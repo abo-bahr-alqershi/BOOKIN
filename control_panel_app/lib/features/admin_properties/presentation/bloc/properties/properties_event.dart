@@ -1,0 +1,153 @@
+// lib/features/admin_properties/presentation/bloc/properties/properties_event.dart
+
+part of 'properties_bloc.dart';
+
+abstract class PropertiesEvent extends Equatable {
+  const PropertiesEvent();
+  
+  @override
+  List<Object?> get props => [];
+}
+
+class LoadPropertiesEvent extends PropertiesEvent {
+  final int pageNumber;
+  final int pageSize;
+  final String? sortBy;
+  final bool? isAscending;
+  final bool? isApproved;
+  
+  const LoadPropertiesEvent({
+    this.pageNumber = 1,
+    this.pageSize = 10,
+    this.sortBy,
+    this.isAscending,
+    this.isApproved,
+  });
+  
+  @override
+  List<Object?> get props => [pageNumber, pageSize, sortBy, isAscending, isApproved];
+}
+
+class CreatePropertyEvent extends PropertiesEvent {
+  final String name;
+  final String address;
+  final String propertyTypeId;
+  final String ownerId;
+  final String description;
+  final double latitude;
+  final double longitude;
+  final String city;
+  final int starRating;
+  final List<String>? images;
+  
+  const CreatePropertyEvent({
+    required this.name,
+    required this.address,
+    required this.propertyTypeId,
+    required this.ownerId,
+    required this.description,
+    required this.latitude,
+    required this.longitude,
+    required this.city,
+    required this.starRating,
+    this.images,
+  });
+  
+  @override
+  List<Object?> get props => [
+    name, address, propertyTypeId, ownerId, description,
+    latitude, longitude, city, starRating, images,
+  ];
+}
+
+class UpdatePropertyEvent extends PropertiesEvent {
+  final String propertyId;
+  final String? name;
+  final String? address;
+  final String? description;
+  final double? latitude;
+  final double? longitude;
+  final String? city;
+  final int? starRating;
+  final List<String>? images;
+  
+  const UpdatePropertyEvent({
+    required this.propertyId,
+    this.name,
+    this.address,
+    this.description,
+    this.latitude,
+    this.longitude,
+    this.city,
+    this.starRating,
+    this.images,
+  });
+  
+  @override
+  List<Object?> get props => [
+    propertyId, name, address, description,
+    latitude, longitude, city, starRating, images,
+  ];
+}
+
+class DeletePropertyEvent extends PropertiesEvent {
+  final String propertyId;
+  
+  const DeletePropertyEvent(this.propertyId);
+  
+  @override
+  List<Object> get props => [propertyId];
+}
+
+class ApprovePropertyEvent extends PropertiesEvent {
+  final String propertyId;
+  
+  const ApprovePropertyEvent(this.propertyId);
+  
+  @override
+  List<Object> get props => [propertyId];
+}
+
+class RejectPropertyEvent extends PropertiesEvent {
+  final String propertyId;
+  
+  const RejectPropertyEvent(this.propertyId);
+  
+  @override
+  List<Object> get props => [propertyId];
+}
+
+class FilterPropertiesEvent extends PropertiesEvent {
+  final String? propertyTypeId;
+  final double? minPrice;
+  final double? maxPrice;
+  final List<String>? amenityIds;
+  final List<int>? starRatings;
+  final double? minAverageRating;
+  final bool? isApproved;
+  
+  const FilterPropertiesEvent({
+    this.propertyTypeId,
+    this.minPrice,
+    this.maxPrice,
+    this.amenityIds,
+    this.starRatings,
+    this.minAverageRating,
+    this.isApproved,
+  });
+  
+  @override
+  List<Object?> get props => [
+    propertyTypeId, minPrice, maxPrice,
+    amenityIds, starRatings, minAverageRating, isApproved,
+  ];
+}
+
+class SearchPropertiesEvent extends PropertiesEvent {
+  final String searchTerm;
+  
+  const SearchPropertiesEvent(this.searchTerm);
+  
+  @override
+  List<Object> get props => [searchTerm];
+}

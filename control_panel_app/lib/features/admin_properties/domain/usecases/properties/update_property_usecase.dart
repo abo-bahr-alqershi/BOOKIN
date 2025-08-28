@@ -1,0 +1,54 @@
+// lib/features/admin_properties/domain/usecases/properties/update_property_usecase.dart
+
+import 'package:dartz/dartz.dart';
+import 'package:bookn_cp_app/core/error/failures.dart';
+import 'package:bookn_cp_app/core/usecases/usecase.dart';
+import '../../repositories/properties_repository.dart';
+
+class UpdatePropertyParams {
+  final String propertyId;
+  final String? name;
+  final String? address;
+  final String? description;
+  final double? latitude;
+  final double? longitude;
+  final String? city;
+  final int? starRating;
+  final List<String>? images;
+  
+  UpdatePropertyParams({
+    required this.propertyId,
+    this.name,
+    this.address,
+    this.description,
+    this.latitude,
+    this.longitude,
+    this.city,
+    this.starRating,
+    this.images,
+  });
+  
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {};
+    if (name != null) data['name'] = name;
+    if (address != null) data['address'] = address;
+    if (description != null) data['description'] = description;
+    if (latitude != null) data['latitude'] = latitude;
+    if (longitude != null) data['longitude'] = longitude;
+    if (city != null) data['city'] = city;
+    if (starRating != null) data['starRating'] = starRating;
+    if (images != null) data['images'] = images;
+    return data;
+  }
+}
+
+class UpdatePropertyUseCase implements UseCase<bool, UpdatePropertyParams> {
+  final PropertiesRepository repository;
+  
+  UpdatePropertyUseCase(this.repository);
+  
+  @override
+  Future<Either<Failure, bool>> call(UpdatePropertyParams params) async {
+    return await repository.updateProperty(params.propertyId, params.toJson());
+  }
+}

@@ -1,0 +1,225 @@
+// lib/features/admin_properties/data/datasources/properties_remote_datasource.dart
+
+import 'package:dio/dio.dart';
+import 'package:bookn_cp_app/core/network/api_client.dart';
+import 'package:bookn_cp_app/core/error/exceptions.dart';
+import 'package:bookn_cp_app/core/models/paginated_result.dart';
+import '../models/property_model.dart';
+
+abstract class PropertiesRemoteDataSource {
+  Future<PaginatedResult<PropertyModel>> getAllProperties({
+    int? pageNumber,
+    int? pageSize,
+    String? searchTerm,
+    String? propertyTypeId,
+    double? minPrice,
+    double? maxPrice,
+    String? sortBy,
+    bool? isAscending,
+    List<String>? amenityIds,
+    List<int>? starRatings,
+    double? minAverageRating,
+    bool? isApproved,
+    bool? hasActiveBookings,
+  });
+  
+  Future<PropertyModel> getPropertyById(String propertyId);
+  Future<PropertyModel> getPropertyDetails(String propertyId, {bool includeUnits = false});
+  Future<String> createProperty(Map<String, dynamic> propertyData);
+  Future<bool> updateProperty(String propertyId, Map<String, dynamic> propertyData);
+  Future<bool> deleteProperty(String propertyId);
+  Future<bool> approveProperty(String propertyId);
+  Future<bool> rejectProperty(String propertyId);
+  Future<PaginatedResult<PropertyModel>> getPendingProperties({
+    int? pageNumber,
+    int? pageSize,
+  });
+  Future<bool> addPropertyToSections(String propertyId, List<String> sectionIds);
+}
+
+class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
+  final ApiClient apiClient;
+  static const String _baseEndpoint = '/api/admin/Properties';
+  
+  PropertiesRemoteDataSourceImpl({required this.apiClient});
+  
+  @override
+  Future<PaginatedResult<PropertyModel>> getAllProperties({
+    int? pageNumber,
+    int? pageSize,
+    String? searchTerm,
+    String? propertyTypeId,
+    double? minPrice,
+    double? maxPrice,
+    String? sortBy,
+    bool? isAscending,
+    List<String>? amenityIds,
+    List<int>? starRatings,
+    double? minAverageRating,
+    bool? isApproved,
+    bool? hasActiveBookings,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        if (pageNumber != null) 'pageNumber': pageNumber,
+        if (pageSize != null) 'pageSize': pageSize,
+        if (searchTerm != null) 'searchTerm': searchTerm,
+        if (propertyTypeId != null) 'propertyTypeId': propertyTypeId,
+        if (minPrice != null) 'minPrice': minPrice,
+        if (maxPrice != null) 'maxPrice': maxPrice,
+        if (sortBy != null) 'sortBy': sortBy,
+        if (isAscending != null) 'isAscending': isAscending,
+        if (amenityIds != null && amenityIds.isNotEmpty) 'amenityIds': amenityIds,
+        if (starRatings != null && starRatings.isNotEmpty) 'starRatings': starRatings,
+        if (minAverageRating != null) 'minAverageRating': minAverageRating,
+        if (isApproved != null) 'isApproved': isApproved,
+        if (hasActiveBookings != null) 'hasActiveBookings': hasActiveBookings,
+      };
+      
+      final response = await apiClient.get(
+        _baseEndpoint,
+        queryParameters: queryParams,
+      );
+      
+      return PaginatedResult<PropertyModel>.fromJson(
+        response.data,
+        (json) => PropertyModel.fromJson(json as Map<String, dynamic>),
+      );
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Failed to fetch properties');
+    }
+  }
+  
+  @override
+  Future<PropertyModel> getPropertyById(String propertyId) async {
+    try {
+      final response = await apiClient.get('$_baseEndpoint/$propertyId');
+      
+      if (response.data['success'] == true) {
+        return PropertyModel.fromJson(response.data['data']);
+      } else {
+        throw ServerException(response.data['message'] ?? 'Failed to get property');
+      }
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Failed to fetch property');
+    }
+  }
+  
+  @override
+  Future<PropertyModel> getPropertyDetails(String propertyId, {bool includeUnits = false}) async {
+    try {
+      final response = await apiClient.get(
+        '$_baseEndpoint/$propertyId/details',
+        queryParameters: {'includeUnits': includeUnits},
+      );
+      
+      if (response.data['success'] == true) {
+        return PropertyModel.fromJson(response.data['data']);
+      } else {
+        throw ServerException(response.data['message'] ?? 'Failed to get property details');
+      }
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Failed to fetch property details');
+    }
+  }
+  
+  @override
+  Future<String> createProperty(Map<String, dynamic> propertyData) async {
+    try {
+      final response = await apiClient.post(
+        _baseEndpoint,
+        data: propertyData,
+      );
+      
+      if (response.data['success'] == true) {
+        return response.data['data'] as String;
+      } else {
+        throw ServerException(response.data['message'] ?? 'Failed to create property');
+      }
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Failed to create property');
+    }
+  }
+  
+  @override
+  Future<bool> updateProperty(String propertyId, Map<String, dynamic> propertyData) async {
+    try {
+      final response = await apiClient.put(
+        '$_baseEndpoint/$propertyId',
+        data: propertyData,
+      );
+      
+      return response.data['success'] == true;
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Failed to update property');
+    }
+  }
+  
+  @override
+  Future<bool> deleteProperty(String propertyId) async {
+    try {
+      final response = await apiClient.delete('$_baseEndpoint/$propertyId');
+      return response.data['success'] == true;
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Failed to delete property');
+    }
+  }
+  
+  @override
+  Future<bool> approveProperty(String propertyId) async {
+    try {
+      final response = await apiClient.post('$_baseEndpoint/$propertyId/approve');
+      return response.data['success'] == true;
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Failed to approve property');
+    }
+  }
+  
+  @override
+  Future<bool> rejectProperty(String propertyId) async {
+    try {
+      final response = await apiClient.post('$_baseEndpoint/$propertyId/reject');
+      return response.data['success'] == true;
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Failed to reject property');
+    }
+  }
+  
+  @override
+  Future<PaginatedResult<PropertyModel>> getPendingProperties({
+    int? pageNumber,
+    int? pageSize,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        if (pageNumber != null) 'pageNumber': pageNumber,
+        if (pageSize != null) 'pageSize': pageSize,
+      };
+      
+      final response = await apiClient.get(
+        '$_baseEndpoint/pending',
+        queryParameters: queryParams,
+      );
+      
+      return PaginatedResult<PropertyModel>.fromJson(
+        response.data,
+        (json) => PropertyModel.fromJson(json as Map<String, dynamic>),
+      );
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Failed to fetch pending properties');
+    }
+  }
+  
+  @override
+  Future<bool> addPropertyToSections(String propertyId, List<String> sectionIds) async {
+    try {
+      final response = await apiClient.post(
+        '/api/admin/properties/$propertyId/sections',
+        data: {'sectionIds': sectionIds},
+      );
+      return response.data['success'] == true;
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Failed to add property to sections');
+    }
+  }
+}

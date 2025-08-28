@@ -1,0 +1,171 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:bookn_cp_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:bookn_cp_app/features/auth/presentation/bloc/auth_state.dart';
+import 'package:bookn_cp_app/features/auth/presentation/pages/login_page.dart';
+import 'package:bookn_cp_app/features/chat/presentation/widgets/conversation_loader.dart';
+import 'package:bookn_cp_app/presentation/screens/futuristic_main_screen.dart';
+import 'package:bookn_cp_app/presentation/screens/splash_screen.dart';
+// Removed imports for deleted features
+// Removed unused imports
+import 'package:bookn_cp_app/features/auth/presentation/pages/register_page.dart';
+import 'package:bookn_cp_app/features/auth/presentation/pages/forgot_password_page.dart';
+// Removed imports for deleted features
+import 'package:bookn_cp_app/features/chat/presentation/pages/chat_page.dart';
+import 'package:bookn_cp_app/features/chat/presentation/pages/new_conversation_page.dart';
+import 'package:bookn_cp_app/features/chat/presentation/pages/conversations_page.dart';
+import 'package:bookn_cp_app/features/chat/domain/entities/conversation.dart';
+import 'package:bookn_cp_app/features/auth/presentation/pages/change_password_page.dart';
+import 'package:bookn_cp_app/features/auth/presentation/pages/edit_profile_page.dart';
+// Removed settings pages imports
+
+class AppRouter {
+  static GoRouter build(BuildContext context) {
+    final authBloc = context.read<AuthBloc>();
+    return GoRouter(
+      initialLocation: '/',
+      refreshListenable: GoRouterRefreshStream(authBloc.stream),
+      redirect: (context, state) {
+        final authState = context.read<AuthBloc>().state;
+        final goingToLogin = state.matchedLocation == '/login';
+        final goingToRegister = state.matchedLocation == '/register';
+        final goingToForgot = state.matchedLocation == '/forgot-password';
+        final isSplash = state.matchedLocation == '/';
+        final isProtected = _protectedPaths.any((p) => state.matchedLocation.startsWith(p));
+
+        if (isSplash) return null;
+
+        if (authState is AuthUnauthenticated && isProtected && !(goingToLogin || goingToRegister || goingToForgot)) {
+          return '/login';
+        }
+
+        if (authState is AuthAuthenticated && (goingToLogin || goingToRegister || goingToForgot)) {
+          return '/main';
+        }
+
+        return null;
+      },
+      routes: <RouteBase>[
+        GoRoute(
+          path: '/',
+          builder: (BuildContext context, GoRouterState state) {
+            return const SplashScreen();
+          },
+        ),
+        // Onboarding removed
+        GoRoute(
+          path: '/main',
+          builder: (BuildContext context, GoRouterState state) {
+            return const MainScreen();
+          },
+        ),
+        GoRoute(
+          path: '/login',
+          builder: (BuildContext context, GoRouterState state) {
+            return const Scaffold(
+              body: Center(
+                child: LoginPage(),
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/register',
+          builder: (BuildContext context, GoRouterState state) {
+            final params = state.extra is Map<String, dynamic>
+                ? state.extra as Map<String, dynamic>
+                : {"isFirst": false};
+            return RegisterPage(
+              isFirst: params["isFirst"] ?? false,
+            );
+          },
+        ),
+        GoRoute(
+          path: '/forgot-password',
+          builder: (BuildContext context, GoRouterState state) {
+            return const ForgotPasswordPage();
+          },
+        ),
+        GoRoute(
+          path: '/profile',
+          builder: (BuildContext context, GoRouterState state) {
+            return const Scaffold(
+              body: Center(
+                child: Text('الملف الشخصي'),
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/profile/edit',
+          builder: (BuildContext context, GoRouterState state) {
+            return const EditProfilePage();
+          },
+        ),
+        GoRoute(
+          path: '/profile/change-password',
+          builder: (BuildContext context, GoRouterState state) {
+            return const ChangePasswordPage();
+          },
+        ),
+        // Settings routes removed
+        // Removed review and search routes
+        // Removed property routes
+        // Removed booking routes
+
+        // قائمة المحادثات
+        GoRoute(
+          path: '/conversations',
+          builder: (context, state) {
+            return const ConversationsPage();
+          },
+        ),
+
+        // محادثة جديدة
+        GoRoute(
+          path: '/conversations/new',
+          builder: (context, state) {
+            return const NewConversationPage();
+          },
+        ),
+
+        // صفحة المحادثة
+        GoRoute(
+          path: '/chat/:conversationId',
+          builder: (context, state) {
+            final conversationId = state.pathParameters['conversationId']!;
+            final conversation = state.extra as Conversation?;
+            
+            if (conversation != null) {
+              return ChatPage(conversation: conversation);
+            }
+            
+            // إذا لم تمرر المحادثة كـ extra، قم بتحميلها
+            return ConversationLoader(conversationId: conversationId);
+          },
+        ),
+      ],
+    );
+  }
+
+
+  static const List<String> _protectedPaths = <String>[
+    '/profile',
+    '/conversations',
+    '/chat',
+  ];
+}
+
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
+  late final StreamSubscription<dynamic> _subscription;
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
