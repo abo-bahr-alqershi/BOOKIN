@@ -83,7 +83,7 @@ class _AssignSectionsModalState extends State<AssignSectionsModal>
             scale: _scaleAnimation,
             child: Container(
               width: MediaQuery.of(context).size.width * 0.9,
-              maxWidth: 400,
+              constraints: const BoxConstraints(maxWidth: 400),
               margin: const EdgeInsets.all(AppDimensions.paddingLarge),
               decoration: BoxDecoration(
                 gradient: AppTheme.darkGradient,

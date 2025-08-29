@@ -8,7 +8,7 @@ class PricingMethodModel {
     );
   }
   
-  static String toString(PricingMethod method) {
+  static String stringValueOf(PricingMethod method) {
     return method.value;
   }
   

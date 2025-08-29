@@ -14,6 +14,8 @@ import '../widgets/futuristic_units_table.dart';
 import '../widgets/futuristic_unit_map_view.dart';
 import '../widgets/unit_filters_widget.dart';
 
+enum ViewMode { table, cards, map }
+
 class UnitsListPage extends StatefulWidget {
   const UnitsListPage({super.key});
 
@@ -24,7 +26,6 @@ class UnitsListPage extends StatefulWidget {
 class _UnitsListPageState extends State<UnitsListPage>
     with TickerProviderStateMixin {
   // View modes
-  enum ViewMode { table, cards, map }
   ViewMode _currentView = ViewMode.table;
 
   // Animation controllers

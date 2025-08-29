@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:ui';
+import 'dart:math' as math;
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/theme/app_dimensions.dart';
@@ -223,7 +224,7 @@ class _EditUnitPageState extends State<EditUnitPage>
             width: 0.5,
           ),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.arrow_back,
           color: AppTheme.textWhite,
           size: 20,
@@ -588,7 +589,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(
+          CircularProgressIndicator(
             color: AppTheme.primaryBlue,
           ),
           const SizedBox(height: AppDimensions.spaceMedium),
@@ -788,7 +789,7 @@ class _EditUnitBackgroundPainter extends CustomPainter {
     for (int i = 0; i < 3; i++) {
       final offset = Offset(
         size.width * (0.2 + i * 0.3),
-        size.height * 0.5 + 50 * (animationValue * 2 * 3.14159 + i).sin,
+        size.height * 0.5 + 50 * math.sin(animationValue * 2 * 3.14159 + i),
       );
       canvas.drawCircle(offset, 30 + i * 10, paint);
     }

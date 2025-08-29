@@ -420,6 +420,3 @@ class AppDimensions {
   static bool isDesktop(BuildContext context) => 
       MediaQuery.of(context).size.width >= tabletBreakpoint;
 }
-  static bool isDesktop(BuildContext context) => 
-      MediaQuery.of(context).size.width >= tabletBreakpoint;
-}
