@@ -59,6 +59,23 @@ import 'features/chat/domain/usecases/update_user_status_usecase.dart';
 import 'features/chat/domain/usecases/get_chat_settings_usecase.dart';
 import 'features/chat/domain/usecases/update_chat_settings_usecase.dart';
 
+// Features - Admin Units
+import 'features/admin_units/presentation/bloc/units_list/units_list_bloc.dart';
+import 'features/admin_units/presentation/bloc/unit_form/unit_form_bloc.dart';
+import 'features/admin_units/presentation/bloc/unit_details/unit_details_bloc.dart';
+import 'features/admin_units/domain/repositories/units_repository.dart';
+import 'features/admin_units/data/repositories/units_repository_impl.dart';
+import 'features/admin_units/data/datasources/units_remote_datasource.dart';
+import 'features/admin_units/data/datasources/units_local_datasource.dart';
+import 'features/admin_units/domain/usecases/get_units_usecase.dart';
+import 'features/admin_units/domain/usecases/get_unit_details_usecase.dart';
+import 'features/admin_units/domain/usecases/create_unit_usecase.dart';
+import 'features/admin_units/domain/usecases/update_unit_usecase.dart';
+import 'features/admin_units/domain/usecases/delete_unit_usecase.dart';
+import 'features/admin_units/domain/usecases/get_unit_types_by_property_usecase.dart';
+import 'features/admin_units/domain/usecases/get_unit_fields_usecase.dart';
+import 'features/admin_units/domain/usecases/assign_unit_to_sections_usecase.dart';
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
@@ -67,6 +84,9 @@ Future<void> init() async {
 
 	// Features - Chat
 	_initChat();
+
+	// Features - Admin Units
+	_initAdminUnits();
 
 	// Theme
   _initTheme();
@@ -192,6 +212,46 @@ void _initChat() {
 	sl.registerLazySingleton(() => ChatWebSocketService(
 		authLocalDataSource: sl(),
 	));
+}
+
+void _initAdminUnits() {
+  // Blocs
+  sl.registerFactory(() => UnitsListBloc(
+        getUnitsUseCase: sl(),
+        deleteUnitUseCase: sl(),
+      ));
+  sl.registerFactory(() => UnitFormBloc(
+        createUnitUseCase: sl(),
+        updateUnitUseCase: sl(),
+        getUnitTypesByPropertyUseCase: sl(),
+        getUnitFieldsUseCase: sl(),
+      ));
+  sl.registerFactory(() => UnitDetailsBloc(
+        getUnitDetailsUseCase: sl(),
+        deleteUnitUseCase: sl(),
+        assignUnitToSectionsUseCase: sl(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton(() => GetUnitsUseCase(sl()));
+  sl.registerLazySingleton(() => GetUnitDetailsUseCase(sl()));
+  sl.registerLazySingleton(() => CreateUnitUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateUnitUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteUnitUseCase(sl()));
+  sl.registerLazySingleton(() => GetUnitTypesByPropertyUseCase(sl()));
+  sl.registerLazySingleton(() => GetUnitFieldsUseCase(sl()));
+  sl.registerLazySingleton(() => AssignUnitToSectionsUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<UnitsRepository>(() => UnitsRepositoryImpl(
+        remoteDataSource: sl(),
+        localDataSource: sl(),
+        networkInfo: sl(),
+      ));
+
+  // Data sources
+  sl.registerLazySingleton<UnitsRemoteDataSource>(() => UnitsRemoteDataSourceImpl(dio: sl()));
+  sl.registerLazySingleton<UnitsLocalDataSource>(() => UnitsLocalDataSourceImpl(sharedPreferences: sl()));
 }
 
 void _initTheme() {

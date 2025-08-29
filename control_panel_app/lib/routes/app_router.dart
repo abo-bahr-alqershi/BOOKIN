@@ -20,6 +20,15 @@ import 'package:bookn_cp_app/features/chat/domain/entities/conversation.dart';
 import 'package:bookn_cp_app/features/auth/presentation/pages/change_password_page.dart';
 import 'package:bookn_cp_app/features/auth/presentation/pages/edit_profile_page.dart';
 // Removed settings pages imports
+// Admin Units pages
+import 'package:bookn_cp_app/features/admin_units/presentation/pages/units_list_page.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/pages/create_unit_page.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/pages/edit_unit_page.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/pages/unit_details_page.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/bloc/units_list/units_list_bloc.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_form/unit_form_bloc.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_details/unit_details_bloc.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
@@ -120,6 +129,52 @@ class AppRouter {
           path: '/conversations',
           builder: (context, state) {
             return const ConversationsPage();
+          },
+        ),
+
+        // Admin Units - list
+        GoRoute(
+          path: '/admin/units',
+          builder: (context, state) {
+            return BlocProvider<UnitsListBloc>(
+              create: (_) => di.sl<UnitsListBloc>()..add(LoadUnitsEvent()),
+              child: const UnitsListPage(),
+            );
+          },
+        ),
+
+        // Admin Units - create
+        GoRoute(
+          path: '/admin/units/create',
+          builder: (context, state) {
+            return BlocProvider<UnitFormBloc>(
+              create: (_) => di.sl<UnitFormBloc>()..add(const InitializeFormEvent()),
+              child: const CreateUnitPage(),
+            );
+          },
+        ),
+
+        // Admin Units - edit
+        GoRoute(
+          path: '/admin/units/:unitId/edit',
+          builder: (context, state) {
+            final unitId = state.pathParameters['unitId']!;
+            return BlocProvider<UnitFormBloc>(
+              create: (_) => di.sl<UnitFormBloc>()..add(InitializeFormEvent(unitId: unitId)),
+              child: EditUnitPage(unitId: unitId),
+            );
+          },
+        ),
+
+        // Admin Units - details
+        GoRoute(
+          path: '/admin/units/:unitId',
+          builder: (context, state) {
+            final unitId = state.pathParameters['unitId']!;
+            return BlocProvider<UnitDetailsBloc>(
+              create: (_) => di.sl<UnitDetailsBloc>()..add(LoadUnitDetailsEvent(unitId: unitId)),
+              child: UnitDetailsPage(unitId: unitId),
+            );
           },
         ),
 
