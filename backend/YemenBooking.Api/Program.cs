@@ -35,11 +35,14 @@ using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Listen on all interfaces for LAN access
-builder.WebHost.ConfigureKestrel(options =>
+// Listen on port 5000 only in Development; in hosting, rely on platform binding
+if (builder.Environment.IsDevelopment())
 {
-    options.ListenAnyIP(5000);
-});
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        options.ListenAnyIP(5000);
+    });
+}
 
 // WebSocket chat disabled: using FCM for real-time notifications
 

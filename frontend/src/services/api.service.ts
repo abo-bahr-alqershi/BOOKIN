@@ -1,8 +1,21 @@
 import axios from 'axios';
 
 // إعداد الـ API client للاتصال بالباك اند
+const runtimeBaseUrl = ((): string => {
+  // استخدم متغير بيئة من Vite إن وجد
+  const envUrl = (import.meta as any)?.env?.VITE_API_BASE_URL as string | undefined;
+  if (envUrl && envUrl.trim().length > 0) return envUrl;
+
+  // افتراض: نفس الأصل + مسار API النسبي
+  if (typeof window !== 'undefined' && window.location) {
+    return `${window.location.origin}`;
+  }
+  // fallback أخير
+  return '';
+})();
+
 export const apiClient = axios.create({
-  baseURL: 'http://localhost:5000',
+  baseURL: runtimeBaseUrl,
   timeout: 10000,
   withCredentials: true,  // إرسال الكوكيز لجلسات المصادقة تلقائياً
   headers: {
