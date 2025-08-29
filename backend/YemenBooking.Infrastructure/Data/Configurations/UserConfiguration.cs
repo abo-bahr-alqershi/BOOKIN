@@ -64,13 +64,13 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(u => u.SettingsJson)
             .IsRequired()
-            .HasColumnType("TEXT")
+            .HasColumnType("NVARCHAR(MAX)")
             .HasDefaultValue("{}")
             .HasComment("إعدادات المستخدم بصيغة JSON");
 
         builder.Property(u => u.FavoritesJson)
             .IsRequired()
-            .HasColumnType("TEXT")
+            .HasColumnType("NVARCHAR(MAX)")
             .HasDefaultValue("[]")
             .HasComment("قائمة مفضلة المستخدم بصيغة JSON");
 

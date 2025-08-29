@@ -41,10 +41,10 @@ public class UnitTypeFieldConfiguration : IEntityTypeConfiguration<UnitTypeField
             .HasMaxLength(500);
 
         builder.Property(ptf => ptf.FieldOptions)
-            .HasColumnType("TEXT");
+            .HasColumnType("NVARCHAR(MAX)");
 
         builder.Property(ptf => ptf.ValidationRules)
-            .HasColumnType("TEXT");
+            .HasColumnType("NVARCHAR(MAX)");
 
         builder.Property(ptf => ptf.IsRequired)
             .HasDefaultValue(false);

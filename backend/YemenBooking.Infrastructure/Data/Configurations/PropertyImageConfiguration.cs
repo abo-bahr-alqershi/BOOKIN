@@ -59,8 +59,8 @@ public class PropertyImageConfiguration : IEntityTypeConfiguration<PropertyImage
         builder.Property(pi => pi.Category).IsRequired();
         builder.Property(pi => pi.Caption).HasMaxLength(200);
         builder.Property(pi => pi.AltText).HasMaxLength(200);
-        builder.Property(pi => pi.Tags).HasColumnType("TEXT");
-        builder.Property(pi => pi.Sizes).HasColumnType("TEXT");
+        builder.Property(pi => pi.Tags).HasColumnType("NVARCHAR(MAX)");
+        builder.Property(pi => pi.Sizes).HasColumnType("NVARCHAR(MAX)");
         builder.Property(pi => pi.IsMain).HasDefaultValue(false);
         builder.Property(pi => pi.SortOrder).HasDefaultValue(0);
         builder.Property(pi => pi.Views).HasDefaultValue(0);

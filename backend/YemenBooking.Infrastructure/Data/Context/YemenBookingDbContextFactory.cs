@@ -15,8 +15,10 @@ public class YemenBookingDbContextFactory : IDesignTimeDbContextFactory<YemenBoo
     public YemenBookingDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<YemenBookingDbContext>();
-        // تهيئة الاتصال بقاعدة بيانات SQLite
-        optionsBuilder.UseSqlite("Data Source=YemenBooking.db");
+        // // تهيئة الاتصال بقاعدة بيانات SQLite
+        // optionsBuilder.UseSqlite("Data Source=YemenBooking.db");
+        // تهيئة الاتصال بقاعدة بيانات SQL Server
+        optionsBuilder.UseSqlServer("Data Source=SQL5107.site4now.net;Initial Catalog=db_abd8fd_bookn2;User Id=db_abd8fd_bookn2_admin;Password=Qaz123@Wsx123@");
         // For design-time, httpContextAccessor not used, passing new HttpContextAccessor instance
         return new YemenBookingDbContext(
             optionsBuilder.Options,

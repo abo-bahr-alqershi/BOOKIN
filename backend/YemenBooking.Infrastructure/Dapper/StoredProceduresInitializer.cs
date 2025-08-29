@@ -15,8 +15,8 @@ namespace YemenBooking.Infrastructure.Dapper
         /// </summary>
         public static void EnsureAdvancedSearchProc(IDbConnection connection)
         {
-            if(connection.GetType().Name.Contains("Sqlite",System.StringComparison.OrdinalIgnoreCase))
-                return;
+            // if(connection.GetType().Name.Contains("Sqlite",System.StringComparison.OrdinalIgnoreCase))
+            //     return;
             const string procName = "sp_AdvancedPropertySearch";
             // التحقق من وجود الإجراء
             var exists = connection.ExecuteScalar<int>(

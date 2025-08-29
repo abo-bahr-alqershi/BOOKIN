@@ -121,7 +121,8 @@ namespace YemenBooking.Infrastructure.Repositories
 
             if (orderBy != null)
             {
-                if (_context.Database.IsSqlite())
+                // if (_context.Database.IsSqlite())
+                if (false) // SQLite-only path disabled after switching to SQL Server
                 {
                     Expression body = orderBy.Body;
                     while (body is UnaryExpression ue && (ue.NodeType == ExpressionType.Convert || ue.NodeType == ExpressionType.ConvertChecked))

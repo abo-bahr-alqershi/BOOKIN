@@ -28,7 +28,7 @@ public class PropertyTypeConfiguration : IEntityTypeConfiguration<PropertyType>
         // تكوين الخصائص الأخرى
         builder.Property(pt => pt.Name).IsRequired().HasMaxLength(50);
         builder.Property(pt => pt.Description).HasMaxLength(500);
-        builder.Property(pt => pt.DefaultAmenities).HasColumnType("TEXT");
+        builder.Property(pt => pt.DefaultAmenities).HasColumnType("NVARCHAR(MAX)");
         
         // تكوين الفهرس
         builder.HasIndex(pt => pt.Name).IsUnique();

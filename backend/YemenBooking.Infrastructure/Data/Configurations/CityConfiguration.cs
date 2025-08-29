@@ -22,7 +22,7 @@ public class CityConfiguration : IEntityTypeConfiguration<City>
                .HasMaxLength(100)
                .IsRequired();
         builder.Property(c => c.ImagesJson)
-               .HasColumnType("TEXT")
+               .HasColumnType("NVARCHAR(MAX)")
                .HasDefaultValue("[]");
 
         builder.HasIndex(c => new { c.Name, c.Country }).IsUnique();

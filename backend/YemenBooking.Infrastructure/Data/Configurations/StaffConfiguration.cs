@@ -23,7 +23,7 @@ public class StaffConfiguration : IEntityTypeConfiguration<Staff>
         builder.Property(s => s.UserId).IsRequired();
         builder.Property(s => s.PropertyId).IsRequired();
         builder.Property(s => s.Position).IsRequired();
-        builder.Property(s => s.Permissions).HasColumnType("TEXT");
+        builder.Property(s => s.Permissions).HasColumnType("NVARCHAR(MAX)");
 
         builder.Property(s => s.Position)
             .IsRequired()

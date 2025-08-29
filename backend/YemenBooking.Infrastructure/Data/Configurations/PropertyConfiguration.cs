@@ -34,7 +34,7 @@ public class PropertyConfiguration : IEntityTypeConfiguration<Property>
         builder.Property(p => p.Latitude).HasColumnType("decimal(9,6)");
         builder.Property(p => p.Longitude).HasColumnType("decimal(9,6)");
         builder.Property(p => p.StarRating).HasDefaultValue(0);
-        builder.Property(p => p.Description).HasColumnType("TEXT");
+        builder.Property(p => p.Description).HasColumnType("NVARCHAR(MAX)");
         builder.Property(p => p.IsApproved).HasDefaultValue(false);
         builder.Property(p => p.CreatedAt).HasColumnType("datetime").IsRequired();
         builder.Property(p => p.BookingCount).HasDefaultValue(0);
