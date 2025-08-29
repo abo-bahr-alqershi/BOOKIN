@@ -17,6 +17,18 @@ namespace YemenBooking.Infrastructure.Dapper
         {
             // if(connection.GetType().Name.Contains("Sqlite",System.StringComparison.OrdinalIgnoreCase))
             //     return;
+            // Ensure required SQL Server table types exist
+            const string ensureTypesSql = @"
+IF TYPE_ID(N'dbo.GuidList') IS NULL
+    CREATE TYPE dbo.GuidList AS TABLE (Id UNIQUEIDENTIFIER NOT NULL);
+
+IF TYPE_ID(N'dbo.JsonFilters') IS NULL
+    CREATE TYPE dbo.JsonFilters AS TABLE (
+        FieldId UNIQUEIDENTIFIER NULL,
+        Value NVARCHAR(MAX) NULL
+    );";
+            connection.Execute(ensureTypesSql);
+
             const string procName = "sp_AdvancedPropertySearch";
             // التحقق من وجود الإجراء
             var exists = connection.ExecuteScalar<int>(
