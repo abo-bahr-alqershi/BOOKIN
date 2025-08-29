@@ -108,7 +108,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       if (error?.response?.status === 401) {
         showError('انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.');
         // إعادة توجيه لصفحة تسجيل الدخول
-        window.location.href = '/login';
+        window.location.href = '/auth/login';
       } else if (error?.response?.status === 403) {
         showError('ليس لديك صلاحية للوصول لهذا المحتوى');
       } else if (error?.response?.status >= 500) {

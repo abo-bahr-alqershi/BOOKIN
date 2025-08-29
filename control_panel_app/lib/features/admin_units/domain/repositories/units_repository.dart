@@ -1,0 +1,56 @@
+import 'package:dartz/dartz.dart' hide Unit;
+import '../../../../../core/error/failures.dart';
+import '../entities/unit.dart';
+import '../entities/unit_type.dart';
+import '../entities/unit_field_value.dart';
+
+abstract class UnitsRepository {
+  Future<Either<Failure, List<Unit>>> getUnits({
+    int? pageNumber,
+    int? pageSize,
+    String? propertyId,
+    String? unitTypeId,
+    bool? isAvailable,
+    double? minPrice,
+    double? maxPrice,
+    String? searchQuery,
+  });
+
+  Future<Either<Failure, Unit>> getUnitDetails(String unitId);
+
+  Future<Either<Failure, String>> createUnit({
+    required String propertyId,
+    required String unitTypeId,
+    required String name,
+    required Map<String, dynamic> basePrice,
+    required String customFeatures,
+    required String pricingMethod,
+    List<Map<String, dynamic>>? fieldValues,
+    List<String>? images,
+    int? adultCapacity,
+    int? childrenCapacity,
+  });
+
+  Future<Either<Failure, bool>> updateUnit({
+    required String unitId,
+    String? name,
+    Map<String, dynamic>? basePrice,
+    String? customFeatures,
+    String? pricingMethod,
+    List<Map<String, dynamic>>? fieldValues,
+    List<String>? images,
+    int? adultCapacity,
+    int? childrenCapacity,
+  });
+
+  Future<Either<Failure, bool>> deleteUnit(String unitId);
+
+  Future<Either<Failure, List<UnitType>>> getUnitTypesByProperty(String propertyTypeId);
+
+  Future<Either<Failure, List<UnitTypeField>>> getUnitFields(String unitTypeId);
+
+  Future<Either<Failure, bool>> assignUnitToSections(
+    String unitId,
+    List<String> sectionIds,
+  );
+}

@@ -21,7 +21,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'Access-Control-Allow-Origin': '*'
+    // ملاحظة: Access-Control-Allow-Origin يُحدد من الخادم فقط
   }
 });
 
@@ -93,7 +93,7 @@ apiClient.interceptors.response.use(
             refreshToken
           });
           
-          const { token: newToken, refreshToken: newRefreshToken } = response.data.data;
+          const { accessToken: newToken, refreshToken: newRefreshToken } = response.data.data;
           
           localStorage.setItem('token', newToken);
           localStorage.setItem('refreshToken', newRefreshToken);
@@ -106,7 +106,7 @@ apiClient.interceptors.response.use(
           processQueue(refreshError, null);
           localStorage.removeItem('token');
           localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
+          window.location.href = '/auth/login';
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;
@@ -114,7 +114,7 @@ apiClient.interceptors.response.use(
       } else {
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
+        window.location.href = '/auth/login';
       }
     }
     

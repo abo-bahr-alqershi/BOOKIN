@@ -1,0 +1,211 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:equatable/equatable.dart';
+import '../../../domain/entities/unit.dart';
+import '../../../domain/entities/unit_type.dart';
+import '../../../domain/entities/money.dart';
+import '../../../domain/entities/pricing_method.dart';
+import '../../../domain/usecases/create_unit_usecase.dart';
+import '../../../domain/usecases/update_unit_usecase.dart';
+import '../../../domain/usecases/get_unit_types_by_property_usecase.dart';
+import '../../../domain/usecases/get_unit_fields_usecase.dart';
+
+part 'unit_form_event.dart';
+part 'unit_form_state.dart';
+
+class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
+  final CreateUnitUseCase createUnitUseCase;
+  final UpdateUnitUseCase updateUnitUseCase;
+  final GetUnitTypesByPropertyUseCase getUnitTypesByPropertyUseCase;
+  final GetUnitFieldsUseCase getUnitFieldsUseCase;
+
+  UnitFormBloc({
+    required this.createUnitUseCase,
+    required this.updateUnitUseCase,
+    required this.getUnitTypesByPropertyUseCase,
+    required this.getUnitFieldsUseCase,
+  }) : super(UnitFormInitial()) {
+    on<InitializeFormEvent>(_onInitializeForm);
+    on<PropertySelectedEvent>(_onPropertySelected);
+    on<UnitTypeSelectedEvent>(_onUnitTypeSelected);
+    on<UpdateCapacityEvent>(_onUpdateCapacity);
+    on<UpdatePricingEvent>(_onUpdatePricing);
+    on<UpdateFeaturesEvent>(_onUpdateFeatures);
+    on<UpdateDynamicFieldsEvent>(_onUpdateDynamicFields);
+    on<SubmitFormEvent>(_onSubmitForm);
+  }
+
+  Future<void> _onInitializeForm(
+    InitializeFormEvent event,
+    Emitter<UnitFormState> emit,
+  ) async {
+    emit(UnitFormLoading());
+    
+    if (event.unitId != null) {
+      // Load existing unit for editing
+      emit(UnitFormReady(
+        isEditMode: true,
+        unitId: event.unitId,
+      ));
+    } else {
+      emit(const UnitFormReady());
+    }
+  }
+
+  Future<void> _onPropertySelected(
+    PropertySelectedEvent event,
+    Emitter<UnitFormState> emit,
+  ) async {
+    if (state is UnitFormReady) {
+      final currentState = state as UnitFormReady;
+      emit(currentState.copyWith(isLoadingUnitTypes: true));
+      
+      final result = await getUnitTypesByPropertyUseCase(event.propertyId);
+      
+      result.fold(
+        (failure) => emit(UnitFormError(message: failure.message)),
+        (unitTypes) => emit(currentState.copyWith(
+          selectedPropertyId: event.propertyId,
+          availableUnitTypes: unitTypes,
+          isLoadingUnitTypes: false,
+        )),
+      );
+    }
+  }
+
+  Future<void> _onUnitTypeSelected(
+    UnitTypeSelectedEvent event,
+    Emitter<UnitFormState> emit,
+  ) async {
+    if (state is UnitFormReady) {
+      final currentState = state as UnitFormReady;
+      emit(currentState.copyWith(isLoadingFields: true));
+      
+      // Get selected unit type
+      final unitType = currentState.availableUnitTypes.firstWhere(
+        (type) => type.id == event.unitTypeId,
+      );
+      
+      // Load fields for this unit type
+      final result = await getUnitFieldsUseCase(event.unitTypeId);
+      
+      result.fold(
+        (failure) => emit(UnitFormError(message: failure.message)),
+        (fields) => emit(currentState.copyWith(
+          selectedUnitType: unitType,
+          unitTypeFields: fields,
+          isLoadingFields: false,
+        )),
+      );
+    }
+  }
+
+  Future<void> _onUpdateCapacity(
+    UpdateCapacityEvent event,
+    Emitter<UnitFormState> emit,
+  ) async {
+    if (state is UnitFormReady) {
+      final currentState = state as UnitFormReady;
+      emit(currentState.copyWith(
+        adultCapacity: event.adultCapacity,
+        childrenCapacity: event.childrenCapacity,
+      ));
+    }
+  }
+
+  Future<void> _onUpdatePricing(
+    UpdatePricingEvent event,
+    Emitter<UnitFormState> emit,
+  ) async {
+    if (state is UnitFormReady) {
+      final currentState = state as UnitFormReady;
+      emit(currentState.copyWith(
+        basePrice: event.basePrice,
+        pricingMethod: event.pricingMethod,
+      ));
+    }
+  }
+
+  Future<void> _onUpdateFeatures(
+    UpdateFeaturesEvent event,
+    Emitter<UnitFormState> emit,
+  ) async {
+    if (state is UnitFormReady) {
+      final currentState = state as UnitFormReady;
+      emit(currentState.copyWith(
+        customFeatures: event.features,
+      ));
+    }
+  }
+
+  Future<void> _onUpdateDynamicFields(
+    UpdateDynamicFieldsEvent event,
+    Emitter<UnitFormState> emit,
+  ) async {
+    if (state is UnitFormReady) {
+      final currentState = state as UnitFormReady;
+      emit(currentState.copyWith(
+        dynamicFieldValues: event.values,
+      ));
+    }
+  }
+
+  Future<void> _onSubmitForm(
+    SubmitFormEvent event,
+    Emitter<UnitFormState> emit,
+  ) async {
+    if (state is UnitFormReady) {
+      final currentState = state as UnitFormReady;
+      emit(UnitFormLoading());
+      
+      if (currentState.isEditMode) {
+        // Update existing unit
+        final result = await updateUnitUseCase(UpdateUnitParams(
+          unitId: currentState.unitId!,
+          name: currentState.unitName,
+          basePrice: currentState.basePrice?.toJson(),
+          customFeatures: currentState.customFeatures,
+          pricingMethod: currentState.pricingMethod?.value,
+          fieldValues: _convertDynamicFieldsToList(currentState.dynamicFieldValues),
+          images: currentState.images,
+          adultCapacity: currentState.adultCapacity,
+          childrenCapacity: currentState.childrenCapacity,
+        ));
+        
+        result.fold(
+          (failure) => emit(UnitFormError(message: failure.message)),
+          (_) => emit(UnitFormSubmitted()),
+        );
+      } else {
+        // Create new unit
+        final result = await createUnitUseCase(CreateUnitParams(
+          propertyId: currentState.selectedPropertyId!,
+          unitTypeId: currentState.selectedUnitType!.id,
+          name: currentState.unitName!,
+          basePrice: currentState.basePrice!.toJson(),
+          customFeatures: currentState.customFeatures ?? '',
+          pricingMethod: currentState.pricingMethod!.value,
+          fieldValues: _convertDynamicFieldsToList(currentState.dynamicFieldValues),
+          images: currentState.images,
+          adultCapacity: currentState.adultCapacity,
+          childrenCapacity: currentState.childrenCapacity,
+        ));
+        
+        result.fold(
+          (failure) => emit(UnitFormError(message: failure.message)),
+          (_) => emit(UnitFormSubmitted()),
+        );
+      }
+    }
+  }
+
+  List<Map<String, dynamic>> _convertDynamicFieldsToList(
+    Map<String, dynamic> fieldValues,
+  ) {
+    return fieldValues.entries
+        .map((entry) => {
+              'fieldId': entry.key,
+              'fieldValue': entry.value,
+            })
+        .toList();
+  }
+}

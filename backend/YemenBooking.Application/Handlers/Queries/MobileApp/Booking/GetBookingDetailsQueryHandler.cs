@@ -84,29 +84,22 @@ public class GetBookingDetailsQueryHandler : IRequestHandler<GetBookingDetailsQu
                 return ResultDto<BookingDetailsDto>.Failed("ليس لديك صلاحية للوصول لهذا الحجز", "ACCESS_DENIED");
             }
 
-            // جلب بيانات الوحدة والخدمات والمدفوعات بشكل متوازٍ
-            var unitTask = _unitRepository.GetByIdAsync(booking.UnitId, cancellationToken);
-            var servicesTask = _bookingServiceRepository.GetBookingServicesAsync(booking.Id, cancellationToken);
-            var paymentsTask = _paymentRepository.GetPaymentsByBookingAsync(booking.Id, cancellationToken);
-
-            var unit = await unitTask;
+            // جلب بيانات الوحدة والخدمات والمدفوعات بشكل تسلسلي لتجنب مشاركة DbContext بالتوازي
+            var unit = await _unitRepository.GetByIdAsync(booking.UnitId, cancellationToken);
             if (unit == null)
             {
                 _logger.LogWarning("لم يتم العثور على الوحدة: {UnitId}", booking.UnitId);
                 return ResultDto<BookingDetailsDto>.Failed("بيانات الوحدة غير متاحة", "UNIT_NOT_FOUND");
             }
 
-            var propertyTask = _propertyRepository.GetByIdAsync(unit.PropertyId, cancellationToken);
-            await Task.WhenAll(propertyTask, servicesTask, paymentsTask);
-
-            var property = propertyTask.Result;
+            var property = await _propertyRepository.GetByIdAsync(unit.PropertyId, cancellationToken);
             if (property == null)
             {
                 _logger.LogWarning("لم يتم العثور على العقار: {PropertyId}", unit.PropertyId);
                 return ResultDto<BookingDetailsDto>.Failed("بيانات العقار غير متاحة", "PROPERTY_NOT_FOUND");
             }
 
-            var bookingServices = servicesTask.Result;
+            var bookingServices = await _bookingServiceRepository.GetBookingServicesAsync(booking.Id, cancellationToken);
             var serviceDtos = bookingServices.Select(bs => new BookingServiceDto
             {
                 Id = bs.ServiceId,
@@ -116,7 +109,7 @@ public class GetBookingDetailsQueryHandler : IRequestHandler<GetBookingDetailsQu
                 Currency = bs.TotalPrice.Currency ?? "YER"
             }).ToList();
 
-            var payments = paymentsTask.Result;
+            var payments = await _paymentRepository.GetPaymentsByBookingAsync(booking.Id, cancellationToken);
             var paymentDtos = payments.Select(p => new PaymentDto
             {
                 Id = p.Id,

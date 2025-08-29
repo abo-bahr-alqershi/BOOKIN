@@ -1,0 +1,67 @@
+import 'package:dartz/dartz.dart';
+import 'package:equatable/equatable.dart';
+import '../../../../../core/error/failures.dart';
+import '../../../../../core/usecases/usecase.dart';
+import '../repositories/units_repository.dart';
+
+class CreateUnitUseCase implements UseCase<String, CreateUnitParams> {
+  final UnitsRepository repository;
+
+  CreateUnitUseCase(this.repository);
+
+  @override
+  Future<Either<Failure, String>> call(CreateUnitParams params) async {
+    return await repository.createUnit(
+      propertyId: params.propertyId,
+      unitTypeId: params.unitTypeId,
+      name: params.name,
+      basePrice: params.basePrice,
+      customFeatures: params.customFeatures,
+      pricingMethod: params.pricingMethod,
+      fieldValues: params.fieldValues,
+      images: params.images,
+      adultCapacity: params.adultCapacity,
+      childrenCapacity: params.childrenCapacity,
+    );
+  }
+}
+
+class CreateUnitParams extends Equatable {
+  final String propertyId;
+  final String unitTypeId;
+  final String name;
+  final Map<String, dynamic> basePrice;
+  final String customFeatures;
+  final String pricingMethod;
+  final List<Map<String, dynamic>>? fieldValues;
+  final List<String>? images;
+  final int? adultCapacity;
+  final int? childrenCapacity;
+
+  const CreateUnitParams({
+    required this.propertyId,
+    required this.unitTypeId,
+    required this.name,
+    required this.basePrice,
+    required this.customFeatures,
+    required this.pricingMethod,
+    this.fieldValues,
+    this.images,
+    this.adultCapacity,
+    this.childrenCapacity,
+  });
+
+  @override
+  List<Object?> get props => [
+        propertyId,
+        unitTypeId,
+        name,
+        basePrice,
+        customFeatures,
+        pricingMethod,
+        fieldValues,
+        images,
+        adultCapacity,
+        childrenCapacity,
+      ];
+}

@@ -5,6 +5,7 @@ using YemenBooking.Application.DTOs;
 using YemenBooking.Core.Interfaces.Repositories;
 using YemenBooking.Core.Enums;
 using BookingDto = YemenBooking.Application.Queries.MobileApp.Booking.BookingDto;
+using Microsoft.EntityFrameworkCore;
 
 namespace YemenBooking.Application.Handlers.Queries.MobileApp.Booking;
 
@@ -72,49 +73,52 @@ public class GetUserBookingsQueryHandler : IRequestHandler<GetUserBookingsQuery,
                 return ResultDto<PaginatedResult<BookingDto>>.Failed("المستخدم غير موجود", "USER_NOT_FOUND");
             }
 
-            // الحصول على حجوزات المستخدم مع التصفح
-            var allBookings = await _bookingRepository.GetAllAsync(cancellationToken);
-            var userBookings = allBookings?.Where(b => b.UserId == request.UserId);
+            // بناء الاستعلام على مستوى قاعدة البيانات لتجنب التوازي على نفس DbContext
+            var pageNumber = request.PageNumber < 1 ? 1 : request.PageNumber;
+            var pageSize = request.PageSize < 1 ? 10 : request.PageSize;
+
+            var query = _bookingRepository.GetQueryable()
+                .AsNoTracking()
+                .AsSplitQuery()
+                .Where(b => b.UserId == request.UserId);
             
             if (request.Status.HasValue)
             {
-                userBookings = userBookings?.Where(b => b.Status == request.Status.Value);
+                query = query.Where(b => b.Status == request.Status.Value);
             }
             
-            var totalCount = userBookings?.Count() ?? 0;
-            var bookings = userBookings?
-                .Skip((request.PageNumber - 1) * request.PageSize)
-                .Take(request.PageSize);
+            var totalCount = await query.CountAsync(cancellationToken);
 
-            if (bookings == null || !bookings.Any())
+            var pageItems = await query
+                .Include(b => b.Unit)
+                    .ThenInclude(u => u.Property)
+                        .ThenInclude(p => p.Images)
+                .OrderByDescending(b => b.BookedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            if (pageItems.Count == 0)
             {
                 _logger.LogInformation("لم يتم العثور على حجوزات للمستخدم: {UserId}", request.UserId);
-                
                 return ResultDto<PaginatedResult<BookingDto>>.Ok(
                     new PaginatedResult<BookingDto>
                     {
                         Items = new List<BookingDto>(),
                         TotalCount = 0,
-                        PageNumber = request.PageNumber,
+                        PageNumber = pageNumber,
+                        PageSize = pageSize
                     }, 
                     "لا توجد حجوزات متاحة"
                 );
             }
 
-            // تحويل البيانات إلى DTO بشكل متوازي
-            var bookingDtoTasks = bookings.Select(async booking =>
+            // تحويل إلى DTO بدون تشغيل عمليات قاعدة بيانات متوازية
+            var bookingDtos = pageItems.Select(booking =>
             {
-                // جلب تفاصيل الوحدة
-                var unitTask = _unitRepository.GetByIdAsync(booking.UnitId, cancellationToken);
-                var unit = await unitTask;
-                // جلب تفاصيل العقار
-                var property = unit != null
-                    ? await _propertyRepository.GetByIdAsync(unit.PropertyId, cancellationToken)
-                    : null;
-                // إمكانية الإلغاء والتقييم
-                var canCancel = CanCancelBooking(booking);
-                var canReview = CanReviewBooking(booking);
-                // إنشاء DTO
+                var unit = booking.Unit;
+                var property = unit?.Property;
+                var propertyImageUrl = property?.Images?.FirstOrDefault()?.Url ?? string.Empty;
                 return new BookingDto
                 {
                     Id = booking.Id,
@@ -128,13 +132,11 @@ public class GetUserBookingsQueryHandler : IRequestHandler<GetUserBookingsQuery,
                     Currency = booking.TotalPrice.Currency ?? "YER",
                     Status = booking.Status,
                     BookedAt = booking.BookedAt,
-                    PropertyImageUrl = property?.Images?.FirstOrDefault()?.Url ?? string.Empty,
-                    CanCancel = canCancel,
-                    CanReview = canReview
+                    PropertyImageUrl = propertyImageUrl,
+                    CanCancel = CanCancelBooking(booking),
+                    CanReview = CanReviewBooking(booking)
                 };
-            });
-            var bookingDtos = (await Task.WhenAll(bookingDtoTasks))
-                .OrderByDescending(b => b.BookedAt)
+            })
                 .ToList();
 
             // حساب إجمالي عدد الصفحات
@@ -144,19 +146,14 @@ public class GetUserBookingsQueryHandler : IRequestHandler<GetUserBookingsQuery,
             {
                 Items = bookingDtos,
                 TotalCount = totalCount,
-                PageNumber = request.PageNumber,
+                PageNumber = pageNumber,
+                PageSize = pageSize
             };
 
             _logger.LogInformation("تم الحصول على {Count} حجز للمستخدم {UserId} بنجاح", bookingDtos.Count, request.UserId);
 
             return ResultDto<PaginatedResult<BookingDto>>.Ok(
-                new PaginatedResult<BookingDto>
-                {
-                    Items = bookingDtos,
-                    TotalCount = totalCount,
-                    PageNumber = request.PageNumber,
-                    PageSize = request.PageSize
-                },
+                response,
                 $"تم الحصول على {bookingDtos.Count} حجز من أصل {totalCount}"
             );
         }

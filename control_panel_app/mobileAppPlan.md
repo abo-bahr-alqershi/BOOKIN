@@ -227,6 +227,72 @@ lib/
 │   │           ├── icon_picker_modal.dart
 │   │           └── futuristic_stats_card.dart
 │   │   
+│   ├── lib/features/admin_units/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   │   ├── units_local_datasource.dart
+│   │   │   │   └── units_remote_datasource.dart
+│   │   │   ├── models/
+│   │   │   │   ├── unit_model.dart
+│   │   │   │   ├── unit_type_model.dart
+│   │   │   │   ├── unit_field_value_model.dart
+│   │   │   │   ├── money_model.dart
+│   │   │   │   └── pricing_method_model.dart
+│   │   │   └── repositories/
+│   │   │       └── units_repository_impl.dart
+│   │   │
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   ├── unit.dart
+│   │   │   │   ├── unit_type.dart
+│   │   │   │   ├── unit_field_value.dart
+│   │   │   │   ├── money.dart
+│   │   │   │   └── pricing_method.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── units_repository.dart
+│   │   │   └── usecases/
+│   │   │       ├── get_units_usecase.dart
+│   │   │       ├── get_unit_details_usecase.dart
+│   │   │       ├── create_unit_usecase.dart
+│   │   │       ├── update_unit_usecase.dart
+│   │   │       ├── delete_unit_usecase.dart
+│   │   │       ├── get_unit_types_by_property_usecase.dart
+│   │   │       ├── get_unit_fields_usecase.dart
+│   │   │       └── assign_unit_to_sections_usecase.dart
+│   │   │
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── units_list/
+│   │       │   │   ├── units_list_bloc.dart
+│   │       │   │   ├── units_list_event.dart
+│   │       │   │   └── units_list_state.dart
+│   │       │   ├── unit_form/
+│   │       │   │   ├── unit_form_bloc.dart
+│   │       │   │   ├── unit_form_event.dart
+│   │       │   │   └── unit_form_state.dart
+│   │       │   └── unit_details/
+│   │       │       ├── unit_details_bloc.dart
+│   │       │       ├── unit_details_event.dart
+│   │       │       └── unit_details_state.dart
+│   │       ├── pages/
+│   │       │   ├── units_list_page.dart
+│   │       │   ├── unit_details_page.dart
+│   │       │   ├── create_unit_page.dart
+│   │       │   ├── edit_unit_page.dart
+│   │       │   └── unit_gallery_page.dart
+│   │       └── widgets/
+│   │           ├── futuristic_unit_card.dart
+│   │           ├── futuristic_units_table.dart
+│   │           ├── futuristic_unit_map_view.dart
+│   │           ├── unit_form_widget.dart
+│   │           ├── dynamic_fields_widget.dart
+│   │           ├── capacity_selector_widget.dart
+│   │           ├── pricing_form_widget.dart
+│   │           ├── features_tags_widget.dart
+│   │           ├── unit_filters_widget.dart
+│   │           ├── unit_stats_card.dart
+│   │           └── assign_sections_modal.dart
+│   │ 
 │   │   
 │   ├── notifications/
 │   │   ├── data/

@@ -135,11 +135,17 @@ namespace YemenBooking.Infrastructure.Services
             }
 
             // إعداد التوكن
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+            var secret = string.IsNullOrWhiteSpace(_jwtSettings.Secret)
+                ? "fallback-development-secret-change-in-production-please-32+chars"
+                : _jwtSettings.Secret;
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var now = DateTime.UtcNow;
             // إنشاء Access Token
-            var accessTokenExpires = now.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
+            var accessExpiryMinutes = _jwtSettings.AccessTokenExpirationMinutes > 0
+                ? _jwtSettings.AccessTokenExpirationMinutes
+                : 60; // default 60 minutes
+            var accessTokenExpires = now.AddMinutes(accessExpiryMinutes);
             var accessTokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
@@ -161,7 +167,10 @@ namespace YemenBooking.Infrastructure.Services
             }
 
             // إنشاء Refresh Token كـJWT
-            var refreshTokenExpires = now.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+            var refreshExpiryDays = _jwtSettings.RefreshTokenExpirationDays > 0
+                ? _jwtSettings.RefreshTokenExpirationDays
+                : 7; // default 7 days
+            var refreshTokenExpires = now.AddDays(refreshExpiryDays);
             var refreshClaims = new List<Claim>(claims) { new Claim("tokenType", "refresh") };
             var refreshDescriptor = new SecurityTokenDescriptor
             {

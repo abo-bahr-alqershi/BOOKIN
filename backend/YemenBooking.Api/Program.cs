@@ -104,10 +104,10 @@ builder.Services.AddMediatR(cfg => {
     cfg.RegisterServicesFromAssembly(typeof(GetPropertyDetailsQueryHandler).Assembly);
 });
 
-// إضافة AutoMapper وتهيئة ملفات Mapping يدويًا لتجنب خطأ MissingMethodException
+// إضافة AutoMapper مع تقييد البحث على مجلد Mappings في طبقة Application
 builder.Services.AddAutoMapper(
-    cfg => cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies()),
-    AppDomain.CurrentDomain.GetAssemblies());
+    cfg => cfg.AddMaps(typeof(QueryMappingProfile).Assembly),
+    typeof(QueryMappingProfile).Assembly);
 
 // إضافة خدمات المشروع
 builder.Services.AddYemenBookingServices();
