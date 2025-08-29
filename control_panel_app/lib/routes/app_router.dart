@@ -20,6 +20,26 @@ import 'package:bookn_cp_app/features/chat/domain/entities/conversation.dart';
 import 'package:bookn_cp_app/features/auth/presentation/pages/change_password_page.dart';
 import 'package:bookn_cp_app/features/auth/presentation/pages/edit_profile_page.dart';
 // Removed settings pages imports
+// Admin Units pages
+import 'package:bookn_cp_app/features/admin_units/presentation/pages/units_list_page.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/pages/create_unit_page.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/pages/edit_unit_page.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/pages/unit_details_page.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/bloc/units_list/units_list_bloc.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_form/unit_form_bloc.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_details/unit_details_bloc.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
+// Property Types page and blocs
+import 'package:bookn_cp_app/features/property_types/presentation/pages/property_types_page.dart';
+import 'package:bookn_cp_app/features/property_types/presentation/bloc/property_types/property_types_bloc.dart';
+import 'package:bookn_cp_app/features/property_types/presentation/bloc/property_types/property_types_event.dart';
+import 'package:bookn_cp_app/features/property_types/presentation/bloc/unit_types/unit_types_bloc.dart';
+import 'package:bookn_cp_app/features/property_types/presentation/bloc/unit_type_fields/unit_type_fields_bloc.dart';
+// removed wrong properties pages imports
+import 'package:bookn_cp_app/features/properties/presentation/pages/properties_list_page.dart';
+import 'package:bookn_cp_app/features/properties/presentation/pages/create_property_page.dart';
+import 'package:bookn_cp_app/features/properties/presentation/pages/edit_property_page.dart';
+import 'package:bookn_cp_app/features/properties/presentation/pages/property_details_page.dart';
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
@@ -122,6 +142,70 @@ class AppRouter {
             return const ConversationsPage();
           },
         ),
+
+        // Admin Units - list
+        GoRoute(
+          path: '/admin/units',
+          builder: (context, state) {
+            return BlocProvider<UnitsListBloc>(
+              create: (_) => di.sl<UnitsListBloc>()..add(LoadUnitsEvent()),
+              child: const UnitsListPage(),
+            );
+          },
+        ),
+
+        // Admin Units - create
+        GoRoute(
+          path: '/admin/units/create',
+          builder: (context, state) {
+            return BlocProvider<UnitFormBloc>(
+              create: (_) => di.sl<UnitFormBloc>()..add(const InitializeFormEvent()),
+              child: const CreateUnitPage(),
+            );
+          },
+        ),
+
+        // Admin Units - edit
+        GoRoute(
+          path: '/admin/units/:unitId/edit',
+          builder: (context, state) {
+            final unitId = state.pathParameters['unitId']!;
+            return BlocProvider<UnitFormBloc>(
+              create: (_) => di.sl<UnitFormBloc>()..add(InitializeFormEvent(unitId: unitId)),
+              child: EditUnitPage(unitId: unitId),
+            );
+          },
+        ),
+
+        // Admin Units - details
+        GoRoute(
+          path: '/admin/units/:unitId',
+          builder: (context, state) {
+            final unitId = state.pathParameters['unitId']!;
+            return BlocProvider<UnitDetailsBloc>(
+              create: (_) => di.sl<UnitDetailsBloc>()..add(LoadUnitDetailsEvent(unitId: unitId)),
+              child: UnitDetailsPage(unitId: unitId),
+            );
+          },
+        ),
+
+        // Property Types Management
+        GoRoute(
+          path: '/admin/property-types',
+          builder: (context, state) {
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider(create: (_) => di.sl<PropertyTypesBloc>()..add(const LoadPropertyTypesEvent())),
+                BlocProvider(create: (_) => di.sl<UnitTypesBloc>()),
+                BlocProvider(create: (_) => di.sl<UnitTypeFieldsBloc>()),
+              ],
+              child: const PropertyTypesPage(),
+            );
+          },
+        ),
+
+        // Admin Properties
+        // removed non-existent admin properties pages imports and routes
 
         // محادثة جديدة
         GoRoute(

@@ -59,6 +59,87 @@ import 'features/chat/domain/usecases/update_user_status_usecase.dart';
 import 'features/chat/domain/usecases/get_chat_settings_usecase.dart';
 import 'features/chat/domain/usecases/update_chat_settings_usecase.dart';
 
+// Features - Admin Units
+import 'features/admin_units/presentation/bloc/units_list/units_list_bloc.dart';
+import 'features/admin_units/presentation/bloc/unit_form/unit_form_bloc.dart';
+import 'features/admin_units/presentation/bloc/unit_details/unit_details_bloc.dart';
+import 'features/admin_units/domain/repositories/units_repository.dart';
+import 'features/admin_units/data/repositories/units_repository_impl.dart';
+import 'features/admin_units/data/datasources/units_remote_datasource.dart';
+import 'features/admin_units/data/datasources/units_local_datasource.dart';
+import 'features/admin_units/domain/usecases/get_units_usecase.dart';
+import 'features/admin_units/domain/usecases/get_unit_details_usecase.dart';
+import 'features/admin_units/domain/usecases/create_unit_usecase.dart';
+import 'features/admin_units/domain/usecases/update_unit_usecase.dart';
+import 'features/admin_units/domain/usecases/delete_unit_usecase.dart';
+import 'features/admin_units/domain/usecases/get_unit_types_by_property_usecase.dart';
+import 'features/admin_units/domain/usecases/get_unit_fields_usecase.dart';
+import 'features/admin_units/domain/usecases/assign_unit_to_sections_usecase.dart';
+
+// Features - Property Types
+import 'features/property_types/presentation/bloc/property_types/property_types_bloc.dart';
+import 'features/property_types/presentation/bloc/unit_types/unit_types_bloc.dart';
+import 'features/property_types/presentation/bloc/unit_type_fields/unit_type_fields_bloc.dart';
+import 'features/property_types/domain/repositories/property_types_repository.dart' as pt_domain;
+import 'features/property_types/domain/repositories/unit_types_repository.dart' as ut_domain;
+import 'features/property_types/domain/repositories/unit_type_fields_repository.dart' as utf_domain;
+import 'features/property_types/data/repositories/property_types_repository_impl.dart' as pt_data;
+import 'features/property_types/data/repositories/unit_types_repository_impl.dart' as ut_data;
+import 'features/property_types/data/repositories/unit_type_fields_repository_impl.dart' as utf_data;
+import 'features/property_types/data/datasources/property_types_remote_datasource.dart' as pt_ds;
+import 'features/property_types/data/datasources/unit_types_remote_datasource.dart' as ut_ds;
+import 'features/property_types/data/datasources/unit_type_fields_remote_datasource.dart' as utf_ds;
+import 'features/property_types/domain/usecases/property_types/get_all_property_types_usecase.dart' as pt_uc;
+import 'features/property_types/domain/usecases/property_types/create_property_type_usecase.dart' as pt_uc3;
+import 'features/property_types/domain/usecases/property_types/update_property_type_usecase.dart' as pt_uc4;
+import 'features/property_types/domain/usecases/property_types/delete_property_type_usecase.dart' as pt_uc5;
+import 'features/property_types/domain/usecases/unit_types/get_unit_types_by_property_usecase.dart' as ut_uc1;
+import 'features/property_types/domain/usecases/unit_types/create_unit_type_usecase.dart' as ut_uc2;
+import 'features/property_types/domain/usecases/unit_types/update_unit_type_usecase.dart' as ut_uc3;
+import 'features/property_types/domain/usecases/unit_types/delete_unit_type_usecase.dart' as ut_uc4;
+import 'features/property_types/domain/usecases/fields/get_fields_by_unit_type_usecase.dart' as utf_uc1;
+import 'features/property_types/domain/usecases/fields/create_field_usecase.dart' as utf_uc2;
+import 'features/property_types/domain/usecases/fields/update_field_usecase.dart' as utf_uc3;
+import 'features/property_types/domain/usecases/fields/delete_field_usecase.dart' as utf_uc4;
+
+// Features - Admin Properties
+import 'features/admin_properties/presentation/bloc/properties/properties_bloc.dart' as ap_bloc;
+import 'features/admin_properties/presentation/bloc/amenities/amenities_bloc.dart' as ap_am_bloc;
+import 'features/admin_properties/presentation/bloc/policies/policies_bloc.dart' as ap_po_bloc;
+import 'features/admin_properties/presentation/bloc/property_types/property_types_bloc.dart' as ap_pt_bloc;
+import 'features/admin_properties/domain/repositories/properties_repository.dart' as ap_repo;
+import 'features/admin_properties/domain/repositories/amenities_repository.dart' as ap_am_repo;
+import 'features/admin_properties/domain/repositories/policies_repository.dart' as ap_po_repo;
+import 'features/admin_properties/domain/repositories/property_types_repository.dart' as ap_pt_repo;
+import 'features/admin_properties/data/repositories/properties_repository_impl.dart' as ap_repo_impl;
+import 'features/admin_properties/data/repositories/amenities_repository_impl.dart' as ap_am_repo_impl;
+import 'features/admin_properties/data/repositories/policies_repository_impl.dart' as ap_po_repo_impl;
+import 'features/admin_properties/data/repositories/property_types_repository_impl.dart' as ap_pt_repo_impl;
+import 'features/admin_properties/data/datasources/properties_remote_datasource.dart' as ap_ds_prop_remote;
+import 'features/admin_properties/data/datasources/properties_local_datasource.dart' as ap_ds_prop_local;
+import 'features/admin_properties/data/datasources/amenities_remote_datasource.dart' as ap_ds_am_remote;
+import 'features/admin_properties/data/datasources/policies_remote_datasource.dart' as ap_ds_po_remote;
+import 'features/admin_properties/data/datasources/property_types_remote_datasource.dart' as ap_ds_pt_remote;
+import 'features/admin_properties/domain/usecases/properties/get_all_properties_usecase.dart' as ap_uc_prop1;
+import 'features/admin_properties/domain/usecases/properties/create_property_usecase.dart' as ap_uc_prop2;
+import 'features/admin_properties/domain/usecases/properties/update_property_usecase.dart' as ap_uc_prop3;
+import 'features/admin_properties/domain/usecases/properties/delete_property_usecase.dart' as ap_uc_prop4;
+import 'features/admin_properties/domain/usecases/properties/approve_property_usecase.dart' as ap_uc_prop5;
+import 'features/admin_properties/domain/usecases/properties/reject_property_usecase.dart' as ap_uc_prop6;
+import 'features/admin_properties/domain/usecases/amenities/get_amenities_usecase.dart' as ap_uc_am1;
+import 'features/admin_properties/domain/usecases/amenities/create_amenity_usecase.dart' as ap_uc_am2;
+import 'features/admin_properties/domain/usecases/amenities/update_amenity_usecase.dart' as ap_uc_am3;
+import 'features/admin_properties/domain/usecases/amenities/delete_amenity_usecase.dart' as ap_uc_am4;
+import 'features/admin_properties/domain/usecases/amenities/assign_amenity_to_property_usecase.dart' as ap_uc_am5;
+import 'features/admin_properties/domain/usecases/policies/get_policies_usecase.dart' as ap_uc_po1;
+import 'features/admin_properties/domain/usecases/policies/create_policy_usecase.dart' as ap_uc_po2;
+import 'features/admin_properties/domain/usecases/policies/update_policy_usecase.dart' as ap_uc_po3;
+import 'features/admin_properties/domain/usecases/policies/delete_policy_usecase.dart' as ap_uc_po4;
+import 'features/admin_properties/domain/usecases/property_types/get_property_types_usecase.dart' as ap_uc_pt1;
+import 'features/admin_properties/domain/usecases/property_types/create_property_type_usecase.dart' as ap_uc_pt2;
+import 'features/admin_properties/domain/usecases/property_types/update_property_type_usecase.dart' as ap_uc_pt3;
+import 'features/admin_properties/domain/usecases/property_types/delete_property_type_usecase.dart' as ap_uc_pt4;
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
@@ -67,6 +148,15 @@ Future<void> init() async {
 
 	// Features - Chat
 	_initChat();
+
+	// Features - Admin Units
+	_initAdminUnits();
+
+	// Features - Property Types
+	_initPropertyTypes();
+
+	// Features - Admin Properties
+	_initAdminProperties();
 
 	// Theme
   _initTheme();
@@ -192,6 +282,189 @@ void _initChat() {
 	sl.registerLazySingleton(() => ChatWebSocketService(
 		authLocalDataSource: sl(),
 	));
+}
+
+void _initAdminUnits() {
+  // Blocs
+  sl.registerFactory(() => UnitsListBloc(
+        getUnitsUseCase: sl(),
+        deleteUnitUseCase: sl(),
+      ));
+  sl.registerFactory(() => UnitFormBloc(
+        createUnitUseCase: sl(),
+        updateUnitUseCase: sl(),
+        getUnitTypesByPropertyUseCase: sl(),
+        getUnitFieldsUseCase: sl(),
+      ));
+  sl.registerFactory(() => UnitDetailsBloc(
+        getUnitDetailsUseCase: sl(),
+        deleteUnitUseCase: sl(),
+        assignUnitToSectionsUseCase: sl(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton(() => GetUnitsUseCase(sl()));
+  sl.registerLazySingleton(() => GetUnitDetailsUseCase(sl()));
+  sl.registerLazySingleton(() => CreateUnitUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateUnitUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteUnitUseCase(sl()));
+  sl.registerLazySingleton(() => GetUnitTypesByPropertyUseCase(sl()));
+  sl.registerLazySingleton(() => GetUnitFieldsUseCase(sl()));
+  sl.registerLazySingleton(() => AssignUnitToSectionsUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<UnitsRepository>(() => UnitsRepositoryImpl(
+        remoteDataSource: sl(),
+        localDataSource: sl(),
+        networkInfo: sl(),
+      ));
+
+  // Data sources
+  sl.registerLazySingleton<UnitsRemoteDataSource>(() => UnitsRemoteDataSourceImpl(dio: sl()));
+  sl.registerLazySingleton<UnitsLocalDataSource>(() => UnitsLocalDataSourceImpl(sharedPreferences: sl()));
+}
+
+void _initPropertyTypes() {
+  // Blocs
+  sl.registerFactory(() => PropertyTypesBloc(
+        getAllPropertyTypes: sl<pt_uc.GetAllPropertyTypesUseCase>(),
+        createPropertyType: sl<pt_uc3.CreatePropertyTypeUseCase>(),
+        updatePropertyType: sl<pt_uc4.UpdatePropertyTypeUseCase>(),
+        deletePropertyType: sl<pt_uc5.DeletePropertyTypeUseCase>(),
+      ));
+  sl.registerFactory(() => UnitTypesBloc(
+        getUnitTypesByProperty: sl<ut_uc1.GetUnitTypesByPropertyUseCase>(),
+        createUnitType: sl<ut_uc2.CreateUnitTypeUseCase>(),
+        updateUnitType: sl<ut_uc3.UpdateUnitTypeUseCase>(),
+        deleteUnitType: sl<ut_uc4.DeleteUnitTypeUseCase>(),
+      ));
+  sl.registerFactory(() => UnitTypeFieldsBloc(
+        getFieldsByUnitType: sl<utf_uc1.GetFieldsByUnitTypeUseCase>(),
+        createField: sl<utf_uc2.CreateFieldUseCase>(),
+        updateField: sl<utf_uc3.UpdateFieldUseCase>(),
+        deleteField: sl<utf_uc4.DeleteFieldUseCase>(),
+      ));
+
+  // Use cases - property types
+  sl.registerLazySingleton<pt_uc.GetAllPropertyTypesUseCase>(() => pt_uc.GetAllPropertyTypesUseCase(sl()));
+  sl.registerLazySingleton<pt_uc3.CreatePropertyTypeUseCase>(() => pt_uc3.CreatePropertyTypeUseCase(sl()));
+  sl.registerLazySingleton<pt_uc4.UpdatePropertyTypeUseCase>(() => pt_uc4.UpdatePropertyTypeUseCase(sl()));
+  sl.registerLazySingleton<pt_uc5.DeletePropertyTypeUseCase>(() => pt_uc5.DeletePropertyTypeUseCase(sl()));
+
+  // Use cases - unit types
+  sl.registerLazySingleton<ut_uc1.GetUnitTypesByPropertyUseCase>(() => ut_uc1.GetUnitTypesByPropertyUseCase(sl()));
+  sl.registerLazySingleton<ut_uc2.CreateUnitTypeUseCase>(() => ut_uc2.CreateUnitTypeUseCase(sl()));
+  sl.registerLazySingleton<ut_uc3.UpdateUnitTypeUseCase>(() => ut_uc3.UpdateUnitTypeUseCase(sl()));
+  sl.registerLazySingleton<ut_uc4.DeleteUnitTypeUseCase>(() => ut_uc4.DeleteUnitTypeUseCase(sl()));
+
+  // Use cases - fields
+  sl.registerLazySingleton<utf_uc1.GetFieldsByUnitTypeUseCase>(() => utf_uc1.GetFieldsByUnitTypeUseCase(sl()));
+  sl.registerLazySingleton<utf_uc2.CreateFieldUseCase>(() => utf_uc2.CreateFieldUseCase(sl()));
+  sl.registerLazySingleton<utf_uc3.UpdateFieldUseCase>(() => utf_uc3.UpdateFieldUseCase(sl()));
+  sl.registerLazySingleton<utf_uc4.DeleteFieldUseCase>(() => utf_uc4.DeleteFieldUseCase(sl()));
+
+  // Repositories
+  sl.registerLazySingleton<pt_domain.PropertyTypesRepository>(() => pt_data.PropertyTypesRepositoryImpl(
+        remoteDataSource: sl(),
+        networkInfo: sl(),
+      ));
+  sl.registerLazySingleton<ut_domain.UnitTypesRepository>(() => ut_data.UnitTypesRepositoryImpl(
+        remoteDataSource: sl(),
+        networkInfo: sl(),
+      ));
+  sl.registerLazySingleton<utf_domain.UnitTypeFieldsRepository>(() => utf_data.UnitTypeFieldsRepositoryImpl(
+        remoteDataSource: sl(),
+        networkInfo: sl(),
+      ));
+
+  // Data sources
+  sl.registerLazySingleton<pt_ds.PropertyTypesRemoteDataSource>(() => pt_ds.PropertyTypesRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<ut_ds.UnitTypesRemoteDataSource>(() => ut_ds.UnitTypesRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<utf_ds.UnitTypeFieldsRemoteDataSource>(() => utf_ds.UnitTypeFieldsRemoteDataSourceImpl(apiClient: sl()));
+}
+
+void _initAdminProperties() {
+  // Blocs
+  sl.registerFactory(() => ap_bloc.PropertiesBloc(
+        getAllProperties: sl<ap_uc_prop1.GetAllPropertiesUseCase>(),
+        createProperty: sl<ap_uc_prop2.CreatePropertyUseCase>(),
+        updateProperty: sl<ap_uc_prop3.UpdatePropertyUseCase>(),
+        deleteProperty: sl<ap_uc_prop4.DeletePropertyUseCase>(),
+        approveProperty: sl<ap_uc_prop5.ApprovePropertyUseCase>(),
+        rejectProperty: sl<ap_uc_prop6.RejectPropertyUseCase>(),
+      ));
+  sl.registerFactory(() => ap_am_bloc.AmenitiesBloc(
+        getAmenities: sl<ap_uc_am1.GetAmenitiesUseCase>(),
+        createAmenity: sl<ap_uc_am2.CreateAmenityUseCase>(),
+        updateAmenity: sl<ap_uc_am3.UpdateAmenityUseCase>(),
+        deleteAmenity: sl<ap_uc_am4.DeleteAmenityUseCase>(),
+        assignAmenityToProperty: sl<ap_uc_am5.AssignAmenityToPropertyUseCase>(),
+      ));
+  sl.registerFactory(() => ap_po_bloc.PoliciesBloc(
+        getPolicies: sl<ap_uc_po1.GetPoliciesUseCase>(),
+        createPolicy: sl<ap_uc_po2.CreatePolicyUseCase>(),
+        updatePolicy: sl<ap_uc_po3.UpdatePolicyUseCase>(),
+        deletePolicy: sl<ap_uc_po4.DeletePolicyUseCase>(),
+      ));
+  sl.registerFactory(() => ap_pt_bloc.PropertyTypesBloc(
+        getPropertyTypes: sl<ap_uc_pt1.GetPropertyTypesUseCase>(),
+        createPropertyType: sl<ap_uc_pt2.CreatePropertyTypeUseCase>(),
+        updatePropertyType: sl<ap_uc_pt3.UpdatePropertyTypeUseCase>(),
+        deletePropertyType: sl<ap_uc_pt4.DeletePropertyTypeUseCase>(),
+      ));
+
+  // Use cases - properties
+  sl.registerLazySingleton<ap_uc_prop1.GetAllPropertiesUseCase>(() => ap_uc_prop1.GetAllPropertiesUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_prop2.CreatePropertyUseCase>(() => ap_uc_prop2.CreatePropertyUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_prop3.UpdatePropertyUseCase>(() => ap_uc_prop3.UpdatePropertyUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_prop4.DeletePropertyUseCase>(() => ap_uc_prop4.DeletePropertyUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_prop5.ApprovePropertyUseCase>(() => ap_uc_prop5.ApprovePropertyUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_prop6.RejectPropertyUseCase>(() => ap_uc_prop6.RejectPropertyUseCase(sl()));
+
+  // Use cases - amenities
+  sl.registerLazySingleton<ap_uc_am1.GetAmenitiesUseCase>(() => ap_uc_am1.GetAmenitiesUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_am2.CreateAmenityUseCase>(() => ap_uc_am2.CreateAmenityUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_am3.UpdateAmenityUseCase>(() => ap_uc_am3.UpdateAmenityUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_am4.DeleteAmenityUseCase>(() => ap_uc_am4.DeleteAmenityUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_am5.AssignAmenityToPropertyUseCase>(() => ap_uc_am5.AssignAmenityToPropertyUseCase(sl()));
+
+  // Use cases - policies
+  sl.registerLazySingleton<ap_uc_po1.GetPoliciesUseCase>(() => ap_uc_po1.GetPoliciesUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_po2.CreatePolicyUseCase>(() => ap_uc_po2.CreatePolicyUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_po3.UpdatePolicyUseCase>(() => ap_uc_po3.UpdatePolicyUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_po4.DeletePolicyUseCase>(() => ap_uc_po4.DeletePolicyUseCase(sl()));
+
+  // Use cases - property types
+  sl.registerLazySingleton<ap_uc_pt1.GetPropertyTypesUseCase>(() => ap_uc_pt1.GetPropertyTypesUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_pt2.CreatePropertyTypeUseCase>(() => ap_uc_pt2.CreatePropertyTypeUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_pt3.UpdatePropertyTypeUseCase>(() => ap_uc_pt3.UpdatePropertyTypeUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_pt4.DeletePropertyTypeUseCase>(() => ap_uc_pt4.DeletePropertyTypeUseCase(sl()));
+
+  // Repositories
+  sl.registerLazySingleton<ap_repo.PropertiesRepository>(() => ap_repo_impl.PropertiesRepositoryImpl(
+        remoteDataSource: sl(),
+        localDataSource: sl(),
+        networkInfo: sl(),
+      ));
+  sl.registerLazySingleton<ap_am_repo.AmenitiesRepository>(() => ap_am_repo_impl.AmenitiesRepositoryImpl(
+        remoteDataSource: sl(),
+        networkInfo: sl(),
+      ));
+  sl.registerLazySingleton<ap_po_repo.PoliciesRepository>(() => ap_po_repo_impl.PoliciesRepositoryImpl(
+        remoteDataSource: sl(),
+        networkInfo: sl(),
+      ));
+  sl.registerLazySingleton<ap_pt_repo.PropertyTypesRepository>(() => ap_pt_repo_impl.PropertyTypesRepositoryImpl(
+        remoteDataSource: sl(),
+        networkInfo: sl(),
+      ));
+
+  // Data sources
+  sl.registerLazySingleton<ap_ds_prop_remote.PropertiesRemoteDataSource>(() => ap_ds_prop_remote.PropertiesRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<ap_ds_prop_local.PropertiesLocalDataSource>(() => ap_ds_prop_local.PropertiesLocalDataSourceImpl(sharedPreferences: sl()));
+  sl.registerLazySingleton<ap_ds_am_remote.AmenitiesRemoteDataSource>(() => ap_ds_am_remote.AmenitiesRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<ap_ds_po_remote.PoliciesRemoteDataSource>(() => ap_ds_po_remote.PoliciesRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<ap_ds_pt_remote.PropertyTypesRemoteDataSource>(() => ap_ds_pt_remote.PropertyTypesRemoteDataSourceImpl(apiClient: sl()));
 }
 
 void _initTheme() {
