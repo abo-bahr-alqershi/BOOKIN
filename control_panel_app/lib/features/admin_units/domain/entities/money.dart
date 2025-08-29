@@ -39,6 +39,14 @@ class Money extends Equatable {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'amount': amount,
+      'currency': currency,
+      if (formattedAmount != null) 'formattedAmount': formattedAmount,
+    };
+  }
+
   @override
   List<Object?> get props => [amount, currency, formattedAmount];
 }

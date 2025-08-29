@@ -426,7 +426,7 @@ class _UnitGalleryPageState extends State<UnitGalleryPage>
   Widget _buildImageActionButton(
     IconData icon,
     VoidCallback onTap, {
-    Color color = AppTheme.textWhite,
+    Color? color,
   }) {
     return GestureDetector(
       onTap: () {
@@ -438,7 +438,7 @@ class _UnitGalleryPageState extends State<UnitGalleryPage>
         child: Icon(
           icon,
           size: 16,
-          color: color,
+          color: color ?? AppTheme.textWhite,
         ),
       ),
     );

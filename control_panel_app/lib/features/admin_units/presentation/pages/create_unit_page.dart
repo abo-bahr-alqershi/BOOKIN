@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:ui';
+import 'dart:math' as math;
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/theme/app_dimensions.dart';
@@ -738,8 +739,7 @@ class _CreateUnitBackgroundPainter extends CustomPainter {
     for (double x = 0; x <= size.width; x++) {
       final y = size.height * 0.5 +
           waveHeight *
-              (x / size.width * 2 * 3.14159 + animationValue * 2 * 3.14159)
-                  .sin;
+              math.sin(x / size.width * 2 * 3.14159 + animationValue * 2 * 3.14159);
       path.lineTo(x, y);
     }
     
