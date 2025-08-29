@@ -32,6 +32,7 @@ using Google.Apis.Auth.OAuth2;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
+using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -104,10 +105,21 @@ builder.Services.AddMediatR(cfg => {
     cfg.RegisterServicesFromAssembly(typeof(GetPropertyDetailsQueryHandler).Assembly);
 });
 
-// إضافة AutoMapper وتهيئة ملفات Mapping يدويًا لتجنب خطأ MissingMethodException
+// إضافة AutoMapper مع حصر المسح على تجميعات المشروع فقط لتفادي تحميل أنواع من مكتبات طرف ثالث
+var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+var mapperAssemblies = loadedAssemblies
+    .Where(a =>
+        {
+            var name = a.GetName().Name ?? string.Empty;
+            return name.StartsWith("YemenBooking.") || name.Equals("YemenBooking");
+        })
+    .DefaultIfEmpty(typeof(Program).Assembly)
+    .Distinct()
+    .ToArray();
+
 builder.Services.AddAutoMapper(
-    cfg => cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies()),
-    AppDomain.CurrentDomain.GetAssemblies());
+    cfg => cfg.AddMaps(mapperAssemblies),
+    mapperAssemblies);
 
 // إضافة خدمات المشروع
 builder.Services.AddYemenBookingServices();
