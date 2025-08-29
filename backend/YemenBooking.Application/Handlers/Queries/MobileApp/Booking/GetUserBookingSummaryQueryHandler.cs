@@ -69,14 +69,10 @@ public class GetUserBookingSummaryQueryHandler : IRequestHandler<GetUserBookingS
             // تحديد السنة المطلوبة
             var targetYear = request.Year ?? DateTime.Now.Year;
 
-            // جلب ملخص الحجوزات الشهرية، وأكثر العقارات حجزاً، وأكثر المدن زيارة بشكل متوازٍ
-            var monthlyTask = GetMonthlyBookingSummary(request.UserId, targetYear, cancellationToken);
-            var topPropsTask = GetTopBookedProperties(request.UserId, 5, cancellationToken);
-            var topCitiesTask = GetTopVisitedCities(request.UserId, 5, cancellationToken);
-            await Task.WhenAll(monthlyTask, topPropsTask, topCitiesTask);
-            var monthlyBookings = monthlyTask.Result;
-            var topBookedProperties = topPropsTask.Result;
-            var topVisitedCities = topCitiesTask.Result;
+            // جلب ملخص الحجوزات الشهرية، وأكثر العقارات حجزاً، وأكثر المدن زيارة بشكل تسلسلي
+            var monthlyBookings = await GetMonthlyBookingSummary(request.UserId, targetYear, cancellationToken);
+            var topBookedProperties = await GetTopBookedProperties(request.UserId, 5, cancellationToken);
+            var topVisitedCities = await GetTopVisitedCities(request.UserId, 5, cancellationToken);
 
             // إنشاء DTO للاستجابة
             var summaryDto = new UserBookingSummaryDto

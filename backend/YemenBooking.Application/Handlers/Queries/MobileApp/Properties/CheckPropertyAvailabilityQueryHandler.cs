@@ -130,18 +130,22 @@ public class CheckPropertyAvailabilityQueryHandler : IRequestHandler<CheckProper
                 return ResultDto<PropertyAvailabilityResponse>.Ok(noCapacityResponse, $"لا توجد وحدات تتسع لـ {request.GuestsCount} ضيف");
             }
 
-            // فلترة الوحدات المتاحة وحساب الأسعار والأنواع بشكل متوازي
-            var availabilityResults = await Task.WhenAll(eligibleUnits.Select(async unit =>
+            // فلترة الوحدات المتاحة وحساب الأسعار والأنواع بشكل تسلسلي لتجنب مشاركة DbContext بين المهام
+            var filteredResults = new List<AvailabilityResult>();
+            foreach (var unit in eligibleUnits)
             {
                 var isAvailable = await IsUnitAvailable(unit.Id, request.CheckInDate, request.CheckOutDate, cancellationToken);
-                if (!isAvailable) return null;
+                if (!isAvailable) continue;
                 var unitType = await _unitTypeRepository.GetByIdAsync(unit.UnitTypeId, cancellationToken);
                 var unitPrice = await CalculateUnitPrice(unit, request.CheckInDate, request.CheckOutDate, cancellationToken);
-                return new { Unit = unit, UnitTypeName = unitType?.Name, Price = unitPrice };
-            }));
-            var filteredResults = availabilityResults.Where(r => r != null).ToList();
+                filteredResults.Add(new AvailabilityResult { Unit = unit, UnitTypeName = unitType?.Name, Price = unitPrice });
+            }
             var availableUnits = filteredResults.Select(r => r.Unit).ToList();
-            var availableUnitTypes = filteredResults.Select(r => r.UnitTypeName).Where(name => !string.IsNullOrEmpty(name)).ToList();
+            var availableUnitTypes = filteredResults
+                .Select(r => r.UnitTypeName)
+                .Where(name => !string.IsNullOrEmpty(name))
+                .Select(name => name!)
+                .ToList();
             var prices = filteredResults.Select(r => r.Price).Where(price => price > 0).ToList();
             // إنشاء الاستجابة
             var response = new PropertyAvailabilityResponse
@@ -169,6 +173,13 @@ public class CheckPropertyAvailabilityQueryHandler : IRequestHandler<CheckProper
                 "CHECK_AVAILABILITY_ERROR"
             );
         }
+    }
+
+    private sealed class AvailabilityResult
+    {
+        public Core.Entities.Unit Unit { get; set; } = default!;
+        public string? UnitTypeName { get; set; }
+        public decimal Price { get; set; }
     }
 
     /// <summary>

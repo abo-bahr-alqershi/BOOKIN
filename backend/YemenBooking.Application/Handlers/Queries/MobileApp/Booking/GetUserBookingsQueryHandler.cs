@@ -101,21 +101,17 @@ public class GetUserBookingsQueryHandler : IRequestHandler<GetUserBookingsQuery,
                 );
             }
 
-            // تحويل البيانات إلى DTO بشكل متوازي
-            var bookingDtoTasks = bookings.Select(async booking =>
+            // تحويل البيانات إلى DTO بشكل تسلسلي لتجنب مشاركة DbContext بين مهام متوازية
+            var bookingDtos = new List<BookingDto>();
+            foreach (var booking in bookings)
             {
-                // جلب تفاصيل الوحدة
-                var unitTask = _unitRepository.GetByIdAsync(booking.UnitId, cancellationToken);
-                var unit = await unitTask;
-                // جلب تفاصيل العقار
+                var unit = await _unitRepository.GetByIdAsync(booking.UnitId, cancellationToken);
                 var property = unit != null
                     ? await _propertyRepository.GetByIdAsync(unit.PropertyId, cancellationToken)
                     : null;
-                // إمكانية الإلغاء والتقييم
                 var canCancel = CanCancelBooking(booking);
                 var canReview = CanReviewBooking(booking);
-                // إنشاء DTO
-                return new BookingDto
+                bookingDtos.Add(new BookingDto
                 {
                     Id = booking.Id,
                     BookingNumber = $"BK-{booking.Id.ToString().Substring(0, 8)}",
@@ -131,9 +127,9 @@ public class GetUserBookingsQueryHandler : IRequestHandler<GetUserBookingsQuery,
                     PropertyImageUrl = property?.Images?.FirstOrDefault()?.Url ?? string.Empty,
                     CanCancel = canCancel,
                     CanReview = canReview
-                };
-            });
-            var bookingDtos = (await Task.WhenAll(bookingDtoTasks))
+                });
+            }
+            bookingDtos = bookingDtos
                 .OrderByDescending(b => b.BookedAt)
                 .ToList();
 
