@@ -205,32 +205,7 @@ class AppRouter {
         ),
 
         // Admin Properties
-        GoRoute(
-          path: '/admin/properties',
-          builder: (context, state) {
-            return const PropertiesListPage();
-          },
-        ),
-        GoRoute(
-          path: '/admin/properties/create',
-          builder: (context, state) {
-            return const CreatePropertyPage();
-          },
-        ),
-        GoRoute(
-          path: '/admin/properties/:propertyId/edit',
-          builder: (context, state) {
-            final propertyId = state.pathParameters['propertyId']!;
-            return EditPropertyPage(propertyId: propertyId);
-          },
-        ),
-        GoRoute(
-          path: '/admin/properties/:propertyId',
-          builder: (context, state) {
-            final propertyId = state.pathParameters['propertyId']!;
-            return PropertyDetailsPage(propertyId: propertyId);
-          },
-        ),
+        // removed non-existent admin properties pages imports and routes
 
         // محادثة جديدة
         GoRoute(
