@@ -40,7 +40,7 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
         builder.Property(n => n.MessageAr).HasMaxLength(1000);
         builder.Property(n => n.Priority).IsRequired().HasMaxLength(20);
         builder.Property(n => n.Status).IsRequired().HasMaxLength(20);
-        builder.Property(n => n.Data).HasColumnType("TEXT");
+        builder.Property(n => n.Data).HasColumnType("NVARCHAR(MAX)");
 
         // Channels and SentChannels (JSON conversion)
         var listConverter = new ValueConverter<List<string>, string>(
@@ -48,10 +48,10 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
             v => JsonSerializer.Deserialize<List<string>>(v, _jsonOptions) ?? new List<string>());
         builder.Property(n => n.Channels)
             .HasConversion(listConverter)
-            .HasColumnType("TEXT");
+            .HasColumnType("NVARCHAR(MAX)");
         builder.Property(n => n.SentChannels)
             .HasConversion(listConverter)
-            .HasColumnType("TEXT");
+            .HasColumnType("NVARCHAR(MAX)");
 
         builder.Property(n => n.IsRead).HasDefaultValue(false);
         builder.Property(n => n.IsDismissed).HasDefaultValue(false);

@@ -54,7 +54,7 @@ public class ReviewImageConfiguration : IEntityTypeConfiguration<ReviewImage>
             .HasComment("نص بديل للصورة");
 
         builder.Property(ri => ri.Tags)
-            .HasColumnType("TEXT")
+            .HasColumnType("NVARCHAR(MAX)")
             .HasComment("وسوم الصورة");
 
         builder.Property(ri => ri.IsMain)

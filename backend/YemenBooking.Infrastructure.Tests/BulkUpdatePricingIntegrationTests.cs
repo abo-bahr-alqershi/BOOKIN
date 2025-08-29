@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.Data.Sqlite;
+// using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.AspNetCore.Http;
@@ -20,12 +20,9 @@ namespace YemenBooking.Tests.Integration
         [Fact]
         public async Task BulkUpdate_WithYER_Currency_ShouldSucceed()
         {
-            // Arrange: open in-memory SQLite and apply migrations
-            var connection = new SqliteConnection("DataSource=:memory:");
-            await connection.OpenAsync();
-
+            // Arrange: switched off in-memory SQLite for SQL Server environment
             var options = new DbContextOptionsBuilder<YemenBookingDbContext>()
-                .UseSqlite(connection)
+                .UseSqlServer("Data Source=SQL5107.site4now.net;Initial Catalog=db_abd8fd_bookn2;User Id=db_abd8fd_bookn2_admin;Password=Qaz123@Wsx123@")
                 .Options;
 
             // Create context and apply migrations

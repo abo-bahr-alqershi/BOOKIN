@@ -45,7 +45,7 @@ namespace YemenBooking.Infrastructure.Data.Configurations
                 .HasComment("URL of the thumbnail image (optional)");
 
             builder.Property(a => a.Metadata)
-                .HasColumnType("TEXT")
+                .HasColumnType("NVARCHAR(MAX)")
                 .HasComment("Additional metadata as JSON string (optional)");
 
             builder.Property(a => a.DurationSeconds)

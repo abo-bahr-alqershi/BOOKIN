@@ -60,7 +60,7 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
             .HasComment("متوسط التقييم");
 
         builder.Property(r => r.Comment)
-            .HasColumnType("TEXT")
+            .HasColumnType("NVARCHAR(MAX)")
             .HasComment("تعليق التقييم");
 
         builder.Property(r => r.CreatedAt)

@@ -13,7 +13,8 @@ using YemenBooking.Infrastructure.Services;
 using YemenBooking.Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Data.Sqlite;
+// using Microsoft.Data.Sqlite;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
@@ -168,9 +169,9 @@ builder.Services.AddAuthentication(options =>
 // إضافة التفويض
 builder.Services.AddAuthorization();
 
-// إعداد DbContext لاستخدام SQLite
+// إعداد DbContext لاستخدام SQL Server بدلاً من SQLite
 builder.Services.AddDbContext<YemenBookingDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
            .ConfigureWarnings(w => w.Ignore(RelationalEventId.ModelValidationKeyDefaultValueWarning))
 );
 
