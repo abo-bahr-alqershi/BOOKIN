@@ -76,6 +76,32 @@ import 'features/admin_units/domain/usecases/get_unit_types_by_property_usecase.
 import 'features/admin_units/domain/usecases/get_unit_fields_usecase.dart';
 import 'features/admin_units/domain/usecases/assign_unit_to_sections_usecase.dart';
 
+// Features - Property Types
+import 'features/property_types/presentation/bloc/property_types/property_types_bloc.dart';
+import 'features/property_types/presentation/bloc/unit_types/unit_types_bloc.dart';
+import 'features/property_types/presentation/bloc/unit_type_fields/unit_type_fields_bloc.dart';
+import 'features/property_types/domain/repositories/property_types_repository.dart' as pt_domain;
+import 'features/property_types/domain/repositories/unit_types_repository.dart' as ut_domain;
+import 'features/property_types/domain/repositories/unit_type_fields_repository.dart' as utf_domain;
+import 'features/property_types/data/repositories/property_types_repository_impl.dart' as pt_data;
+import 'features/property_types/data/repositories/unit_types_repository_impl.dart' as ut_data;
+import 'features/property_types/data/repositories/unit_type_fields_repository_impl.dart' as utf_data;
+import 'features/property_types/data/datasources/property_types_remote_datasource.dart' as pt_ds;
+import 'features/property_types/data/datasources/unit_types_remote_datasource.dart' as ut_ds;
+import 'features/property_types/data/datasources/unit_type_fields_remote_datasource.dart' as utf_ds;
+import 'features/property_types/domain/usecases/property_types/get_all_property_types_usecase.dart' as pt_uc;
+import 'features/property_types/domain/usecases/property_types/create_property_type_usecase.dart' as pt_uc3;
+import 'features/property_types/domain/usecases/property_types/update_property_type_usecase.dart' as pt_uc4;
+import 'features/property_types/domain/usecases/property_types/delete_property_type_usecase.dart' as pt_uc5;
+import 'features/property_types/domain/usecases/unit_types/get_unit_types_by_property_usecase.dart' as ut_uc1;
+import 'features/property_types/domain/usecases/unit_types/create_unit_type_usecase.dart' as ut_uc2;
+import 'features/property_types/domain/usecases/unit_types/update_unit_type_usecase.dart' as ut_uc3;
+import 'features/property_types/domain/usecases/unit_types/delete_unit_type_usecase.dart' as ut_uc4;
+import 'features/property_types/domain/usecases/fields/get_fields_by_unit_type_usecase.dart' as utf_uc1;
+import 'features/property_types/domain/usecases/fields/create_field_usecase.dart' as utf_uc2;
+import 'features/property_types/domain/usecases/fields/update_field_usecase.dart' as utf_uc3;
+import 'features/property_types/domain/usecases/fields/delete_field_usecase.dart' as utf_uc4;
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
@@ -87,6 +113,9 @@ Future<void> init() async {
 
 	// Features - Admin Units
 	_initAdminUnits();
+
+	// Features - Property Types
+	_initPropertyTypes();
 
 	// Theme
   _initTheme();
@@ -252,6 +281,65 @@ void _initAdminUnits() {
   // Data sources
   sl.registerLazySingleton<UnitsRemoteDataSource>(() => UnitsRemoteDataSourceImpl(dio: sl()));
   sl.registerLazySingleton<UnitsLocalDataSource>(() => UnitsLocalDataSourceImpl(sharedPreferences: sl()));
+}
+
+void _initPropertyTypes() {
+  // Blocs
+  sl.registerFactory(() => PropertyTypesBloc(
+        getAllPropertyTypes: sl<pt_uc.GetAllPropertyTypesUseCase>(),
+        createPropertyType: sl<pt_uc3.CreatePropertyTypeUseCase>(),
+        updatePropertyType: sl<pt_uc4.UpdatePropertyTypeUseCase>(),
+        deletePropertyType: sl<pt_uc5.DeletePropertyTypeUseCase>(),
+      ));
+  sl.registerFactory(() => UnitTypesBloc(
+        getUnitTypesByProperty: sl<ut_uc1.GetUnitTypesByPropertyUseCase>(),
+        createUnitType: sl<ut_uc2.CreateUnitTypeUseCase>(),
+        updateUnitType: sl<ut_uc3.UpdateUnitTypeUseCase>(),
+        deleteUnitType: sl<ut_uc4.DeleteUnitTypeUseCase>(),
+      ));
+  sl.registerFactory(() => UnitTypeFieldsBloc(
+        getFieldsByUnitType: sl<utf_uc1.GetFieldsByUnitTypeUseCase>(),
+        createField: sl<utf_uc2.CreateFieldUseCase>(),
+        updateField: sl<utf_uc3.UpdateFieldUseCase>(),
+        deleteField: sl<utf_uc4.DeleteFieldUseCase>(),
+      ));
+
+  // Use cases - property types
+  sl.registerLazySingleton<pt_uc.GetAllPropertyTypesUseCase>(() => pt_uc.GetAllPropertyTypesUseCase(sl()));
+  sl.registerLazySingleton<pt_uc3.CreatePropertyTypeUseCase>(() => pt_uc3.CreatePropertyTypeUseCase(sl()));
+  sl.registerLazySingleton<pt_uc4.UpdatePropertyTypeUseCase>(() => pt_uc4.UpdatePropertyTypeUseCase(sl()));
+  sl.registerLazySingleton<pt_uc5.DeletePropertyTypeUseCase>(() => pt_uc5.DeletePropertyTypeUseCase(sl()));
+
+  // Use cases - unit types
+  sl.registerLazySingleton<ut_uc1.GetUnitTypesByPropertyUseCase>(() => ut_uc1.GetUnitTypesByPropertyUseCase(sl()));
+  sl.registerLazySingleton<ut_uc2.CreateUnitTypeUseCase>(() => ut_uc2.CreateUnitTypeUseCase(sl()));
+  sl.registerLazySingleton<ut_uc3.UpdateUnitTypeUseCase>(() => ut_uc3.UpdateUnitTypeUseCase(sl()));
+  sl.registerLazySingleton<ut_uc4.DeleteUnitTypeUseCase>(() => ut_uc4.DeleteUnitTypeUseCase(sl()));
+
+  // Use cases - fields
+  sl.registerLazySingleton<utf_uc1.GetFieldsByUnitTypeUseCase>(() => utf_uc1.GetFieldsByUnitTypeUseCase(sl()));
+  sl.registerLazySingleton<utf_uc2.CreateFieldUseCase>(() => utf_uc2.CreateFieldUseCase(sl()));
+  sl.registerLazySingleton<utf_uc3.UpdateFieldUseCase>(() => utf_uc3.UpdateFieldUseCase(sl()));
+  sl.registerLazySingleton<utf_uc4.DeleteFieldUseCase>(() => utf_uc4.DeleteFieldUseCase(sl()));
+
+  // Repositories
+  sl.registerLazySingleton<pt_domain.PropertyTypesRepository>(() => pt_data.PropertyTypesRepositoryImpl(
+        remoteDataSource: sl(),
+        networkInfo: sl(),
+      ));
+  sl.registerLazySingleton<ut_domain.UnitTypesRepository>(() => ut_data.UnitTypesRepositoryImpl(
+        remoteDataSource: sl(),
+        networkInfo: sl(),
+      ));
+  sl.registerLazySingleton<utf_domain.UnitTypeFieldsRepository>(() => utf_data.UnitTypeFieldsRepositoryImpl(
+        remoteDataSource: sl(),
+        networkInfo: sl(),
+      ));
+
+  // Data sources
+  sl.registerLazySingleton<pt_ds.PropertyTypesRemoteDataSource>(() => pt_ds.PropertyTypesRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<ut_ds.UnitTypesRemoteDataSource>(() => ut_ds.UnitTypesRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<utf_ds.UnitTypeFieldsRemoteDataSource>(() => utf_ds.UnitTypeFieldsRemoteDataSourceImpl(apiClient: sl()));
 }
 
 void _initTheme() {
