@@ -289,8 +289,6 @@ class _ActivityChartWidgetState extends State<ActivityChartWidget>
               ),
             ],
           ),
-          swapAnimationDuration: const Duration(milliseconds: 300),
-          swapAnimationCurve: Curves.easeOut,
         );
       },
     );
@@ -379,8 +377,6 @@ class _ActivityChartWidgetState extends State<ActivityChartWidget>
               );
             }).toList(),
           ),
-          swapAnimationDuration: const Duration(milliseconds: 300),
-          swapAnimationCurve: Curves.easeOut,
         );
       },
     );
@@ -433,8 +429,6 @@ class _ActivityChartWidgetState extends State<ActivityChartWidget>
               );
             }).toList(),
           ),
-          swapAnimationDuration: const Duration(milliseconds: 300),
-          swapAnimationCurve: Curves.easeOut,
         );
       },
     );

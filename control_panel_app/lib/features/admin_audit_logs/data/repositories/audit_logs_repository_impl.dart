@@ -29,7 +29,7 @@ class AuditLogsRepositoryImpl implements AuditLogsRepository {
         await localDataSource.cacheAuditLogs(result.items);
         return Right(result);
       } catch (e) {
-        return Left(ServerFailure(message: e.toString()));
+        return Left(ServerFailure(e.toString()));
       }
     } else {
       try {
@@ -39,10 +39,9 @@ class AuditLogsRepositoryImpl implements AuditLogsRepository {
           totalCount: cachedLogs.length,
           pageNumber: 1,
           pageSize: cachedLogs.length,
-          totalPages: 1,
         ));
       } catch (e) {
-        return Left(CacheFailure(message: 'No cached data available'));
+        return Left(CacheFailure('No cached data available'));
       }
     }
   }
@@ -55,10 +54,10 @@ class AuditLogsRepositoryImpl implements AuditLogsRepository {
         final result = await remoteDataSource.getCustomerActivityLogs(query);
         return Right(result);
       } catch (e) {
-        return Left(ServerFailure(message: e.toString()));
+        return Left(ServerFailure(e.toString()));
       }
     } else {
-      return Left(NetworkFailure(message: 'No internet connection'));
+      return Left(NetworkFailure('No internet connection'));
     }
   }
 
@@ -70,10 +69,10 @@ class AuditLogsRepositoryImpl implements AuditLogsRepository {
         final result = await remoteDataSource.getPropertyActivityLogs(query);
         return Right(result);
       } catch (e) {
-        return Left(ServerFailure(message: e.toString()));
+        return Left(ServerFailure(e.toString()));
       }
     } else {
-      return Left(NetworkFailure(message: 'No internet connection'));
+      return Left(NetworkFailure('No internet connection'));
     }
   }
 
@@ -85,10 +84,10 @@ class AuditLogsRepositoryImpl implements AuditLogsRepository {
         final result = await remoteDataSource.getAdminActivityLogs(query);
         return Right(result);
       } catch (e) {
-        return Left(ServerFailure(message: e.toString()));
+        return Left(ServerFailure(e.toString()));
       }
     } else {
-      return Left(NetworkFailure(message: 'No internet connection'));
+      return Left(NetworkFailure('No internet connection'));
     }
   }
 
@@ -100,10 +99,10 @@ class AuditLogsRepositoryImpl implements AuditLogsRepository {
         final result = await remoteDataSource.exportAuditLogs(query);
         return Right(result);
       } catch (e) {
-        return Left(ServerFailure(message: e.toString()));
+        return Left(ServerFailure(e.toString()));
       }
     } else {
-      return Left(NetworkFailure(message: 'No internet connection'));
+      return Left(NetworkFailure('No internet connection'));
     }
   }
 }
