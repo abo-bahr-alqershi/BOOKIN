@@ -402,12 +402,12 @@ class _AdminServicesPageState extends State<AdminServicesPage>
     return BlocBuilder<ServicesBloc, ServicesState>(
       builder: (context, state) {
         if (state is ServicesLoading) {
-          return const Center(child: FuturisticLoadingWidget());
+          return const Center(child: LoadingWidget());
         }
         
         if (state is ServicesError) {
           return Center(
-            child: FuturisticErrorWidget(
+            child: CustomErrorWidget(
               message: state.message,
               onRetry: _loadInitialData,
             ),
@@ -417,7 +417,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
         if (state is ServicesLoaded) {
           if (state.services.isEmpty) {
             return const Center(
-              child: FuturisticEmptyWidget(
+              child: EmptyWidget(
                 message: 'لا توجد خدمات حالياً',
               ),
             );

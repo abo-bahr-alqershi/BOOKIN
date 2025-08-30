@@ -67,7 +67,7 @@ class ServicesRemoteDataSourceImpl implements ServicesRemoteDataSource {
       if (response.data['success'] == true) {
         return response.data['data'] ?? '';
       }
-      throw ApiException(response.data['message'] ?? 'Failed to create service');
+      throw ApiException(message: response.data['message'] ?? 'Failed to create service');
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -140,7 +140,7 @@ class ServicesRemoteDataSourceImpl implements ServicesRemoteDataSource {
       if (response.data['success'] == true) {
         return ServiceDetailsModel.fromJson(response.data['data']);
       }
-      throw ApiException('Failed to get service details');
+      throw ApiException(message: 'Failed to get service details');
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

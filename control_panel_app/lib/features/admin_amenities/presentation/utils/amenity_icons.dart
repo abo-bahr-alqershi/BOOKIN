@@ -64,7 +64,8 @@ class AmenityIcons {
     AmenityIcon(name: 'local_laundry_service', label: 'غسالة', icon: Icons.local_laundry_service, category: 'أجهزة', emoji: '🧺'),
     AmenityIcon(name: 'dry_cleaning', label: 'تنظيف جاف', icon: Icons.dry_cleaning, category: 'أجهزة', emoji: '👔'),
     AmenityIcon(name: 'iron', label: 'مكواة', icon: Icons.iron, category: 'أجهزة', emoji: '👔'),
-    AmenityIcon(name: 'dishwasher', label: 'غسالة صحون', icon: Icons.dishwasher, category: 'أجهزة', emoji: '🍽️'),
+    // Icons.dishwasher may not exist in current Flutter Material set; use alternative
+    AmenityIcon(name: 'dishwasher', label: 'غسالة صحون', icon: Icons.kitchen, category: 'أجهزة', emoji: '🍽️'),
     
     // مرافق الحمام
     AmenityIcon(name: 'bathroom', label: 'حمام', icon: Icons.bathroom, category: 'حمام', emoji: '🚿'),
@@ -100,7 +101,8 @@ class AmenityIcons {
     AmenityIcon(name: 'sports_baseball', label: 'بيسبول', icon: Icons.sports_baseball, category: 'رياضة', emoji: '⚾'),
     AmenityIcon(name: 'sports_esports', label: 'ألعاب إلكترونية', icon: Icons.sports_esports, category: 'رياضة', emoji: '🎮'),
     AmenityIcon(name: 'spa', label: 'سبا', icon: Icons.spa, category: 'رياضة', emoji: '💆'),
-    AmenityIcon(name: 'sauna', label: 'ساونا', icon: Icons.sauna, category: 'رياضة', emoji: '🧖'),
+    // Icons.sauna may not exist in current Flutter Material set; use spa as fallback
+    AmenityIcon(name: 'sauna', label: 'ساونا', icon: Icons.spa, category: 'رياضة', emoji: '🧖'),
     AmenityIcon(name: 'self_improvement', label: 'يوغا', icon: Icons.self_improvement, category: 'رياضة', emoji: '🧘'),
     
     // مرافق المواصلات والمواقف

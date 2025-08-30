@@ -25,9 +25,9 @@ class AmenitiesRepositoryImpl implements AmenitiesRepository {
       );
       return Right(result);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(message: e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
 
@@ -47,9 +47,9 @@ class AmenitiesRepositoryImpl implements AmenitiesRepository {
       );
       return Right(result);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(message: e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
 
@@ -59,9 +59,9 @@ class AmenitiesRepositoryImpl implements AmenitiesRepository {
       final result = await remoteDataSource.deleteAmenity(amenityId);
       return Right(result);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(message: e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
 
@@ -89,12 +89,11 @@ class AmenitiesRepositoryImpl implements AmenitiesRepository {
         totalCount: result.totalCount,
         pageNumber: result.pageNumber,
         pageSize: result.pageSize,
-        totalPages: result.totalPages,
       ));
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(message: e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
 
@@ -116,9 +115,9 @@ class AmenitiesRepositoryImpl implements AmenitiesRepository {
       );
       return Right(result);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(message: e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
 
@@ -135,9 +134,9 @@ class AmenitiesRepositoryImpl implements AmenitiesRepository {
         revenueByAmenity: result.revenueByAmenity,
       ));
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(message: e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
 
@@ -147,9 +146,9 @@ class AmenitiesRepositoryImpl implements AmenitiesRepository {
       final result = await remoteDataSource.toggleAmenityStatus(amenityId);
       return Right(result);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(message: e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
 
@@ -161,9 +160,9 @@ class AmenitiesRepositoryImpl implements AmenitiesRepository {
       final result = await remoteDataSource.getPopularAmenities(limit: limit);
       return Right(result);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(message: e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
 }

@@ -35,11 +35,7 @@ import 'package:bookn_cp_app/features/property_types/presentation/bloc/property_
 import 'package:bookn_cp_app/features/property_types/presentation/bloc/property_types/property_types_event.dart';
 import 'package:bookn_cp_app/features/property_types/presentation/bloc/unit_types/unit_types_bloc.dart';
 import 'package:bookn_cp_app/features/property_types/presentation/bloc/unit_type_fields/unit_type_fields_bloc.dart';
-// removed wrong properties pages imports
-import 'package:bookn_cp_app/features/properties/presentation/pages/properties_list_page.dart';
-import 'package:bookn_cp_app/features/properties/presentation/pages/create_property_page.dart';
-import 'package:bookn_cp_app/features/properties/presentation/pages/edit_property_page.dart';
-import 'package:bookn_cp_app/features/properties/presentation/pages/property_details_page.dart';
+// removed wrong properties pages imports (files do not exist)
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
