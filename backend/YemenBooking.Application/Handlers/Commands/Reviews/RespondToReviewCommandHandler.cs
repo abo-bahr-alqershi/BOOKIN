@@ -68,6 +68,13 @@ namespace YemenBooking.Application.Handlers.Commands.Reviews
 
             entity = await _responseRepository.CreateAsync(entity, cancellationToken);
 
+            // Update quick fields on Review for CP app
+            review.ResponseText = entity.Text;
+            review.ResponseDate = entity.RespondedAt;
+            review.UpdatedBy = responderId;
+            review.UpdatedAt = DateTime.UtcNow;
+            await _reviewRepository.UpdateReviewAsync(review, cancellationToken);
+
             await _auditService.LogBusinessOperationAsync(
                 "CreateReviewResponse",
                 $"تم إضافة رد على التقييم {request.ReviewId}",

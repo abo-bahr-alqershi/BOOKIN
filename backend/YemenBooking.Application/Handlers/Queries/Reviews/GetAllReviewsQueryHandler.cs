@@ -100,6 +100,9 @@ namespace YemenBooking.Application.Handlers.Queries.Reviews
                 AverageRating = r.AverageRating,
                 Comment = r.Comment,
                 CreatedAt = r.CreatedAt,
+                IsApproved = !r.IsPendingApproval,
+                IsPending = r.IsPendingApproval,
+                RespondedBy = null,
                 // Related property and user names (safe navigation)
                 PropertyName = r.Booking?.Unit?.Property?.Name ?? string.Empty,
                 UserName = r.Booking?.User?.Name ?? string.Empty,

@@ -64,6 +64,21 @@ namespace YemenBooking.Application.DTOs
         public DateTime? ResponseDate { get; set; }
         
         /// <summary>
+        /// هل المراجعة معتمدة
+        /// </summary>
+        public bool IsApproved { get; set; }
+        
+        /// <summary>
+        /// هل المراجعة بانتظار المراجعة
+        /// </summary>
+        public bool IsPending { get; set; }
+        
+        /// <summary>
+        /// معرف من قام بالرد
+        /// </summary>
+        public Guid? RespondedBy { get; set; }
+        
+        /// <summary>
         /// تعليق المراجعة
         /// Review comment
         /// </summary>
