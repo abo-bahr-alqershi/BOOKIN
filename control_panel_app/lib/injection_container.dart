@@ -17,6 +17,33 @@ import 'services/deep_link_service.dart';
 import 'services/websocket_service.dart';
 import 'services/connectivity_service.dart';
 
+// Features - Admin Currencies
+import 'features/admin_currencies/presentation/bloc/currencies_bloc.dart' as ac_bloc;
+import 'features/admin_currencies/domain/repositories/currencies_repository.dart' as ac_repo;
+import 'features/admin_currencies/data/repositories/currencies_repository_impl.dart' as ac_repo_impl;
+import 'features/admin_currencies/data/datasources/currencies_remote_datasource.dart' as ac_ds_remote;
+import 'features/admin_currencies/data/datasources/currencies_local_datasource.dart' as ac_ds_local;
+import 'features/admin_currencies/domain/usecases/get_currencies_usecase.dart' as ac_uc1;
+import 'features/admin_currencies/domain/usecases/save_currencies_usecase.dart' as ac_uc2;
+import 'features/admin_currencies/domain/usecases/delete_currency_usecase.dart' as ac_uc3;
+import 'features/admin_currencies/domain/usecases/set_default_currency_usecase.dart' as ac_uc4;
+
+// Features - Admin Cities
+import 'features/admin_cities/presentation/bloc/cities_bloc.dart' as ci_bloc;
+import 'features/admin_cities/domain/repositories/cities_repository.dart' as ci_repo;
+import 'features/admin_cities/data/repositories/cities_repository_impl.dart' as ci_repo_impl;
+import 'features/admin_cities/data/datasources/cities_remote_datasource.dart' as ci_ds_remote;
+import 'features/admin_cities/data/datasources/cities_local_datasource.dart' as ci_ds_local;
+import 'features/admin_cities/domain/usecases/get_cities_usecase.dart' as ci_uc1;
+import 'features/admin_cities/domain/usecases/save_cities_usecase.dart' as ci_uc2;
+import 'features/admin_cities/domain/usecases/create_city_usecase.dart' as ci_uc3;
+import 'features/admin_cities/domain/usecases/update_city_usecase.dart' as ci_uc4;
+import 'features/admin_cities/domain/usecases/delete_city_usecase.dart' as ci_uc5;
+import 'features/admin_cities/domain/usecases/search_cities_usecase.dart' as ci_uc6;
+import 'features/admin_cities/domain/usecases/get_cities_statistics_usecase.dart' as ci_uc7;
+import 'features/admin_cities/domain/usecases/upload_city_image_usecase.dart' as ci_uc8;
+import 'features/admin_cities/domain/usecases/delete_city_image_usecase.dart' as ci_uc9;
+
 // Features - Admin Users
 import 'features/admin_users/presentation/bloc/users_list/users_list_bloc.dart';
 import 'features/admin_users/presentation/bloc/user_details/user_details_bloc.dart';
@@ -239,6 +266,12 @@ Future<void> init() async {
 
 	// Features - Admin Amenities (standalone)
 	_initAdminAmenities();
+
+	// Features - Admin Currencies
+	_initAdminCurrencies();
+
+	// Features - Admin Cities
+	_initAdminCities();
 
 	// Theme
   _initTheme();
@@ -678,6 +711,69 @@ void _initAdminAmenities() {
   sl.registerLazySingleton<aa_ds_remote.AmenitiesRemoteDataSource>(() => aa_ds_remote.AmenitiesRemoteDataSourceImpl(apiClient: sl()));
 }
 
+void _initAdminCurrencies() {
+  // Bloc
+  sl.registerFactory(() => ac_bloc.CurrenciesBloc(
+        getCurrencies: sl<ac_uc1.GetCurrenciesUseCase>(),
+        saveCurrencies: sl<ac_uc2.SaveCurrenciesUseCase>(),
+        deleteCurrency: sl<ac_uc3.DeleteCurrencyUseCase>(),
+        setDefaultCurrency: sl<ac_uc4.SetDefaultCurrencyUseCase>(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton<ac_uc1.GetCurrenciesUseCase>(() => ac_uc1.GetCurrenciesUseCase(sl()));
+  sl.registerLazySingleton<ac_uc2.SaveCurrenciesUseCase>(() => ac_uc2.SaveCurrenciesUseCase(sl()));
+  sl.registerLazySingleton<ac_uc3.DeleteCurrencyUseCase>(() => ac_uc3.DeleteCurrencyUseCase(sl()));
+  sl.registerLazySingleton<ac_uc4.SetDefaultCurrencyUseCase>(() => ac_uc4.SetDefaultCurrencyUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<ac_repo.CurrenciesRepository>(() => ac_repo_impl.CurrenciesRepositoryImpl(
+        remoteDataSource: sl(),
+        localDataSource: sl(),
+        networkInfo: sl(),
+      ));
+
+  // Data sources
+  sl.registerLazySingleton<ac_ds_remote.CurrenciesRemoteDataSource>(() => ac_ds_remote.CurrenciesRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<ac_ds_local.CurrenciesLocalDataSource>(() => ac_ds_local.CurrenciesLocalDataSourceImpl(sharedPreferences: sl()));
+}
+
+void _initAdminCities() {
+  // Bloc
+  sl.registerFactory(() => ci_bloc.CitiesBloc(
+        getCities: sl<ci_uc1.GetCitiesUseCase>(),
+        saveCities: sl<ci_uc2.SaveCitiesUseCase>(),
+        createCity: sl<ci_uc3.CreateCityUseCase>(),
+        updateCity: sl<ci_uc4.UpdateCityUseCase>(),
+        deleteCity: sl<ci_uc5.DeleteCityUseCase>(),
+        searchCities: sl<ci_uc6.SearchCitiesUseCase>(),
+        getCitiesStatistics: sl<ci_uc7.GetCitiesStatisticsUseCase>(),
+        uploadCityImage: sl<ci_uc8.UploadCityImageUseCase>(),
+        deleteCityImage: sl<ci_uc9.DeleteCityImageUseCase>(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton<ci_uc1.GetCitiesUseCase>(() => ci_uc1.GetCitiesUseCase(sl()));
+  sl.registerLazySingleton<ci_uc2.SaveCitiesUseCase>(() => ci_uc2.SaveCitiesUseCase(sl()));
+  sl.registerLazySingleton<ci_uc3.CreateCityUseCase>(() => ci_uc3.CreateCityUseCase(sl()));
+  sl.registerLazySingleton<ci_uc4.UpdateCityUseCase>(() => ci_uc4.UpdateCityUseCase(sl()));
+  sl.registerLazySingleton<ci_uc5.DeleteCityUseCase>(() => ci_uc5.DeleteCityUseCase(sl()));
+  sl.registerLazySingleton<ci_uc6.SearchCitiesUseCase>(() => ci_uc6.SearchCitiesUseCase(sl()));
+  sl.registerLazySingleton<ci_uc7.GetCitiesStatisticsUseCase>(() => ci_uc7.GetCitiesStatisticsUseCase(sl()));
+  sl.registerLazySingleton<ci_uc8.UploadCityImageUseCase>(() => ci_uc8.UploadCityImageUseCase(sl()));
+  sl.registerLazySingleton<ci_uc9.DeleteCityImageUseCase>(() => ci_uc9.DeleteCityImageUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<ci_repo.CitiesRepository>(() => ci_repo_impl.CitiesRepositoryImpl(
+        remoteDataSource: sl(),
+        localDataSource: sl(),
+        networkInfo: sl(),
+      ));
+
+  // Data sources
+  sl.registerLazySingleton<ci_ds_remote.CitiesRemoteDataSource>(() => ci_ds_remote.CitiesRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<ci_ds_local.CitiesLocalDataSource>(() => ci_ds_local.CitiesLocalDataSourceImpl(sharedPreferences: sl()));
+}
 void _initAdminUsers() {
   // Blocs
   sl.registerFactory(() => UsersListBloc(

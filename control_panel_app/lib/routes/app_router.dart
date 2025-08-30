@@ -45,6 +45,14 @@ import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/reviews_li
 import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/review_details/review_details_bloc.dart' as ar_details_bloc;
 import 'package:bookn_cp_app/features/admin_services/presentation/bloc/services_bloc.dart';
 import 'package:bookn_cp_app/features/admin_amenities/presentation/bloc/amenities_bloc.dart' as aa_bloc;
+// Admin Currencies pages & bloc
+import 'package:bookn_cp_app/features/admin_currencies/presentation/pages/currencies_management_page.dart' as ac_pages;
+import 'package:bookn_cp_app/features/admin_currencies/presentation/bloc/currencies_bloc.dart' as ac_bloc;
+import 'package:bookn_cp_app/features/admin_currencies/presentation/bloc/currencies_event.dart' as ac_events;
+// Admin Cities page & bloc
+import 'package:bookn_cp_app/features/admin_cities/presentation/pages/admin_cities_page.dart' as ci_pages;
+import 'package:bookn_cp_app/features/admin_cities/presentation/bloc/cities_bloc.dart' as ci_bloc;
+import 'package:bookn_cp_app/features/admin_cities/presentation/bloc/cities_event.dart' as ci_events;
 // Admin Audit Logs page & bloc
 import 'package:bookn_cp_app/features/admin_audit_logs/presentation/pages/audit_logs_page.dart' as al_pages;
 import 'package:bookn_cp_app/features/admin_audit_logs/presentation/bloc/audit_logs_bloc.dart' as al_bloc;
@@ -300,6 +308,30 @@ class AppRouter {
             return BlocProvider<ar_list_bloc.ReviewsListBloc>(
               create: (_) => di.sl<ar_list_bloc.ReviewsListBloc>(),
               child: const ReviewsListPage(),
+            );
+          },
+        ),
+
+        // Admin Currencies
+        GoRoute(
+          path: '/admin/currencies',
+          builder: (context, state) {
+            return BlocProvider<ac_bloc.CurrenciesBloc>(
+              create: (_) => di.sl<ac_bloc.CurrenciesBloc>()..add(ac_events.LoadCurrenciesEvent()),
+              child: const ac_pages.CurrenciesManagementPage(),
+            );
+          },
+        ),
+
+        // Admin Cities
+        GoRoute(
+          path: '/admin/cities',
+          builder: (context, state) {
+            return BlocProvider<ci_bloc.CitiesBloc>(
+              create: (_) => di.sl<ci_bloc.CitiesBloc>()
+                ..add(const ci_events.LoadCitiesEvent())
+                ..add(ci_events.LoadCitiesStatisticsEvent()),
+              child: const ci_pages.AdminCitiesPage(),
             );
           },
         ),
