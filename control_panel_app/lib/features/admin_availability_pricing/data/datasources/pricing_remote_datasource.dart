@@ -6,7 +6,8 @@ import '../../../../core/network/api_exceptions.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../models/pricing_rule_model.dart';
 import '../models/seasonal_pricing_model.dart';
-import '../../domain/repositories/pricing_repository.dart';
+import '../../domain/repositories/pricing_repository.dart' as pricing_repo;
+import '../../domain/entities/pricing.dart';
 
 abstract class PricingRemoteDataSource {
   Future<UnitPricingModel> getMonthlyPricing(
@@ -19,7 +20,7 @@ abstract class PricingRemoteDataSource {
   
   Future<void> bulkUpdatePricing(
     String unitId,
-    List<PricingPeriod> periods,
+    List<pricing_repo.PricingPeriod> periods,
     bool overwriteExisting,
   );
   
@@ -36,7 +37,7 @@ abstract class PricingRemoteDataSource {
   
   Future<void> applySeasonalPricing(Map<String, dynamic> data);
   
-  Future<PricingBreakdownModel> getPricingBreakdown({
+  Future<pricing_repo.PricingBreakdown> getPricingBreakdown({
     required String unitId,
     required DateTime checkIn,
     required DateTime checkOut,
@@ -80,7 +81,7 @@ class PricingRemoteDataSourceImpl implements PricingRemoteDataSource {
   @override
   Future<void> bulkUpdatePricing(
     String unitId,
-    List<PricingPeriod> periods,
+    List<pricing_repo.PricingPeriod> periods,
     bool overwriteExisting,
   ) async {
     try {
@@ -89,10 +90,10 @@ class PricingRemoteDataSourceImpl implements PricingRemoteDataSource {
         'periods': periods.map((p) => {
           'startDate': p.startDate.toIso8601String(),
           'endDate': p.endDate.toIso8601String(),
-          'priceType': PricingRuleModel._priceTypeToString(p.priceType),
+          'priceType': _priceTypeToString(p.priceType),
           'price': p.price,
           if (p.currency != null) 'currency': p.currency,
-          'tier': PricingRuleModel._pricingTierToString(p.tier),
+          'tier': _pricingTierToString(p.tier),
           if (p.percentageChange != null) 'percentageChange': p.percentageChange,
           if (p.minPrice != null) 'minPrice': p.minPrice,
           if (p.maxPrice != null) 'maxPrice': p.maxPrice,
@@ -170,7 +171,7 @@ class PricingRemoteDataSourceImpl implements PricingRemoteDataSource {
   }
 
   @override
-  Future<PricingBreakdownModel> getPricingBreakdown({
+  Future<pricing_repo.PricingBreakdown> getPricingBreakdown({
     required String unitId,
     required DateTime checkIn,
     required DateTime checkOut,
@@ -191,12 +192,12 @@ class PricingRemoteDataSourceImpl implements PricingRemoteDataSource {
   }
 }
 
-class PricingBreakdownModel extends PricingBreakdown {
+class PricingBreakdownModel extends pricing_repo.PricingBreakdown {
   PricingBreakdownModel({
     required DateTime checkIn,
     required DateTime checkOut,
     required String currency,
-    required List<DayPrice> days,
+    required List<pricing_repo.DayPrice> days,
     required int totalNights,
     required double subTotal,
     double? discount,
@@ -235,7 +236,7 @@ class PricingBreakdownModel extends PricingBreakdown {
   }
 }
 
-class DayPriceModel extends DayPrice {
+class DayPriceModel extends pricing_repo.DayPrice {
   DayPriceModel({
     required DateTime date,
     required double price,
@@ -252,8 +253,59 @@ class DayPriceModel extends DayPrice {
     return DayPriceModel(
       date: DateTime.parse(json['date'] as String),
       price: (json['price'] as num).toDouble(),
-      priceType: PricingRuleModel._parsePriceType(json['priceType'] as String),
+      priceType: _parsePriceTypeString(json['priceType'] as String),
       description: json['description'] as String?,
     );
+  }
+}
+
+// Local converters to avoid accessing private members across libraries
+PriceType _parsePriceTypeString(String type) {
+  switch (type.toLowerCase()) {
+    case 'base':
+      return PriceType.base;
+    case 'weekend':
+      return PriceType.weekend;
+    case 'seasonal':
+      return PriceType.seasonal;
+    case 'holiday':
+      return PriceType.holiday;
+    case 'special_event':
+    case 'specialevent':
+      return PriceType.specialEvent;
+    default:
+      return PriceType.custom;
+  }
+}
+
+String _priceTypeToString(PriceType type) {
+  switch (type) {
+    case PriceType.base:
+      return 'base';
+    case PriceType.weekend:
+      return 'weekend';
+    case PriceType.seasonal:
+      return 'seasonal';
+    case PriceType.holiday:
+      return 'holiday';
+    case PriceType.specialEvent:
+      return 'special_event';
+    case PriceType.custom:
+      return 'custom';
+  }
+}
+
+String _pricingTierToString(PricingTier tier) {
+  switch (tier) {
+    case PricingTier.normal:
+      return 'normal';
+    case PricingTier.high:
+      return 'high';
+    case PricingTier.peak:
+      return 'peak';
+    case PricingTier.discount:
+      return 'discount';
+    case PricingTier.custom:
+      return 'custom';
   }
 }

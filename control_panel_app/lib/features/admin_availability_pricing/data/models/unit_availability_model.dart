@@ -2,6 +2,7 @@
 
 import '../../domain/entities/unit_availability.dart';
 import '../../domain/entities/availability.dart';
+import '../../domain/repositories/availability_repository.dart' as availability_repo;
 
 class UnitAvailabilityModel extends UnitAvailability {
   const UnitAvailabilityModel({
@@ -202,13 +203,13 @@ class AvailabilityStatsModel extends AvailabilityStats {
   }
 }
 
-class CheckAvailabilityResponseModel extends CheckAvailabilityResponse {
+class CheckAvailabilityResponseModel extends availability_repo.CheckAvailabilityResponse {
   CheckAvailabilityResponseModel({
     required bool isAvailable,
     required String status,
-    required List<BlockedPeriod> blockedPeriods,
-    required List<AvailablePeriod> availablePeriods,
-    required AvailabilityDetails details,
+    required List<availability_repo.BlockedPeriod> blockedPeriods,
+    required List<availability_repo.AvailablePeriod> availablePeriods,
+    required availability_repo.AvailabilityDetails details,
     required List<String> messages,
   }) : super(
           isAvailable: isAvailable,
@@ -235,7 +236,7 @@ class CheckAvailabilityResponseModel extends CheckAvailabilityResponse {
   }
 }
 
-class BlockedPeriodModel extends BlockedPeriod {
+class BlockedPeriodModel extends availability_repo.BlockedPeriod {
   BlockedPeriodModel({
     required DateTime startDate,
     required DateTime endDate,
@@ -261,7 +262,7 @@ class BlockedPeriodModel extends BlockedPeriod {
   }
 }
 
-class AvailablePeriodModel extends AvailablePeriod {
+class AvailablePeriodModel extends availability_repo.AvailablePeriod {
   AvailablePeriodModel({
     required DateTime startDate,
     required DateTime endDate,
@@ -284,7 +285,7 @@ class AvailablePeriodModel extends AvailablePeriod {
   }
 }
 
-class AvailabilityDetailsModel extends AvailabilityDetails {
+class AvailabilityDetailsModel extends availability_repo.AvailabilityDetails {
   AvailabilityDetailsModel({
     required String unitId,
     required String unitName,

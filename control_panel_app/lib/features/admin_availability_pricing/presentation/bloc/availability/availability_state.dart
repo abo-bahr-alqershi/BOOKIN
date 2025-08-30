@@ -18,7 +18,7 @@ class AvailabilityLoaded extends AvailabilityState {
   final String selectedUnitId;
   final int currentYear;
   final int currentMonth;
-  final CheckAvailabilityResponse? availabilityCheckResponse;
+  final availability_repo.CheckAvailabilityResponse? availabilityCheckResponse;
   final List<BookingConflict>? conflicts;
 
   const AvailabilityLoaded({
@@ -35,7 +35,7 @@ class AvailabilityLoaded extends AvailabilityState {
     String? selectedUnitId,
     int? currentYear,
     int? currentMonth,
-    CheckAvailabilityResponse? availabilityCheckResponse,
+    availability_repo.CheckAvailabilityResponse? availabilityCheckResponse,
     List<BookingConflict>? conflicts,
   }) {
     return AvailabilityLoaded(
