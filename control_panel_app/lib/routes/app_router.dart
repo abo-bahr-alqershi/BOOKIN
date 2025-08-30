@@ -36,6 +36,15 @@ import 'package:bookn_cp_app/features/property_types/presentation/bloc/property_
 import 'package:bookn_cp_app/features/property_types/presentation/bloc/unit_types/unit_types_bloc.dart';
 import 'package:bookn_cp_app/features/property_types/presentation/bloc/unit_type_fields/unit_type_fields_bloc.dart';
 // removed wrong properties pages imports (files do not exist)
+import 'package:bookn_cp_app/features/admin_services/presentation/pages/admin_services_page.dart';
+import 'package:bookn_cp_app/features/admin_amenities/presentation/pages/amenities_management_page.dart';
+import 'package:bookn_cp_app/features/admin_reviews/presentation/pages/reviews_list_page.dart';
+import 'package:bookn_cp_app/features/admin_reviews/presentation/pages/review_details_page.dart';
+import 'package:bookn_cp_app/features/admin_reviews/domain/entities/review.dart';
+import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/reviews_list/reviews_list_bloc.dart' as ar_list_bloc;
+import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/review_details/review_details_bloc.dart' as ar_details_bloc;
+import 'package:bookn_cp_app/features/admin_services/presentation/bloc/services_bloc.dart';
+import 'package:bookn_cp_app/features/admin_amenities/presentation/bloc/amenities_bloc.dart' as aa_bloc;
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
@@ -202,6 +211,51 @@ class AppRouter {
 
         // Admin Properties
         // removed non-existent admin properties pages imports and routes
+
+        // Admin Services
+        GoRoute(
+          path: '/admin/services',
+          builder: (context, state) {
+            return BlocProvider<ServicesBloc>(
+              create: (_) => di.sl<ServicesBloc>(),
+              child: const AdminServicesPage(),
+            );
+          },
+        ),
+
+        // Admin Amenities (standalone management)
+        GoRoute(
+          path: '/admin/amenities',
+          builder: (context, state) {
+            return BlocProvider<aa_bloc.AmenitiesBloc>(
+              create: (_) => di.sl<aa_bloc.AmenitiesBloc>(),
+              child: const AmenitiesManagementPage(),
+            );
+          },
+        ),
+
+        // Admin Reviews list
+        GoRoute(
+          path: '/admin/reviews',
+          builder: (context, state) {
+            return BlocProvider<ar_list_bloc.ReviewsListBloc>(
+              create: (_) => di.sl<ar_list_bloc.ReviewsListBloc>(),
+              child: const ReviewsListPage(),
+            );
+          },
+        ),
+
+        // Admin Review details
+        GoRoute(
+          path: '/admin/reviews/details',
+          builder: (context, state) {
+            final review = state.extra as Review;
+            return BlocProvider<ar_details_bloc.ReviewDetailsBloc>(
+              create: (_) => di.sl<ar_details_bloc.ReviewDetailsBloc>(),
+              child: ReviewDetailsPage(review: review),
+            );
+          },
+        ),
 
         // محادثة جديدة
         GoRoute(
