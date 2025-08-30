@@ -7,7 +7,8 @@ import '../../../../core/constants/api_constants.dart';
 import '../models/availability_model.dart';
 import '../models/unit_availability_model.dart';
 import '../models/booking_conflict_model.dart';
-import '../../domain/repositories/availability_repository.dart';
+import '../../domain/entities/availability.dart';
+import '../../domain/repositories/availability_repository.dart' as availability_repo;
 
 abstract class AvailabilityRemoteDataSource {
   Future<UnitAvailabilityModel> getMonthlyAvailability(
@@ -20,7 +21,7 @@ abstract class AvailabilityRemoteDataSource {
   
   Future<void> bulkUpdateAvailability(
     String unitId,
-    List<AvailabilityPeriod> periods,
+    List<availability_repo.AvailabilityPeriod> periods,
     bool overwriteExisting,
   );
   
@@ -96,7 +97,7 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
   @override
   Future<void> bulkUpdateAvailability(
     String unitId,
-    List<AvailabilityPeriod> periods,
+    List<availability_repo.AvailabilityPeriod> periods,
     bool overwriteExisting,
   ) async {
     try {
@@ -105,7 +106,7 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
         'periods': periods.map((p) => {
           'startDate': p.startDate.toIso8601String(),
           'endDate': p.endDate.toIso8601String(),
-          'status': AvailabilityModel._statusToString(p.status),
+          'status': _availabilityStatusToString(p.status),
           if (p.reason != null) 'reason': p.reason,
           if (p.notes != null) 'notes': p.notes,
           'overwriteExisting': p.overwriteExisting,
@@ -158,12 +159,12 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
       if (availabilityId != null) {
         await apiClient.delete(
           '${ApiConstants.units}/$unitId/availability/$availabilityId',
-          queryParameters: if (forceDelete != null) {'forceDelete': forceDelete},
+          queryParameters: forceDelete != null ? {'forceDelete': forceDelete} : null,
         );
       } else if (startDate != null && endDate != null) {
         await apiClient.delete(
           '${ApiConstants.units}/$unitId/availability/${startDate.toIso8601String()}/${endDate.toIso8601String()}',
-          queryParameters: if (forceDelete != null) {'forceDelete': forceDelete},
+          queryParameters: forceDelete != null ? {'forceDelete': forceDelete} : null,
         );
       }
     } on DioException catch (e) {
@@ -226,6 +227,21 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
           .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
+    }
+  }
+
+  String _availabilityStatusToString(AvailabilityStatus status) {
+    switch (status) {
+      case AvailabilityStatus.available:
+        return 'available';
+      case AvailabilityStatus.unavailable:
+        return 'unavailable';
+      case AvailabilityStatus.maintenance:
+        return 'maintenance';
+      case AvailabilityStatus.blocked:
+        return 'blocked';
+      case AvailabilityStatus.booked:
+        return 'booked';
     }
   }
 }

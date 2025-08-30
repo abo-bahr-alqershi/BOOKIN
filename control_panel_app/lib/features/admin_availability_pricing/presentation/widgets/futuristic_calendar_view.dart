@@ -535,7 +535,7 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
     
     if (widget.viewMode == ViewMode.pricing || widget.viewMode == ViewMode.both) {
       context.read<PricingBloc>().add(
-        ChangeMonth(
+        ChangePricingMonth(
           year: widget.currentDate.year,
           month: widget.currentDate.month,
         ),

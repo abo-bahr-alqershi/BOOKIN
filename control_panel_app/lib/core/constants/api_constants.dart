@@ -45,4 +45,9 @@ class ApiConstants {
   // Pagination
   static const int defaultPageSize = 20;
   static const int maxPageSize = 100;
+
+  // Resource paths
+  static String get units => baseUrl.endsWith('/')
+      ? '${baseUrl}api/admin/Units'
+      : '$baseUrl/api/admin/Units';
 }

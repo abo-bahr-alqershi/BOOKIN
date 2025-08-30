@@ -626,7 +626,7 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
       );
       
       context.read<PricingBloc>().add(
-        ChangeMonth(year: date.year, month: date.month),
+        ChangePricingMonth(year: date.year, month: date.month),
       );
     }
   }

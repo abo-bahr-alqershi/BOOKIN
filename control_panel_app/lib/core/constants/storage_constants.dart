@@ -22,6 +22,7 @@ class StorageConstants {
   static const String userCachePrefix = 'user_';
   static const String bookingCachePrefix = 'booking_';
   static const String imageCachePrefix = 'image_';
+  static const String availabilityCachePrefix = 'availability_';
   
   // Database Names
   static const String mainDatabase = 'yemen_booking.db';

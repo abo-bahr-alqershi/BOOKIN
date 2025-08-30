@@ -155,7 +155,7 @@ class _ConflictResolutionDialogState extends State<ConflictResolutionDialog>
               color: AppTheme.error.withOpacity(0.2),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.warning_amber_rounded,
               color: AppTheme.error,
               size: 24,
