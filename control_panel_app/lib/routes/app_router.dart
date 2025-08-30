@@ -45,6 +45,13 @@ import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/reviews_li
 import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/review_details/review_details_bloc.dart' as ar_details_bloc;
 import 'package:bookn_cp_app/features/admin_services/presentation/bloc/services_bloc.dart';
 import 'package:bookn_cp_app/features/admin_amenities/presentation/bloc/amenities_bloc.dart' as aa_bloc;
+// Admin Properties pages & blocs
+import 'package:bookn_cp_app/features/admin_properties/presentation/pages/properties_list_page.dart' as ap_pages;
+import 'package:bookn_cp_app/features/admin_properties/presentation/pages/create_property_page.dart' as ap_pages;
+import 'package:bookn_cp_app/features/admin_properties/presentation/pages/edit_property_page.dart' as ap_pages;
+import 'package:bookn_cp_app/features/admin_properties/presentation/pages/property_details_page.dart' as ap_pages;
+import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/properties/properties_bloc.dart' as ap_bloc;
+import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/property_types/property_types_bloc.dart' as ap_prop_pt_bloc;
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
@@ -210,7 +217,50 @@ class AppRouter {
         ),
 
         // Admin Properties
-        // removed non-existent admin properties pages imports and routes
+        GoRoute(
+          path: '/admin/properties',
+          builder: (context, state) {
+            return BlocProvider<ap_bloc.PropertiesBloc>(
+              create: (_) => di.sl<ap_bloc.PropertiesBloc>()..add(const ap_bloc.LoadPropertiesEvent()),
+              child: const ap_pages.PropertiesListPage(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/admin/properties/create',
+          builder: (context, state) {
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider<ap_bloc.PropertiesBloc>(create: (_) => di.sl<ap_bloc.PropertiesBloc>()),
+                BlocProvider<ap_prop_pt_bloc.PropertyTypesBloc>(create: (_) => di.sl<ap_prop_pt_bloc.PropertyTypesBloc>()),
+              ],
+              child: const ap_pages.CreatePropertyPage(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/admin/properties/:propertyId',
+          builder: (context, state) {
+            final propertyId = state.pathParameters['propertyId']!;
+            return BlocProvider<ap_bloc.PropertiesBloc>(
+              create: (_) => di.sl<ap_bloc.PropertiesBloc>(),
+              child: ap_pages.PropertyDetailsPage(propertyId: propertyId),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/admin/properties/:propertyId/edit',
+          builder: (context, state) {
+            final propertyId = state.pathParameters['propertyId']!;
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider<ap_bloc.PropertiesBloc>(create: (_) => di.sl<ap_bloc.PropertiesBloc>()),
+                BlocProvider<ap_prop_pt_bloc.PropertyTypesBloc>(create: (_) => di.sl<ap_prop_pt_bloc.PropertyTypesBloc>()),
+              ],
+              child: ap_pages.EditPropertyPage(propertyId: propertyId),
+            );
+          },
+        ),
 
         // Admin Services
         GoRoute(
