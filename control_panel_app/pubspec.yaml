@@ -88,7 +88,7 @@ dependencies:
   record: ^6.0.0
   image_picker: ^1.0.7
   image_cropper: ^8.0.2
-
+  fl_chart: ^1.0.0
 
 dev_dependencies:
   flutter_test:

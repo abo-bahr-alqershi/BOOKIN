@@ -227,6 +227,8 @@ lib/
 │   │           ├── icon_picker_modal.dart
 │   │           └── futuristic_stats_card.dart
 │   │   
+│   │ 
+│   │ 
 │   ├── admin_units/
 │   │   ├── data/
 │   │   │   ├── datasources/
@@ -293,6 +295,7 @@ lib/
 │   │           ├── unit_stats_card.dart
 │   │           └── assign_sections_modal.dart
 │   │ 
+│   │ 
 │   │   
 │   ├── admin_amenities/
 │   │   ├── data/
@@ -328,6 +331,7 @@ lib/
 │   │           ├── amenity_form_dialog.dart
 │   │           ├── amenity_filters_widget.dart
 │   │           └── amenity_stats_card.dart
+│   │ 
 │   │ 
 │   │ 
 │   ├── admin_services/
@@ -432,6 +436,93 @@ lib/
 │   │           └── rating_breakdown_widget.dart
 │   │
 │   │
+│   │ 
+│   ├── admin_audit_logs/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   │   ├── audit_logs_local_datasource.dart
+│   │   │   │   └── audit_logs_remote_datasource.dart
+│   │   │   ├── models/
+│   │   │   │   └── audit_log_model.dart
+│   │   │   └── repositories/
+│   │   │       └── audit_logs_repository_impl.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   └── audit_log.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── audit_logs_repository.dart
+│   │   │   └── usecases/
+│   │   │       ├── get_audit_logs_usecase.dart
+│   │   │       ├── get_customer_activity_logs_usecase.dart
+│   │   │       ├── get_property_activity_logs_usecase.dart
+│   │   │       ├── get_admin_activity_logs_usecase.dart
+│   │   │       └── export_audit_logs_usecase.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── audit_logs_bloc.dart
+│   │       │   ├── audit_logs_event.dart
+│   │       │   └── audit_logs_state.dart
+│   │       ├── pages/
+│   │       │   └── audit_logs_page.dart
+│   │       └── widgets/
+│   │           ├── futuristic_audit_log_card.dart
+│   │           ├── futuristic_audit_logs_table.dart
+│   │           ├── audit_log_details_dialog.dart
+│   │           ├── audit_log_filters_widget.dart
+│   │           ├── audit_log_timeline_widget.dart
+│   │           ├── activity_chart_widget.dart
+│   │           └── audit_log_stats_card.dart
+│   │ 
+│   │ 
+│   │ 
+│   ├── admin_users/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   │   ├── users_local_datasource.dart
+│   │   │   │   └── users_remote_datasource.dart
+│   │   │   ├── models/
+│   │   │   │   ├── user_model.dart
+│   │   │   │   ├── user_details_model.dart
+│   │   │   │   └── user_lifetime_stats_model.dart
+│   │   │   └── repositories/
+│   │   │       └── users_repository_impl.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   ├── user.dart
+│   │   │   │   ├── user_details.dart
+│   │   │   │   └── user_lifetime_stats.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── users_repository.dart
+│   │   │   └── usecases/
+│   │   │       ├── get_all_users_usecase.dart
+│   │   │       ├── get_user_details_usecase.dart
+│   │   │       ├── create_user_usecase.dart
+│   │   │       ├── update_user_usecase.dart
+│   │   │       ├── activate_user_usecase.dart
+│   │   │       ├── deactivate_user_usecase.dart
+│   │   │       ├── assign_role_usecase.dart
+│   │   │       └── get_user_lifetime_stats_usecase.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── users_list/
+│   │       │   │   ├── users_list_bloc.dart
+│   │       │   │   ├── users_list_event.dart
+│   │       │   │   └── users_list_state.dart
+│   │       │   └── user_details/
+│   │       │       ├── user_details_bloc.dart
+│   │       │       ├── user_details_event.dart
+│   │       │       └── user_details_state.dart
+│   │       ├── pages/
+│   │       │   ├── users_list_page.dart
+│   │       │   ├── user_details_page.dart
+│   │       │   └── create_user_page.dart
+│   │       └── widgets/
+│   │           ├── futuristic_user_card.dart
+│   │           ├── futuristic_users_table.dart
+│   │           ├── user_filters_widget.dart
+│   │           ├── user_stats_card.dart
+│   │           ├── user_form_dialog.dart
+│   │           └── user_role_selector.dart
 │   ├── notifications/
 │   │   ├── data/
 │   │   │   ├── datasources/
@@ -535,32 +626,3 @@ pubspec.yaml
 analysis_options.yaml
 .env
 .env.production
-
-مثال عن الفيوتشرز
-│   ├── favorites/
-│   │   ├── data/
-│   │   │   ├── datasources/
-│   │   │   │   └── favorites_remote_datasource.dart
-│   │   │   ├── models/
-│   │   │   │   └── favorite_property_model.dart
-│   │   │   └── repositories/
-│   │   │       └── favorites_repository_impl.dart
-│   │   ├── domain/
-│   │   │   ├── entities/
-│   │   │   │   └── favorite_property.dart
-│   │   │   ├── repositories/
-│   │   │   │   └── favorites_repository.dart
-│   │   │   └── usecases/
-│   │   │       ├── add_to_favorites_usecase.dart
-│   │   │       ├── get_favorites_usecase.dart
-│   │   │       └── remove_from_favorites_usecase.dart
-│   │   └── presentation/
-│   │       ├── bloc/
-│   │       │   ├── favorites_bloc.dart
-│   │       │   ├── favorites_event.dart
-│   │       │   └── favorites_state.dart
-│   │       ├── pages/
-│   │       │   └── favorites_page.dart
-│   │       └── widgets/
-│   │           ├── favorite_button_widget.dart
-│   │           └── favorite_property_card_widget.dart

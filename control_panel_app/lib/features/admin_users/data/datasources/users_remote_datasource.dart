@@ -1,0 +1,269 @@
+import 'dart:convert';
+import 'package:dio/dio.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/network/api_exceptions.dart';
+import '../../../../core/models/paginated_result.dart';
+import '../../../../core/models/result_dto.dart';
+import '../models/user_model.dart';
+import '../models/user_details_model.dart';
+import '../models/user_lifetime_stats_model.dart';
+
+abstract class UsersRemoteDataSource {
+  Future<PaginatedResult<UserModel>> getAllUsers({
+    int? pageNumber,
+    int? pageSize,
+    String? searchTerm,
+    String? sortBy,
+    bool? isAscending,
+    String? roleId,
+    bool? isActive,
+    DateTime? createdAfter,
+    DateTime? createdBefore,
+    DateTime? lastLoginAfter,
+    String? loyaltyTier,
+    double? minTotalSpent,
+  });
+
+  Future<UserDetailsModel> getUserDetails(String userId);
+
+  Future<String> createUser({
+    required String name,
+    required String email,
+    required String password,
+    required String phone,
+    String? profileImage,
+  });
+
+  Future<bool> updateUser({
+    required String userId,
+    String? name,
+    String? email,
+    String? phone,
+    String? profileImage,
+  });
+
+  Future<bool> activateUser(String userId);
+  Future<bool> deactivateUser(String userId);
+  Future<bool> assignRole({
+    required String userId,
+    required String roleId,
+  });
+
+  Future<UserLifetimeStatsModel> getUserLifetimeStats(String userId);
+}
+
+class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
+  final ApiClient _apiClient;
+
+  UsersRemoteDataSourceImpl(this._apiClient);
+
+  @override
+  Future<PaginatedResult<UserModel>> getAllUsers({
+    int? pageNumber,
+    int? pageSize,
+    String? searchTerm,
+    String? sortBy,
+    bool? isAscending,
+    String? roleId,
+    bool? isActive,
+    DateTime? createdAfter,
+    DateTime? createdBefore,
+    DateTime? lastLoginAfter,
+    String? loyaltyTier,
+    double? minTotalSpent,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      
+      if (pageNumber != null) queryParams['pageNumber'] = pageNumber;
+      if (pageSize != null) queryParams['pageSize'] = pageSize;
+      if (searchTerm != null && searchTerm.isNotEmpty) {
+        queryParams['searchTerm'] = searchTerm;
+      }
+      if (sortBy != null) queryParams['sortBy'] = sortBy;
+      if (isAscending != null) queryParams['isAscending'] = isAscending;
+      if (roleId != null) queryParams['roleId'] = roleId;
+      if (isActive != null) queryParams['isActive'] = isActive;
+      if (createdAfter != null) {
+        queryParams['createdAfter'] = createdAfter.toIso8601String();
+      }
+      if (createdBefore != null) {
+        queryParams['createdBefore'] = createdBefore.toIso8601String();
+      }
+      if (lastLoginAfter != null) {
+        queryParams['lastLoginAfter'] = lastLoginAfter.toIso8601String();
+      }
+      if (loyaltyTier != null) queryParams['loyaltyTier'] = loyaltyTier;
+      if (minTotalSpent != null) queryParams['minTotalSpent'] = minTotalSpent;
+
+      final response = await _apiClient.get(
+        '/api/admin/Users',
+        queryParameters: queryParams,
+      );
+
+      return PaginatedResult<UserModel>.fromJson(
+        response.data,
+        (json) => UserModel.fromJson(json as Map<String, dynamic>),
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<UserDetailsModel> getUserDetails(String userId) async {
+    try {
+      final response = await _apiClient.get('/api/admin/Users/$userId/details');
+      final result = ResultDto<Map<String, dynamic>>.fromJson(
+        response.data,
+        (json) => json as Map<String, dynamic>,
+      );
+      
+      if (result.isSuccess && result.data != null) {
+        return UserDetailsModel.fromJson(result.data!);
+      } else {
+        throw ApiException(message: result.message ?? 'Failed to get user details');
+      }
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<String> createUser({
+    required String name,
+    required String email,
+    required String password,
+    required String phone,
+    String? profileImage,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/api/admin/Users',
+        data: {
+          'name': name,
+          'email': email,
+          'password': password,
+          'phone': phone,
+          if (profileImage != null) 'profileImage': profileImage,
+        },
+      );
+
+      final result = ResultDto<String>.fromJson(
+        response.data,
+        (json) => json as String,
+      );
+
+      if (result.isSuccess && result.data != null) {
+        return result.data!;
+      } else {
+        throw ApiException(message: result.message ?? 'Failed to create user');
+      }
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<bool> updateUser({
+    required String userId,
+    String? name,
+    String? email,
+    String? phone,
+    String? profileImage,
+  }) async {
+    try {
+      final data = <String, dynamic>{};
+      if (name != null) data['name'] = name;
+      if (email != null) data['email'] = email;
+      if (phone != null) data['phone'] = phone;
+      if (profileImage != null) data['profileImage'] = profileImage;
+
+      final response = await _apiClient.put(
+        '/api/admin/Users/$userId',
+        data: data,
+      );
+
+      final result = ResultDto<bool>.fromJson(
+        response.data,
+        (json) => json as bool,
+      );
+
+      return result.isSuccess && (result.data ?? false);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<bool> activateUser(String userId) async {
+    try {
+      final response = await _apiClient.post('/api/admin/Users/$userId/activate');
+      final result = ResultDto<bool>.fromJson(
+        response.data,
+        (json) => json as bool,
+      );
+      return result.isSuccess && (result.data ?? false);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<bool> deactivateUser(String userId) async {
+    try {
+      final response = await _apiClient.post('/api/admin/Users/$userId/deactivate');
+      final result = ResultDto<bool>.fromJson(
+        response.data,
+        (json) => json as bool,
+      );
+      return result.isSuccess && (result.data ?? false);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<bool> assignRole({
+    required String userId,
+    required String roleId,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/api/admin/Users/$userId/assign-role',
+        data: {
+          'userId': userId,
+          'roleId': roleId,
+        },
+      );
+
+      final result = ResultDto<bool>.fromJson(
+        response.data,
+        (json) => json as bool,
+      );
+
+      return result.isSuccess && (result.data ?? false);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<UserLifetimeStatsModel> getUserLifetimeStats(String userId) async {
+    try {
+      final response = await _apiClient.get('/api/admin/Users/$userId/lifetime-stats');
+      final result = ResultDto<Map<String, dynamic>>.fromJson(
+        response.data,
+        (json) => json as Map<String, dynamic>,
+      );
+      
+      if (result.isSuccess && result.data != null) {
+        return UserLifetimeStatsModel.fromJson(result.data!);
+      } else {
+        throw ApiException(message: result.message ?? 'Failed to get lifetime stats');
+      }
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+}
