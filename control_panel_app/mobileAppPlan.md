@@ -600,7 +600,76 @@ lib/
 │   │           └── exchange_rate_indicator.dart
 │   │
 │   │
-│   │           
+│   │
+│   ├── admin_availability_pricing/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   │   ├── availability_remote_datasource.dart
+│   │   │   │   ├── pricing_remote_datasource.dart
+│   │   │   │   └── availability_local_datasource.dart
+│   │   │   ├── models/
+│   │   │   │   ├── availability_model.dart
+│   │   │   │   ├── pricing_model.dart
+│   │   │   │   ├── unit_availability_model.dart
+│   │   │   │   ├── pricing_rule_model.dart
+│   │   │   │   ├── booking_conflict_model.dart
+│   │   │   │   └── seasonal_pricing_model.dart
+│   │   │   └── repositories/
+│   │   │       ├── availability_repository_impl.dart
+│   │   │       └── pricing_repository_impl.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   ├── availability.dart
+│   │   │   │   ├── pricing.dart
+│   │   │   │   ├── unit_availability.dart
+│   │   │   │   ├── pricing_rule.dart
+│   │   │   │   ├── booking_conflict.dart
+│   │   │   │   └── seasonal_pricing.dart
+│   │   │   ├── repositories/
+│   │   │   │   ├── availability_repository.dart
+│   │   │   │   └── pricing_repository.dart
+│   │   │   └── usecases/
+│   │   │       ├── availability/
+│   │   │       │   ├── get_monthly_availability_usecase.dart
+│   │   │       │   ├── update_availability_usecase.dart
+│   │   │       │   ├── bulk_update_availability_usecase.dart
+│   │   │       │   ├── clone_availability_usecase.dart
+│   │   │       │   ├── check_availability_usecase.dart
+│   │   │       │   └── delete_availability_usecase.dart
+│   │   │       └── pricing/
+│   │   │           ├── get_monthly_pricing_usecase.dart
+│   │   │           ├── update_pricing_usecase.dart
+│   │   │           ├── bulk_update_pricing_usecase.dart
+│   │   │           ├── copy_pricing_usecase.dart
+│   │   │           ├── apply_seasonal_pricing_usecase.dart
+│   │   │           └── delete_pricing_usecase.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── availability/
+│   │       │   │   ├── availability_bloc.dart
+│   │       │   │   ├── availability_event.dart
+│   │       │   │   └── availability_state.dart
+│   │       │   └── pricing/
+│   │       │       ├── pricing_bloc.dart
+│   │       │       ├── pricing_event.dart
+│   │       │       └── pricing_state.dart
+│   │       ├── pages/
+│   │       │   └── availability_pricing_page.dart
+│   │       └── widgets/
+│   │           ├── futuristic_calendar_view.dart
+│   │           ├── availability_calendar_grid.dart
+│   │           ├── pricing_calendar_grid.dart
+│   │           ├── unit_selector_card.dart
+│   │           ├── availability_status_legend.dart
+│   │           ├── pricing_tier_legend.dart
+│   │           ├── bulk_update_dialog.dart
+│   │           ├── seasonal_pricing_dialog.dart
+│   │           ├── conflict_resolution_dialog.dart
+│   │           ├── stats_dashboard_card.dart
+│   │           └── quick_actions_panel.dart
+│   │
+│   │
+│   │
 │   ├── notifications/
 │   │   ├── data/
 │   │   │   ├── datasources/

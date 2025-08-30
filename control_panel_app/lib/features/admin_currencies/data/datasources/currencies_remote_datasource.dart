@@ -11,7 +11,6 @@ abstract class CurrenciesRemoteDataSource {
 
 class CurrenciesRemoteDataSourceImpl implements CurrenciesRemoteDataSource {
   final ApiClient apiClient;
-  static const String _adminPath = '/api/admin/currencies';
 
   CurrenciesRemoteDataSourceImpl({required this.apiClient});
 

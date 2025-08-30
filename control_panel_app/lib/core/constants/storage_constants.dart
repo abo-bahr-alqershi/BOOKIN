@@ -31,4 +31,7 @@ class StorageConstants {
   static const String favoritesTable = 'favorites';
   static const String messagesTable = 'messages';
   static const String notificationsTable = 'notifications';
+
+
+  
 }
