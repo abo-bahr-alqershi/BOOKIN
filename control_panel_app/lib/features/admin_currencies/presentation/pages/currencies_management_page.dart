@@ -382,12 +382,12 @@ class _CurrenciesManagementPageState extends State<CurrenciesManagementPage>
       },
       builder: (context, state) {
         if (state is CurrenciesLoading) {
-          return const Center(child: FuturisticLoadingWidget());
+          return const LoadingWidget(type: LoadingType.pulse);
         }
 
         if (state is CurrenciesError) {
           return Center(
-            child: FuturisticErrorWidget(
+            child: CustomErrorWidget(
               message: state.message,
               onRetry: () {
                 context.read<CurrenciesBloc>().add(LoadCurrenciesEvent());
@@ -399,17 +399,15 @@ class _CurrenciesManagementPageState extends State<CurrenciesManagementPage>
         if (state is CurrenciesLoaded) {
           if (state.filteredCurrencies.isEmpty) {
             return Center(
-              child: FuturisticEmptyWidget(
-                icon: Icons.currency_exchange_rounded,
-                title: state.searchQuery.isNotEmpty
+              child: EmptyWidget(
+                message: state.searchQuery.isNotEmpty
                     ? 'لا توجد نتائج'
                     : 'لا توجد عملات',
-                subtitle: state.searchQuery.isNotEmpty
-                    ? 'جرب البحث بكلمات أخرى'
-                    : 'ابدأ بإضافة عملة جديدة',
-                actionLabel: state.searchQuery.isEmpty ? 'إضافة عملة' : null,
-                onAction: state.searchQuery.isEmpty
-                    ? () => _openFormModal()
+                actionWidget: state.searchQuery.isEmpty
+                    ? ElevatedButton(
+                        onPressed: _openFormModal,
+                        child: const Text('إضافة عملة'),
+                      )
                     : null,
               ),
             );

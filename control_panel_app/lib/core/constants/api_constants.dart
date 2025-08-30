@@ -8,6 +8,13 @@ class ApiConstants {
     // defaultValue: 'http://192.168.0.157:5000/',
   );
   
+  // Derived base URLs for different API areas
+  static String get commonBaseUrl =>
+      baseUrl.endsWith('/') ? '${baseUrl}api/common' : '$baseUrl/api/common';
+
+  static String get adminBaseUrl =>
+      baseUrl.endsWith('/') ? '${baseUrl}api/admin' : '$baseUrl/api/admin';
+  
   static const String imageBaseUrl = String.fromEnvironment(
     'IMAGE_BASE_URL',
     defaultValue: 'http://ameenalqershi-001-site1.mtempurl.com',
