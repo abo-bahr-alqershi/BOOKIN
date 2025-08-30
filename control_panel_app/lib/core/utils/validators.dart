@@ -39,4 +39,51 @@ class Validators {
   }
   
   // Add other validation methods as needed
+
+  // Form field validators (to be used directly as TextFormField.validator)
+  static String? Function(String?) get validateName => (String? value) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      return 'مطلوب';
+    }
+    if (!isValidName(trimmed)) {
+      return 'اسم غير صحيح';
+    }
+    return null;
+  };
+
+  static String? Function(String?) get validateEmail => (String? value) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      return 'مطلوب';
+    }
+    if (!isValidEmail(trimmed)) {
+      return 'بريد غير صحيح';
+    }
+    return null;
+  };
+
+  static String? Function(String?) get validatePassword => (String? value) {
+    final raw = value ?? '';
+    if (raw.isEmpty) {
+      return 'مطلوب';
+    }
+    if (!isValidPassword(raw, minLength: 8)) {
+      return '8 أحرف على الأقل';
+    }
+    return null;
+  };
+
+  static String? Function(String?) get validatePhone => (String? value) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      return 'مطلوب';
+    }
+    // Accept both with and without leading '+'. Normalize before validating.
+    final normalized = trimmed.startsWith('+') ? trimmed : '+$trimmed';
+    if (!isValidPhoneNumber(normalized)) {
+      return 'رقم غير صحيح';
+    }
+    return null;
+  };
 }
