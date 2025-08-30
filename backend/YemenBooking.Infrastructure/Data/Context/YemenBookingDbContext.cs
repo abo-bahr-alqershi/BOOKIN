@@ -185,6 +185,12 @@ public class YemenBookingDbContext : DbContext
     public DbSet<ReviewImage> ReviewImages { get; set; }
 
     /// <summary>
+    /// جدول ردود التقييمات
+    /// Review responses table
+    /// </summary>
+    public DbSet<ReviewResponse> ReviewResponses { get; set; }
+
+    /// <summary>
     /// جدول البلاغات
     /// Reports table
     /// </summary>
@@ -341,6 +347,7 @@ public class YemenBookingDbContext : DbContext
         modelBuilder.ApplyConfiguration(new NotificationConfiguration());
         modelBuilder.ApplyConfiguration(new AuditLogConfiguration());
         modelBuilder.ApplyConfiguration(new ReviewImageConfiguration());
+        modelBuilder.ApplyConfiguration(new ReviewResponseConfiguration());
         modelBuilder.ApplyConfiguration(new ReportConfiguration());
 
         // تكوين شات المحادثات والرسائل والتفاعلات والمرفقات والإعدادات
