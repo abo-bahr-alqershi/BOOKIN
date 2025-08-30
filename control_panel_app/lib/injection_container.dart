@@ -102,6 +102,45 @@ import 'features/property_types/domain/usecases/fields/create_field_usecase.dart
 import 'features/property_types/domain/usecases/fields/update_field_usecase.dart' as utf_uc3;
 import 'features/property_types/domain/usecases/fields/delete_field_usecase.dart' as utf_uc4;
 
+// Features - Admin Services
+import 'features/admin_services/presentation/bloc/services_bloc.dart';
+import 'features/admin_services/data/datasources/services_remote_datasource.dart';
+import 'features/admin_services/data/repositories/services_repository_impl.dart';
+import 'features/admin_services/domain/repositories/services_repository.dart';
+import 'features/admin_services/domain/usecases/create_service_usecase.dart' as as_uc1;
+import 'features/admin_services/domain/usecases/update_service_usecase.dart' as as_uc2;
+import 'features/admin_services/domain/usecases/delete_service_usecase.dart' as as_uc3;
+import 'features/admin_services/domain/usecases/get_services_by_property_usecase.dart' as as_uc4;
+import 'features/admin_services/domain/usecases/get_service_details_usecase.dart' as as_uc5;
+import 'features/admin_services/domain/usecases/get_services_by_type_usecase.dart' as as_uc6;
+
+// Features - Admin Reviews
+import 'features/admin_reviews/presentation/bloc/reviews_list/reviews_list_bloc.dart' as ar_list_bloc;
+import 'features/admin_reviews/presentation/bloc/review_details/review_details_bloc.dart' as ar_details_bloc;
+import 'features/admin_reviews/presentation/bloc/review_response/review_response_bloc.dart' as ar_resp_bloc;
+import 'features/admin_reviews/data/datasources/reviews_remote_datasource.dart' as ar_ds_remote;
+import 'features/admin_reviews/data/datasources/reviews_local_datasource.dart' as ar_ds_local;
+import 'features/admin_reviews/data/repositories/reviews_repository_impl.dart' as ar_repo_impl;
+import 'features/admin_reviews/domain/repositories/reviews_repository.dart' as ar_repo;
+import 'features/admin_reviews/domain/usecases/get_all_reviews_usecase.dart' as ar_uc1;
+import 'features/admin_reviews/domain/usecases/approve_review_usecase.dart' as ar_uc2;
+import 'features/admin_reviews/domain/usecases/delete_review_usecase.dart' as ar_uc3;
+import 'features/admin_reviews/domain/usecases/get_review_details_usecase.dart' as ar_uc4;
+import 'features/admin_reviews/domain/usecases/get_review_responses_usecase.dart' as ar_uc5;
+import 'features/admin_reviews/domain/usecases/respond_to_review_usecase.dart' as ar_uc6;
+import 'features/admin_reviews/domain/usecases/delete_review_response_usecase.dart' as ar_uc7;
+
+// Features - Admin Amenities (standalone)
+import 'features/admin_amenities/presentation/bloc/amenities_bloc.dart' as aa_bloc;
+import 'features/admin_amenities/data/datasources/amenities_remote_datasource.dart' as aa_ds_remote;
+import 'features/admin_amenities/data/repositories/amenities_repository_impl.dart' as aa_repo_impl;
+import 'features/admin_amenities/domain/repositories/amenities_repository.dart' as aa_repo;
+import 'features/admin_amenities/domain/usecases/create_amenity_usecase.dart' as aa_uc1;
+import 'features/admin_amenities/domain/usecases/update_amenity_usecase.dart' as aa_uc2;
+import 'features/admin_amenities/domain/usecases/delete_amenity_usecase.dart' as aa_uc3;
+import 'features/admin_amenities/domain/usecases/get_all_amenities_usecase.dart' as aa_uc4;
+import 'features/admin_amenities/domain/usecases/assign_amenity_to_property_usecase.dart' as aa_uc5;
+
 // Features - Admin Properties
 import 'features/admin_properties/presentation/bloc/properties/properties_bloc.dart' as ap_bloc;
 import 'features/admin_properties/presentation/bloc/amenities/amenities_bloc.dart' as ap_am_bloc;
@@ -157,6 +196,15 @@ Future<void> init() async {
 
 	// Features - Admin Properties
 	_initAdminProperties();
+
+	// Features - Admin Services
+	_initAdminServices();
+
+	// Features - Admin Reviews
+	_initAdminReviews();
+
+	// Features - Admin Amenities (standalone)
+	_initAdminAmenities();
 
 	// Theme
   _initTheme();
@@ -465,6 +513,94 @@ void _initAdminProperties() {
   sl.registerLazySingleton<ap_ds_am_remote.AmenitiesRemoteDataSource>(() => ap_ds_am_remote.AmenitiesRemoteDataSourceImpl(apiClient: sl()));
   sl.registerLazySingleton<ap_ds_po_remote.PoliciesRemoteDataSource>(() => ap_ds_po_remote.PoliciesRemoteDataSourceImpl(apiClient: sl()));
   sl.registerLazySingleton<ap_ds_pt_remote.PropertyTypesRemoteDataSource>(() => ap_ds_pt_remote.PropertyTypesRemoteDataSourceImpl(apiClient: sl()));
+}
+
+void _initAdminServices() {
+  // Bloc
+  sl.registerFactory(() => ServicesBloc(
+        createServiceUseCase: sl<as_uc1.CreateServiceUseCase>(),
+        updateServiceUseCase: sl<as_uc2.UpdateServiceUseCase>(),
+        deleteServiceUseCase: sl<as_uc3.DeleteServiceUseCase>(),
+        getServicesByPropertyUseCase: sl<as_uc4.GetServicesByPropertyUseCase>(),
+        getServiceDetailsUseCase: sl<as_uc5.GetServiceDetailsUseCase>(),
+        getServicesByTypeUseCase: sl<as_uc6.GetServicesByTypeUseCase>(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton<as_uc1.CreateServiceUseCase>(() => as_uc1.CreateServiceUseCase(sl()));
+  sl.registerLazySingleton<as_uc2.UpdateServiceUseCase>(() => as_uc2.UpdateServiceUseCase(sl()));
+  sl.registerLazySingleton<as_uc3.DeleteServiceUseCase>(() => as_uc3.DeleteServiceUseCase(sl()));
+  sl.registerLazySingleton<as_uc4.GetServicesByPropertyUseCase>(() => as_uc4.GetServicesByPropertyUseCase(sl()));
+  sl.registerLazySingleton<as_uc5.GetServiceDetailsUseCase>(() => as_uc5.GetServiceDetailsUseCase(sl()));
+  sl.registerLazySingleton<as_uc6.GetServicesByTypeUseCase>(() => as_uc6.GetServicesByTypeUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<ServicesRepository>(() => ServicesRepositoryImpl(remoteDataSource: sl()));
+
+  // Data source
+  sl.registerLazySingleton<ServicesRemoteDataSource>(() => ServicesRemoteDataSourceImpl(apiClient: sl()));
+}
+
+void _initAdminReviews() {
+  // Blocs
+  sl.registerFactory(() => ar_list_bloc.ReviewsListBloc(
+        getAllReviews: sl<ar_uc1.GetAllReviewsUseCase>(),
+        approveReview: sl<ar_uc2.ApproveReviewUseCase>(),
+        deleteReview: sl<ar_uc3.DeleteReviewUseCase>(),
+      ));
+  sl.registerFactory(() => ar_details_bloc.ReviewDetailsBloc(
+        getReviewDetails: sl<ar_uc4.GetReviewDetailsUseCase>(),
+        getReviewResponses: sl<ar_uc5.GetReviewResponsesUseCase>(),
+        respondToReview: sl<ar_uc6.RespondToReviewUseCase>(),
+        deleteReviewResponse: sl<ar_uc7.DeleteReviewResponseUseCase>(),
+      ));
+  sl.registerFactory(() => ar_resp_bloc.ReviewResponseBloc(
+        respondToReview: sl<ar_uc6.RespondToReviewUseCase>(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton<ar_uc1.GetAllReviewsUseCase>(() => ar_uc1.GetAllReviewsUseCase(sl()));
+  sl.registerLazySingleton<ar_uc2.ApproveReviewUseCase>(() => ar_uc2.ApproveReviewUseCase(sl()));
+  sl.registerLazySingleton<ar_uc3.DeleteReviewUseCase>(() => ar_uc3.DeleteReviewUseCase(sl()));
+  sl.registerLazySingleton<ar_uc4.GetReviewDetailsUseCase>(() => ar_uc4.GetReviewDetailsUseCase(sl()));
+  sl.registerLazySingleton<ar_uc5.GetReviewResponsesUseCase>(() => ar_uc5.GetReviewResponsesUseCase(sl()));
+  sl.registerLazySingleton<ar_uc6.RespondToReviewUseCase>(() => ar_uc6.RespondToReviewUseCase(sl()));
+  sl.registerLazySingleton<ar_uc7.DeleteReviewResponseUseCase>(() => ar_uc7.DeleteReviewResponseUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<ar_repo.ReviewsRepository>(() => ar_repo_impl.ReviewsRepositoryImpl(
+        remoteDataSource: sl(),
+        localDataSource: sl(),
+      ));
+
+  // Data sources
+  sl.registerLazySingleton<ar_ds_remote.ReviewsRemoteDataSource>(() => ar_ds_remote.ReviewsRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<ar_ds_local.ReviewsLocalDataSource>(() => ar_ds_local.ReviewsLocalDataSourceImpl(sharedPreferences: sl()));
+}
+
+void _initAdminAmenities() {
+  // Bloc
+  sl.registerFactory(() => aa_bloc.AmenitiesBloc(
+        createAmenityUseCase: sl<aa_uc1.CreateAmenityUseCase>(),
+        updateAmenityUseCase: sl<aa_uc2.UpdateAmenityUseCase>(),
+        deleteAmenityUseCase: sl<aa_uc3.DeleteAmenityUseCase>(),
+        getAllAmenitiesUseCase: sl<aa_uc4.GetAllAmenitiesUseCase>(),
+        assignAmenityToPropertyUseCase: sl<aa_uc5.AssignAmenityToPropertyUseCase>(),
+        repository: sl(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton<aa_uc1.CreateAmenityUseCase>(() => aa_uc1.CreateAmenityUseCase(sl()));
+  sl.registerLazySingleton<aa_uc2.UpdateAmenityUseCase>(() => aa_uc2.UpdateAmenityUseCase(sl()));
+  sl.registerLazySingleton<aa_uc3.DeleteAmenityUseCase>(() => aa_uc3.DeleteAmenityUseCase(sl()));
+  sl.registerLazySingleton<aa_uc4.GetAllAmenitiesUseCase>(() => aa_uc4.GetAllAmenitiesUseCase(sl()));
+  sl.registerLazySingleton<aa_uc5.AssignAmenityToPropertyUseCase>(() => aa_uc5.AssignAmenityToPropertyUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<aa_repo.AmenitiesRepository>(() => aa_repo_impl.AmenitiesRepositoryImpl(remoteDataSource: sl()));
+
+  // Data source
+  sl.registerLazySingleton<aa_ds_remote.AmenitiesRemoteDataSource>(() => aa_ds_remote.AmenitiesRemoteDataSourceImpl(apiClient: sl()));
 }
 
 void _initTheme() {

@@ -79,7 +79,7 @@ class ServicesBloc extends Bloc<ServicesEvent, ServicesState> {
             emit(ServicesLoaded(
               services: paginatedResult.items,
               paginatedServices: paginatedResult,
-              totalServices: paginatedResult.totalItems,
+              totalServices: paginatedResult.totalCount,
               paidServices: paidServices,
             ));
           },

@@ -52,7 +52,7 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
   
@@ -64,7 +64,7 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
   
@@ -76,7 +76,7 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
   
@@ -88,7 +88,7 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
   
@@ -102,7 +102,7 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
   
@@ -122,7 +122,7 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
   
@@ -136,7 +136,7 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
   
@@ -148,7 +148,7 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(e.toString()));
+      return Left(UnknownFailure(e.toString()));
     }
   }
 }

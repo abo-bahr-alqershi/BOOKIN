@@ -1,4 +1,4 @@
-import 'package:bookn_cp_app/features/admin_services/data/models/pricing_model.dart';
+// Removed wrong import to avoid ambiguous type
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
@@ -120,9 +120,8 @@ class ServicesRepositoryImpl implements ServicesRepository {
       
       return Right(PaginatedResult<Service>(
         items: services,
-        totalItems: result.totalItems,
-        totalPages: result.totalPages,
-        currentPage: result.currentPage,
+        totalCount: result.totalCount,
+        pageNumber: result.pageNumber,
         pageSize: result.pageSize,
       ));
     } on ServerException catch (e) {

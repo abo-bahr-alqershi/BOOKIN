@@ -8,7 +8,8 @@ import type {
   GetReviewsByPropertyQuery,
   GetReviewsByUserQuery,
   GetPendingReviewsQuery,
-  GetAllReviewsQuery
+  GetAllReviewsQuery,
+  RespondToReviewCommand
 } from '../types/review.types';
 import { apiClient } from './api.service';
 import type { ResultDto } from '../types/common.types';
@@ -34,4 +35,20 @@ export class AdminReviewsService {
   static async deleteReview(reviewId: string): Promise<ResultDto<boolean>> {
     return apiClient.delete<ResultDto<boolean>>(`/api/admin/reviews/${reviewId}`).then(res => res.data);
   }
+
+  static async respondToReview(reviewId: string, command: RespondToReviewCommand) {
+    return apiClient.post(`/api/admin/reviews/${reviewId}/respond`, command)
+      .then(res => res.data);
+  }
+
+  static async getReviewResponses(reviewId: string) {
+    return apiClient.get(`/api/admin/reviews/${reviewId}/responses`)
+      .then(res => res.data);
+  }
+
+  static async deleteReviewResponse(responseId: string) {
+    return apiClient.delete(`/api/admin/reviews/responses/${responseId}`)
+      .then(res => res.data);
+  }
+  
 }

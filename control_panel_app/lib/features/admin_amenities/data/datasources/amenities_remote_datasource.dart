@@ -165,7 +165,6 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
           totalCount: response.data['totalCount'] ?? 0,
           pageNumber: response.data['pageNumber'] ?? 1,
           pageSize: response.data['pageSize'] ?? 10,
-          totalPages: response.data['totalPages'] ?? 1,
         );
       } else {
         throw const ServerException( 'Invalid response format');
