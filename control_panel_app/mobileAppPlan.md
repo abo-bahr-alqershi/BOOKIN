@@ -227,7 +227,7 @@ lib/
 │   │           ├── icon_picker_modal.dart
 │   │           └── futuristic_stats_card.dart
 │   │   
-│   ├── lib/features/admin_units/
+│   ├── admin_units/
 │   │   ├── data/
 │   │   │   ├── datasources/
 │   │   │   │   ├── units_local_datasource.dart
@@ -294,6 +294,87 @@ lib/
 │   │           └── assign_sections_modal.dart
 │   │ 
 │   │   
+│   ├── admin_amenities/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   │   └── amenities_remote_datasource.dart
+│   │   │   ├── models/
+│   │   │   │   └── amenity_model.dart
+│   │   │   └── repositories/
+│   │   │       └── amenities_repository_impl.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   └── amenity.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── amenities_repository.dart
+│   │   │   └── usecases/
+│   │   │       ├── create_amenity_usecase.dart
+│   │   │       ├── update_amenity_usecase.dart
+│   │   │       ├── delete_amenity_usecase.dart
+│   │   │       ├── get_all_amenities_usecase.dart
+│   │   │       └── assign_amenity_to_property_usecase.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── amenities_bloc.dart
+│   │       │   ├── amenities_event.dart
+│   │       │   └── amenities_state.dart
+│   │       ├── pages/
+│   │       │   └── amenities_management_page.dart
+│   │       ├── utils/
+│   │       │   └── amenity_icons.dart
+│   │       └── widgets/
+│   │           ├── futuristic_amenity_card.dart
+│   │           ├── futuristic_amenities_table.dart
+│   │           ├── amenity_form_dialog.dart
+│   │           ├── amenity_filters_widget.dart
+│   │           └── amenity_stats_card.dart
+│   │ 
+│   │ 
+│   ├── admin_services/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   │   ├── services_local_datasource.dart
+│   │   │   │   └── services_remote_datasource.dart
+│   │   │   ├── models/
+│   │   │   │   ├── service_model.dart
+│   │   │   │   ├── service_details_model.dart
+│   │   │   │   ├── money_model.dart
+│   │   │   │   └── pricing_model.dart
+│   │   │   └── repositories/
+│   │   │       └── services_repository_impl.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   ├── service.dart
+│   │   │   │   ├── service_details.dart
+│   │   │   │   ├── money.dart
+│   │   │   │   └── pricing_model.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── services_repository.dart
+│   │   │   └── usecases/
+│   │   │       ├── create_service_usecase.dart
+│   │   │       ├── update_service_usecase.dart
+│   │   │       ├── delete_service_usecase.dart
+│   │   │       ├── get_services_by_property_usecase.dart
+│   │   │       ├── get_service_details_usecase.dart
+│   │   │       └── get_services_by_type_usecase.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── services_bloc.dart
+│   │       │   ├── services_event.dart
+│   │       │   └── services_state.dart
+│   │       ├── pages/
+│   │       │   └── admin_services_page.dart
+│   │       ├── widgets/
+│   │       │   ├── futuristic_service_card.dart
+│   │       │   ├── futuristic_services_table.dart
+│   │       │   ├── service_form_dialog.dart
+│   │       │   ├── service_icon_picker.dart
+│   │       │   ├── service_details_dialog.dart
+│   │       │   ├── service_stats_card.dart
+│   │       │   └── service_filters_widget.dart
+│   │       └── utils/
+│   │           └── service_icons.dart
+│   │
 │   ├── notifications/
 │   │   ├── data/
 │   │   │   ├── datasources/
