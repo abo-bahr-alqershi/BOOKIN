@@ -49,10 +49,11 @@ namespace YemenBooking.Application.Handlers.Queries.Reviews
             {
                 Id = r.Id,
                 ReviewId = r.ReviewId,
-                Text = r.Text,
-                RespondedAt = r.RespondedAt,
-                CreatedBy = r.CreatedBy,
-                UpdatedBy = r.UpdatedBy
+                ResponseText = r.Text,
+                RespondedBy = r.RespondedBy,
+                RespondedByName = r.RespondedByName,
+                CreatedAt = r.CreatedAt,
+                UpdatedAt = r.UpdatedAt
             }).ToList();
 
             return ResultDto<List<ReviewResponseDto>>.Ok(list);

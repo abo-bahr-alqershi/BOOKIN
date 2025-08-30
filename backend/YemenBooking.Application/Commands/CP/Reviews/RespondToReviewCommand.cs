@@ -11,7 +11,8 @@ namespace YemenBooking.Application.Commands.Reviews
     public class RespondToReviewCommand : IRequest<ResultDto<ReviewResponseDto>>
     {
         public Guid ReviewId { get; set; }
-        public string Text { get; set; } = string.Empty;
+        public string ResponseText { get; set; } = string.Empty;
+        public Guid OwnerId { get; set; }
     }
 }
 

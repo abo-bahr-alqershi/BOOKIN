@@ -10,10 +10,11 @@ namespace YemenBooking.Application.DTOs
     {
         public Guid Id { get; set; }
         public Guid ReviewId { get; set; }
-        public string Text { get; set; } = string.Empty;
-        public DateTime RespondedAt { get; set; }
-        public Guid? CreatedBy { get; set; }
-        public Guid? UpdatedBy { get; set; }
+        public string ResponseText { get; set; } = string.Empty;
+        public Guid RespondedBy { get; set; }
+        public string RespondedByName { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
 }
 

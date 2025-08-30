@@ -16,6 +16,7 @@ namespace YemenBooking.Application.Handlers.Commands.Reviews
         private readonly IReviewRepository _reviewRepository;
         private readonly IReviewResponseRepository _responseRepository;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IUserRepository _userRepository;
         private readonly IAuditService _auditService;
         private readonly ILogger<RespondToReviewCommandHandler> _logger;
 
@@ -24,18 +25,20 @@ namespace YemenBooking.Application.Handlers.Commands.Reviews
             IReviewResponseRepository responseRepository,
             ICurrentUserService currentUserService,
             IAuditService auditService,
-            ILogger<RespondToReviewCommandHandler> logger)
+            ILogger<RespondToReviewCommandHandler> logger,
+            IUserRepository userRepository)
         {
             _reviewRepository = reviewRepository;
             _responseRepository = responseRepository;
             _currentUserService = currentUserService;
             _auditService = auditService;
             _logger = logger;
+            _userRepository = userRepository;
         }
 
         public async Task<ResultDto<ReviewResponseDto>> Handle(RespondToReviewCommand request, CancellationToken cancellationToken)
         {
-            if (request.ReviewId == Guid.Empty || string.IsNullOrWhiteSpace(request.Text))
+            if (request.ReviewId == Guid.Empty || string.IsNullOrWhiteSpace(request.ResponseText))
                 return ResultDto<ReviewResponseDto>.Failed("ReviewId and Text are required");
 
             var review = await _reviewRepository.GetReviewByIdAsync(request.ReviewId, cancellationToken);
@@ -48,13 +51,19 @@ namespace YemenBooking.Application.Handlers.Commands.Reviews
             if (!isAuthorized)
                 return ResultDto<ReviewResponseDto>.Failed("غير مصرح لك بالرد على هذا التقييم");
 
+            var responderId = request.OwnerId != Guid.Empty ? request.OwnerId : _currentUserService.UserId;
+            var responder = await _userRepository.GetUserByIdAsync(responderId, cancellationToken);
+            var responderName = responder?.Name ?? _currentUserService.Username ?? string.Empty;
+
             var entity = new ReviewResponse
             {
                 Id = Guid.NewGuid(),
                 ReviewId = request.ReviewId,
-                Text = request.Text.Trim(),
+                Text = request.ResponseText.Trim(),
                 RespondedAt = DateTime.UtcNow,
-                CreatedBy = _currentUserService.UserId
+                RespondedBy = responderId,
+                RespondedByName = responderName,
+                CreatedBy = responderId
             };
 
             entity = await _responseRepository.CreateAsync(entity, cancellationToken);
@@ -72,9 +81,11 @@ namespace YemenBooking.Application.Handlers.Commands.Reviews
             {
                 Id = entity.Id,
                 ReviewId = entity.ReviewId,
-                Text = entity.Text,
-                RespondedAt = entity.RespondedAt,
-                CreatedBy = entity.CreatedBy
+                ResponseText = entity.Text,
+                RespondedBy = entity.RespondedBy,
+                RespondedByName = entity.RespondedByName,
+                CreatedAt = entity.CreatedAt,
+                UpdatedAt = entity.UpdatedAt
             };
 
             return ResultDto<ReviewResponseDto>.Ok(dto, "تم إضافة الرد بنجاح");

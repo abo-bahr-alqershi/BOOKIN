@@ -26,6 +26,14 @@ public class ReviewResponseConfiguration : IEntityTypeConfiguration<ReviewRespon
             .IsRequired()
             .HasComment("تاريخ إنشاء الرد");
 
+        builder.Property(r => r.RespondedBy)
+            .IsRequired()
+            .HasComment("المستخدم الذي قام بالرد");
+
+        builder.Property(r => r.RespondedByName)
+            .HasMaxLength(200)
+            .HasComment("اسم المجيب (منسوخ)");
+
         builder.Property(r => r.IsDeleted)
             .IsRequired()
             .HasDefaultValue(false);

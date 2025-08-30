@@ -32,6 +32,20 @@ public class ReviewResponse : BaseEntity<Guid>
     public DateTime RespondedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
+    /// المستخدم الذي قام بالرد
+    /// Responder user identifier
+    /// </summary>
+    [Display(Name = "معرّف المُجيب")]
+    public Guid RespondedBy { get; set; }
+
+    /// <summary>
+    /// اسم المستخدم الذي قام بالرد (نسخ اختياري للتسريع)
+    /// Cached responder name for quick reads
+    /// </summary>
+    [Display(Name = "اسم المُجيب")]
+    public string RespondedByName { get; set; } = string.Empty;
+
+    /// <summary>
     /// المراجعة المرتبطة
     /// Navigation to review
     /// </summary>
