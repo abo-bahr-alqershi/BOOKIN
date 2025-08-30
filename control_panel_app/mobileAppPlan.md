@@ -567,6 +567,40 @@ lib/
 │   │
 │   │
 │   │
+│   ├── admin_currencies/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   │   ├── currencies_local_datasource.dart
+│   │   │   │   └── currencies_remote_datasource.dart
+│   │   │   ├── models/
+│   │   │   │   └── currency_model.dart
+│   │   │   └── repositories/
+│   │   │       └── currencies_repository_impl.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   └── currency.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── currencies_repository.dart
+│   │   │   └── usecases/
+│   │   │       ├── get_currencies_usecase.dart
+│   │   │       ├── save_currencies_usecase.dart
+│   │   │       ├── delete_currency_usecase.dart
+│   │   │       └── set_default_currency_usecase.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── currencies_bloc.dart
+│   │       │   ├── currencies_event.dart
+│   │       │   └── currencies_state.dart
+│   │       ├── pages/
+│   │       │   └── currencies_management_page.dart
+│   │       └── widgets/
+│   │           ├── futuristic_currency_card.dart
+│   │           ├── futuristic_currency_form_modal.dart
+│   │           ├── currency_stats_card.dart
+│   │           └── exchange_rate_indicator.dart
+│   │
+│   │
+│   │           
 │   ├── notifications/
 │   │   ├── data/
 │   │   │   ├── datasources/
