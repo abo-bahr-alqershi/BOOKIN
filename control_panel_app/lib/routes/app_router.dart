@@ -55,6 +55,12 @@ import 'package:bookn_cp_app/features/admin_properties/presentation/pages/edit_p
 import 'package:bookn_cp_app/features/admin_properties/presentation/pages/property_details_page.dart' as ap_pages;
 import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/properties/properties_bloc.dart' as ap_bloc;
 import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/property_types/property_types_bloc.dart' as ap_prop_pt_bloc;
+// Admin Users pages & blocs
+import 'package:bookn_cp_app/features/admin_users/presentation/pages/users_list_page.dart' as au_pages;
+import 'package:bookn_cp_app/features/admin_users/presentation/pages/create_user_page.dart' as au_pages;
+import 'package:bookn_cp_app/features/admin_users/presentation/pages/user_details_page.dart' as au_pages;
+import 'package:bookn_cp_app/features/admin_users/presentation/bloc/users_list/users_list_bloc.dart' as au_list_bloc;
+import 'package:bookn_cp_app/features/admin_users/presentation/bloc/user_details/user_details_bloc.dart' as au_details_bloc;
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
@@ -294,6 +300,41 @@ class AppRouter {
             return BlocProvider<ar_list_bloc.ReviewsListBloc>(
               create: (_) => di.sl<ar_list_bloc.ReviewsListBloc>(),
               child: const ReviewsListPage(),
+            );
+          },
+        ),
+
+        // Admin Users - list
+        GoRoute(
+          path: '/admin/users',
+          builder: (context, state) {
+            return BlocProvider<au_list_bloc.UsersListBloc>(
+              create: (_) => di.sl<au_list_bloc.UsersListBloc>()..add(au_list_bloc.LoadUsersEvent()),
+              child: const au_pages.UsersListPage(),
+            );
+          },
+        ),
+
+        // Admin Users - create
+        GoRoute(
+          path: '/admin/users/create',
+          builder: (context, state) {
+            // Reuse UsersListBloc for create page for consistency with existing code patterns
+            return BlocProvider<au_list_bloc.UsersListBloc>(
+              create: (_) => di.sl<au_list_bloc.UsersListBloc>(),
+              child: const au_pages.CreateUserPage(),
+            );
+          },
+        ),
+
+        // Admin Users - details
+        GoRoute(
+          path: '/admin/users/:userId',
+          builder: (context, state) {
+            final userId = state.pathParameters['userId']!;
+            return BlocProvider<au_details_bloc.UserDetailsBloc>(
+              create: (_) => di.sl<au_details_bloc.UserDetailsBloc>()..add(au_details_bloc.LoadUserDetailsEvent(userId: userId)),
+              child: au_pages.UserDetailsPage(userId: userId),
             );
           },
         ),

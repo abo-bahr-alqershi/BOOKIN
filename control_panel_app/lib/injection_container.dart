@@ -17,6 +17,22 @@ import 'services/deep_link_service.dart';
 import 'services/websocket_service.dart';
 import 'services/connectivity_service.dart';
 
+// Features - Admin Users
+import 'features/admin_users/presentation/bloc/users_list/users_list_bloc.dart';
+import 'features/admin_users/presentation/bloc/user_details/user_details_bloc.dart';
+import 'features/admin_users/domain/repositories/users_repository.dart' as au_repo;
+import 'features/admin_users/data/repositories/users_repository_impl.dart' as au_repo_impl;
+import 'features/admin_users/data/datasources/users_remote_datasource.dart' as au_ds_remote;
+import 'features/admin_users/data/datasources/users_local_datasource.dart' as au_ds_local;
+import 'features/admin_users/domain/usecases/get_all_users_usecase.dart' as au_uc1;
+import 'features/admin_users/domain/usecases/get_user_details_usecase.dart' as au_uc2;
+import 'features/admin_users/domain/usecases/create_user_usecase.dart' as au_uc3;
+import 'features/admin_users/domain/usecases/update_user_usecase.dart' as au_uc4;
+import 'features/admin_users/domain/usecases/activate_user_usecase.dart' as au_uc5;
+import 'features/admin_users/domain/usecases/deactivate_user_usecase.dart' as au_uc6;
+import 'features/admin_users/domain/usecases/assign_role_usecase.dart' as au_uc7;
+import 'features/admin_users/domain/usecases/get_user_lifetime_stats_usecase.dart' as au_uc8;
+
 // Features - Auth
 import 'features/auth/data/datasources/auth_local_datasource.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
@@ -199,6 +215,9 @@ Future<void> init() async {
 
 	// Features - Chat
 	_initChat();
+
+	// Features - Admin Users
+	_initAdminUsers();
 
 	// Features - Admin Units
 	_initAdminUnits();
@@ -657,6 +676,44 @@ void _initAdminAmenities() {
 
   // Data source
   sl.registerLazySingleton<aa_ds_remote.AmenitiesRemoteDataSource>(() => aa_ds_remote.AmenitiesRemoteDataSourceImpl(apiClient: sl()));
+}
+
+void _initAdminUsers() {
+  // Blocs
+  sl.registerFactory(() => UsersListBloc(
+        getAllUsersUseCase: sl<au_uc1.GetAllUsersUseCase>(),
+        activateUserUseCase: sl<au_uc5.ActivateUserUseCase>(),
+        deactivateUserUseCase: sl<au_uc6.DeactivateUserUseCase>(),
+      ));
+  sl.registerFactory(() => UserDetailsBloc(
+        getUserDetailsUseCase: sl<au_uc2.GetUserDetailsUseCase>(),
+        getUserLifetimeStatsUseCase: sl<au_uc8.GetUserLifetimeStatsUseCase>(),
+        updateUserUseCase: sl<au_uc4.UpdateUserUseCase>(),
+        activateUserUseCase: sl<au_uc5.ActivateUserUseCase>(),
+        deactivateUserUseCase: sl<au_uc6.DeactivateUserUseCase>(),
+        assignRoleUseCase: sl<au_uc7.AssignRoleUseCase>(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton<au_uc1.GetAllUsersUseCase>(() => au_uc1.GetAllUsersUseCase(sl()));
+  sl.registerLazySingleton<au_uc2.GetUserDetailsUseCase>(() => au_uc2.GetUserDetailsUseCase(sl()));
+  sl.registerLazySingleton<au_uc3.CreateUserUseCase>(() => au_uc3.CreateUserUseCase(sl()));
+  sl.registerLazySingleton<au_uc4.UpdateUserUseCase>(() => au_uc4.UpdateUserUseCase(sl()));
+  sl.registerLazySingleton<au_uc5.ActivateUserUseCase>(() => au_uc5.ActivateUserUseCase(sl()));
+  sl.registerLazySingleton<au_uc6.DeactivateUserUseCase>(() => au_uc6.DeactivateUserUseCase(sl()));
+  sl.registerLazySingleton<au_uc7.AssignRoleUseCase>(() => au_uc7.AssignRoleUseCase(sl()));
+  sl.registerLazySingleton<au_uc8.GetUserLifetimeStatsUseCase>(() => au_uc8.GetUserLifetimeStatsUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<au_repo.UsersRepository>(() => au_repo_impl.UsersRepositoryImpl(
+        remoteDataSource: sl(),
+        localDataSource: sl(),
+        networkInfo: sl(),
+      ));
+
+  // Data sources
+  sl.registerLazySingleton<au_ds_remote.UsersRemoteDataSource>(() => au_ds_remote.UsersRemoteDataSourceImpl(sl()));
+  sl.registerLazySingleton<au_ds_local.UsersLocalDataSource>(() => au_ds_local.UsersLocalDataSourceImpl(sharedPreferences: sl()));
 }
 
 void _initTheme() {
