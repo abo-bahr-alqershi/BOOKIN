@@ -17,11 +17,27 @@ export interface ReviewImageDto {
   uploadedAt: string;
 }
 
+/**
+ * فئة الصورة
+ */
 export type ImageCategory = {
     Exterior: 0,
     Interior: 1,
     Room: 2,
     Facility: 3,
+}
+
+/**
+ * رد على التقييم
+ */
+export interface ReviewResponseDto {
+  id: string;
+  reviewId: string;
+  responseText: string;
+  respondedBy: string;
+  respondedByName: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 /**
@@ -38,9 +54,23 @@ export interface ReviewDto {
   service: number;
   location: number;
   value: number;
+  /** متوسط التقييم */
+  averageRating: number;
   comment: string;
   createdAt: string;
   images: ReviewImageDto[];
+  /** نص رد الإدارة */
+  responseText?: string;
+  /** تاريخ الرد */
+  responseDate?: string;
+  /** هل المراجعة معتمدة */
+  isApproved: boolean;
+  /** هل المراجعة بانتظار الموافقة */
+  isPending: boolean;
+  /** معرف من قام بالرد */
+  respondedBy?: string;
+  /** ردود التقييم */
+  responses?: ReviewResponseDto[];
 }
 
 /**
@@ -95,6 +125,13 @@ export interface GetReviewsByUserQuery {
  */
 export interface GetPendingReviewsQuery {}
 
+/**
+ * استعلام جلب ردود التقييم
+ */
+export interface GetReviewResponsesQuery {
+  reviewId: string;
+}
+
 // إضافة استعلام جلب جميع التقييمات مع دعم التصفية والصفحات
 /**
  * استعلام جلب جميع التقييمات مع دعم التصفية والصفحات
@@ -126,4 +163,8 @@ export interface RespondToReviewCommand {
     reviewId: string;
     responseText: string;
     ownerId: string;
+}
+
+export interface DeleteReviewResponseCommand {
+    responseId: string;
 }
