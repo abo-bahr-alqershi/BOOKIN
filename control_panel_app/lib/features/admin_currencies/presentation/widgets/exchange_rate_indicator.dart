@@ -64,7 +64,7 @@ class _ExchangeRateIndicatorState extends State<ExchangeRateIndicator>
     );
 
     _shimmerController = AnimationController(
-      duration: const Duration(seconds: 1.5),
+      duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
 
