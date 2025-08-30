@@ -116,4 +116,11 @@ public class Review : BaseEntity<Guid>
     /// </summary>
     [Display(Name = "صور المراجعة المرتبطة")]
     public virtual ICollection<ReviewImage> Images { get; set; } = new List<ReviewImage>();
+
+    /// <summary>
+    /// الردود على التقييم
+    /// Responses associated with the review
+    /// </summary>
+    [Display(Name = "ردود التقييم")]
+    public virtual ICollection<ReviewResponse> Responses { get; set; } = new List<ReviewResponse>();
 } 

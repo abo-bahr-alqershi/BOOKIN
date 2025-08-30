@@ -6,6 +6,7 @@ using YemenBooking.Application.Commands.Dashboard;
 using YemenBooking.Application.Commands.Reviews;
 using YemenBooking.Application.Queries.Reviews;
 using YemenBooking.Application.Queries.Dashboard;
+using YemenBooking.Application.DTOs;
 
 namespace YemenBooking.Api.Controllers.Admin
 {
@@ -49,6 +50,37 @@ namespace YemenBooking.Api.Controllers.Admin
         {
             var command = new DeleteReviewCommand { ReviewId = reviewId };
             var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// إضافة رد على تقييم
+        /// </summary>
+        [HttpPost("{reviewId}/respond")]
+        public async Task<IActionResult> RespondToReview(Guid reviewId, [FromBody] RespondToReviewCommand command)
+        {
+            command.ReviewId = reviewId;
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// جلب ردود تقييم
+        /// </summary>
+        [HttpGet("{reviewId}/responses")]
+        public async Task<IActionResult> GetReviewResponses(Guid reviewId)
+        {
+            var responses = await _mediator.Send(new GetReviewResponsesQuery { ReviewId = reviewId });
+            return Ok(responses);
+        }
+
+        /// <summary>
+        /// حذف رد تقييم
+        /// </summary>
+        [HttpDelete("responses/{responseId}")]
+        public async Task<IActionResult> DeleteReviewResponse(Guid responseId)
+        {
+            var result = await _mediator.Send(new DeleteReviewResponseCommand { ResponseId = responseId });
             return Ok(result);
         }
     }
