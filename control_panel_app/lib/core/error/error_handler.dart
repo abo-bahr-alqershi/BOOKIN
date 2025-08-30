@@ -50,7 +50,6 @@ class ErrorHandler {
       case DioExceptionType.badCertificate:
         return const ServerFailure('خطأ في شهادة الأمان');
       case DioExceptionType.unknown:
-      default:
         return const UnknownFailure();
     }
   }

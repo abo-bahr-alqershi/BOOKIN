@@ -68,7 +68,6 @@ class CustomErrorWidget extends StatelessWidget {
         iconColor = AppTheme.warning;
         break;
       case ErrorType.general:
-      default:
         iconData = Icons.error_outline_rounded;
         iconColor = AppTheme.error;
         break;
@@ -163,7 +162,6 @@ class CustomErrorWidget extends StatelessWidget {
       case ErrorType.permission:
         return 'ليس لديك صلاحية';
       case ErrorType.general:
-      default:
         return 'حدث خطأ ما';
     }
   }
