@@ -375,6 +375,63 @@ lib/
 │   │       └── utils/
 │   │           └── service_icons.dart
 │   │
+│   ├── admin_reviews/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   │   ├── reviews_local_datasource.dart
+│   │   │   │   └── reviews_remote_datasource.dart
+│   │   │   ├── models/
+│   │   │   │   ├── review_model.dart
+│   │   │   │   ├── review_image_model.dart
+│   │   │   │   └── review_response_model.dart
+│   │   │   └── repositories/
+│   │   │       └── reviews_repository_impl.dart
+│   │   │
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   ├── review.dart
+│   │   │   │   ├── review_image.dart
+│   │   │   │   └── review_response.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── reviews_repository.dart
+│   │   │   └── usecases/
+│   │   │       ├── get_all_reviews_usecase.dart
+│   │   │       ├── get_review_details_usecase.dart
+│   │   │       ├── approve_review_usecase.dart
+│   │   │       ├── reject_review_usecase.dart
+│   │   │       ├── delete_review_usecase.dart
+│   │   │       ├── respond_to_review_usecase.dart
+│   │   │       ├── get_review_responses_usecase.dart
+│   │   │       └── delete_review_response_usecase.dart
+│   │   │
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── reviews_list/
+│   │       │   │   ├── reviews_list_bloc.dart
+│   │       │   │   ├── reviews_list_event.dart
+│   │       │   │   └── reviews_list_state.dart
+│   │       │   ├── review_details/
+│   │       │   │   ├── review_details_bloc.dart
+│   │       │   │   ├── review_details_event.dart
+│   │       │   │   └── review_details_state.dart
+│   │       │   └── review_response/
+│   │       │       ├── review_response_bloc.dart
+│   │       │       ├── review_response_event.dart
+│   │       │       └── review_response_state.dart
+│   │       ├── pages/
+│   │       │   ├── reviews_list_page.dart
+│   │       │   └── review_details_page.dart
+│   │       └── widgets/
+│   │           ├── futuristic_review_card.dart
+│   │           ├── futuristic_reviews_table.dart
+│   │           ├── review_filters_widget.dart
+│   │           ├── review_stats_card.dart
+│   │           ├── review_images_gallery.dart
+│   │           ├── review_response_card.dart
+│   │           ├── add_response_dialog.dart
+│   │           └── rating_breakdown_widget.dart
+│   │
+│   │
 │   ├── notifications/
 │   │   ├── data/
 │   │   │   ├── datasources/
