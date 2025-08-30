@@ -130,6 +130,18 @@ import 'features/admin_reviews/domain/usecases/get_review_responses_usecase.dart
 import 'features/admin_reviews/domain/usecases/respond_to_review_usecase.dart' as ar_uc6;
 import 'features/admin_reviews/domain/usecases/delete_review_response_usecase.dart' as ar_uc7;
 
+// Features - Admin Audit Logs
+import 'features/admin_audit_logs/presentation/bloc/audit_logs_bloc.dart';
+import 'features/admin_audit_logs/data/datasources/audit_logs_remote_datasource.dart' as al_ds_remote;
+import 'features/admin_audit_logs/data/datasources/audit_logs_local_datasource.dart' as al_ds_local;
+import 'features/admin_audit_logs/data/repositories/audit_logs_repository_impl.dart' as al_repo_impl;
+import 'features/admin_audit_logs/domain/repositories/audit_logs_repository.dart' as al_repo;
+import 'features/admin_audit_logs/domain/usecases/get_audit_logs_usecase.dart' as al_uc_get;
+import 'features/admin_audit_logs/domain/usecases/export_audit_logs_usecase.dart' as al_uc_export;
+import 'features/admin_audit_logs/domain/usecases/get_customer_activity_logs_usecase.dart' as al_uc_get_cust;
+import 'features/admin_audit_logs/domain/usecases/get_property_activity_logs_usecase.dart' as al_uc_get_prop;
+import 'features/admin_audit_logs/domain/usecases/get_admin_activity_logs_usecase.dart' as al_uc_get_admin;
+
 // Features - Admin Amenities (standalone)
 import 'features/admin_amenities/presentation/bloc/amenities_bloc.dart' as aa_bloc;
 import 'features/admin_amenities/data/datasources/amenities_remote_datasource.dart' as aa_ds_remote;
@@ -202,6 +214,9 @@ Future<void> init() async {
 
 	// Features - Admin Reviews
 	_initAdminReviews();
+
+	// Features - Admin Audit Logs
+	_initAdminAuditLogs();
 
 	// Features - Admin Amenities (standalone)
 	_initAdminAmenities();
@@ -576,6 +591,47 @@ void _initAdminReviews() {
   // Data sources
   sl.registerLazySingleton<ar_ds_remote.ReviewsRemoteDataSource>(() => ar_ds_remote.ReviewsRemoteDataSourceImpl(apiClient: sl()));
   sl.registerLazySingleton<ar_ds_local.ReviewsLocalDataSource>(() => ar_ds_local.ReviewsLocalDataSourceImpl(sharedPreferences: sl()));
+}
+
+void _initAdminAuditLogs() {
+	// Bloc
+	sl.registerFactory(() => AuditLogsBloc(
+		getAuditLogsUseCase: sl<al_uc_get.GetAuditLogsUseCase>(),
+		exportAuditLogsUseCase: sl<al_uc_export.ExportAuditLogsUseCase>(),
+	));
+
+	// Use cases
+	sl.registerLazySingleton<al_uc_get.GetAuditLogsUseCase>(
+		() => al_uc_get.GetAuditLogsUseCase(repository: sl()),
+	);
+	sl.registerLazySingleton<al_uc_export.ExportAuditLogsUseCase>(
+		() => al_uc_export.ExportAuditLogsUseCase(repository: sl()),
+	);
+	// Optional extra use cases for other activity views
+	sl.registerLazySingleton<al_uc_get_cust.GetCustomerActivityLogsUseCase>(
+		() => al_uc_get_cust.GetCustomerActivityLogsUseCase(repository: sl()),
+	);
+	sl.registerLazySingleton<al_uc_get_prop.GetPropertyActivityLogsUseCase>(
+		() => al_uc_get_prop.GetPropertyActivityLogsUseCase(repository: sl()),
+	);
+	sl.registerLazySingleton<al_uc_get_admin.GetAdminActivityLogsUseCase>(
+		() => al_uc_get_admin.GetAdminActivityLogsUseCase(repository: sl()),
+	);
+
+	// Repository
+	sl.registerLazySingleton<al_repo.AuditLogsRepository>(() => al_repo_impl.AuditLogsRepositoryImpl(
+		remoteDataSource: sl(),
+		localDataSource: sl(),
+		networkInfo: sl(),
+	));
+
+	// Data sources
+	sl.registerLazySingleton<al_ds_remote.AuditLogsRemoteDataSource>(
+		() => al_ds_remote.AuditLogsRemoteDataSourceImpl(apiClient: sl()),
+	);
+	sl.registerLazySingleton<al_ds_local.AuditLogsLocalDataSource>(
+		() => al_ds_local.AuditLogsLocalDataSourceImpl(),
+	);
 }
 
 void _initAdminAmenities() {

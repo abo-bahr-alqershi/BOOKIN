@@ -45,6 +45,9 @@ import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/reviews_li
 import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/review_details/review_details_bloc.dart' as ar_details_bloc;
 import 'package:bookn_cp_app/features/admin_services/presentation/bloc/services_bloc.dart';
 import 'package:bookn_cp_app/features/admin_amenities/presentation/bloc/amenities_bloc.dart' as aa_bloc;
+// Admin Audit Logs page & bloc
+import 'package:bookn_cp_app/features/admin_audit_logs/presentation/pages/audit_logs_page.dart' as al_pages;
+import 'package:bookn_cp_app/features/admin_audit_logs/presentation/bloc/audit_logs_bloc.dart' as al_bloc;
 // Admin Properties pages & blocs
 import 'package:bookn_cp_app/features/admin_properties/presentation/pages/properties_list_page.dart' as ap_pages;
 import 'package:bookn_cp_app/features/admin_properties/presentation/pages/create_property_page.dart' as ap_pages;
@@ -291,6 +294,17 @@ class AppRouter {
             return BlocProvider<ar_list_bloc.ReviewsListBloc>(
               create: (_) => di.sl<ar_list_bloc.ReviewsListBloc>(),
               child: const ReviewsListPage(),
+            );
+          },
+        ),
+
+        // Admin Audit Logs
+        GoRoute(
+          path: '/admin/audit-logs',
+          builder: (context, state) {
+            return BlocProvider<al_bloc.AuditLogsBloc>(
+              create: (_) => di.sl<al_bloc.AuditLogsBloc>(),
+              child: const al_pages.AuditLogsPage(),
             );
           },
         ),
