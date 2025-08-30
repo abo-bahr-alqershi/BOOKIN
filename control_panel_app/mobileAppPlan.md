@@ -526,6 +526,43 @@ lib/
 │   │
 │   │
 │   │
+│   ├── admin_cities/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   │   ├── cities_local_datasource.dart
+│   │   │   │   └── cities_remote_datasource.dart
+│   │   │   ├── models/
+│   │   │   │   └── city_model.dart
+│   │   │   └── repositories/
+│   │   │       └── cities_repository_impl.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   └── city.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── cities_repository.dart
+│   │   │   └── usecases/
+│   │   │       ├── get_cities_usecase.dart
+│   │   │       ├── create_city_usecase.dart
+│   │   │       ├── update_city_usecase.dart
+│   │   │       ├── delete_city_usecase.dart
+│   │   │       └── search_cities_usecase.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── cities_bloc.dart
+│   │       │   ├── cities_event.dart
+│   │       │   └── cities_state.dart
+│   │       ├── pages/
+│   │       │   └── admin_cities_page.dart
+│   │       └── widgets/
+│   │           ├── futuristic_city_card.dart
+│   │           ├── futuristic_cities_grid.dart
+│   │           ├── city_form_modal.dart
+│   │           ├── city_stats_card.dart
+│   │           ├── city_search_bar.dart
+│   │           └── city_image_gallery.dart
+│   │
+│   │
+│   │
 │   ├── notifications/
 │   │   ├── data/
 │   │   │   ├── datasources/
