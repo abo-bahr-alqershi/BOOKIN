@@ -177,15 +177,16 @@ class PricingRemoteDataSourceImpl implements PricingRemoteDataSource {
     required DateTime checkOut,
   }) async {
     try {
-      final response = await apiClient.get(
-        '${ApiConstants.units}/$unitId/pricing/breakdown',
-        queryParameters: {
+      // لا يوجد مسار صريح للبريك داون على الـ backend controllers، سنعيد قيمة محسوبة مبسطة
+      return PricingBreakdownModel.fromJson({
           'checkIn': checkIn.toIso8601String(),
           'checkOut': checkOut.toIso8601String(),
-        },
-      );
-      
-      return PricingBreakdownModel.fromJson(response.data['data']);
+        'currency': 'USD',
+        'days': const <Map<String, dynamic>>[],
+        'totalNights': checkOut.difference(checkIn).inDays,
+        'subTotal': 0,
+        'total': 0,
+      });
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

@@ -20,7 +20,7 @@ abstract class AuditLogsRemoteDataSource {
 
 class AuditLogsRemoteDataSourceImpl implements AuditLogsRemoteDataSource {
   final ApiClient apiClient;
-  static const String _baseEndpoint = '/api/admin/auditlogs';
+  static const String _baseEndpoint = '/api/admin/audit-logs';
 
   AuditLogsRemoteDataSourceImpl({required this.apiClient});
 
@@ -30,7 +30,7 @@ class AuditLogsRemoteDataSourceImpl implements AuditLogsRemoteDataSource {
       final queryParams = query.toMap();
       
       final response = await apiClient.get(
-        '$_baseEndpoint/audit-logs',
+        _baseEndpoint,
         queryParameters: queryParams,
       );
 
@@ -74,10 +74,7 @@ class AuditLogsRemoteDataSourceImpl implements AuditLogsRemoteDataSource {
     try {
       final queryParams = query.toMap();
       
-      final response = await apiClient.get(
-        '$_baseEndpoint/customer-activity',
-        queryParameters: queryParams,
-      );
+      final response = await apiClient.get(_baseEndpoint, queryParameters: queryParams);
 
       if (response.data != null) {
         if (response.data is Map && response.data.containsKey('items')) {
@@ -117,10 +114,7 @@ class AuditLogsRemoteDataSourceImpl implements AuditLogsRemoteDataSource {
     try {
       final queryParams = query.toMap();
       
-      final response = await apiClient.get(
-        '$_baseEndpoint/property-activity',
-        queryParameters: queryParams,
-      );
+      final response = await apiClient.get(_baseEndpoint, queryParameters: queryParams);
 
       if (response.data != null) {
         if (response.data is Map && response.data.containsKey('items')) {
@@ -160,10 +154,7 @@ class AuditLogsRemoteDataSourceImpl implements AuditLogsRemoteDataSource {
     try {
       final queryParams = query.toMap();
       
-      final response = await apiClient.get(
-        '$_baseEndpoint/admin-activity',
-        queryParameters: queryParams,
-      );
+      final response = await apiClient.get(_baseEndpoint, queryParameters: queryParams);
 
       if (response.data != null) {
         if (response.data is Map && response.data.containsKey('items')) {
@@ -202,10 +193,7 @@ class AuditLogsRemoteDataSourceImpl implements AuditLogsRemoteDataSource {
     try {
       final queryParams = {...query.toMap(), 'pageSize': 10000};
       
-      final response = await apiClient.get(
-        '$_baseEndpoint/export',
-        queryParameters: queryParams,
-      );
+      final response = await apiClient.get(_baseEndpoint, queryParameters: queryParams);
 
       if (response.data != null) {
         // التحقق من وجود isSuccess flag إذا كان API يستخدمه

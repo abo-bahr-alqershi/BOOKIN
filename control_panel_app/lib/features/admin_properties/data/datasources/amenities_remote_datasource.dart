@@ -137,14 +137,20 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
   @override
   Future<List<AmenityModel>> getPropertyAmenities(String propertyId) async {
     try {
-      final response = await apiClient.get('/api/admin/properties/$propertyId/amenities');
-      
-      if (response.data['success'] == true) {
-        final List<dynamic> data = response.data['data'];
-        return data.map((json) => AmenityModel.fromJson(json)).toList();
-      } else {
-        throw ServerException(response.data['message'] ?? 'Failed to get property amenities');
+      // لا يوجد مسار مباشر لجلب مرافق الكيان
+      // نستخدم تفاصيل الكيان والتي تتضمن قائمة amenities
+      final response = await apiClient.get('/api/admin/Properties/$propertyId/details', queryParameters: {
+        'includeUnits': false,
+      });
+      if (response.data is Map<String, dynamic>) {
+        final map = response.data as Map<String, dynamic>;
+        if (map['success'] == true && map['data'] is Map<String, dynamic>) {
+          final data = map['data'] as Map<String, dynamic>;
+          final List<dynamic> list = (data['amenities'] as List?) ?? const [];
+          return list.map((j) => AmenityModel.fromJson(j as Map<String, dynamic>)).toList();
+        }
       }
+        throw ServerException(response.data['message'] ?? 'Failed to get property amenities');
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to fetch property amenities');
     }

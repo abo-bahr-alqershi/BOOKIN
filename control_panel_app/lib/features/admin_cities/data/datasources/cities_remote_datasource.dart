@@ -48,6 +48,7 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   
   /// 🔗 المسار الأساسي لـ API المدن
   static const String _basePath = '/api/admin/system-settings/cities';
+  // لا يوجد CitiesController على الـ backend؛ نُبقي فقط على مسارات system-settings
   static const String _adminPath = '/api/admin/cities';
   static const String _imagesPath = '/api/images';
 
@@ -99,22 +100,14 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   @override
   Future<String> createCity(CityModel city) async {
     try {
-      final response = await apiClient.post(
-        _adminPath,
-        data: city.toJson(),
-      );
-      
-      if (response.data['success'] == true) {
-        // إرجاع معرف المدينة المنشأة
-        if (response.data['data'] is Map) {
-          return response.data['data']['name'] ?? '';
+      // لا يوجد مسار لإنشاء مدينة منفردة؛ ندمجها ضمن القائمة ونحفظ عبر PUT
+      final existing = await getCities();
+      final updated = [...existing, city];
+      final ok = await saveCities(updated);
+      if (ok) {
+        return city.name;
         }
-        return response.data['data'] ?? '';
-      }
-      
-      throw ApiException(
-        message: response.data['message'] ?? 'Failed to create city',
-      );
+      throw ApiException(message: 'Failed to create city');
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -124,18 +117,13 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   @override
   Future<bool> updateCity(String oldName, CityModel city) async {
     try {
-      final response = await apiClient.put(
-        '$_adminPath/$oldName',
-        data: city.toJson(),
-      );
-      
-      if (response.data['success'] == true) {
-        return true;
-      }
-      
-      throw ApiException(
-        message: response.data['message'] ?? 'Failed to update city',
-      );
+      // تحديث عبر جلب القائمة وتعديل العنصر ثم PUT للقائمة كاملة
+      final existing = await getCities();
+      final idx = existing.indexWhere((c) => c.name == oldName);
+      if (idx == -1) throw ApiException(message: 'City not found');
+      final List<CityModel> updated = List.of(existing);
+      updated[idx] = city;
+      return await saveCities(updated);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -145,9 +133,10 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   @override
   Future<bool> deleteCity(String name) async {
     try {
-      final response = await apiClient.delete('$_adminPath/$name');
-      
-      return response.data['success'] == true;
+      // حذف عبر إعادة حفظ القائمة بدون هذه المدينة
+      final existing = await getCities();
+      final updated = existing.where((c) => c.name != name).toList();
+      return await saveCities(updated);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -157,17 +146,9 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   @override
   Future<List<CityModel>> searchCities(String query) async {
     try {
-      final response = await apiClient.get(
-        '$_adminPath/search',
-        queryParameters: {'q': query},
-      );
-      
-      if (response.data['success'] == true) {
-        final List<dynamic> data = response.data['data'] ?? [];
-        return data.map((json) => CityModel.fromJson(json)).toList();
-      }
-      
-      return [];
+      final all = await getCities();
+      final q = query.toLowerCase();
+      return all.where((c) => c.name.toLowerCase().contains(q) || c.country.toLowerCase().contains(q)).toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -177,13 +158,18 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   @override
   Future<Map<String, dynamic>> getCitiesStatistics() async {
     try {
-      final response = await apiClient.get('$_adminPath/statistics');
-      
-      if (response.data['success'] == true) {
-        return response.data['data'] ?? {};
+      final all = await getCities();
+      final total = all.length;
+      final active = all.where((c) => c.isActive ?? true).length;
+      final byCountry = <String, int>{};
+      for (final c in all) {
+        byCountry[c.country] = (byCountry[c.country] ?? 0) + 1;
       }
-      
-      return {};
+      return {
+        'total': total,
+        'active': active,
+        'byCountry': byCountry,
+      };
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -208,12 +194,14 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
         ),
       );
       
-      if (response.data['success'] == true) {
-        final data = response.data['data'];
-        if (data is Map) {
-          return data['url'] ?? '';
+      if (response.data is Map<String, dynamic>) {
+        final map = response.data as Map<String, dynamic>;
+        if (map['success'] == true) {
+          final data = map['image'] ?? map['data'];
+          if (data is Map && data['url'] != null) {
+            return data['url'] as String;
         }
-        return '';
+        }
       }
       
       throw ApiException(
@@ -228,12 +216,29 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   @override
   Future<bool> deleteCityImage(String imageUrl) async {
     try {
-      final response = await apiClient.delete(
+      // محاولة إيجاد صورة عبر GET /api/images ثم حذفها عبر ID
+      final listResponse = await apiClient.get(
         _imagesPath,
-        queryParameters: {'url': imageUrl},
+        queryParameters: {
+          'search': imageUrl,
+          'page': 1,
+          'limit': 100,
+        },
       );
-      
-      return response.data['success'] == true;
+      if (listResponse.data is Map<String, dynamic>) {
+        final map = listResponse.data as Map<String, dynamic>;
+        final List<dynamic> images = (map['images'] as List?) ?? (map['items'] as List?) ?? const [];
+        final match = images.cast<Map<String, dynamic>?>().firstWhere(
+          (m) => m != null && (m!['url'] == imageUrl),
+          orElse: () => null,
+        );
+        if (match != null && match['id'] != null) {
+          final id = match['id'].toString();
+          final del = await apiClient.delete('$_imagesPath/$id');
+          return del.data is Map && del.data['success'] == true || del.statusCode == 204;
+        }
+      }
+      return false;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -249,31 +254,29 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
     bool? isActive,
   }) async {
     try {
-      final response = await apiClient.get(
-        '$_adminPath/paginated',
-        queryParameters: {
-          if (pageNumber != null) 'pageNumber': pageNumber,
-          if (pageSize != null) 'pageSize': pageSize,
-          if (search != null && search.isNotEmpty) 'search': search,
-          if (country != null && country.isNotEmpty) 'country': country,
-          if (isActive != null) 'isActive': isActive,
-        },
-      );
-      
-      // إذا كانت الاستجابة تحتوي على بيانات مُرَقَّمة
-      if (response.data['success'] == true && response.data['data'] != null) {
-        return PaginatedResult<CityModel>.fromJson(
-          response.data,
-          (json) => CityModel.fromJson(json),
-        );
+      final all = await getCities();
+      List<CityModel> filtered = all;
+      if (search != null && search.isNotEmpty) {
+        final s = search.toLowerCase();
+        filtered = filtered.where((c) => c.name.toLowerCase().contains(s) || c.country.toLowerCase().contains(s)).toList();
       }
-      
-      // إذا لم تكن هناك بيانات مُرَقَّمة، نعيد قائمة فارغة
-      return PaginatedResult<CityModel>(
-        items: [],
-        totalCount: 0,
-        pageNumber: pageNumber ?? 1,
-        pageSize: pageSize ?? 10,
+      if (country != null && country.isNotEmpty) {
+        final c = country.toLowerCase();
+        filtered = filtered.where((x) => x.country.toLowerCase() == c).toList();
+      }
+      if (isActive != null) {
+        filtered = filtered.where((x) => (x.isActive ?? true) == isActive).toList();
+      }
+      final pn = (pageNumber ?? 1) < 1 ? 1 : (pageNumber ?? 1);
+      final ps = (pageSize ?? 20) <= 0 ? 20 : (pageSize ?? 20);
+      final start = (pn - 1) * ps;
+      final end = (start + ps) > filtered.length ? filtered.length : (start + ps);
+      final pageItems = start < filtered.length ? filtered.sublist(start, end) : <CityModel>[];
+      return PaginatedResult(
+        items: pageItems,
+        pageNumber: pn,
+        pageSize: ps,
+        totalCount: filtered.length,
       );
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
