@@ -730,31 +730,76 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
                     ),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(colors: gradientColors),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        icon,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: AppDimensions.spaceSmall),
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: AppTextStyles.heading3.copyWith(
-                          color: AppTheme.textWhite,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isCompact = constraints.maxWidth < 220;
+                    if (isCompact) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(colors: gradientColors),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  icon,
+                                  size: 20,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: AppDimensions.spaceSmall),
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.heading3.copyWith(
+                                    color: AppTheme.textWhite,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: _buildAddButton(onAdd, gradientColors),
+                          ),
+                        ],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(colors: gradientColors),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            icon,
+                            size: 20,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                    ),
-                    _buildAddButton(onAdd, gradientColors),
-                  ],
+                        const SizedBox(width: AppDimensions.spaceSmall),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: AppTextStyles.heading3.copyWith(
+                              color: AppTheme.textWhite,
+                            ),
+                          ),
+                        ),
+                        _buildAddButton(onAdd, gradientColors),
+                      ],
+                    );
+                  },
                 ),
               ),
               
