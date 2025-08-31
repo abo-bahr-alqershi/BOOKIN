@@ -156,16 +156,15 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
     bool? forceDelete,
   }) async {
     try {
-      if (availabilityId != null) {
-        await apiClient.delete(
-          '${ApiConstants.units}/$unitId/availability/$availabilityId',
-          queryParameters: forceDelete != null ? {'forceDelete': forceDelete} : null,
-        );
-      } else if (startDate != null && endDate != null) {
+      // الـ backend يدعم الحذف بنطاق التواريخ فقط
+      if (startDate != null && endDate != null) {
         await apiClient.delete(
           '${ApiConstants.units}/$unitId/availability/${startDate.toIso8601String()}/${endDate.toIso8601String()}',
           queryParameters: forceDelete != null ? {'forceDelete': forceDelete} : null,
         );
+      } else {
+        // لا مسار لحذف بواسطة availabilityId حاليًا
+        throw ApiException(message: 'حذف التوفر يتطلب startDate و endDate. لا يوجد حذف بواسطة المعرّف حاليًا.');
       }
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -209,22 +208,8 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
     required String checkType,
   }) async {
     try {
-      final response = await apiClient.post(
-        '${ApiConstants.units}/$unitId/availability/check-conflicts',
-        data: {
-          'unitId': unitId,
-          'startDate': startDate.toIso8601String(),
-          'endDate': endDate.toIso8601String(),
-          if (startTime != null) 'startTime': startTime,
-          if (endTime != null) 'endTime': endTime,
-          'checkType': checkType,
-        },
-      );
-      
-      final List<dynamic> conflicts = response.data['conflicts'] ?? [];
-      return conflicts
-          .map((json) => BookingConflictModel.fromJson(json))
-          .toList();
+      // لا يوجد مسار check-conflicts في الـ backend الحالي، نعيد قائمة فارغة لتجنّب الأعطال
+      return <BookingConflictModel>[];
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

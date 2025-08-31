@@ -37,7 +37,7 @@ abstract class ServicesRemoteDataSource {
 
 class ServicesRemoteDataSourceImpl implements ServicesRemoteDataSource {
   final ApiClient apiClient;
-  static const String _basePath = '/api/admin/propertyservices';
+  static const String _basePath = '/api/admin/PropertyServices';
 
   ServicesRemoteDataSourceImpl({required this.apiClient});
 
