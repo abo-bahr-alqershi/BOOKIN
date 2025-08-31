@@ -250,41 +250,84 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
                 width: 1,
               ),
             ),
-            child: Row(
-              children: [
-                // Animated Logo
-                _buildAnimatedLogo(),
-                
-                const SizedBox(width: AppDimensions.spaceMedium),
-                
-                // Title
-                Expanded(
-                  child: Column(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final bool isNarrow = constraints.maxWidth < 480;
+                if (isNarrow) {
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ShaderMask(
-                        shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
-                        child: Text(
-                          'إدارة أنواع الكيانات',
-                          style: AppTextStyles.heading2.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                      Row(
+                        children: [
+                          _buildAnimatedLogo(),
+                          const SizedBox(width: AppDimensions.spaceMedium),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ShaderMask(
+                                  shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                                  child: Text(
+                                    'إدارة أنواع الكيانات',
+                                    style: AppTextStyles.heading2.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text(
+                                  'إدارة شاملة لأنواع الكيانات والوحدات والحقول الديناميكية',
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    color: AppTheme.textMuted,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                      Text(
-                        'إدارة شاملة لأنواع الكيانات والوحدات والحقول الديناميكية',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppTheme.textMuted,
-                        ),
-                      ),
+                      const SizedBox(height: AppDimensions.spaceSmall),
+                      _buildHeaderActions(),
                     ],
-                  ),
-                ),
-                
-                // Action Buttons
-                _buildHeaderActions(),
-              ],
+                  );
+                }
+                return Row(
+                  children: [
+                    // Animated Logo
+                    _buildAnimatedLogo(),
+                    const SizedBox(width: AppDimensions.spaceMedium),
+                    // Title
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ShaderMask(
+                            shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                            child: Text(
+                              'إدارة أنواع الكيانات',
+                              style: AppTextStyles.heading2.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'إدارة شاملة لأنواع الكيانات والوحدات والحقول الديناميكية',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Action Buttons
+                    _buildHeaderActions(),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -439,34 +482,82 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
   }
 
   Widget _buildHierarchicalLayout() {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Column 1: Property Types
-          Expanded(
-            flex: 3,
-            child: _buildPropertyTypesColumn(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double maxWidth = constraints.maxWidth;
+        // Wide screens: keep three columns
+        if (maxWidth >= 1100) {
+          return Padding(
+            padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: _buildPropertyTypesColumn(),
+                ),
+                const SizedBox(width: AppDimensions.spaceMedium),
+                Expanded(
+                  flex: 3,
+                  child: _buildUnitTypesColumn(),
+                ),
+                const SizedBox(width: AppDimensions.spaceMedium),
+                Expanded(
+                  flex: 4,
+                  child: _buildFieldsColumn(),
+                ),
+              ],
+            ),
+          );
+        }
+        // Medium screens: two columns on top, fields full width below
+        if (maxWidth >= 800) {
+          return Padding(
+            padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+            child: Column(
+              children: [
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: _buildPropertyTypesColumn()),
+                      const SizedBox(width: AppDimensions.spaceMedium),
+                      Expanded(child: _buildUnitTypesColumn()),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.spaceMedium),
+                Expanded(
+                  child: _buildFieldsColumn(),
+                ),
+              ],
+            ),
+          );
+        }
+        // Small screens: stack vertically in a scroll view with fixed heights
+        return Padding(
+          padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+          child: ListView(
+            physics: const BouncingScrollPhysics(),
+            children: [
+              SizedBox(
+                height: 360,
+                child: _buildPropertyTypesColumn(),
+              ),
+              const SizedBox(height: AppDimensions.spaceMedium),
+              SizedBox(
+                height: 360,
+                child: _buildUnitTypesColumn(),
+              ),
+              const SizedBox(height: AppDimensions.spaceMedium),
+              SizedBox(
+                height: 420,
+                child: _buildFieldsColumn(),
+              ),
+            ],
           ),
-          
-          const SizedBox(width: AppDimensions.spaceMedium),
-          
-          // Column 2: Unit Types
-          Expanded(
-            flex: 3,
-            child: _buildUnitTypesColumn(),
-          ),
-          
-          const SizedBox(width: AppDimensions.spaceMedium),
-          
-          // Column 3: Dynamic Fields
-          Expanded(
-            flex: 4,
-            child: _buildFieldsColumn(),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -730,31 +821,72 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
                     ),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(colors: gradientColors),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        icon,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: AppDimensions.spaceSmall),
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: AppTextStyles.heading3.copyWith(
-                          color: AppTheme.textWhite,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final bool isVeryNarrow = constraints.maxWidth < 220;
+                    if (isVeryNarrow) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(colors: gradientColors),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  icon,
+                                  size: 20,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: AppDimensions.spaceSmall),
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  style: AppTextStyles.heading3.copyWith(
+                                    color: AppTheme.textWhite,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppDimensions.spaceSmall),
+                          _buildAddButton(onAdd, gradientColors),
+                        ],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(colors: gradientColors),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            icon,
+                            size: 20,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                    ),
-                    _buildAddButton(onAdd, gradientColors),
-                  ],
+                        const SizedBox(width: AppDimensions.spaceSmall),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: AppTextStyles.heading3.copyWith(
+                              color: AppTheme.textWhite,
+                            ),
+                          ),
+                        ),
+                        _buildAddButton(onAdd, gradientColors),
+                      ],
+                    );
+                  },
                 ),
               ),
               
