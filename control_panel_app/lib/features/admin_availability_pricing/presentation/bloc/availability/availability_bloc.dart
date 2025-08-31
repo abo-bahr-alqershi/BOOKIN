@@ -9,6 +9,7 @@ import '../../../domain/usecases/availability/get_monthly_availability_usecase.d
 import '../../../domain/usecases/availability/update_availability_usecase.dart';
 import '../../../domain/usecases/availability/bulk_update_availability_usecase.dart';
 import '../../../domain/usecases/availability/check_availability_usecase.dart';
+import '../../../domain/repositories/availability_repository.dart' as availability_repo;
 
 part 'availability_event.dart';
 part 'availability_state.dart';
@@ -105,7 +106,16 @@ class AvailabilityBloc extends Bloc<AvailabilityEvent, AvailabilityState> {
       final result = await bulkUpdateAvailabilityUseCase(
         BulkUpdateAvailabilityParams(
           unitId: event.unitId,
-          periods: event.periods,
+          periods: event.periods
+              .map((p) => availability_repo.AvailabilityPeriod(
+                    startDate: p.startDate,
+                    endDate: p.endDate,
+                    status: p.status,
+                    reason: p.reason,
+                    notes: p.notes,
+                    overwriteExisting: p.overwriteExisting,
+                  ))
+              .toList(),
           overwriteExisting: event.overwriteExisting,
         ),
       );

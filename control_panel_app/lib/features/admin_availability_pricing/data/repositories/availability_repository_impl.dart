@@ -7,12 +7,12 @@ import '../../../../core/network/network_info.dart';
 import '../../domain/entities/availability.dart';
 import '../../domain/entities/unit_availability.dart';
 import '../../domain/entities/booking_conflict.dart';
-import '../../domain/repositories/availability_repository.dart';
+import '../../domain/repositories/availability_repository.dart' as availability_repo;
 import '../datasources/availability_remote_datasource.dart';
 import '../datasources/availability_local_datasource.dart';
 import '../models/availability_model.dart';
 
-class AvailabilityRepositoryImpl implements AvailabilityRepository {
+class AvailabilityRepositoryImpl implements availability_repo.AvailabilityRepository {
   final AvailabilityRemoteDataSource remoteDataSource;
   final AvailabilityLocalDataSource localDataSource;
   final NetworkInfo networkInfo;
@@ -93,7 +93,7 @@ class AvailabilityRepositoryImpl implements AvailabilityRepository {
   @override
   Future<Either<Failure, void>> bulkUpdateAvailability({
     required String unitId,
-    required List<AvailabilityPeriod> periods,
+    required List<availability_repo.AvailabilityPeriod> periods,
     required bool overwriteExisting,
   }) async {
     if (await networkInfo.isConnected) {
@@ -177,7 +177,7 @@ class AvailabilityRepositoryImpl implements AvailabilityRepository {
   }
 
   @override
-  Future<Either<Failure, CheckAvailabilityResponse>> checkAvailability({
+  Future<Either<Failure, availability_repo.CheckAvailabilityResponse>> checkAvailability({
     required String unitId,
     required DateTime checkIn,
     required DateTime checkOut,
