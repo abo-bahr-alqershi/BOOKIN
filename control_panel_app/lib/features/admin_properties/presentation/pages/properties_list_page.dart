@@ -243,42 +243,47 @@ class _PropertiesListPageState extends State<PropertiesListPage>
               ),
               
               // Action Buttons
-              Row(
-                children: [
-                  _buildActionButton(
-                    icon: Icons.filter_list_rounded,
-                    label: 'فلتر',
-                    onTap: () => setState(() => _showFilters = !_showFilters),
-                    isActive: _showFilters,
+              Flexible(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildActionButton(
+                        icon: Icons.filter_list_rounded,
+                        label: 'فلتر',
+                        onTap: () => setState(() => _showFilters = !_showFilters),
+                        isActive: _showFilters,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildActionButton(
+                        icon: Icons.grid_view_rounded,
+                        label: 'شبكة',
+                        onTap: () => setState(() => _selectedView = 'grid'),
+                        isActive: _selectedView == 'grid',
+                      ),
+                      const SizedBox(width: 8),
+                      _buildActionButton(
+                        icon: Icons.table_chart_rounded,
+                        label: 'جدول',
+                        onTap: () => setState(() => _selectedView = 'table'),
+                        isActive: _selectedView == 'table',
+                      ),
+                      const SizedBox(width: 8),
+                      _buildActionButton(
+                        icon: Icons.map_rounded,
+                        label: 'خريطة',
+                        onTap: () => setState(() => _selectedView = 'map'),
+                        isActive: _selectedView == 'map',
+                      ),
+                      const SizedBox(width: 16),
+                      _buildPrimaryActionButton(
+                        icon: Icons.add_rounded,
+                        label: 'إضافة عقار',
+                        onTap: () => context.push('/admin/properties/create'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  _buildActionButton(
-                    icon: Icons.grid_view_rounded,
-                    label: 'شبكة',
-                    onTap: () => setState(() => _selectedView = 'grid'),
-                    isActive: _selectedView == 'grid',
-                  ),
-                  const SizedBox(width: 8),
-                  _buildActionButton(
-                    icon: Icons.table_chart_rounded,
-                    label: 'جدول',
-                    onTap: () => setState(() => _selectedView = 'table'),
-                    isActive: _selectedView == 'table',
-                  ),
-                  const SizedBox(width: 8),
-                  _buildActionButton(
-                    icon: Icons.map_rounded,
-                    label: 'خريطة',
-                    onTap: () => setState(() => _selectedView = 'map'),
-                    isActive: _selectedView == 'map',
-                  ),
-                  const SizedBox(width: 16),
-                  _buildPrimaryActionButton(
-                    icon: Icons.add_rounded,
-                    label: 'إضافة عقار',
-                    onTap: () => context.push('/admin/properties/create'),
-                  ),
-                ],
+                ),
               ),
             ],
           ),

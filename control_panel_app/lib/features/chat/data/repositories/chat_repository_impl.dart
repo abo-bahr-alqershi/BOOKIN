@@ -76,6 +76,13 @@ Future<Either<Failure, Conversation>> createConversation({
         return const Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
       }
     } catch (e) {
+      // حاول إعادة الكاش عند حدوث خطأ خادم/شبكة
+      try {
+        final cachedConversations = await localDataSource.getCachedConversations();
+        if (cachedConversations != null && cachedConversations.isNotEmpty) {
+          return Right(cachedConversations);
+        }
+      } catch (_) {}
       return ErrorHandler.handle(e);
     }
   }

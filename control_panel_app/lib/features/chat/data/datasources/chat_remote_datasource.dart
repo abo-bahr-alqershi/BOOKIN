@@ -852,9 +852,15 @@ Future<MessageModel> sendMessage({
     } on DioException catch (e, s) {
       // معالجة متوقعة في حالة عدم وجود إعدادات (أول مرة) => إعادة افتراضي بدون تسجيل كخطأ حرج
       final msg = e.response?.data is Map ? (e.response?.data['message']?.toString() ?? '') : '';
-      final notFound = e.response?.statusCode == 404 || msg.contains('إعدادات');
+      final code = e.response?.statusCode;
+      final notFound = code == 404 || msg.contains('إعدادات');
       if (notFound) {
-        logRequestSuccess('$requestName.not_found_fallback', statusCode: e.response?.statusCode);
+        logRequestSuccess('$requestName.not_found_fallback', statusCode: code);
+        return const ChatSettingsModel(id: '', userId: '');
+      }
+      // فallback في أخطاء الخادم 5xx
+      if (code != null && code >= 500 && code < 600) {
+        logRequestError('$requestName.server_fallback', e, stackTrace: s);
         return const ChatSettingsModel(id: '', userId: '');
       }
       logRequestError(requestName, e, stackTrace: s);
@@ -863,6 +869,10 @@ Future<MessageModel> sendMessage({
       final notFound = e.statusCode == 404 || e.message.contains('إعدادات');
       if (notFound) {
         logRequestSuccess('$requestName.not_found_fallback', statusCode: e.statusCode);
+        return const ChatSettingsModel(id: '', userId: '');
+      }
+      if (e.statusCode != null && e.statusCode! >= 500 && e.statusCode! < 600) {
+        logRequestError('$requestName.server_fallback', e, stackTrace: s);
         return const ChatSettingsModel(id: '', userId: '');
       }
       logRequestError(requestName, e, stackTrace: s);

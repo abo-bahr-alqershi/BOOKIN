@@ -187,6 +187,11 @@ class AppRouter {
           path: '/conversations',
           pageBuilder: (context, state) => fadeTransitionPage(child: const ConversationsPage()),
         ),
+        // Alias to support /chat/conversations
+        GoRoute(
+          path: '/chat/conversations',
+          pageBuilder: (context, state) => fadeTransitionPage(child: const ConversationsPage()),
+        ),
 
         // Admin Hub
         GoRoute(
