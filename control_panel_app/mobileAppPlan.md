@@ -702,6 +702,50 @@ lib/
 │   │           ├─ notification_filter_widget.dart
 │   │           └─ notification_item_widget.dart
 │   │
+│   │
+│   │
+│   └── home/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   │   ├── home_remote_datasource.dart
+│   │   │   │   └── home_local_datasource.dart
+│   │   │   ├── models/
+│   │   │   │   ├── dashboard_stats_model.dart
+│   │   │   │   ├── recent_activity_model.dart
+│   │   │   │   ├── quick_action_model.dart
+│   │   │   │   └── analytics_data_model.dart
+│   │   │   └── repositories/
+│   │   │       └── home_repository_impl.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   ├── dashboard_stats.dart
+│   │   │   │   ├── recent_activity.dart
+│   │   │   │   ├── quick_action.dart
+│   │   │   │   └── analytics_data.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── home_repository.dart
+│   │   │   └── usecases/
+│   │   │       ├── get_dashboard_stats_usecase.dart
+│   │   │       ├── get_recent_activities_usecase.dart
+│   │   │       ├── get_quick_actions_usecase.dart
+│   │   │       └── get_analytics_data_usecase.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── home_bloc.dart
+│   │       │   ├── home_event.dart
+│   │       │   └── home_state.dart
+│   │       ├── pages/
+│   │       │   └── admin_home_page.dart
+│   │       └── widgets/
+│   │           ├── futuristic_stats_grid.dart
+│   │           ├── recent_activities_timeline.dart
+│   │           ├── quick_actions_panel.dart
+│   │           ├── performance_chart_card.dart
+│   │           ├── activity_heatmap_widget.dart
+│   │           └── animated_counter_widget.dart
+│   │
+│   │
+│   │
 │   └── settings/
 │       ├── data/
 │       │   ├── datasources/

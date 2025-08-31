@@ -73,6 +73,12 @@ import 'package:bookn_cp_app/features/admin_users/presentation/bloc/user_details
 import 'package:bookn_cp_app/features/admin_availability_pricing/presentation/pages/availability_pricing_page.dart';
 import 'package:bookn_cp_app/features/admin_availability_pricing/presentation/bloc/availability/availability_bloc.dart';
 import 'package:bookn_cp_app/features/admin_availability_pricing/presentation/bloc/pricing/pricing_bloc.dart';
+import 'package:bookn_cp_app/features/onboarding/presentation/pages/select_city_currency_page.dart';
+import 'package:bookn_cp_app/features/notifications/presentation/pages/notifications_page.dart';
+import 'package:bookn_cp_app/features/notifications/presentation/pages/notification_settings_page.dart';
+import 'package:bookn_cp_app/features/admin_hub/presentation/pages/admin_hub_page.dart';
+import 'route_animations.dart';
+import 'route_guards.dart' as guards;
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
@@ -86,7 +92,8 @@ class AppRouter {
         final goingToRegister = state.matchedLocation == '/register';
         final goingToForgot = state.matchedLocation == '/forgot-password';
         final isSplash = state.matchedLocation == '/';
-        final isProtected = _protectedPaths.any((p) => state.matchedLocation.startsWith(p));
+        final path = state.matchedLocation;
+        final isProtected = guards.isProtectedPath(path);
 
         if (isSplash) return null;
 
@@ -95,6 +102,11 @@ class AppRouter {
         }
 
         if (authState is AuthAuthenticated && (goingToLogin || goingToRegister || goingToForgot)) {
+          return '/main';
+        }
+
+        // Optional: Admin guard (just redirect to main if not admin)
+        if (guards.isAdminPath(path) && !guards.isAdmin(authState)) {
           return '/main';
         }
 
@@ -107,12 +119,14 @@ class AppRouter {
             return const SplashScreen();
           },
         ),
-        // Onboarding removed
+        // Onboarding
+        GoRoute(
+          path: '/onboarding/select-city-currency',
+          pageBuilder: (context, state) => slideUpTransitionPage(child: const SelectCityCurrencyPage()),
+        ),
         GoRoute(
           path: '/main',
-          builder: (BuildContext context, GoRouterState state) {
-            return const MainScreen();
-          },
+          pageBuilder: (context, state) => fadeTransitionPage(child: const MainScreen()),
         ),
         GoRoute(
           path: '/login',
@@ -171,9 +185,13 @@ class AppRouter {
         // قائمة المحادثات
         GoRoute(
           path: '/conversations',
-          builder: (context, state) {
-            return const ConversationsPage();
-          },
+          pageBuilder: (context, state) => fadeTransitionPage(child: const ConversationsPage()),
+        ),
+
+        // Admin Hub
+        GoRoute(
+          path: '/admin',
+          pageBuilder: (context, state) => scaleFadeTransitionPage(child: const AdminHubPage()),
         ),
 
         // Admin Units - list
@@ -339,6 +357,16 @@ class AppRouter {
               child: const ac_pages.CurrenciesManagementPage(),
             );
           },
+        ),
+
+        // Notifications
+        GoRoute(
+          path: '/notifications',
+          pageBuilder: (context, state) => fadeTransitionPage(child: const NotificationsPage()),
+        ),
+        GoRoute(
+          path: '/notifications/settings',
+          pageBuilder: (context, state) => slideUpTransitionPage(child: const NotificationSettingsPage()),
         ),
 
         // Admin Cities
