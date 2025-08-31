@@ -51,11 +51,45 @@ class PropertyTypesRemoteDataSourceImpl implements PropertyTypesRemoteDataSource
           'pageSize': pageSize,
         },
       );
-      
-      return PaginatedResult<PropertyTypeModel>.fromJson(
-        response.data,
-        (json) => PropertyTypeModel.fromJson(json),
-      );
+      // The backend may return either a bare paginated object or an envelope { success, data, ... }
+      dynamic body = response.data;
+      if (body is Map<String, dynamic> && body.containsKey('success')) {
+        final result = ResultDto<Map<String, dynamic>>.fromJson(body, (j) => j);
+        if (!result.isSuccess || result.data == null) {
+          throw ServerException(result.message ?? 'Failed to fetch property types');
+        }
+        body = result.data;
+      }
+
+      if (body is Map<String, dynamic>) {
+        return PaginatedResult<PropertyTypeModel>.fromJson(
+          body,
+          (json) => PropertyTypeModel.fromJson(json as Map<String, dynamic>),
+        );
+      }
+
+      if (body is List) {
+        // Fallback: list without pagination
+        final items = body
+            .map<PropertyTypeModel>((e) => e is Map<String, dynamic>
+                ? PropertyTypeModel.fromJson(e)
+                : PropertyTypeModel(
+                    id: '',
+                    name: e?.toString() ?? '',
+                    description: '',
+                    defaultAmenities: '',
+                    icon: 'home',
+                  ))
+            .toList();
+        return PaginatedResult<PropertyTypeModel>(
+          items: items,
+          pageNumber: pageNumber,
+          pageSize: pageSize,
+          totalCount: items.length,
+        );
+      }
+
+      throw ServerException('Unexpected response format for property types');
     } on DioException catch (e) {
       throw ServerException(e.message ?? 'Server error occurred');
     }
