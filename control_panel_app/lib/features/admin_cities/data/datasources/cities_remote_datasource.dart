@@ -216,14 +216,34 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   @override
   Future<bool> deleteCityImage(String imageUrl) async {
     try {
-      // لا يوجد مسار حذف حسب URL؛ يحتاج ID عادةً. سنعيد false إن لم يكن مدعوماً
-      // بديل: يمكن جلب الصور ثم حذف المطابق ل URL إذا توفر id
+      // محاولة إيجاد صورة عبر GET /api/images ثم حذفها عبر ID
+      final listResponse = await apiClient.get(
+        _imagesPath,
+        queryParameters: {
+          'search': imageUrl,
+          'page': 1,
+          'limit': 100,
+        },
+      );
+      if (listResponse.data is Map<String, dynamic>) {
+        final map = listResponse.data as Map<String, dynamic>;
+        final List<dynamic> images = (map['images'] as List?) ?? (map['items'] as List?) ?? const [];
+        final match = images.cast<Map<String, dynamic>?>().firstWhere(
+          (m) => m != null && (m!['url'] == imageUrl),
+          orElse: () => null,
+        );
+        if (match != null && match['id'] != null) {
+          final id = match['id'].toString();
+          final del = await apiClient.delete('$_imagesPath/$id');
+          return del.data is Map && del.data['success'] == true || del.statusCode == 204;
+        }
+      }
       return false;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
   }
-
+ 
   /// 📑 الحصول على المدن بصفحات
   @override
   Future<PaginatedResult<CityModel>> getCitiesPaginated({
@@ -234,31 +254,29 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
     bool? isActive,
   }) async {
     try {
-      final response = await apiClient.get(
-        '$_adminPath/paginated',
-        queryParameters: {
-          if (pageNumber != null) 'pageNumber': pageNumber,
-          if (pageSize != null) 'pageSize': pageSize,
-          if (search != null && search.isNotEmpty) 'search': search,
-          if (country != null && country.isNotEmpty) 'country': country,
-          if (isActive != null) 'isActive': isActive,
-        },
-      );
-      
-      // إذا كانت الاستجابة تحتوي على بيانات مُرَقَّمة
-      if (response.data['success'] == true && response.data['data'] != null) {
-        return PaginatedResult<CityModel>.fromJson(
-          response.data,
-          (json) => CityModel.fromJson(json),
-        );
+      final all = await getCities();
+      List<CityModel> filtered = all;
+      if (search != null && search.isNotEmpty) {
+        final s = search.toLowerCase();
+        filtered = filtered.where((c) => c.name.toLowerCase().contains(s) || c.country.toLowerCase().contains(s)).toList();
       }
-      
-      // إذا لم تكن هناك بيانات مُرَقَّمة، نعيد قائمة فارغة
-      return PaginatedResult<CityModel>(
-        items: [],
-        totalCount: 0,
-        pageNumber: pageNumber ?? 1,
-        pageSize: pageSize ?? 10,
+      if (country != null && country.isNotEmpty) {
+        final c = country.toLowerCase();
+        filtered = filtered.where((x) => x.country.toLowerCase() == c).toList();
+      }
+      if (isActive != null) {
+        filtered = filtered.where((x) => (x.isActive ?? true) == isActive).toList();
+      }
+      final pn = (pageNumber ?? 1) < 1 ? 1 : (pageNumber ?? 1);
+      final ps = (pageSize ?? 20) <= 0 ? 20 : (pageSize ?? 20);
+      final start = (pn - 1) * ps;
+      final end = (start + ps) > filtered.length ? filtered.length : (start + ps);
+      final pageItems = start < filtered.length ? filtered.sublist(start, end) : <CityModel>[];
+      return PaginatedResult(
+        items: pageItems,
+        pageNumber: pn,
+        pageSize: ps,
+        totalCount: filtered.length,
       );
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
