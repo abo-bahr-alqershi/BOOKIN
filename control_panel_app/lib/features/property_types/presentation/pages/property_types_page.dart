@@ -221,7 +221,7 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
           
           // Main Content Area
           Expanded(
-            child: _buildHierarchicalLayout(),
+            child: _buildResponsiveLayout(),
           ),
         ],
       ),
@@ -230,7 +230,7 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
 
   Widget _buildFuturisticHeader() {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+      padding: EdgeInsets.all(_getResponsivePadding(context)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
         child: BackdropFilter(
@@ -250,55 +250,99 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
                 width: 1,
               ),
             ),
-            child: Row(
-              children: [
-                // Animated Logo
-                _buildAnimatedLogo(),
-                
-                const SizedBox(width: AppDimensions.spaceMedium),
-                
-                // Title
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ShaderMask(
-                        shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
-                        child: Text(
-                          'إدارة أنواع الكيانات',
-                          style: AppTextStyles.heading2.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        'إدارة شاملة لأنواع الكيانات والوحدات والحقول الديناميكية',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppTheme.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                // Action Buttons
-                _buildHeaderActions(),
-              ],
-            ),
+            child: _buildResponsiveHeader(),
           ),
         ),
       ),
     );
   }
 
+  Widget _buildResponsiveHeader() {
+    final isSmallScreen = MediaQuery.of(context).size.width < 600;
+    
+    if (isSmallScreen) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _buildAnimatedLogo(),
+              const Spacer(),
+              _buildHeaderActions(),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.spaceSmall),
+          ShaderMask(
+            shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+            child: Text(
+              'إدارة أنواع الكيانات',
+              style: _getResponsiveTextStyle(context, AppTextStyles.heading2).copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Text(
+            'إدارة شاملة لأنواع الكيانات والوحدات',
+            style: _getResponsiveTextStyle(context, AppTextStyles.bodySmall).copyWith(
+              color: AppTheme.textMuted,
+            ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
+          ),
+        ],
+      );
+    }
+    
+    return Row(
+      children: [
+        // Animated Logo
+        _buildAnimatedLogo(),
+        
+        const SizedBox(width: AppDimensions.spaceMedium),
+        
+        // Title
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ShaderMask(
+                shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                child: Text(
+                  'إدارة أنواع الكيانات',
+                  style: _getResponsiveTextStyle(context, AppTextStyles.heading2).copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Text(
+                'إدارة شاملة لأنواع الكيانات والوحدات والحقول الديناميكية',
+                style: _getResponsiveTextStyle(context, AppTextStyles.bodySmall).copyWith(
+                  color: AppTheme.textMuted,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ],
+          ),
+        ),
+        
+        // Action Buttons
+        _buildHeaderActions(),
+      ],
+    );
+  }
+
   Widget _buildAnimatedLogo() {
+    final logoSize = _getResponsiveLogoSize(context);
+    
     return AnimatedBuilder(
       animation: _glowAnimation,
       builder: (context, child) {
         return Container(
-          width: 56,
-          height: 56,
+          width: logoSize,
+          height: logoSize,
           decoration: BoxDecoration(
             gradient: AppTheme.primaryGradient,
             shape: BoxShape.circle,
@@ -310,10 +354,10 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
               ),
             ],
           ),
-          child: const Icon(
+          child: Icon(
             Icons.apartment_rounded,
             color: Colors.white,
-            size: 28,
+            size: logoSize * 0.5,
           ),
         );
       },
@@ -346,11 +390,13 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
     required IconData icon,
     required VoidCallback onTap,
   }) {
+    final buttonSize = _getResponsiveButtonSize(context);
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 40,
-        height: 40,
+        width: buttonSize,
+        height: buttonSize,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -366,7 +412,7 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
         ),
         child: Icon(
           icon,
-          size: 20,
+          size: buttonSize * 0.5,
           color: AppTheme.primaryBlue,
         ),
       ),
@@ -374,9 +420,11 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
   }
 
   Widget _buildStatsSection() {
+    final isSmallScreen = MediaQuery.of(context).size.width < 600;
+    
     return Container(
-      height: 120,
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLarge),
+      height: isSmallScreen ? 100 : 120,
+      padding: EdgeInsets.symmetric(horizontal: _getResponsivePadding(context)),
       child: BlocBuilder<PropertyTypesBloc, PropertyTypesState>(
         builder: (context, propertyState) {
           return BlocBuilder<UnitTypesBloc, UnitTypesState>(
@@ -389,6 +437,54 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
                       ? unitState.unitTypes.length : 0;
                   final fieldCount = fieldState is UnitTypeFieldsLoaded 
                       ? fieldState.fields.length : 0;
+                  
+                  if (isSmallScreen) {
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 150,
+                            child: FuturisticStatsCard(
+                              title: 'الكيانات',
+                              value: propertyCount.toString(),
+                              icon: Icons.business_rounded,
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF4FACFE), Color(0xFF00F2FE)],
+                              ),
+                              animationDelay: const Duration(milliseconds: 0),
+                            ),
+                          ),
+                          const SizedBox(width: AppDimensions.spaceSmall),
+                          SizedBox(
+                            width: 150,
+                            child: FuturisticStatsCard(
+                              title: 'الوحدات',
+                              value: unitCount.toString(),
+                              icon: Icons.home_rounded,
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                              ),
+                              animationDelay: const Duration(milliseconds: 100),
+                            ),
+                          ),
+                          const SizedBox(width: AppDimensions.spaceSmall),
+                          SizedBox(
+                            width: 150,
+                            child: FuturisticStatsCard(
+                              title: 'الحقول',
+                              value: fieldCount.toString(),
+                              icon: Icons.dynamic_form_rounded,
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFF093FB), Color(0xFFF5576C)],
+                              ),
+                              animationDelay: const Duration(milliseconds: 200),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                   
                   return Row(
                     children: [
@@ -438,9 +534,105 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
     );
   }
 
-  Widget _buildHierarchicalLayout() {
+  Widget _buildResponsiveLayout() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    if (screenWidth < 768) {
+      // Mobile Layout - Single Column with Tabs
+      return _buildMobileLayout();
+    } else if (screenWidth < 1200) {
+      // Tablet Layout - Two Columns
+      return _buildTabletLayout();
+    } else {
+      // Desktop Layout - Three Columns
+      return _buildDesktopLayout();
+    }
+  }
+
+  Widget _buildMobileLayout() {
+    return DefaultTabController(
+      length: 3,
+      child: Column(
+        children: [
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: _getResponsivePadding(context)),
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+            ),
+            child: TabBar(
+              indicatorColor: AppTheme.primaryBlue,
+              indicatorWeight: 3,
+              labelColor: AppTheme.primaryBlue,
+              unselectedLabelColor: AppTheme.textMuted,
+              labelStyle: _getResponsiveTextStyle(context, AppTextStyles.bodySmall),
+              tabs: const [
+                Tab(text: 'الكيانات', icon: Icon(Icons.business_rounded, size: 16)),
+                Tab(text: 'الوحدات', icon: Icon(Icons.home_rounded, size: 16)),
+                Tab(text: 'الحقول', icon: Icon(Icons.dynamic_form_rounded, size: 16)),
+              ],
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(_getResponsivePadding(context)),
+                  child: _buildPropertyTypesColumn(),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(_getResponsivePadding(context)),
+                  child: _buildUnitTypesColumn(),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(_getResponsivePadding(context)),
+                  child: _buildFieldsColumn(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabletLayout() {
     return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+      padding: EdgeInsets.all(_getResponsivePadding(context)),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Column 1: Property Types
+          Expanded(
+            flex: 1,
+            child: _buildPropertyTypesColumn(),
+          ),
+          
+          SizedBox(width: _getResponsiveSpacing(context)),
+          
+          // Column 2: Unit Types & Fields
+          Expanded(
+            flex: 1,
+            child: Column(
+              children: [
+                Expanded(
+                  child: _buildUnitTypesColumn(),
+                ),
+                SizedBox(height: _getResponsiveSpacing(context)),
+                Expanded(
+                  child: _buildFieldsColumn(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopLayout() {
+    return Padding(
+      padding: EdgeInsets.all(_getResponsivePadding(context)),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -450,7 +642,7 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
             child: _buildPropertyTypesColumn(),
           ),
           
-          const SizedBox(width: AppDimensions.spaceMedium),
+          SizedBox(width: _getResponsiveSpacing(context)),
           
           // Column 2: Unit Types
           Expanded(
@@ -458,7 +650,7 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
             child: _buildUnitTypesColumn(),
           ),
           
-          const SizedBox(width: AppDimensions.spaceMedium),
+          SizedBox(width: _getResponsiveSpacing(context)),
           
           // Column 3: Dynamic Fields
           Expanded(
@@ -694,6 +886,8 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
     required VoidCallback onAdd,
     required Widget child,
   }) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 600;
+    
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -716,9 +910,9 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Column(
             children: [
-              // Header
+              // Header - Fixed the overflow issue here
               Container(
-                padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+                padding: EdgeInsets.all(_getResponsiveColumnPadding(context)),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: gradientColors.map((c) => c.withOpacity(0.1)).toList(),
@@ -732,28 +926,33 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
                 ),
                 child: Row(
                   children: [
+                    // Icon Container
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: EdgeInsets.all(isSmallScreen ? 6 : 8),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(colors: gradientColors),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 10),
                       ),
                       child: Icon(
                         icon,
-                        size: 20,
+                        size: isSmallScreen ? 16 : 20,
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(width: AppDimensions.spaceSmall),
+                    SizedBox(width: isSmallScreen ? 6 : 8),
+                    // Title - Make it flexible to prevent overflow
                     Expanded(
                       child: Text(
                         title,
-                        style: AppTextStyles.heading3.copyWith(
+                        style: _getResponsiveTextStyle(context, AppTextStyles.heading3).copyWith(
                           color: AppTheme.textWhite,
                         ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                     ),
-                    _buildAddButton(onAdd, gradientColors),
+                    // Add Button - Make it responsive
+                    _buildResponsiveAddButton(onAdd, gradientColors),
                   ],
                 ),
               ),
@@ -761,7 +960,7 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
               // Content
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+                  padding: EdgeInsets.all(_getResponsiveColumnPadding(context)),
                   child: child,
                 ),
               ),
@@ -772,38 +971,47 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
     );
   }
 
-  Widget _buildAddButton(VoidCallback onTap, List<Color> colors) {
+  Widget _buildResponsiveAddButton(VoidCallback onTap, List<Color> colors) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 600;
+    
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
         onTap();
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 6,
+        padding: EdgeInsets.symmetric(
+          horizontal: isSmallScreen ? 8 : 12,
+          vertical: isSmallScreen ? 4 : 6,
         ),
         decoration: BoxDecoration(
           gradient: LinearGradient(colors: colors),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(isSmallScreen ? 6 : 8),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
+        child: isSmallScreen 
+          ? Icon(
               Icons.add_rounded,
               size: 16,
               color: Colors.white,
+            )
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.add_rounded,
+                  size: 16,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'إضافة',
+                  style: AppTextStyles.buttonSmall.copyWith(
+                    color: Colors.white,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 4),
-            Text(
-              'إضافة',
-              style: AppTextStyles.buttonSmall.copyWith(
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -826,12 +1034,12 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
       ),
       child: TextField(
         controller: _searchController,
-        style: AppTextStyles.bodySmall.copyWith(
+        style: _getResponsiveTextStyle(context, AppTextStyles.bodySmall).copyWith(
           color: AppTheme.textWhite,
         ),
         decoration: InputDecoration(
           hintText: 'البحث في الحقول...',
-          hintStyle: AppTextStyles.caption.copyWith(
+          hintStyle: _getResponsiveTextStyle(context, AppTextStyles.caption).copyWith(
             color: AppTheme.textMuted,
           ),
           border: InputBorder.none,
@@ -879,7 +1087,7 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
           const SizedBox(height: 12),
           Text(
             message,
-            style: AppTextStyles.bodyMedium.copyWith(
+            style: _getResponsiveTextStyle(context, AppTextStyles.bodyMedium).copyWith(
               color: AppTheme.error,
             ),
             textAlign: TextAlign.center,
@@ -902,13 +1110,59 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
           const SizedBox(height: 12),
           Text(
             message,
-            style: AppTextStyles.bodyMedium.copyWith(
+            style: _getResponsiveTextStyle(context, AppTextStyles.bodyMedium).copyWith(
               color: AppTheme.textMuted,
             ),
           ),
         ],
       ),
     );
+  }
+
+  // Responsive Helper Functions
+  double _getResponsivePadding(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width < 600) return AppDimensions.paddingSmall;
+    if (width < 1200) return AppDimensions.paddingMedium;
+    return AppDimensions.paddingLarge;
+  }
+
+  double _getResponsiveColumnPadding(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width < 600) return AppDimensions.paddingSmall;
+    return AppDimensions.paddingMedium;
+  }
+
+  double _getResponsiveSpacing(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width < 600) return AppDimensions.spaceSmall;
+    if (width < 1200) return AppDimensions.spaceMedium;
+    return AppDimensions.spaceLarge;
+  }
+
+  double _getResponsiveLogoSize(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width < 600) return 40;
+    if (width < 1200) return 48;
+    return 56;
+  }
+
+  double _getResponsiveButtonSize(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width < 600) return 32;
+    if (width < 1200) return 36;
+    return 40;
+  }
+
+  TextStyle _getResponsiveTextStyle(BuildContext context, TextStyle baseStyle) {
+    final width = MediaQuery.of(context).size.width;
+    if (width < 600) {
+      return baseStyle.copyWith(fontSize: baseStyle.fontSize! * 0.85);
+    }
+    if (width < 1200) {
+      return baseStyle.copyWith(fontSize: baseStyle.fontSize! * 0.95);
+    }
+    return baseStyle;
   }
 
   void _showPropertyTypeModal({PropertyType? propertyType}) {
@@ -1035,13 +1289,13 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
         ),
         title: Text(
           title,
-          style: AppTextStyles.heading3.copyWith(
+          style: _getResponsiveTextStyle(context, AppTextStyles.heading3).copyWith(
             color: AppTheme.textWhite,
           ),
         ),
         content: Text(
           message,
-          style: AppTextStyles.bodyMedium.copyWith(
+          style: _getResponsiveTextStyle(context, AppTextStyles.bodyMedium).copyWith(
             color: AppTheme.textLight,
           ),
         ),
@@ -1050,7 +1304,7 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               'إلغاء',
-              style: AppTextStyles.buttonMedium.copyWith(
+              style: _getResponsiveTextStyle(context, AppTextStyles.buttonMedium).copyWith(
                 color: AppTheme.textMuted,
               ),
             ),
@@ -1062,7 +1316,7 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
             },
             child: Text(
               'حذف',
-              style: AppTextStyles.buttonMedium.copyWith(
+              style: _getResponsiveTextStyle(context, AppTextStyles.buttonMedium).copyWith(
                 color: AppTheme.error,
               ),
             ),
