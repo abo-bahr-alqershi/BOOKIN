@@ -26,7 +26,7 @@ class ApiClient {
     
     _dio.interceptors.addAll([
       AuthInterceptor(),
-      ErrorInterceptor(),
+      ErrorInterceptor(_dio),
       if (const bool.fromEnvironment('DEBUG')) 
         PrettyDioLogger(
           requestHeader: true,

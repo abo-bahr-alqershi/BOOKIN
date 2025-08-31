@@ -181,6 +181,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           'refreshToken': refreshToken,
           'logoutFromAllDevices': logoutFromAllDevices,
         },
+        options: Options(
+          extra: {
+            'skipRefresh': true,
+            'skipAuth': true,
+          },
+        ),
       );
       logRequestSuccess(requestName, statusCode: response.statusCode);
       final resultDto = ResultDtoVoid.fromJson(response.data);
@@ -248,6 +254,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           'accessToken': accessToken,
           'refreshToken': refreshToken,
         },
+        options: Options(
+          extra: {
+            'skipAuth': true,
+            'skipRefresh': true,
+          },
+        ),
       );
 
       logRequestSuccess(requestName, statusCode: response.statusCode);
