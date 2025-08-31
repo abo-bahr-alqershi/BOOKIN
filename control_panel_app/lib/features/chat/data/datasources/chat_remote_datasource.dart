@@ -632,7 +632,7 @@ Future<MessageModel> sendMessage({
       });
 
       final response = await apiClient.upload(
-        '/api/common/chat/attachments',
+        '/api/common/chat/upload',
         formData: formData,
         options: Options(
           headers: {
@@ -644,8 +644,12 @@ Future<MessageModel> sendMessage({
 
       logRequestSuccess(requestName, statusCode: response.statusCode);
 
-      if (response.data['success'] == true && response.data['data'] != null) {
-        return AttachmentModel.fromJson(response.data['data']);
+      if (response.data is Map<String, dynamic>) {
+        final map = response.data as Map<String, dynamic>;
+        final dynamic payload = map['data'] ?? map['attachment'];
+        if (map['success'] == true && payload != null) {
+          return AttachmentModel.fromJson(payload as Map<String, dynamic>);
+        }
       }
       throw ServerException(response.data['message'] ?? 'فشل رفع المرفق');
     } on DioException catch (e, s) {

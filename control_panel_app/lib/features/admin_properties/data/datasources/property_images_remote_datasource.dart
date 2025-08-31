@@ -25,7 +25,7 @@ abstract class PropertyImagesRemoteDataSource {
 
 class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSource {
   final ApiClient apiClient;
-  static const String _baseEndpoint = '/api/admin/properties';
+  static const String _imagesEndpoint = '/api/images';
   
   PropertyImagesRemoteDataSourceImpl({required this.apiClient});
   
@@ -51,7 +51,7 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
       });
       
       final response = await apiClient.post(
-        '$_baseEndpoint/$propertyId/images/upload',
+        '$_imagesEndpoint/upload',
         data: formData,
         options: Options(
           headers: {
@@ -60,11 +60,20 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
         ),
       );
       
-      if (response.data['success'] == true) {
-        return PropertyImageModel.fromJson(response.data['data']);
-      } else {
-        throw ServerException(response.data['message'] ?? 'Failed to upload image');
+      if (response.data is Map<String, dynamic>) {
+        final map = response.data as Map<String, dynamic>;
+        if (map['success'] == true && map['image'] != null) {
+          return PropertyImageModel.fromJson(map['image']);
+        }
+        // بعض البيئات قد ترجع تحت data
+        if (map['success'] == true && map['data'] != null) {
+          final data = map['data'];
+          if (data is Map<String, dynamic> && data.containsKey('url')) {
+            return PropertyImageModel.fromJson(data);
+          }
+        }
       }
+      throw ServerException(response.data['message'] ?? 'Failed to upload image');
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to upload image');
     }
@@ -73,14 +82,16 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   @override
   Future<List<PropertyImageModel>> getPropertyImages(String propertyId) async {
     try {
-      final response = await apiClient.get('$_baseEndpoint/$propertyId/images');
+      final response = await apiClient.get('$_imagesEndpoint', queryParameters: {
+        'propertyId': propertyId,
+      });
       
-      if (response.data['success'] == true) {
-        final List<dynamic> data = response.data['data'];
-        return data.map((json) => PropertyImageModel.fromJson(json)).toList();
-      } else {
-        throw ServerException(response.data['message'] ?? 'Failed to get property images');
+      if (response.data is Map<String, dynamic>) {
+        final map = response.data as Map<String, dynamic>;
+        final List<dynamic> list = (map['images'] as List?) ?? (map['items'] as List?) ?? const [];
+        return list.map((json) => PropertyImageModel.fromJson(json)).toList();
       }
+      throw ServerException('Invalid response when fetching images');
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to fetch property images');
     }
@@ -90,7 +101,7 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   Future<bool> updateImage(String imageId, Map<String, dynamic> data) async {
     try {
       final response = await apiClient.put(
-        '/api/admin/images/$imageId',
+        '$_imagesEndpoint/$imageId',
         data: data,
       );
       
@@ -103,7 +114,7 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   @override
   Future<bool> deleteImage(String imageId) async {
     try {
-      final response = await apiClient.delete('/api/admin/images/$imageId');
+      final response = await apiClient.delete('$_imagesEndpoint/$imageId');
       return response.data['success'] == true;
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to delete image');
@@ -113,12 +124,17 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   @override
   Future<bool> reorderImages(String propertyId, List<String> imageIds) async {
     try {
-      final response = await apiClient.post(
-        '$_baseEndpoint/$propertyId/images/reorder',
-        data: {'imageIds': imageIds},
-      );
-      
-      return response.data['success'] == true;
+      // لا يوجد مسار لإعادة الترتيب دفعة واحدة في الـ backend الحالي.
+      // نقوم بتطبيق الترتيب عبر تحديث كل صورة على حدة.
+      int order = 0;
+      for (final id in imageIds) {
+        await apiClient.put(
+          '$_imagesEndpoint/$id',
+          data: {'order': order},
+        );
+        order++;
+      }
+      return true;
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to reorder images');
     }
@@ -127,10 +143,11 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   @override
   Future<bool> setAsPrimaryImage(String propertyId, String imageId) async {
     try {
-      final response = await apiClient.post(
-        '$_baseEndpoint/$propertyId/images/$imageId/set-primary',
+      // لا يوجد مسار صريح لتعيين الرئيسية؛ سنقوم بالتحديث المباشر للصورة
+      final response = await apiClient.put(
+        '$_imagesEndpoint/$imageId',
+        data: {'isPrimary': true, 'propertyId': propertyId},
       );
-      
       return response.data['success'] == true;
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to set primary image');

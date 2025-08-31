@@ -48,6 +48,7 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   
   /// 🔗 المسار الأساسي لـ API المدن
   static const String _basePath = '/api/admin/system-settings/cities';
+  // لا يوجد CitiesController على الـ backend؛ نُبقي فقط على مسارات system-settings
   static const String _adminPath = '/api/admin/cities';
   static const String _imagesPath = '/api/images';
 
@@ -99,22 +100,14 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   @override
   Future<String> createCity(CityModel city) async {
     try {
-      final response = await apiClient.post(
-        _adminPath,
-        data: city.toJson(),
-      );
-      
-      if (response.data['success'] == true) {
-        // إرجاع معرف المدينة المنشأة
-        if (response.data['data'] is Map) {
-          return response.data['data']['name'] ?? '';
-        }
-        return response.data['data'] ?? '';
+      // لا يوجد مسار لإنشاء مدينة منفردة؛ ندمجها ضمن القائمة ونحفظ عبر PUT
+      final existing = await getCities();
+      final updated = [...existing, city];
+      final ok = await saveCities(updated);
+      if (ok) {
+        return city.name;
       }
-      
-      throw ApiException(
-        message: response.data['message'] ?? 'Failed to create city',
-      );
+      throw ApiException(message: 'Failed to create city');
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -124,18 +117,13 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   @override
   Future<bool> updateCity(String oldName, CityModel city) async {
     try {
-      final response = await apiClient.put(
-        '$_adminPath/$oldName',
-        data: city.toJson(),
-      );
-      
-      if (response.data['success'] == true) {
-        return true;
-      }
-      
-      throw ApiException(
-        message: response.data['message'] ?? 'Failed to update city',
-      );
+      // تحديث عبر جلب القائمة وتعديل العنصر ثم PUT للقائمة كاملة
+      final existing = await getCities();
+      final idx = existing.indexWhere((c) => c.name == oldName);
+      if (idx == -1) throw ApiException(message: 'City not found');
+      final List<CityModel> updated = List.of(existing);
+      updated[idx] = city;
+      return await saveCities(updated);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -145,9 +133,10 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   @override
   Future<bool> deleteCity(String name) async {
     try {
-      final response = await apiClient.delete('$_adminPath/$name');
-      
-      return response.data['success'] == true;
+      // حذف عبر إعادة حفظ القائمة بدون هذه المدينة
+      final existing = await getCities();
+      final updated = existing.where((c) => c.name != name).toList();
+      return await saveCities(updated);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -157,17 +146,9 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   @override
   Future<List<CityModel>> searchCities(String query) async {
     try {
-      final response = await apiClient.get(
-        '$_adminPath/search',
-        queryParameters: {'q': query},
-      );
-      
-      if (response.data['success'] == true) {
-        final List<dynamic> data = response.data['data'] ?? [];
-        return data.map((json) => CityModel.fromJson(json)).toList();
-      }
-      
-      return [];
+      final all = await getCities();
+      final q = query.toLowerCase();
+      return all.where((c) => c.name.toLowerCase().contains(q) || c.country.toLowerCase().contains(q)).toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -177,13 +158,18 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   @override
   Future<Map<String, dynamic>> getCitiesStatistics() async {
     try {
-      final response = await apiClient.get('$_adminPath/statistics');
-      
-      if (response.data['success'] == true) {
-        return response.data['data'] ?? {};
+      final all = await getCities();
+      final total = all.length;
+      final active = all.where((c) => c.isActive ?? true).length;
+      final byCountry = <String, int>{};
+      for (final c in all) {
+        byCountry[c.country] = (byCountry[c.country] ?? 0) + 1;
       }
-      
-      return {};
+      return {
+        'total': total,
+        'active': active,
+        'byCountry': byCountry,
+      };
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -208,12 +194,14 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
         ),
       );
       
-      if (response.data['success'] == true) {
-        final data = response.data['data'];
-        if (data is Map) {
-          return data['url'] ?? '';
+      if (response.data is Map<String, dynamic>) {
+        final map = response.data as Map<String, dynamic>;
+        if (map['success'] == true) {
+          final data = map['image'] ?? map['data'];
+          if (data is Map && data['url'] != null) {
+            return data['url'] as String;
+          }
         }
-        return '';
       }
       
       throw ApiException(
@@ -228,12 +216,9 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   @override
   Future<bool> deleteCityImage(String imageUrl) async {
     try {
-      final response = await apiClient.delete(
-        _imagesPath,
-        queryParameters: {'url': imageUrl},
-      );
-      
-      return response.data['success'] == true;
+      // لا يوجد مسار حذف حسب URL؛ يحتاج ID عادةً. سنعيد false إن لم يكن مدعوماً
+      // بديل: يمكن جلب الصور ثم حذف المطابق ل URL إذا توفر id
+      return false;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
