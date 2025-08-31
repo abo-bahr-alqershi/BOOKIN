@@ -7,6 +7,7 @@ import 'dart:math' as math;
 import '../../core/theme/app_theme.dart';
 import '../../features/chat/presentation/pages/conversations_page.dart';
 import '../../features/auth/presentation/pages/profile_page.dart';
+import '../../features/admin_hub/presentation/pages/admin_hub_page.dart';
 // Removed imports for deleted features
 
 class MainScreen extends StatefulWidget {
@@ -46,6 +47,7 @@ class _MainScreenState extends State<MainScreen>
   // ];
   List<Widget> get _pages => [
     const NavigationPage(child: ConversationsPage()),
+    const NavigationPage(child: AdminHubPage()),
     const NavigationPage(child: ProfilePage()),
   ];
   final List<_NavItem> _navItems = [
@@ -55,6 +57,14 @@ class _MainScreenState extends State<MainScreen>
       label: 'الرسائل',
       gradient: LinearGradient(
         colors: [AppTheme.primaryBlue, AppTheme.primaryViolet],
+      ),
+    ),
+    _NavItem(
+      icon: Icons.dashboard_customize_outlined,
+      activeIcon: Icons.dashboard_customize_rounded,
+      label: 'الإدارة',
+      gradient: LinearGradient(
+        colors: [AppTheme.neonBlue, AppTheme.neonPurple],
       ),
     ),
     _NavItem(
