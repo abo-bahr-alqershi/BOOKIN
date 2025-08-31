@@ -105,10 +105,7 @@ class AppRouter {
           return '/main';
         }
 
-        // Optional: Admin guard (just redirect to main if not admin)
-        if (guards.isAdminPath(path) && !guards.isAdmin(authState)) {
-          return '/main';
-        }
+        // Admin guard disabled to allow UI navigation; backend enforces permissions
 
         return null;
       },
