@@ -235,31 +235,47 @@ class _FuturisticStatsCardState extends State<FuturisticStatsCard>
                     Expanded(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
-                            widget.title,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppTheme.textMuted,
-                              letterSpacing: 0.5,
+                          Flexible(
+                            child: Text(
+                              widget.title,
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.end,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppTheme.textMuted,
+                                letterSpacing: 0.5,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 4),
-                          AnimatedBuilder(
-                            animation: _countAnimation,
-                            builder: (context, child) {
-                              return ShaderMask(
-                                shaderCallback: (bounds) => 
-                                    widget.gradient.createShader(bounds),
-                                child: Text(
-                                  _countAnimation.value.toString(),
-                                  style: AppTextStyles.heading1.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                          Flexible(
+                            child: AnimatedBuilder(
+                              animation: _countAnimation,
+                              builder: (context, child) {
+                                return ShaderMask(
+                                  shaderCallback: (bounds) => 
+                                      widget.gradient.createShader(bounds),
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerRight,
+                                    child: Text(
+                                      _countAnimation.value.toString(),
+                                      maxLines: 1,
+                                      softWrap: false,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.end,
+                                      style: AppTextStyles.heading1.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
                         ],
                       ),
