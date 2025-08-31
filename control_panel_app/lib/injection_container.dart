@@ -234,6 +234,29 @@ import 'features/admin_properties/domain/usecases/property_types/create_property
 import 'features/admin_properties/domain/usecases/property_types/update_property_type_usecase.dart' as ap_uc_pt3;
 import 'features/admin_properties/domain/usecases/property_types/delete_property_type_usecase.dart' as ap_uc_pt4;
 
+// Features - Admin Availability & Pricing
+import 'features/admin_availability_pricing/presentation/bloc/availability/availability_bloc.dart';
+import 'features/admin_availability_pricing/presentation/bloc/pricing/pricing_bloc.dart';
+import 'features/admin_availability_pricing/domain/repositories/availability_repository.dart' as aap_av_repo;
+import 'features/admin_availability_pricing/domain/repositories/pricing_repository.dart' as aap_pr_repo;
+import 'features/admin_availability_pricing/data/repositories/availability_repository_impl.dart' as aap_av_repo_impl;
+import 'features/admin_availability_pricing/data/repositories/pricing_repository_impl.dart' as aap_pr_repo_impl;
+import 'features/admin_availability_pricing/data/datasources/availability_remote_datasource.dart' as aap_av_ds_remote;
+import 'features/admin_availability_pricing/data/datasources/availability_local_datasource.dart' as aap_av_ds_local;
+import 'features/admin_availability_pricing/data/datasources/pricing_remote_datasource.dart' as aap_pr_ds_remote;
+import 'features/admin_availability_pricing/domain/usecases/availability/get_monthly_availability_usecase.dart' as aap_av_uc_get;
+import 'features/admin_availability_pricing/domain/usecases/availability/update_availability_usecase.dart' as aap_av_uc_update;
+import 'features/admin_availability_pricing/domain/usecases/availability/bulk_update_availability_usecase.dart' as aap_av_uc_bulk;
+import 'features/admin_availability_pricing/domain/usecases/availability/check_availability_usecase.dart' as aap_av_uc_check;
+import 'features/admin_availability_pricing/domain/usecases/availability/clone_availability_usecase.dart' as aap_av_uc_clone;
+import 'features/admin_availability_pricing/domain/usecases/availability/delete_availability_usecase.dart' as aap_av_uc_delete;
+import 'features/admin_availability_pricing/domain/usecases/pricing/get_monthly_pricing_usecase.dart' as aap_pr_uc_get;
+import 'features/admin_availability_pricing/domain/usecases/pricing/update_pricing_usecase.dart' as aap_pr_uc_update;
+import 'features/admin_availability_pricing/domain/usecases/pricing/bulk_update_pricing_usecase.dart' as aap_pr_uc_bulk;
+import 'features/admin_availability_pricing/domain/usecases/pricing/copy_pricing_usecase.dart' as aap_pr_uc_copy;
+import 'features/admin_availability_pricing/domain/usecases/pricing/delete_pricing_usecase.dart' as aap_pr_uc_delete;
+import 'features/admin_availability_pricing/domain/usecases/pricing/apply_seasonal_pricing_usecase.dart' as aap_pr_uc_apply;
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
@@ -272,6 +295,9 @@ Future<void> init() async {
 
 	// Features - Admin Cities
 	_initAdminCities();
+
+	// Features - Admin Availability & Pricing
+	_initAdminAvailabilityPricing();
 
 	// Theme
   _initTheme();
@@ -580,6 +606,54 @@ void _initAdminProperties() {
   sl.registerLazySingleton<ap_ds_am_remote.AmenitiesRemoteDataSource>(() => ap_ds_am_remote.AmenitiesRemoteDataSourceImpl(apiClient: sl()));
   sl.registerLazySingleton<ap_ds_po_remote.PoliciesRemoteDataSource>(() => ap_ds_po_remote.PoliciesRemoteDataSourceImpl(apiClient: sl()));
   sl.registerLazySingleton<ap_ds_pt_remote.PropertyTypesRemoteDataSource>(() => ap_ds_pt_remote.PropertyTypesRemoteDataSourceImpl(apiClient: sl()));
+}
+
+void _initAdminAvailabilityPricing() {
+	// Blocs
+	sl.registerFactory(() => AvailabilityBloc(
+		getMonthlyAvailabilityUseCase: sl<aap_av_uc_get.GetMonthlyAvailabilityUseCase>(),
+		updateAvailabilityUseCase: sl<aap_av_uc_update.UpdateAvailabilityUseCase>(),
+		bulkUpdateAvailabilityUseCase: sl<aap_av_uc_bulk.BulkUpdateAvailabilityUseCase>(),
+		checkAvailabilityUseCase: sl<aap_av_uc_check.CheckAvailabilityUseCase>(),
+	));
+	sl.registerFactory(() => PricingBloc(
+		getMonthlyPricingUseCase: sl<aap_pr_uc_get.GetMonthlyPricingUseCase>(),
+		updatePricingUseCase: sl<aap_pr_uc_update.UpdatePricingUseCase>(),
+		bulkUpdatePricingUseCase: sl<aap_pr_uc_bulk.BulkUpdatePricingUseCase>(),
+		applySeasonalPricingUseCase: sl<aap_pr_uc_apply.ApplySeasonalPricingUseCase>(),
+	));
+
+	// Use cases - Availability
+	sl.registerLazySingleton<aap_av_uc_get.GetMonthlyAvailabilityUseCase>(() => aap_av_uc_get.GetMonthlyAvailabilityUseCase(sl()));
+	sl.registerLazySingleton<aap_av_uc_update.UpdateAvailabilityUseCase>(() => aap_av_uc_update.UpdateAvailabilityUseCase(sl()));
+	sl.registerLazySingleton<aap_av_uc_bulk.BulkUpdateAvailabilityUseCase>(() => aap_av_uc_bulk.BulkUpdateAvailabilityUseCase(sl()));
+	sl.registerLazySingleton<aap_av_uc_check.CheckAvailabilityUseCase>(() => aap_av_uc_check.CheckAvailabilityUseCase(sl()));
+	sl.registerLazySingleton<aap_av_uc_clone.CloneAvailabilityUseCase>(() => aap_av_uc_clone.CloneAvailabilityUseCase(sl()));
+	sl.registerLazySingleton<aap_av_uc_delete.DeleteAvailabilityUseCase>(() => aap_av_uc_delete.DeleteAvailabilityUseCase(sl()));
+
+	// Use cases - Pricing
+	sl.registerLazySingleton<aap_pr_uc_get.GetMonthlyPricingUseCase>(() => aap_pr_uc_get.GetMonthlyPricingUseCase(sl()));
+	sl.registerLazySingleton<aap_pr_uc_update.UpdatePricingUseCase>(() => aap_pr_uc_update.UpdatePricingUseCase(sl()));
+	sl.registerLazySingleton<aap_pr_uc_bulk.BulkUpdatePricingUseCase>(() => aap_pr_uc_bulk.BulkUpdatePricingUseCase(sl()));
+	sl.registerLazySingleton<aap_pr_uc_copy.CopyPricingUseCase>(() => aap_pr_uc_copy.CopyPricingUseCase(sl()));
+	sl.registerLazySingleton<aap_pr_uc_delete.DeletePricingUseCase>(() => aap_pr_uc_delete.DeletePricingUseCase(sl()));
+	sl.registerLazySingleton<aap_pr_uc_apply.ApplySeasonalPricingUseCase>(() => aap_pr_uc_apply.ApplySeasonalPricingUseCase(sl()));
+
+	// Repositories
+	sl.registerLazySingleton<aap_av_repo.AvailabilityRepository>(() => aap_av_repo_impl.AvailabilityRepositoryImpl(
+		remoteDataSource: sl(),
+		localDataSource: sl(),
+		networkInfo: sl(),
+	));
+	sl.registerLazySingleton<aap_pr_repo.PricingRepository>(() => aap_pr_repo_impl.PricingRepositoryImpl(
+		remoteDataSource: sl(),
+		networkInfo: sl(),
+	));
+
+	// Data sources
+	sl.registerLazySingleton<aap_av_ds_remote.AvailabilityRemoteDataSource>(() => aap_av_ds_remote.AvailabilityRemoteDataSourceImpl(apiClient: sl()));
+	sl.registerLazySingleton<aap_av_ds_local.AvailabilityLocalDataSource>(() => aap_av_ds_local.AvailabilityLocalDataSourceImpl(sharedPreferences: sl()));
+	sl.registerLazySingleton<aap_pr_ds_remote.PricingRemoteDataSource>(() => aap_pr_ds_remote.PricingRemoteDataSourceImpl(apiClient: sl()));
 }
 
 void _initAdminServices() {

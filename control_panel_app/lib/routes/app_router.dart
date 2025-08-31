@@ -69,6 +69,10 @@ import 'package:bookn_cp_app/features/admin_users/presentation/pages/create_user
 import 'package:bookn_cp_app/features/admin_users/presentation/pages/user_details_page.dart' as au_pages;
 import 'package:bookn_cp_app/features/admin_users/presentation/bloc/users_list/users_list_bloc.dart' as au_list_bloc;
 import 'package:bookn_cp_app/features/admin_users/presentation/bloc/user_details/user_details_bloc.dart' as au_details_bloc;
+// Admin Availability & Pricing
+import 'package:bookn_cp_app/features/admin_availability_pricing/presentation/pages/availability_pricing_page.dart';
+import 'package:bookn_cp_app/features/admin_availability_pricing/presentation/bloc/availability/availability_bloc.dart';
+import 'package:bookn_cp_app/features/admin_availability_pricing/presentation/bloc/pricing/pricing_bloc.dart';
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
@@ -179,6 +183,20 @@ class AppRouter {
             return BlocProvider<UnitsListBloc>(
               create: (_) => di.sl<UnitsListBloc>()..add(LoadUnitsEvent()),
               child: const UnitsListPage(),
+            );
+          },
+        ),
+
+        // Admin Availability & Pricing
+        GoRoute(
+          path: '/admin/availability-pricing',
+          builder: (context, state) {
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider<AvailabilityBloc>(create: (_) => di.sl<AvailabilityBloc>()),
+                BlocProvider<PricingBloc>(create: (_) => di.sl<PricingBloc>()),
+              ],
+              child: const AvailabilityPricingPage(),
             );
           },
         ),
