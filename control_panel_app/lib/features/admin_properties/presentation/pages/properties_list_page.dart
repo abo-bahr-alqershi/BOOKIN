@@ -243,7 +243,10 @@ class _PropertiesListPageState extends State<PropertiesListPage>
               ),
               
               // Action Buttons
-              Row(
+              Flexible(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
                 children: [
                   _buildActionButton(
                     icon: Icons.filter_list_rounded,
@@ -279,6 +282,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
                     onTap: () => context.push('/admin/properties/create'),
                   ),
                 ],
+                  ),
+                ),
               ),
             ],
           ),
