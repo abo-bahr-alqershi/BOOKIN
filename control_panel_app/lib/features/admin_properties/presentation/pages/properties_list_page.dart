@@ -177,8 +177,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
               end: Alignment.bottomRight,
               colors: [
                 AppTheme.darkBackground,
-                AppTheme.darkBackground2.withValues(alpha: 0.8),
-                AppTheme.darkBackground3.withValues(alpha: 0.6),
+                AppTheme.darkBackground2.withOpacity(0.8),
+                AppTheme.darkBackground3.withOpacity(0.6),
               ],
             ),
           ),
@@ -200,13 +200,13 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.darkCard.withValues(alpha: 0.7),
-            AppTheme.darkCard.withValues(alpha: 0.3),
+            AppTheme.darkCard.withOpacity(0.7),
+            AppTheme.darkCard.withOpacity(0.3),
           ],
         ),
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+            color: AppTheme.primaryBlue.withOpacity(0.3),
             width: 1,
           ),
         ),
@@ -247,41 +247,41 @@ class _PropertiesListPageState extends State<PropertiesListPage>
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                children: [
-                  _buildActionButton(
-                    icon: Icons.filter_list_rounded,
-                    label: 'فلتر',
-                    onTap: () => setState(() => _showFilters = !_showFilters),
-                    isActive: _showFilters,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildActionButton(
-                    icon: Icons.grid_view_rounded,
-                    label: 'شبكة',
-                    onTap: () => setState(() => _selectedView = 'grid'),
-                    isActive: _selectedView == 'grid',
-                  ),
-                  const SizedBox(width: 8),
-                  _buildActionButton(
-                    icon: Icons.table_chart_rounded,
-                    label: 'جدول',
-                    onTap: () => setState(() => _selectedView = 'table'),
-                    isActive: _selectedView == 'table',
-                  ),
-                  const SizedBox(width: 8),
-                  _buildActionButton(
-                    icon: Icons.map_rounded,
-                    label: 'خريطة',
-                    onTap: () => setState(() => _selectedView = 'map'),
-                    isActive: _selectedView == 'map',
-                  ),
-                  const SizedBox(width: 16),
-                  _buildPrimaryActionButton(
-                    icon: Icons.add_rounded,
-                    label: 'إضافة عقار',
-                    onTap: () => context.push('/admin/properties/create'),
-                  ),
-                ],
+                    children: [
+                      _buildActionButton(
+                        icon: Icons.filter_list_rounded,
+                        label: 'فلتر',
+                        onTap: () => setState(() => _showFilters = !_showFilters),
+                        isActive: _showFilters,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildActionButton(
+                        icon: Icons.grid_view_rounded,
+                        label: 'شبكة',
+                        onTap: () => setState(() => _selectedView = 'grid'),
+                        isActive: _selectedView == 'grid',
+                      ),
+                      const SizedBox(width: 8),
+                      _buildActionButton(
+                        icon: Icons.table_chart_rounded,
+                        label: 'جدول',
+                        onTap: () => setState(() => _selectedView = 'table'),
+                        isActive: _selectedView == 'table',
+                      ),
+                      const SizedBox(width: 8),
+                      _buildActionButton(
+                        icon: Icons.map_rounded,
+                        label: 'خريطة',
+                        onTap: () => setState(() => _selectedView = 'map'),
+                        isActive: _selectedView == 'map',
+                      ),
+                      const SizedBox(width: 16),
+                      _buildPrimaryActionButton(
+                        icon: Icons.add_rounded,
+                        label: 'إضافة عقار',
+                        onTap: () => context.push('/admin/properties/create'),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -311,21 +311,21 @@ class _PropertiesListPageState extends State<PropertiesListPage>
               ? AppTheme.primaryGradient
               : LinearGradient(
                   colors: [
-                    AppTheme.darkCard.withValues(alpha: 0.5),
-                    AppTheme.darkCard.withValues(alpha: 0.3),
+                    AppTheme.darkCard.withOpacity(0.5),
+                    AppTheme.darkCard.withOpacity(0.3),
                   ],
                 ),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isActive
-                ? AppTheme.primaryBlue.withValues(alpha: 0.5)
-                : AppTheme.darkBorder.withValues(alpha: 0.3),
+                ? AppTheme.primaryBlue.withOpacity(0.5)
+                : AppTheme.darkBorder.withOpacity(0.3),
             width: 1,
           ),
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                    color: AppTheme.primaryBlue.withOpacity(0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
@@ -370,7 +370,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primaryBlue.withValues(alpha: 0.4),
+              color: AppTheme.primaryBlue.withOpacity(0.4),
               blurRadius: 15,
               offset: const Offset(0, 3),
             ),
@@ -520,23 +520,36 @@ class _PropertiesListPageState extends State<PropertiesListPage>
   }
   
   Widget _buildGridView(PropertiesLoaded state) {
-    return GridView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.2,
-      ),
-      itemCount: state.properties.length,
-      itemBuilder: (context, index) {
-        final property = state.properties[index];
-        return _PropertyGridCard(
-          property: property,
-          onTap: () => _navigateToProperty(property.id),
-          onEdit: () => _navigateToEditProperty(property.id),
-          onDelete: () => _showDeleteConfirmation(property.id),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // حساب عدد الأعمدة بناءً على عرض الشاشة
+        int crossAxisCount = 3;
+        if (constraints.maxWidth < 900) {
+          crossAxisCount = 2;
+        }
+        if (constraints.maxWidth < 600) {
+          crossAxisCount = 1;
+        }
+        
+        return GridView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.all(16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.3, // تعديل النسبة لإعطاء مساحة أكبر
+          ),
+          itemCount: state.properties.length,
+          itemBuilder: (context, index) {
+            final property = state.properties[index];
+            return _PropertyGridCard(
+              property: property,
+              onTap: () => _navigateToProperty(property.id),
+              onEdit: () => _navigateToEditProperty(property.id),
+              onDelete: () => _showDeleteConfirmation(property.id),
+            );
+          },
         );
       },
     );
@@ -586,7 +599,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
           Icon(
             Icons.error_outline_rounded,
             size: 64,
-            color: AppTheme.error.withValues(alpha: 0.7),
+            color: AppTheme.error.withOpacity(0.7),
           ),
           const SizedBox(height: 16),
           Text(
@@ -630,7 +643,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primaryBlue.withValues(alpha: 0.4 * _glowAnimation.value),
+                  color: AppTheme.primaryBlue.withOpacity(0.4 * _glowAnimation.value),
                   blurRadius: 20 + 10 * _glowAnimation.value,
                   spreadRadius: 2,
                 ),
@@ -672,7 +685,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
   }
 }
 
-// Property Grid Card Widget
+// Property Grid Card Widget - محسّن لمنع overflow
 class _PropertyGridCard extends StatefulWidget {
   final Property property;
   final VoidCallback onTap;
@@ -743,26 +756,26 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
                     end: Alignment.bottomRight,
                     colors: _isHovered
                         ? [
-                            AppTheme.primaryBlue.withValues(alpha: 0.1),
-                            AppTheme.primaryPurple.withValues(alpha: 0.05),
+                            AppTheme.primaryBlue.withOpacity(0.1),
+                            AppTheme.primaryPurple.withOpacity(0.05),
                           ]
                         : [
-                            AppTheme.darkCard.withValues(alpha: 0.7),
-                            AppTheme.darkCard.withValues(alpha: 0.5),
+                            AppTheme.darkCard.withOpacity(0.7),
+                            AppTheme.darkCard.withOpacity(0.5),
                           ],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: _isHovered
-                        ? AppTheme.primaryBlue.withValues(alpha: 0.5)
-                        : AppTheme.darkBorder.withValues(alpha: 0.3),
+                        ? AppTheme.primaryBlue.withOpacity(0.5)
+                        : AppTheme.darkBorder.withOpacity(0.3),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: _isHovered
-                          ? AppTheme.primaryBlue.withValues(alpha: 0.2)
-                          : Colors.black.withValues(alpha: 0.1),
+                          ? AppTheme.primaryBlue.withOpacity(0.2)
+                          : Colors.black.withOpacity(0.1),
                       blurRadius: _isHovered ? 20 : 10,
                       offset: const Offset(0, 4),
                     ),
@@ -774,101 +787,117 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                     child: Stack(
                       children: [
-                        // Content
+                        // Content - محسّن لمنع overflow
                         Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(12),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Header
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      gradient: AppTheme.primaryGradient,
-                                      borderRadius: BorderRadius.circular(10),
+                              Flexible(
+                                flex: 2,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        gradient: AppTheme.primaryGradient,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.business_rounded,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
                                     ),
-                                    child: const Icon(
-                                      Icons.business_rounded,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          widget.property.name,
-                                          style: AppTextStyles.bodyMedium.copyWith(
-                                            color: AppTheme.textWhite,
-                                            fontWeight: FontWeight.w600,
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            widget.property.name,
+                                            style: TextStyle(
+                                              color: AppTheme.textWhite,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          widget.property.city,
-                                          style: AppTextStyles.caption.copyWith(
-                                            color: AppTheme.textMuted,
+                                          Text(
+                                            widget.property.city,
+                                            style: TextStyle(
+                                              color: AppTheme.textMuted,
+                                              fontSize: 11,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                               
                               const Spacer(),
                               
-                              // Stats
-                              Row(
-                                children: [
-                                  _buildStat(
-                                    icon: Icons.star_rounded,
-                                    value: widget.property.starRating.toString(),
-                                    color: AppTheme.warning,
+                              // Stats - محسّن لمنع overflow
+                              Flexible(
+                                flex: 1,
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: [
+                                      _buildStat(
+                                        icon: Icons.star_rounded,
+                                        value: widget.property.starRating.toString(),
+                                        color: AppTheme.warning,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      _buildStat(
+                                        icon: Icons.location_on_rounded,
+                                        value: widget.property.city.length > 8 
+                                            ? '${widget.property.city.substring(0, 8)}...'
+                                            : widget.property.city,
+                                        color: AppTheme.primaryBlue,
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 16),
-                                  _buildStat(
-                                    icon: Icons.location_on_rounded,
-                                    value: widget.property.city,
-                                    color: AppTheme.primaryBlue,
-                                  ),
-                                ],
+                                ),
                               ),
                               
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 8),
                               
                               // Status Badge
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
+                                  horizontal: 6,
+                                  vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
                                   color: widget.property.isApproved
-                                      ? AppTheme.success.withValues(alpha: 0.2)
-                                      : AppTheme.warning.withValues(alpha: 0.2),
+                                      ? AppTheme.success.withOpacity(0.2)
+                                      : AppTheme.warning.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
                                     color: widget.property.isApproved
-                                        ? AppTheme.success.withValues(alpha: 0.5)
-                                        : AppTheme.warning.withValues(alpha: 0.5),
+                                        ? AppTheme.success.withOpacity(0.5)
+                                        : AppTheme.warning.withOpacity(0.5),
                                     width: 0.5,
                                   ),
                                 ),
                                 child: Text(
                                   widget.property.isApproved ? 'معتمد' : 'قيد المراجعة',
-                                  style: AppTextStyles.caption.copyWith(
+                                  style: TextStyle(
                                     color: widget.property.isApproved
                                         ? AppTheme.success
                                         : AppTheme.warning,
                                     fontWeight: FontWeight.w600,
+                                    fontSize: 10,
                                   ),
                                 ),
                               ),
@@ -914,13 +943,19 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
     required Color color,
   }) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: 4),
-        Text(
-          value,
-          style: AppTextStyles.caption.copyWith(
-            color: AppTheme.textMuted,
+        Icon(icon, size: 12, color: color),
+        const SizedBox(width: 2),
+        Flexible(
+          child: Text(
+            value,
+            style: TextStyle(
+              color: AppTheme.textMuted,
+              fontSize: 10,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
@@ -938,19 +973,19 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
         onTap();
       },
       child: Container(
-        width: 28,
-        height: 28,
+        width: 26,
+        height: 26,
         decoration: BoxDecoration(
-          color: AppTheme.darkBackground.withValues(alpha: 0.8),
+          color: AppTheme.darkBackground.withOpacity(0.8),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: (color ?? AppTheme.primaryBlue).withValues(alpha: 0.3),
+            color: (color ?? AppTheme.primaryBlue).withOpacity(0.3),
             width: 0.5,
           ),
         ),
         child: Icon(
           icon,
-          size: 14,
+          size: 12,
           color: color ?? AppTheme.primaryBlue,
         ),
       ),
@@ -974,18 +1009,18 @@ class _DeleteConfirmationDialog extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              AppTheme.darkCard.withValues(alpha: 0.95),
-              AppTheme.darkCard.withValues(alpha: 0.85),
+              AppTheme.darkCard.withOpacity(0.95),
+              AppTheme.darkCard.withOpacity(0.85),
             ],
           ),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppTheme.error.withValues(alpha: 0.3),
+            color: AppTheme.error.withOpacity(0.3),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.error.withValues(alpha: 0.2),
+              color: AppTheme.error.withOpacity(0.2),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -1000,8 +1035,8 @@ class _DeleteConfirmationDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.error.withValues(alpha: 0.2),
-                    AppTheme.error.withValues(alpha: 0.1),
+                    AppTheme.error.withOpacity(0.2),
+                    AppTheme.error.withOpacity(0.1),
                   ],
                 ),
                 shape: BoxShape.circle,
@@ -1037,10 +1072,10 @@ class _DeleteConfirmationDialog extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: AppTheme.darkSurface.withValues(alpha: 0.5),
+                        color: AppTheme.darkSurface.withOpacity(0.5),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                          color: AppTheme.darkBorder.withOpacity(0.3),
                           width: 1,
                         ),
                       ),
@@ -1068,13 +1103,13 @@ class _DeleteConfirmationDialog extends StatelessWidget {
                         gradient: LinearGradient(
                           colors: [
                             AppTheme.error,
-                            AppTheme.error.withValues(alpha: 0.8),
+                            AppTheme.error.withOpacity(0.8),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.error.withValues(alpha: 0.3),
+                            color: AppTheme.error.withOpacity(0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -1118,7 +1153,7 @@ class _FuturisticBackgroundPainter extends CustomPainter {
       ..strokeWidth = 0.5;
     
     // Draw grid
-    paint.color = AppTheme.primaryBlue.withValues(alpha: 0.05);
+    paint.color = AppTheme.primaryBlue.withOpacity(0.05);
     const spacing = 50.0;
     
     for (double x = 0; x < size.width; x += spacing) {
@@ -1139,7 +1174,7 @@ class _FuturisticBackgroundPainter extends CustomPainter {
     
     // Draw rotating circles
     final center = Offset(size.width / 2, size.height / 2);
-    paint.color = AppTheme.primaryBlue.withValues(alpha: 0.03 * glowIntensity);
+    paint.color = AppTheme.primaryBlue.withOpacity(0.03 * glowIntensity);
     
     for (int i = 0; i < 3; i++) {
       final radius = 200.0 + i * 100;

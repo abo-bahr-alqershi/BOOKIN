@@ -65,40 +65,131 @@ class PropertyModel extends Property {
     stats: stats,
   );
   
+  // دالة للتحقق من صحة URL
+  static String _validateAndFixUrl(String? url) {
+    if (url == null || url.isEmpty) {
+      return 'https://via.placeholder.com/400x300?text=No+Image';
+    }
+    
+    // التحقق من أن URL يبدأ بـ http أو https
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      // إذا كان URL نسبي، أضف البروتوكول والدومين
+      if (url.startsWith('/')) {
+        // استبدل هذا بـ base URL الخاص بك
+        return 'https://your-api-domain.com$url';
+      }
+      // إذا كان مجرد اسم ملف أو placeholder
+      return 'https://via.placeholder.com/400x300?text=$url';
+    }
+    
+    return url;
+  }
+  
   factory PropertyModel.fromJson(Map<String, dynamic> json) {
+    // معالجة آمنة للصور
+    List<PropertyImage> parsedImages = [];
+    if (json['images'] != null) {
+      if (json['images'] is List) {
+        parsedImages = (json['images'] as List).map((e) {
+          if (e is Map<String, dynamic>) {
+            return PropertyImageModel.fromJson(e);
+          } else if (e is String) {
+            // إذا كانت الصورة عبارة عن URL string فقط
+            final validUrl = _validateAndFixUrl(e);
+            return PropertyImageModel(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              url: validUrl,
+              filename: 'image.jpg',
+              size: 0,
+              mimeType: 'image/jpeg',
+              width: 0,
+              height: 0,
+              uploadedAt: DateTime.now(),
+              uploadedBy: json['ownerId'] as String? ?? '',
+              order: parsedImages.length,
+              isPrimary: parsedImages.isEmpty,
+              category: ImageCategory.gallery,
+              processingStatus: ProcessingStatus.ready,
+              thumbnails: ImageThumbnailsModel(
+                small: validUrl,
+                medium: validUrl,
+                large: validUrl,
+                hd: validUrl,
+              ),
+            );
+          }
+          return null;
+        }).whereType<PropertyImage>().toList();
+      } else if (json['images'] is String) {
+        // إذا كانت images عبارة عن URL واحد
+        final imageUrl = _validateAndFixUrl(json['images'] as String);
+        parsedImages = [
+          PropertyImageModel(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            url: imageUrl,
+            filename: 'image.jpg',
+            size: 0,
+            mimeType: 'image/jpeg',
+            width: 0,
+            height: 0,
+            uploadedAt: DateTime.now(),
+            uploadedBy: json['ownerId'] as String? ?? '',
+            order: 0,
+            isPrimary: true,
+            category: ImageCategory.gallery,
+            processingStatus: ProcessingStatus.ready,
+            thumbnails: ImageThumbnailsModel(
+              small: imageUrl,
+              medium: imageUrl,
+              large: imageUrl,
+              hd: imageUrl,
+            ),
+          ),
+        ];
+      }
+    }
+    
     return PropertyModel(
-      id: json['id'] as String,
-      ownerId: json['ownerId'] as String,
-      typeId: json['typeId'] as String,
-      name: json['name'] as String,
+      id: json['id'] as String? ?? '',
+      ownerId: json['ownerId'] as String? ?? '',
+      typeId: json['typeId'] as String? ?? '',
+      name: json['name'] as String? ?? '',
       shortDescription: json['shortDescription'] as String?,
       basePricePerNight: (json['basePricePerNight'] as num?)?.toDouble() ?? 0.0,
-      address: json['address'] as String,
-      city: json['city'] as String,
-      latitude: json['latitude']?.toDouble(),
-      longitude: json['longitude']?.toDouble(),
-      starRating: json['starRating'] as int,
-      description: json['description'] as String,
-      isApproved: json['isApproved'] as bool,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      viewCount: json['viewCount'] as int? ?? 0,
-      bookingCount: json['bookingCount'] as int? ?? 0,
+      address: json['address'] as String? ?? '',
+      city: json['city'] as String? ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      starRating: (json['starRating'] as num?)?.toInt() ?? 0,
+      description: json['description'] as String? ?? '',
+      isApproved: json['isApproved'] as bool? ?? false,
+      createdAt: json['createdAt'] != null 
+          ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      viewCount: (json['viewCount'] as num?)?.toInt() ?? 0,
+      bookingCount: (json['bookingCount'] as num?)?.toInt() ?? 0,
       averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0.0,
       currency: json['currency'] as String? ?? 'YER',
       isFeatured: json['isFeatured'] as bool? ?? false,
-      ownerName: json['ownerName'] as String,
-      typeName: json['typeName'] as String,
-      distanceKm: json['distanceKm']?.toDouble(),
-      images: (json['images'] as List<dynamic>?)
-          ?.map((e) => PropertyImageModel.fromJson(e as Map<String, dynamic>))
-          .toList() ?? [],
+      ownerName: json['ownerName'] as String? ?? '',
+      typeName: json['typeName'] as String? ?? '',
+      distanceKm: (json['distanceKm'] as num?)?.toDouble(),
+      images: parsedImages,
       amenities: (json['amenities'] as List<dynamic>?)
-          ?.map((e) => AmenityModel.fromJson(e as Map<String, dynamic>))
-          .toList() ?? [],
+          ?.map((e) {
+            if (e is Map<String, dynamic>) {
+              return AmenityModel.fromJson(e);
+            }
+            return null;
+          }).whereType<Amenity>().toList() ?? [],
       policies: (json['policies'] as List<dynamic>?)
-          ?.map((e) => PolicyModel.fromJson(e as Map<String, dynamic>))
-          .toList() ?? [],
-      stats: json['stats'] != null 
+          ?.map((e) {
+            if (e is Map<String, dynamic>) {
+              return PolicyModel.fromJson(e);
+            }
+            return null;
+          }).whereType<Policy>().toList() ?? [],
+      stats: json['stats'] != null && json['stats'] is Map<String, dynamic>
           ? PropertyStatsModel.fromJson(json['stats'] as Map<String, dynamic>)
           : null,
     );
@@ -155,12 +246,12 @@ class PropertyStatsModel extends PropertyStats {
   
   factory PropertyStatsModel.fromJson(Map<String, dynamic> json) {
     return PropertyStatsModel(
-      totalBookings: json['totalBookings'] as int,
-      activeBookings: json['activeBookings'] as int,
-      averageRating: (json['averageRating'] as num).toDouble(),
-      reviewCount: json['reviewCount'] as int,
-      occupancyRate: (json['occupancyRate'] as num).toDouble(),
-      monthlyRevenue: (json['monthlyRevenue'] as num).toDouble(),
+      totalBookings: (json['totalBookings'] as num?)?.toInt() ?? 0,
+      activeBookings: (json['activeBookings'] as num?)?.toInt() ?? 0,
+      averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0.0,
+      reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
+      occupancyRate: (json['occupancyRate'] as num?)?.toDouble() ?? 0.0,
+      monthlyRevenue: (json['monthlyRevenue'] as num?)?.toDouble() ?? 0.0,
     );
   }
   

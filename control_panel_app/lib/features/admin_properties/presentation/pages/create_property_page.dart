@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:get_it/get_it.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 import 'package:bookn_cp_app/core/theme/app_colors.dart';
@@ -12,18 +13,44 @@ import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import 'package:bookn_cp_app/core/theme/app_dimensions.dart';
 import '../bloc/properties/properties_bloc.dart';
 import '../bloc/property_types/property_types_bloc.dart';
+import '../bloc/amenities/amenities_bloc.dart';
 import '../widgets/property_image_gallery.dart';
 import '../widgets/amenity_selector_widget.dart';
 import '../widgets/property_map_view.dart';
 
-class CreatePropertyPage extends StatefulWidget {
+class CreatePropertyPage extends StatelessWidget {
   const CreatePropertyPage({super.key});
-  
+
   @override
-  State<CreatePropertyPage> createState() => _CreatePropertyPageState();
+  Widget build(BuildContext context) {
+    // توفير جميع الـ Blocs في مستوى أعلى
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<PropertiesBloc>(
+          create: (context) => GetIt.instance<PropertiesBloc>(),
+        ),
+        BlocProvider<PropertyTypesBloc>(
+          create: (context) => GetIt.instance<PropertyTypesBloc>()
+            ..add(const LoadPropertyTypesEvent()),
+        ),
+        BlocProvider<AmenitiesBloc>(
+          create: (context) => GetIt.instance<AmenitiesBloc>()
+            ..add(const LoadAmenitiesEvent()),
+        ),
+      ],
+      child: const _CreatePropertyView(),
+    );
+  }
 }
 
-class _CreatePropertyPageState extends State<CreatePropertyPage>
+class _CreatePropertyView extends StatefulWidget {
+  const _CreatePropertyView();
+  
+  @override
+  State<_CreatePropertyView> createState() => _CreatePropertyViewState();
+}
+
+class _CreatePropertyViewState extends State<_CreatePropertyView>
     with TickerProviderStateMixin {
   // Controllers
   late AnimationController _animationController;
@@ -47,11 +74,13 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
   List<String> _selectedAmenities = [];
   int _currentStep = 0;
   
+  // Track if widget is mounted
+  bool _isDisposed = false;
+  
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
-    _loadPropertyTypes();
   }
   
   void _initializeAnimations() {
@@ -81,15 +110,17 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
       curve: Curves.easeOutQuart,
     ));
     
-    _animationController.forward();
-  }
-  
-  void _loadPropertyTypes() {
-    context.read<PropertyTypesBloc>().add(const LoadPropertyTypesEvent());
+    // Start animation after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_isDisposed) {
+        _animationController.forward();
+      }
+    });
   }
   
   @override
   void dispose() {
+    _isDisposed = true;
     _animationController.dispose();
     _glowController.dispose();
     _nameController.dispose();
@@ -101,42 +132,66 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
     super.dispose();
   }
   
+  // Safe setState
+  void _safeSetState(VoidCallback fn) {
+    if (mounted && !_isDisposed) {
+      setState(fn);
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      body: Stack(
-        children: [
-          // Animated Background
-          _buildAnimatedBackground(),
-          
-          // Main Content
-          SafeArea(
-            child: Column(
-              children: [
-                // Header
-                _buildHeader(),
-                
-                // Progress Indicator
-                _buildProgressIndicator(),
-                
-                // Form Content
-                Expanded(
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: _buildFormContent(),
+    return BlocListener<PropertiesBloc, PropertiesState>(
+      listener: (context, state) {
+        if (!mounted) return;
+        
+        if (state is PropertyCreated) {
+          _showSuccessMessage('تم إنشاء العقار بنجاح');
+          // تأخير قليل قبل الرجوع
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              context.pop();
+            }
+          });
+        } else if (state is PropertiesError) {
+          _showErrorMessage(state.message);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.darkBackground,
+        body: Stack(
+          children: [
+            // Animated Background
+            _buildAnimatedBackground(),
+            
+            // Main Content
+            SafeArea(
+              child: Column(
+                children: [
+                  // Header
+                  _buildHeader(),
+                  
+                  // Progress Indicator
+                  _buildProgressIndicator(),
+                  
+                  // Form Content
+                  Expanded(
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: _buildFormContent(),
+                      ),
                     ),
                   ),
-                ),
-                
-                // Action Buttons
-                _buildActionButtons(),
-              ],
+                  
+                  // Action Buttons
+                  _buildActionButtons(),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -152,8 +207,8 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
               end: Alignment.bottomRight,
               colors: [
                 AppTheme.darkBackground,
-                AppTheme.darkBackground2.withValues(alpha: 0.8),
-                AppTheme.darkBackground3.withValues(alpha: 0.6),
+                AppTheme.darkBackground2.withOpacity(0.8),
+                AppTheme.darkBackground3.withOpacity(0.6),
               ],
             ),
           ),
@@ -174,13 +229,13 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.darkCard.withValues(alpha: 0.7),
-            AppTheme.darkCard.withValues(alpha: 0.3),
+            AppTheme.darkCard.withOpacity(0.7),
+            AppTheme.darkCard.withOpacity(0.3),
           ],
         ),
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+            color: AppTheme.primaryBlue.withOpacity(0.3),
             width: 1,
           ),
         ),
@@ -189,20 +244,20 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
         children: [
           // Back Button
           GestureDetector(
-            onTap: () => context.pop(),
+            onTap: _handleBack,
             child: Container(
               width: 40,
               height: 40,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.darkSurface.withValues(alpha: 0.5),
-                    AppTheme.darkSurface.withValues(alpha: 0.3),
+                    AppTheme.darkSurface.withOpacity(0.5),
+                    AppTheme.darkSurface.withOpacity(0.3),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                  color: AppTheme.darkBorder.withOpacity(0.3),
                   width: 1,
                 ),
               ),
@@ -270,19 +325,19 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
                         ? AppTheme.primaryGradient
                         : null,
                     color: !isActive
-                        ? AppTheme.darkSurface.withValues(alpha: 0.5)
+                        ? AppTheme.darkSurface.withOpacity(0.5)
                         : null,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isActive
-                          ? AppTheme.primaryBlue.withValues(alpha: 0.5)
-                          : AppTheme.darkBorder.withValues(alpha: 0.3),
+                          ? AppTheme.primaryBlue.withOpacity(0.5)
+                          : AppTheme.darkBorder.withOpacity(0.3),
                       width: 1,
                     ),
                     boxShadow: isActive
                         ? [
                             BoxShadow(
-                              color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                              color: AppTheme.primaryBlue.withOpacity(0.3),
                               blurRadius: 10,
                             ),
                           ]
@@ -316,7 +371,7 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
                             ? AppTheme.primaryGradient
                             : null,
                         color: !isCompleted
-                            ? AppTheme.darkBorder.withValues(alpha: 0.2)
+                            ? AppTheme.darkBorder.withOpacity(0.2)
                             : null,
                         borderRadius: BorderRadius.circular(1),
                       ),
@@ -440,13 +495,13 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppTheme.darkCard.withValues(alpha: 0.7),
-                  AppTheme.darkCard.withValues(alpha: 0.5),
+                  AppTheme.darkCard.withOpacity(0.7),
+                  AppTheme.darkCard.withOpacity(0.5),
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                color: AppTheme.darkBorder.withOpacity(0.3),
                 width: 1,
               ),
             ),
@@ -454,7 +509,7 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
               borderRadius: BorderRadius.circular(16),
               child: PropertyMapView(
                 onLocationSelected: (lat, lng) {
-                  setState(() {
+                  _safeSetState(() {
                     _latitudeController.text = lat.toString();
                     _longitudeController.text = lng.toString();
                   });
@@ -476,6 +531,10 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
               if (value == null || value.isEmpty) {
                 return 'الرجاء إدخال خط العرض';
               }
+              final lat = double.tryParse(value);
+              if (lat == null || lat < -90 || lat > 90) {
+                return 'خط العرض غير صحيح';
+              }
               return null;
             },
           ),
@@ -492,6 +551,10 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'الرجاء إدخال خط الطول';
+              }
+              final lng = double.tryParse(value);
+              if (lng == null || lng < -180 || lng > 180) {
+                return 'خط الطول غير صحيح';
               }
               return null;
             },
@@ -519,7 +582,7 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
           PropertyImageGallery(
             images: _selectedImages,
             onImagesChanged: (images) {
-              setState(() {
+              _safeSetState(() {
                 _selectedImages = images;
               });
             },
@@ -536,12 +599,31 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
             ),
           ),
           const SizedBox(height: 12),
-          AmenitySelectorWidget(
-            selectedAmenities: _selectedAmenities,
-            onAmenitiesChanged: (amenities) {
-              setState(() {
-                _selectedAmenities = amenities;
-              });
+          
+          BlocBuilder<AmenitiesBloc, AmenitiesState>(
+            builder: (context, state) {
+              if (state is AmenitiesLoading) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              } else if (state is AmenitiesError) {
+                return _buildErrorWidget(
+                  state.message,
+                  onRetry: () {
+                    context.read<AmenitiesBloc>().add(const LoadAmenitiesEvent());
+                  },
+                );
+              } else if (state is AmenitiesLoaded) {
+                return AmenitySelectorWidget(
+                  selectedAmenities: _selectedAmenities,
+                  onAmenitiesChanged: (amenities) {
+                    _safeSetState(() {
+                      _selectedAmenities = amenities;
+                    });
+                  },
+                );
+              }
+              return const SizedBox.shrink();
             },
           ),
         ],
@@ -595,6 +677,15 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
               {'label': 'عدد المرافق', 'value': '${_selectedAmenities.length}'},
             ],
           ),
+          
+          const SizedBox(height: 16),
+          
+          _buildReviewCard(
+            title: 'الوصف',
+            items: [
+              {'label': 'الوصف', 'value': _descriptionController.text},
+            ],
+          ),
         ],
       ),
     );
@@ -624,13 +715,13 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTheme.darkCard.withValues(alpha: 0.5),
-                AppTheme.darkCard.withValues(alpha: 0.3),
+                AppTheme.darkCard.withOpacity(0.5),
+                AppTheme.darkCard.withOpacity(0.3),
               ],
             ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppTheme.darkBorder.withValues(alpha: 0.3),
+              color: AppTheme.darkBorder.withOpacity(0.3),
               width: 1,
             ),
           ),
@@ -644,12 +735,12 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: AppTextStyles.bodyMedium.copyWith(
-                color: AppTheme.textMuted.withValues(alpha: 0.5),
+                color: AppTheme.textMuted.withOpacity(0.5),
               ),
               prefixIcon: maxLines == 1
                   ? Icon(
                       icon,
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.7),
+                      color: AppTheme.primaryBlue.withOpacity(0.7),
                       size: 20,
                     )
                   : null,
@@ -677,19 +768,23 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
         const SizedBox(height: 8),
         BlocBuilder<PropertyTypesBloc, PropertyTypesState>(
           builder: (context, state) {
-            if (state is PropertyTypesLoaded) {
+            if (state is PropertyTypesLoading) {
+              return _buildLoadingDropdown();
+            } else if (state is PropertyTypesError) {
+              return _buildErrorDropdown(state.message);
+            } else if (state is PropertyTypesLoaded) {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppTheme.darkCard.withValues(alpha: 0.5),
-                      AppTheme.darkCard.withValues(alpha: 0.3),
+                      AppTheme.darkCard.withOpacity(0.5),
+                      AppTheme.darkCard.withOpacity(0.3),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                    color: AppTheme.darkBorder.withOpacity(0.3),
                     width: 1,
                   ),
                 ),
@@ -700,7 +795,7 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
                     dropdownColor: AppTheme.darkCard,
                     icon: Icon(
                       Icons.arrow_drop_down_rounded,
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.7),
+                      color: AppTheme.primaryBlue.withOpacity(0.7),
                     ),
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppTheme.textWhite,
@@ -708,7 +803,7 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
                     hint: Text(
                       'اختر نوع العقار',
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppTheme.textMuted.withValues(alpha: 0.5),
+                        color: AppTheme.textMuted.withOpacity(0.5),
                       ),
                     ),
                     items: state.propertyTypes.map((type) {
@@ -718,7 +813,7 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
                       );
                     }).toList(),
                     onChanged: (value) {
-                      setState(() {
+                      _safeSetState(() {
                         _selectedPropertyTypeId = value;
                       });
                     },
@@ -726,10 +821,63 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
                 ),
               );
             }
-            return const Center(child: CircularProgressIndicator());
+            return _buildLoadingDropdown();
           },
         ),
       ],
+    );
+  }
+  
+  Widget _buildLoadingDropdown() {
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.5),
+            AppTheme.darkCard.withOpacity(0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: const Center(
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildErrorDropdown(String message) {
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.5),
+            AppTheme.darkCard.withOpacity(0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.error.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          'خطأ في تحميل الأنواع',
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppTheme.error,
+          ),
+        ),
+      ),
     );
   }
   
@@ -750,7 +898,7 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
             final isSelected = index < _starRating;
             return GestureDetector(
               onTap: () {
-                setState(() {
+                _safeSetState(() {
                   _starRating = index + 1;
                 });
                 HapticFeedback.lightImpact();
@@ -763,7 +911,7 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
                   child: Icon(
                     isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
                     size: 32,
-                    color: isSelected ? AppTheme.warning : AppTheme.textMuted.withValues(alpha: 0.5),
+                    color: isSelected ? AppTheme.warning : AppTheme.textMuted.withOpacity(0.5),
                   ),
                 ),
               ),
@@ -783,13 +931,13 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.darkCard.withValues(alpha: 0.5),
-            AppTheme.darkCard.withValues(alpha: 0.3),
+            AppTheme.darkCard.withOpacity(0.5),
+            AppTheme.darkCard.withOpacity(0.3),
           ],
         ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.darkBorder.withValues(alpha: 0.3),
+          color: AppTheme.darkBorder.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -815,16 +963,64 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
                     color: AppTheme.textMuted,
                   ),
                 ),
-                Text(
-                  item['value']!,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppTheme.textWhite,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    item['value']!,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppTheme.textWhite,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.end,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
           )),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildErrorWidget(String message, {VoidCallback? onRetry}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.error.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.error.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.error_outline_rounded,
+            color: AppTheme.error,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppTheme.error,
+              ),
+            ),
+          ),
+          if (onRetry != null)
+            TextButton(
+              onPressed: onRetry,
+              child: Text(
+                'إعادة المحاولة',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppTheme.primaryBlue,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -836,13 +1032,13 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.darkCard.withValues(alpha: 0.7),
-            AppTheme.darkCard.withValues(alpha: 0.5),
+            AppTheme.darkCard.withOpacity(0.7),
+            AppTheme.darkCard.withOpacity(0.5),
           ],
         ),
         border: Border(
           top: BorderSide(
-            color: AppTheme.darkBorder.withValues(alpha: 0.3),
+            color: AppTheme.darkBorder.withOpacity(0.3),
             width: 1,
           ),
         ),
@@ -859,13 +1055,13 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.darkSurface.withValues(alpha: 0.5),
-                        AppTheme.darkSurface.withValues(alpha: 0.3),
+                        AppTheme.darkSurface.withOpacity(0.5),
+                        AppTheme.darkSurface.withOpacity(0.3),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                      color: AppTheme.darkBorder.withOpacity(0.3),
                       width: 1,
                     ),
                   ),
@@ -895,19 +1091,33 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                      color: AppTheme.primaryBlue.withOpacity(0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Center(
-                  child: Text(
-                    _currentStep < 3 ? 'التالي' : 'إضافة العقار',
-                    style: AppTextStyles.buttonMedium.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: BlocBuilder<PropertiesBloc, PropertiesState>(
+                    builder: (context, state) {
+                      if (state is PropertiesLoading) {
+                        return const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        );
+                      }
+                      return Text(
+                        _currentStep < 3 ? 'التالي' : 'إضافة العقار',
+                        style: AppTextStyles.buttonMedium.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -918,9 +1128,21 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
     );
   }
   
+  void _handleBack() {
+    if (!mounted) return;
+    
+    if (_currentStep > 0) {
+      _safeSetState(() {
+        _currentStep--;
+      });
+    } else {
+      context.pop();
+    }
+  }
+  
   void _previousStep() {
     if (_currentStep > 0) {
-      setState(() {
+      _safeSetState(() {
         _currentStep--;
       });
     }
@@ -935,10 +1157,12 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
         isValid = _validateBasicInfo();
       } else if (_currentStep == 1) {
         isValid = _validateLocation();
+      } else if (_currentStep == 2) {
+        isValid = _validateImagesAndAmenities();
       }
       
       if (isValid) {
-        setState(() {
+        _safeSetState(() {
           _currentStep++;
         });
       }
@@ -951,13 +1175,7 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
         _addressController.text.isEmpty ||
         _cityController.text.isEmpty ||
         _descriptionController.text.isEmpty) {
-      // Show error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('الرجاء ملء جميع الحقول المطلوبة'),
-          backgroundColor: AppTheme.error,
-        ),
-      );
+      _showErrorMessage('الرجاء ملء جميع الحقول المطلوبة');
       return false;
     }
     return true;
@@ -966,53 +1184,161 @@ class _CreatePropertyPageState extends State<CreatePropertyPage>
   bool _validateLocation() {
     if (_latitudeController.text.isEmpty ||
         _longitudeController.text.isEmpty) {
-      // Show error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('الرجاء تحديد موقع العقار'),
-          backgroundColor: AppTheme.error,
-        ),
-      );
+      _showErrorMessage('الرجاء تحديد موقع العقار');
+      return false;
+    }
+    
+    final lat = double.tryParse(_latitudeController.text);
+    final lng = double.tryParse(_longitudeController.text);
+    
+    if (lat == null || lng == null) {
+      _showErrorMessage('إحداثيات الموقع غير صحيحة');
+      return false;
+    }
+    
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      _showErrorMessage('إحداثيات الموقع خارج النطاق المسموح');
+      return false;
+    }
+    
+    return true;
+  }
+  
+  bool _validateImagesAndAmenities() {
+    if (_selectedImages.isEmpty) {
+      _showErrorMessage('الرجاء إضافة صورة واحدة على الأقل');
       return false;
     }
     return true;
   }
   
-  void _submitForm() {
+  // void _submitForm() {
+  //   if (!mounted) return;
+    
+  //   if (_formKey.currentState!.validate()) {
+  //     // Get current user ID (you might need to get this from auth state)
+  //     const ownerId = 'current_user_id'; // TODO: Get from auth
+      
+  //     // Submit the form
+  //     context.read<PropertiesBloc>().add(
+  //       CreatePropertyEvent(
+  //         name: _nameController.text,
+  //         address: _addressController.text,
+  //         propertyTypeId: _selectedPropertyTypeId!,
+  //         ownerId: ownerId,
+  //         description: _descriptionController.text,
+  //         latitude: double.parse(_latitudeController.text),
+  //         longitude: double.parse(_longitudeController.text),
+  //         city: _cityController.text,
+  //         starRating: _starRating,
+  //         images: _selectedImages,
+  //         // amenityIds: _selectedAmenities,
+  //       ),
+  //     );
+  //   }
+  // }
+    void _submitForm() {
+    if (!mounted) return;
+    
     if (_formKey.currentState!.validate()) {
-      // Submit the form
+      // الحصول على معرف المستخدم من AuthBloc
+      // TODO: استبدل هذا بالمعرف الحقيقي
+      const ownerId = 'admin-user-id'; // أو استخدم معرف صحيح
+      
+      // طباعة البيانات للتأكد
+      print('Creating property with:');
+      print('Name: ${_nameController.text}');
+      print('PropertyTypeId: $_selectedPropertyTypeId');
+      print('City: ${_cityController.text}');
+      print('StarRating: $_starRating');
+      print('Amenities: $_selectedAmenities');
+      
+      // إرسال البيانات
       context.read<PropertiesBloc>().add(
         CreatePropertyEvent(
-          name: _nameController.text,
-          address: _addressController.text,
+          name: _nameController.text.trim(),
+          address: _addressController.text.trim(),
           propertyTypeId: _selectedPropertyTypeId!,
-          ownerId: 'current_user_id', // TODO: Get from auth
-          description: _descriptionController.text,
+          ownerId: ownerId,
+          description: _descriptionController.text.trim(),
           latitude: double.parse(_latitudeController.text),
           longitude: double.parse(_longitudeController.text),
-          city: _cityController.text,
+          city: _cityController.text.trim(),
           starRating: _starRating,
-          images: _selectedImages,
+          images: _selectedImages.isEmpty ? null : _selectedImages,
+          amenityIds: _selectedAmenities.isEmpty ? null : _selectedAmenities,
         ),
       );
-      
-      // Listen for success
-      // TODO: Add listener for success state
-      
-      context.pop();
     }
   }
-  
+
   String _getPropertyTypeName() {
+    if (!mounted) return 'غير محدد';
+    
     final state = context.read<PropertyTypesBloc>().state;
     if (state is PropertyTypesLoaded && _selectedPropertyTypeId != null) {
-      final type = state.propertyTypes.firstWhere(
-        (t) => t.id == _selectedPropertyTypeId,
-        orElse: () => state.propertyTypes.first,
-      );
-      return type.name;
+      try {
+        final type = state.propertyTypes.firstWhere(
+          (t) => t.id == _selectedPropertyTypeId,
+        );
+        return type.name;
+      } catch (e) {
+        return 'غير محدد';
+      }
     }
-    return '';
+    return 'غير محدد';
+  }
+  
+  void _showSuccessMessage(String message) {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(
+              Icons.check_circle_rounded,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(message),
+            ),
+          ],
+        ),
+        backgroundColor: AppTheme.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+  
+  void _showErrorMessage(String message) {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(
+              Icons.error_outline_rounded,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(message),
+            ),
+          ],
+        ),
+        backgroundColor: AppTheme.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
   }
 }
 
@@ -1029,8 +1355,8 @@ class _CreatePropertyBackgroundPainter extends CustomPainter {
     // Draw glowing orbs
     paint.shader = RadialGradient(
       colors: [
-        AppTheme.primaryBlue.withValues(alpha: 0.1 * glowIntensity),
-        AppTheme.primaryBlue.withValues(alpha: 0.05 * glowIntensity),
+        AppTheme.primaryBlue.withOpacity(0.1 * glowIntensity),
+        AppTheme.primaryBlue.withOpacity(0.05 * glowIntensity),
         Colors.transparent,
       ],
     ).createShader(Rect.fromCircle(
@@ -1046,8 +1372,8 @@ class _CreatePropertyBackgroundPainter extends CustomPainter {
     
     paint.shader = RadialGradient(
       colors: [
-        AppTheme.primaryPurple.withValues(alpha: 0.1 * glowIntensity),
-        AppTheme.primaryPurple.withValues(alpha: 0.05 * glowIntensity),
+        AppTheme.primaryPurple.withOpacity(0.1 * glowIntensity),
+        AppTheme.primaryPurple.withOpacity(0.05 * glowIntensity),
         Colors.transparent,
       ],
     ).createShader(Rect.fromCircle(

@@ -52,8 +52,17 @@ class PaginatedResult<T> extends Equatable {
     Map<String, dynamic> json,
     T Function(Map<String, dynamic>) fromJsonT,
   ) {
-    final rawItems = (json['items'] as List?) ?? const [];
-    final parsedItems = rawItems.map((item) => fromJsonT(item)).toList();
+    // Support both { items, pageNumber, ... } and ResultDto-wrapped shapes { success, data: { items: [...] } }
+    final Object? root = json['items'] == null && json['data'] is Map<String, dynamic>
+        ? json['data']
+        : json;
+    final Map<String, dynamic> payload = (root as Map<String, dynamic>);
+
+    final rawItems = (payload['items'] as List?) ?? const [];
+    final parsedItems = rawItems
+        .whereType<Map>()
+        .map((item) => fromJsonT(Map<String, dynamic>.from(item as Map)))
+        .toList();
 
     int parseInt(dynamic v, int fallback) {
       if (v is int) return v;
@@ -62,16 +71,16 @@ class PaginatedResult<T> extends Equatable {
       return fallback;
     }
 
-    final pn = parseInt(json['pageNumber'], 1);
-    final ps = parseInt(json['pageSize'], 10);
-    final tc = parseInt(json['totalCount'], parsedItems.length);
+    final pn = parseInt(payload['pageNumber'], 1);
+    final ps = parseInt(payload['pageSize'], 10);
+    final tc = parseInt(payload['totalCount'], parsedItems.length);
 
     return PaginatedResult<T>(
       items: parsedItems,
       pageNumber: pn < 1 ? 1 : pn,
       pageSize: ps <= 0 ? (parsedItems.isNotEmpty ? parsedItems.length : 10) : ps,
       totalCount: tc < 0 ? 0 : tc,
-      metadata: json['metadata'],
+      metadata: payload['metadata'],
     );
   }
 

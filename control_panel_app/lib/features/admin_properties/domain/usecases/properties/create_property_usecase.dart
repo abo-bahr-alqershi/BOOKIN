@@ -16,6 +16,7 @@ class CreatePropertyParams {
   final String city;
   final int starRating;
   final List<String>? images;
+  final List<String>? amenityIds; // أضف هذا السطر
   
   CreatePropertyParams({
     required this.name,
@@ -28,6 +29,7 @@ class CreatePropertyParams {
     required this.city,
     required this.starRating,
     this.images,
+    this.amenityIds, // أضف هذا السطر
   });
   
   Map<String, dynamic> toJson() => {
@@ -40,7 +42,10 @@ class CreatePropertyParams {
     'longitude': longitude,
     'city': city,
     'starRating': starRating,
-    if (images != null) 'images': images,
+    'images': images ?? [],
+    'amenityIds': amenityIds ?? [],
+    'isApproved': false, // أضف هذا لتجنب مشاكل API
+    'isActive': true,    // أضف هذا أيضاً
   };
 }
 
@@ -51,6 +56,19 @@ class CreatePropertyUseCase implements UseCase<String, CreatePropertyParams> {
   
   @override
   Future<Either<Failure, String>> call(CreatePropertyParams params) async {
+    // تحقق من صحة البيانات قبل الإرسال
+    if (params.starRating < 1 || params.starRating > 5) {
+      return Left(ValidationFailure('تقييم النجوم يجب أن يكون بين 1 و 5'));
+    }
+    
+    if (params.latitude < -90 || params.latitude > 90) {
+      return Left(ValidationFailure('خط العرض غير صحيح'));
+    }
+    
+    if (params.longitude < -180 || params.longitude > 180) {
+      return Left(ValidationFailure('خط الطول غير صحيح'));
+    }
+    
     return await repository.createProperty(params.toJson());
   }
 }

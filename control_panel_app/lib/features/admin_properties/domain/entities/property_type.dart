@@ -6,7 +6,7 @@ class PropertyType extends Equatable {
   final String id;
   final String name;
   final String description;
-  final String defaultAmenities;
+  final List<String> defaultAmenities;
   final String icon;
   final int propertiesCount;
   final bool isActive;

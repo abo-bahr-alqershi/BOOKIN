@@ -1,5 +1,6 @@
 // lib/features/admin_properties/presentation/bloc/properties/properties_bloc.dart
 
+import 'package:bookn_cp_app/features/admin_amenities/domain/entities/amenity.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:bookn_cp_app/core/models/paginated_result.dart';
@@ -69,35 +70,36 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
     );
   }
   
-  Future<void> _onCreateProperty(
-    CreatePropertyEvent event,
-    Emitter<PropertiesState> emit,
-  ) async {
-    emit(PropertyCreating());
-    
-    final result = await createProperty(
-      CreatePropertyParams(
-        name: event.name,
-        address: event.address,
-        propertyTypeId: event.propertyTypeId,
-        ownerId: event.ownerId,
-        description: event.description,
-        latitude: event.latitude,
-        longitude: event.longitude,
-        city: event.city,
-        starRating: event.starRating,
-        images: event.images,
-      ),
-    );
-    
-    result.fold(
-      (failure) => emit(PropertiesError(failure.message)),
-      (propertyId) {
-        emit(PropertyCreated(propertyId));
-        add(LoadPropertiesEvent());
-      },
-    );
-  }
+Future<void> _onCreateProperty(
+  CreatePropertyEvent event,
+  Emitter<PropertiesState> emit,
+) async {
+  emit(PropertyCreating());
+  
+  final result = await createProperty(
+    CreatePropertyParams(
+      name: event.name,
+      address: event.address,
+      propertyTypeId: event.propertyTypeId,
+      ownerId: event.ownerId,
+      description: event.description,
+      latitude: event.latitude,
+      longitude: event.longitude,
+      city: event.city,
+      starRating: event.starRating,
+      images: event.images,
+      amenityIds: event.amenityIds, // أضف هذا السطر
+    ),
+  );
+  
+  result.fold(
+    (failure) => emit(PropertiesError(failure.message)),
+    (propertyId) {
+      emit(PropertyCreated(propertyId));
+      add(LoadPropertiesEvent());
+    },
+  );
+}
   
   Future<void> _onUpdateProperty(
     UpdatePropertyEvent event,

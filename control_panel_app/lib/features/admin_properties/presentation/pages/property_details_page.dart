@@ -233,7 +233,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
             borderRadius: BorderRadius.circular(12),
           ),
           child: IconButton(
-            icon: const Icon(Icons.edit_rounded, size: 20),
+            icon: Icon(Icons.edit_rounded, size: 20,color: AppTheme.glowWhite),
             onPressed: () => context.push('/admin/properties/${widget.propertyId}/edit'),
           ),
         ),

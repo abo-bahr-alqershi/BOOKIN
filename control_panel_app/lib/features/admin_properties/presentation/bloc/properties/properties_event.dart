@@ -28,6 +28,8 @@ class LoadPropertiesEvent extends PropertiesEvent {
   List<Object?> get props => [pageNumber, pageSize, sortBy, isAscending, isApproved];
 }
 
+// lib/features/admin_properties/presentation/bloc/properties/properties_event.dart
+
 class CreatePropertyEvent extends PropertiesEvent {
   final String name;
   final String address;
@@ -39,6 +41,7 @@ class CreatePropertyEvent extends PropertiesEvent {
   final String city;
   final int starRating;
   final List<String>? images;
+  final List<String>? amenityIds; // أضف هذا السطر
   
   const CreatePropertyEvent({
     required this.name,
@@ -51,12 +54,13 @@ class CreatePropertyEvent extends PropertiesEvent {
     required this.city,
     required this.starRating,
     this.images,
+    this.amenityIds, // أضف هذا السطر
   });
   
   @override
   List<Object?> get props => [
     name, address, propertyTypeId, ownerId, description,
-    latitude, longitude, city, starRating, images,
+    latitude, longitude, city, starRating, images, amenityIds, // أضف amenityIds
   ];
 }
 
