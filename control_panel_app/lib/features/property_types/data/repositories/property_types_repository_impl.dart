@@ -54,7 +54,7 @@ class PropertyTypesRepositoryImpl implements PropertyTypesRepository {
   Future<Either<Failure, String>> createPropertyType({
     required String name,
     required String description,
-    required String defaultAmenities,
+    required List<String> defaultAmenities,
     required String icon,
   }) async {
     if (await networkInfo.isConnected) {
@@ -79,7 +79,7 @@ class PropertyTypesRepositoryImpl implements PropertyTypesRepository {
     required String propertyTypeId,
     required String name,
     required String description,
-    required String defaultAmenities,
+    required List<String> defaultAmenities,
     required String icon,
   }) async {
     if (await networkInfo.isConnected) {

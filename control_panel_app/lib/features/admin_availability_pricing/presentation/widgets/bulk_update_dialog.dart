@@ -380,7 +380,7 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
         const SizedBox(height: 12),
         _buildStatusSelector(),
         
-        if (_availabilityStatus == AvailabilityStatus.unavailable ||
+        if (_availabilityStatus == AvailabilityStatus.blocked ||
             _availabilityStatus == AvailabilityStatus.blocked) ...[
           const SizedBox(height: 16),
           _buildReasonField(),
@@ -395,7 +395,7 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
   Widget _buildStatusSelector() {
     final statuses = [
       (AvailabilityStatus.available, 'متاح', AppTheme.success),
-      (AvailabilityStatus.unavailable, 'غير متاح', AppTheme.textMuted),
+      (AvailabilityStatus.booked, 'محجوز', AppTheme.warning),
       (AvailabilityStatus.blocked, 'محظور', AppTheme.error),
       (AvailabilityStatus.maintenance, 'صيانة', AppTheme.info),
     ];

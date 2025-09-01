@@ -22,7 +22,7 @@ class UpdateAvailabilityUseCase
 }
 
 class UpdateAvailabilityParams extends Equatable {
-  final Availability availability;
+  final UnitAvailabilityEntry availability;
 
   const UpdateAvailabilityParams({required this.availability});
 

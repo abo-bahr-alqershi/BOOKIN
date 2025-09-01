@@ -23,7 +23,7 @@ class CreatePropertyTypeUseCase implements UseCase<String, CreatePropertyTypePar
 class CreatePropertyTypeParams extends Equatable {
   final String name;
   final String description;
-  final String defaultAmenities;
+  final List<String> defaultAmenities;
   final String icon;
 
   const CreatePropertyTypeParams({

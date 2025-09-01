@@ -5,8 +5,11 @@ class PropertyTypeModel extends PropertyType {
     required String id,
     required String name,
     required String description,
-    required String defaultAmenities,
+    required List<String> defaultAmenities,
     required String icon,
+    int propertiesCount = 0,
+    List<String> unitTypeIds = const [],
+    bool isActive = true,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : super(
@@ -15,6 +18,9 @@ class PropertyTypeModel extends PropertyType {
           description: description,
           defaultAmenities: defaultAmenities,
           icon: icon,
+          propertiesCount: propertiesCount,
+          unitTypeIds: unitTypeIds,
+          isActive: isActive,
           createdAt: createdAt,
           updatedAt: updatedAt,
         );
@@ -24,8 +30,15 @@ class PropertyTypeModel extends PropertyType {
       id: json['id'] ?? '',
       name: json['name'] ?? '',
       description: json['description'] ?? '',
-      defaultAmenities: json['defaultAmenities'] ?? '',
+      defaultAmenities: json['defaultAmenities'] is List
+          ? List<String>.from(json['defaultAmenities'])
+          : [],
       icon: json['icon'] ?? 'home',
+      propertiesCount: json['propertiesCount'] ?? 0,
+      unitTypeIds: json['unitTypeIds'] is List
+          ? List<String>.from(json['unitTypeIds'])
+          : [],
+      isActive: json['isActive'] ?? true,
       createdAt: json['createdAt'] != null 
           ? DateTime.parse(json['createdAt']) 
           : null,
@@ -42,6 +55,9 @@ class PropertyTypeModel extends PropertyType {
       'description': description,
       'defaultAmenities': defaultAmenities,
       'icon': icon,
+      'propertiesCount': propertiesCount,
+      'unitTypeIds': unitTypeIds,
+      'isActive': isActive,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
     };

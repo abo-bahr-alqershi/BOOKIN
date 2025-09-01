@@ -99,7 +99,7 @@ class AvailabilityStatusDetailModel extends AvailabilityStatusDetail {
       case 'available':
         return AvailabilityStatus.available;
       case 'unavailable':
-        return AvailabilityStatus.unavailable;
+        return AvailabilityStatus.blocked;
       case 'maintenance':
         return AvailabilityStatus.maintenance;
       case 'blocked':
@@ -115,14 +115,14 @@ class AvailabilityStatusDetailModel extends AvailabilityStatusDetail {
     switch (status) {
       case AvailabilityStatus.available:
         return 'available';
-      case AvailabilityStatus.unavailable:
-        return 'unavailable';
-      case AvailabilityStatus.maintenance:
-        return 'maintenance';
-      case AvailabilityStatus.blocked:
-        return 'blocked';
       case AvailabilityStatus.booked:
         return 'booked';
+      case AvailabilityStatus.blocked:
+        return 'blocked';
+      case AvailabilityStatus.maintenance:
+        return 'maintenance';
+      case AvailabilityStatus.hold:
+        return 'hold';
     }
   }
 }

@@ -57,7 +57,7 @@ class PricingRemoteDataSourceImpl implements PricingRemoteDataSource {
   ) async {
     try {
       final response = await apiClient.get(
-        '${ApiConstants.units}/$unitId/pricing/$year/$month',
+        '/api/admin/units/$unitId/pricing/$year/$month',
       );
       
       return UnitPricingModel.fromJson(response.data['data']);
@@ -70,7 +70,7 @@ class PricingRemoteDataSourceImpl implements PricingRemoteDataSource {
   Future<void> updatePricing(Map<String, dynamic> data) async {
     try {
       await apiClient.post(
-        '${ApiConstants.units}/${data['unitId']}/pricing',
+        '/api/admin/units/${data['unitId']}/pricing',
         data: data,
       );
     } on DioException catch (e) {
@@ -104,7 +104,7 @@ class PricingRemoteDataSourceImpl implements PricingRemoteDataSource {
       };
       
       await apiClient.post(
-        '${ApiConstants.units}/$unitId/pricing/bulk',
+        '/api/admin/units/$unitId/pricing/bulk',
         data: data,
       );
     } on DioException catch (e) {
@@ -116,7 +116,7 @@ class PricingRemoteDataSourceImpl implements PricingRemoteDataSource {
   Future<void> copyPricing(Map<String, dynamic> data) async {
     try {
       await apiClient.post(
-        '${ApiConstants.units}/${data['unitId']}/pricing/copy',
+        '/api/admin/units/${data['unitId']}/pricing/copy',
         data: data,
       );
     } on DioException catch (e) {
@@ -134,7 +134,7 @@ class PricingRemoteDataSourceImpl implements PricingRemoteDataSource {
     try {
       if (pricingId != null) {
         await apiClient.delete(
-          '${ApiConstants.units}/$unitId/pricing/$pricingId',
+          '/api/admin/units/$unitId/pricing/$pricingId',
         );
       }
     } on DioException catch (e) {
@@ -146,7 +146,7 @@ class PricingRemoteDataSourceImpl implements PricingRemoteDataSource {
   Future<List<SeasonalPricingModel>> getSeasonalPricing(String unitId) async {
     try {
       final response = await apiClient.get(
-        '${ApiConstants.units}/$unitId/pricing/templates',
+        '/api/admin/units/$unitId/pricing/templates',
       );
       
       final List<dynamic> seasons = response.data['seasons'] ?? [];
@@ -162,7 +162,7 @@ class PricingRemoteDataSourceImpl implements PricingRemoteDataSource {
   Future<void> applySeasonalPricing(Map<String, dynamic> data) async {
     try {
       await apiClient.post(
-        '${ApiConstants.units}/${data['unitId']}/pricing/apply-template',
+        '/api/admin/units/${data['unitId']}/pricing/apply-template',
         data: data,
       );
     } on DioException catch (e) {

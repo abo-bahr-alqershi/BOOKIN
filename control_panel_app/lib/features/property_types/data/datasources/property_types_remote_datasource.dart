@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'dart:convert';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/models/paginated_result.dart';
@@ -17,7 +18,7 @@ abstract class PropertyTypesRemoteDataSource {
   Future<String> createPropertyType({
     required String name,
     required String description,
-    required String defaultAmenities,
+    required List<String> defaultAmenities,
     required String icon,
   });
   
@@ -25,7 +26,7 @@ abstract class PropertyTypesRemoteDataSource {
     required String propertyTypeId,
     required String name,
     required String description,
-    required String defaultAmenities,
+    required List<String> defaultAmenities,
     required String icon,
   });
   
@@ -52,10 +53,48 @@ class PropertyTypesRemoteDataSourceImpl implements PropertyTypesRemoteDataSource
         },
       );
       
+      dynamic raw = response.data;
+      if (raw is String) {
+        try {
+          raw = json.decode(raw);
+        } catch (_) {}
+      }
+
+      // Support both ResultDto-wrapped and direct paginated payloads
+      dynamic payload;
+      if (raw is Map<String, dynamic> && raw.containsKey('data')) {
+        payload = raw['data'];
+      } else {
+        payload = raw;
+      }
+
+      if (payload is String) {
+        try {
+          payload = json.decode(payload);
+        } catch (_) {}
+      }
+
+      if (payload is Map<String, dynamic>) {
       return PaginatedResult<PropertyTypeModel>.fromJson(
-        response.data,
-        (json) => PropertyTypeModel.fromJson(json),
+          payload,
+          (json) => PropertyTypeModel.fromJson(json as Map<String, dynamic>),
       );
+      }
+
+      if (payload is List) {
+        final items = payload
+            .whereType<Map<String, dynamic>>()
+            .map((e) => PropertyTypeModel.fromJson(e))
+            .toList();
+        return PaginatedResult<PropertyTypeModel>(
+          items: items,
+          pageNumber: pageNumber,
+          pageSize: pageSize,
+          totalCount: items.length,
+        );
+      }
+
+      throw const ServerException('Invalid response structure for property types');
     } on DioException catch (e) {
       throw ServerException(e.message ?? 'Server error occurred');
     }
@@ -65,13 +104,17 @@ class PropertyTypesRemoteDataSourceImpl implements PropertyTypesRemoteDataSource
   Future<PropertyTypeModel> getPropertyTypeById(String id) async {
     try {
       final response = await apiClient.get('$_baseEndpoint/$id');
-      final result = ResultDto.fromJson(response.data, null);
-      
-      if (result.isSuccess && result.data != null) {
-        return PropertyTypeModel.fromJson(result.data);
-      } else {
-        throw ServerException(result.message ?? 'Failed to get property type');
+      dynamic raw = response.data;
+      if (raw is String) {
+        try { raw = json.decode(raw); } catch (_) {}
       }
+      final result = ResultDto.fromJson((raw as Map<String, dynamic>), null);
+      final data = result.data;
+      if (result.isSuccess && data != null) {
+        final map = data is String ? json.decode(data) : data;
+        return PropertyTypeModel.fromJson(map as Map<String, dynamic>);
+      }
+        throw ServerException(result.message ?? 'Failed to get property type');
     } on DioException catch (e) {
       throw ServerException(e.message ?? 'Server error occurred');
     }
@@ -81,7 +124,7 @@ class PropertyTypesRemoteDataSourceImpl implements PropertyTypesRemoteDataSource
   Future<String> createPropertyType({
     required String name,
     required String description,
-    required String defaultAmenities,
+    required List<String> defaultAmenities,
     required String icon,
   }) async {
     try {
@@ -112,7 +155,7 @@ class PropertyTypesRemoteDataSourceImpl implements PropertyTypesRemoteDataSource
     required String propertyTypeId,
     required String name,
     required String description,
-    required String defaultAmenities,
+    required List<String> defaultAmenities,
     required String icon,
   }) async {
     try {

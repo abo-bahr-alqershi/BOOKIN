@@ -4,20 +4,20 @@ import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exceptions.dart';
 import '../../../../core/constants/api_constants.dart';
-import '../models/availability_model.dart';
-import '../models/unit_availability_model.dart';
+import '../models/availability_model.dart' as avail_model;
+import '../models/unit_availability_model.dart' as unit_avail_model;
 import '../models/booking_conflict_model.dart';
 import '../../domain/entities/availability.dart';
 import '../../domain/repositories/availability_repository.dart' as availability_repo;
 
 abstract class AvailabilityRemoteDataSource {
-  Future<UnitAvailabilityModel> getMonthlyAvailability(
+  Future<unit_avail_model.UnitAvailabilityModel> getMonthlyAvailability(
     String unitId,
     int year,
     int month,
   );
   
-  Future<void> updateAvailability(AvailabilityModel availability);
+  Future<void> updateAvailability(avail_model.UnitAvailabilityEntryModel availability);
   
   Future<void> bulkUpdateAvailability(
     String unitId,
@@ -41,7 +41,7 @@ abstract class AvailabilityRemoteDataSource {
     bool? forceDelete,
   });
   
-  Future<CheckAvailabilityResponseModel> checkAvailability({
+  Future<unit_avail_model.CheckAvailabilityResponseModel> checkAvailability({
     required String unitId,
     required DateTime checkIn,
     required DateTime checkOut,
@@ -66,27 +66,27 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
   AvailabilityRemoteDataSourceImpl({required this.apiClient});
 
   @override
-  Future<UnitAvailabilityModel> getMonthlyAvailability(
+  Future<unit_avail_model.UnitAvailabilityModel> getMonthlyAvailability(
     String unitId,
     int year,
     int month,
   ) async {
     try {
       final response = await apiClient.get(
-        '${ApiConstants.units}/$unitId/availability/$year/$month',
+        '/api/admin/units/$unitId/availability/$year/$month',
       );
       
-      return UnitAvailabilityModel.fromJson(response.data['data']);
+      return unit_avail_model.UnitAvailabilityModel.fromJson(response.data['data']);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
   }
 
   @override
-  Future<void> updateAvailability(AvailabilityModel availability) async {
+  Future<void> updateAvailability(avail_model.UnitAvailabilityEntryModel availability) async {
     try {
       await apiClient.post(
-        '${ApiConstants.units}/${availability.unitId}/availability',
+        '/api/admin/units/${availability.unitId}/availability',
         data: availability.toJson(),
       );
     } on DioException catch (e) {
@@ -115,7 +115,7 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
       };
       
       await apiClient.post(
-        '${ApiConstants.units}/$unitId/availability/bulk',
+        '/api/admin/units/$unitId/availability/bulk',
         data: data,
       );
     } on DioException catch (e) {
@@ -133,7 +133,7 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
   }) async {
     try {
       await apiClient.post(
-        '${ApiConstants.units}/$unitId/availability/clone',
+        '/api/admin/units/$unitId/availability/clone',
         data: {
           'unitId': unitId,
           'sourceStartDate': sourceStartDate.toIso8601String(),
@@ -159,7 +159,7 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
       // الـ backend يدعم الحذف بنطاق التواريخ فقط
       if (startDate != null && endDate != null) {
         await apiClient.delete(
-          '${ApiConstants.units}/$unitId/availability/${startDate.toIso8601String()}/${endDate.toIso8601String()}',
+          '/api/admin/units/$unitId/availability/${startDate.toIso8601String()}/${endDate.toIso8601String()}',
           queryParameters: forceDelete != null ? {'forceDelete': forceDelete} : null,
         );
       } else {
@@ -172,7 +172,7 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
   }
 
   @override
-  Future<CheckAvailabilityResponseModel> checkAvailability({
+  Future<unit_avail_model.CheckAvailabilityResponseModel> checkAvailability({
     required String unitId,
     required DateTime checkIn,
     required DateTime checkOut,
@@ -182,7 +182,7 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
   }) async {
     try {
       final response = await apiClient.get(
-        '${ApiConstants.units}/$unitId/availability/check',
+        '/api/admin/units/$unitId/availability/check',
         queryParameters: {
           'checkIn': checkIn.toIso8601String(),
           'checkOut': checkOut.toIso8601String(),
@@ -192,7 +192,7 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
         },
       );
       
-      return CheckAvailabilityResponseModel.fromJson(response.data['data']);
+      return unit_avail_model.CheckAvailabilityResponseModel.fromJson(response.data['data']);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -219,14 +219,14 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
     switch (status) {
       case AvailabilityStatus.available:
         return 'available';
-      case AvailabilityStatus.unavailable:
-        return 'unavailable';
-      case AvailabilityStatus.maintenance:
-        return 'maintenance';
-      case AvailabilityStatus.blocked:
-        return 'blocked';
       case AvailabilityStatus.booked:
         return 'booked';
+      case AvailabilityStatus.blocked:
+        return 'blocked';
+      case AvailabilityStatus.maintenance:
+        return 'maintenance';
+      case AvailabilityStatus.hold:
+        return 'hold';
     }
   }
 }

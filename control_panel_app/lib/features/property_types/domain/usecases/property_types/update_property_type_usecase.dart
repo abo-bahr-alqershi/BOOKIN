@@ -25,7 +25,7 @@ class UpdatePropertyTypeParams extends Equatable {
   final String propertyTypeId;
   final String name;
   final String description;
-  final String defaultAmenities;
+  final List<String> defaultAmenities;
   final String icon;
 
   const UpdatePropertyTypeParams({

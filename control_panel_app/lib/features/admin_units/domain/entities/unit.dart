@@ -9,8 +9,14 @@ class Unit extends Equatable {
   final String unitTypeId;
   final String name;
   final Money basePrice;
+  final int maxCapacity;
+  final double discountPercentage;
   final String customFeatures;
   final bool isAvailable;
+  final int viewCount;
+  final int bookingCount;
+  final int? adultsCapacity;
+  final int? childrenCapacity;
   final String propertyName;
   final String unitTypeName;
   final PricingMethod pricingMethod;
@@ -18,10 +24,6 @@ class Unit extends Equatable {
   final List<FieldGroupWithValues> dynamicFields;
   final double? distanceKm;
   final List<String>? images;
-  final int? adultCapacity;
-  final int? childrenCapacity;
-  final int? viewCount;
-  final int? bookingCount;
 
   const Unit({
     required this.id,
@@ -29,8 +31,14 @@ class Unit extends Equatable {
     required this.unitTypeId,
     required this.name,
     required this.basePrice,
+    this.maxCapacity = 2,
+    this.discountPercentage = 0.0,
     required this.customFeatures,
     required this.isAvailable,
+    this.viewCount = 0,
+    this.bookingCount = 0,
+    this.adultsCapacity,
+    this.childrenCapacity,
     required this.propertyName,
     required this.unitTypeName,
     required this.pricingMethod,
@@ -38,10 +46,6 @@ class Unit extends Equatable {
     this.dynamicFields = const [],
     this.distanceKm,
     this.images,
-    this.adultCapacity,
-    this.childrenCapacity,
-    this.viewCount,
-    this.bookingCount,
   });
 
   List<String> get featuresList {
@@ -51,7 +55,7 @@ class Unit extends Equatable {
 
   String get capacityDisplay {
     final capacities = <String>[];
-    if (adultCapacity != null) capacities.add('👨 $adultCapacity');
+    if (adultsCapacity != null) capacities.add('👨 $adultsCapacity');
     if (childrenCapacity != null) capacities.add('👶 $childrenCapacity');
     return capacities.join(' • ');
   }
@@ -63,8 +67,14 @@ class Unit extends Equatable {
         unitTypeId,
         name,
         basePrice,
+        maxCapacity,
+        discountPercentage,
         customFeatures,
         isAvailable,
+        viewCount,
+        bookingCount,
+        adultsCapacity,
+        childrenCapacity,
         propertyName,
         unitTypeName,
         pricingMethod,
@@ -72,9 +82,5 @@ class Unit extends Equatable {
         dynamicFields,
         distanceKm,
         images,
-        adultCapacity,
-        childrenCapacity,
-        viewCount,
-        bookingCount,
       ];
 }

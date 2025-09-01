@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'dart:convert';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/models/paginated_result.dart';
@@ -61,10 +62,40 @@ class UnitTypesRemoteDataSourceImpl implements UnitTypesRemoteDataSource {
         },
       );
       
+      dynamic raw = response.data;
+      if (raw is String) {
+        try { raw = json.decode(raw); } catch (_) {}
+      }
+
+      dynamic payload = (raw is Map<String, dynamic> && raw.containsKey('data'))
+          ? raw['data']
+          : raw;
+
+      if (payload is String) {
+        try { payload = json.decode(payload); } catch (_) {}
+      }
+
+      if (payload is Map<String, dynamic>) {
       return PaginatedResult<UnitTypeModel>.fromJson(
-        response.data,
+          payload,
         (json) => UnitTypeModel.fromJson(json as Map<String, dynamic>),
       );
+      }
+
+      if (payload is List) {
+        final items = payload
+            .whereType<Map<String, dynamic>>()
+            .map((e) => UnitTypeModel.fromJson(e))
+            .toList();
+        return PaginatedResult<UnitTypeModel>(
+          items: items,
+          pageNumber: pageNumber,
+          pageSize: pageSize,
+          totalCount: items.length,
+        );
+      }
+
+      throw const ServerException('Invalid response structure for unit types');
     } on DioException catch (e) {
       throw ServerException(e.message ?? 'Server error occurred');
     }
@@ -74,13 +105,17 @@ class UnitTypesRemoteDataSourceImpl implements UnitTypesRemoteDataSource {
   Future<UnitTypeModel> getUnitTypeById(String id) async {
     try {
       final response = await apiClient.get('$_baseEndpoint/$id');
-      final result = ResultDto.fromJson(response.data, null);
-      
-      if (result.isSuccess && result.data != null) {
-        return UnitTypeModel.fromJson(result.data);
-      } else {
-        throw ServerException(result.message ?? 'Failed to get unit type');
+      dynamic raw = response.data;
+      if (raw is String) {
+        try { raw = json.decode(raw); } catch (_) {}
       }
+      final result = ResultDto.fromJson((raw as Map<String, dynamic>), null);
+      final data = result.data;
+      if (result.isSuccess && data != null) {
+        final map = data is String ? json.decode(data) : data;
+        return UnitTypeModel.fromJson(map as Map<String, dynamic>);
+      }
+        throw ServerException(result.message ?? 'Failed to get unit type');
     } on DioException catch (e) {
       throw ServerException(e.message ?? 'Server error occurred');
     }

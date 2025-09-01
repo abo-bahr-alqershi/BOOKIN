@@ -25,7 +25,7 @@ class LoadMonthlyAvailability extends AvailabilityEvent {
 }
 
 class UpdateAvailability extends AvailabilityEvent {
-  final Availability availability;
+  final UnitAvailabilityEntry availability;
 
   const UpdateAvailability({required this.availability});
 

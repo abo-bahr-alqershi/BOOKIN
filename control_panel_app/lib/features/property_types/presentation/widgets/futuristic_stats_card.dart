@@ -139,7 +139,7 @@ class _FuturisticStatsCardState extends State<FuturisticStatsCard>
 
   Widget _buildCard() {
     return Container(
-      height: 100,
+      constraints: const BoxConstraints(minHeight: 100),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -235,10 +235,13 @@ class _FuturisticStatsCardState extends State<FuturisticStatsCard>
                     Expanded(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             widget.title,
+                            softWrap: true,
+                            textAlign: TextAlign.end,
                             style: AppTextStyles.bodySmall.copyWith(
                               color: AppTheme.textMuted,
                               letterSpacing: 0.5,
@@ -253,6 +256,8 @@ class _FuturisticStatsCardState extends State<FuturisticStatsCard>
                                     widget.gradient.createShader(bounds),
                                 child: Text(
                                   _countAnimation.value.toString(),
+                                  softWrap: true,
+                                  textAlign: TextAlign.end,
                                   style: AppTextStyles.heading1.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,

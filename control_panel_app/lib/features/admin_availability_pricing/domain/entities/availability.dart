@@ -4,10 +4,10 @@ import 'package:equatable/equatable.dart';
 
 enum AvailabilityStatus {
   available,
-  unavailable,
-  maintenance,
-  blocked,
   booked,
+  blocked,
+  maintenance,
+  hold,
 }
 
 enum UnavailabilityReason {
@@ -18,59 +18,55 @@ enum UnavailabilityReason {
   other,
 }
 
-class Availability extends Equatable {
+class UnitAvailabilityEntry extends Equatable {
   final String? availabilityId;
   final String unitId;
   final DateTime startDate;
   final DateTime endDate;
-  final String? startTime;
-  final String? endTime;
   final AvailabilityStatus status;
-  final UnavailabilityReason? reason;
+  final String? reason;
   final String? notes;
+  final String? bookingId;
   final String? createdBy;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  const Availability({
+  const UnitAvailabilityEntry({
     this.availabilityId,
     required this.unitId,
     required this.startDate,
     required this.endDate,
-    this.startTime,
-    this.endTime,
     required this.status,
     this.reason,
     this.notes,
+    this.bookingId,
     this.createdBy,
     this.createdAt,
     this.updatedAt,
   });
 
-  Availability copyWith({
+  UnitAvailabilityEntry copyWith({
     String? availabilityId,
     String? unitId,
     DateTime? startDate,
     DateTime? endDate,
-    String? startTime,
-    String? endTime,
     AvailabilityStatus? status,
-    UnavailabilityReason? reason,
+    String? reason,
     String? notes,
+    String? bookingId,
     String? createdBy,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
-    return Availability(
+    return UnitAvailabilityEntry(
       availabilityId: availabilityId ?? this.availabilityId,
       unitId: unitId ?? this.unitId,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
-      startTime: startTime ?? this.startTime,
-      endTime: endTime ?? this.endTime,
       status: status ?? this.status,
       reason: reason ?? this.reason,
       notes: notes ?? this.notes,
+      bookingId: bookingId ?? this.bookingId,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -83,11 +79,10 @@ class Availability extends Equatable {
         unitId,
         startDate,
         endDate,
-        startTime,
-        endTime,
         status,
         reason,
         notes,
+        bookingId,
         createdBy,
         createdAt,
         updatedAt,

@@ -70,12 +70,12 @@ class AvailabilityRepositoryImpl implements availability_repo.AvailabilityReposi
 
   @override
   Future<Either<Failure, void>> updateAvailability(
-    Availability availability,
+    UnitAvailabilityEntry availability,
   ) async {
     if (await networkInfo.isConnected) {
       try {
         await remoteDataSource.updateAvailability(
-          availability as AvailabilityModel,
+          availability as UnitAvailabilityEntryModel,
         );
         
         // Clear related cache

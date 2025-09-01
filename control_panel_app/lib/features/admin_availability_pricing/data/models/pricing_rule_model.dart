@@ -6,59 +6,77 @@ import '../../domain/entities/pricing.dart';
 class PricingRuleModel extends PricingRule {
   const PricingRuleModel({
     required String id,
+    required String unitId,
     required DateTime startDate,
     required DateTime endDate,
-    required double price,
-    required PriceType priceType,
-    required String description,
-    required String currency,
-    PricingTier? pricingTier,
+    String? startTime,
+    String? endTime,
+    required double priceAmount,
+    required String priceType,
+    required String pricingTier,
     double? percentageChange,
-    bool isActive = true,
+    double? minPrice,
+    double? maxPrice,
+    String? description,
+    required String currency,
   }) : super(
           id: id,
+          unitId: unitId,
           startDate: startDate,
           endDate: endDate,
-          price: price,
+          startTime: startTime,
+          endTime: endTime,
+          priceAmount: priceAmount,
           priceType: priceType,
-          description: description,
-          currency: currency,
           pricingTier: pricingTier,
           percentageChange: percentageChange,
-          isActive: isActive,
+          minPrice: minPrice,
+          maxPrice: maxPrice,
+          description: description,
+          currency: currency,
         );
 
   factory PricingRuleModel.fromJson(Map<String, dynamic> json) {
     return PricingRuleModel(
       id: json['id'] as String,
+      unitId: json['unitId'] as String,
       startDate: DateTime.parse(json['startDate'] as String),
       endDate: DateTime.parse(json['endDate'] as String),
-      price: (json['price'] as num).toDouble(),
-      priceType: _parsePriceType(json['priceType'] as String),
-      description: json['description'] as String,
-      currency: json['currency'] as String,
-      pricingTier: json['pricingTier'] != null
-          ? _parsePricingTier(json['pricingTier'] as String)
-          : null,
+      startTime: json['startTime'] as String?,
+      endTime: json['endTime'] as String?,
+      priceAmount: (json['priceAmount'] as num).toDouble(),
+      priceType: json['priceType'] as String,
+      pricingTier: json['pricingTier'] as String,
       percentageChange: json['percentageChange'] != null
           ? (json['percentageChange'] as num).toDouble()
           : null,
-      isActive: json['isActive'] as bool? ?? true,
+      minPrice: json['minPrice'] != null
+          ? (json['minPrice'] as num).toDouble()
+          : null,
+      maxPrice: json['maxPrice'] != null
+          ? (json['maxPrice'] as num).toDouble()
+          : null,
+      description: json['description'] as String?,
+      currency: json['currency'] as String,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'unitId': unitId,
       'startDate': startDate.toIso8601String(),
       'endDate': endDate.toIso8601String(),
-      'price': price,
-      'priceType': _priceTypeToString(priceType),
-      'description': description,
-      'currency': currency,
-      if (pricingTier != null) 'pricingTier': _pricingTierToString(pricingTier!),
+      if (startTime != null) 'startTime': startTime,
+      if (endTime != null) 'endTime': endTime,
+      'priceAmount': priceAmount,
+      'priceType': priceType,
+      'pricingTier': pricingTier,
       if (percentageChange != null) 'percentageChange': percentageChange,
-      'isActive': isActive,
+      if (minPrice != null) 'minPrice': minPrice,
+      if (maxPrice != null) 'maxPrice': maxPrice,
+      if (description != null) 'description': description,
+      'currency': currency,
     };
   }
 

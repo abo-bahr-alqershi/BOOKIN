@@ -5,41 +5,53 @@ import 'pricing.dart';
 
 class PricingRule extends Equatable {
   final String id;
+  final String unitId;
   final DateTime startDate;
   final DateTime endDate;
-  final double price;
-  final PriceType priceType;
-  final String description;
-  final String currency;
-  final PricingTier? pricingTier;
+  final String? startTime;
+  final String? endTime;
+  final double priceAmount;
+  final String priceType;
+  final String pricingTier;
   final double? percentageChange;
-  final bool isActive;
+  final double? minPrice;
+  final double? maxPrice;
+  final String? description;
+  final String currency;
 
   const PricingRule({
     required this.id,
+    required this.unitId,
     required this.startDate,
     required this.endDate,
-    required this.price,
+    this.startTime,
+    this.endTime,
+    required this.priceAmount,
     required this.priceType,
-    required this.description,
-    required this.currency,
-    this.pricingTier,
+    required this.pricingTier,
     this.percentageChange,
-    this.isActive = true,
+    this.minPrice,
+    this.maxPrice,
+    this.description,
+    required this.currency,
   });
 
   @override
   List<Object?> get props => [
         id,
+        unitId,
         startDate,
         endDate,
-        price,
+        startTime,
+        endTime,
+        priceAmount,
         priceType,
-        description,
-        currency,
         pricingTier,
         percentageChange,
-        isActive,
+        minPrice,
+        maxPrice,
+        description,
+        currency,
       ];
 }
 

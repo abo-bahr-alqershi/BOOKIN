@@ -2,17 +2,16 @@
 
 import '../../domain/entities/availability.dart';
 
-class AvailabilityModel extends Availability {
-  const AvailabilityModel({
+class UnitAvailabilityEntryModel extends UnitAvailabilityEntry {
+  const UnitAvailabilityEntryModel({
     String? availabilityId,
     required String unitId,
     required DateTime startDate,
     required DateTime endDate,
-    String? startTime,
-    String? endTime,
     required AvailabilityStatus status,
-    UnavailabilityReason? reason,
+    String? reason,
     String? notes,
+    String? bookingId,
     String? createdBy,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -21,29 +20,25 @@ class AvailabilityModel extends Availability {
           unitId: unitId,
           startDate: startDate,
           endDate: endDate,
-          startTime: startTime,
-          endTime: endTime,
           status: status,
           reason: reason,
           notes: notes,
+          bookingId: bookingId,
           createdBy: createdBy,
           createdAt: createdAt,
           updatedAt: updatedAt,
         );
 
-  factory AvailabilityModel.fromJson(Map<String, dynamic> json) {
-    return AvailabilityModel(
-      availabilityId: json['availabilityId'] as String?,
+  factory UnitAvailabilityEntryModel.fromJson(Map<String, dynamic> json) {
+    return UnitAvailabilityEntryModel(
+      availabilityId: json['id'] as String?,
       unitId: json['unitId'] as String,
       startDate: DateTime.parse(json['startDate'] as String),
       endDate: DateTime.parse(json['endDate'] as String),
-      startTime: json['startTime'] as String?,
-      endTime: json['endTime'] as String?,
       status: _parseStatus(json['status'] as String),
-      reason: json['reason'] != null
-          ? _parseReason(json['reason'] as String)
-          : null,
+      reason: json['reason'] as String?,
       notes: json['notes'] as String?,
+      bookingId: json['bookingId'] as String?,
       createdBy: json['createdBy'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
@@ -56,15 +51,14 @@ class AvailabilityModel extends Availability {
 
   Map<String, dynamic> toJson() {
     return {
-      if (availabilityId != null) 'availabilityId': availabilityId,
+      if (availabilityId != null) 'id': availabilityId,
       'unitId': unitId,
       'startDate': startDate.toIso8601String(),
       'endDate': endDate.toIso8601String(),
-      if (startTime != null) 'startTime': startTime,
-      if (endTime != null) 'endTime': endTime,
       'status': _statusToString(status),
-      if (reason != null) 'reason': _reasonToString(reason!),
+      if (reason != null) 'reason': reason,
       if (notes != null) 'notes': notes,
+      if (bookingId != null) 'bookingId': bookingId,
       if (createdBy != null) 'createdBy': createdBy,
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
       if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
@@ -75,14 +69,14 @@ class AvailabilityModel extends Availability {
     switch (status.toLowerCase()) {
       case 'available':
         return AvailabilityStatus.available;
-      case 'unavailable':
-        return AvailabilityStatus.unavailable;
-      case 'maintenance':
-        return AvailabilityStatus.maintenance;
-      case 'blocked':
-        return AvailabilityStatus.blocked;
       case 'booked':
         return AvailabilityStatus.booked;
+      case 'blocked':
+        return AvailabilityStatus.blocked;
+      case 'maintenance':
+        return AvailabilityStatus.maintenance;
+      case 'hold':
+        return AvailabilityStatus.hold;
       default:
         return AvailabilityStatus.available;
     }
@@ -92,14 +86,14 @@ class AvailabilityModel extends Availability {
     switch (status) {
       case AvailabilityStatus.available:
         return 'available';
-      case AvailabilityStatus.unavailable:
-        return 'unavailable';
-      case AvailabilityStatus.maintenance:
-        return 'maintenance';
-      case AvailabilityStatus.blocked:
-        return 'blocked';
       case AvailabilityStatus.booked:
         return 'booked';
+      case AvailabilityStatus.blocked:
+        return 'blocked';
+      case AvailabilityStatus.maintenance:
+        return 'maintenance';
+      case AvailabilityStatus.hold:
+        return 'hold';
     }
   }
 

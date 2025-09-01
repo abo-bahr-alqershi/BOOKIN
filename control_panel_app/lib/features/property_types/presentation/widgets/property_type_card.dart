@@ -188,7 +188,7 @@ class _PropertyTypeCardState extends State<PropertyTypeCard>
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  widget.propertyType.defaultAmenities,
+                                  widget.propertyType.defaultAmenities.join(', '),
                                   style: AppTextStyles.caption.copyWith(
                                     color: AppTheme.primaryBlue,
                                   ),

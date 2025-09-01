@@ -23,7 +23,7 @@ class LoadPropertyTypesEvent extends PropertyTypesEvent {
 class CreatePropertyTypeEvent extends PropertyTypesEvent {
   final String name;
   final String description;
-  final String defaultAmenities;
+  final List<String> defaultAmenities;
   final String icon;
 
   const CreatePropertyTypeEvent({
@@ -41,7 +41,7 @@ class UpdatePropertyTypeEvent extends PropertyTypesEvent {
   final String propertyTypeId;
   final String name;
   final String description;
-  final String defaultAmenities;
+  final List<String> defaultAmenities;
   final String icon;
 
   const UpdatePropertyTypeEvent({

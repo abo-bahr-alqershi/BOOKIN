@@ -14,7 +14,7 @@ abstract class AvailabilityRepository {
   );
 
   Future<Either<Failure, void>> updateAvailability(
-    Availability availability,
+    UnitAvailabilityEntry availability,
   );
 
   Future<Either<Failure, void>> bulkUpdateAvailability({

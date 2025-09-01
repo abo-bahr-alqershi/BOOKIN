@@ -9,7 +9,7 @@ import 'icon_picker_modal.dart';
 
 class PropertyTypeModal extends StatefulWidget {
   final PropertyType? propertyType;
-  final Function(String name, String description, String defaultAmenities, String icon) onSave;
+  final Function(String name, String description, List<String> defaultAmenities, String icon) onSave;
 
   const PropertyTypeModal({
     super.key,
@@ -66,7 +66,7 @@ class _PropertyTypeModalState extends State<PropertyTypeModal>
       text: widget.propertyType?.description ?? '',
     );
     _defaultAmenitiesController = TextEditingController(
-      text: widget.propertyType?.defaultAmenities ?? '',
+      text: widget.propertyType?.defaultAmenities.join(', ') ?? '',
     );
     _selectedIcon = widget.propertyType?.icon ?? 'home';
     
@@ -546,7 +546,7 @@ class _PropertyTypeModalState extends State<PropertyTypeModal>
       widget.onSave(
         _nameController.text,
         _descriptionController.text,
-        _defaultAmenitiesController.text,
+        _defaultAmenitiesController.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
         _selectedIcon,
       );
       Navigator.of(context).pop();
