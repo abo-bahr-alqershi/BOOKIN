@@ -1,3 +1,5 @@
+// lib/features/units/presentation/widgets/unit_type_field_modal.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
@@ -23,10 +25,12 @@ class UnitTypeFieldModal extends StatefulWidget {
 }
 
 class _UnitTypeFieldModalState extends State<UnitTypeFieldModal>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _animationController;
+  late AnimationController _tabAnimationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
+  late Animation<double> _slideAnimation;
   
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _fieldNameController;
@@ -45,20 +49,28 @@ class _UnitTypeFieldModalState extends State<UnitTypeFieldModal>
   bool _showInCards = false;
   bool _isPrimaryFilter = false;
   bool _isLoading = false;
+  
+  // Mobile tab management
+  int _currentMobileTab = 0;
+  final PageController _pageController = PageController();
+  
+  // Breakpoints
+  static const double _mobileBreakpoint = 600;
+  static const double _tabletBreakpoint = 1024;
 
   final List<Map<String, dynamic>> _fieldTypes = [
-    {'value': 'text', 'label': 'نص قصير', 'icon': '📝'},
-    {'value': 'textarea', 'label': 'نص طويل', 'icon': '📄'},
-    {'value': 'number', 'label': 'رقم', 'icon': '🔢'},
-    {'value': 'currency', 'label': 'مبلغ مالي', 'icon': '💰'},
-    {'value': 'boolean', 'label': 'نعم/لا', 'icon': '☑️'},
-    {'value': 'select', 'label': 'قائمة منسدلة', 'icon': '📋'},
-    {'value': 'multiselect', 'label': 'تحديد متعدد', 'icon': '📋'},
-    {'value': 'date', 'label': 'تاريخ', 'icon': '📅'},
-    {'value': 'email', 'label': 'بريد إلكتروني', 'icon': '📧'},
-    {'value': 'phone', 'label': 'رقم هاتف', 'icon': '📞'},
-    {'value': 'file', 'label': 'ملف', 'icon': '📎'},
-    {'value': 'image', 'label': 'صورة', 'icon': '🖼️'},
+    {'value': 'text', 'label': 'نص قصير', 'icon': Icons.text_fields_rounded, 'color': AppTheme.primaryBlue},
+    {'value': 'textarea', 'label': 'نص طويل', 'icon': Icons.subject_rounded, 'color': AppTheme.primaryPurple},
+    {'value': 'number', 'label': 'رقم', 'icon': Icons.numbers_rounded, 'color': AppTheme.success},
+    {'value': 'currency', 'label': 'مبلغ مالي', 'icon': Icons.attach_money_rounded, 'color': AppTheme.warning},
+    {'value': 'boolean', 'label': 'نعم/لا', 'icon': Icons.toggle_on_rounded, 'color': AppTheme.info},
+    {'value': 'select', 'label': 'قائمة منسدلة', 'icon': Icons.arrow_drop_down_circle_rounded, 'color': AppTheme.neonPurple},
+    {'value': 'multiselect', 'label': 'تحديد متعدد', 'icon': Icons.checklist_rounded, 'color': AppTheme.neonGreen},
+    {'value': 'date', 'label': 'تاريخ', 'icon': Icons.calendar_today_rounded, 'color': AppTheme.error},
+    {'value': 'email', 'label': 'بريد إلكتروني', 'icon': Icons.email_rounded, 'color': AppTheme.primaryBlue},
+    {'value': 'phone', 'label': 'رقم هاتف', 'icon': Icons.phone_rounded, 'color': AppTheme.success},
+    {'value': 'file', 'label': 'ملف', 'icon': Icons.attach_file_rounded, 'color': AppTheme.warning},
+    {'value': 'image', 'label': 'صورة', 'icon': Icons.image_rounded, 'color': AppTheme.info},
   ];
 
   @override
@@ -66,6 +78,11 @@ class _UnitTypeFieldModalState extends State<UnitTypeFieldModal>
     super.initState();
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    
+    _tabAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
     
@@ -83,6 +100,14 @@ class _UnitTypeFieldModalState extends State<UnitTypeFieldModal>
     ).animate(CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeOut,
+    ));
+    
+    _slideAnimation = Tween<double>(
+      begin: 50.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
     ));
     
     _fieldNameController = TextEditingController(
@@ -118,11 +143,14 @@ class _UnitTypeFieldModalState extends State<UnitTypeFieldModal>
     }
     
     _animationController.forward();
+    _tabAnimationController.forward();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _tabAnimationController.dispose();
+    _pageController.dispose();
     _fieldNameController.dispose();
     _displayNameController.dispose();
     _descriptionController.dispose();
@@ -135,6 +163,818 @@ class _UnitTypeFieldModalState extends State<UnitTypeFieldModal>
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < _mobileBreakpoint) {
+          return _buildMobileLayout();
+        } else if (constraints.maxWidth < _tabletBreakpoint) {
+          return _buildTabletLayout();
+        } else {
+          return _buildDesktopLayout();
+        }
+      },
+    );
+  }
+
+  // ================ MOBILE LAYOUT ================
+  Widget _buildMobileLayout() {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: Transform.translate(
+            offset: Offset(0, _slideAnimation.value),
+            child: Scaffold(
+              backgroundColor: AppTheme.darkBackground,
+              body: SafeArea(
+                child: Column(
+                  children: [
+                    _buildMobileHeader(),
+                    _buildMobileTabs(),
+                    Expanded(
+                      child: _buildMobileContent(),
+                    ),
+                    _buildMobileActions(),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMobileHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.95),
+            AppTheme.darkCard.withOpacity(0.85),
+          ],
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.neonPurple.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppTheme.neonPurple, AppTheme.neonGreen],
+              ),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.neonPurple.withOpacity(0.3),
+                  blurRadius: 8,
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.dynamic_form_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.field == null 
+                      ? 'حقل جديد'
+                      : 'تعديل الحقل',
+                  style: AppTextStyles.heading3.copyWith(
+                    fontSize: 18,
+                    color: AppTheme.textWhite,
+                  ),
+                ),
+                Text(
+                  'قم بإدخال البيانات المطلوبة',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppTheme.darkSurface.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.close_rounded,
+                color: AppTheme.textMuted,
+                size: 18,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileTabs() {
+    final tabs = [
+      {'label': 'الأساسي', 'icon': Icons.info_rounded},
+      {'label': 'النوع', 'icon': Icons.category_rounded},
+      {'label': 'الخصائص', 'icon': Icons.settings_rounded},
+      {'label': 'متقدم', 'icon': Icons.tune_rounded},
+    ];
+
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withOpacity(0.5),
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.darkBorder.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+      ),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: tabs.length,
+        itemBuilder: (context, index) {
+          final tab = tabs[index];
+          final isActive = _currentMobileTab == index;
+          
+          return GestureDetector(
+            onTap: () {
+              setState(() => _currentMobileTab = index);
+              _pageController.animateToPage(
+                index,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+              HapticFeedback.lightImpact();
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                gradient: isActive
+                    ? LinearGradient(
+                        colors: [
+                          AppTheme.neonPurple.withOpacity(0.3),
+                          AppTheme.neonGreen.withOpacity(0.2),
+                        ],
+                      )
+                    : null,
+                color: !isActive
+                    ? AppTheme.darkSurface.withOpacity(0.3)
+                    : null,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isActive
+                      ? AppTheme.neonPurple.withOpacity(0.5)
+                      : Colors.transparent,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    tab['icon'] as IconData,
+                    size: 16,
+                    color: isActive ? AppTheme.neonPurple : AppTheme.textMuted,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    tab['label'] as String,
+                    style: AppTextStyles.caption.copyWith(
+                      color: isActive ? AppTheme.textWhite : AppTheme.textMuted,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMobileContent() {
+    return Form(
+      key: _formKey,
+      child: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() => _currentMobileTab = index);
+        },
+        children: [
+          _buildMobileBasicInfo(),
+          _buildMobileFieldType(),
+          _buildMobileFeatures(),
+          _buildMobileAdvanced(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileBasicInfo() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildMobileSection(
+            title: 'معلومات الحقل',
+            icon: Icons.info_outline_rounded,
+            children: [
+              _buildMobileTextField(
+                controller: _fieldNameController,
+                label: 'اسم الحقل (بالإنجليزية)',
+                hint: 'field_name',
+                icon: Icons.code_rounded,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'يرجى إدخال اسم الحقل';
+                  }
+                  if (!RegExp(r'^[a-zA-Z_][a-zA-Z0-9_]*$').hasMatch(value)) {
+                    return 'يجب أن يبدأ بحرف ويحتوي على حروف وأرقام و _ فقط';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildMobileTextField(
+                controller: _displayNameController,
+                label: 'الاسم المعروض',
+                hint: 'الاسم الذي سيظهر للمستخدم',
+                icon: Icons.label_rounded,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'يرجى إدخال الاسم المعروض';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildMobileTextField(
+                controller: _descriptionController,
+                label: 'الوصف',
+                hint: 'وصف مختصر للحقل',
+                icon: Icons.description_rounded,
+                maxLines: 3,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileFieldType() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildMobileSection(
+            title: 'نوع الحقل',
+            icon: Icons.category_rounded,
+            children: [
+              _buildMobileFieldTypeGrid(),
+              if (_selectedFieldType == 'select' || _selectedFieldType == 'multiselect') ...[
+                const SizedBox(height: 16),
+                _buildMobileTextField(
+                  controller: _optionsController,
+                  label: 'الخيارات',
+                  hint: 'خيار 1, خيار 2, خيار 3',
+                  icon: Icons.list_rounded,
+                  maxLines: 3,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'يرجى إدخال الخيارات مفصولة بفاصلة';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileFieldTypeGrid() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 1.0,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: _fieldTypes.length,
+      itemBuilder: (context, index) {
+        final type = _fieldTypes[index];
+        final isSelected = _selectedFieldType == type['value'];
+        
+        return GestureDetector(
+          onTap: () {
+            setState(() => _selectedFieldType = type['value'] as String);
+            HapticFeedback.selectionClick();
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? LinearGradient(
+                      colors: [
+                        (type['color'] as Color).withOpacity(0.3),
+                        (type['color'] as Color).withOpacity(0.1),
+                      ],
+                    )
+                  : null,
+              color: !isSelected
+                  ? AppTheme.darkSurface.withOpacity(0.5)
+                  : null,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected
+                    ? (type['color'] as Color).withOpacity(0.5)
+                    : AppTheme.darkBorder.withOpacity(0.3),
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  type['icon'] as IconData,
+                  size: 24,
+                  color: isSelected
+                      ? (type['color'] as Color)
+                      : AppTheme.textMuted,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  type['label'] as String,
+                  style: AppTextStyles.caption.copyWith(
+                    fontSize: 10,
+                    color: isSelected
+                        ? AppTheme.textWhite
+                        : AppTheme.textMuted,
+                    fontWeight: isSelected
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMobileFeatures() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildMobileSection(
+            title: 'خصائص الحقل',
+            icon: Icons.settings_rounded,
+            children: [
+              _buildMobileFeatureToggle(
+                title: 'حقل مطلوب',
+                subtitle: 'يجب على المستخدم ملء هذا الحقل',
+                value: _isRequired,
+                onChanged: (v) => setState(() => _isRequired = v),
+                icon: Icons.star_rounded,
+                activeColor: AppTheme.error,
+              ),
+              const SizedBox(height: 12),
+              _buildMobileFeatureToggle(
+                title: 'قابل للبحث',
+                subtitle: 'يمكن البحث بواسطة هذا الحقل',
+                value: _isSearchable,
+                onChanged: (v) => setState(() => _isSearchable = v),
+                icon: Icons.search_rounded,
+                activeColor: AppTheme.primaryBlue,
+              ),
+              const SizedBox(height: 12),
+              _buildMobileFeatureToggle(
+                title: 'حقل عام',
+                subtitle: 'يظهر لجميع المستخدمين',
+                value: _isPublic,
+                onChanged: (v) => setState(() => _isPublic = v),
+                icon: Icons.public_rounded,
+                activeColor: AppTheme.success,
+              ),
+              const SizedBox(height: 12),
+              _buildMobileFeatureToggle(
+                title: 'للوحدات',
+                subtitle: 'يستخدم هذا الحقل مع الوحدات',
+                value: _isForUnits,
+                onChanged: (v) => setState(() => _isForUnits = v),
+                icon: Icons.home_work_rounded,
+                activeColor: AppTheme.warning,
+              ),
+              const SizedBox(height: 12),
+              _buildMobileFeatureToggle(
+                title: 'يظهر في الكروت',
+                subtitle: 'عرض الحقل في بطاقات العرض',
+                value: _showInCards,
+                onChanged: (v) => setState(() => _showInCards = v),
+                icon: Icons.view_carousel_rounded,
+                activeColor: AppTheme.info,
+              ),
+              const SizedBox(height: 12),
+              _buildMobileFeatureToggle(
+                title: 'فلتر أساسي',
+                subtitle: 'استخدام الحقل كفلتر رئيسي',
+                value: _isPrimaryFilter,
+                onChanged: (v) => setState(() => _isPrimaryFilter = v),
+                icon: Icons.filter_list_rounded,
+                activeColor: AppTheme.neonPurple,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileAdvanced() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildMobileSection(
+            title: 'إعدادات متقدمة',
+            icon: Icons.tune_rounded,
+            children: [
+              _buildMobileTextField(
+                controller: _categoryController,
+                label: 'الفئة',
+                hint: 'فئة الحقل',
+                icon: Icons.category_rounded,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildMobileTextField(
+                      controller: _sortOrderController,
+                      label: 'الترتيب',
+                      hint: '0',
+                      icon: Icons.sort_rounded,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildMobileTextField(
+                      controller: _priorityController,
+                      label: 'الأولوية',
+                      hint: '0',
+                      icon: Icons.priority_high_rounded,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileSection({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkSurface.withOpacity(0.5),
+            AppTheme.darkSurface.withOpacity(0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.neonPurple.withOpacity(0.3),
+                      AppTheme.neonGreen.withOpacity(0.2),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  icon,
+                  size: 16,
+                  color: AppTheme.neonPurple,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppTheme.textWhite,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 14, color: AppTheme.neonPurple.withOpacity(0.7)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: AppTextStyles.caption.copyWith(
+                color: AppTheme.textLight,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: AppTheme.darkCard.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.darkBorder.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: TextFormField(
+            controller: controller,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppTheme.textWhite,
+            ),
+            maxLines: maxLines,
+            keyboardType: keyboardType,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: AppTextStyles.caption.copyWith(
+                color: AppTheme.textMuted.withOpacity(0.5),
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.all(12),
+            ),
+            validator: validator,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileFeatureToggle({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required Function(bool) onChanged,
+    required IconData icon,
+    required Color activeColor,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        onChanged(!value);
+        HapticFeedback.selectionClick();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: value
+              ? LinearGradient(
+                  colors: [
+                    activeColor.withOpacity(0.2),
+                    activeColor.withOpacity(0.1),
+                  ],
+                )
+              : null,
+          color: !value
+              ? AppTheme.darkCard.withOpacity(0.3)
+              : null,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: value
+                ? activeColor.withOpacity(0.5)
+                : AppTheme.darkBorder.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: activeColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                size: 18,
+                color: activeColor,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: value ? activeColor : AppTheme.textWhite,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppTheme.textMuted,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch(
+              value: value,
+              onChanged: onChanged,
+              activeColor: activeColor,
+              activeTrackColor: activeColor.withOpacity(0.3),
+              inactiveThumbColor: AppTheme.textMuted,
+              inactiveTrackColor: AppTheme.darkBorder.withOpacity(0.3),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileActions() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.95),
+            AppTheme.darkCard.withOpacity(0.85),
+          ],
+        ),
+        border: Border(
+          top: BorderSide(
+            color: AppTheme.darkBorder.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                Navigator.of(context).pop();
+              },
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppTheme.darkSurface.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppTheme.darkBorder.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    'إلغاء',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppTheme.textMuted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: GestureDetector(
+              onTap: _isLoading ? null : _handleSave,
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppTheme.neonPurple, AppTheme.neonGreen],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.neonPurple.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Text(
+                          widget.field == null ? 'إضافة' : 'تحديث',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ================ TABLET LAYOUT ================
+  Widget _buildTabletLayout() {
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
@@ -145,7 +985,54 @@ class _UnitTypeFieldModalState extends State<UnitTypeFieldModal>
             child: Dialog(
               backgroundColor: Colors.transparent,
               insetPadding: const EdgeInsets.all(20),
-              child: _buildModalContent(),
+              child: Container(
+                width: double.infinity,
+                constraints: const BoxConstraints(maxWidth: 800, maxHeight: 600),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppTheme.darkCard.withOpacity(0.95),
+                      AppTheme.darkCard.withOpacity(0.85),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: AppTheme.neonPurple.withOpacity(0.3),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.neonPurple.withOpacity(0.2),
+                      blurRadius: 30,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: Column(
+                      children: [
+                        _buildTabletHeader(),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              _buildTabletSidebar(),
+                              Expanded(
+                                child: _buildTabletContent(),
+                              ),
+                            ],
+                          ),
+                        ),
+                        _buildTabletActions(),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         );
@@ -153,10 +1040,451 @@ class _UnitTypeFieldModalState extends State<UnitTypeFieldModal>
     );
   }
 
-  Widget _buildModalContent() {
+  Widget _buildTabletHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.neonPurple.withOpacity(0.1),
+            AppTheme.neonGreen.withOpacity(0.05),
+          ],
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.darkBorder.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppTheme.neonPurple, AppTheme.neonGreen],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.neonPurple.withOpacity(0.3),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.dynamic_form_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.field == null 
+                      ? 'إضافة حقل ديناميكي'
+                      : 'تعديل الحقل الديناميكي',
+                  style: AppTextStyles.heading2.copyWith(
+                    fontSize: 20,
+                    color: AppTheme.textWhite,
+                  ),
+                ),
+                Text(
+                  'قم بإدخال معلومات الحقل',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.darkSurface.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.close_rounded,
+                color: AppTheme.textMuted,
+                size: 18,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabletSidebar() {
+    return Container(
+      width: 200,
+      decoration: BoxDecoration(
+        color: AppTheme.darkSurface.withOpacity(0.3),
+        border: Border(
+          right: BorderSide(
+            color: AppTheme.darkBorder.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          _buildTabletSidebarItem(
+            'المعلومات الأساسية',
+            Icons.info_rounded,
+            0,
+          ),
+          _buildTabletSidebarItem(
+            'نوع الحقل',
+            Icons.category_rounded,
+            1,
+          ),
+          _buildTabletSidebarItem(
+            'الخصائص',
+            Icons.settings_rounded,
+            2,
+          ),
+          _buildTabletSidebarItem(
+            'إعدادات متقدمة',
+            Icons.tune_rounded,
+            3,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabletSidebarItem(String label, IconData icon, int index) {
+    final isActive = _currentMobileTab == index;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() => _currentMobileTab = index);
+        HapticFeedback.selectionClick();
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: isActive
+              ? LinearGradient(
+                  colors: [
+                    AppTheme.neonPurple.withOpacity(0.2),
+                    AppTheme.neonGreen.withOpacity(0.1),
+                  ],
+                )
+              : null,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isActive
+                ? AppTheme.neonPurple.withOpacity(0.3)
+                : Colors.transparent,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isActive ? AppTheme.neonPurple : AppTheme.textMuted,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTextStyles.caption.copyWith(
+                  color: isActive ? AppTheme.textWhite : AppTheme.textMuted,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabletContent() {
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: _getTabletContent(),
+      ),
+    );
+  }
+
+  Widget _getTabletContent() {
+    switch (_currentMobileTab) {
+      case 0:
+        return _buildTabletBasicInfo();
+      case 1:
+        return _buildTabletFieldType();
+      case 2:
+        return _buildTabletFeatures();
+      case 3:
+        return _buildTabletAdvanced();
+      default:
+        return _buildTabletBasicInfo();
+    }
+  }
+
+  Widget _buildTabletBasicInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildTextField(
+                controller: _fieldNameController,
+                label: 'اسم الحقل (بالإنجليزية)',
+                hint: 'field_name',
+                icon: Icons.code_rounded,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'يرجى إدخال اسم الحقل';
+                  }
+                  if (!RegExp(r'^[a-zA-Z_][a-zA-Z0-9_]*$').hasMatch(value)) {
+                    return 'يجب أن يبدأ بحرف ويحتوي على حروف وأرقام و _ فقط';
+                  }
+                  return null;
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildTextField(
+                controller: _displayNameController,
+                label: 'الاسم المعروض',
+                hint: 'الاسم الذي سيظهر للمستخدم',
+                icon: Icons.label_rounded,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'يرجى إدخال الاسم المعروض';
+                  }
+                  return null;
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _descriptionController,
+          label: 'الوصف',
+          hint: 'وصف مختصر للحقل',
+          icon: Icons.description_rounded,
+          maxLines: 3,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTabletFieldType() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildTabletFieldTypeGrid(),
+        if (_selectedFieldType == 'select' || _selectedFieldType == 'multiselect') ...[
+          const SizedBox(height: 16),
+          _buildTextField(
+            controller: _optionsController,
+            label: 'الخيارات',
+            hint: 'خيار 1, خيار 2, خيار 3',
+            icon: Icons.list_rounded,
+            maxLines: 3,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'يرجى إدخال الخيارات مفصولة بفاصلة';
+              }
+              return null;
+            },
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildTabletFieldTypeGrid() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        childAspectRatio: 1.2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: _fieldTypes.length,
+      itemBuilder: (context, index) {
+        final type = _fieldTypes[index];
+        final isSelected = _selectedFieldType == type['value'];
+        
+        return GestureDetector(
+          onTap: () {
+            setState(() => _selectedFieldType = type['value'] as String);
+            HapticFeedback.selectionClick();
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? LinearGradient(
+                      colors: [
+                        (type['color'] as Color).withOpacity(0.3),
+                        (type['color'] as Color).withOpacity(0.1),
+                      ],
+                    )
+                  : null,
+              color: !isSelected
+                  ? AppTheme.darkSurface.withOpacity(0.5)
+                  : null,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected
+                    ? (type['color'] as Color).withOpacity(0.5)
+                    : AppTheme.darkBorder.withOpacity(0.3),
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  type['icon'] as IconData,
+                  size: 24,
+                  color: isSelected
+                      ? (type['color'] as Color)
+                      : AppTheme.textMuted,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  type['label'] as String,
+                  style: AppTextStyles.caption.copyWith(
+                    fontSize: 11,
+                    color: isSelected
+                        ? AppTheme.textWhite
+                        : AppTheme.textMuted,
+                    fontWeight: isSelected
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTabletFeatures() {
+    return _buildFeatureToggles();
+  }
+
+  Widget _buildTabletAdvanced() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildTextField(
+          controller: _categoryController,
+          label: 'الفئة',
+          hint: 'فئة الحقل',
+          icon: Icons.category_rounded,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildTextField(
+                controller: _sortOrderController,
+                label: 'الترتيب',
+                hint: '0',
+                icon: Icons.sort_rounded,
+                keyboardType: TextInputType.number,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildTextField(
+                controller: _priorityController,
+                label: 'الأولوية',
+                hint: '0',
+                icon: Icons.priority_high_rounded,
+                keyboardType: TextInputType.number,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTabletActions() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkSurface.withOpacity(0.3),
+            AppTheme.darkSurface.withOpacity(0.1),
+          ],
+        ),
+        border: Border(
+          top: BorderSide(
+            color: AppTheme.darkBorder.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          _buildCancelButton(),
+          const SizedBox(width: 12),
+          _buildSaveButton(),
+        ],
+      ),
+    );
+  }
+
+  // ================ DESKTOP LAYOUT ================
+  Widget _buildDesktopLayout() {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.all(20),
+              child: _buildDesktopContent(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDesktopContent() {
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
+      constraints: const BoxConstraints(maxWidth: 900, maxHeight: 700),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -455,12 +1783,16 @@ class _UnitTypeFieldModalState extends State<UnitTypeFieldModal>
             ),
             items: _fieldTypes.map((type) {
               return DropdownMenuItem<String>(
-                value: type['value'],
+                value: type['value'] as String,
                 child: Row(
                   children: [
-                    Text(type['icon'], style: const TextStyle(fontSize: 20)),
+                    Icon(
+                      type['icon'] as IconData,
+                      size: 20,
+                      color: type['color'] as Color,
+                    ),
                     const SizedBox(width: 8),
-                    Text(type['label']),
+                    Text(type['label'] as String),
                   ],
                 ),
               );
