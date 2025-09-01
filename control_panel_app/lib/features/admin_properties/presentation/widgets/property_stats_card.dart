@@ -108,10 +108,14 @@ class _PropertyStatsCardState extends State<PropertyStatsCard>
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          runAlignment: WrapAlignment.center,
+                          spacing: 8,
+                          runSpacing: 8,
                           children: [
                             Container(
                               width: 36,
@@ -132,44 +136,51 @@ class _PropertyStatsCardState extends State<PropertyStatsCard>
                               ),
                             ),
                             if (widget.trend != null)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: widget.isPositive
-                                      ? AppTheme.success.withValues(alpha: 0.1)
-                                      : AppTheme.error.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      widget.isPositive
-                                          ? Icons.trending_up_rounded
-                                          : Icons.trending_down_rounded,
-                                      size: 12,
-                                      color: widget.isPositive
-                                          ? AppTheme.success
-                                          : AppTheme.error,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      widget.trend!,
-                                      style: AppTextStyles.caption.copyWith(
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 140),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: widget.isPositive
+                                        ? AppTheme.success.withValues(alpha: 0.1)
+                                        : AppTheme.error.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        widget.isPositive
+                                            ? Icons.trending_up_rounded
+                                            : Icons.trending_down_rounded,
+                                        size: 12,
                                         color: widget.isPositive
                                             ? AppTheme.success
                                             : AppTheme.error,
-                                        fontWeight: FontWeight.w600,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          widget.trend!,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: AppTextStyles.caption.copyWith(
+                                            color: widget.isPositive
+                                                ? AppTheme.success
+                                                : AppTheme.error,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                           ],
                         ),
-                        const Spacer(),
+                        const SizedBox(height: 8),
                         Text(
                           widget.value,
                           style: AppTextStyles.heading1.copyWith(

@@ -43,23 +43,27 @@ class PropertyImageModel extends PropertyImage {
   
   factory PropertyImageModel.fromJson(Map<String, dynamic> json) {
     return PropertyImageModel(
-      id: json['id'] as String,
-      url: json['url'] as String,
-      filename: json['filename'] as String,
-      size: json['size'] as int,
-      mimeType: json['mimeType'] as String,
-      width: json['width'] as int,
-      height: json['height'] as int,
+      id: (json['id'] ?? json['imageId']) as String,
+      url: (json['url'] ?? json['imageUrl'] ?? '') as String,
+      filename: (json['filename'] ?? json['name'] ?? '') as String,
+      size: (json['size'] as num?)?.toInt() ?? 0,
+      mimeType: (json['mimeType'] ?? json['type'] ?? 'image/jpeg') as String,
+      width: (json['width'] as num?)?.toInt() ?? 0,
+      height: (json['height'] as num?)?.toInt() ?? 0,
       alt: json['alt'] as String?,
-      uploadedAt: DateTime.parse(json['uploadedAt'] as String),
-      uploadedBy: json['uploadedBy'] as String,
-      order: json['order'] as int,
-      isPrimary: json['isPrimary'] as bool,
+      uploadedAt: json['uploadedAt'] != null
+          ? DateTime.parse(json['uploadedAt'] as String)
+          : DateTime.now(),
+      uploadedBy: (json['uploadedBy'] ?? json['ownerId'] ?? '') as String,
+      order: (json['order'] as num?)?.toInt() ?? 0,
+      isPrimary: (json['isPrimary'] as bool?) ?? false,
       propertyId: json['propertyId'] as String?,
-      category: _parseImageCategory(json['category']),
-      tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? [],
-      processingStatus: _parseProcessingStatus(json['processingStatus']),
-      thumbnails: ImageThumbnailsModel.fromJson(json['thumbnails']),
+      category: _parseImageCategory((json['category'] ?? 'gallery').toString()),
+      tags: (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      processingStatus: _parseProcessingStatus((json['processingStatus'] ?? 'ready').toString()),
+      thumbnails: json['thumbnails'] is Map<String, dynamic>
+          ? ImageThumbnailsModel.fromJson(json['thumbnails'] as Map<String, dynamic>)
+          : const ImageThumbnailsModel(small: '', medium: '', large: '', hd: ''),
     );
   }
   
@@ -176,10 +180,10 @@ class ImageThumbnailsModel extends ImageThumbnails {
   
   factory ImageThumbnailsModel.fromJson(Map<String, dynamic> json) {
     return ImageThumbnailsModel(
-      small: json['small'] as String,
-      medium: json['medium'] as String,
-      large: json['large'] as String,
-      hd: json['hd'] as String,
+      small: (json['small'] ?? json['s'] ?? '') as String,
+      medium: (json['medium'] ?? json['m'] ?? '') as String,
+      large: (json['large'] ?? json['l'] ?? '') as String,
+      hd: (json['hd'] ?? json['xl'] ?? '') as String,
     );
   }
   
