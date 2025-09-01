@@ -9,6 +9,9 @@ import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import 'package:bookn_cp_app/core/theme/app_dimensions.dart';
 import '../../domain/entities/review.dart';
+import 'package:bookn_cp_app/injection_container.dart';
+import 'package:bookn_cp_app/services/local_storage_service.dart';
+import 'package:bookn_cp_app/core/constants/storage_constants.dart';
 import '../bloc/review_details/review_details_bloc.dart';
 import '../widgets/rating_breakdown_widget.dart';
 import '../widgets/review_images_gallery.dart';
@@ -537,11 +540,13 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       builder: (context) => AddResponseDialog(
         reviewId: widget.review.id,
         onSubmit: (responseText) {
+          final String respondedBy =
+              (sl<LocalStorageService>().getData(StorageConstants.userId)?.toString() ?? '');
           context.read<ReviewDetailsBloc>().add(
             AddResponseEvent(
               reviewId: widget.review.id,
               responseText: responseText,
-              respondedBy: 'admin-id', // Get from auth
+              respondedBy: respondedBy,
             ),
           );
         },

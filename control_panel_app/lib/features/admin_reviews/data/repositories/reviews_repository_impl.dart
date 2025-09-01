@@ -25,6 +25,7 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
     double? maxRating,
     bool? hasImages,
     String? propertyId,
+    String? unitId,
     String? userId,
     DateTime? startDate,
     DateTime? endDate,
@@ -38,6 +39,7 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
         maxRating: maxRating,
         hasImages: hasImages,
         propertyId: propertyId,
+        unitId: unitId,
         userId: userId,
         startDate: startDate,
         endDate: endDate,
@@ -59,8 +61,13 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
   @override
   Future<Either<Failure, Review>> getReviewDetails(String reviewId) async {
     try {
-      final review = await remoteDataSource.getReviewDetails(reviewId);
-      return Right(review);
+      // Backend does not expose GET /api/admin/reviews/{id}; fallback to cache
+      final cached = await localDataSource.getCachedReviews();
+      final match = cached.firstWhere(
+        (r) => r.id == reviewId,
+        orElse: () => throw ServerException('Review not found in cache'),
+      );
+      return Right(match);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {

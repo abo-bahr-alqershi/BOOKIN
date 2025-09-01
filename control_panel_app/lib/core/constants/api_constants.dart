@@ -4,7 +4,7 @@ class ApiConstants {
   // Base URLs
   static const String baseUrl = String.fromEnvironment(
     'BASE_URL',
-    defaultValue: 'http://ameenalqershi-001-site1.mtempurl.com/',
+    defaultValue: 'http://ameenalqershi-001-site1.mtempurl.com',
     // defaultValue: 'http://192.168.0.157:5000/',
   );
   

@@ -52,3 +52,23 @@ class UnitTypesError extends UnitTypesState {
   @override
   List<Object> get props => [message];
 }
+
+class UnitTypeOperationLoading extends UnitTypesState {}
+
+class UnitTypeOperationSuccess extends UnitTypesState {
+  final String message;
+
+  const UnitTypeOperationSuccess({required this.message});
+
+  @override
+  List<Object> get props => [message];
+}
+
+class UnitTypeOperationError extends UnitTypesState {
+  final String message;
+
+  const UnitTypeOperationError({required this.message});
+
+  @override
+  List<Object> get props => [message];
+}

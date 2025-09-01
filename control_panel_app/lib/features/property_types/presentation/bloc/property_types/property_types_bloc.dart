@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../domain/entities/property_type.dart';
 import '../../../domain/usecases/property_types/get_all_property_types_usecase.dart';
 import '../../../domain/usecases/property_types/create_property_type_usecase.dart';
 import '../../../domain/usecases/property_types/update_property_type_usecase.dart';
@@ -140,13 +141,29 @@ class PropertyTypesBloc extends Bloc<PropertyTypesEvent, PropertyTypesState> {
       final loadedState = state as PropertyTypesLoaded;
       
       if (event.propertyTypeId == null) {
+        // إلغاء التحديد
         emit(loadedState.copyWith(clearSelection: true));
       } else {
-        final selectedType = loadedState.propertyTypes.firstWhere(
-          (type) => type.id == event.propertyTypeId,
-          orElse: () => loadedState.propertyTypes.first,
-        );
-        emit(loadedState.copyWith(selectedPropertyType: selectedType));
+        // البحث عن النوع المطلوب
+        PropertyType? selectedType;
+        
+        // البحث الآمن عن النوع
+        for (final type in loadedState.propertyTypes) {
+          if (type.id == event.propertyTypeId) {
+            selectedType = type;
+            break;
+          }
+        }
+        
+        if (selectedType != null) {
+          // تم العثور على النوع
+          emit(loadedState.copyWith(selectedPropertyType: selectedType));
+        } else {
+          // لم يتم العثور على النوع - يمكنك إضافة معالجة خاصة هنا
+          print('Warning: Property type with id ${event.propertyTypeId} not found');
+          // يمكنك اختيار عدم تغيير الحالة أو إلغاء التحديد
+          emit(loadedState.copyWith(clearSelection: true));
+        }
       }
     }
   }

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../domain/entities/unit_type.dart';
 import '../../../domain/usecases/unit_types/get_unit_types_by_property_usecase.dart';
 import '../../../domain/usecases/unit_types/create_unit_type_usecase.dart';
 import '../../../domain/usecases/unit_types/update_unit_type_usecase.dart';
@@ -57,6 +58,7 @@ class UnitTypesBloc extends Bloc<UnitTypesEvent, UnitTypesState> {
     Emitter<UnitTypesState> emit,
   ) async {
     final currentState = state;
+    emit(UnitTypeOperationLoading());
     
     final result = await createUnitType(
       CreateUnitTypeParams(
@@ -73,12 +75,13 @@ class UnitTypesBloc extends Bloc<UnitTypesEvent, UnitTypesState> {
     
     result.fold(
       (failure) {
-        emit(UnitTypesError(message: failure.message));
+        emit(UnitTypeOperationError(message: failure.message));
         if (currentState is UnitTypesLoaded) {
           emit(currentState);
         }
       },
       (_) {
+        emit(const UnitTypeOperationSuccess(message: 'تم إضافة نوع الوحدة بنجاح'));
         if (_currentPropertyTypeId != null) {
           add(LoadUnitTypesEvent(propertyTypeId: _currentPropertyTypeId!));
         }
@@ -91,6 +94,7 @@ class UnitTypesBloc extends Bloc<UnitTypesEvent, UnitTypesState> {
     Emitter<UnitTypesState> emit,
   ) async {
     final currentState = state;
+    emit(UnitTypeOperationLoading());
     
     final result = await updateUnitType(
       UpdateUnitTypeParams(
@@ -107,12 +111,13 @@ class UnitTypesBloc extends Bloc<UnitTypesEvent, UnitTypesState> {
     
     result.fold(
       (failure) {
-        emit(UnitTypesError(message: failure.message));
+        emit(UnitTypeOperationError(message: failure.message));
         if (currentState is UnitTypesLoaded) {
           emit(currentState);
         }
       },
       (_) {
+        emit(const UnitTypeOperationSuccess(message: 'تم تحديث نوع الوحدة بنجاح'));
         if (_currentPropertyTypeId != null) {
           add(LoadUnitTypesEvent(propertyTypeId: _currentPropertyTypeId!));
         }
@@ -125,17 +130,19 @@ class UnitTypesBloc extends Bloc<UnitTypesEvent, UnitTypesState> {
     Emitter<UnitTypesState> emit,
   ) async {
     final currentState = state;
+    emit(UnitTypeOperationLoading());
     
     final result = await deleteUnitType(event.unitTypeId);
     
     result.fold(
       (failure) {
-        emit(UnitTypesError(message: failure.message));
+        emit(UnitTypeOperationError(message: failure.message));
         if (currentState is UnitTypesLoaded) {
           emit(currentState);
         }
       },
       (_) {
+        emit(const UnitTypeOperationSuccess(message: 'تم حذف نوع الوحدة بنجاح'));
         if (_currentPropertyTypeId != null) {
           add(LoadUnitTypesEvent(propertyTypeId: _currentPropertyTypeId!));
         }
@@ -151,13 +158,35 @@ class UnitTypesBloc extends Bloc<UnitTypesEvent, UnitTypesState> {
       final loadedState = state as UnitTypesLoaded;
       
       if (event.unitTypeId == null) {
+        // إلغاء التحديد
         emit(loadedState.copyWith(clearSelection: true));
       } else {
-        final selectedType = loadedState.unitTypes.firstWhere(
-          (type) => type.id == event.unitTypeId,
-          orElse: () => loadedState.unitTypes.first,
-        );
-        emit(loadedState.copyWith(selectedUnitType: selectedType));
+        // البحث عن النوع المطلوب بطريقة آمنة
+        UnitType? selectedType;
+        
+        // البحث الآمن عن النوع باستخدام حلقة for
+        for (final type in loadedState.unitTypes) {
+          if (type.id == event.unitTypeId) {
+            selectedType = type;
+            break;
+          }
+        }
+        
+        if (selectedType != null) {
+          // تم العثور على النوع
+          emit(loadedState.copyWith(selectedUnitType: selectedType));
+        } else {
+          // لم يتم العثور على النوع
+          print('Warning: Unit type with id ${event.unitTypeId} not found');
+          
+          // يمكن اختيار الأول من القائمة إذا كانت غير فارغة
+          if (loadedState.unitTypes.isNotEmpty) {
+            emit(loadedState.copyWith(selectedUnitType: loadedState.unitTypes.first));
+          } else {
+            // إلغاء التحديد إذا كانت القائمة فارغة
+            emit(loadedState.copyWith(clearSelection: true));
+          }
+        }
       }
     }
   }

@@ -139,7 +139,7 @@ class _FuturisticStatsCardState extends State<FuturisticStatsCard>
 
   Widget _buildCard() {
     return Container(
-      constraints: const BoxConstraints(minHeight: 100),
+      height: 100, // ارتفاع ثابت لمنع overflow
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -210,11 +210,11 @@ class _FuturisticStatsCardState extends State<FuturisticStatsCard>
                   children: [
                     // Icon Container
                     Container(
-                      width: 56,
-                      height: 56,
+                      width: 48,
+                      height: 48,
                       decoration: BoxDecoration(
                         gradient: widget.gradient,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
                             color: widget.gradient.colors.first.withOpacity(0.3),
@@ -226,7 +226,7 @@ class _FuturisticStatsCardState extends State<FuturisticStatsCard>
                       child: Icon(
                         widget.icon,
                         color: Colors.white,
-                        size: 28,
+                        size: 24,
                       ),
                     ),
                     const SizedBox(width: AppDimensions.spaceMedium),
@@ -236,18 +236,19 @@ class _FuturisticStatsCardState extends State<FuturisticStatsCard>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             widget.title,
-                            softWrap: true,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                             textAlign: TextAlign.end,
                             style: AppTextStyles.bodySmall.copyWith(
                               color: AppTheme.textMuted,
                               letterSpacing: 0.5,
+                              fontSize: 11,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           AnimatedBuilder(
                             animation: _countAnimation,
                             builder: (context, child) {
@@ -256,11 +257,14 @@ class _FuturisticStatsCardState extends State<FuturisticStatsCard>
                                     widget.gradient.createShader(bounds),
                                 child: Text(
                                   _countAnimation.value.toString(),
-                                  softWrap: true,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                   textAlign: TextAlign.end,
                                   style: AppTextStyles.heading1.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    height: 1.2,
                                   ),
                                 ),
                               );
@@ -283,7 +287,7 @@ class _FuturisticStatsCardState extends State<FuturisticStatsCard>
                               child: Icon(
                                 Icons.arrow_forward_ios_rounded,
                                 color: widget.gradient.colors.first,
-                                size: 16,
+                                size: 14,
                               ),
                             ),
                           );

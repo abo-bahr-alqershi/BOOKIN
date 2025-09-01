@@ -74,6 +74,13 @@ class UnitTypeFieldsBloc extends Bloc<UnitTypeFieldsEvent, UnitTypeFieldsState> 
   ) async {
     final currentState = state;
     
+    final Map<String, dynamic>? fieldOptions = event.fieldData['fieldOptions'] == null
+        ? null
+        : Map<String, dynamic>.from(event.fieldData['fieldOptions'] as Map);
+    final Map<String, dynamic>? validationRules = event.fieldData['validationRules'] == null
+        ? null
+        : Map<String, dynamic>.from(event.fieldData['validationRules'] as Map);
+
     final result = await createField(
       CreateFieldParams(
         unitTypeId: event.unitTypeId,
@@ -81,8 +88,8 @@ class UnitTypeFieldsBloc extends Bloc<UnitTypeFieldsEvent, UnitTypeFieldsState> 
         fieldName: event.fieldData['fieldName'],
         displayName: event.fieldData['displayName'],
         description: event.fieldData['description'],
-        fieldOptions: event.fieldData['fieldOptions'],
-        validationRules: event.fieldData['validationRules'],
+        fieldOptions: fieldOptions,
+        validationRules: validationRules,
         isRequired: event.fieldData['isRequired'],
         isSearchable: event.fieldData['isSearchable'],
         isPublic: event.fieldData['isPublic'],
@@ -117,14 +124,21 @@ class UnitTypeFieldsBloc extends Bloc<UnitTypeFieldsEvent, UnitTypeFieldsState> 
   ) async {
     final currentState = state;
     
+    final Map<String, dynamic>? fieldOptions = event.fieldData['fieldOptions'] == null
+        ? null
+        : Map<String, dynamic>.from(event.fieldData['fieldOptions'] as Map);
+    final Map<String, dynamic>? validationRules = event.fieldData['validationRules'] == null
+        ? null
+        : Map<String, dynamic>.from(event.fieldData['validationRules'] as Map);
+    
     final result = await updateField(
       UpdateFieldParams(
         fieldId: event.fieldId,
         fieldName: event.fieldData['fieldName'],
         displayName: event.fieldData['displayName'],
         description: event.fieldData['description'],
-        fieldOptions: event.fieldData['fieldOptions'],
-        validationRules: event.fieldData['validationRules'],
+        fieldOptions: fieldOptions,
+        validationRules: validationRules,
         isRequired: event.fieldData['isRequired'],
         isSearchable: event.fieldData['isSearchable'],
         isPublic: event.fieldData['isPublic'],

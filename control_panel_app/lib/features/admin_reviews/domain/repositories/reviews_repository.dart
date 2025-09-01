@@ -12,6 +12,7 @@ abstract class ReviewsRepository {
     double? maxRating,
     bool? hasImages,
     String? propertyId,
+    String? unitId,
     String? userId,
     DateTime? startDate,
     DateTime? endDate,
