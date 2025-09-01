@@ -106,96 +106,104 @@ class _PropertyStatsCardState extends State<PropertyStatsCard>
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Wrap(
-                          alignment: WrapAlignment.spaceBetween,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          runAlignment: WrapAlignment.center,
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    widget.color.withValues(alpha: 0.3),
-                                    widget.color.withValues(alpha: 0.1),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                widget.icon,
-                                color: widget.color,
-                                size: 18,
-                              ),
-                            ),
-                            if (widget.trend != null)
-                              ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 140),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: widget.isPositive
-                                        ? AppTheme.success.withValues(alpha: 0.1)
-                                        : AppTheme.error.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        widget.isPositive
-                                            ? Icons.trending_up_rounded
-                                            : Icons.trending_down_rounded,
-                                        size: 12,
-                                        color: widget.isPositive
-                                            ? AppTheme.success
-                                            : AppTheme.error,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Flexible(
-                                        child: Text(
-                                          widget.trend!,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: AppTextStyles.caption.copyWith(
-                                            color: widget.isPositive
-                                                ? AppTheme.success
-                                                : AppTheme.error,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.topLeft,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            runAlignment: WrapAlignment.center,
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      widget.color.withValues(alpha: 0.3),
+                                      widget.color.withValues(alpha: 0.1),
                                     ],
                                   ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  widget.icon,
+                                  color: widget.color,
+                                  size: 18,
                                 ),
                               ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          widget.value,
-                          style: AppTextStyles.heading1.copyWith(
-                            color: AppTheme.textWhite,
-                            fontWeight: FontWeight.bold,
+                              if (widget.trend != null)
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 140),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: widget.isPositive
+                                          ? AppTheme.success.withValues(alpha: 0.1)
+                                          : AppTheme.error.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          widget.isPositive
+                                              ? Icons.trending_up_rounded
+                                              : Icons.trending_down_rounded,
+                                          size: 12,
+                                          color: widget.isPositive
+                                              ? AppTheme.success
+                                              : AppTheme.error,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Text(
+                                            widget.trend!,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTextStyles.caption.copyWith(
+                                              color: widget.isPositive
+                                                  ? AppTheme.success
+                                                  : AppTheme.error,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.title,
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppTheme.textMuted,
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.value,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.heading1.copyWith(
+                              color: AppTheme.textWhite,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
