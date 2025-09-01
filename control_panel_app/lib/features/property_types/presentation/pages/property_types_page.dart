@@ -1262,14 +1262,14 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
               fieldsBloc.add(
                 UpdateFieldEvent(
                   fieldId: field.fieldId,
-                  fieldData: fieldData,
+                  fieldData: Map<String, dynamic>.from(fieldData),
                 ),
               );
             } else {
               fieldsBloc.add(
                 CreateFieldEvent(
                   unitTypeId: unitState.selectedUnitType!.id,
-                  fieldData: fieldData,
+                  fieldData: Map<String, dynamic>.from(fieldData),
                 ),
               );
             }

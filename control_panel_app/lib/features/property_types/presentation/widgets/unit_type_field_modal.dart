@@ -794,6 +794,7 @@ class _UnitTypeFieldModalState extends State<UnitTypeFieldModal>
             .where((e) => e.isNotEmpty)
             .toList();
       }
+      final validationRules = <String, dynamic>{};
       
       widget.onSave({
         'fieldTypeId': _selectedFieldType,
@@ -801,7 +802,7 @@ class _UnitTypeFieldModalState extends State<UnitTypeFieldModal>
         'displayName': _displayNameController.text,
         'description': _descriptionController.text,
         'fieldOptions': fieldOptions,
-        'validationRules': {},
+        'validationRules': validationRules,
         'isRequired': _isRequired,
         'isSearchable': _isSearchable,
         'isPublic': _isPublic,
