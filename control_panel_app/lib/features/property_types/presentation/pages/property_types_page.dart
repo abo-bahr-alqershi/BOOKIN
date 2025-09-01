@@ -1249,28 +1249,32 @@ class _PropertyTypesPageState extends State<PropertyTypesPage>
       return;
     }
     
+    final fieldsBloc = context.read<UnitTypeFieldsBloc>();
     showDialog(
       context: context,
-      builder: (context) => UnitTypeFieldModal(
-        field: field,
-        unitTypeId: unitState.selectedUnitType!.id,
-        onSave: (fieldData) {
-          if (field != null) {
-            context.read<UnitTypeFieldsBloc>().add(
-              UpdateFieldEvent(
-                fieldId: field.fieldId,
-                fieldData: fieldData,
-              ),
-            );
-          } else {
-            context.read<UnitTypeFieldsBloc>().add(
-              CreateFieldEvent(
-                unitTypeId: unitState.selectedUnitType!.id,
-                fieldData: fieldData,
-              ),
-            );
-          }
-        },
+      builder: (dialogContext) => BlocProvider.value(
+        value: fieldsBloc,
+        child: UnitTypeFieldModal(
+          field: field,
+          unitTypeId: unitState.selectedUnitType!.id,
+          onSave: (fieldData) {
+            if (field != null) {
+              fieldsBloc.add(
+                UpdateFieldEvent(
+                  fieldId: field.fieldId,
+                  fieldData: fieldData,
+                ),
+              );
+            } else {
+              fieldsBloc.add(
+                CreateFieldEvent(
+                  unitTypeId: unitState.selectedUnitType!.id,
+                  fieldData: fieldData,
+                ),
+              );
+            }
+          },
+        ),
       ),
     );
   }
