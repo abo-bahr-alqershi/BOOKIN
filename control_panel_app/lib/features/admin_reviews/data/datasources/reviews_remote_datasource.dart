@@ -3,6 +3,8 @@
 import 'package:dio/dio.dart';
 import 'package:bookn_cp_app/core/network/api_client.dart';
 import 'package:bookn_cp_app/core/error/exceptions.dart';
+import 'package:bookn_cp_app/services/local_storage_service.dart';
+import 'package:bookn_cp_app/core/constants/storage_constants.dart';
 import '../models/review_model.dart';
 import '../models/review_response_model.dart';
 
@@ -13,6 +15,7 @@ abstract class ReviewsRemoteDataSource {
     double? maxRating,
     bool? hasImages,
     String? propertyId,
+    String? unitId,
     String? userId,
     DateTime? startDate,
     DateTime? endDate,
@@ -20,6 +23,7 @@ abstract class ReviewsRemoteDataSource {
     int? pageSize,
   });
   
+  // Not available in backend; kept for interface compatibility but unused
   Future<ReviewModel> getReviewDetails(String reviewId);
   Future<bool> approveReview(String reviewId);
   Future<bool> rejectReview(String reviewId);
@@ -35,8 +39,9 @@ abstract class ReviewsRemoteDataSource {
 
 class ReviewsRemoteDataSourceImpl implements ReviewsRemoteDataSource {
   final ApiClient apiClient;
+  final LocalStorageService localStorage;
   
-  ReviewsRemoteDataSourceImpl({required this.apiClient});
+  ReviewsRemoteDataSourceImpl({required this.apiClient, required this.localStorage});
   
   @override
   Future<List<ReviewModel>> getAllReviews({
@@ -45,6 +50,7 @@ class ReviewsRemoteDataSourceImpl implements ReviewsRemoteDataSource {
     double? maxRating,
     bool? hasImages,
     String? propertyId,
+    String? unitId,
     String? userId,
     DateTime? startDate,
     DateTime? endDate,
@@ -59,9 +65,11 @@ class ReviewsRemoteDataSourceImpl implements ReviewsRemoteDataSource {
       if (maxRating != null) queryParams['maxRating'] = maxRating;
       if (hasImages != null) queryParams['hasImages'] = hasImages;
       if (propertyId != null) queryParams['propertyId'] = propertyId;
+      if (unitId != null) queryParams['unitId'] = unitId;
       if (userId != null) queryParams['userId'] = userId;
-      if (startDate != null) queryParams['startDate'] = startDate.toIso8601String();
-      if (endDate != null) queryParams['endDate'] = endDate.toIso8601String();
+      // Align with backend query contract: ReviewedAfter/ReviewedBefore
+      if (startDate != null) queryParams['reviewedAfter'] = startDate.toIso8601String();
+      if (endDate != null) queryParams['reviewedBefore'] = endDate.toIso8601String();
       if (pageNumber != null) queryParams['pageNumber'] = pageNumber;
       if (pageSize != null) queryParams['pageSize'] = pageSize;
       
@@ -82,23 +90,22 @@ class ReviewsRemoteDataSourceImpl implements ReviewsRemoteDataSource {
   
   @override
   Future<ReviewModel> getReviewDetails(String reviewId) async {
-    try {
-      final response = await apiClient.get('/api/admin/reviews/$reviewId');
-      
-      if (response.statusCode == 200) {
-        return ReviewModel.fromJson(response.data['data']);
-      }
-      throw ServerException('Failed to load review details');
-    } on DioException catch (e) {
-      throw ServerException(e.message ?? 'Network error occurred');
-    }
+    // Not supported by backend; use repository cache fallback.
+    throw ServerException('Get review details is not supported by backend');
   }
   
   @override
   Future<bool> approveReview(String reviewId) async {
     try {
+      final String? adminId = localStorage.getData(StorageConstants.userId)?.toString();
+      if (adminId == null || adminId.isEmpty) {
+        throw ServerException('AdminId is missing');
+      }
       final response = await apiClient.post(
         '/api/admin/reviews/$reviewId/approve',
+        data: {
+          'adminId': adminId,
+        },
       );
       
       return response.statusCode == 200;
@@ -109,15 +116,8 @@ class ReviewsRemoteDataSourceImpl implements ReviewsRemoteDataSource {
   
   @override
   Future<bool> rejectReview(String reviewId) async {
-    try {
-      final response = await apiClient.post(
-        '/api/admin/reviews/$reviewId/reject',
-      );
-      
-      return response.statusCode == 200;
-    } on DioException catch (e) {
-      throw ServerException(e.message ?? 'Failed to reject review');
-    }
+    // Not supported by backend as of now
+    throw ServerException('Reject review is not supported by backend');
   }
   
   @override

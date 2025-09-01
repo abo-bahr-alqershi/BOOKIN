@@ -715,7 +715,12 @@ void _initAdminReviews() {
       ));
 
   // Data sources
-  sl.registerLazySingleton<ar_ds_remote.ReviewsRemoteDataSource>(() => ar_ds_remote.ReviewsRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<ar_ds_remote.ReviewsRemoteDataSource>(
+    () => ar_ds_remote.ReviewsRemoteDataSourceImpl(
+      apiClient: sl(),
+      localStorage: sl(),
+    ),
+  );
   sl.registerLazySingleton<ar_ds_local.ReviewsLocalDataSource>(() => ar_ds_local.ReviewsLocalDataSourceImpl(sharedPreferences: sl()));
 }
 

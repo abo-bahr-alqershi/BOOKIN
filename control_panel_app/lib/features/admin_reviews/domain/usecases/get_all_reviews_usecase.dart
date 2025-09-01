@@ -12,6 +12,7 @@ class GetAllReviewsParams {
   final double? maxRating;
   final bool? hasImages;
   final String? propertyId;
+  final String? unitId;
   final String? userId;
   final DateTime? startDate;
   final DateTime? endDate;
@@ -24,6 +25,7 @@ class GetAllReviewsParams {
     this.maxRating,
     this.hasImages,
     this.propertyId,
+    this.unitId,
     this.userId,
     this.startDate,
     this.endDate,
@@ -45,6 +47,7 @@ class GetAllReviewsUseCase implements UseCase<List<Review>, GetAllReviewsParams>
       maxRating: params.maxRating,
       hasImages: params.hasImages,
       propertyId: params.propertyId,
+      unitId: params.unitId,
       userId: params.userId,
       startDate: params.startDate,
       endDate: params.endDate,
