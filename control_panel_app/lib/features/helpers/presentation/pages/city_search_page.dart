@@ -6,6 +6,7 @@ import '../../../../core/widgets/loading_widget.dart';
 import '../../../admin_cities/domain/entities/city.dart';
 import '../../domain/entities/search_result.dart';
 import '../../domain/usecases/search_cities_usecase.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
 import '../widgets/search_header.dart';
 import '../widgets/search_item_card.dart';
 import '../widgets/simple_filter_bar.dart';
@@ -31,10 +32,7 @@ class CitySearchPage extends StatefulWidget {
 }
 
 class _CitySearchPageState extends State<CitySearchPage> {
-  final SearchCitiesUseCase _searchCitiesUseCase = SearchCitiesUseCase(
-    // TODO: Add to injection_container.dart
-    null as dynamic,
-  );
+  final SearchCitiesUseCase _searchCitiesUseCase = di.sl<SearchCitiesUseCase>();
   
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();

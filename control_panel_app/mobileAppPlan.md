@@ -777,6 +777,8 @@ lib/
 │   │       │   ├── unit_search_page.dart
 │   │       │   ├── city_search_page.dart
 │   │       │   └── booking_search_page.dart
+│   │       ├── utils/
+│   │       │   └── search_navigation_helper.dart
 │   │       └── widgets/
 │   │           ├── search_header.dart
 │   │           ├── search_item_card.dart

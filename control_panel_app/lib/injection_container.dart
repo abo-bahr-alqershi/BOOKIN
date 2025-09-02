@@ -31,6 +31,14 @@ import 'services/deep_link_service.dart';
 import 'services/websocket_service.dart';
 import 'services/connectivity_service.dart';
 // Helpers Feature
+import 'features/helpers/data/datasources/helpers_remote_datasource.dart' as helpers_ds;
+import 'features/helpers/data/repositories/helpers_repository_impl.dart' as helpers_repo_impl;
+import 'features/helpers/domain/repositories/helpers_repository.dart' as helpers_repo;
+import 'features/helpers/domain/usecases/search_users_usecase.dart' as helpers_uc_users;
+import 'features/helpers/domain/usecases/search_properties_usecase.dart' as helpers_uc_props;
+import 'features/helpers/domain/usecases/search_units_usecase.dart' as helpers_uc_units;
+import 'features/helpers/domain/usecases/search_cities_usecase.dart' as helpers_uc_cities;
+import 'features/helpers/domain/usecases/search_bookings_usecase.dart' as helpers_uc_bookings;
 
 // Features - Admin Currencies
 import 'features/admin_currencies/presentation/bloc/currencies_bloc.dart' as ac_bloc;
@@ -316,7 +324,7 @@ Future<void> init() async {
 	_initAdminAvailabilityPricing();
 
 	// Features - Helpers (search/filter facades)
-	// helpers_inj.registerHelpersFeature(sl);
+	_initHelpers();
 
 	// Theme
   _initTheme();
@@ -910,6 +918,23 @@ void _initAdminCities() {
   // Data sources
   sl.registerLazySingleton<ci_ds_remote.CitiesRemoteDataSource>(() => ci_ds_remote.CitiesRemoteDataSourceImpl(apiClient: sl()));
   sl.registerLazySingleton<ci_ds_local.CitiesLocalDataSource>(() => ci_ds_local.CitiesLocalDataSourceImpl(sharedPreferences: sl()));
+}
+
+void _initHelpers() {
+	// Use cases
+	sl.registerLazySingleton<helpers_uc_users.SearchUsersUseCase>(() => helpers_uc_users.SearchUsersUseCase(sl()));
+	sl.registerLazySingleton<helpers_uc_props.SearchPropertiesUseCase>(() => helpers_uc_props.SearchPropertiesUseCase(sl()));
+	sl.registerLazySingleton<helpers_uc_units.SearchUnitsUseCase>(() => helpers_uc_units.SearchUnitsUseCase(sl()));
+	sl.registerLazySingleton<helpers_uc_cities.SearchCitiesUseCase>(() => helpers_uc_cities.SearchCitiesUseCase(sl()));
+	sl.registerLazySingleton<helpers_uc_bookings.SearchBookingsUseCase>(() => helpers_uc_bookings.SearchBookingsUseCase(sl()));
+
+	// Repository
+	sl.registerLazySingleton<helpers_repo.HelpersRepository>(() => helpers_repo_impl.HelpersRepositoryImpl(
+		remoteDataSource: sl(),
+	));
+
+	// Data sources
+	sl.registerLazySingleton<helpers_ds.HelpersRemoteDataSource>(() => helpers_ds.HelpersRemoteDataSourceImpl(sl()));
 }
 void _initAdminUsers() {
   // Blocs
