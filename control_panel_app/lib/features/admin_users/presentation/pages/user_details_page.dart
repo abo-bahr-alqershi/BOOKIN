@@ -751,8 +751,11 @@ class _UserDetailsPageState extends State<UserDetailsPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              OverflowBar(
+                alignment: MainAxisAlignment.spaceBetween,
+                overflowAlignment: OverflowBarAlignment.center,
+                spacing: 8,
+                overflowSpacing: 4,
                 children: [
                   Container(
                     width: 32,
@@ -772,43 +775,45 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                       size: 16,
                     ),
                   ),
-                  
                   if (trend != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isPositive
-                            ? AppTheme.success.withOpacity(0.1)
-                            : AppTheme.error.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isPositive
-                                ? Icons.trending_up_rounded
-                                : Icons.trending_down_rounded,
-                            size: 10,
-                            color: isPositive
-                                ? AppTheme.success
-                                : AppTheme.error,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            trend,
-                            style: TextStyle(
-                              fontSize: 10,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isPositive
+                              ? AppTheme.success.withOpacity(0.1)
+                              : AppTheme.error.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isPositive
+                                  ? Icons.trending_up_rounded
+                                  : Icons.trending_down_rounded,
+                              size: 10,
                               color: isPositive
                                   ? AppTheme.success
                                   : AppTheme.error,
-                              fontWeight: FontWeight.w600,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 2),
+                            Text(
+                              trend,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: isPositive
+                                    ? AppTheme.success
+                                    : AppTheme.error,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                 ],
