@@ -64,3 +64,33 @@ class SortUsersEvent extends UsersListEvent {
   @override
   List<Object> get props => [sortBy, isAscending];
 }
+
+class CreateUserEvent extends UsersListEvent {
+  final String name;
+  final String email;
+  final String password;
+  final String phone;
+  final String? profileImage;
+  final String? role;
+
+  const CreateUserEvent({
+    required this.name,
+    required this.email,
+    required this.password,
+    required this.phone,
+    this.profileImage,
+    this.role,
+  });
+
+  @override
+  List<Object?> get props => [name, email, password, phone, profileImage, role];
+}
+
+class DeleteUserEvent extends UsersListEvent {
+  final String userId;
+
+  const DeleteUserEvent(this.userId);
+
+  @override
+  List<Object> get props => [userId];
+}

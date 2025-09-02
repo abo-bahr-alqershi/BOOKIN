@@ -20,6 +20,9 @@ class UserDetails extends Equatable {
   final double totalPayments;
   final double totalRefunds;
   final int reviewsCount;
+  
+  // نقاط الولاء (اختياري)
+  final int? loyaltyPoints;
 
   // بيانات المالك أو الموظف
   final String? role;
@@ -49,6 +52,7 @@ class UserDetails extends Equatable {
     required this.totalPayments,
     required this.totalRefunds,
     required this.reviewsCount,
+    this.loyaltyPoints,
     this.role,
     this.propertyId,
     this.propertyName,
@@ -78,6 +82,7 @@ class UserDetails extends Equatable {
         totalPayments,
         totalRefunds,
         reviewsCount,
+        loyaltyPoints,
         role,
         propertyId,
         propertyName,

@@ -942,6 +942,8 @@ void _initAdminUsers() {
         getAllUsersUseCase: sl<au_uc1.GetAllUsersUseCase>(),
         activateUserUseCase: sl<au_uc5.ActivateUserUseCase>(),
         deactivateUserUseCase: sl<au_uc6.DeactivateUserUseCase>(),
+        createUserUseCase: sl<au_uc3.CreateUserUseCase>(),
+        assignRoleUseCase: sl<au_uc7.AssignRoleUseCase>(),
       ));
   sl.registerFactory(() => UserDetailsBloc(
         getUserDetailsUseCase: sl<au_uc2.GetUserDetailsUseCase>(),

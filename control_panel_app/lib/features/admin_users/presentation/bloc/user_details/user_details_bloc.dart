@@ -38,6 +38,7 @@ class UserDetailsBloc extends Bloc<UserDetailsEvent, UserDetailsState> {
     on<UpdateUserDetailsEvent>(_onUpdateUserDetails);
     on<ToggleUserStatusEvent>(_onToggleUserStatus);
     on<AssignUserRoleEvent>(_onAssignUserRole);
+    on<DeleteUserEvent>(_onDeleteUser);
   }
 
   Future<void> _onLoadUserDetails(
@@ -206,5 +207,13 @@ class UserDetailsBloc extends Bloc<UserDetailsEvent, UserDetailsState> {
         }
       },
     );
+  }
+
+  Future<void> _onDeleteUser(
+    DeleteUserEvent event,
+    Emitter<UserDetailsState> emit,
+  ) async {
+    // Backend does not expose delete; emulate by deactivating
+    await _deactivateUserUseCase(DeactivateUserParams(userId: event.userId));
   }
 }
