@@ -151,7 +151,7 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
 
       final result = ResultDto<String>.fromJson(
         response.data,
-        (json) => json as String,
+        (dynamic json) => json as String,
       );
 
       if (result.isSuccess && result.data != null) {
@@ -186,7 +186,7 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
 
       final result = ResultDto<bool>.fromJson(
         response.data,
-        (json) => json as bool,
+        (dynamic json) => json as bool,
       );
 
       return result.isSuccess && (result.data ?? false);
@@ -201,7 +201,7 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
       final response = await _apiClient.post('/api/admin/Users/$userId/activate');
       final result = ResultDto<bool>.fromJson(
         response.data,
-        (json) => json as bool,
+        (dynamic json) => json as bool,
       );
       return result.isSuccess && (result.data ?? false);
     } on DioException catch (e) {
@@ -215,7 +215,7 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
       final response = await _apiClient.post('/api/admin/Users/$userId/deactivate');
       final result = ResultDto<bool>.fromJson(
         response.data,
-        (json) => json as bool,
+        (dynamic json) => json as bool,
       );
       return result.isSuccess && (result.data ?? false);
     } on DioException catch (e) {

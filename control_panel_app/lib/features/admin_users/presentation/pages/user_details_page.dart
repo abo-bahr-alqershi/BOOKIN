@@ -483,7 +483,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                             ]
                           : null,
                     ),
-                    child: user.avatarUrl != null
+                    child: user.avatarUrl != null && user.avatarUrl!.trim().isNotEmpty
                         ? ClipOval(
                             child: Image.network(
                               user.avatarUrl!,

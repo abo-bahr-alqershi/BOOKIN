@@ -131,10 +131,11 @@ class _FuturisticUsersTableState extends State<FuturisticUsersTable>
       tween: Tween(begin: 0.0, end: 1.0),
       curve: Curves.easeOutBack,
       builder: (context, value, child) {
+        final clamped = value.clamp(0.0, 1.0);
         return Transform.scale(
-          scale: value,
+          scale: clamped,
           child: Opacity(
-            opacity: value,
+            opacity: clamped,
             child: Container(
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
@@ -797,10 +798,11 @@ class _FuturisticUsersTableState extends State<FuturisticUsersTable>
           tween: Tween(begin: 0.0, end: 1.0),
           curve: Curves.easeOutCubic,
           builder: (context, value, child) {
+            final clamped = value.clamp(0.0, 1.0);
             return Transform.translate(
-              offset: Offset((1 - value) * -50, 0),
+              offset: Offset((1 - clamped) * -50, 0),
               child: Opacity(
-                opacity: value,
+                opacity: clamped,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -990,7 +992,7 @@ class _FuturisticUsersTableState extends State<FuturisticUsersTable>
             ),
         ],
       ),
-      child: user.profileImage != null
+      child: user.profileImage != null && user.profileImage!.trim().isNotEmpty
           ? ClipOval(
               child: Image.network(
                 user.profileImage!,
