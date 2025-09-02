@@ -17,11 +17,11 @@ class ReorderImagesUseCase implements UseCase<bool, ReorderImagesParams> {
 }
 
 class ReorderImagesParams {
-  final String propertyId;
+  final String? propertyId;
   final List<String> imageIds;
 
   ReorderImagesParams({
-    required this.propertyId,
+    this.propertyId,
     required this.imageIds,
   });
 }

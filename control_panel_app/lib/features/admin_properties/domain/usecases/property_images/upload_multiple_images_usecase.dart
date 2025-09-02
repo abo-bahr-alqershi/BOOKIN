@@ -23,13 +23,13 @@ class UploadMultipleImagesUseCase implements UseCase<List<PropertyImage>, Upload
 }
 
 class UploadMultipleImagesParams {
-  final String propertyId;
+  final String? propertyId;
   final List<String> filePaths;
   final String? category;
   final List<String>? tags;
 
   UploadMultipleImagesParams({
-    required this.propertyId,
+    this.propertyId,
     required this.filePaths,
     this.category,
     this.tags,

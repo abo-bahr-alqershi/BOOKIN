@@ -54,15 +54,20 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
     on<SelectAllImagesEvent>(_onSelectAllImages);
     on<DeselectAllImagesEvent>(_onDeselectAllImages);
   }
-
   Future<void> _onLoadPropertyImages(
     LoadPropertyImagesEvent event,
     Emitter<PropertyImagesState> emit,
   ) async {
+    // منع جلب الصور إذا لم يكن هناك propertyId
+    if (event.propertyId == null || event.propertyId!.isEmpty) {
+      emit(const PropertyImagesLoaded(images: []));
+      return;
+    }
+    
     emit(const PropertyImagesLoading(message: 'Loading images...'));
     
     final Either<Failure, List<PropertyImage>> result = 
-        await getPropertyImages(event.propertyId);
+        await getPropertyImages(event.propertyId!);
     
     result.fold(
       (failure) => emit(PropertyImagesError(
@@ -84,6 +89,15 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
     UploadPropertyImageEvent event,
     Emitter<PropertyImagesState> emit,
   ) async {
+    // تحقق من وجود propertyId قبل الرفع
+    if (event.propertyId == null || event.propertyId!.isEmpty) {
+      emit(PropertyImagesError(
+        message: 'لا يمكن رفع الصور بدون معرف العقار',
+        previousImages: _currentImages,
+      ));
+      return;
+    }
+
     emit(PropertyImageUploading(
       currentImages: _currentImages,
       uploadingFileName: event.filePath.split('/').last,
@@ -114,7 +128,7 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
         ));
         // بعد ثانية واحدة، عرض قائمة الصور المحدثة
         Future.delayed(const Duration(seconds: 1), () {
-          add(LoadPropertyImagesEvent(propertyId: event.propertyId));
+          // add(LoadPropertyImagesEvent(propertyId: event.propertyId));
         });
       },
     );

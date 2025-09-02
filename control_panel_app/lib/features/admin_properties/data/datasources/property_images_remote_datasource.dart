@@ -7,7 +7,7 @@ import '../models/property_image_model.dart';
 
 abstract class PropertyImagesRemoteDataSource {
   Future<PropertyImageModel> uploadImage({
-    required String propertyId,
+    String? propertyId,
     required String filePath,
     String? category,
     String? alt,
@@ -16,11 +16,11 @@ abstract class PropertyImagesRemoteDataSource {
     List<String>? tags,
   });
   
-  Future<List<PropertyImageModel>> getPropertyImages(String propertyId);
+  Future<List<PropertyImageModel>> getPropertyImages(String? propertyId);
   Future<bool> updateImage(String imageId, Map<String, dynamic> data);
   Future<bool> deleteImage(String imageId);
-  Future<bool> reorderImages(String propertyId, List<String> imageIds);
-  Future<bool> setAsPrimaryImage(String propertyId, String imageId);
+  Future<bool> reorderImages(String? propertyId, List<String> imageIds);
+  Future<bool> setAsPrimaryImage(String? propertyId, String imageId);
 }
 
 class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSource {
@@ -31,7 +31,7 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   
   @override
   Future<PropertyImageModel> uploadImage({
-    required String propertyId,
+    String? propertyId,
     required String filePath,
     String? category,
     String? alt,
@@ -80,7 +80,7 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   }
   
   @override
-  Future<List<PropertyImageModel>> getPropertyImages(String propertyId) async {
+  Future<List<PropertyImageModel>> getPropertyImages(String? propertyId) async {
     try {
       final response = await apiClient.get('$_imagesEndpoint', queryParameters: {
         'propertyId': propertyId,
@@ -122,7 +122,7 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   }
   
   @override
-  Future<bool> reorderImages(String propertyId, List<String> imageIds) async {
+  Future<bool> reorderImages(String? propertyId, List<String> imageIds) async {
     try {
       // لا يوجد مسار لإعادة الترتيب دفعة واحدة في الـ backend الحالي.
       // نقوم بتطبيق الترتيب عبر تحديث كل صورة على حدة.
@@ -141,7 +141,7 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   }
   
   @override
-  Future<bool> setAsPrimaryImage(String propertyId, String imageId) async {
+  Future<bool> setAsPrimaryImage(String? propertyId, String imageId) async {
     try {
       // لا يوجد مسار صريح لتعيين الرئيسية؛ سنقوم بالتحديث المباشر للصورة
       final response = await apiClient.put(

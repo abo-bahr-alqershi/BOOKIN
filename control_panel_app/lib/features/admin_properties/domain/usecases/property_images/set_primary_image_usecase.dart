@@ -17,11 +17,11 @@ class SetPrimaryImageUseCase implements UseCase<bool, SetPrimaryImageParams> {
 }
 
 class SetPrimaryImageParams {
-  final String propertyId;
+  final String? propertyId;
   final String imageId;
 
   SetPrimaryImageParams({
-    required this.propertyId,
+    this.propertyId,
     required this.imageId,
   });
 }

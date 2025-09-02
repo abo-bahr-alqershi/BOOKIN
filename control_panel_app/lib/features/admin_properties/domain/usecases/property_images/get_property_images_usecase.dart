@@ -12,7 +12,7 @@ class GetPropertyImagesUseCase implements UseCase<List<PropertyImage>, String> {
   GetPropertyImagesUseCase(this.repository);
 
   @override
-  Future<Either<Failure, List<PropertyImage>>> call(String propertyId) async {
+  Future<Either<Failure, List<PropertyImage>>> call(String? propertyId) async {
     return await repository.getPropertyImages(propertyId);
   }
 }

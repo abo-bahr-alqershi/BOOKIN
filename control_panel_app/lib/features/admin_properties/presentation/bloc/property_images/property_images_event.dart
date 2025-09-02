@@ -10,16 +10,16 @@ abstract class PropertyImagesEvent extends Equatable {
 }
 
 class LoadPropertyImagesEvent extends PropertyImagesEvent {
-  final String propertyId;
+  final String? propertyId;
 
-  const LoadPropertyImagesEvent({required this.propertyId});
+  const LoadPropertyImagesEvent({this.propertyId});
 
   @override
   List<Object?> get props => [propertyId];
 }
 
 class UploadPropertyImageEvent extends PropertyImagesEvent {
-  final String propertyId;
+  final String? propertyId;
   final String filePath;
   final String? category;
   final String? alt;
@@ -28,7 +28,7 @@ class UploadPropertyImageEvent extends PropertyImagesEvent {
   final List<String>? tags;
 
   const UploadPropertyImageEvent({
-    required this.propertyId,
+    this.propertyId,
     required this.filePath,
     this.category,
     this.alt,
@@ -42,13 +42,13 @@ class UploadPropertyImageEvent extends PropertyImagesEvent {
 }
 
 class UploadMultipleImagesEvent extends PropertyImagesEvent {
-  final String propertyId;
+  final String? propertyId;
   final List<String> filePaths;
   final String? category;
   final List<String>? tags;
 
   const UploadMultipleImagesEvent({
-    required this.propertyId,
+    this.propertyId,
     required this.filePaths,
     this.category,
     this.tags,
@@ -90,11 +90,11 @@ class DeleteMultipleImagesEvent extends PropertyImagesEvent {
 }
 
 class ReorderImagesEvent extends PropertyImagesEvent {
-  final String propertyId;
+  final String? propertyId;
   final List<String> imageIds;
 
   const ReorderImagesEvent({
-    required this.propertyId,
+    this.propertyId,
     required this.imageIds,
   });
 
@@ -103,11 +103,11 @@ class ReorderImagesEvent extends PropertyImagesEvent {
 }
 
 class SetPrimaryImageEvent extends PropertyImagesEvent {
-  final String propertyId;
+  final String? propertyId;
   final String imageId;
 
   const SetPrimaryImageEvent({
-    required this.propertyId,
+    this.propertyId,
     required this.imageId,
   });
 

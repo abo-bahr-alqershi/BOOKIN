@@ -158,7 +158,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
                 position: _contentSlideAnimation,
                 child: Column(
                   children: [
-                    _buildHeader(state),
+                    _buildResponsiveHeader(state),
                     Expanded(
                       child: _buildContent(state),
                     ),
@@ -174,7 +174,11 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
     );
   }
 
-  Widget _buildHeader(UnitDetailsLoaded state) {
+  // تحسين الـ Header ليكون responsive
+  Widget _buildResponsiveHeader(UnitDetailsLoaded state) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingLarge),
       child: ClipRRect(
@@ -196,44 +200,216 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
               ),
             ),
             padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildBackButton(),
-                const SizedBox(width: AppDimensions.spaceMedium),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ShaderMask(
-                        shaderCallback: (bounds) =>
-                            AppTheme.primaryGradient.createShader(bounds),
-                        child: Text(
-                          state.unit.name,
-                          style: AppTextStyles.heading2.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      Row(
+                // الصف الأول: زر الرجوع والعنوان والإجراءات الأساسية
+                Row(
+                  children: [
+                    _buildBackButton(),
+                    const SizedBox(width: AppDimensions.spaceMedium),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildInfoChip(
-                            Icons.apartment,
-                            state.unit.unitTypeName,
+                          ShaderMask(
+                            shaderCallback: (bounds) =>
+                                AppTheme.primaryGradient.createShader(bounds),
+                            child: Text(
+                              state.unit.name,
+                              style: AppTextStyles.heading2.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                          const SizedBox(width: AppDimensions.spaceSmall),
-                          _buildInfoChip(
-                            Icons.location_city,
-                            state.unit.propertyName,
+                          const SizedBox(height: AppDimensions.spaceXSmall),
+                          // استخدام Wrap بدلاً من Row للـ chips
+                          Wrap(
+                            spacing: AppDimensions.spaceSmall,
+                            runSpacing: AppDimensions.spaceXSmall,
+                            children: [
+                              _buildInfoChip(
+                                Icons.apartment,
+                                state.unit.unitTypeName,
+                              ),
+                              _buildInfoChip(
+                                Icons.location_city,
+                                state.unit.propertyName,
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: AppDimensions.spaceMedium),
+                    // استخدام PopupMenuButton للإجراءات على الشاشات الصغيرة
+                    if (isSmallScreen)
+                      _buildActionsMenu(state)
+                    else
+                      _buildActionButtonsRow(state),
+                  ],
                 ),
-                _buildActionButtons(state),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // قائمة منسدلة للإجراءات على الشاشات الصغيرة
+  Widget _buildActionsMenu(UnitDetailsLoaded state) {
+    return PopupMenuButton<String>(
+      icon: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.primaryBlue.withOpacity(0.2),
+              AppTheme.primaryPurple.withOpacity(0.1),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+          border: Border.all(
+            color: AppTheme.primaryBlue.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Icon(
+          Icons.more_vert,
+          color: AppTheme.textWhite,
+          size: 20,
+        ),
+      ),
+      color: AppTheme.darkCard,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+        side: BorderSide(
+          color: AppTheme.darkBorder.withOpacity(0.3),
+          width: 0.5,
+        ),
+      ),
+      onSelected: (value) {
+        HapticFeedback.lightImpact();
+        switch (value) {
+          case 'edit':
+            context.push('/admin/units/${widget.unitId}/edit');
+            break;
+          case 'gallery':
+            context.push('/admin/units/${widget.unitId}/gallery');
+            break;
+          case 'sections':
+            setState(() => _showAssignSectionsModal = true);
+            break;
+          case 'delete':
+            _showDeleteConfirmation(state);
+            break;
+        }
+      },
+      itemBuilder: (context) => [
+        _buildMenuItem('edit', Icons.edit, 'تعديل', AppTheme.primaryBlue),
+        _buildMenuItem('gallery', Icons.image, 'الصور', AppTheme.primaryPurple),
+        _buildMenuItem('sections', Icons.category, 'الأقسام', AppTheme.success),
+        _buildMenuItem('delete', Icons.delete, 'حذف', AppTheme.error),
+      ],
+    );
+  }
+
+  PopupMenuItem<String> _buildMenuItem(
+    String value,
+    IconData icon,
+    String label,
+    Color color,
+  ) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: AppDimensions.spaceSmall),
+          Text(
+            label,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppTheme.textWhite,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // أزرار الإجراءات للشاشات الكبيرة (أيقونات فقط)
+  Widget _buildActionButtonsRow(UnitDetailsLoaded state) {
+    return Row(
+      children: [
+        _buildIconActionButton(
+          Icons.edit,
+          'تعديل',
+          AppTheme.primaryBlue,
+          () => context.push('/admin/units/${widget.unitId}/edit'),
+        ),
+        const SizedBox(width: 8),
+        _buildIconActionButton(
+          Icons.image,
+          'الصور',
+          AppTheme.primaryPurple,
+          () => context.push('/admin/units/${widget.unitId}/gallery'),
+        ),
+        const SizedBox(width: 8),
+        _buildIconActionButton(
+          Icons.category,
+          'الأقسام',
+          AppTheme.success,
+          () => setState(() => _showAssignSectionsModal = true),
+        ),
+        const SizedBox(width: 8),
+        _buildIconActionButton(
+          Icons.delete,
+          'حذف',
+          AppTheme.error,
+          () => _showDeleteConfirmation(state),
+        ),
+      ],
+    );
+  }
+
+  // زر إجراء بأيقونة فقط مع Tooltip
+  Widget _buildIconActionButton(
+    IconData icon,
+    String tooltip,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                color.withOpacity(0.2),
+                color.withOpacity(0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+            border: Border.all(
+              color: color.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: color,
           ),
         ),
       ),
@@ -273,6 +449,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
 
   Widget _buildInfoChip(IconData icon, String label) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 150), // تحديد عرض أقصى
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.paddingSmall,
         vertical: AppDimensions.paddingXSmall,
@@ -282,96 +459,21 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
         borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: AppTheme.textMuted),
           const SizedBox(width: AppDimensions.spaceXSmall),
-          Text(
-            label,
-            style: AppTextStyles.caption.copyWith(
-              color: AppTheme.textMuted,
+          Flexible(
+            child: Text(
+              label,
+              style: AppTextStyles.caption.copyWith(
+                color: AppTheme.textMuted,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildActionButtons(UnitDetailsLoaded state) {
-    return Row(
-      children: [
-        _buildActionButton(
-          Icons.edit,
-          'تعديل',
-          AppTheme.primaryBlue,
-          () => context.push('/admin/units/${widget.unitId}/edit'),
-        ),
-        const SizedBox(width: AppDimensions.spaceSmall),
-        _buildActionButton(
-          Icons.image,
-          'الصور',
-          AppTheme.primaryPurple,
-          () => context.push('/admin/units/${widget.unitId}/gallery'),
-        ),
-        const SizedBox(width: AppDimensions.spaceSmall),
-        _buildActionButton(
-          Icons.category,
-          'الأقسام',
-          AppTheme.success,
-          () => setState(() => _showAssignSectionsModal = true),
-        ),
-        const SizedBox(width: AppDimensions.spaceSmall),
-        _buildActionButton(
-          Icons.delete,
-          'حذف',
-          AppTheme.error,
-          () => _showDeleteConfirmation(state),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButton(
-    IconData icon,
-    String label,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingMedium,
-          vertical: AppDimensions.paddingSmall,
-        ),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              color.withOpacity(0.2),
-              color.withOpacity(0.1),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: AppDimensions.spaceXSmall),
-            Text(
-              label,
-              style: AppTextStyles.caption.copyWith(
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -381,8 +483,8 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       padding: const EdgeInsets.all(AppDimensions.paddingLarge),
       child: Column(
         children: [
-          // Statistics Cards
-          _buildStatsSection(state),
+          // Statistics Cards - جعلها responsive
+          _buildResponsiveStatsSection(state),
           const SizedBox(height: AppDimensions.spaceLarge),
           
           // Basic Information
@@ -411,7 +513,38 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
     );
   }
 
-  Widget _buildStatsSection(UnitDetailsLoaded state) {
+  // تحسين قسم الإحصائيات ليكون responsive
+  Widget _buildResponsiveStatsSection(UnitDetailsLoaded state) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+
+    if (isSmallScreen) {
+      return Column(
+        children: [
+          UnitStatsCard(
+            title: 'المشاهدات',
+            value: '${state.unit.viewCount ?? 0}',
+            icon: Icons.visibility,
+            color: AppTheme.primaryBlue,
+          ),
+          const SizedBox(height: AppDimensions.spaceMedium),
+          UnitStatsCard(
+            title: 'الحجوزات',
+            value: '${state.unit.bookingCount ?? 0}',
+            icon: Icons.calendar_today,
+            color: AppTheme.primaryPurple,
+          ),
+          const SizedBox(height: AppDimensions.spaceMedium),
+          UnitStatsCard(
+            title: 'الحالة',
+            value: state.unit.isAvailable ? 'متاحة' : 'غير متاحة',
+            icon: Icons.check_circle,
+            color: state.unit.isAvailable ? AppTheme.success : AppTheme.error,
+          ),
+        ],
+      );
+    }
+
     return Row(
       children: [
         Expanded(
@@ -633,17 +766,28 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppTheme.textMuted,
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppTheme.textMuted,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          Text(
-            value,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.textWhite,
-              fontWeight: FontWeight.w600,
+          const SizedBox(width: AppDimensions.spaceSmall),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textWhite,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
             ),
           ),
         ],

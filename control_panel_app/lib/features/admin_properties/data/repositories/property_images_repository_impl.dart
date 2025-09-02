@@ -20,7 +20,7 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
 
   @override
   Future<Either<Failure, PropertyImage>> uploadImage({
-    required String propertyId,
+    String? propertyId,
     required String filePath,
     String? category,
     String? alt,
@@ -51,7 +51,7 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
   }
 
   @override
-  Future<Either<Failure, List<PropertyImage>>> getPropertyImages(String propertyId) async {
+  Future<Either<Failure, List<PropertyImage>>> getPropertyImages(String? propertyId) async {
     if (await networkInfo.isConnected) {
       try {
         final List<PropertyImageModel> result = await remoteDataSource.getPropertyImages(propertyId);
@@ -103,7 +103,7 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
 
   @override
   Future<Either<Failure, bool>> reorderImages(
-    String propertyId,
+    String? propertyId,
     List<String> imageIds,
   ) async {
     if (await networkInfo.isConnected) {
@@ -122,7 +122,7 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
 
   @override
   Future<Either<Failure, bool>> setAsPrimaryImage(
-    String propertyId,
+    String? propertyId,
     String imageId,
   ) async {
     if (await networkInfo.isConnected) {
@@ -164,7 +164,7 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
 
   @override
   Future<Either<Failure, List<PropertyImage>>> uploadMultipleImages({
-    required String propertyId,
+    String? propertyId,
     required List<String> filePaths,
     String? category,
     List<String>? tags,

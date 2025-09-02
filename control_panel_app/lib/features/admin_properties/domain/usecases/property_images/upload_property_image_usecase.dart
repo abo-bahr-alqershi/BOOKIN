@@ -26,7 +26,7 @@ class UploadPropertyImageUseCase implements UseCase<PropertyImage, UploadImagePa
 }
 
 class UploadImageParams {
-  final String propertyId;
+  final String? propertyId;
   final String filePath;
   final String? category;
   final String? alt;
@@ -35,7 +35,7 @@ class UploadImageParams {
   final List<String>? tags;
 
   UploadImageParams({
-    required this.propertyId,
+    this.propertyId,
     required this.filePath,
     this.category,
     this.alt,

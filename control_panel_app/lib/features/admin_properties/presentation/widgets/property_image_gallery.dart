@@ -40,10 +40,10 @@ class PropertyImageGallery extends StatefulWidget {
   });
   
   @override
-  State<PropertyImageGallery> createState() => _PropertyImageGalleryState();
+  State<PropertyImageGallery> createState() => PropertyImageGalleryState();
 }
 
-class _PropertyImageGalleryState extends State<PropertyImageGallery>
+class PropertyImageGalleryState extends State<PropertyImageGallery>
     with TickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
   late AnimationController _animationController;
@@ -68,6 +68,7 @@ class _PropertyImageGalleryState extends State<PropertyImageGallery>
   final Set<int> _selectedLocalIndices = {};
   int? _primaryImageIndex = 0;
   
+  // تحديد الوضع المحلي بناءً على وجود propertyId
   bool get _isLocalMode => widget.propertyId == null || widget.propertyId!.isEmpty;
   bool _isInitialLoadDone = false;
   
@@ -95,11 +96,10 @@ class _PropertyImageGalleryState extends State<PropertyImageGallery>
       _localImages = List.from(widget.initialLocalImages!);
     }
     
-    // Initialize remote images if provided
-    if (widget.initialImages != null) {
+    // Initialize remote images if provided (for edit mode)
+    if (widget.initialImages != null && !_isLocalMode) {
       _remoteImages = List.from(widget.initialImages!);
       _displayImages = List.from(widget.initialImages!);
-      // Find primary image index
       _primaryImageIndex = _displayImages.indexWhere((img) => img.isPrimary == true);
       if (_primaryImageIndex == -1) _primaryImageIndex = 0;
     }
@@ -109,10 +109,11 @@ class _PropertyImageGalleryState extends State<PropertyImageGallery>
   void didChangeDependencies() {
     super.didChangeDependencies();
     
+    // فقط تحميل الصور إذا كان هناك propertyId صالح
     if (!_isLocalMode && !_isInitialLoadDone) {
       try {
         _imagesBloc = context.read<PropertyImagesBloc?>();
-        if (_imagesBloc != null && widget.propertyId != null) {
+        if (_imagesBloc != null && widget.propertyId != null && widget.propertyId!.isNotEmpty) {
           _imagesBloc!.add(LoadPropertyImagesEvent(propertyId: widget.propertyId!));
           _isInitialLoadDone = true;
         }
@@ -132,7 +133,13 @@ class _PropertyImageGalleryState extends State<PropertyImageGallery>
   
   @override
   Widget build(BuildContext context) {
-    if (_isLocalMode || _imagesBloc == null) {
+    // العمل في الوضع المحلي إذا لم يكن هناك propertyId
+    if (_isLocalMode) {
+      return _buildLocalModeContent();
+    }
+    
+    // العمل مع Bloc إذا كان هناك propertyId
+    if (_imagesBloc == null) {
       return _buildLocalModeContent();
     }
     
@@ -145,6 +152,22 @@ class _PropertyImageGalleryState extends State<PropertyImageGallery>
         return _buildContent(state);
       },
     );
+  }
+  
+  // دالة لرفع الصور المحلية بعد إنشاء العقار
+  Future<void> uploadLocalImages(String newPropertyId) async {
+    if (_localImages.isEmpty || _imagesBloc == null) return;
+    
+    // رفع جميع الصور المحلية
+    _imagesBloc!.add(UploadMultipleImagesEvent(
+      propertyId: newPropertyId,
+      filePaths: _localImages,
+    ));
+    
+    // مسح القائمة المحلية
+    setState(() {
+      _localImages.clear();
+    });
   }
   
   Widget _buildContent(PropertyImagesState state) {
@@ -168,6 +191,355 @@ class _PropertyImageGalleryState extends State<PropertyImageGallery>
       ],
     );
   }
+  
+  Widget _buildLocalModeContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLocalHeaderSection(_localImages.length),
+        const SizedBox(height: 20),
+        
+        if (!widget.isReadOnly && _localImages.length < widget.maxImages)
+          _buildMinimalistUploadArea(),
+        
+        if (_localImages.isNotEmpty) ...[
+          if (!widget.isReadOnly && _localImages.length < widget.maxImages)
+            const SizedBox(height: 24),
+          _buildLocalImagesGrid(_localImages),
+        ],
+        
+        if (_localImages.isEmpty && widget.isReadOnly)
+          _buildMinimalistEmptyState(),
+      ],
+    );
+  }
+  
+  Widget _buildLocalHeaderSection(int imageCount) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _isSelectionMode 
+                      ? 'تم تحديد ${_selectedLocalIndices.length}'
+                      : 'معرض الصور (محلي)',
+                    style: AppTextStyles.heading3.copyWith(
+                      color: AppTheme.textWhite,
+                      fontWeight: FontWeight.w300,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$imageCount من ${widget.maxImages}',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppTheme.textMuted.withOpacity(0.7),
+                      fontWeight: FontWeight.w300,
+                    ),
+                  ),
+                ],
+              ),
+              
+              // Local mode indicator
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.warning.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: AppTheme.warning.withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 12,
+                      color: AppTheme.warning,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'سيتم الرفع عند الحفظ',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppTheme.warning,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildLocalImagesGrid(List<String> images) {
+    return AnimationLimiter(
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+          childAspectRatio: 1,
+        ),
+        itemCount: images.length,
+        itemBuilder: (context, index) {
+          return AnimationConfiguration.staggeredGrid(
+            position: index,
+            duration: const Duration(milliseconds: 275),
+            columnCount: 3,
+            child: ScaleAnimation(
+              scale: 0.95,
+              child: FadeInAnimation(
+                child: _buildLocalImageItem(
+                  images[index],
+                  index,
+                  _selectedLocalIndices.contains(index),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+  
+  Widget _buildLocalImageItem(String imagePath, int index, bool isSelected) {
+    final bool isHovered = _hoveredIndex == index;
+    final bool isPrimary = index == 0;
+    
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredIndex = index),
+      onExit: (_) => setState(() => _hoveredIndex = null),
+      child: GestureDetector(
+        onTap: () {
+          if (_isSelectionMode) {
+            setState(() {
+              if (_selectedLocalIndices.contains(index)) {
+                _selectedLocalIndices.remove(index);
+              } else {
+                _selectedLocalIndices.add(index);
+              }
+            });
+          } else {
+            _previewLocalImage(imagePath);
+          }
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          transform: Matrix4.identity()
+            ..scale(isHovered ? 0.97 : 1.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                ? AppTheme.primaryBlue.withOpacity(0.5)
+                : AppTheme.darkBorder.withOpacity(0.1),
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(11),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                _buildImageFromPath(imagePath),
+                
+                // Gradient overlay
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(isHovered ? 0.5 : 0.2),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                // Delete button
+                if (!widget.isReadOnly)
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 200),
+                    top: isHovered ? 8 : -40,
+                    right: 8,
+                    child: _buildQuickActionButton(
+                      icon: Icons.delete_outline,
+                      onTap: () => _deleteLocalImage(index),
+                      color: AppTheme.error,
+                    ),
+                  ),
+                
+                // Primary badge
+                if (isPrimary)
+                  Positioned(
+                    bottom: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.warning.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.star,
+                            size: 12,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'رئيسية',
+                            style: AppTextStyles.caption.copyWith(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                
+                // Local indicator
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.warning.withOpacity(0.8),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.schedule,
+                      size: 12,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  void _deleteLocalImage(int index) {
+    setState(() {
+      _localImages.removeAt(index);
+      _selectedLocalIndices.remove(index);
+      // تحديث الـ indices بعد الحذف
+      final updatedIndices = <int>{};
+      for (var i in _selectedLocalIndices) {
+        if (i > index) {
+          updatedIndices.add(i - 1);
+        } else if (i < index) {
+          updatedIndices.add(i);
+        }
+      }
+      _selectedLocalIndices.clear();
+      _selectedLocalIndices.addAll(updatedIndices);
+    });
+    
+    if (widget.onLocalImagesChanged != null) {
+      widget.onLocalImagesChanged!(_localImages);
+    }
+    
+    _showSuccessSnackBar('تم حذف الصورة');
+  }
+  
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        imageQuality: 85,
+      );
+      
+      if (image != null) {
+        if (_isLocalMode) {
+          // في الوضع المحلي، احفظ المسار فقط
+          setState(() {
+            _localImages.add(image.path);
+          });
+          if (widget.onLocalImagesChanged != null) {
+            widget.onLocalImagesChanged!(_localImages);
+          }
+          _showSuccessSnackBar('تم إضافة الصورة (سيتم الرفع عند الحفظ)');
+        } else if (_imagesBloc != null && widget.propertyId != null) {
+          // في وضع التعديل، ارفع مباشرة
+          setState(() {
+            _uploadingFiles.add(image.path);
+          });
+          _imagesBloc!.add(UploadPropertyImageEvent(
+            propertyId: widget.propertyId!,
+            filePath: image.path,
+            isPrimary: _displayImages.isEmpty,
+          ));
+        }
+      }
+    } catch (e) {
+      _showErrorSnackBar('فشل في اختيار الصورة');
+    }
+  }
+  
+  Future<void> _pickMultipleImages() async {
+    try {
+      final List<XFile> images = await _picker.pickMultiImage(
+        imageQuality: 85,
+      );
+      
+      if (images.isNotEmpty) {
+        final remainingSlots = widget.maxImages - (_isLocalMode ? _localImages.length : _displayImages.length);
+        final imagesToAdd = images.take(remainingSlots).toList();
+        
+        if (imagesToAdd.isNotEmpty) {
+          if (_isLocalMode) {
+            // في الوضع المحلي
+            setState(() {
+              _localImages.addAll(imagesToAdd.map((img) => img.path));
+            });
+            if (widget.onLocalImagesChanged != null) {
+              widget.onLocalImagesChanged!(_localImages);
+            }
+            _showSuccessSnackBar('تم إضافة ${imagesToAdd.length} صورة (سيتم الرفع عند الحفظ)');
+          } else if (_imagesBloc != null && widget.propertyId != null) {
+            // في وضع التعديل
+            setState(() {
+              for (var img in imagesToAdd) {
+                _uploadingFiles.add(img.path);
+              }
+            });
+            _imagesBloc!.add(UploadMultipleImagesEvent(
+              propertyId: widget.propertyId!,
+              filePaths: imagesToAdd.map((img) => img.path).toList(),
+            ));
+          }
+        }
+      }
+    } catch (e) {
+      _showErrorSnackBar('فشل في اختيار الصور');
+    }
+  }
+  
+  // باقي الدوال تبقى كما هي مع التعديلات اللازمة...
   
   Widget _buildEnhancedHeader(int imageCount, PropertyImagesState state) {
     final isSelectionMode = state is PropertyImagesLoaded ? state.isSelectionMode : _isSelectionMode;
@@ -390,7 +762,8 @@ class _PropertyImageGalleryState extends State<PropertyImageGallery>
       ],
     );
   }
-  
+
+  // باقي الدوال تبقى كما هي...
   Widget _buildReorderableGrid(List<PropertyImage> images) {
     return ReorderableWrap(
       spacing: 8,
@@ -1008,6 +1381,54 @@ class _PropertyImageGalleryState extends State<PropertyImageGallery>
     );
   }
   
+  Widget _buildImageFromPath(String path) {
+    if (path.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: path,
+        fit: BoxFit.cover,
+        fadeInDuration: const Duration(milliseconds: 200),
+        placeholder: (context, url) => Container(
+          color: AppTheme.darkCard.withOpacity(0.3),
+          child: Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 1.5,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppTheme.primaryBlue.withOpacity(0.5)
+                ),
+              ),
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => Container(
+          color: AppTheme.darkCard.withOpacity(0.3),
+          child: Icon(
+            Icons.image_not_supported_outlined,
+            color: AppTheme.textMuted.withOpacity(0.3),
+            size: 24,
+          ),
+        ),
+      );
+    } else {
+      return Image.file(
+        File(path),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: AppTheme.darkCard.withOpacity(0.3),
+            child: Icon(
+              Icons.image_not_supported_outlined,
+              color: AppTheme.textMuted.withOpacity(0.3),
+              size: 24,
+            ),
+          );
+        },
+      );
+    }
+  }
+  
   Widget _buildMinimalistLoadingState() {
     return Container(
       height: 180,
@@ -1206,264 +1627,6 @@ class _PropertyImageGalleryState extends State<PropertyImageGallery>
     );
   }
   
-  // باقي الدوال مثل LocalMode content وغيرها تبقى كما هي...
-  
-  Widget _buildLocalModeContent() {
-    final images = _isLocalMode ? _localImages : _remoteImages.map((e) => e.url).toList();
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLocalHeaderSection(images.length),
-        const SizedBox(height: 20),
-        
-        if (!widget.isReadOnly && images.length < widget.maxImages)
-          _buildMinimalistUploadArea(),
-        
-        if (images.isNotEmpty) ...[
-          if (!widget.isReadOnly && images.length < widget.maxImages)
-            const SizedBox(height: 24),
-          _buildLocalImagesGrid(images),
-        ],
-        
-        if (images.isEmpty)
-          _buildMinimalistEmptyState(),
-      ],
-    );
-  }
-  
-  Widget _buildLocalHeaderSection(int imageCount) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _isSelectionMode 
-                  ? 'تم تحديد ${_selectedLocalIndices.length}'
-                  : 'معرض الصور',
-                style: AppTextStyles.heading3.copyWith(
-                  color: AppTheme.textWhite,
-                  fontWeight: FontWeight.w300,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '$imageCount من ${widget.maxImages}',
-                style: AppTextStyles.caption.copyWith(
-                  color: AppTheme.textMuted.withOpacity(0.7),
-                  fontWeight: FontWeight.w300,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildLocalImagesGrid(List<String> images) {
-    return AnimationLimiter(
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-          childAspectRatio: 1,
-        ),
-        itemCount: images.length,
-        itemBuilder: (context, index) {
-          return AnimationConfiguration.staggeredGrid(
-            position: index,
-            duration: const Duration(milliseconds: 275),
-            columnCount: 3,
-            child: ScaleAnimation(
-              scale: 0.95,
-              child: FadeInAnimation(
-                child: _buildLocalImageItem(
-                  images[index],
-                  index,
-                  _selectedLocalIndices.contains(index),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-  
-  Widget _buildLocalImageItem(String imagePath, int index, bool isSelected) {
-    final bool isHovered = _hoveredIndex == index;
-    final bool isPrimary = index == 0;
-    
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hoveredIndex = index),
-      onExit: (_) => setState(() => _hoveredIndex = null),
-      child: GestureDetector(
-        onTap: () {
-          if (_isSelectionMode) {
-            setState(() {
-              if (_selectedLocalIndices.contains(index)) {
-                _selectedLocalIndices.remove(index);
-              } else {
-                _selectedLocalIndices.add(index);
-              }
-            });
-          } else {
-            _previewLocalImage(imagePath);
-          }
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          transform: Matrix4.identity()
-            ..scale(isHovered ? 0.97 : 1.0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected
-                ? AppTheme.primaryBlue.withOpacity(0.5)
-                : AppTheme.darkBorder.withOpacity(0.1),
-              width: isSelected ? 2 : 1,
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(11),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                _buildImageFromPath(imagePath),
-                
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(isHovered ? 0.5 : 0.2),
-                      ],
-                    ),
-                  ),
-                ),
-                
-                if (!widget.isReadOnly && !_isSelectionMode)
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 200),
-                    top: isHovered ? 8 : -40,
-                    right: 8,
-                    child: Row(
-                      children: [
-                        _buildQuickActionButton(
-                          icon: Icons.visibility_outlined,
-                          onTap: () => _previewLocalImage(imagePath),
-                        ),
-                        const SizedBox(width: 4),
-                        _buildQuickActionButton(
-                          icon: Icons.delete_outline,
-                          onTap: () => _deleteLocalImage(index),
-                          color: AppTheme.error,
-                        ),
-                      ],
-                    ),
-                  ),
-                
-                if (isPrimary)
-                  Positioned(
-                    bottom: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppTheme.darkCard.withOpacity(0.8),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.star,
-                            color: AppTheme.warning.withOpacity(0.8),
-                            size: 12,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'رئيسية',
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppTheme.textWhite.withOpacity(0.8),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w300,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildImageFromPath(String path) {
-    if (path.startsWith('http')) {
-      return CachedNetworkImage(
-        imageUrl: path,
-        fit: BoxFit.cover,
-        fadeInDuration: const Duration(milliseconds: 200),
-        placeholder: (context, url) => Container(
-          color: AppTheme.darkCard.withOpacity(0.3),
-          child: Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 1.5,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  AppTheme.primaryBlue.withOpacity(0.5)
-                ),
-              ),
-            ),
-          ),
-        ),
-        errorWidget: (context, url, error) => Container(
-          color: AppTheme.darkCard.withOpacity(0.3),
-          child: Icon(
-            Icons.image_not_supported_outlined,
-            color: AppTheme.textMuted.withOpacity(0.3),
-            size: 24,
-          ),
-        ),
-      );
-    } else {
-      return Image.file(
-        File(path),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            color: AppTheme.darkCard.withOpacity(0.3),
-            child: Icon(
-              Icons.image_not_supported_outlined,
-              color: AppTheme.textMuted.withOpacity(0.3),
-              size: 24,
-            ),
-          );
-        },
-      );
-    }
-  }
-  
-  // باقي الدوال كما هي...
-  
   void _handleStateChanges(PropertyImagesState state) {
     if (state is PropertyImagesLoaded) {
       setState(() {
@@ -1560,99 +1723,21 @@ class _PropertyImageGalleryState extends State<PropertyImageGallery>
     );
   }
   
-  Future<void> _pickImage(ImageSource source) async {
-    try {
-      final XFile? image = await _picker.pickImage(
-        source: source,
-        imageQuality: 85,
-      );
-      
-      if (image != null) {
-        if (_isLocalMode) {
-          setState(() {
-            _localImages.add(image.path);
-          });
-          if (widget.onLocalImagesChanged != null) {
-            widget.onLocalImagesChanged!(_localImages);
-          }
-          _showSuccessSnackBar('تم إضافة الصورة');
-        } else if (_imagesBloc != null) {
-          setState(() {
-            _uploadingFiles.add(image.path);
-          });
-          _imagesBloc!.add(UploadPropertyImageEvent(
-            propertyId: widget.propertyId!,
-            filePath: image.path,
-            isPrimary: _displayImages.isEmpty,
-          ));
-        }
-      }
-    } catch (e) {
-      _showErrorSnackBar('فشل في اختيار الصورة');
-    }
-  }
-  
-  Future<void> _pickMultipleImages() async {
-    try {
-      final List<XFile> images = await _picker.pickMultiImage(
-        imageQuality: 85,
-      );
-      
-      if (images.isNotEmpty) {
-        if (_isLocalMode || _imagesBloc == null) {
-          final remainingSlots = widget.maxImages - _localImages.length;
-          final imagesToAdd = images.take(remainingSlots).toList();
-          
-          if (imagesToAdd.isNotEmpty) {
-            setState(() {
-              _localImages.addAll(imagesToAdd.map((img) => img.path));
-            });
-            if (widget.onLocalImagesChanged != null) {
-              widget.onLocalImagesChanged!(_localImages);
-            }
-            _showSuccessSnackBar('تم إضافة ${imagesToAdd.length} صورة');
-          }
-        } else {
-          final remainingSlots = widget.maxImages - _displayImages.length;
-          final imagesToAdd = images.take(remainingSlots).toList();
-          
-          if (imagesToAdd.isNotEmpty) {
-            setState(() {
-              for (var img in imagesToAdd) {
-                _uploadingFiles.add(img.path);
-              }
-            });
-            _imagesBloc!.add(UploadMultipleImagesEvent(
-              propertyId: widget.propertyId!,
-              filePaths: imagesToAdd.map((img) => img.path).toList(),
-            ));
-          }
-        }
-      }
-    } catch (e) {
-      _showErrorSnackBar('فشل في اختيار الصور');
-    }
-  }
-  
   void _handleDroppedFiles(List<XFile> files) {
     if (files.isNotEmpty) {
-      if (_isLocalMode || _imagesBloc == null) {
-        final remainingSlots = widget.maxImages - _localImages.length;
-        final filesToAdd = files.take(remainingSlots).toList();
-        
-        if (filesToAdd.isNotEmpty) {
+      final remainingSlots = widget.maxImages - (_isLocalMode ? _localImages.length : _displayImages.length);
+      final filesToAdd = files.take(remainingSlots).toList();
+      
+      if (filesToAdd.isNotEmpty) {
+        if (_isLocalMode) {
           setState(() {
             _localImages.addAll(filesToAdd.map((file) => file.path));
           });
           if (widget.onLocalImagesChanged != null) {
             widget.onLocalImagesChanged!(_localImages);
           }
-        }
-      } else {
-        final remainingSlots = widget.maxImages - _displayImages.length;
-        final filesToAdd = files.take(remainingSlots).toList();
-        
-        if (filesToAdd.isNotEmpty) {
+          _showSuccessSnackBar('تم إضافة ${filesToAdd.length} صورة (سيتم الرفع عند الحفظ)');
+        } else if (_imagesBloc != null && widget.propertyId != null) {
           setState(() {
             for (var file in filesToAdd) {
               _uploadingFiles.add(file.path);
@@ -1665,16 +1750,6 @@ class _PropertyImageGalleryState extends State<PropertyImageGallery>
         }
       }
     }
-  }
-  
-  void _deleteLocalImage(int index) {
-    setState(() {
-      _localImages.removeAt(index);
-    });
-    if (widget.onLocalImagesChanged != null) {
-      widget.onLocalImagesChanged!(_localImages);
-    }
-    _showSuccessSnackBar('تم حذف الصورة');
   }
   
   void _previewImage(PropertyImage image) {
