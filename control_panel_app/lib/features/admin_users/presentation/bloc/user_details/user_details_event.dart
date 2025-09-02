@@ -60,3 +60,12 @@ class AssignUserRoleEvent extends UserDetailsEvent {
   @override
   List<Object> get props => [userId, roleId];
 }
+
+class DeleteUserEvent extends UserDetailsEvent {
+  final String userId;
+
+  const DeleteUserEvent({required this.userId});
+
+  @override
+  List<Object> get props => [userId];
+}

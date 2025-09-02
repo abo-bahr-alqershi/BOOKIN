@@ -23,13 +23,21 @@ class ResultDto<T> extends Equatable {
 
   factory ResultDto.fromJson(
     Map<String, dynamic> json,
-    T Function(Map<String, dynamic>)? fromJsonT,
+    T Function(dynamic)? fromJsonT,
   ) {
+    T? parsedData;
+    if (json.containsKey('data')) {
+      final raw = json['data'];
+      if (fromJsonT != null) {
+        parsedData = fromJsonT(raw);
+      } else {
+        parsedData = raw as T?;
+      }
+    }
+
     return ResultDto<T>(
       success: json['success'] ?? false,
-      data: json['data'] != null && fromJsonT != null
-          ? fromJsonT(json['data'])
-          : json['data'],
+      data: parsedData,
       message: json['message'],
       errors: json['errors'] != null
           ? List<String>.from(json['errors'])

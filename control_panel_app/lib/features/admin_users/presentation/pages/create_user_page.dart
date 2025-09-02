@@ -13,7 +13,12 @@ import '../bloc/users_list/users_list_bloc.dart';
 import '../widgets/user_role_selector.dart';
 
 class CreateUserPage extends StatefulWidget {
-  const CreateUserPage({super.key});
+  final String? userId; // if provided -> edit mode
+  final String? initialName;
+  final String? initialEmail;
+  final String? initialPhone;
+  final String? initialRoleId;
+  const CreateUserPage({super.key, this.userId, this.initialName, this.initialEmail, this.initialPhone, this.initialRoleId});
 
   @override
   State<CreateUserPage> createState() => _CreateUserPageState();
@@ -49,6 +54,13 @@ class _CreateUserPageState extends State<CreateUserPage>
   void initState() {
     super.initState();
     _initializeAnimations();
+    // Pre-fill if edit mode
+    if (widget.userId != null) {
+      _nameController.text = widget.initialName ?? _nameController.text;
+      _emailController.text = widget.initialEmail ?? _emailController.text;
+      _phoneController.text = widget.initialPhone ?? _phoneController.text;
+      _selectedRole = widget.initialRoleId;
+    }
   }
   
   void _initializeAnimations() {
@@ -249,7 +261,7 @@ class _CreateUserPageState extends State<CreateUserPage>
                 ShaderMask(
                   shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
                   child: Text(
-                    'إضافة مستخدم جديد',
+                    widget.userId == null ? 'إضافة مستخدم جديد' : 'تعديل المستخدم',
                     style: AppTextStyles.heading2.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -258,7 +270,7 @@ class _CreateUserPageState extends State<CreateUserPage>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'قم بملء البيانات المطلوبة لإضافة المستخدم',
+                  widget.userId == null ? 'قم بملء البيانات المطلوبة لإضافة المستخدم' : 'قم بتحديث بيانات المستخدم',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppTheme.textMuted,
                   ),
@@ -399,8 +411,8 @@ class _CreateUserPageState extends State<CreateUserPage>
           
           const SizedBox(height: 20),
           
-          // Password
-          _buildPasswordField(),
+          // Password (only in create mode)
+          if (widget.userId == null) _buildPasswordField(),
         ],
       ),
     );
@@ -976,7 +988,9 @@ class _CreateUserPageState extends State<CreateUserPage>
                         );
                       }
                       return Text(
-                        _currentStep < 3 ? 'التالي' : 'إنشاء المستخدم',
+                        _currentStep < 3
+                            ? 'التالي'
+                            : (widget.userId == null ? 'إنشاء المستخدم' : 'تحديث المستخدم'),
                         style: AppTextStyles.buttonMedium.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -1033,9 +1047,10 @@ class _CreateUserPageState extends State<CreateUserPage>
   }
   
   bool _validateBasicInfo() {
+    final isEditing = widget.userId != null;
     if (_nameController.text.isEmpty ||
         _emailController.text.isEmpty ||
-        _passwordController.text.isEmpty) {
+        (!isEditing && _passwordController.text.isEmpty)) {
       _showErrorMessage('الرجاء ملء جميع الحقول المطلوبة');
       return false;
     }
@@ -1060,18 +1075,28 @@ class _CreateUserPageState extends State<CreateUserPage>
   
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
-      // TODO: Implement actual user creation
+      if (widget.userId == null) {
       context.read<UsersListBloc>().add(
         CreateUserEvent(
           name: _nameController.text,
           email: _emailController.text,
           password: _passwordController.text,
           phone: _phoneController.text,
-          role: _selectedRole!,
+            roleId: _selectedRole,
         ),
       );
-      
       _showSuccessMessage('تم إنشاء المستخدم بنجاح');
+      } else {
+        context.read<UsersListBloc>().add(
+          UpdateUserEvent(
+            userId: widget.userId!,
+            name: _nameController.text,
+            email: _emailController.text,
+            phone: _phoneController.text,
+          ),
+        );
+        _showSuccessMessage('تم تحديث المستخدم بنجاح');
+      }
       context.pop();
     }
   }

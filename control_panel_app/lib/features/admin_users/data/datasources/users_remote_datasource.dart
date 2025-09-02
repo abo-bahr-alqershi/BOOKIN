@@ -151,7 +151,7 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
 
       final result = ResultDto<String>.fromJson(
         response.data,
-        (json) => json as String,
+        (dynamic json) => json as String,
       );
 
       if (result.isSuccess && result.data != null) {
@@ -186,7 +186,7 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
 
       final result = ResultDto<bool>.fromJson(
         response.data,
-        (json) => json as bool,
+        (dynamic json) => json as bool,
       );
 
       return result.isSuccess && (result.data ?? false);
@@ -201,7 +201,7 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
       final response = await _apiClient.post('/api/admin/Users/$userId/activate');
       final result = ResultDto<bool>.fromJson(
         response.data,
-        (json) => json as bool,
+        (dynamic json) => json as bool,
       );
       return result.isSuccess && (result.data ?? false);
     } on DioException catch (e) {
@@ -215,7 +215,7 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
       final response = await _apiClient.post('/api/admin/Users/$userId/deactivate');
       final result = ResultDto<bool>.fromJson(
         response.data,
-        (json) => json as bool,
+        (dynamic json) => json as bool,
       );
       return result.isSuccess && (result.data ?? false);
     } on DioException catch (e) {
@@ -252,18 +252,53 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
   Future<UserLifetimeStatsModel> getUserLifetimeStats(String userId) async {
     try {
       final response = await _apiClient.get('/api/admin/Users/$userId/lifetime-stats');
+      
+      // التحقق من أن response.data ليس null
+      if (response.data == null) {
+        throw ApiException(message: 'No data received from server');
+      }
+      
+      // التحقق من أن response.data هو Map
+      if (response.data is! Map<String, dynamic>) {
+        throw ApiException(message: 'Invalid response format from server');
+      }
+      
       final result = ResultDto<Map<String, dynamic>>.fromJson(
-        response.data,
-        (json) => json as Map<String, dynamic>,
+        response.data as Map<String, dynamic>,
+        (json) {
+          // التحقق من أن json ليس null قبل التحويل
+          if (json == null) {
+            // إرجاع Map فارغ بدلاً من رمي استثناء
+            return <String, dynamic>{};
+          }
+          if (json is! Map<String, dynamic>) {
+            // إرجاع Map فارغ بدلاً من رمي استثناء
+            return <String, dynamic>{};
+          }
+          return json as Map<String, dynamic>;
+        },
       );
       
-      if (result.isSuccess && result.data != null) {
+      if (result.isSuccess) {
+        // حتى لو كانت البيانات فارغة، نعيد نموذج بقيم افتراضية
+        if (result.data != null && result.data!.isNotEmpty) {
         return UserLifetimeStatsModel.fromJson(result.data!);
+        } else {
+          // إرجاع بيانات افتراضية إذا كانت البيانات فارغة
+          return UserLifetimeStatsModel(
+            totalNightsStayed: 0,
+            totalMoneySpent: 0.0,
+            favoriteCity: null,
+          );
+        }
       } else {
         throw ApiException(message: result.message ?? 'Failed to get lifetime stats');
       }
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
+    } catch (e) {
+      // معالجة أي أخطاء أخرى قد تحدث
+      throw ApiException(message: 'Unexpected error: ${e.toString()}');
     }
   }
 }

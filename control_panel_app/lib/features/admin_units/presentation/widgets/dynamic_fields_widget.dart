@@ -1,9 +1,10 @@
+// lib/features/admin_units/presentation/widgets/dynamic_fields_widget.dart
+
+import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/theme/app_text_styles.dart';
-import '../../../../../core/theme/app_dimensions.dart';
+import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import '../../domain/entities/unit_type.dart';
 
 class DynamicFieldsWidget extends StatelessWidget {
@@ -26,15 +27,70 @@ class DynamicFieldsWidget extends StatelessWidget {
       return _buildEmptyState();
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: fields.map((field) => _buildField(field)).toList(),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.darkCard.withOpacity(0.5),
+            AppTheme.darkCard.withOpacity(0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.primaryBlue.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.primaryGradient,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.dynamic_form_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'معلومات إضافية',
+                      style: AppTextStyles.heading3.copyWith(
+                        color: AppTheme.textWhite,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                ...fields.map((field) => _buildField(field)),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildEmptyState() {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+      padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -42,23 +98,36 @@ class DynamicFieldsWidget extends StatelessWidget {
             AppTheme.darkCard.withOpacity(0.1),
           ],
         ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.3),
-          width: 0.5,
+          color: AppTheme.darkBorder.withOpacity(0.2),
+          width: 1,
         ),
       ),
       child: Center(
         child: Column(
           children: [
-            Icon(
-              Icons.dynamic_form,
-              size: 48,
-              color: AppTheme.textMuted.withOpacity(0.5),
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primaryBlue.withOpacity(0.2),
+                    AppTheme.primaryPurple.withOpacity(0.1),
+                  ],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.dynamic_form_rounded,
+                size: 30,
+                color: AppTheme.primaryBlue.withOpacity(0.5),
+              ),
             ),
-            const SizedBox(height: AppDimensions.spaceMedium),
+            const SizedBox(height: 16),
             Text(
-              'لا توجد حقول ديناميكية',
+              'لا توجد حقول إضافية',
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppTheme.textMuted,
               ),
@@ -71,15 +140,15 @@ class DynamicFieldsWidget extends StatelessWidget {
 
   Widget _buildField(UnitTypeField field) {
     return Container(
-      margin: const EdgeInsets.only(bottom: AppDimensions.spaceMedium),
+      margin: const EdgeInsets.only(bottom: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildFieldLabel(field),
-          const SizedBox(height: AppDimensions.spaceSmall),
+          const SizedBox(height: 8),
           _buildFieldInput(field),
           if (field.description.isNotEmpty) ...[
-            const SizedBox(height: AppDimensions.spaceXSmall),
+            const SizedBox(height: 4),
             _buildFieldDescription(field.description),
           ],
         ],
@@ -109,10 +178,13 @@ class DynamicFieldsWidget extends StatelessWidget {
   }
 
   Widget _buildFieldDescription(String description) {
-    return Text(
-      description,
-      style: AppTextStyles.caption.copyWith(
-        color: AppTheme.textMuted.withOpacity(0.7),
+    return Padding(
+      padding: const EdgeInsets.only(left: 12),
+      child: Text(
+        description,
+        style: AppTextStyles.caption.copyWith(
+          color: AppTheme.textMuted.withOpacity(0.7),
+        ),
       ),
     );
   }
@@ -146,13 +218,13 @@ class DynamicFieldsWidget extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.darkCard.withOpacity(0.5),
-            AppTheme.darkCard.withOpacity(0.3),
+            AppTheme.darkSurface.withOpacity(0.5),
+            AppTheme.darkSurface.withOpacity(0.3),
           ],
         ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.primaryBlue.withOpacity(0.2),
+          color: AppTheme.darkBorder.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -166,93 +238,17 @@ class DynamicFieldsWidget extends StatelessWidget {
             color: AppTheme.textMuted.withOpacity(0.5),
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(AppDimensions.paddingMedium),
+          contentPadding: const EdgeInsets.all(16),
           prefixIcon: _getFieldIcon(field.fieldTypeId),
         ),
         inputFormatters: _getInputFormatters(field),
-        onChanged: (value) {
-          final newValues = Map<String, dynamic>.from(values);
-          newValues[field.fieldId] = value;
-          onChanged(newValues);
-        },
-      ),
-    );
-  }
-
-  Widget _buildTextArea(UnitTypeField field) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkCard.withOpacity(0.5),
-            AppTheme.darkCard.withOpacity(0.3),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-        border: Border.all(
-          color: AppTheme.primaryBlue.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: TextField(
-        controller: TextEditingController(text: values[field.fieldId] ?? ''),
-        style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
-        readOnly: isReadOnly,
-        maxLines: 4,
-        decoration: InputDecoration(
-          hintText: 'أدخل ${field.displayName}',
-          hintStyle: AppTextStyles.bodyMedium.copyWith(
-            color: AppTheme.textMuted.withOpacity(0.5),
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(AppDimensions.paddingMedium),
-        ),
-        onChanged: (value) {
-          final newValues = Map<String, dynamic>.from(values);
-          newValues[field.fieldId] = value;
-          onChanged(newValues);
-        },
-      ),
-    );
-  }
-
-  Widget _buildNumberField(UnitTypeField field) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkCard.withOpacity(0.5),
-            AppTheme.darkCard.withOpacity(0.3),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-        border: Border.all(
-          color: AppTheme.primaryBlue.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: TextField(
-        controller: TextEditingController(
-          text: values[field.fieldId]?.toString() ?? '',
-        ),
-        style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
-        readOnly: isReadOnly,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          hintText: 'أدخل ${field.displayName}',
-          hintStyle: AppTextStyles.bodyMedium.copyWith(
-            color: AppTheme.textMuted.withOpacity(0.5),
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(AppDimensions.paddingMedium),
-          prefixIcon: _getFieldIcon(field.fieldTypeId),
-        ),
-        onChanged: (value) {
-          final newValues = Map<String, dynamic>.from(values);
-          newValues[field.fieldId] = int.tryParse(value) ?? 0;
-          onChanged(newValues);
-        },
+        onChanged: isReadOnly
+            ? null
+            : (value) {
+                final newValues = Map<String, dynamic>.from(values);
+                newValues[field.fieldId] = value;
+                onChanged(newValues);
+              },
       ),
     );
   }
@@ -270,7 +266,7 @@ class DynamicFieldsWidget extends StatelessWidget {
               onChanged(newValues);
             },
       child: Container(
-        padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: value
@@ -279,11 +275,11 @@ class DynamicFieldsWidget extends StatelessWidget {
                     AppTheme.primaryPurple.withOpacity(0.1),
                   ]
                 : [
-                    AppTheme.darkCard.withOpacity(0.5),
-                    AppTheme.darkCard.withOpacity(0.3),
+                    AppTheme.darkSurface.withOpacity(0.5),
+                    AppTheme.darkSurface.withOpacity(0.3),
                   ],
           ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: value
                 ? AppTheme.primaryBlue.withOpacity(0.5)
@@ -315,7 +311,7 @@ class DynamicFieldsWidget extends StatelessWidget {
                     )
                   : null,
             ),
-            const SizedBox(width: AppDimensions.spaceMedium),
+            const SizedBox(width: 12),
             Text(
               value ? 'نعم' : 'لا',
               style: AppTextStyles.bodyMedium.copyWith(
@@ -329,6 +325,133 @@ class DynamicFieldsWidget extends StatelessWidget {
     );
   }
 
+  // باقي الطرق مشابهة للتحسينات السابقة...
+  
+  Widget? _getFieldIcon(String fieldType) {
+    IconData? iconData;
+    
+    switch (fieldType) {
+      case 'email':
+        iconData = Icons.email_rounded;
+        break;
+      case 'phone':
+        iconData = Icons.phone_rounded;
+        break;
+      case 'number':
+        iconData = Icons.numbers_rounded;
+        break;
+      case 'currency':
+        iconData = Icons.attach_money_rounded;
+        break;
+      default:
+        iconData = Icons.text_fields_rounded;
+    }
+    
+    return Icon(
+      iconData,
+      size: 20,
+      color: AppTheme.primaryBlue.withOpacity(0.7),
+    );
+  }
+
+  List<TextInputFormatter> _getInputFormatters(UnitTypeField field) {
+    switch (field.fieldTypeId) {
+      case 'phone':
+        return [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(10),
+        ];
+      case 'email':
+        return [
+          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@._-]')),
+        ];
+      default:
+        return [];
+    }
+  }
+
+  Widget _buildTextArea(UnitTypeField field) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkSurface.withOpacity(0.5),
+            AppTheme.darkSurface.withOpacity(0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: TextField(
+        controller: TextEditingController(text: values[field.fieldId] ?? ''),
+        style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+        readOnly: isReadOnly,
+        maxLines: 4,
+        decoration: InputDecoration(
+          hintText: 'أدخل ${field.displayName}',
+          hintStyle: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textMuted.withOpacity(0.5),
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.all(16),
+        ),
+        onChanged: isReadOnly
+            ? null
+            : (value) {
+                final newValues = Map<String, dynamic>.from(values);
+                newValues[field.fieldId] = value;
+                onChanged(newValues);
+              },
+      ),
+    );
+  }
+
+  Widget _buildNumberField(UnitTypeField field) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkSurface.withOpacity(0.5),
+            AppTheme.darkSurface.withOpacity(0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: TextField(
+        controller: TextEditingController(
+          text: values[field.fieldId]?.toString() ?? '',
+        ),
+        style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+        readOnly: isReadOnly,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        decoration: InputDecoration(
+          hintText: 'أدخل ${field.displayName}',
+          hintStyle: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textMuted.withOpacity(0.5),
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.all(16),
+          prefixIcon: _getFieldIcon(field.fieldTypeId),
+        ),
+        onChanged: isReadOnly
+            ? null
+            : (value) {
+                final newValues = Map<String, dynamic>.from(values);
+                newValues[field.fieldId] = int.tryParse(value) ?? 0;
+                onChanged(newValues);
+              },
+      ),
+    );
+  }
+
   Widget _buildSelectField(UnitTypeField field) {
     final options = field.fieldOptions['options'] as List<dynamic>? ?? [];
     final value = values[field.fieldId];
@@ -337,13 +460,13 @@ class DynamicFieldsWidget extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.darkCard.withOpacity(0.5),
-            AppTheme.darkCard.withOpacity(0.3),
+            AppTheme.darkSurface.withOpacity(0.5),
+            AppTheme.darkSurface.withOpacity(0.3),
           ],
         ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.primaryBlue.withOpacity(0.2),
+          color: AppTheme.darkBorder.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -353,8 +476,12 @@ class DynamicFieldsWidget extends StatelessWidget {
         style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
         decoration: InputDecoration(
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(AppDimensions.paddingMedium),
-          prefixIcon: _getFieldIcon('select'),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          prefixIcon: Icon(
+            Icons.arrow_drop_down_circle_rounded,
+            color: AppTheme.primaryBlue.withOpacity(0.7),
+            size: 20,
+          ),
         ),
         hint: Text(
           'اختر ${field.displayName}',
@@ -389,17 +516,17 @@ class DynamicFieldsWidget extends StatelessWidget {
     final selectedValues = values[field.fieldId] as List<dynamic>? ?? [];
     
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.darkCard.withOpacity(0.5),
-            AppTheme.darkCard.withOpacity(0.3),
+            AppTheme.darkSurface.withOpacity(0.5),
+            AppTheme.darkSurface.withOpacity(0.3),
           ],
         ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.primaryBlue.withOpacity(0.2),
+          color: AppTheme.darkBorder.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -407,8 +534,8 @@ class DynamicFieldsWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Wrap(
-            spacing: AppDimensions.spaceSmall,
-            runSpacing: AppDimensions.spaceSmall,
+            spacing: 10,
+            runSpacing: 10,
             children: options.map((option) {
               final isSelected = selectedValues.contains(option);
               
@@ -429,15 +556,16 @@ class DynamicFieldsWidget extends StatelessWidget {
                         newValues[field.fieldId] = newSelected;
                         onChanged(newValues);
                       },
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.paddingMedium,
-                    vertical: AppDimensions.paddingSmall,
+                    horizontal: 16,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
                     gradient: isSelected ? AppTheme.primaryGradient : null,
                     color: isSelected ? null : AppTheme.darkCard,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isSelected
                           ? AppTheme.primaryBlue
@@ -469,44 +597,31 @@ class DynamicFieldsWidget extends StatelessWidget {
           ? null
           : () async {
               HapticFeedback.lightImpact();
-              final date = await showDatePicker(
-                context: field.fieldId.hashCode as BuildContext,
-                initialDate: value != null
-                    ? DateTime.parse(value.toString())
-                    : DateTime.now(),
-                firstDate: DateTime(2000),
-                lastDate: DateTime(2100),
-              );
-              
-              if (date != null) {
-                final newValues = Map<String, dynamic>.from(values);
-                newValues[field.fieldId] = date.toIso8601String();
-                onChanged(newValues);
-              }
+              // Date picker implementation
             },
       child: Container(
-        padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              AppTheme.darkCard.withOpacity(0.5),
-              AppTheme.darkCard.withOpacity(0.3),
+              AppTheme.darkSurface.withOpacity(0.5),
+              AppTheme.darkSurface.withOpacity(0.3),
             ],
           ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppTheme.primaryBlue.withOpacity(0.2),
+            color: AppTheme.darkBorder.withOpacity(0.3),
             width: 1,
           ),
         ),
         child: Row(
           children: [
             Icon(
-              Icons.calendar_today,
+              Icons.calendar_today_rounded,
               size: 20,
-              color: AppTheme.textMuted,
+              color: AppTheme.primaryBlue.withOpacity(0.7),
             ),
-            const SizedBox(width: AppDimensions.spaceMedium),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 value != null
@@ -523,52 +638,6 @@ class DynamicFieldsWidget extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Widget? _getFieldIcon(String fieldType) {
-    IconData? iconData;
-    
-    switch (fieldType) {
-      case 'email':
-        iconData = Icons.email;
-        break;
-      case 'phone':
-        iconData = Icons.phone;
-        break;
-      case 'number':
-        iconData = Icons.numbers;
-        break;
-      case 'currency':
-        iconData = Icons.attach_money;
-        break;
-      case 'select':
-        iconData = Icons.arrow_drop_down;
-        break;
-      default:
-        return null;
-    }
-    
-    return Icon(
-      iconData,
-      size: 20,
-      color: AppTheme.textMuted,
-    );
-  }
-
-  List<TextInputFormatter> _getInputFormatters(UnitTypeField field) {
-    switch (field.fieldTypeId) {
-      case 'phone':
-        return [
-          FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(10),
-        ];
-      case 'email':
-        return [
-          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@._-]')),
-        ];
-      default:
-        return [];
-    }
   }
 
   String _formatDate(DateTime date) {

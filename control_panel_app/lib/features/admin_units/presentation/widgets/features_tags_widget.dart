@@ -1,8 +1,10 @@
+// lib/features/admin_units/presentation/widgets/features_tags_widget.dart
+
+import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/theme/app_text_styles.dart';
-import '../../../../../core/theme/app_dimensions.dart';
+import 'dart:ui';
+import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 
 class FeaturesTagsWidget extends StatefulWidget {
   final Function(String) onFeaturesChanged;
@@ -18,9 +20,13 @@ class FeaturesTagsWidget extends StatefulWidget {
   State<FeaturesTagsWidget> createState() => _FeaturesTagsWidgetState();
 }
 
-class _FeaturesTagsWidgetState extends State<FeaturesTagsWidget> {
+class _FeaturesTagsWidgetState extends State<FeaturesTagsWidget>
+    with TickerProviderStateMixin {
   final _textController = TextEditingController();
   final List<String> _features = [];
+  
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
   
   final List<String> _suggestions = [
     'واي فاي مجاني',
@@ -46,11 +52,27 @@ class _FeaturesTagsWidgetState extends State<FeaturesTagsWidget> {
     if (widget.initialFeatures != null) {
       _features.addAll(widget.initialFeatures!);
     }
+    
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+    
+    _animationController.forward();
   }
 
   @override
   void dispose() {
     _textController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -61,6 +83,7 @@ class _FeaturesTagsWidgetState extends State<FeaturesTagsWidget> {
         _textController.clear();
       });
       _updateFeatures();
+      HapticFeedback.lightImpact();
     }
   }
 
@@ -69,6 +92,7 @@ class _FeaturesTagsWidgetState extends State<FeaturesTagsWidget> {
       _features.remove(feature);
     });
     _updateFeatures();
+    HapticFeedback.lightImpact();
   }
 
   void _updateFeatures() {
@@ -77,47 +101,89 @@ class _FeaturesTagsWidgetState extends State<FeaturesTagsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primaryPurple.withOpacity(0.05),
-            AppTheme.primaryBlue.withOpacity(0.02),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-        border: Border.all(
-          color: AppTheme.primaryPurple.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.star,
-                size: 20,
-                color: AppTheme.primaryPurple,
-              ),
-              const SizedBox(width: AppDimensions.spaceSmall),
-              Text(
-                'الميزات المخصصة',
-                style: AppTextStyles.heading3.copyWith(
-                  color: AppTheme.textWhite,
-                ),
-              ),
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppTheme.primaryPurple.withOpacity(0.1),
+              AppTheme.primaryBlue.withOpacity(0.05),
             ],
           ),
-          const SizedBox(height: AppDimensions.spaceMedium),
-          _buildInputField(),
-          const SizedBox(height: AppDimensions.spaceMedium),
-          _buildFeaturesList(),
-          const SizedBox(height: AppDimensions.spaceMedium),
-          _buildSuggestions(),
-        ],
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppTheme.primaryPurple.withOpacity(0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryPurple.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppTheme.primaryPurple,
+                              AppTheme.primaryBlue,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.star_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'المميزات',
+                        style: AppTextStyles.heading3.copyWith(
+                          color: AppTheme.textWhite,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  _buildInputField(),
+                  
+                  const SizedBox(height: 20),
+                  
+                  _buildFeaturesList(),
+                  
+                  if (_getSuggestionsToShow().isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    _buildSuggestions(),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -125,11 +191,11 @@ class _FeaturesTagsWidgetState extends State<FeaturesTagsWidget> {
   Widget _buildInputField() {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.darkCard.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+        color: AppTheme.darkSurface.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: AppTheme.darkBorder.withOpacity(0.3),
-          width: 0.5,
+          width: 1,
         ),
       ),
       child: Row(
@@ -146,7 +212,12 @@ class _FeaturesTagsWidgetState extends State<FeaturesTagsWidget> {
                   color: AppTheme.textMuted.withOpacity(0.5),
                 ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.all(AppDimensions.paddingMedium),
+                contentPadding: const EdgeInsets.all(16),
+                prefixIcon: Icon(
+                  Icons.add_circle_outline_rounded,
+                  color: AppTheme.primaryPurple.withOpacity(0.7),
+                  size: 20,
+                ),
               ),
               onSubmitted: _addFeature,
             ),
@@ -157,16 +228,16 @@ class _FeaturesTagsWidgetState extends State<FeaturesTagsWidget> {
               _addFeature(_textController.text);
             },
             child: Container(
-              padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 gradient: AppTheme.primaryGradient,
-                borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(AppDimensions.radiusMedium),
-                  bottomRight: Radius.circular(AppDimensions.radiusMedium),
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
                 ),
               ),
               child: const Icon(
-                Icons.add,
+                Icons.add_rounded,
                 color: Colors.white,
                 size: 20,
               ),
@@ -180,129 +251,165 @@ class _FeaturesTagsWidgetState extends State<FeaturesTagsWidget> {
   Widget _buildFeaturesList() {
     if (_features.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppTheme.darkCard.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+          color: AppTheme.darkSurface.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.darkBorder.withOpacity(0.2),
+            width: 1,
+          ),
         ),
         child: Center(
-          child: Text(
-            'لم تتم إضافة أي ميزات بعد',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppTheme.textMuted.withOpacity(0.7),
-            ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.auto_awesome_rounded,
+                size: 32,
+                color: AppTheme.textMuted.withOpacity(0.3),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'لم تتم إضافة أي مميزات بعد',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppTheme.textMuted.withOpacity(0.7),
+                ),
+              ),
+            ],
           ),
         ),
       );
     }
 
     return Wrap(
-      spacing: AppDimensions.spaceSmall,
-      runSpacing: AppDimensions.spaceSmall,
+      spacing: 10,
+      runSpacing: 10,
       children: _features.map((feature) {
-        return Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingMedium,
-            vertical: AppDimensions.paddingSmall,
-          ),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTheme.primaryBlue.withOpacity(0.2),
-                AppTheme.primaryPurple.withOpacity(0.1),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-            border: Border.all(
-              color: AppTheme.primaryBlue.withOpacity(0.3),
-              width: 0.5,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '✨',
-                style: const TextStyle(fontSize: 12),
-              ),
-              const SizedBox(width: AppDimensions.spaceXSmall),
-              Text(
-                feature,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppTheme.textWhite,
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 300),
+          builder: (context, value, child) {
+            return Transform.scale(
+              scale: value,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryBlue.withOpacity(0.2),
+                      AppTheme.primaryPurple.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppTheme.primaryBlue.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      '✨',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      feature,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppTheme.textWhite,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => _removeFeature(feature),
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.error.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 12,
+                          color: AppTheme.error,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: AppDimensions.spaceXSmall),
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  _removeFeature(feature);
-                },
-                child: Icon(
-                  Icons.close,
-                  size: 14,
-                  color: AppTheme.textMuted.withOpacity(0.7),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       }).toList(),
     );
   }
 
+  List<String> _getSuggestionsToShow() {
+    return _suggestions.where((s) => !_features.contains(s)).take(5).toList();
+  }
+
   Widget _buildSuggestions() {
-    final availableSuggestions = _suggestions
-        .where((s) => !_features.contains(s))
-        .toList();
-
-    if (availableSuggestions.isEmpty) return const SizedBox.shrink();
-
+    final suggestions = _getSuggestionsToShow();
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'اقتراحات',
-          style: AppTextStyles.caption.copyWith(
-            color: AppTheme.textMuted,
-          ),
+        Row(
+          children: [
+            Icon(
+              Icons.auto_awesome_rounded,
+              size: 16,
+              color: AppTheme.primaryPurple.withOpacity(0.7),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'اقتراحات سريعة',
+              style: AppTextStyles.caption.copyWith(
+                color: AppTheme.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: AppDimensions.spaceSmall),
+        const SizedBox(height: 10),
         Wrap(
-          spacing: AppDimensions.spaceXSmall,
-          runSpacing: AppDimensions.spaceXSmall,
-          children: availableSuggestions.take(5).map((suggestion) {
+          spacing: 8,
+          runSpacing: 8,
+          children: suggestions.map((suggestion) {
             return GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                _addFeature(suggestion);
-              },
+              onTap: () => _addFeature(suggestion),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingSmall,
-                  vertical: AppDimensions.paddingXSmall,
+                  horizontal: 12,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppTheme.darkCard.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+                  color: AppTheme.darkSurface.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: AppTheme.darkBorder.withOpacity(0.3),
-                    width: 0.5,
+                    width: 1,
                   ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.add,
-                      size: 12,
-                      color: AppTheme.textMuted.withOpacity(0.7),
+                      Icons.add_rounded,
+                      size: 14,
+                      color: AppTheme.primaryPurple.withOpacity(0.7),
                     ),
-                    const SizedBox(width: AppDimensions.spaceXSmall),
+                    const SizedBox(width: 4),
                     Text(
                       suggestion,
                       style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.textMuted.withOpacity(0.7),
+                        color: AppTheme.textMuted,
                       ),
                     ),
                   ],

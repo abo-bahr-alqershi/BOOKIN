@@ -1,7 +1,9 @@
+// lib/features/admin_units/presentation/widgets/unit_form_widget.dart
+
+import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/theme/app_text_styles.dart';
-import '../../../../../core/theme/app_dimensions.dart';
+import 'dart:ui';
+import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 
 class UnitFormWidget extends StatefulWidget {
   final Function(String) onPropertyChanged;
@@ -23,80 +25,153 @@ class UnitFormWidget extends StatefulWidget {
   State<UnitFormWidget> createState() => _UnitFormWidgetState();
 }
 
-class _UnitFormWidgetState extends State<UnitFormWidget> {
+class _UnitFormWidgetState extends State<UnitFormWidget>
+    with SingleTickerProviderStateMixin {
   final _nameController = TextEditingController();
   String? _selectedPropertyId;
   String? _selectedUnitTypeId;
-
+  
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  
   @override
   void initState() {
     super.initState();
     _nameController.text = widget.initialName ?? '';
     _selectedPropertyId = widget.initialPropertyId;
     _selectedUnitTypeId = widget.initialUnitTypeId;
+    
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+    
+    _animationController.forward();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkCard.withOpacity(0.3),
-            AppTheme.darkCard.withOpacity(0.1),
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppTheme.darkCard.withOpacity(0.5),
+              AppTheme.darkCard.withOpacity(0.3),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppTheme.primaryBlue.withOpacity(0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryBlue.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-        border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.3),
-          width: 0.5,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.primaryGradient,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.home_work_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'معلومات الوحدة',
+                        style: AppTextStyles.heading3.copyWith(
+                          color: AppTheme.textWhite,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  _buildTextField(
+                    label: 'اسم الوحدة',
+                    controller: _nameController,
+                    icon: Icons.home_rounded,
+                    hint: 'أدخل اسم الوحدة',
+                  ),
+                  
+                  const SizedBox(height: 20),
+                  
+                  _buildDropdown(
+                    label: 'العقار',
+                    value: _selectedPropertyId,
+                    icon: Icons.location_city_rounded,
+                    hint: 'اختر العقار',
+                    items: _getPropertyItems(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedPropertyId = value;
+                        _selectedUnitTypeId = null;
+                      });
+                      widget.onPropertyChanged(value!);
+                    },
+                  ),
+                  
+                  const SizedBox(height: 20),
+                  
+                  _buildDropdown(
+                    label: 'نوع الوحدة',
+                    value: _selectedUnitTypeId,
+                    icon: Icons.apartment_rounded,
+                    hint: 'اختر نوع الوحدة',
+                    items: _getUnitTypeItems(),
+                    onChanged: (value) {
+                      setState(() => _selectedUnitTypeId = value);
+                      widget.onUnitTypeChanged(value!);
+                    },
+                    enabled: _selectedPropertyId != null,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildTextField(
-            label: 'اسم الوحدة',
-            controller: _nameController,
-            icon: Icons.home,
-            hint: 'أدخل اسم الوحدة',
-          ),
-          const SizedBox(height: AppDimensions.spaceMedium),
-          _buildDropdown(
-            label: 'الكيان',
-            value: _selectedPropertyId,
-            icon: Icons.location_city,
-            hint: 'اختر الكيان',
-            items: _getPropertyItems(),
-            onChanged: (value) {
-              setState(() {
-                _selectedPropertyId = value;
-                _selectedUnitTypeId = null;
-              });
-              widget.onPropertyChanged(value!);
-            },
-          ),
-          const SizedBox(height: AppDimensions.spaceMedium),
-          _buildDropdown(
-            label: 'نوع الوحدة',
-            value: _selectedUnitTypeId,
-            icon: Icons.apartment,
-            hint: 'اختر نوع الوحدة',
-            items: _getUnitTypeItems(),
-            onChanged: (value) {
-              setState(() => _selectedUnitTypeId = value);
-              widget.onUnitTypeChanged(value!);
-            },
-            enabled: _selectedPropertyId != null,
-          ),
-        ],
       ),
     );
   }
@@ -111,18 +186,18 @@ class _UnitFormWidgetState extends State<UnitFormWidget> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildLabel(label),
-        const SizedBox(height: AppDimensions.spaceSmall),
+        const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTheme.darkCard.withOpacity(0.5),
-                AppTheme.darkCard.withOpacity(0.3),
+                AppTheme.darkSurface.withOpacity(0.5),
+                AppTheme.darkSurface.withOpacity(0.3),
               ],
             ),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppTheme.primaryBlue.withOpacity(0.2),
+              color: AppTheme.darkBorder.withOpacity(0.3),
               width: 1,
             ),
           ),
@@ -139,10 +214,10 @@ class _UnitFormWidgetState extends State<UnitFormWidget> {
               prefixIcon: Icon(
                 icon,
                 size: 20,
-                color: AppTheme.textMuted,
+                color: AppTheme.primaryBlue.withOpacity(0.7),
               ),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(AppDimensions.paddingMedium),
+              contentPadding: const EdgeInsets.all(16),
             ),
           ),
         ),
@@ -163,49 +238,58 @@ class _UnitFormWidgetState extends State<UnitFormWidget> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildLabel(label),
-        const SizedBox(height: AppDimensions.spaceSmall),
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: enabled
-                  ? [
-                      AppTheme.darkCard.withOpacity(0.5),
-                      AppTheme.darkCard.withOpacity(0.3),
-                    ]
-                  : [
-                      AppTheme.darkCard.withOpacity(0.2),
-                      AppTheme.darkCard.withOpacity(0.1),
-                    ],
-            ),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-            border: Border.all(
-              color: enabled
-                  ? AppTheme.primaryBlue.withOpacity(0.2)
-                  : AppTheme.darkBorder.withOpacity(0.2),
-              width: 1,
-            ),
-          ),
-          child: DropdownButtonFormField<String>(
-            value: value,
-            dropdownColor: AppTheme.darkCard,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.textWhite,
-            ),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: AppTextStyles.bodyMedium.copyWith(
-                color: AppTheme.textMuted.withOpacity(0.5),
+        const SizedBox(height: 8),
+        AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: enabled ? 1.0 : 0.6,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: enabled
+                    ? [
+                        AppTheme.darkSurface.withOpacity(0.5),
+                        AppTheme.darkSurface.withOpacity(0.3),
+                      ]
+                    : [
+                        AppTheme.darkSurface.withOpacity(0.3),
+                        AppTheme.darkSurface.withOpacity(0.2),
+                      ],
               ),
-              prefixIcon: Icon(
-                icon,
-                size: 20,
-                color: enabled ? AppTheme.textMuted : AppTheme.textMuted.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: enabled
+                    ? AppTheme.darkBorder.withOpacity(0.3)
+                    : AppTheme.darkBorder.withOpacity(0.2),
+                width: 1,
               ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(AppDimensions.paddingMedium),
             ),
-            items: items,
-            onChanged: enabled ? onChanged : null,
+            child: DropdownButtonFormField<String>(
+              value: value,
+              dropdownColor: AppTheme.darkCard,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textWhite,
+              ),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: AppTextStyles.bodyMedium.copyWith(
+                  color: AppTheme.textMuted.withOpacity(0.5),
+                ),
+                prefixIcon: Icon(
+                  icon,
+                  size: 20,
+                  color: enabled 
+                      ? AppTheme.primaryBlue.withOpacity(0.7)
+                      : AppTheme.textMuted.withOpacity(0.5),
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              items: items,
+              onChanged: enabled ? onChanged : null,
+            ),
           ),
         ),
       ],
@@ -233,13 +317,12 @@ class _UnitFormWidgetState extends State<UnitFormWidget> {
   }
 
   List<DropdownMenuItem<String>> _getPropertyItems() {
-    // This would be loaded from BLoC/API
     return [
-      DropdownMenuItem(
+      const DropdownMenuItem(
         value: 'prop1',
         child: Text('فندق الهيلتون'),
       ),
-      DropdownMenuItem(
+      const DropdownMenuItem(
         value: 'prop2',
         child: Text('منتجع البحر الأحمر'),
       ),
@@ -249,13 +332,12 @@ class _UnitFormWidgetState extends State<UnitFormWidget> {
   List<DropdownMenuItem<String>> _getUnitTypeItems() {
     if (_selectedPropertyId == null) return [];
     
-    // This would be loaded based on selected property
     return [
-      DropdownMenuItem(
+      const DropdownMenuItem(
         value: 'type1',
         child: Text('غرفة مفردة'),
       ),
-      DropdownMenuItem(
+      const DropdownMenuItem(
         value: 'type2',
         child: Text('جناح'),
       ),

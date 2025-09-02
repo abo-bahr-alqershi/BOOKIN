@@ -1,8 +1,10 @@
+// lib/features/admin_units/presentation/widgets/pricing_form_widget.dart
+
+import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/theme/app_text_styles.dart';
-import '../../../../../core/theme/app_dimensions.dart';
+import 'dart:ui';
+import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import '../../domain/entities/money.dart';
 import '../../domain/entities/pricing_method.dart';
 
@@ -22,10 +24,14 @@ class PricingFormWidget extends StatefulWidget {
   State<PricingFormWidget> createState() => _PricingFormWidgetState();
 }
 
-class _PricingFormWidgetState extends State<PricingFormWidget> {
+class _PricingFormWidgetState extends State<PricingFormWidget>
+    with SingleTickerProviderStateMixin {
   late TextEditingController _amountController;
   late String _selectedCurrency;
   late PricingMethod _selectedMethod;
+  
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
@@ -35,11 +41,27 @@ class _PricingFormWidgetState extends State<PricingFormWidget> {
     );
     _selectedCurrency = widget.initialBasePrice?.currency ?? 'YER';
     _selectedMethod = widget.initialPricingMethod ?? PricingMethod.daily;
+    
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    
+    _scaleAnimation = Tween<double>(
+      begin: 0.9,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.elasticOut,
+    ));
+    
+    _animationController.forward();
   }
 
   @override
   void dispose() {
     _amountController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -54,56 +76,95 @@ class _PricingFormWidgetState extends State<PricingFormWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.success.withOpacity(0.05),
-            AppTheme.success.withOpacity(0.02),
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppTheme.success.withOpacity(0.1),
+              AppTheme.success.withOpacity(0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppTheme.success.withOpacity(0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.success.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-        border: Border.all(
-          color: AppTheme.success.withOpacity(0.2),
-          width: 1,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppTheme.success,
+                              AppTheme.success.withOpacity(0.8),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.attach_money,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'التسعير',
+                        style: AppTextStyles.heading3.copyWith(
+                          color: AppTheme.textWhite,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: _buildAmountField(),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildCurrencySelector(),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 20),
+                  
+                  _buildPricingMethodSelector(),
+                ],
+              ),
+            ),
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.attach_money,
-                size: 20,
-                color: AppTheme.success,
-              ),
-              const SizedBox(width: AppDimensions.spaceSmall),
-              Text(
-                'التسعير',
-                style: AppTextStyles.heading3.copyWith(
-                  color: AppTheme.textWhite,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimensions.spaceMedium),
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: _buildAmountField(),
-              ),
-              const SizedBox(width: AppDimensions.spaceMedium),
-              Expanded(
-                child: _buildCurrencySelector(),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimensions.spaceMedium),
-          _buildPricingMethodSelector(),
-        ],
       ),
     );
   }
@@ -116,16 +177,17 @@ class _PricingFormWidgetState extends State<PricingFormWidget> {
           'المبلغ',
           style: AppTextStyles.bodySmall.copyWith(
             color: AppTheme.textMuted,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: AppDimensions.spaceSmall),
+        const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: AppTheme.darkCard.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+            color: AppTheme.darkSurface.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: AppTheme.darkBorder.withOpacity(0.3),
-              width: 0.5,
+              width: 1,
             ),
           ),
           child: TextField(
@@ -134,17 +196,17 @@ class _PricingFormWidgetState extends State<PricingFormWidget> {
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
             ],
-            style: AppTextStyles.bodyLarge.copyWith(
-              color: AppTheme.textWhite,
+            style: AppTextStyles.heading3.copyWith(
+              color: AppTheme.success,
               fontWeight: FontWeight.bold,
             ),
             decoration: InputDecoration(
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(AppDimensions.paddingMedium),
+              contentPadding: const EdgeInsets.all(16),
               prefixIcon: Icon(
                 Icons.payments,
                 size: 20,
-                color: AppTheme.success,
+                color: AppTheme.success.withOpacity(0.7),
               ),
             ),
             onChanged: (_) => _updatePricing(),
@@ -162,16 +224,17 @@ class _PricingFormWidgetState extends State<PricingFormWidget> {
           'العملة',
           style: AppTextStyles.bodySmall.copyWith(
             color: AppTheme.textMuted,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: AppDimensions.spaceSmall),
+        const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: AppTheme.darkCard.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+            color: AppTheme.darkSurface.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: AppTheme.darkBorder.withOpacity(0.3),
-              width: 0.5,
+              width: 1,
             ),
           ),
           child: DropdownButtonFormField<String>(
@@ -183,7 +246,8 @@ class _PricingFormWidgetState extends State<PricingFormWidget> {
             decoration: const InputDecoration(
               border: InputBorder.none,
               contentPadding: EdgeInsets.symmetric(
-                horizontal: AppDimensions.paddingMedium,
+                horizontal: 16,
+                vertical: 8,
               ),
             ),
             items: ['YER', 'USD', 'EUR', 'SAR'].map((currency) {
@@ -210,11 +274,13 @@ class _PricingFormWidgetState extends State<PricingFormWidget> {
           'طريقة التسعير',
           style: AppTextStyles.bodySmall.copyWith(
             color: AppTheme.textMuted,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: AppDimensions.spaceSmall),
+        const SizedBox(height: 12),
         Wrap(
-          spacing: AppDimensions.spaceSmall,
+          spacing: 10,
+          runSpacing: 10,
           children: PricingMethod.values.map((method) {
             final isSelected = _selectedMethod == method;
             return GestureDetector(
@@ -226,19 +292,28 @@ class _PricingFormWidgetState extends State<PricingFormWidget> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingMedium,
-                  vertical: AppDimensions.paddingSmall,
+                  horizontal: 16,
+                  vertical: 10,
                 ),
                 decoration: BoxDecoration(
                   gradient: isSelected ? AppTheme.primaryGradient : null,
-                  color: isSelected ? null : AppTheme.darkCard.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+                  color: isSelected ? null : AppTheme.darkSurface.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected
-                        ? AppTheme.primaryBlue
+                        ? AppTheme.primaryBlue.withOpacity(0.5)
                         : AppTheme.darkBorder.withOpacity(0.3),
                     width: 1,
                   ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppTheme.primaryBlue.withOpacity(0.2),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -247,7 +322,7 @@ class _PricingFormWidgetState extends State<PricingFormWidget> {
                       method.icon,
                       style: const TextStyle(fontSize: 14),
                     ),
-                    const SizedBox(width: AppDimensions.spaceXSmall),
+                    const SizedBox(width: 8),
                     Text(
                       method.arabicLabel,
                       style: AppTextStyles.bodySmall.copyWith(

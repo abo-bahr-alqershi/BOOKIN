@@ -1018,7 +1018,7 @@ class _UserGridCardState extends State<_UserGridCard>
                                       width: 2,
                                     ),
                                   ),
-                                  child: widget.user.profileImage != null
+                                  child: widget.user.profileImage != null && widget.user.profileImage!.trim().isNotEmpty
                                       ? ClipOval(
                                           child: Image.network(
                                             widget.user.profileImage!,
