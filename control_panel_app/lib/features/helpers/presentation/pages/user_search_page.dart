@@ -288,7 +288,7 @@ class _UserSearchPageState extends State<UserSearchPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryBlue,
                       ),
-                      child: const Text('تأكيد'),
+                      child: Text('تأكيد',style: TextStyle(color: AppTheme.textWhite),),
                     ),
                   ],
                 ),

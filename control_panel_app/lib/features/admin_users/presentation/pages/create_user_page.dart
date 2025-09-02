@@ -1,12 +1,13 @@
+// lib/features/admin_users/presentation/pages/create_user_page.dart
+
+import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:ui';
 import 'dart:math' as math;
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
+import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import '../../../../core/utils/validators.dart';
 import '../bloc/users_list/users_list_bloc.dart';
 import '../widgets/user_role_selector.dart';
@@ -20,101 +21,110 @@ class CreateUserPage extends StatefulWidget {
 
 class _CreateUserPageState extends State<CreateUserPage>
     with TickerProviderStateMixin {
-  // Form
+  // Animation Controllers
+  late AnimationController _backgroundAnimationController;
+  late AnimationController _glowController;
+  late AnimationController _particleController;
+  late AnimationController _contentAnimationController;
+  
+  // Animations
+  late Animation<double> _backgroundRotation;
+  late Animation<double> _glowAnimation;
+  late Animation<double> _contentFadeAnimation;
+  late Animation<Offset> _contentSlideAnimation;
+  
+  // Form Controllers
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
   
-  // Animation Controllers
-  late AnimationController _backgroundController;
-  late AnimationController _formController;
-  late AnimationController _glowController;
-  
-  // Animations
-  late Animation<double> _backgroundAnimation;
-  late Animation<double> _formAnimation;
-  late Animation<double> _glowAnimation;
-  
   // State
   String? _selectedRole;
   bool _isPasswordVisible = false;
-  bool _isSubmitting = false;
+  int _currentStep = 0;
   
-  // Focus Nodes
-  final _nameFocus = FocusNode();
-  final _emailFocus = FocusNode();
-  final _passwordFocus = FocusNode();
-  final _phoneFocus = FocusNode();
-
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
-    _setupFocusListeners();
   }
-
+  
   void _initializeAnimations() {
-    _backgroundController = AnimationController(
+    _backgroundAnimationController = AnimationController(
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
     
-    _formController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-    
     _glowController = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
     
-    _backgroundAnimation = Tween<double>(
+    _particleController = AnimationController(
+      duration: const Duration(seconds: 15),
+      vsync: this,
+    )..repeat();
+    
+    _contentAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    _backgroundRotation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
     ).animate(CurvedAnimation(
-      parent: _backgroundController,
+      parent: _backgroundAnimationController,
       curve: Curves.linear,
     ));
     
-    _formAnimation = CurvedAnimation(
-      parent: _formController,
-      curve: Curves.easeOutBack,
-    );
-    
-    _glowAnimation = CurvedAnimation(
+    _glowAnimation = Tween<double>(
+      begin: 0.3,
+      end: 1.0,
+    ).animate(CurvedAnimation(
       parent: _glowController,
       curve: Curves.easeInOut,
-    );
+    ));
     
-    _formController.forward();
+    _contentFadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _contentAnimationController,
+      curve: Curves.easeOut,
+    ));
+    
+    _contentSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.05),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _contentAnimationController,
+      curve: Curves.easeOutQuart,
+    ));
+    
+    // Start animations
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _contentAnimationController.forward();
+      }
+    });
   }
-
-  void _setupFocusListeners() {
-    _nameFocus.addListener(() => setState(() {}));
-    _emailFocus.addListener(() => setState(() {}));
-    _passwordFocus.addListener(() => setState(() {}));
-    _phoneFocus.addListener(() => setState(() {}));
-  }
-
+  
   @override
   void dispose() {
-    _backgroundController.dispose();
-    _formController.dispose();
+    _backgroundAnimationController.dispose();
     _glowController.dispose();
+    _particleController.dispose();
+    _contentAnimationController.dispose();
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _phoneController.dispose();
-    _nameFocus.dispose();
-    _emailFocus.dispose();
-    _passwordFocus.dispose();
-    _phoneFocus.dispose();
     super.dispose();
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -124,16 +134,40 @@ class _CreateUserPageState extends State<CreateUserPage>
           // Animated Background
           _buildAnimatedBackground(),
           
-          // Form Content
-          _buildFormContent(),
+          // Main Content
+          SafeArea(
+            child: Column(
+              children: [
+                // Header
+                _buildHeader(),
+                
+                // Progress Indicator
+                _buildProgressIndicator(),
+                
+                // Form Content
+                Expanded(
+                  child: FadeTransition(
+                    opacity: _contentFadeAnimation,
+                    child: SlideTransition(
+                      position: _contentSlideAnimation,
+                      child: _buildFormContent(),
+                    ),
+                  ),
+                ),
+                
+                // Action Buttons
+                _buildActionButtons(),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
-
+  
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
-      animation: _backgroundAnimation,
+      animation: Listenable.merge([_backgroundRotation, _glowAnimation]),
       builder: (context, child) {
         return Container(
           decoration: BoxDecoration(
@@ -142,144 +176,724 @@ class _CreateUserPageState extends State<CreateUserPage>
               end: Alignment.bottomRight,
               colors: [
                 AppTheme.darkBackground,
-                AppTheme.darkBackground2.withOpacity(0.95),
-                AppTheme.darkBackground3.withOpacity(0.9),
+                AppTheme.darkBackground2.withOpacity(0.8),
+                AppTheme.darkBackground3.withOpacity(0.6),
               ],
             ),
           ),
-          child: Stack(
-            children: [
-              // Animated shapes
-              ...List.generate(5, (index) {
-                return Positioned(
-                  top: 100.0 * index,
-                  left: 50.0 * index,
-                  child: Transform.rotate(
-                    angle: _backgroundAnimation.value + (index * math.pi / 5),
-                    child: Container(
-                      width: 200,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            AppTheme.primaryBlue.withOpacity(0.05),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-              
-              // Grid overlay
-              CustomPaint(
-                painter: _GridPainter(
-                  color: AppTheme.primaryBlue.withOpacity(0.02),
-                ),
-                size: Size.infinite,
-              ),
-            ],
+          child: CustomPaint(
+            painter: _CreateUserBackgroundPainter(
+              rotation: _backgroundRotation.value,
+              glowIntensity: _glowAnimation.value,
+            ),
+            size: Size.infinite,
           ),
         );
       },
     );
   }
-
-  Widget _buildFormContent() {
-    return SafeArea(
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-          child: Column(
-            children: [
-              // Header
-              _buildHeader(),
-              
-              const SizedBox(height: AppDimensions.spaceLarge),
-              
-              // Form Card
-              AnimatedBuilder(
-                animation: _formAnimation,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: _formAnimation.value,
-                    child: Opacity(
-                      opacity: _formAnimation.value,
-                      child: _buildFormCard(),
-                    ),
-                  );
-                },
-              ),
-            ],
+  
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.7),
+            AppTheme.darkCard.withOpacity(0.3),
+          ],
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.primaryBlue.withOpacity(0.3),
+            width: 1,
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        // Back Button
-        GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            context.pop();
-          },
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.darkCard.withOpacity(0.7),
-                  AppTheme.darkCard.withOpacity(0.5),
-                ],
+      child: Row(
+        children: [
+          // Back Button
+          GestureDetector(
+            onTap: _handleBack,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.darkSurface.withOpacity(0.5),
+                    AppTheme.darkSurface.withOpacity(0.3),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.darkBorder.withOpacity(0.3),
+                  width: 1,
+                ),
               ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppTheme.primaryBlue.withOpacity(0.2),
-                width: 1,
+              child: Icon(
+                Icons.arrow_back_rounded,
+                color: AppTheme.textWhite,
+                size: 20,
               ),
-            ),
-            child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: AppTheme.primaryBlue,
             ),
           ),
-        ),
-        
-        const SizedBox(width: AppDimensions.spaceMedium),
-        
-        // Title
-        Expanded(
-          child: ShaderMask(
-            shaderCallback: (bounds) {
-              return LinearGradient(
-                colors: [
-                  AppTheme.primaryCyan,
-                  AppTheme.primaryBlue,
-                  AppTheme.primaryPurple,
-                ],
-              ).createShader(bounds);
-            },
-            child: Text(
-              'إضافة مستخدم جديد',
-              style: AppTextStyles.heading2.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+          
+          const SizedBox(width: 16),
+          
+          // Title
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ShaderMask(
+                  shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                  child: Text(
+                    'إضافة مستخدم جديد',
+                    style: AppTextStyles.heading2.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'قم بملء البيانات المطلوبة لإضافة المستخدم',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+              ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildProgressIndicator() {
+    final steps = ['المعلومات الأساسية', 'معلومات الاتصال', 'الصلاحيات', 'المراجعة'];
+    
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
+        children: List.generate(steps.length, (index) {
+          final isActive = index <= _currentStep;
+          final isCompleted = index < _currentStep;
+          
+          return Expanded(
+            child: Row(
+              children: [
+                // Step Indicator
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    gradient: isActive
+                        ? AppTheme.primaryGradient
+                        : null,
+                    color: !isActive
+                        ? AppTheme.darkSurface.withOpacity(0.5)
+                        : null,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isActive
+                          ? AppTheme.primaryBlue.withOpacity(0.5)
+                          : AppTheme.darkBorder.withOpacity(0.3),
+                      width: 1,
+                    ),
+                    boxShadow: isActive
+                        ? [
+                            BoxShadow(
+                              color: AppTheme.primaryBlue.withOpacity(0.3),
+                              blurRadius: 10,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Center(
+                    child: isCompleted
+                        ? const Icon(
+                            Icons.check_rounded,
+                            size: 16,
+                            color: Colors.white,
+                          )
+                        : Text(
+                            '${index + 1}',
+                            style: AppTextStyles.caption.copyWith(
+                              color: isActive ? Colors.white : AppTheme.textMuted,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                ),
+                
+                // Line
+                if (index < steps.length - 1)
+                  Expanded(
+                    child: Container(
+                      height: 2,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      decoration: BoxDecoration(
+                        gradient: isCompleted
+                            ? AppTheme.primaryGradient
+                            : null,
+                        color: !isCompleted
+                            ? AppTheme.darkBorder.withOpacity(0.2)
+                            : null,
+                        borderRadius: BorderRadius.circular(1),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+  
+  Widget _buildFormContent() {
+    return Form(
+      key: _formKey,
+      child: IndexedStack(
+        index: _currentStep,
+        children: [
+          _buildBasicInfoStep(),
+          _buildContactStep(),
+          _buildPermissionsStep(),
+          _buildReviewStep(),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildBasicInfoStep() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Name
+          _buildInputField(
+            controller: _nameController,
+            label: 'الاسم الكامل',
+            hint: 'أدخل الاسم الكامل',
+            icon: Icons.person_rounded,
+            validator: Validators.validateName,
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Email
+          _buildInputField(
+            controller: _emailController,
+            label: 'البريد الإلكتروني',
+            hint: 'أدخل البريد الإلكتروني',
+            icon: Icons.email_rounded,
+            keyboardType: TextInputType.emailAddress,
+            validator: Validators.validateEmail,
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Password
+          _buildPasswordField(),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildContactStep() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Phone
+          _buildInputField(
+            controller: _phoneController,
+            label: 'رقم الهاتف',
+            hint: 'أدخل رقم الهاتف',
+            icon: Icons.phone_rounded,
+            keyboardType: TextInputType.phone,
+            validator: Validators.validatePhone,
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Additional contact info can be added here
+          _buildInfoCard(
+            icon: Icons.info_rounded,
+            title: 'معلومات إضافية',
+            description: 'يمكنك إضافة معلومات اتصال إضافية لاحقاً من صفحة تفاصيل المستخدم',
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildPermissionsStep() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'دور المستخدم',
+            style: AppTextStyles.heading3.copyWith(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Role Selector
+          ..._buildRoleOptions(),
+        ],
+      ),
+    );
+  }
+  
+  List<Widget> _buildRoleOptions() {
+    final roles = [
+      {
+        'id': 'admin',
+        'name': 'مدير',
+        'description': 'صلاحيات كاملة على النظام',
+        'icon': Icons.admin_panel_settings_rounded,
+        'gradient': [AppTheme.error, AppTheme.primaryViolet],
+      },
+      {
+        'id': 'owner',
+        'name': 'مالك',
+        'description': 'مالك كيان أو عقار',
+        'icon': Icons.business_rounded,
+        'gradient': [AppTheme.primaryBlue, AppTheme.primaryPurple],
+      },
+      {
+        'id': 'staff',
+        'name': 'موظف',
+        'description': 'موظف في كيان أو عقار',
+        'icon': Icons.badge_rounded,
+        'gradient': [AppTheme.warning, AppTheme.neonBlue],
+      },
+      {
+        'id': 'customer',
+        'name': 'عميل',
+        'description': 'مستخدم عادي للخدمة',
+        'icon': Icons.person_rounded,
+        'gradient': [AppTheme.primaryCyan, AppTheme.neonGreen],
+      },
+    ];
+    
+    return roles.map((role) {
+      final isSelected = _selectedRole == role['id'];
+      
+      return GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedRole = role['id'] as String;
+          });
+          HapticFeedback.lightImpact();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: isSelected
+                ? LinearGradient(
+                    colors: [
+                      (role['gradient'] as List<Color>)[0].withOpacity(0.1),
+                      (role['gradient'] as List<Color>)[1].withOpacity(0.05),
+                    ],
+                  )
+                : LinearGradient(
+                    colors: [
+                      AppTheme.darkCard.withOpacity(0.5),
+                      AppTheme.darkCard.withOpacity(0.3),
+                    ],
+                  ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? (role['gradient'] as List<Color>)[0].withOpacity(0.5)
+                  : AppTheme.darkBorder.withOpacity(0.3),
+              width: 1,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: (role['gradient'] as List<Color>)[0].withOpacity(0.2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: role['gradient'] as List<Color>,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  role['icon'] as IconData,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      role['name'] as String,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppTheme.textWhite,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      role['description'] as String,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isSelected)
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: role['gradient'] as List<Color>,
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    }).toList();
+  }
+  
+  Widget _buildReviewStep() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'مراجعة البيانات',
+            style: AppTextStyles.heading2.copyWith(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 20),
+          
+          // Review Cards
+          _buildReviewCard(
+            title: 'المعلومات الأساسية',
+            items: [
+              {'label': 'الاسم', 'value': _nameController.text},
+              {'label': 'البريد الإلكتروني', 'value': _emailController.text},
+              {'label': 'كلمة المرور', 'value': '••••••••'},
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          _buildReviewCard(
+            title: 'معلومات الاتصال',
+            items: [
+              {'label': 'رقم الهاتف', 'value': _phoneController.text},
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          _buildReviewCard(
+            title: 'الصلاحيات',
+            items: [
+              {'label': 'الدور', 'value': _getRoleText(_selectedRole ?? '')},
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textWhite,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.darkCard.withOpacity(0.5),
+                AppTheme.darkCard.withOpacity(0.3),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.darkBorder.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textWhite,
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textMuted.withOpacity(0.5),
+              ),
+              prefixIcon: Icon(
+                icon,
+                color: AppTheme.primaryBlue.withOpacity(0.7),
+                size: 20,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.all(16),
+            ),
+            validator: validator,
           ),
         ),
       ],
     );
   }
-
-  Widget _buildFormCard() {
+  
+  Widget _buildPasswordField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'كلمة المرور',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textWhite,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.darkCard.withOpacity(0.5),
+                AppTheme.darkCard.withOpacity(0.3),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.darkBorder.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: TextFormField(
+            controller: _passwordController,
+            obscureText: !_isPasswordVisible,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textWhite,
+            ),
+            decoration: InputDecoration(
+              hintText: 'أدخل كلمة المرور',
+              hintStyle: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textMuted.withOpacity(0.5),
+              ),
+              prefixIcon: Icon(
+                Icons.lock_rounded,
+                color: AppTheme.primaryBlue.withOpacity(0.7),
+                size: 20,
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _isPasswordVisible
+                      ? Icons.visibility_off_rounded
+                      : Icons.visibility_rounded,
+                  color: AppTheme.textMuted,
+                  size: 20,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isPasswordVisible = !_isPasswordVisible;
+                  });
+                },
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.all(16),
+            ),
+            validator: Validators.validatePassword,
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
     return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primaryBlue.withOpacity(0.1),
+            AppTheme.primaryPurple.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.primaryBlue.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textWhite,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildReviewCard({
+    required String title,
+    required List<Map<String, String>> items,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.5),
+            AppTheme.darkCard.withOpacity(0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.primaryBlue,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...items.map((item) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  item['label']!,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    item['value']!,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppTheme.textWhite,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.end,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildActionButtons() {
+    return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -287,429 +901,181 @@ class _CreateUserPageState extends State<CreateUserPage>
             AppTheme.darkCard.withOpacity(0.5),
           ],
         ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
-        border: Border.all(
-          color: AppTheme.primaryBlue.withOpacity(0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryBlue.withOpacity(0.1),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Form Header
-                  _buildFormHeader(),
-                  
-                  const SizedBox(height: AppDimensions.spaceLarge),
-                  
-                  // Name Field
-                  _buildFuturisticTextField(
-                    controller: _nameController,
-                    focusNode: _nameFocus,
-                    label: 'الاسم الكامل',
-                    icon: Icons.person_rounded,
-                    validator: Validators.validateName,
-                    onFieldSubmitted: (_) {
-                      FocusScope.of(context).requestFocus(_emailFocus);
-                    },
-                  ),
-                  
-                  const SizedBox(height: AppDimensions.spaceMedium),
-                  
-                  // Email Field
-                  _buildFuturisticTextField(
-                    controller: _emailController,
-                    focusNode: _emailFocus,
-                    label: 'البريد الإلكتروني',
-                    icon: Icons.email_rounded,
-                    keyboardType: TextInputType.emailAddress,
-                    validator: Validators.validateEmail,
-                    onFieldSubmitted: (_) {
-                      FocusScope.of(context).requestFocus(_passwordFocus);
-                    },
-                  ),
-                  
-                  const SizedBox(height: AppDimensions.spaceMedium),
-                  
-                  // Password Field
-                  _buildFuturisticTextField(
-                    controller: _passwordController,
-                    focusNode: _passwordFocus,
-                    label: 'كلمة المرور',
-                    icon: Icons.lock_rounded,
-                    obscureText: !_isPasswordVisible,
-                    validator: Validators.validatePassword,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible
-                            ? Icons.visibility_off_rounded
-                            : Icons.visibility_rounded,
-                        color: AppTheme.textMuted,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
-                    ),
-                    onFieldSubmitted: (_) {
-                      FocusScope.of(context).requestFocus(_phoneFocus);
-                    },
-                  ),
-                  
-                  const SizedBox(height: AppDimensions.spaceMedium),
-                  
-                  // Phone Field
-                  _buildFuturisticTextField(
-                    controller: _phoneController,
-                    focusNode: _phoneFocus,
-                    label: 'رقم الهاتف',
-                    icon: Icons.phone_rounded,
-                    keyboardType: TextInputType.phone,
-                    validator: Validators.validatePhone,
-                  ),
-                  
-                  const SizedBox(height: AppDimensions.spaceMedium),
-                  
-                  // Role Selector
-                  _buildRoleSelector(),
-                  
-                  const SizedBox(height: AppDimensions.spaceLarge),
-                  
-                  // Submit Button
-                  _buildSubmitButton(),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFormHeader() {
-    return Center(
-      child: AnimatedBuilder(
-        animation: _glowAnimation,
-        builder: (context, child) {
-          return Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  AppTheme.primaryBlue.withOpacity(0.2 * _glowAnimation.value),
-                  AppTheme.primaryPurple.withOpacity(0.1 * _glowAnimation.value),
-                  Colors.transparent,
-                ],
-              ),
-            ),
-            child: Container(
-              margin: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: AppTheme.primaryGradient,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryBlue.withOpacity(0.4),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.person_add_rounded,
-                color: Colors.white,
-                size: 32,
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildFuturisticTextField({
-    required TextEditingController controller,
-    required FocusNode focusNode,
-    required String label,
-    required IconData icon,
-    TextInputType? keyboardType,
-    bool obscureText = false,
-    Widget? suffixIcon,
-    String? Function(String?)? validator,
-    Function(String)? onFieldSubmitted,
-  }) {
-    final isFocused = focusNode.hasFocus;
-    
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            isFocused
-                ? AppTheme.primaryBlue.withOpacity(0.1)
-                : AppTheme.darkSurface.withOpacity(0.6),
-            isFocused
-                ? AppTheme.primaryPurple.withOpacity(0.05)
-                : AppTheme.darkSurface.withOpacity(0.4),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-        border: Border.all(
-          color: isFocused
-              ? AppTheme.primaryBlue.withOpacity(0.5)
-              : AppTheme.darkBorder.withOpacity(0.3),
-          width: isFocused ? 1.5 : 1,
-        ),
-        boxShadow: isFocused
-            ? [
-                BoxShadow(
-                  color: AppTheme.primaryBlue.withOpacity(0.2),
-                  blurRadius: 15,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : [],
-      ),
-      child: TextFormField(
-        controller: controller,
-        focusNode: focusNode,
-        keyboardType: keyboardType,
-        obscureText: obscureText,
-        style: AppTextStyles.bodyMedium.copyWith(
-          color: AppTheme.textWhite,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: AppTextStyles.bodyMedium.copyWith(
-            color: isFocused
-                ? AppTheme.primaryBlue
-                : AppTheme.textMuted,
-          ),
-          prefixIcon: Container(
-            margin: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              gradient: isFocused
-                  ? AppTheme.primaryGradient
-                  : null,
-              color: !isFocused
-                  ? AppTheme.textMuted.withOpacity(0.3)
-                  : null,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-          suffixIcon: suffixIcon,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingMedium,
-            vertical: AppDimensions.paddingMedium,
-          ),
-        ),
-        validator: validator,
-        onFieldSubmitted: onFieldSubmitted,
-      ),
-    );
-  }
-
-  Widget _buildRoleSelector() {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        _showRoleSelector();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingMedium,
-          vertical: AppDimensions.paddingMedium,
-        ),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.darkSurface.withOpacity(0.6),
-              AppTheme.darkSurface.withOpacity(0.4),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-          border: Border.all(
-            color: _selectedRole != null
-                ? AppTheme.primaryBlue.withOpacity(0.3)
-                : AppTheme.darkBorder.withOpacity(0.3),
+        border: Border(
+          top: BorderSide(
+            color: AppTheme.darkBorder.withOpacity(0.3),
             width: 1,
           ),
         ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: _selectedRole != null
-                    ? AppTheme.primaryGradient
-                    : null,
-                color: _selectedRole == null
-                    ? AppTheme.textMuted.withOpacity(0.3)
-                    : null,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.security_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: AppDimensions.spaceMedium),
+      ),
+      child: Row(
+        children: [
+          // Previous Button
+          if (_currentStep > 0)
             Expanded(
-              child: Text(
-                _selectedRole != null
-                    ? _getRoleText(_selectedRole!)
-                    : 'اختر الدور',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: _selectedRole != null
-                      ? AppTheme.textWhite
-                      : AppTheme.textMuted,
-                ),
-              ),
-            ),
-            Icon(
-              Icons.arrow_drop_down_rounded,
-              color: AppTheme.primaryBlue,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSubmitButton() {
-    return AnimatedBuilder(
-      animation: _glowAnimation,
-      builder: (context, child) {
-        return Container(
-          height: 56,
-          decoration: BoxDecoration(
-            gradient: AppTheme.primaryGradient,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primaryBlue.withOpacity(
-                  0.3 + 0.2 * _glowAnimation.value,
-                ),
-                blurRadius: 20 + 10 * _glowAnimation.value,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: ElevatedButton(
-            onPressed: _isSubmitting ? null : _handleSubmit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-              ),
-            ),
-            child: _isSubmitting
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
+              child: GestureDetector(
+                onTap: _previousStep,
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.darkSurface.withOpacity(0.5),
+                        AppTheme.darkSurface.withOpacity(0.3),
+                      ],
                     ),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.check_rounded,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: AppDimensions.spaceSmall),
-                      Text(
-                        'إنشاء المستخدم',
-                        style: AppTextStyles.buttonLarge.copyWith(
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.darkBorder.withOpacity(0.3),
+                      width: 1,
+                    ),
                   ),
+                  child: Center(
+                    child: Text(
+                      'السابق',
+                      style: AppTextStyles.buttonMedium.copyWith(
+                        color: AppTheme.textWhite,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          
+          if (_currentStep > 0) const SizedBox(width: 12),
+          
+          // Next/Submit Button
+          Expanded(
+            flex: _currentStep == 0 ? 1 : 1,
+            child: GestureDetector(
+              onTap: _currentStep < 3 ? _nextStep : _submitForm,
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryBlue.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: BlocBuilder<UsersListBloc, UsersListState>(
+                    builder: (context, state) {
+                      if (state is UsersListLoading) {
+                        return const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        );
+                      }
+                      return Text(
+                        _currentStep < 3 ? 'التالي' : 'إنشاء المستخدم',
+                        style: AppTextStyles.buttonMedium.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
           ),
-        );
-      },
-    );
-  }
-
-  void _showRoleSelector() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => UserRoleSelector(
-        currentRole: _selectedRole,
-        onRoleSelected: (roleId) {
-          setState(() {
-            _selectedRole = roleId;
-          });
-        },
+        ],
       ),
     );
   }
-
-  void _handleSubmit() {
-    if (_formKey.currentState!.validate()) {
-      if (_selectedRole == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('يرجى اختيار دور المستخدم'),
-            backgroundColor: AppTheme.error,
-          ),
-        );
-        return;
-      }
-
+  
+  void _handleBack() {
+    if (_currentStep > 0) {
       setState(() {
-        _isSubmitting = true;
+        _currentStep--;
       });
-
-      // TODO: Implement actual user creation
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          setState(() {
-            _isSubmitting = false;
-          });
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('تم إنشاء المستخدم بنجاح'),
-              backgroundColor: AppTheme.success,
-            ),
-          );
-          
-          context.pop();
-        }
+    } else {
+      context.pop();
+    }
+  }
+  
+  void _previousStep() {
+    if (_currentStep > 0) {
+      setState(() {
+        _currentStep--;
       });
     }
   }
-
+  
+  void _nextStep() {
+    if (_currentStep < 3) {
+      // Validate current step
+      bool isValid = true;
+      
+      if (_currentStep == 0) {
+        isValid = _validateBasicInfo();
+      } else if (_currentStep == 1) {
+        isValid = _validateContact();
+      } else if (_currentStep == 2) {
+        isValid = _validatePermissions();
+      }
+      
+      if (isValid) {
+        setState(() {
+          _currentStep++;
+        });
+      }
+    }
+  }
+  
+  bool _validateBasicInfo() {
+    if (_nameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
+      _showErrorMessage('الرجاء ملء جميع الحقول المطلوبة');
+      return false;
+    }
+    return true;
+  }
+  
+  bool _validateContact() {
+    if (_phoneController.text.isEmpty) {
+      _showErrorMessage('الرجاء إدخال رقم الهاتف');
+      return false;
+    }
+    return true;
+  }
+  
+  bool _validatePermissions() {
+    if (_selectedRole == null) {
+      _showErrorMessage('الرجاء اختيار دور المستخدم');
+      return false;
+    }
+    return true;
+  }
+  
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      // TODO: Implement actual user creation
+      context.read<UsersListBloc>().add(
+        CreateUserEvent(
+          name: _nameController.text,
+          email: _emailController.text,
+          password: _passwordController.text,
+          phone: _phoneController.text,
+          role: _selectedRole!,
+        ),
+      );
+      
+      _showSuccessMessage('تم إنشاء المستخدم بنجاح');
+      context.pop();
+    }
+  }
+  
   String _getRoleText(String role) {
     switch (role.toLowerCase()) {
       case 'admin':
@@ -724,21 +1090,73 @@ class _CreateUserPageState extends State<CreateUserPage>
         return role;
     }
   }
+  
+  void _showSuccessMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(
+              Icons.check_circle_rounded,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(message),
+            ),
+          ],
+        ),
+        backgroundColor: AppTheme.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+  
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(
+              Icons.error_outline_rounded,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(message),
+            ),
+          ],
+        ),
+        backgroundColor: AppTheme.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
 }
 
-// Custom Grid Painter
-class _GridPainter extends CustomPainter {
-  final Color color;
-
-  _GridPainter({required this.color});
-
+class _CreateUserBackgroundPainter extends CustomPainter {
+  final double rotation;
+  final double glowIntensity;
+  
+  _CreateUserBackgroundPainter({
+    required this.rotation,
+    required this.glowIntensity,
+  });
+  
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
-
+    
+    // Draw grid
+    paint.color = AppTheme.primaryBlue.withOpacity(0.05);
     const spacing = 50.0;
     
     for (double x = 0; x < size.width; x += spacing) {
@@ -756,8 +1174,22 @@ class _GridPainter extends CustomPainter {
         paint,
       );
     }
+    
+    // Draw rotating circles
+    final center = Offset(size.width / 2, size.height / 2);
+    paint.color = AppTheme.primaryBlue.withOpacity(0.03 * glowIntensity);
+    
+    for (int i = 0; i < 3; i++) {
+      final radius = 200.0 + i * 100;
+      canvas.save();
+      canvas.translate(center.dx, center.dy);
+      canvas.rotate(rotation + i * 0.5);
+      canvas.translate(-center.dx, -center.dy);
+      canvas.drawCircle(center, radius, paint);
+      canvas.restore();
+    }
   }
-
+  
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

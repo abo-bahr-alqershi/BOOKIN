@@ -1,25 +1,27 @@
+// lib/features/admin_users/presentation/widgets/futuristic_users_table.dart
+
+import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
+import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
+import 'package:bookn_cp_app/core/theme/app_dimensions.dart';
 import '../../domain/entities/user.dart';
 
 class FuturisticUsersTable extends StatefulWidget {
   final List<User> users;
   final Function(String) onUserTap;
   final Function(String, bool) onStatusToggle;
-  final Function(String, bool) onSort;
-
+  final Function(String) onDelete;
+  
   const FuturisticUsersTable({
     super.key,
     required this.users,
     required this.onUserTap,
     required this.onStatusToggle,
-    required this.onSort,
+    required this.onDelete,
   });
-
+  
   @override
   State<FuturisticUsersTable> createState() => _FuturisticUsersTableState();
 }
@@ -29,10 +31,14 @@ class _FuturisticUsersTableState extends State<FuturisticUsersTable>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   
-  String? _sortColumn;
+  String? _hoveredUserId;
+  String _sortColumn = 'name';
   bool _isAscending = true;
-  int? _hoveredRow;
-
+  
+  // Breakpoints
+  static const double _mobileBreakpoint = 600;
+  static const double _tabletBreakpoint = 1024;
+  
   @override
   void initState() {
     super.initState();
@@ -41,54 +47,376 @@ class _FuturisticUsersTableState extends State<FuturisticUsersTable>
       vsync: this,
     );
     
-    _fadeAnimation = CurvedAnimation(
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeOut,
-    );
+    ));
     
     _animationController.forward();
   }
-
+  
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
   }
-
+  
+  List<User> get _sortedUsers {
+    final sorted = List<User>.from(widget.users);
+    
+    sorted.sort((a, b) {
+      int comparison = 0;
+      
+      switch (_sortColumn) {
+        case 'name':
+          comparison = a.name.compareTo(b.name);
+          break;
+        case 'email':
+          comparison = a.email.compareTo(b.email);
+          break;
+        case 'role':
+          comparison = a.role.compareTo(b.role);
+          break;
+        case 'createdAt':
+          comparison = a.createdAt.compareTo(b.createdAt);
+          break;
+        case 'status':
+          comparison = a.isActive.toString().compareTo(b.isActive.toString());
+          break;
+      }
+      
+      return _isAscending ? comparison : -comparison;
+    });
+    
+    return sorted;
+  }
+  
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // تحديد نوع الشاشة
+        if (constraints.maxWidth < _mobileBreakpoint) {
+          return _buildMobileView();
+        } else if (constraints.maxWidth < _tabletBreakpoint) {
+          return _buildTabletView();
+        } else {
+          return _buildDesktopView();
+        }
+      },
+    );
+  }
+  
+  // ========== عرض الموبايل - بطاقات عمودية ==========
+  Widget _buildMobileView() {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: _sortedUsers.length,
+        itemBuilder: (context, index) {
+          final user = _sortedUsers[index];
+          return _buildMobileCard(user, index);
+        },
+      ),
+    );
+  }
+  
+  Widget _buildMobileCard(User user, int index) {
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 300 + (index * 50)),
+      tween: Tween(begin: 0.0, end: 1.0),
+      curve: Curves.easeOutBack,
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: value,
+          child: Opacity(
+            opacity: value,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.darkCard.withValues(alpha: 0.9),
+                    AppTheme.darkCard.withValues(alpha: 0.7),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: user.isActive
+                      ? AppTheme.success.withValues(alpha: 0.3)
+                      : AppTheme.darkBorder.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: user.isActive
+                        ? AppTheme.success.withValues(alpha: 0.1)
+                        : AppTheme.darkBorder.withValues(alpha: 0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => widget.onUserTap(user.id),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Header with avatar and status
+                            Row(
+                              children: [
+                                // Avatar
+                                _buildAvatar(user, size: 50),
+                                const SizedBox(width: 12),
+                                // User Name and Role
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        user.name,
+                                        style: AppTextStyles.heading3.copyWith(
+                                          fontSize: 16,
+                                          color: AppTheme.textWhite,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      _buildRoleBadge(user.role),
+                                    ],
+                                  ),
+                                ),
+                                // Status Badge
+                                _buildStatusBadge(user.isActive),
+                              ],
+                            ),
+                            
+                            const SizedBox(height: 16),
+                            
+                            // User Details
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppTheme.darkSurface.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                children: [
+                                  _buildMobileDetailRow(
+                                    icon: Icons.email_rounded,
+                                    label: 'البريد',
+                                    value: user.email,
+                                    iconColor: AppTheme.primaryBlue,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _buildMobileDetailRow(
+                                    icon: Icons.phone_rounded,
+                                    label: 'الهاتف',
+                                    value: user.phone.isNotEmpty ? user.phone : 'غير محدد',
+                                    iconColor: AppTheme.primaryPurple,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _buildMobileDetailRow(
+                                    icon: Icons.calendar_today_rounded,
+                                    label: 'تاريخ الإنضمام',
+                                    value: _formatDate(user.createdAt),
+                                    iconColor: AppTheme.primaryCyan,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            
+                            const SizedBox(height: 12),
+                            
+                            // Action Buttons
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildMobileActionButton(
+                                    label: user.isActive ? 'إيقاف' : 'تفعيل',
+                                    icon: user.isActive 
+                                        ? Icons.toggle_on_rounded 
+                                        : Icons.toggle_off_rounded,
+                                    color: user.isActive 
+                                        ? AppTheme.success 
+                                        : AppTheme.textMuted,
+                                    onTap: () => widget.onStatusToggle(
+                                      user.id, 
+                                      !user.isActive
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildMobileActionButton(
+                                    label: 'عرض',
+                                    icon: Icons.visibility_rounded,
+                                    color: AppTheme.primaryBlue,
+                                    onTap: () => widget.onUserTap(user.id),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildMobileActionButton(
+                                    label: 'حذف',
+                                    icon: Icons.delete_rounded,
+                                    color: AppTheme.error,
+                                    onTap: () => widget.onDelete(user.id),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+  
+  Widget _buildMobileDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color iconColor,
+  }) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 16,
+          color: iconColor.withValues(alpha: 0.7),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: AppTextStyles.caption.copyWith(
+            color: AppTheme.textMuted,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppTheme.textLight,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildMobileActionButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: color.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: color,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: AppTextStyles.caption.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  // ========== عرض التابلت - جدول مبسط ==========
+  Widget _buildTabletView() {
     return FadeTransition(
       opacity: _fadeAnimation,
       child: Container(
+        margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
           gradient: LinearGradient(
             colors: [
-              AppTheme.darkCard.withOpacity(0.7),
-              AppTheme.darkCard.withOpacity(0.5),
+              AppTheme.darkCard.withValues(alpha: 0.7),
+              AppTheme.darkCard.withValues(alpha: 0.5),
             ],
           ),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppTheme.primaryBlue.withOpacity(0.2),
+            color: AppTheme.primaryBlue.withValues(alpha: 0.2),
             width: 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryBlue.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+          borderRadius: BorderRadius.circular(20),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Column(
               children: [
-                _buildTableHeader(),
+                _buildTabletHeader(),
                 Expanded(
-                  child: _buildTableBody(),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: 900, // عرض ثابت للتابلت
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: _sortedUsers.length,
+                        itemBuilder: (context, index) {
+                          final user = _sortedUsers[index];
+                          return _buildTabletRow(user);
+                        },
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -97,42 +425,37 @@ class _FuturisticUsersTableState extends State<FuturisticUsersTable>
       ),
     );
   }
-
-  Widget _buildTableHeader() {
+  
+  Widget _buildTabletHeader() {
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.primaryBlue.withOpacity(0.1),
-            AppTheme.primaryPurple.withOpacity(0.05),
+            AppTheme.primaryBlue.withValues(alpha: 0.1),
+            AppTheme.primaryPurple.withValues(alpha: 0.05),
           ],
         ),
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.primaryBlue.withOpacity(0.2),
+            color: AppTheme.primaryBlue.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
       ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingMedium,
-        vertical: AppDimensions.paddingSmall,
-      ),
       child: Row(
         children: [
-          _buildHeaderCell('المستخدم', flex: 3, sortKey: 'name'),
-          _buildHeaderCell('البريد الإلكتروني', flex: 3, sortKey: 'email'),
-          _buildHeaderCell('الهاتف', flex: 2, sortKey: 'phone'),
-          _buildHeaderCell('الدور', flex: 2, sortKey: 'role'),
-          _buildHeaderCell('تاريخ الإنشاء', flex: 2, sortKey: 'createdAt'),
-          _buildHeaderCell('الحالة', flex: 2),
-          _buildHeaderCell('الإجراءات', flex: 2),
+          _buildTabletHeaderCell('المستخدم', flex: 3, sortKey: 'name'),
+          _buildTabletHeaderCell('البريد الإلكتروني', flex: 3, sortKey: 'email'),
+          _buildTabletHeaderCell('الدور', flex: 2, sortKey: 'role'),
+          _buildTabletHeaderCell('الحالة', flex: 1, sortKey: 'status'),
+          _buildTabletHeaderCell('الإجراءات', flex: 2),
         ],
       ),
     );
   }
-
-  Widget _buildHeaderCell(String title, {
+  
+  Widget _buildTabletHeaderCell(String title, {
     required int flex,
     String? sortKey,
   }) {
@@ -152,247 +475,614 @@ class _FuturisticUsersTableState extends State<FuturisticUsersTable>
                     _isAscending = true;
                   }
                 });
-                widget.onSort(sortKey, _isAscending);
               }
             : null,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingSmall,
-            vertical: AppDimensions.paddingSmall,
+        child: Row(
+          mainAxisAlignment: sortKey == null 
+              ? MainAxisAlignment.center 
+              : MainAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: isActive ? AppTheme.primaryBlue : AppTheme.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (sortKey != null) ...[
+              const SizedBox(width: 4),
+              Icon(
+                isActive
+                    ? (_isAscending
+                        ? Icons.arrow_upward_rounded
+                        : Icons.arrow_downward_rounded)
+                    : Icons.unfold_more_rounded,
+                size: 14,
+                color: isActive
+                    ? AppTheme.primaryBlue
+                    : AppTheme.textMuted.withValues(alpha: 0.5),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildTabletRow(User user) {
+    final isHovered = _hoveredUserId == user.id;
+    
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredUserId = user.id),
+      onExit: (_) => setState(() => _hoveredUserId = null),
+      child: GestureDetector(
+        onTap: () => widget.onUserTap(user.id),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: isHovered
+                ? LinearGradient(
+                    colors: [
+                      AppTheme.primaryBlue.withValues(alpha: 0.08),
+                      AppTheme.primaryPurple.withValues(alpha: 0.04),
+                    ],
+                  )
+                : null,
+            color: !isHovered
+                ? AppTheme.darkSurface.withValues(alpha: 0.3)
+                : null,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isHovered
+                  ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+                  : Colors.transparent,
+              width: 1,
+            ),
           ),
           child: Row(
             children: [
-              Text(
-                title,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: isActive
-                      ? AppTheme.primaryBlue
-                      : AppTheme.textWhite,
-                  fontWeight: FontWeight.bold,
+              // User Info
+              Expanded(
+                flex: 3,
+                child: Row(
+                  children: [
+                    _buildAvatar(user, size: 36),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user.name,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppTheme.textWhite,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (user.phone.isNotEmpty)
+                            Text(
+                              user.phone,
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppTheme.textMuted,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              if (sortKey != null) ...[
-                const SizedBox(width: 4),
-                Icon(
-                  isActive
-                      ? (_isAscending
-                          ? Icons.arrow_upward_rounded
-                          : Icons.arrow_downward_rounded)
-                      : Icons.unfold_more_rounded,
-                  size: 16,
-                  color: isActive
-                      ? AppTheme.primaryBlue
-                      : AppTheme.textMuted.withOpacity(0.5),
+              
+              // Email
+              Expanded(
+                flex: 3,
+                child: Text(
+                  user.email,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppTheme.textLight,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
+              ),
+              
+              // Role
+              Expanded(
+                flex: 2,
+                child: _buildRoleBadge(user.role),
+              ),
+              
+              // Status
+              Expanded(
+                flex: 1,
+                child: Center(
+                  child: _buildStatusBadge(user.isActive),
+                ),
+              ),
+              
+              // Actions
+              Expanded(
+                flex: 2,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildActionButton(
+                      icon: user.isActive
+                          ? Icons.toggle_on_rounded
+                          : Icons.toggle_off_rounded,
+                      color: user.isActive ? AppTheme.success : AppTheme.textMuted,
+                      onTap: () => widget.onStatusToggle(user.id, !user.isActive),
+                    ),
+                    const SizedBox(width: 4),
+                    _buildActionButton(
+                      icon: Icons.visibility_rounded,
+                      color: AppTheme.primaryBlue,
+                      onTap: () => widget.onUserTap(user.id),
+                    ),
+                    const SizedBox(width: 4),
+                    _buildActionButton(
+                      icon: Icons.delete_rounded,
+                      color: AppTheme.error,
+                      onTap: () => widget.onDelete(user.id),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
   }
-
-  Widget _buildTableBody() {
-    return ListView.builder(
-      physics: const BouncingScrollPhysics(),
-      itemCount: widget.users.length,
-      itemBuilder: (context, index) {
-        final user = widget.users[index];
-        final isHovered = _hoveredRow == index;
-        
-        return MouseRegion(
-          onEnter: (_) => setState(() => _hoveredRow = index),
-          onExit: (_) => setState(() => _hoveredRow = null),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              color: isHovered
-                  ? AppTheme.primaryBlue.withOpacity(0.05)
-                  : Colors.transparent,
-              border: Border(
-                bottom: BorderSide(
-                  color: AppTheme.darkBorder.withOpacity(0.2),
-                  width: 0.5,
-                ),
-              ),
+  
+  // ========== عرض سطح المكتب - الجدول الكامل ==========
+  Widget _buildDesktopView() {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Container(
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.darkCard.withValues(alpha: 0.7),
+              AppTheme.darkCard.withValues(alpha: 0.5),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
             ),
-            child: InkWell(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                widget.onUserTap(user.id);
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingMedium,
-                  vertical: AppDimensions.paddingSmall,
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Column(
+              children: [
+                _buildDesktopHeader(),
+                Expanded(
+                  child: _buildDesktopBody(),
                 ),
-                child: Row(
-                  children: [
-                    _buildUserCell(user, flex: 3),
-                    _buildTextCell(user.email, flex: 3),
-                    _buildTextCell(user.phone, flex: 2),
-                    _buildRoleCell(user.role, flex: 2),
-                    _buildDateCell(user.createdAt, flex: 2),
-                    _buildStatusCell(user.isActive, flex: 2),
-                    _buildActionsCell(user, flex: 2),
-                  ],
-                ),
-              ),
+              ],
             ),
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildUserCell(User user, {required int flex}) {
-    return Expanded(
-      flex: flex,
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: user.profileImage != null
-                  ? null
-                  : AppTheme.primaryGradient,
-              border: Border.all(
-                color: user.isActive
-                    ? AppTheme.success.withOpacity(0.5)
-                    : AppTheme.darkBorder,
-                width: 1.5,
-              ),
-            ),
-            child: user.profileImage != null
-                ? ClipOval(
-                    child: Image.network(
-                      user.profileImage!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _buildDefaultAvatar(user.name);
-                      },
-                    ),
-                  )
-                : _buildDefaultAvatar(user.name),
-          ),
-          const SizedBox(width: AppDimensions.paddingSmall),
-          Expanded(
-            child: Text(
-              user.name,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppTheme.textWhite,
-                fontWeight: FontWeight.w600,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
-
+  
+  Widget _buildDesktopHeader() {
+    final headers = [
+      {'label': 'المستخدم', 'key': 'name', 'flex': 3},
+      {'label': 'البريد الإلكتروني', 'key': 'email', 'flex': 3},
+      {'label': 'الدور', 'key': 'role', 'flex': 2},
+      {'label': 'تاريخ الإنشاء', 'key': 'createdAt', 'flex': 2},
+      {'label': 'الحالة', 'key': 'status', 'flex': 1},
+      {'label': 'الإجراءات', 'key': 'actions', 'flex': 2},
+    ];
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primaryBlue.withValues(alpha: 0.1),
+            AppTheme.primaryPurple.withValues(alpha: 0.05),
+          ],
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: headers.map((header) {
+          final isActionColumn = header['key'] == 'actions';
+          final isActive = _sortColumn == header['key'];
+          
+          return Expanded(
+            flex: header['flex'] as int,
+            child: isActionColumn
+                ? Center(
+                    child: Text(
+                      header['label'] as String,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppTheme.textMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  )
+                : GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() {
+                        if (_sortColumn == header['key']) {
+                          _isAscending = !_isAscending;
+                        } else {
+                          _sortColumn = header['key'] as String;
+                          _isAscending = true;
+                        }
+                      });
+                    },
+                    child: Row(
+                      children: [
+                        Text(
+                          header['label'] as String,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: isActive ? AppTheme.primaryBlue : AppTheme.textMuted,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        if (isActive)
+                          Icon(
+                            _isAscending
+                                ? Icons.arrow_upward_rounded
+                                : Icons.arrow_downward_rounded,
+                            size: 14,
+                            color: AppTheme.primaryBlue,
+                          )
+                        else
+                          Icon(
+                            Icons.unfold_more_rounded,
+                            size: 14,
+                            color: AppTheme.textMuted.withValues(alpha: 0.3),
+                          ),
+                      ],
+                    ),
+                  ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+  
+  Widget _buildDesktopBody() {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: _sortedUsers.length,
+      itemBuilder: (context, index) {
+        final user = _sortedUsers[index];
+        return _buildDesktopRow(user, index);
+      },
+    );
+  }
+  
+  Widget _buildDesktopRow(User user, int index) {
+    final isHovered = _hoveredUserId == user.id;
+    
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredUserId = user.id),
+      onExit: (_) => setState(() => _hoveredUserId = null),
+      child: GestureDetector(
+        onTap: () => widget.onUserTap(user.id),
+        child: TweenAnimationBuilder<double>(
+          duration: Duration(milliseconds: 200 + (index * 30)),
+          tween: Tween(begin: 0.0, end: 1.0),
+          curve: Curves.easeOutCubic,
+          builder: (context, value, child) {
+            return Transform.translate(
+              offset: Offset((1 - value) * -50, 0),
+              child: Opacity(
+                opacity: value,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    gradient: isHovered
+                        ? LinearGradient(
+                            colors: [
+                              AppTheme.primaryBlue.withValues(alpha: 0.08),
+                              AppTheme.primaryPurple.withValues(alpha: 0.04),
+                            ],
+                          )
+                        : null,
+                    color: !isHovered
+                        ? AppTheme.darkSurface.withValues(alpha: 0.3)
+                        : null,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isHovered
+                          ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+                          : Colors.transparent,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // User Info
+                      Expanded(
+                        flex: 3,
+                        child: Row(
+                          children: [
+                            _buildAvatar(user, size: 40),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    user.name,
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      color: AppTheme.textWhite,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (user.phone.isNotEmpty)
+                                    Text(
+                                      user.phone,
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: AppTheme.textMuted,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      // Email
+                      Expanded(
+                        flex: 3,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.email_outlined,
+                              size: 14,
+                              color: AppTheme.textMuted.withValues(alpha: 0.7),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                user.email,
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppTheme.textLight,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      // Role
+                      Expanded(
+                        flex: 2,
+                        child: _buildRoleBadge(user.role),
+                      ),
+                      
+                      // Created Date
+                      Expanded(
+                        flex: 2,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              size: 14,
+                              color: AppTheme.textMuted.withValues(alpha: 0.7),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _formatDate(user.createdAt),
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppTheme.textLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      // Status
+                      Expanded(
+                        flex: 1,
+                        child: Center(
+                          child: _buildStatusBadge(user.isActive),
+                        ),
+                      ),
+                      
+                      // Actions
+                      Expanded(
+                        flex: 2,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildActionButton(
+                              icon: user.isActive
+                                  ? Icons.toggle_on_rounded
+                                  : Icons.toggle_off_rounded,
+                              color: user.isActive ? AppTheme.success : AppTheme.textMuted,
+                              tooltip: user.isActive ? 'إلغاء التفعيل' : 'تفعيل',
+                              onTap: () => widget.onStatusToggle(user.id, !user.isActive),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildActionButton(
+                              icon: Icons.visibility_rounded,
+                              color: AppTheme.primaryBlue,
+                              tooltip: 'عرض التفاصيل',
+                              onTap: () => widget.onUserTap(user.id),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildActionButton(
+                              icon: Icons.delete_rounded,
+                              color: AppTheme.error,
+                              tooltip: 'حذف',
+                              onTap: () => widget.onDelete(user.id),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+  
+  // ========== مكونات مشتركة ==========
+  Widget _buildAvatar(User user, {required double size}) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: user.profileImage != null
+            ? null
+            : AppTheme.primaryGradient,
+        border: Border.all(
+          color: user.isActive
+              ? AppTheme.success.withValues(alpha: 0.5)
+              : AppTheme.darkBorder,
+          width: 1.5,
+        ),
+        boxShadow: [
+          if (user.isActive)
+            BoxShadow(
+              color: AppTheme.success.withValues(alpha: 0.3),
+              blurRadius: 8,
+              spreadRadius: 1,
+            ),
+        ],
+      ),
+      child: user.profileImage != null
+          ? ClipOval(
+              child: Image.network(
+                user.profileImage!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return _buildDefaultAvatar(user.name);
+                },
+              ),
+            )
+          : _buildDefaultAvatar(user.name),
+    );
+  }
+  
   Widget _buildDefaultAvatar(String name) {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
     
     return Center(
       child: Text(
         initial,
-        style: AppTextStyles.bodySmall.copyWith(
+        style: AppTextStyles.bodyMedium.copyWith(
           color: Colors.white,
           fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
-
-  Widget _buildTextCell(String text, {required int flex}) {
-    return Expanded(
-      flex: flex,
-      child: Text(
-        text,
-        style: AppTextStyles.bodySmall.copyWith(
-          color: AppTheme.textMuted,
+  
+  Widget _buildRoleBadge(String role) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: _getRoleGradient(role),
         ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-
-  Widget _buildRoleCell(String role, {required int flex}) {
-    return Expanded(
-      flex: flex,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 4,
-        ),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: _getRoleGradient(role),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: _getRoleGradient(role)[0].withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          _getRoleText(role),
-          style: AppTextStyles.caption.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildDateCell(DateTime date, {required int flex}) {
-    return Expanded(
-      flex: flex,
       child: Text(
-        _formatDate(date),
-        style: AppTextStyles.bodySmall.copyWith(
-          color: AppTheme.textMuted,
+        _getRoleText(role),
+        style: AppTextStyles.caption.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
-
-  Widget _buildStatusCell(bool isActive, {required int flex}) {
-    return Expanded(
-      flex: flex,
+  
+  Widget _buildStatusBadge(bool isActive) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isActive
+              ? [
+                  AppTheme.success.withValues(alpha: 0.2),
+                  AppTheme.success.withValues(alpha: 0.1),
+                ]
+              : [
+                  AppTheme.textMuted.withValues(alpha: 0.2),
+                  AppTheme.textMuted.withValues(alpha: 0.1),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isActive
+              ? AppTheme.success.withValues(alpha: 0.5)
+              : AppTheme.textMuted.withValues(alpha: 0.5),
+          width: 0.5,
+        ),
+      ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 8,
-            height: 8,
+            width: 6,
+            height: 6,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isActive
-                  ? AppTheme.success
-                  : AppTheme.textMuted,
-              boxShadow: isActive
-                  ? [
-                      BoxShadow(
-                        color: AppTheme.success.withOpacity(0.5),
-                        blurRadius: 4,
-                        spreadRadius: 1,
-                      ),
-                    ]
-                  : [],
+              color: isActive ? AppTheme.success : AppTheme.textMuted,
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           Text(
             isActive ? 'نشط' : 'غير نشط',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: isActive
-                  ? AppTheme.success
-                  : AppTheme.textMuted,
+            style: AppTextStyles.caption.copyWith(
+              color: isActive ? AppTheme.success : AppTheme.textMuted,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -400,43 +1090,42 @@ class _FuturisticUsersTableState extends State<FuturisticUsersTable>
       ),
     );
   }
-
-  Widget _buildActionsCell(User user, {required int flex}) {
-    return Expanded(
-      flex: flex,
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              widget.onStatusToggle(user.id, !user.isActive);
-            },
-            icon: Icon(
-              user.isActive
-                  ? Icons.toggle_on_rounded
-                  : Icons.toggle_off_rounded,
-              color: user.isActive
-                  ? AppTheme.success
-                  : AppTheme.textMuted,
-            ),
-            tooltip: user.isActive ? 'إلغاء التفعيل' : 'تفعيل',
+  
+  Widget _buildActionButton({
+    required IconData icon,
+    required Color color,
+    String? tooltip,
+    required VoidCallback onTap,
+  }) {
+    final button = GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: color.withValues(alpha: 0.3),
+            width: 0.5,
           ),
-          IconButton(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              widget.onUserTap(user.id);
-            },
-            icon: Icon(
-              Icons.visibility_rounded,
-              color: AppTheme.primaryBlue,
-            ),
-            tooltip: 'عرض التفاصيل',
-          ),
-        ],
+        ),
+        child: Icon(
+          icon,
+          size: 16,
+          color: color,
+        ),
       ),
     );
+    
+    return tooltip != null
+        ? Tooltip(message: tooltip, child: button)
+        : button;
   }
-
+  
   List<Color> _getRoleGradient(String role) {
     switch (role.toLowerCase()) {
       case 'admin':
@@ -449,7 +1138,7 @@ class _FuturisticUsersTableState extends State<FuturisticUsersTable>
         return [AppTheme.primaryCyan, AppTheme.neonGreen];
     }
   }
-
+  
   String _getRoleText(String role) {
     switch (role.toLowerCase()) {
       case 'admin':
@@ -464,7 +1153,7 @@ class _FuturisticUsersTableState extends State<FuturisticUsersTable>
         return role;
     }
   }
-
+  
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
