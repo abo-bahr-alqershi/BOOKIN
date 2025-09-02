@@ -20,8 +20,8 @@ import '../widgets/amenity_selector_widget.dart';
 import '../widgets/property_map_view.dart';
 import '../bloc/property_images/property_images_bloc.dart';
 import '../bloc/property_images/property_images_event.dart';
-import 'package:bookn_cp_app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:bookn_cp_app/features/auth/presentation/bloc/auth_state.dart';
+import 'package:bookn_cp_app/features/helpers/presentation/utils/search_navigation_helper.dart';
+import 'package:bookn_cp_app/features/admin_users/domain/entities/user.dart';
 
 class CreatePropertyPage extends StatelessWidget {
   const CreatePropertyPage({super.key});
@@ -78,6 +78,7 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
   
   // State
   String? _selectedPropertyTypeId;
+  User? _selectedOwner;
   int _starRating = 3;
   List<PropertyImage> _selectedImages = [];
   List<String> _selectedLocalImages = [];
@@ -448,6 +449,11 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
           
           const SizedBox(height: 20),
           
+          // Owner
+          _buildOwnerSelector(),
+          
+          const SizedBox(height: 20),
+          
           // Address
           _buildInputField(
             controller: _addressController,
@@ -689,6 +695,7 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
             items: [
               {'label': 'الاسم', 'value': _nameController.text},
               {'label': 'النوع', 'value': _getPropertyTypeName()},
+              {'label': 'المالك', 'value': _selectedOwner?.name ?? 'غير محدد'},
               {'label': 'العنوان', 'value': _addressController.text},
               {'label': 'المدينة', 'value': _cityController.text},
               {'label': 'التقييم', 'value': '$_starRating نجوم'},
@@ -863,6 +870,73 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
             }
             return _buildLoadingDropdown();
           },
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildOwnerSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'مالك العقار',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textWhite,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () async {
+            final user = await SearchNavigationHelper.searchSingleUser(context);
+            if (user != null) {
+              _safeSetState(() {
+                _selectedOwner = user;
+              });
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.darkCard.withOpacity(0.5),
+                  AppTheme.darkCard.withOpacity(0.3),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppTheme.darkBorder.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.person_search_rounded,
+                  color: AppTheme.primaryBlue.withOpacity(0.7),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _selectedOwner?.name ?? 'اختر مالك العقار',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: _selectedOwner == null
+                          ? AppTheme.textMuted.withOpacity(0.5)
+                          : AppTheme.textWhite,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: AppTheme.textMuted.withOpacity(0.7),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -1212,6 +1286,7 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
   bool _validateBasicInfo() {
     if (_nameController.text.isEmpty ||
         _selectedPropertyTypeId == null ||
+        _selectedOwner == null ||
         _addressController.text.isEmpty ||
         _cityController.text.isEmpty ||
         _descriptionController.text.isEmpty) {
@@ -1289,15 +1364,10 @@ void _submitForm() {
       return;
     }
     
-    // الحصول على معرف المستخدم من AuthBloc
-    final authState = context.read<AuthBloc>().state;
-    String? ownerId;
-    if (authState is AuthAuthenticated) {
-      ownerId = authState.user.userId;
-    }
-    
+    // الحصول على معرف المالك من الاختيار
+    final ownerId = _selectedOwner?.id;
     if (ownerId == null || ownerId.isEmpty) {
-      _showErrorMessage('تعذر تحديد معرف المالك. الرجاء إعادة تسجيل الدخول.');
+      _showErrorMessage('الرجاء اختيار مالك العقار');
       return;
     }
     
@@ -1312,6 +1382,7 @@ void _submitForm() {
     debugPrint('Name: ${_nameController.text}');
     debugPrint('Type ID: $_selectedPropertyTypeId');
     debugPrint('City: ${_cityController.text}');
+    debugPrint('Owner: ${_selectedOwner?.name} (${_selectedOwner?.id})');
     debugPrint('Rating: $_starRating');
     debugPrint('Images Count: ${imageUrls.length}');
     debugPrint('Selected Amenities: $_selectedAmenities');
