@@ -20,6 +20,8 @@ import '../widgets/amenity_selector_widget.dart';
 import '../widgets/property_map_view.dart';
 import '../bloc/property_images/property_images_bloc.dart';
 import '../bloc/property_images/property_images_event.dart';
+import 'package:bookn_cp_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:bookn_cp_app/features/auth/presentation/bloc/auth_state.dart';
 
 class CreatePropertyPage extends StatelessWidget {
   const CreatePropertyPage({super.key});
@@ -83,6 +85,7 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
   
   // Track if widget is mounted
   bool _isDisposed = false;
+  bool _waitingForImageUpload = false;
   
   @override
   void initState() {
@@ -148,33 +151,54 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
   
   @override
   Widget build(BuildContext context) {
-    return BlocListener<PropertiesBloc, PropertiesState>(
-      listener: (context, state) {
-        if (!mounted) return;
-        
-        if (state is PropertyCreated) {
-          // إن وُجدت صور محلية، قم برفعها للعقار الذي تم إنشاؤه
-          if (_selectedLocalImages.isNotEmpty) {
-            try {
-              final imagesBloc = context.read<PropertyImagesBloc>();
-              imagesBloc.add(UploadMultipleImagesEvent(
-                propertyId: state.propertyId,
-                filePaths: List<String>.from(_selectedLocalImages),
-              ));
-            } catch (_) {}
-          }
-
-          _showSuccessMessage('تم إنشاء العقار بنجاح');
-          // الرجوع بعد مهلة قصيرة
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) {
-              context.pop();
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<PropertiesBloc, PropertiesState>(
+          listener: (context, state) {
+            if (!mounted) return;
+            
+            if (state is PropertyCreated) {
+              if (_selectedLocalImages.isNotEmpty) {
+                _waitingForImageUpload = true;
+                try {
+                  final imagesBloc = context.read<PropertyImagesBloc>();
+                  imagesBloc.add(UploadMultipleImagesEvent(
+                    propertyId: state.propertyId,
+                    filePaths: List<String>.from(_selectedLocalImages),
+                  ));
+                  _showSuccessMessage('تم إنشاء العقار. جاري رفع الصور...');
+                } catch (_) {
+                  _showErrorMessage('تم إنشاء العقار لكن فشل تهيئة رفع الصور');
+                  context.pop();
+                }
+              } else {
+                _showSuccessMessage('تم إنشاء العقار بنجاح');
+                Future.delayed(const Duration(milliseconds: 500), () {
+                  if (mounted) {
+                    context.pop();
+                  }
+                });
+              }
+            } else if (state is PropertiesError) {
+              _showErrorMessage(state.message);
             }
-          });
-        } else if (state is PropertiesError) {
-          _showErrorMessage(state.message);
-        }
-      },
+          },
+        ),
+        BlocListener<PropertyImagesBloc, PropertyImagesState>(
+          listener: (context, imgState) {
+            if (!_waitingForImageUpload) return;
+            if (imgState is MultipleImagesUploaded || imgState is PropertyImageUploaded) {
+              _waitingForImageUpload = false;
+              _showSuccessMessage('تم رفع الصور بنجاح');
+              if (mounted) context.pop();
+            } else if (imgState is PropertyImagesError) {
+              _waitingForImageUpload = false;
+              _showErrorMessage('تم إنشاء العقار لكن فشل رفع الصور');
+              if (mounted) context.pop();
+            }
+          },
+        ),
+      ],
       child: Scaffold(
         backgroundColor: AppTheme.darkBackground,
         body: Stack(
@@ -1277,8 +1301,12 @@ void _submitForm() {
     }
     
     // الحصول على معرف المستخدم من AuthBloc
-    // TODO: استبدل هذا بالمعرف الحقيقي من AuthBloc
-    const ownerId = 'admin-user-id'; // يجب الحصول على المعرف الحقيقي
+    final authState = context.read<AuthBloc>().state;
+    final ownerId = authState is AuthAuthenticated ? authState.user.userId : '';
+    if (ownerId.isEmpty) {
+      _showErrorMessage('حدثت مشكلة في هوية المستخدم، يرجى إعادة تسجيل الدخول');
+      return;
+    }
     
     // تحويل PropertyImage إلى URLs
     final List<String> imageUrls = _selectedImages
@@ -1313,9 +1341,9 @@ void _submitForm() {
         shortDescription: _descriptionController.text.length > 100 
             ? _descriptionController.text.substring(0, 100) + '...'
             : _descriptionController.text,
-        basePricePerNight: 0.0, // يمكنك إضافة حقل للسعر
-        currency: 'YER', // يمكنك إضافة حقل للعملة
-        isFeatured: false, // يمكنك إضافة خيار للعقارات المميزة
+        basePricePerNight: 0.0,
+        currency: 'YER',
+        isFeatured: false,
       ),
     );
   }

@@ -32,21 +32,28 @@ class CreatePropertyParams {
     this.amenityIds, // أضف هذا السطر
   });
   
-  Map<String, dynamic> toJson() => {
-    'name': name,
-    'address': address,
-    'propertyTypeId': propertyTypeId,
-    'ownerId': ownerId,
-    'description': description,
-    'latitude': latitude,
-    'longitude': longitude,
-    'city': city,
-    'starRating': starRating,
-    'images': images ?? [],
-    'amenityIds': amenityIds ?? [],
-    'isApproved': false, // أضف هذا لتجنب مشاكل API
-    'isActive': true,    // أضف هذا أيضاً
-  };
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> command = {
+      'name': name,
+      'address': address,
+      'propertyTypeId': propertyTypeId,
+      'description': description,
+      'latitude': latitude,
+      'longitude': longitude,
+      'city': city,
+      'starRating': starRating,
+    };
+    if (images != null && images!.isNotEmpty) {
+      command['images'] = images;
+    }
+    if (amenityIds != null && amenityIds!.isNotEmpty) {
+      command['amenityIds'] = amenityIds;
+    }
+    return {
+      'ownerId': ownerId,
+      'command': command,
+    };
+  }
 }
 
 class CreatePropertyUseCase implements UseCase<String, CreatePropertyParams> {
