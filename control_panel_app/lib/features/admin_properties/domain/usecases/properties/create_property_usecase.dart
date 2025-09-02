@@ -33,25 +33,18 @@ class CreatePropertyParams {
   });
   
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> command = {
-    'name': name,
-    'address': address,
-    'propertyTypeId': propertyTypeId,
-    'description': description,
-    'latitude': latitude,
-    'longitude': longitude,
-    'city': city,
-    'starRating': starRating,
-    };
-    if (images != null && images!.isNotEmpty) {
-      command['images'] = images;
-    }
-    if (amenityIds != null && amenityIds!.isNotEmpty) {
-      command['amenityIds'] = amenityIds;
-    }
     return {
+      'name': name,
+      'address': address,
+      'propertyTypeId': propertyTypeId,
       'ownerId': ownerId,
-      'command': command,
+      'description': description,
+      'latitude': latitude,
+      'longitude': longitude,
+      'city': city,
+      'starRating': starRating,
+      if (images != null && images!.isNotEmpty) 'images': images,
+      if (amenityIds != null && amenityIds!.isNotEmpty) 'amenityIds': amenityIds,
     };
   }
 }

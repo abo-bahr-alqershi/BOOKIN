@@ -20,6 +20,8 @@ import '../widgets/amenity_selector_widget.dart';
 import '../widgets/property_map_view.dart';
 import '../bloc/property_images/property_images_bloc.dart';
 import '../bloc/property_images/property_images_event.dart';
+import 'package:bookn_cp_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:bookn_cp_app/features/auth/presentation/bloc/auth_state.dart';
 
 class CreatePropertyPage extends StatelessWidget {
   const CreatePropertyPage({super.key});
@@ -1288,8 +1290,16 @@ void _submitForm() {
     }
     
     // الحصول على معرف المستخدم من AuthBloc
-    // TODO: استبدل هذا بالمعرف الحقيقي من AuthBloc
-    const ownerId = 'admin-user-id'; // يجب الحصول على المعرف الحقيقي
+    final authState = context.read<AuthBloc>().state;
+    String? ownerId;
+    if (authState is AuthAuthenticated) {
+      ownerId = authState.user.userId;
+    }
+    
+    if (ownerId == null || ownerId.isEmpty) {
+      _showErrorMessage('تعذر تحديد معرف المالك. الرجاء إعادة تسجيل الدخول.');
+      return;
+    }
     
     // تحويل PropertyImage إلى URLs
     final List<String> imageUrls = _selectedImages
