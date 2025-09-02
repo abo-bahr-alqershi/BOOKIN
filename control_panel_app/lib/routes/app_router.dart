@@ -77,6 +77,12 @@ import 'package:bookn_cp_app/features/onboarding/presentation/pages/select_city_
 import 'package:bookn_cp_app/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:bookn_cp_app/features/notifications/presentation/pages/notification_settings_page.dart';
 import 'package:bookn_cp_app/features/admin_hub/presentation/pages/admin_hub_page.dart';
+// Helpers search pages
+import 'package:bookn_cp_app/features/helpers/presentation/pages/user_search_page.dart';
+import 'package:bookn_cp_app/features/helpers/presentation/pages/property_search_page.dart';
+import 'package:bookn_cp_app/features/helpers/presentation/pages/unit_search_page.dart';
+import 'package:bookn_cp_app/features/helpers/presentation/pages/city_search_page.dart';
+import 'package:bookn_cp_app/features/helpers/presentation/pages/booking_search_page.dart';
 import 'route_animations.dart';
 import 'route_guards.dart' as guards;
 
@@ -333,6 +339,80 @@ class AppRouter {
             return BlocProvider<aa_bloc.AmenitiesBloc>(
               create: (_) => di.sl<aa_bloc.AmenitiesBloc>(),
               child: const AmenitiesManagementPage(),
+            );
+          },
+        ),
+
+        // Helpers - Users search
+        GoRoute(
+          path: '/helpers/search/users',
+          builder: (context, state) {
+            final params = state.extra is Map<String, dynamic> ? state.extra as Map<String, dynamic> : const {};
+            return UserSearchPage(
+              initialSearchTerm: params['initialSearchTerm'],
+              allowMultiSelect: params['allowMultiSelect'] ?? false,
+              onUsersSelected: params['onUsersSelected'],
+              onUserSelected: params['onUserSelected'],
+            );
+          },
+        ),
+
+        // Helpers - Properties search
+        GoRoute(
+          path: '/helpers/search/properties',
+          builder: (context, state) {
+            final params = state.extra is Map<String, dynamic> ? state.extra as Map<String, dynamic> : const {};
+            return PropertySearchPage(
+              initialSearchTerm: params['initialSearchTerm'],
+              allowMultiSelect: params['allowMultiSelect'] ?? false,
+              onPropertiesSelected: params['onPropertiesSelected'],
+              onPropertySelected: params['onPropertySelected'],
+            );
+          },
+        ),
+
+        // Helpers - Units search
+        GoRoute(
+          path: '/helpers/search/units',
+          builder: (context, state) {
+            final params = state.extra is Map<String, dynamic> ? state.extra as Map<String, dynamic> : const {};
+            return UnitSearchPage(
+              initialSearchTerm: params['initialSearchTerm'],
+              propertyId: params['propertyId'],
+              allowMultiSelect: params['allowMultiSelect'] ?? false,
+              onUnitsSelected: params['onUnitsSelected'],
+              onUnitSelected: params['onUnitSelected'],
+            );
+          },
+        ),
+
+        // Helpers - Cities search
+        GoRoute(
+          path: '/helpers/search/cities',
+          builder: (context, state) {
+            final params = state.extra is Map<String, dynamic> ? state.extra as Map<String, dynamic> : const {};
+            return CitySearchPage(
+              initialSearchTerm: params['initialSearchTerm'],
+              country: params['country'],
+              allowMultiSelect: params['allowMultiSelect'] ?? false,
+              onCitiesSelected: params['onCitiesSelected'],
+              onCitySelected: params['onCitySelected'],
+            );
+          },
+        ),
+
+        // Helpers - Bookings search
+        GoRoute(
+          path: '/helpers/search/bookings',
+          builder: (context, state) {
+            final params = state.extra is Map<String, dynamic> ? state.extra as Map<String, dynamic> : const {};
+            return BookingSearchPage(
+              initialSearchTerm: params['initialSearchTerm'],
+              userId: params['userId'],
+              unitId: params['unitId'],
+              allowMultiSelect: params['allowMultiSelect'] ?? false,
+              onBookingsSelected: params['onBookingsSelected'],
+              onBookingSelected: params['onBookingSelected'],
             );
           },
         ),

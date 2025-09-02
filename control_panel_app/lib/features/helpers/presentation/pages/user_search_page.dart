@@ -7,6 +7,7 @@ import '../../../../core/widgets/loading_widget.dart';
 import '../../../admin_users/domain/entities/user.dart';
 import '../../domain/entities/search_result.dart';
 import '../../domain/usecases/search_users_usecase.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
 import '../widgets/search_header.dart';
 import '../widgets/search_item_card.dart';
 import '../widgets/simple_filter_bar.dart';
@@ -30,12 +31,7 @@ class UserSearchPage extends StatefulWidget {
 }
 
 class _UserSearchPageState extends State<UserSearchPage> {
-  final SearchUsersUseCase _searchUsersUseCase = SearchUsersUseCase(
-    // This will be injected via DI
-    // For now, using a temporary instance
-    // TODO: Add to injection_container.dart
-    null as dynamic,
-  );
+  final SearchUsersUseCase _searchUsersUseCase = di.sl<SearchUsersUseCase>();
   
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();

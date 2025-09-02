@@ -6,6 +6,7 @@ import '../../../../core/widgets/loading_widget.dart';
 import '../../../admin_units/domain/entities/unit.dart';
 import '../../domain/entities/search_result.dart';
 import '../../domain/usecases/search_units_usecase.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
 import '../widgets/search_header.dart';
 import '../widgets/search_item_card.dart';
 import '../widgets/simple_filter_bar.dart';
@@ -31,10 +32,7 @@ class UnitSearchPage extends StatefulWidget {
 }
 
 class _UnitSearchPageState extends State<UnitSearchPage> {
-  final SearchUnitsUseCase _searchUnitsUseCase = SearchUnitsUseCase(
-    // TODO: Add to injection_container.dart
-    null as dynamic,
-  );
+  final SearchUnitsUseCase _searchUnitsUseCase = di.sl<SearchUnitsUseCase>();
   
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();

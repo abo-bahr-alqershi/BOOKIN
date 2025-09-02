@@ -6,6 +6,7 @@ import '../../../../core/widgets/loading_widget.dart';
 import '../../../admin_properties/domain/entities/property.dart';
 import '../../domain/entities/search_result.dart';
 import '../../domain/usecases/search_properties_usecase.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
 import '../widgets/search_header.dart';
 import '../widgets/search_item_card.dart';
 import '../widgets/simple_filter_bar.dart';
@@ -29,10 +30,7 @@ class PropertySearchPage extends StatefulWidget {
 }
 
 class _PropertySearchPageState extends State<PropertySearchPage> {
-  final SearchPropertiesUseCase _searchPropertiesUseCase = SearchPropertiesUseCase(
-    // TODO: Add to injection_container.dart
-    null as dynamic,
-  );
+  final SearchPropertiesUseCase _searchPropertiesUseCase = di.sl<SearchPropertiesUseCase>();
   
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
