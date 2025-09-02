@@ -485,6 +485,25 @@ class AppRouter {
           },
         ),
 
+        // Admin Users - edit (reuse CreateUserPage with prefilled data)
+        GoRoute(
+          path: '/admin/users/:userId/edit',
+          builder: (context, state) {
+            final userId = state.pathParameters['userId']!;
+            final extras = state.extra as Map<String, dynamic>?;
+            return BlocProvider<au_list_bloc.UsersListBloc>(
+              create: (_) => di.sl<au_list_bloc.UsersListBloc>(),
+              child: au_pages.CreateUserPage(
+                userId: userId,
+                initialName: extras?['name'] as String?,
+                initialEmail: extras?['email'] as String?,
+                initialPhone: extras?['phone'] as String?,
+                initialRoleId: extras?['roleId'] as String?,
+              ),
+            );
+          },
+        ),
+
         // Admin Users - details
         GoRoute(
           path: '/admin/users/:userId',

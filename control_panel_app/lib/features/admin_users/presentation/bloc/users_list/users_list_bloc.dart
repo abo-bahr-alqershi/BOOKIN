@@ -3,6 +3,8 @@ import 'package:equatable/equatable.dart';
 import '../../../../../core/models/paginated_result.dart';
 import '../../../domain/entities/user.dart';
 import '../../../domain/usecases/get_all_users_usecase.dart';
+import '../../../domain/usecases/create_user_usecase.dart';
+import '../../../domain/usecases/update_user_usecase.dart';
 import '../../../domain/usecases/activate_user_usecase.dart';
 import '../../../domain/usecases/deactivate_user_usecase.dart';
 
@@ -13,6 +15,8 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
   final GetAllUsersUseCase _getAllUsersUseCase;
   final ActivateUserUseCase _activateUserUseCase;
   final DeactivateUserUseCase _deactivateUserUseCase;
+  final CreateUserUseCase _createUserUseCase;
+  final UpdateUserUseCase _updateUserUseCase;
 
   static const int _pageSize = 20;
   List<User> _allUsers = [];
@@ -26,9 +30,13 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
     required GetAllUsersUseCase getAllUsersUseCase,
     required ActivateUserUseCase activateUserUseCase,
     required DeactivateUserUseCase deactivateUserUseCase,
+    required CreateUserUseCase createUserUseCase,
+    required UpdateUserUseCase updateUserUseCase,
   })  : _getAllUsersUseCase = getAllUsersUseCase,
         _activateUserUseCase = activateUserUseCase,
         _deactivateUserUseCase = deactivateUserUseCase,
+        _createUserUseCase = createUserUseCase,
+        _updateUserUseCase = updateUserUseCase,
         super(UsersListInitial()) {
     on<LoadUsersEvent>(_onLoadUsers);
     on<LoadMoreUsersEvent>(_onLoadMoreUsers);
@@ -37,6 +45,8 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
     on<FilterUsersEvent>(_onFilterUsers);
     on<ToggleUserStatusEvent>(_onToggleUserStatus);
     on<SortUsersEvent>(_onSortUsers);
+    on<CreateUserEvent>(_onCreateUser);
+    on<UpdateUserEvent>(_onUpdateUser);
   }
 
   Future<void> _onLoadUsers(
@@ -68,6 +78,96 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
           totalCount: paginatedResult.totalCount,
           isLoadingMore: false,
         ));
+      },
+    );
+  }
+
+  Future<void> _onCreateUser(
+    CreateUserEvent event,
+    Emitter<UsersListState> emit,
+  ) async {
+    emit(UsersListLoading());
+
+    final result = await _createUserUseCase(CreateUserParams(
+      name: event.name,
+      email: event.email,
+      password: event.password,
+      phone: event.phone,
+      profileImage: event.profileImage,
+    ));
+
+    await result.fold(
+      (failure) async {
+        emit(UsersListError(message: failure.message));
+      },
+      (userId) async {
+        // After creating, reload first page to reflect new user
+        final reload = await _getAllUsersUseCase(GetAllUsersParams(
+          pageNumber: 1,
+          pageSize: _pageSize,
+          searchTerm: _lastSearchTerm,
+          roleId: _lastRoleFilter,
+          isActive: _lastActiveFilter,
+        ));
+        reload.fold(
+          (failure) => emit(UsersListError(message: failure.message)),
+          (paginatedResult) {
+            _currentPage = 1;
+            _allUsers = paginatedResult.items;
+            _hasMoreData = paginatedResult.pageNumber < paginatedResult.totalPages;
+            emit(UsersListLoaded(
+              users: _allUsers,
+              hasMore: _hasMoreData,
+              totalCount: paginatedResult.totalCount,
+              isLoadingMore: false,
+            ));
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _onUpdateUser(
+    UpdateUserEvent event,
+    Emitter<UsersListState> emit,
+  ) async {
+    emit(UsersListLoading());
+
+    final result = await _updateUserUseCase(UpdateUserParams(
+      userId: event.userId,
+      name: event.name,
+      email: event.email,
+      phone: event.phone,
+      profileImage: event.profileImage,
+    ));
+
+    await result.fold(
+      (failure) async {
+        emit(UsersListError(message: failure.message));
+      },
+      (success) async {
+        // After updating, refresh list
+        final reload = await _getAllUsersUseCase(GetAllUsersParams(
+          pageNumber: 1,
+          pageSize: _pageSize,
+          searchTerm: _lastSearchTerm,
+          roleId: _lastRoleFilter,
+          isActive: _lastActiveFilter,
+        ));
+        reload.fold(
+          (failure) => emit(UsersListError(message: failure.message)),
+          (paginatedResult) {
+            _currentPage = 1;
+            _allUsers = paginatedResult.items;
+            _hasMoreData = paginatedResult.pageNumber < paginatedResult.totalPages;
+            emit(UsersListLoaded(
+              users: _allUsers,
+              hasMore: _hasMoreData,
+              totalCount: paginatedResult.totalCount,
+              isLoadingMore: false,
+            ));
+          },
+        );
       },
     );
   }

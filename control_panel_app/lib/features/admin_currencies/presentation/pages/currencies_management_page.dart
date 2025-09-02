@@ -494,19 +494,19 @@ class _CurrenciesManagementPageState extends State<CurrenciesManagementPage>
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.black87,
-      builder: (context) => FuturisticCurrencyFormModal(
+      builder: (dialogContext) => FuturisticCurrencyFormModal(
         currency: currency,
         hasDefaultCurrency: hasDefaultCurrency,
         onSave: (updatedCurrency) {
           if (currency != null) {
-            context.read<CurrenciesBloc>().add(
+            dialogContext.read<CurrenciesBloc>().add(
               UpdateCurrencyEvent(
                 currency: updatedCurrency,
                 oldCode: currency.code,
               ),
             );
           } else {
-            context.read<CurrenciesBloc>().add(
+            dialogContext.read<CurrenciesBloc>().add(
               AddCurrencyEvent(currency: updatedCurrency),
             );
           }

@@ -316,7 +316,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                       _buildActionButton(
                         icon: Icons.edit_rounded,
                         label: 'تعديل',
-                        onTap: () => _showEditDialog(state),
+                        onTap: () => _navigateToEditPage(state),
                       ),
                       const SizedBox(width: 8),
                       _buildActionButton(
@@ -1277,23 +1277,15 @@ class _UserDetailsPageState extends State<UserDetailsPage>
   }
   
   // Helper Methods
-  void _showEditDialog(UserDetailsLoaded state) {
-    showDialog(
-      context: context,
-      builder: (context) => UserFormDialog(
-        user: state.userDetails,
-        onSave: (updatedUser) {
-          context.read<UserDetailsBloc>().add(
-            UpdateUserDetailsEvent(
-              userId: widget.userId,
-              name: updatedUser['name'],
-              email: updatedUser['email'],
-              phone: updatedUser['phone'],
-              profileImage: updatedUser['profileImage'],
-            ),
-          );
-        },
-      ),
+  void _navigateToEditPage(UserDetailsLoaded state) {
+    context.go(
+      '/admin/users/${widget.userId}/edit',
+      extra: {
+        'name': state.userDetails.userName,
+        'email': state.userDetails.email,
+        'phone': state.userDetails.phoneNumber,
+        'roleId': state.userDetails.role,
+      },
     );
   }
   
