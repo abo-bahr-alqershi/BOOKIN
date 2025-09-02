@@ -1,5 +1,6 @@
 // lib/features/admin_properties/data/datasources/properties_remote_datasource.dart
 
+import 'package:bookn_cp_app/core/constants/api_constants.dart';
 import 'package:dio/dio.dart';
 import 'package:bookn_cp_app/core/network/api_client.dart';
 import 'package:bookn_cp_app/core/error/exceptions.dart';
@@ -126,6 +127,15 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
   @override
   Future<String> createProperty(Map<String, dynamic> propertyData) async {
     try {
+      // Remove http:// from image URLs before saving
+      if (propertyData['images'] != null) {
+        final images = propertyData['images'] as List;
+        for (int i = 0; i < images.length; i++) {
+          if (images[i] is String) {
+            images[i] = (images[i] as String).replaceAll(ApiConstants.imageBaseUrl, '');
+          }
+        }
+      }
       final response = await apiClient.post(
         _baseEndpoint,
         data: propertyData,
@@ -144,6 +154,15 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
   @override
   Future<bool> updateProperty(String propertyId, Map<String, dynamic> propertyData) async {
     try {
+      // Remove http:// from image URLs before saving
+      if (propertyData['images'] != null) {
+        final images = propertyData['images'] as List;
+        for (int i = 0; i < images.length; i++) {
+          if (images[i] is String) {
+            images[i] = (images[i] as String).replaceAll(ApiConstants.imageBaseUrl, '');
+          }
+        }
+      }
       final response = await apiClient.put(
         '$_baseEndpoint/$propertyId',
         data: propertyData,

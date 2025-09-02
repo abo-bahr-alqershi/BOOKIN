@@ -41,6 +41,27 @@ class PropertiesLoaded extends PropertiesState {
   ];
 }
 
+// إضافة حالات جديدة لتفاصيل العقار
+class PropertyDetailsLoading extends PropertiesState {}
+
+class PropertyDetailsLoaded extends PropertiesState {
+  final Property property;
+  
+  const PropertyDetailsLoaded(this.property);
+  
+  @override
+  List<Object> get props => [property];
+}
+
+class PropertyDetailsError extends PropertiesState {
+  final String message;
+  
+  const PropertyDetailsError(this.message);
+  
+  @override
+  List<Object> get props => [message];
+}
+
 class PropertiesError extends PropertiesState {
   final String message;
   

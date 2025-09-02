@@ -1,6 +1,7 @@
 // lib/features/admin_properties/presentation/pages/create_property_page.dart
 
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
+import 'package:bookn_cp_app/features/admin_properties/domain/entities/property_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -23,7 +24,6 @@ class CreatePropertyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // توفير جميع الـ Blocs في مستوى أعلى
     return MultiBlocProvider(
       providers: [
         BlocProvider<PropertiesBloc>(
@@ -31,11 +31,11 @@ class CreatePropertyPage extends StatelessWidget {
         ),
         BlocProvider<PropertyTypesBloc>(
           create: (context) => GetIt.instance<PropertyTypesBloc>()
-            ..add(const LoadPropertyTypesEvent()),
+            ..add(const LoadPropertyTypesEvent(pageSize: 100)), // جلب كل الأنواع
         ),
         BlocProvider<AmenitiesBloc>(
           create: (context) => GetIt.instance<AmenitiesBloc>()
-            ..add(const LoadAmenitiesEvent()),
+            ..add(const LoadAmenitiesEvent(pageSize: 100)), // جلب كل المرافق مرة واحدة
         ),
       ],
       child: const _CreatePropertyView(),
@@ -70,7 +70,7 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
   // State
   String? _selectedPropertyTypeId;
   int _starRating = 3;
-  List<String> _selectedImages = [];
+  List<PropertyImage> _selectedImages = [];
   List<String> _selectedAmenities = [];
   int _currentStep = 0;
   
@@ -580,14 +580,14 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
           ),
           const SizedBox(height: 12),
           PropertyImageGallery(
-            images: _selectedImages,
-            onImagesChanged: (images) {
-              _safeSetState(() {
-                _selectedImages = images;
-              });
-            },
-          ),
-          
+              initialImages: _selectedImages, // تمرير الصور الحالية
+              onImagesChanged: (images) {
+                setState(() {
+                  _selectedImages = images; // تحديث قائمة الصور
+                });
+              },
+              maxImages: 10,
+            ),
           const SizedBox(height: 30),
           
           // Amenities Selector
@@ -1237,40 +1237,60 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
   //     );
   //   }
   // }
-    void _submitForm() {
-    if (!mounted) return;
-    
-    if (_formKey.currentState!.validate()) {
-      // الحصول على معرف المستخدم من AuthBloc
-      // TODO: استبدل هذا بالمعرف الحقيقي
-      const ownerId = 'admin-user-id'; // أو استخدم معرف صحيح
-      
-      // طباعة البيانات للتأكد
-      print('Creating property with:');
-      print('Name: ${_nameController.text}');
-      print('PropertyTypeId: $_selectedPropertyTypeId');
-      print('City: ${_cityController.text}');
-      print('StarRating: $_starRating');
-      print('Amenities: $_selectedAmenities');
-      
-      // إرسال البيانات
-      context.read<PropertiesBloc>().add(
-        CreatePropertyEvent(
-          name: _nameController.text.trim(),
-          address: _addressController.text.trim(),
-          propertyTypeId: _selectedPropertyTypeId!,
-          ownerId: ownerId,
-          description: _descriptionController.text.trim(),
-          latitude: double.parse(_latitudeController.text),
-          longitude: double.parse(_longitudeController.text),
-          city: _cityController.text.trim(),
-          starRating: _starRating,
-          images: _selectedImages.isEmpty ? null : _selectedImages,
-          amenityIds: _selectedAmenities.isEmpty ? null : _selectedAmenities,
-        ),
-      );
+void _submitForm() {
+  if (!mounted) return;
+  
+  if (_formKey.currentState!.validate()) {
+    // التحقق من البيانات
+    if (_selectedPropertyTypeId == null) {
+      _showErrorMessage('الرجاء اختيار نوع العقار');
+      return;
     }
+    
+    // الحصول على معرف المستخدم من AuthBloc
+    // TODO: استبدل هذا بالمعرف الحقيقي من AuthBloc
+    const ownerId = 'admin-user-id'; // يجب الحصول على المعرف الحقيقي
+    
+    // تحويل PropertyImage إلى URLs
+    final List<String> imageUrls = _selectedImages
+        .where((img) => img.url.isNotEmpty)
+        .map((img) => img.url)
+        .toList();
+    
+    // طباعة للتأكد من البيانات (للتطوير فقط)
+    debugPrint('=== Creating Property ===');
+    debugPrint('Name: ${_nameController.text}');
+    debugPrint('Type ID: $_selectedPropertyTypeId');
+    debugPrint('City: ${_cityController.text}');
+    debugPrint('Rating: $_starRating');
+    debugPrint('Images Count: ${imageUrls.length}');
+    debugPrint('Selected Amenities: $_selectedAmenities');
+    debugPrint('========================');
+    
+    // إرسال البيانات
+    context.read<PropertiesBloc>().add(
+      CreatePropertyEvent(
+        name: _nameController.text.trim(),
+        address: _addressController.text.trim(),
+        propertyTypeId: _selectedPropertyTypeId!,
+        ownerId: ownerId,
+        description: _descriptionController.text.trim(),
+        latitude: double.tryParse(_latitudeController.text) ?? 0.0,
+        longitude: double.tryParse(_longitudeController.text) ?? 0.0,
+        city: _cityController.text.trim(),
+        starRating: _starRating,
+        images: imageUrls.isEmpty ? null : imageUrls,
+        amenityIds: _selectedAmenities.isEmpty ? null : _selectedAmenities,
+        shortDescription: _descriptionController.text.length > 100 
+            ? _descriptionController.text.substring(0, 100) + '...'
+            : _descriptionController.text,
+        basePricePerNight: 0.0, // يمكنك إضافة حقل للسعر
+        currency: 'YER', // يمكنك إضافة حقل للعملة
+        isFeatured: false, // يمكنك إضافة خيار للعقارات المميزة
+      ),
+    );
   }
+}
 
   String _getPropertyTypeName() {
     if (!mounted) return 'غير محدد';

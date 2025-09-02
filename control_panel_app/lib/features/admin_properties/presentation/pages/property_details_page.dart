@@ -43,42 +43,20 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
   // Tab Controller
   late TabController _tabController;
   
-  // Mock Property Data (Replace with BLoC data)
-  final Property _property = Property(
-    id: '1',
-    ownerId: 'owner1',
-    typeId: 'resort',
-    name: 'منتجع الشاطئ الأزرق',
-    address: 'شارع الكورنيش، عدن',
-    city: 'عدن',
-    latitude: 12.7855,
-    longitude: 45.0187,
-    starRating: 5,
-    description: 'منتجع فاخر على شاطئ البحر مع إطلالات خلابة ومرافق عالمية المستوى',
-    isApproved: true,
-    createdAt: DateTime.now(),
-    ownerName: 'أحمد محمد',
-    typeName: 'منتجع',
-    distanceKm: 5.2,
-    images: [],
-    amenities: [],
-    policies: [],
-    stats: PropertyStats(
-      totalBookings: 156,
-      activeBookings: 12,
-      averageRating: 4.8,
-      reviewCount: 89,
-      occupancyRate: 78.5,
-      monthlyRevenue: 125000,
-    ),
-  );
-  
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _setupScrollListener();
     _tabController = TabController(length: 4, vsync: this);
+    
+    // جلب تفاصيل العقار من الـ Backend
+    context.read<PropertiesBloc>().add(
+      LoadPropertyDetailsEvent(
+        propertyId: widget.propertyId,
+        includeUnits: true,
+      ),
+    );
   }
   
   void _initializeAnimations() {
@@ -138,45 +116,197 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
-      body: Stack(
+      body: BlocBuilder<PropertiesBloc, PropertiesState>(
+        builder: (context, state) {
+          if (state is PropertyDetailsLoading) {
+            return _buildLoadingState();
+          }
+          
+          if (state is PropertyDetailsError) {
+            return _buildErrorState(state.message);
+          }
+          
+          if (state is PropertyDetailsLoaded) {
+            return _buildLoadedState(state.property);
+          }
+          
+          return _buildInitialState();
+        },
+      ),
+    );
+  }
+  
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Animated Background
-          _buildAnimatedBackground(),
-          
-          // Main Content
-          CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              // Parallax Header
-              _buildParallaxHeader(),
-              
-              // Property Info
-              SliverToBoxAdapter(
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: _buildPropertyInfo(),
-                  ),
-                ),
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+              shape: BoxShape.circle,
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(12),
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
               ),
-              
-              // Stats Cards
-              SliverToBoxAdapter(
-                child: _buildStatsSection(),
-              ),
-              
-              // Tabs Content
-              SliverToBoxAdapter(
-                child: _buildTabsContent(),
-              ),
-            ],
+            ),
           ),
-          
-          // Floating Action Buttons
-          _buildFloatingActions(),
+          const SizedBox(height: 20),
+          Text(
+            'جاري تحميل تفاصيل العقار...',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textMuted,
+            ),
+          ),
         ],
       ),
+    );
+  }
+  
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppTheme.error.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.error_outline_rounded,
+              color: AppTheme.error,
+              size: 40,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'حدث خطأ في تحميل البيانات',
+            style: AppTextStyles.heading3.copyWith(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              message,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textMuted,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: () {
+              context.read<PropertiesBloc>().add(
+                LoadPropertyDetailsEvent(
+                  propertyId: widget.propertyId,
+                  includeUnits: true,
+                ),
+              );
+            },
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('إعادة المحاولة'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryBlue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildInitialState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.business_rounded,
+            color: AppTheme.textMuted,
+            size: 80,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'لا توجد بيانات للعرض',
+            style: AppTextStyles.heading3.copyWith(
+              color: AppTheme.textWhite,
+            ),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_rounded),
+            label: const Text('العودة'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.darkCard,
+              foregroundColor: AppTheme.textWhite,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildLoadedState(Property property) {
+    return Stack(
+      children: [
+        // Animated Background
+        _buildAnimatedBackground(),
+        
+        // Main Content
+        CustomScrollView(
+          controller: _scrollController,
+          slivers: [
+            // Parallax Header
+            _buildParallaxHeader(property),
+            
+            // Property Info
+            SliverToBoxAdapter(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: _buildPropertyInfo(property),
+                ),
+              ),
+            ),
+            
+            // Stats Cards
+            if (property.stats != null)
+              SliverToBoxAdapter(
+                child: _buildStatsSection(property),
+              ),
+            
+            // Tabs Content
+            SliverToBoxAdapter(
+              child: _buildTabsContent(property),
+            ),
+          ],
+        ),
+        
+        // Floating Action Buttons
+        _buildFloatingActions(property),
+      ],
     );
   }
   
@@ -201,7 +331,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
     );
   }
   
-  Widget _buildParallaxHeader() {
+  Widget _buildParallaxHeader(Property property) {
     return SliverAppBar(
       expandedHeight: 300,
       pinned: true,
@@ -233,7 +363,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
             borderRadius: BorderRadius.circular(12),
           ),
           child: IconButton(
-            icon: Icon(Icons.edit_rounded, size: 20,color: AppTheme.glowWhite),
+            icon: Icon(Icons.edit_rounded, size: 20, color: AppTheme.glowWhite),
             onPressed: () => context.push('/admin/properties/${widget.propertyId}/edit'),
           ),
         ),
@@ -256,10 +386,19 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                     ],
                   ),
                 ),
-                child: _property.images.isNotEmpty
+                child: property.images.isNotEmpty
                     ? Image.network(
-                        _property.images.first.url,
+                        property.images.first.url,
                         fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Center(
+                            child: Icon(
+                              Icons.business_rounded,
+                              size: 80,
+                              color: AppTheme.textWhite.withValues(alpha: 0.5),
+                            ),
+                          );
+                        },
                       )
                     : Center(
                         child: Icon(
@@ -298,7 +437,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                   ShaderMask(
                     shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
                     child: Text(
-                      _property.name,
+                      property.name,
                       style: AppTextStyles.heading1.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -315,7 +454,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        _property.formattedAddress,
+                        property.formattedAddress,
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: AppTheme.textMuted,
                         ),
@@ -331,7 +470,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
     );
   }
   
-  Widget _buildPropertyInfo() {
+  Widget _buildPropertyInfo(Property property) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -344,7 +483,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  gradient: _property.isApproved
+                  gradient: property.isApproved
                       ? LinearGradient(
                           colors: [
                             AppTheme.success.withValues(alpha: 0.2),
@@ -359,7 +498,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                         ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: _property.isApproved
+                    color: property.isApproved
                         ? AppTheme.success.withValues(alpha: 0.5)
                         : AppTheme.warning.withValues(alpha: 0.5),
                     width: 1,
@@ -368,19 +507,19 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                 child: Row(
                   children: [
                     Icon(
-                      _property.isApproved
+                      property.isApproved
                           ? Icons.check_circle_rounded
                           : Icons.pending_rounded,
                       size: 16,
-                      color: _property.isApproved
+                      color: property.isApproved
                           ? AppTheme.success
                           : AppTheme.warning,
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      _property.isApproved ? 'معتمد' : 'قيد المراجعة',
+                      property.isApproved ? 'معتمد' : 'قيد المراجعة',
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: _property.isApproved
+                        color: property.isApproved
                             ? AppTheme.success
                             : AppTheme.warning,
                         fontWeight: FontWeight.w600,
@@ -393,7 +532,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
               Row(
                 children: List.generate(5, (index) {
                   return Icon(
-                    index < _property.starRating
+                    index < property.starRating
                         ? Icons.star_rounded
                         : Icons.star_outline_rounded,
                     size: 20,
@@ -416,7 +555,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
           ),
           const SizedBox(height: 8),
           Text(
-            _property.description,
+            property.description,
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppTheme.textLight,
               height: 1.5,
@@ -452,7 +591,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                   ),
                   child: Center(
                     child: Text(
-                      _property.ownerName[0],
+                      property.ownerName.isNotEmpty ? property.ownerName[0] : 'U',
                       style: AppTextStyles.heading3.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -472,7 +611,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                         ),
                       ),
                       Text(
-                        _property.ownerName,
+                        property.ownerName,
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: AppTheme.textWhite,
                           fontWeight: FontWeight.w600,
@@ -488,7 +627,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    _property.typeName,
+                    property.typeName,
                     style: AppTextStyles.caption.copyWith(
                       color: AppTheme.primaryBlue,
                       fontWeight: FontWeight.w600,
@@ -503,8 +642,8 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
     );
   }
   
-  Widget _buildStatsSection() {
-    final stats = _property.stats;
+  Widget _buildStatsSection(Property property) {
+    final stats = property.stats;
     if (stats == null) return const SizedBox.shrink();
     
     return Container(
@@ -600,7 +739,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
     );
   }
   
-  Widget _buildTabsContent() {
+  Widget _buildTabsContent(Property property) {
     return Container(
       height: 500,
       margin: const EdgeInsets.all(20),
@@ -651,22 +790,23 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
               children: [
                 // Images Tab
                 PropertyImageGallery(
-                  images: const ['image1', 'image2', 'image3'],
+                  propertyId: property.id,
+                  // images: property.images.map((img) => img.url).toList(),
                   onImagesChanged: (_) {},
                   isReadOnly: true,
                 ),
                 
                 // Map Tab
                 PropertyMapView(
-                  initialLocation: (_property.latitude ?? 0, _property.longitude ?? 0),
+                  initialLocation: (property.latitude ?? 0, property.longitude ?? 0),
                   isReadOnly: true,
                 ),
                 
                 // Amenities Tab
-                _buildAmenitiesTab(),
+                _buildAmenitiesTab(property),
                 
                 // Policies Tab
-                _buildPoliciesTab(),
+                _buildPoliciesTab(property),
               ],
             ),
           ),
@@ -675,7 +815,29 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
     );
   }
   
-  Widget _buildAmenitiesTab() {
+  Widget _buildAmenitiesTab(Property property) {
+    if (property.amenities.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.apartment_rounded,
+              color: AppTheme.textMuted.withValues(alpha: 0.5),
+              size: 48,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'لا توجد مرافق مضافة',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textMuted,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -684,20 +846,9 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
         mainAxisSpacing: 12,
         childAspectRatio: 3,
       ),
-      itemCount: 8,
+      itemCount: property.amenities.length,
       itemBuilder: (context, index) {
-        final amenities = [
-          {'icon': Icons.wifi_rounded, 'name': 'واي فاي'},
-          {'icon': Icons.pool_rounded, 'name': 'مسبح'},
-          {'icon': Icons.local_parking_rounded, 'name': 'موقف سيارات'},
-          {'icon': Icons.restaurant_rounded, 'name': 'مطعم'},
-          {'icon': Icons.fitness_center_rounded, 'name': 'صالة رياضية'},
-          {'icon': Icons.spa_rounded, 'name': 'سبا'},
-          {'icon': Icons.beach_access_rounded, 'name': 'شاطئ خاص'},
-          {'icon': Icons.room_service_rounded, 'name': 'خدمة الغرف'},
-        ];
-        
-        final amenity = amenities[index];
+        final amenity = property.amenities[index];
         
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -717,15 +868,18 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
           child: Row(
             children: [
               Icon(
-                amenity['icon'] as IconData,
+                _getAmenityIcon(amenity.icon ?? 'wifi'),
                 color: AppTheme.primaryBlue,
                 size: 20,
               ),
               const SizedBox(width: 8),
-              Text(
-                amenity['name'] as String,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppTheme.textWhite,
+              Expanded(
+                child: Text(
+                  amenity.name,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppTheme.textWhite,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -735,36 +889,84 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
     );
   }
   
-  Widget _buildPoliciesTab() {
-    return ListView(
+  IconData _getAmenityIcon(String iconName) {
+    final iconMap = {
+      'wifi': Icons.wifi_rounded,
+      'pool': Icons.pool_rounded,
+      'parking': Icons.local_parking_rounded,
+      'restaurant': Icons.restaurant_rounded,
+      'gym': Icons.fitness_center_rounded,
+      'spa': Icons.spa_rounded,
+      'beach': Icons.beach_access_rounded,
+      'room_service': Icons.room_service_rounded,
+    };
+    
+    return iconMap[iconName] ?? Icons.check_circle_rounded;
+  }
+  
+  Widget _buildPoliciesTab(Property property) {
+    if (property.policies.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.policy_rounded,
+              color: AppTheme.textMuted.withValues(alpha: 0.5),
+              size: 48,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'لا توجد سياسات مضافة',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textMuted,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    return ListView.builder(
       padding: const EdgeInsets.all(16),
-      children: [
-        _buildPolicyCard(
-          icon: Icons.cancel_rounded,
-          title: 'سياسة الإلغاء',
-          description: 'إلغاء مجاني حتى 48 ساعة قبل الوصول',
-          color: AppTheme.warning,
-        ),
-        _buildPolicyCard(
-          icon: Icons.login_rounded,
-          title: 'تسجيل الدخول',
-          description: 'من الساعة 2:00 مساءً',
-          color: AppTheme.success,
-        ),
-        _buildPolicyCard(
-          icon: Icons.logout_rounded,
-          title: 'تسجيل الخروج',
-          description: 'حتى الساعة 12:00 ظهراً',
-          color: AppTheme.info,
-        ),
-        _buildPolicyCard(
-          icon: Icons.pets_rounded,
-          title: 'الحيوانات الأليفة',
-          description: 'غير مسموح بالحيوانات الأليفة',
-          color: AppTheme.error,
-        ),
-      ],
+      itemCount: property.policies.length,
+      itemBuilder: (context, index) {
+        final policy = property.policies[index];
+        
+        return _buildPolicyCard(
+          icon: _getPolicyIcon(policy.policyType.name),
+          title: policy.policyTypeLabel,
+          description: policy.description,
+          color: _getPolicyColor(policy.policyType.name),
+        );
+      },
     );
+  }
+  
+  IconData _getPolicyIcon(String type) {
+    final iconMap = {
+      'cancellation': Icons.cancel_rounded,
+      'check_in': Icons.login_rounded,
+      'check_out': Icons.logout_rounded,
+      'pets': Icons.pets_rounded,
+      'smoking': Icons.smoke_free_rounded,
+      'payment': Icons.payment_rounded,
+    };
+    
+    return iconMap[type] ?? Icons.info_rounded;
+  }
+  
+  Color _getPolicyColor(String type) {
+    final colorMap = {
+      'cancellation': AppTheme.warning,
+      'check_in': AppTheme.success,
+      'check_out': AppTheme.info,
+      'pets': AppTheme.error,
+      'smoking': AppTheme.error,
+      'payment': AppTheme.primaryBlue,
+    };
+    
+    return colorMap[type] ?? AppTheme.primaryBlue;
   }
   
   Widget _buildPolicyCard({
@@ -826,7 +1028,11 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
     );
   }
   
-  Widget _buildFloatingActions() {
+  Widget _buildFloatingActions(Property property) {
+    if (property.isApproved) {
+      return const SizedBox.shrink();
+    }
+    
     return Positioned(
       bottom: 20,
       right: 20,
@@ -836,6 +1042,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
             icon: Icons.check_circle_rounded,
             color: AppTheme.success,
             onTap: () {
+              HapticFeedback.mediumImpact();
               context.read<PropertiesBloc>().add(
                 ApprovePropertyEvent(widget.propertyId),
               );
@@ -846,6 +1053,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
             icon: Icons.cancel_rounded,
             color: AppTheme.error,
             onTap: () {
+              HapticFeedback.mediumImpact();
               context.read<PropertiesBloc>().add(
                 RejectPropertyEvent(widget.propertyId),
               );
@@ -862,10 +1070,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
     required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        onTap();
-      },
+      onTap: onTap,
       child: Container(
         width: 56,
         height: 56,

@@ -1,3 +1,17 @@
+// injection_container.dart
+
+import 'package:bookn_cp_app/features/admin_properties/data/datasources/property_images_remote_datasource.dart';
+import 'package:bookn_cp_app/features/admin_properties/data/repositories/property_images_repository_impl.dart';
+import 'package:bookn_cp_app/features/admin_properties/domain/repositories/property_images_repository.dart';
+import 'package:bookn_cp_app/features/admin_properties/domain/usecases/property_images/delete_multiple_images_usecase.dart';
+import 'package:bookn_cp_app/features/admin_properties/domain/usecases/property_images/delete_property_image_usecase.dart';
+import 'package:bookn_cp_app/features/admin_properties/domain/usecases/property_images/get_property_images_usecase.dart';
+import 'package:bookn_cp_app/features/admin_properties/domain/usecases/property_images/reorder_images_usecase.dart';
+import 'package:bookn_cp_app/features/admin_properties/domain/usecases/property_images/set_primary_image_usecase.dart';
+import 'package:bookn_cp_app/features/admin_properties/domain/usecases/property_images/update_property_image_usecase.dart';
+import 'package:bookn_cp_app/features/admin_properties/domain/usecases/property_images/upload_multiple_images_usecase.dart';
+import 'package:bookn_cp_app/features/admin_properties/domain/usecases/property_images/upload_property_image_usecase.dart'; // إضافة هذا الاستيراد
+import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/property_images/property_images_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
@@ -220,6 +234,7 @@ import 'features/admin_properties/domain/usecases/properties/update_property_use
 import 'features/admin_properties/domain/usecases/properties/delete_property_usecase.dart' as ap_uc_prop4;
 import 'features/admin_properties/domain/usecases/properties/approve_property_usecase.dart' as ap_uc_prop5;
 import 'features/admin_properties/domain/usecases/properties/reject_property_usecase.dart' as ap_uc_prop6;
+import 'features/admin_properties/domain/usecases/properties/get_property_details_usecase.dart' as ap_uc_prop7;
 import 'features/admin_properties/domain/usecases/amenities/get_amenities_usecase.dart' as ap_uc_am1;
 import 'features/admin_properties/domain/usecases/amenities/create_amenity_usecase.dart' as ap_uc_am2;
 import 'features/admin_properties/domain/usecases/amenities/update_amenity_usecase.dart' as ap_uc_am3;
@@ -533,6 +548,7 @@ void _initAdminProperties() {
         deleteProperty: sl<ap_uc_prop4.DeletePropertyUseCase>(),
         approveProperty: sl<ap_uc_prop5.ApprovePropertyUseCase>(),
         rejectProperty: sl<ap_uc_prop6.RejectPropertyUseCase>(),
+        getPropertyDetails: sl<ap_uc_prop7.GetPropertyDetailsUseCase>(),
       ));
   sl.registerFactory(() => ap_am_bloc.AmenitiesBloc(
         getAmenities: sl<ap_uc_am1.GetAmenitiesUseCase>(),
@@ -554,6 +570,30 @@ void _initAdminProperties() {
         deletePropertyType: sl<ap_uc_pt4.DeletePropertyTypeUseCase>(),
       ));
 
+  // Property Images BLoC
+  sl.registerFactory(
+    () => PropertyImagesBloc(
+      uploadPropertyImage: sl(),
+      uploadMultipleImages: sl(),
+      getPropertyImages: sl(),
+      updatePropertyImage: sl(),
+      deletePropertyImage: sl(),
+      deleteMultipleImages: sl(),
+      reorderImages: sl(),
+      setPrimaryImage: sl(),
+    ),
+  );
+
+  // Property Images Use Cases - إضافة UploadPropertyImageUseCase المفقود
+  sl.registerLazySingleton(() => UploadPropertyImageUseCase(sl())); // هذا السطر كان مفقوداً
+  sl.registerLazySingleton(() => GetPropertyImagesUseCase(sl()));
+  sl.registerLazySingleton(() => UpdatePropertyImageUseCase(sl()));
+  sl.registerLazySingleton(() => DeletePropertyImageUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteMultipleImagesUseCase(sl()));
+  sl.registerLazySingleton(() => ReorderImagesUseCase(sl()));
+  sl.registerLazySingleton(() => SetPrimaryImageUseCase(sl()));
+  sl.registerLazySingleton(() => UploadMultipleImagesUseCase(sl()));
+  
   // Use cases - properties
   sl.registerLazySingleton<ap_uc_prop1.GetAllPropertiesUseCase>(() => ap_uc_prop1.GetAllPropertiesUseCase(sl()));
   sl.registerLazySingleton<ap_uc_prop2.CreatePropertyUseCase>(() => ap_uc_prop2.CreatePropertyUseCase(sl()));
@@ -561,6 +601,7 @@ void _initAdminProperties() {
   sl.registerLazySingleton<ap_uc_prop4.DeletePropertyUseCase>(() => ap_uc_prop4.DeletePropertyUseCase(sl()));
   sl.registerLazySingleton<ap_uc_prop5.ApprovePropertyUseCase>(() => ap_uc_prop5.ApprovePropertyUseCase(sl()));
   sl.registerLazySingleton<ap_uc_prop6.RejectPropertyUseCase>(() => ap_uc_prop6.RejectPropertyUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_prop7.GetPropertyDetailsUseCase>(() => ap_uc_prop7.GetPropertyDetailsUseCase(sl()));
 
   // Use cases - amenities
   sl.registerLazySingleton<ap_uc_am1.GetAmenitiesUseCase>(() => ap_uc_am1.GetAmenitiesUseCase(sl()));
@@ -599,6 +640,19 @@ void _initAdminProperties() {
         remoteDataSource: sl(),
         networkInfo: sl(),
       ));
+      
+  // Property Images Repository
+  sl.registerLazySingleton<PropertyImagesRepository>(
+    () => PropertyImagesRepositoryImpl(
+      remoteDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+
+  // Property Images Data Sources
+  sl.registerLazySingleton<PropertyImagesRemoteDataSource>(
+    () => PropertyImagesRemoteDataSourceImpl(apiClient: sl()),
+  );
 
   // Data sources
   sl.registerLazySingleton<ap_ds_prop_remote.PropertiesRemoteDataSource>(() => ap_ds_prop_remote.PropertiesRemoteDataSourceImpl(apiClient: sl()));

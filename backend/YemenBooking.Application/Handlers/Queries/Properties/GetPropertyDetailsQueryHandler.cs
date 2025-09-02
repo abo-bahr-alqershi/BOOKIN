@@ -58,6 +58,8 @@ namespace YemenBooking.Application.Handlers.Queries.Properties
                     .AsNoTracking()
                     .Include(p => p.PropertyType)
                     .Include(p => p.Owner)
+                    .Include(p => p.Policies)
+                    .Include(p => p.Images.Where(i => !i.IsDeleted))
                     .Include(p => p.Amenities).ThenInclude(pa => pa.PropertyTypeAmenity).ThenInclude(pta => pta.Amenity);
 
 
@@ -93,6 +95,25 @@ namespace YemenBooking.Application.Handlers.Queries.Properties
                     CreatedAt = property.CreatedAt,
                     OwnerName = property.Owner.Name,
                     TypeName = property.PropertyType.Name,
+                    Policies = property.Policies?.Select(pp => new PropertyPolicyDto
+                    {
+                        Id = pp.Id,
+                        PolicyType = pp.Type.ToString(),
+                        Description = pp.Description,
+                        IsActive = pp.IsActive,
+                        Type = pp.Type.ToString(),
+                        Rules = pp.Rules != null ? System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(pp.Rules) : new Dictionary<string, object>()
+                    }).ToList() ?? new List<PropertyPolicyDto>(),
+                    Images = property.Images.Select(i => new PropertyImageDto
+                    {
+                        Id = i.Id,
+                        Url = i.Url,
+                        Name = i.Name,
+                        SizeBytes = i.SizeBytes,
+                        IsMain = i.IsMain,
+                        Type = i.Type,
+                        AltText = i.AltText
+                    }).ToList(),
                     Units = request.IncludeUnits && property.Units != null
                         ? property.Units.Select(u => new YemenBooking.Application.DTOs.Units.UnitDetailsDto
                         {

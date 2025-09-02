@@ -6,6 +6,7 @@ import 'package:equatable/equatable.dart';
 import 'package:bookn_cp_app/core/models/paginated_result.dart';
 import '../../../domain/entities/property.dart';
 import '../../../domain/usecases/properties/get_all_properties_usecase.dart';
+import '../../../domain/usecases/properties/get_property_details_usecase.dart';
 import '../../../domain/usecases/properties/create_property_usecase.dart';
 import '../../../domain/usecases/properties/update_property_usecase.dart';
 import '../../../domain/usecases/properties/delete_property_usecase.dart';
@@ -17,6 +18,7 @@ part 'properties_state.dart';
 
 class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
   final GetAllPropertiesUseCase getAllProperties;
+  final GetPropertyDetailsUseCase getPropertyDetails;
   final CreatePropertyUseCase createProperty;
   final UpdatePropertyUseCase updateProperty;
   final DeletePropertyUseCase deleteProperty;
@@ -25,6 +27,7 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
   
   PropertiesBloc({
     required this.getAllProperties,
+    required this.getPropertyDetails,
     required this.createProperty,
     required this.updateProperty,
     required this.deleteProperty,
@@ -32,6 +35,7 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
     required this.rejectProperty,
   }) : super(PropertiesInitial()) {
     on<LoadPropertiesEvent>(_onLoadProperties);
+    on<LoadPropertyDetailsEvent>(_onLoadPropertyDetails);
     on<CreatePropertyEvent>(_onCreateProperty);
     on<UpdatePropertyEvent>(_onUpdateProperty);
     on<DeletePropertyEvent>(_onDeleteProperty);
@@ -70,36 +74,55 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
     );
   }
   
-Future<void> _onCreateProperty(
-  CreatePropertyEvent event,
-  Emitter<PropertiesState> emit,
-) async {
-  emit(PropertyCreating());
+  Future<void> _onLoadPropertyDetails(
+    LoadPropertyDetailsEvent event,
+    Emitter<PropertiesState> emit,
+  ) async {
+    emit(PropertyDetailsLoading());
+    
+    final result = await getPropertyDetails(
+      GetPropertyDetailsParams(
+        propertyId: event.propertyId,
+        includeUnits: event.includeUnits,
+      ),
+    );
+    
+    result.fold(
+      (failure) => emit(PropertyDetailsError(failure.message)),
+      (property) => emit(PropertyDetailsLoaded(property)),
+    );
+  }
   
-  final result = await createProperty(
-    CreatePropertyParams(
-      name: event.name,
-      address: event.address,
-      propertyTypeId: event.propertyTypeId,
-      ownerId: event.ownerId,
-      description: event.description,
-      latitude: event.latitude,
-      longitude: event.longitude,
-      city: event.city,
-      starRating: event.starRating,
-      images: event.images,
-      amenityIds: event.amenityIds, // أضف هذا السطر
-    ),
-  );
-  
-  result.fold(
-    (failure) => emit(PropertiesError(failure.message)),
-    (propertyId) {
-      emit(PropertyCreated(propertyId));
-      add(LoadPropertiesEvent());
-    },
-  );
-}
+  Future<void> _onCreateProperty(
+    CreatePropertyEvent event,
+    Emitter<PropertiesState> emit,
+  ) async {
+    emit(PropertyCreating());
+    
+    final result = await createProperty(
+      CreatePropertyParams(
+        name: event.name,
+        address: event.address,
+        propertyTypeId: event.propertyTypeId,
+        ownerId: event.ownerId,
+        description: event.description,
+        latitude: event.latitude,
+        longitude: event.longitude,
+        city: event.city,
+        starRating: event.starRating,
+        images: event.images,
+        amenityIds: event.amenityIds,
+      ),
+    );
+    
+    result.fold(
+      (failure) => emit(PropertiesError(failure.message)),
+      (propertyId) {
+        emit(PropertyCreated(propertyId));
+        add(LoadPropertiesEvent());
+      },
+    );
+  }
   
   Future<void> _onUpdateProperty(
     UpdatePropertyEvent event,
@@ -157,7 +180,7 @@ Future<void> _onCreateProperty(
       (failure) => emit(PropertiesError(failure.message)),
       (_) {
         emit(PropertyStatusUpdated(event.propertyId, true));
-        add(LoadPropertiesEvent());
+        add(LoadPropertyDetailsEvent(propertyId: event.propertyId));
       },
     );
   }
@@ -172,7 +195,7 @@ Future<void> _onCreateProperty(
       (failure) => emit(PropertiesError(failure.message)),
       (_) {
         emit(PropertyStatusUpdated(event.propertyId, false));
-        add(LoadPropertiesEvent());
+        add(LoadPropertyDetailsEvent(propertyId: event.propertyId));
       },
     );
   }

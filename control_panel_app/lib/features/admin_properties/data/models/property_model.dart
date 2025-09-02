@@ -1,5 +1,6 @@
 // lib/features/admin_properties/data/models/property_model.dart
 
+import 'package:bookn_cp_app/core/constants/api_constants.dart';
 import 'package:bookn_cp_app/features/admin_properties/domain/entities/amenity.dart';
 import 'package:bookn_cp_app/features/admin_properties/domain/entities/policy.dart';
 import 'package:bookn_cp_app/features/admin_properties/domain/entities/property.dart';
@@ -76,7 +77,7 @@ class PropertyModel extends Property {
       // إذا كان URL نسبي، أضف البروتوكول والدومين
       if (url.startsWith('/')) {
         // استبدل هذا بـ base URL الخاص بك
-        return 'https://your-api-domain.com$url';
+        return '${ApiConstants.imageBaseUrl}$url';
       }
       // إذا كان مجرد اسم ملف أو placeholder
       return 'https://via.placeholder.com/400x300?text=$url';

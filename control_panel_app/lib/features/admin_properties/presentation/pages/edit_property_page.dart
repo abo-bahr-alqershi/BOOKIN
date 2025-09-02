@@ -11,9 +11,13 @@ import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import '../bloc/properties/properties_bloc.dart';
 import '../bloc/property_types/property_types_bloc.dart';
 import '../bloc/amenities/amenities_bloc.dart';
+import '../bloc/property_images/property_images_bloc.dart'; // إضافة استيراد
 import '../widgets/property_image_gallery.dart';
 import '../widgets/amenity_selector_widget.dart';
 import 'package:bookn_cp_app/injection_container.dart' as di;
+import '../../domain/entities/property.dart';
+import '../../domain/entities/property_type.dart';
+import '../../domain/entities/property_image.dart'; // إضافة استيراد
 
 class EditPropertyPage extends StatelessWidget {
   final String propertyId;
@@ -25,8 +29,25 @@ class EditPropertyPage extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => di.sl<AmenitiesBloc>()..add(const LoadAmenitiesEvent()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => di.sl<PropertiesBloc>()
+            ..add(LoadPropertyDetailsEvent(propertyId: propertyId)),
+        ),
+        BlocProvider(
+          create: (_) => di.sl<PropertyTypesBloc>()
+            ..add(const LoadPropertyTypesEvent(pageSize: 100)),
+        ),
+        BlocProvider(
+          create: (_) => di.sl<AmenitiesBloc>()
+            ..add(const LoadAmenitiesEvent()),
+        ),
+        // إضافة PropertyImagesBloc
+        BlocProvider(
+          create: (_) => di.sl<PropertyImagesBloc>(),
+        ),
+      ],
       child: _EditPropertyPageContent(propertyId: propertyId),
     );
   }
@@ -65,17 +86,18 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   // State
   String? _selectedPropertyTypeId;
   int _starRating = 3;
-  List<String> _selectedImages = [];
+  List<PropertyImage> _selectedImages = []; // تغيير نوع البيانات
   List<String> _selectedAmenities = [];
-  bool _isLoading = true;
   bool _isFeatured = false;
   String _currency = 'YER';
+  Property? _currentProperty;
+  bool _isDataLoaded = false;
+  bool _isNavigating = false;
   
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
-    _loadPropertyData();
   }
   
   void _initializeAnimations() {
@@ -108,33 +130,27 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
     _animationController.forward();
   }
   
-  void _loadPropertyData() async {
-    // TODO: Load actual property data from API
-    await Future.delayed(const Duration(seconds: 1));
-    
-    setState(() {
-      _isLoading = false;
-      // Set form data from loaded property with valid image URLs
-      _nameController.text = 'منتجع الشاطئ الأزرق';
-      _shortDescriptionController.text = 'منتجع فاخر على البحر';
-      _addressController.text = 'شارع الكورنيش';
-      _cityController.text = 'عدن';
-      _descriptionController.text = 'منتجع فاخر على شاطئ البحر مع جميع وسائل الراحة والترفيه';
-      _latitudeController.text = '12.7855';
-      _longitudeController.text = '45.0187';
-      _basePriceController.text = '250000';
-      _selectedPropertyTypeId = 'resort';
-      _starRating = 5;
-      _isFeatured = true;
-      _currency = 'YER';
-      // استخدام صور حقيقية من placeholder service
-      _selectedImages = [
-        'https://picsum.photos/seed/property1/400/300',
-        'https://picsum.photos/seed/property2/400/300',
-        'https://picsum.photos/seed/property3/400/300',
-      ];
-      _selectedAmenities = ['wifi', 'parking', 'pool'];
-    });
+  void _loadPropertyDataToForm(Property property) {
+    if (!_isDataLoaded) {
+      setState(() {
+        _currentProperty = property;
+        _nameController.text = property.name;
+        _shortDescriptionController.text = property.shortDescription ?? '';
+        _addressController.text = property.address;
+        _cityController.text = property.city;
+        _descriptionController.text = property.description;
+        _latitudeController.text = property.latitude?.toString() ?? '';
+        _longitudeController.text = property.longitude?.toString() ?? '';
+        _basePriceController.text = property.basePricePerNight.toString();
+        _selectedPropertyTypeId = property.typeId;
+        _starRating = property.starRating;
+        _isFeatured = property.isFeatured;
+        _currency = property.currency;
+        _selectedImages = property.images; // تخزين كائنات PropertyImage
+        _selectedAmenities = property.amenities.map((amenity) => amenity.id).toList();
+        _isDataLoaded = true;
+      });
+    }
   }
   
   @override
@@ -152,41 +168,109 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
     super.dispose();
   }
   
+  void _showSnackBar(String message, {Color? backgroundColor, bool isError = false}) {
+    if (!mounted) return;
+    
+    Future.microtask(() {
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: backgroundColor ?? (isError ? AppTheme.error : AppTheme.success),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    });
+  }
+  
+  void _navigateBack() {
+    if (!_isNavigating && mounted) {
+      _isNavigating = true;
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          context.pop();
+        }
+      });
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      body: Stack(
-        children: [
-          // Animated Background
-          _buildAnimatedBackground(),
-          
-          // Main Content
-          SafeArea(
-            child: Column(
-              children: [
-                // Header
-                _buildHeader(),
-                
-                // Form Content
-                Expanded(
-                  child: _isLoading
-                      ? _buildLoadingState()
-                      : FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: SlideTransition(
-                            position: _slideAnimation,
-                            child: _buildFormContent(),
-                          ),
-                        ),
-                ),
-                
-                // Action Buttons
-                if (!_isLoading) _buildActionButtons(),
-              ],
+    return WillPopScope(
+      onWillPop: () async {
+        return !_isNavigating;
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.darkBackground,
+        body: Stack(
+          children: [
+            _buildAnimatedBackground(),
+            
+            SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(),
+                  
+                  Expanded(
+                    child: BlocConsumer<PropertiesBloc, PropertiesState>(
+                      listenWhen: (previous, current) {
+                        return !_isNavigating;
+                      },
+                      listener: (context, state) {
+                        if (state is PropertyDetailsLoaded) {
+                          _loadPropertyDataToForm(state.property);
+                        } else if (state is PropertyDetailsError) {
+                          _showSnackBar('خطأ في تحميل البيانات: ${state.message}', isError: true);
+                        } else if (state is PropertyUpdated) {
+                          _showSnackBar('تم حفظ التغييرات بنجاح');
+                          _navigateBack();
+                        } else if (state is PropertyDeleted) {
+                          _showSnackBar('تم حذف العقار بنجاح');
+                          _navigateBack();
+                        } else if (state is PropertiesError) {
+                          _showSnackBar('خطأ: ${state.message}', isError: true);
+                        }
+                      },
+                      builder: (context, state) {
+                        if (state is PropertyDetailsLoading) {
+                          return _buildLoadingState();
+                        } else if (state is PropertyDetailsError) {
+                          return _buildErrorState(state.message);
+                        } else if (state is PropertyDetailsLoaded) {
+                          return FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: SlideTransition(
+                              position: _slideAnimation,
+                              child: _buildFormContent(),
+                            ),
+                          );
+                        } else if (state is PropertyUpdating) {
+                          return _buildUpdatingState();
+                        } else {
+                          return _buildLoadingState();
+                        }
+                      },
+                    ),
+                  ),
+                  
+                  BlocBuilder<PropertiesBloc, PropertiesState>(
+                    builder: (context, state) {
+                      if (state is PropertyDetailsLoaded || state is PropertyUpdating) {
+                        return _buildActionButtons(state is PropertyUpdating);
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -226,9 +310,8 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ),
       child: Row(
         children: [
-          // Back Button
           GestureDetector(
-            onTap: () => context.pop(),
+            onTap: _isNavigating ? null : () => _navigateBack(),
             child: Container(
               width: 40,
               height: 40,
@@ -255,7 +338,6 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
           
           const SizedBox(width: 16),
           
-          // Title
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,19 +353,28 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  'تعديل بيانات العقار #${widget.propertyId}',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppTheme.textMuted,
-                  ),
+                BlocBuilder<PropertiesBloc, PropertiesState>(
+                  builder: (context, state) {
+                    String propertyName = 'جاري التحميل...';
+                    if (state is PropertyDetailsLoaded) {
+                      propertyName = state.property.name;
+                    }
+                    return Text(
+                      propertyName,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppTheme.textMuted,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    );
+                  },
                 ),
               ],
             ),
           ),
           
-          // Delete Button
           GestureDetector(
-            onTap: _showDeleteConfirmation,
+            onTap: _isNavigating ? null : _showDeleteConfirmation,
             child: Container(
               width: 40,
               height: 40,
@@ -308,44 +399,6 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
             ),
           ),
         ],
-      ),
-    );
-  }
-  
-  Widget _buildLoadingState() {
-    return AnimatedBuilder(
-      animation: _shimmerController,
-      builder: (context, child) {
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: List.generate(5, (index) => _buildShimmerBox()),
-          ),
-        );
-      },
-    );
-  }
-  
-  Widget _buildShimmerBox() {
-    return Container(
-      height: 60,
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.darkCard.withOpacity(0.3),
-            AppTheme.darkCard.withOpacity(0.5),
-            AppTheme.darkCard.withOpacity(0.3),
-          ],
-          stops: [
-            0.0,
-            _shimmerController.value,
-            1.0,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
       ),
     );
   }
@@ -475,7 +528,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                     controller: _latitudeController,
                     label: 'خط العرض',
                     icon: Icons.my_location_rounded,
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -484,7 +537,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                     controller: _longitudeController,
                     label: 'خط الطول',
                     icon: Icons.my_location_rounded,
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   ),
                 ),
               ],
@@ -495,16 +548,18 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
             
             const SizedBox(height: 30),
             
-            // Images Section
+            // Images Section - استخدام المكون الجديد
             _buildSectionTitle('صور العقار'),
             const SizedBox(height: 16),
             PropertyImageGallery(
-              images: _selectedImages,
+              propertyId: widget.propertyId, // تمرير propertyId
+              initialImages: _selectedImages, // تمرير الصور الحالية
               onImagesChanged: (images) {
                 setState(() {
-                  _selectedImages = images;
+                  _selectedImages = images; // تحديث قائمة الصور
                 });
               },
+              maxImages: 10,
             ),
             
             const SizedBox(height: 30),
@@ -521,7 +576,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
               },
             ),
             
-            const SizedBox(height: 100), // Space for bottom buttons
+            const SizedBox(height: 100),
           ],
         ),
       ),
@@ -612,7 +667,138 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
     );
   }
   
+  // باقي الدوال (_buildPropertyTypeDropdown, _buildCurrencyDropdown, etc.) تبقى كما هي...
+  
+  Widget _buildLoadingState() {
+    return AnimatedBuilder(
+      animation: _shimmerController,
+      builder: (context, child) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: List.generate(5, (index) => _buildShimmerBox()),
+          ),
+        );
+      },
+    );
+  }
+  
+  Widget _buildUpdatingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'جاري حفظ التغييرات...',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textWhite,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.error.withOpacity(0.2),
+                    AppTheme.error.withOpacity(0.1),
+                  ],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_rounded,
+                size: 48,
+                color: AppTheme.error,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'خطأ في تحميل البيانات',
+              style: AppTextStyles.heading2.copyWith(
+                color: AppTheme.textWhite,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textLight,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 30),
+            GestureDetector(
+              onTap: () {
+                context.read<PropertiesBloc>().add(
+                  LoadPropertyDetailsEvent(propertyId: widget.propertyId),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'إعادة المحاولة',
+                  style: AppTextStyles.buttonMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildShimmerBox() {
+    return Container(
+      height: 60,
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.darkCard.withOpacity(0.3),
+            AppTheme.darkCard.withOpacity(0.5),
+            AppTheme.darkCard.withOpacity(0.3),
+          ],
+          stops: [
+            0.0,
+            _shimmerController.value,
+            1.0,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+  }
+  
+  // باقي الدوال كما هي...
   Widget _buildPropertyTypeDropdown() {
+    // نفس الكود السابق
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -638,44 +824,108 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
               width: 1,
             ),
           ),
-          child: DropdownButtonFormField<String>(
-            value: _selectedPropertyTypeId,
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            dropdownColor: AppTheme.darkCard,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.textWhite,
-            ),
-            items: [
-              DropdownMenuItem(
-                value: 'hotel',
-                child: Text('فندق'),
-              ),
-              DropdownMenuItem(
-                value: 'resort',
-                child: Text('منتجع'),
-              ),
-              DropdownMenuItem(
-                value: 'apartment',
-                child: Text('شقة'),
-              ),
-              DropdownMenuItem(
-                value: 'villa',
-                child: Text('فيلا'),
-              ),
-            ],
-            onChanged: (value) {
-              setState(() {
-                _selectedPropertyTypeId = value;
-              });
-            },
-            validator: (value) {
-              if (value == null) {
-                return 'يرجى اختيار نوع العقار';
+          child: BlocBuilder<PropertyTypesBloc, PropertyTypesState>(
+            builder: (context, state) {
+              List<PropertyType> propertyTypes = [];
+              bool isLoading = false;
+              
+              if (state is PropertyTypesLoading) {
+                isLoading = true;
+              } else if (state is PropertyTypesLoaded) {
+                propertyTypes = state.propertyTypes;
               }
-              return null;
+              
+              String? validSelectedValue = _selectedPropertyTypeId;
+              if (validSelectedValue != null && 
+                  propertyTypes.isNotEmpty &&
+                  !propertyTypes.any((type) => type.id == validSelectedValue)) {
+                if (_currentProperty != null) {
+                  propertyTypes.insert(0, PropertyType(
+                    id: _currentProperty!.typeId,
+                    name: _currentProperty!.typeName,
+                    description: '',
+                    defaultAmenities: [],
+                    icon: '',
+                    propertiesCount: 0,
+                  ));
+                } else {
+                  validSelectedValue = null;
+                }
+              }
+              
+              if (isLoading) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppTheme.primaryBlue.withOpacity(0.7),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'جاري تحميل أنواع العقارات...',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              
+              if (propertyTypes.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Text(
+                    'لا توجد أنواع عقارات متاحة',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppTheme.textMuted,
+                    ),
+                  ),
+                );
+              }
+              
+              return DropdownButtonFormField<String>(
+                value: validSelectedValue,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                dropdownColor: AppTheme.darkCard,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppTheme.textWhite,
+                ),
+                hint: Text(
+                  'اختر نوع العقار',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+                items: propertyTypes.map((type) {
+                  return DropdownMenuItem(
+                    value: type.id,
+                    child: Text(type.name),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedPropertyTypeId = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null) {
+                    return 'يرجى اختيار نوع العقار';
+                  }
+                  return null;
+                },
+              );
             },
           ),
         ),
@@ -684,6 +934,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   }
   
   Widget _buildCurrencyDropdown() {
+    // نفس الكود السابق
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -745,6 +996,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   }
   
   Widget _buildStarRatingSelector() {
+    // نفس الكود السابق
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -780,6 +1032,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   }
   
   Widget _buildFeaturedSwitch() {
+    // نفس الكود السابق
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -834,6 +1087,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   }
   
   Widget _buildMapButton() {
+    // نفس الكود السابق
     return GestureDetector(
       onTap: () {
         // TODO: Open map selector
@@ -875,7 +1129,8 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
     );
   }
   
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(bool isUpdating) {
+    // نفس الكود السابق
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -894,17 +1149,16 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ),
       child: Row(
         children: [
-          // Cancel Button
           Expanded(
             child: GestureDetector(
-              onTap: () => context.pop(),
+              onTap: (isUpdating || _isNavigating) ? null : () => _navigateBack(),
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppTheme.darkSurface.withOpacity(0.5),
-                      AppTheme.darkSurface.withOpacity(0.3),
+                      AppTheme.darkSurface.withOpacity(isUpdating ? 0.3 : 0.5),
+                      AppTheme.darkSurface.withOpacity(isUpdating ? 0.2 : 0.3),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
@@ -917,7 +1171,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                   child: Text(
                     'إلغاء',
                     style: AppTextStyles.buttonMedium.copyWith(
-                      color: AppTheme.textWhite,
+                      color: isUpdating ? AppTheme.textMuted : AppTheme.textWhite,
                     ),
                   ),
                 ),
@@ -927,16 +1181,22 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
           
           const SizedBox(width: 12),
           
-          // Save Button
           Expanded(
             child: GestureDetector(
-              onTap: _saveChanges,
+              onTap: (isUpdating || _isNavigating) ? null : _saveChanges,
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
+                  gradient: isUpdating 
+                      ? LinearGradient(
+                          colors: [
+                            AppTheme.primaryBlue.withOpacity(0.3),
+                            AppTheme.primaryPurple.withOpacity(0.3),
+                          ],
+                        )
+                      : AppTheme.primaryGradient,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
+                  boxShadow: isUpdating ? [] : [
                     BoxShadow(
                       color: AppTheme.primaryBlue.withOpacity(0.3),
                       blurRadius: 12,
@@ -945,13 +1205,22 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                   ],
                 ),
                 child: Center(
-                  child: Text(
-                    'حفظ التغييرات',
-                    style: AppTextStyles.buttonMedium.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: isUpdating
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Text(
+                          'حفظ التغييرات',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -962,8 +1231,10 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   }
   
   void _saveChanges() {
-    if (_formKey.currentState!.validate()) {
-      // TODO: Update this to match your actual UpdatePropertyEvent parameters
+    if (_formKey.currentState!.validate() && !_isNavigating) {
+      // استخراج URLs من PropertyImage objects
+      final List<String> imageUrls = _selectedImages.map((img) => img.url).toList();
+      
       context.read<PropertiesBloc>().add(
         UpdatePropertyEvent(
           propertyId: widget.propertyId,
@@ -974,42 +1245,33 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
           latitude: double.tryParse(_latitudeController.text),
           longitude: double.tryParse(_longitudeController.text),
           starRating: _starRating,
-          images: _selectedImages,
+          images: imageUrls, // تمرير URLs فقط
         ),
       );
-      
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('تم حفظ التغييرات بنجاح'),
-          backgroundColor: AppTheme.success,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-      
-      context.pop();
     }
   }
   
   void _showDeleteConfirmation() {
+    if (_isNavigating) return;
+    
     showDialog(
       context: context,
-      builder: (context) => _DeleteConfirmationDialog(
+      barrierDismissible: false,
+      builder: (dialogContext) => _DeleteConfirmationDialog(
         onConfirm: () {
-          context.read<PropertiesBloc>().add(
-            DeletePropertyEvent(widget.propertyId),
-          );
-          Navigator.pop(context);
-          context.pop();
+          Navigator.pop(dialogContext);
+          if (mounted) {
+            context.read<PropertiesBloc>().add(
+              DeletePropertyEvent(widget.propertyId),
+            );
+          }
         },
       ),
     );
   }
 }
 
+// _DeleteConfirmationDialog يبقى كما هو...
 class _DeleteConfirmationDialog extends StatelessWidget {
   final VoidCallback onConfirm;
   
@@ -1017,6 +1279,7 @@ class _DeleteConfirmationDialog extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
+    // نفس الكود السابق
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
       child: Dialog(

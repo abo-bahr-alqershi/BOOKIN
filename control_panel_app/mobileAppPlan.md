@@ -84,6 +84,7 @@ lib/
 |   |   │       ├── properties_repository_impl.dart
 |   |   │       ├── property_types_repository_impl.dart
 |   |   │       ├── amenities_repository_impl.dart
+|   |   │       ├── property_images_repository_impl.dart
 |   |   │       └── policies_repository_impl.dart
 |   |   ├── domain/
 |   |   │   ├── entities/
@@ -98,6 +99,7 @@ lib/
 |   |   │   │   ├── properties_repository.dart
 |   |   │   │   ├── property_types_repository.dart
 |   |   │   │   ├── amenities_repository.dart
+|   |   │       ├── property_images_repository.dart
 |   |   │   │   └── policies_repository.dart
 |   |   │   └── usecases/
 |   |   │       ├── properties/
@@ -107,6 +109,9 @@ lib/
 |   |   │       │   ├── get_all_properties_usecase.dart
 |   |   │       │   ├── get_property_details_usecase.dart
 |   |   │       │   ├── approve_property_usecase.dart
+|   |   │       │   ├── reject_property_usecase.dart
+|   |   │       │   ├── reject_property_usecase.dart
+|   |   │       │   ├── reject_property_usecase.dart
 |   |   │       │   ├── reject_property_usecase.dart
 |   |   │       │   └── search_properties_usecase.dart
 |   |   │       ├── property_types/

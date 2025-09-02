@@ -31,4 +31,5 @@ abstract class PropertiesRepository {
   Future<Either<Failure, bool>> rejectProperty(String propertyId);
   Future<Either<Failure, PaginatedResult<Property>>> getPendingProperties({int? pageNumber, int? pageSize});
   Future<Either<Failure, bool>> addPropertyToSections(String propertyId, List<String> sectionIds);
+
 }
