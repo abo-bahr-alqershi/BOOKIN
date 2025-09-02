@@ -30,6 +30,7 @@ import 'services/analytics_service.dart';
 import 'services/deep_link_service.dart';
 import 'services/websocket_service.dart';
 import 'services/connectivity_service.dart';
+// Helpers Feature
 
 // Features - Admin Currencies
 import 'features/admin_currencies/presentation/bloc/currencies_bloc.dart' as ac_bloc;
@@ -313,6 +314,9 @@ Future<void> init() async {
 
 	// Features - Admin Availability & Pricing
 	_initAdminAvailabilityPricing();
+
+	// Features - Helpers (search/filter facades)
+	// helpers_inj.registerHelpersFeature(sl);
 
 	// Theme
   _initTheme();

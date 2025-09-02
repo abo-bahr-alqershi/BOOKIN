@@ -48,7 +48,7 @@ namespace YemenBooking.Infrastructure.Repositories
 
         public async Task<bool> AssignRoleToUserAsync(Guid userId, Guid roleId, CancellationToken cancellationToken = default)
         {
-            var userRole = new UserRole { UserId = userId, RoleId = roleId };
+            var userRole = new UserRole { UserId = userId, RoleId = roleId, AssignedAt = DateTime.UtcNow };
             await _context.Set<UserRole>().AddAsync(userRole, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
             return true;

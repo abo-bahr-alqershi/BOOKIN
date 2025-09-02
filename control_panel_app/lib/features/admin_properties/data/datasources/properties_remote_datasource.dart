@@ -40,7 +40,7 @@ abstract class PropertiesRemoteDataSource {
 
 class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
   final ApiClient apiClient;
-  static const String _baseEndpoint = '/api/admin/Properties';
+  static const String _baseEndpoint = '/api/admin/properties';
   
   PropertiesRemoteDataSourceImpl({required this.apiClient});
   

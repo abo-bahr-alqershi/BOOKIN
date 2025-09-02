@@ -751,6 +751,39 @@ lib/
 │   │
 │   │
 │   │
+│   └── helpers/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   │   └── helpers_remote_datasource.dart
+│   │   │   ├── models/
+│   │   │   │   └── search_result_model.dart
+│   │   │   └── repositories/
+│   │   │       └── helpers_repository_impl.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   └── search_result.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── helpers_repository.dart
+│   │   │   └── usecases/
+│   │   │       ├── search_users_usecase.dart
+│   │   │       ├── search_properties_usecase.dart
+│   │   │       ├── search_units_usecase.dart
+│   │   │       ├── search_cities_usecase.dart
+│   │   │       └── search_bookings_usecase.dart
+│   │   └── presentation/
+│   │       ├── pages/
+│   │       │   ├── user_search_page.dart
+│   │       │   ├── property_search_page.dart
+│   │       │   ├── unit_search_page.dart
+│   │       │   ├── city_search_page.dart
+│   │       │   └── booking_search_page.dart
+│   │       └── widgets/
+│   │           ├── search_header.dart
+│   │           ├── search_item_card.dart
+│   │           └── simple_filter_bar.dart
+│   │
+│   │
+│   │
 │   └── settings/
 │       ├── data/
 │       │   ├── datasources/
