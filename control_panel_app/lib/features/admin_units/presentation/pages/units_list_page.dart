@@ -246,7 +246,10 @@ class _UnitsListPageState extends State<UnitsListPage>
                   ),
                   
                   // Action Buttons
-                  Row(
+                  Flexible(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
                     children: [
                       _buildActionButton(
                         icon: Icons.filter_list_rounded,
@@ -275,6 +278,8 @@ class _UnitsListPageState extends State<UnitsListPage>
                         onTap: () => context.push('/admin/units/create'),
                       ),
                     ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -515,6 +520,7 @@ class _UnitsListPageState extends State<UnitsListPage>
   Widget _buildFiltersSection() {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
+      constraints: const BoxConstraints(minHeight: 0, maxHeight: 120),
       height: _showFilters ? 80 : 0,
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -959,13 +965,13 @@ class _UnitGridCardState extends State<_UnitGridCard>
                                 children: [
                                   _buildStat(
                                     icon: Icons.bed_rounded,
-                                    value: '${widget.unit.capacity ?? 0}',
+                                    value: '${widget.unit.adultsCapacity ?? widget.unit.maxCapacity}',
                                     color: AppTheme.primaryBlue,
                                   ),
                                   const SizedBox(width: 12),
                                   _buildStat(
                                     icon: Icons.attach_money_rounded,
-                                    value: '${widget.unit.price ?? 0}',
+                                    value: widget.unit.basePrice.displayAmount,
                                     color: AppTheme.success,
                                   ),
                                 ],

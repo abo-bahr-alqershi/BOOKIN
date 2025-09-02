@@ -10,6 +10,7 @@ import 'dart:math' as math;
 import 'package:bookn_cp_app/core/theme/app_colors.dart';
 import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import '../bloc/unit_form/unit_form_bloc.dart';
+import 'package:bookn_cp_app/features/admin_properties/domain/entities/property.dart';
 
 class CreateUnitPage extends StatefulWidget {
   const CreateUnitPage({super.key});
@@ -41,6 +42,7 @@ class _CreateUnitPageState extends State<CreateUnitPage>
   int _childrenCapacity = 0;
   String _pricingMethod = 'per_night';
   Map<String, dynamic> _dynamicFieldValues = {};
+  String? _selectedPropertyName;
   
   @override
   void initState() {
@@ -607,17 +609,6 @@ class _CreateUnitPageState extends State<CreateUnitPage>
   }
   
   Widget _buildPropertySelector(UnitFormState state) {
-    List<DropdownMenuItem<String>> items = [];
-    
-    if (state is UnitFormReady && state.properties.isNotEmpty) {
-      items = state.properties.map((property) {
-        return DropdownMenuItem<String>(
-          value: property.id,
-          child: Text(property.name),
-        );
-      }).toList();
-    }
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -629,8 +620,27 @@ class _CreateUnitPageState extends State<CreateUnitPage>
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+        GestureDetector(
+          onTap: () {
+            context.push(
+              '/helpers/search/properties',
+              extra: {
+                'allowMultiSelect': false,
+                'onPropertySelected': (Property property) {
+                  setState(() {
+                    _selectedPropertyId = property.id;
+                    _selectedPropertyName = property.name;
+                    _selectedUnitTypeId = null;
+                  });
+                  context.read<UnitFormBloc>().add(
+                    PropertySelectedEvent(propertyId: property.id),
+                  );
+                },
+              },
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -644,36 +654,28 @@ class _CreateUnitPageState extends State<CreateUnitPage>
               width: 1,
             ),
           ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _selectedPropertyId,
-              isExpanded: true,
-              dropdownColor: AppTheme.darkCard,
-              icon: Icon(
-                Icons.arrow_drop_down_rounded,
+            child: Row(
+              children: [
+                Icon(
+                  Icons.home_work_outlined,
                 color: AppTheme.primaryBlue.withOpacity(0.7),
               ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _selectedPropertyName ?? 'اختر العقار',
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppTheme.textWhite,
-              ),
-              hint: Text(
-                'اختر العقار',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppTheme.textMuted.withOpacity(0.5),
+                      color: _selectedPropertyName == null
+                          ? AppTheme.textMuted.withOpacity(0.5)
+                          : AppTheme.textWhite,
                 ),
               ),
-              items: items,
-              onChanged: (value) {
-                setState(() {
-                  _selectedPropertyId = value;
-                  _selectedUnitTypeId = null;
-                });
-                if (value != null) {
-                  context.read<UnitFormBloc>().add(
-                    PropertySelectedEvent(propertyId: value),
-                  );
-                }
-              },
+                ),
+                Icon(
+                  Icons.search,
+                  color: AppTheme.primaryBlue.withOpacity(0.7),
+                ),
+              ],
             ),
           ),
         ),
@@ -684,8 +686,8 @@ class _CreateUnitPageState extends State<CreateUnitPage>
   Widget _buildUnitTypeSelector(UnitFormState state) {
     List<DropdownMenuItem<String>> items = [];
     
-    if (state is UnitFormReady && state.unitTypes.isNotEmpty) {
-      items = state.unitTypes.map((unitType) {
+    if (state is UnitFormReady && state.availableUnitTypes.isNotEmpty) {
+      items = state.availableUnitTypes.map((unitType) {
         return DropdownMenuItem<String>(
           value: unitType.id,
           child: Text(unitType.name),
@@ -1205,25 +1207,15 @@ class _CreateUnitPageState extends State<CreateUnitPage>
   }
   
   String _getPropertyName(UnitFormState state) {
-    if (state is UnitFormReady && _selectedPropertyId != null) {
-      try {
-        final property = state.properties.firstWhere(
-          (p) => p.id == _selectedPropertyId,
-        );
-        return property.name;
-      } catch (_) {}
+    if (_selectedPropertyName != null) {
+      return _selectedPropertyName!;
     }
     return 'غير محدد';
   }
   
   String _getUnitTypeName(UnitFormState state) {
-    if (state is UnitFormReady && _selectedUnitTypeId != null) {
-      try {
-        final unitType = state.unitTypes.firstWhere(
-          (ut) => ut.id == _selectedUnitTypeId,
-        );
-        return unitType.name;
-      } catch (_) {}
+    if (state is UnitFormReady && state.selectedUnitType != null) {
+      return state.selectedUnitType!.name;
     }
     return 'غير محدد';
   }
