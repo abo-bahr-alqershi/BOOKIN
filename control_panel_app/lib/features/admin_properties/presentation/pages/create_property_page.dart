@@ -18,6 +18,8 @@ import '../bloc/amenities/amenities_bloc.dart';
 import '../widgets/property_image_gallery.dart';
 import '../widgets/amenity_selector_widget.dart';
 import '../widgets/property_map_view.dart';
+import '../bloc/property_images/property_images_bloc.dart';
+import '../bloc/property_images/property_images_event.dart';
 
 class CreatePropertyPage extends StatelessWidget {
   const CreatePropertyPage({super.key});
@@ -36,6 +38,10 @@ class CreatePropertyPage extends StatelessWidget {
         BlocProvider<AmenitiesBloc>(
           create: (context) => GetIt.instance<AmenitiesBloc>()
             ..add(const LoadAmenitiesEvent(pageSize: 100)), // جلب كل المرافق مرة واحدة
+        ),
+        // لإدارة رفع الصور بعد إنشاء العقار
+        BlocProvider(
+          create: (context) => GetIt.instance<PropertyImagesBloc>(),
         ),
       ],
       child: const _CreatePropertyView(),
@@ -71,6 +77,7 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
   String? _selectedPropertyTypeId;
   int _starRating = 3;
   List<PropertyImage> _selectedImages = [];
+  List<String> _selectedLocalImages = [];
   List<String> _selectedAmenities = [];
   int _currentStep = 0;
   
@@ -146,8 +153,19 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
         if (!mounted) return;
         
         if (state is PropertyCreated) {
+          // إن وُجدت صور محلية، قم برفعها للعقار الذي تم إنشاؤه
+          if (_selectedLocalImages.isNotEmpty) {
+            try {
+              final imagesBloc = context.read<PropertyImagesBloc>();
+              imagesBloc.add(UploadMultipleImagesEvent(
+                propertyId: state.propertyId,
+                filePaths: List<String>.from(_selectedLocalImages),
+              ));
+            } catch (_) {}
+          }
+
           _showSuccessMessage('تم إنشاء العقار بنجاح');
-          // تأخير قليل قبل الرجوع
+          // الرجوع بعد مهلة قصيرة
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) {
               context.pop();
@@ -580,10 +598,16 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
           ),
           const SizedBox(height: 12),
           PropertyImageGallery(
-              initialImages: _selectedImages, // تمرير الصور الحالية
+              initialImages: _selectedImages, // تمرير الصور الحالية (للشبكة لاحقاً)
+              initialLocalImages: _selectedLocalImages, // تمرير الصور المحلية
               onImagesChanged: (images) {
                 setState(() {
-                  _selectedImages = images; // تحديث قائمة الصور
+                  _selectedImages = images; // تحديث قائمة الصور (إن وجدت كائنات من الخادم)
+                });
+              },
+              onLocalImagesChanged: (paths) {
+                setState(() {
+                  _selectedLocalImages = paths; // تحديث مسارات الصور المحلية
                 });
               },
               maxImages: 10,
@@ -673,7 +697,10 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
           _buildReviewCard(
             title: 'الصور والمرافق',
             items: [
-              {'label': 'عدد الصور', 'value': '${_selectedImages.length}'},
+              {
+                'label': 'عدد الصور',
+                'value': '${_selectedLocalImages.isNotEmpty ? _selectedLocalImages.length : _selectedImages.length}'
+              },
               {'label': 'عدد المرافق', 'value': '${_selectedAmenities.length}'},
             ],
           ),
@@ -1205,7 +1232,9 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
   }
   
   bool _validateImagesAndAmenities() {
-    if (_selectedImages.isEmpty) {
+    // اعتبر الصور المحلية أثناء الإنشاء
+    final bool hasAnyImage = _selectedLocalImages.isNotEmpty || _selectedImages.isNotEmpty;
+    if (!hasAnyImage) {
       _showErrorMessage('الرجاء إضافة صورة واحدة على الأقل');
       return false;
     }
