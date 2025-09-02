@@ -28,14 +28,14 @@ class UserModel extends User {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      role: json['role'] as String,
-      email: json['email'] as String,
-      phone: json['phone'] as String,
-      profileImage: json['profileImage'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      isActive: json['isActive'] as bool,
+      id: (json['id'] ?? json['userId'] ?? '').toString(),
+      name: (json['name'] ?? json['fullName'] ?? json['userName'] ?? '').toString(),
+      role: (json['role'] ?? json['roleName'] ?? '').toString(),
+      email: (json['email'] ?? '').toString(),
+      phone: (json['phone'] ?? json['phoneNumber'] ?? '').toString(),
+      profileImage: (json['profileImage'] ?? json['avatarUrl']) as String?,
+      createdAt: DateTime.tryParse((json['createdAt'] ?? json['registeredAt'] ?? DateTime.now().toIso8601String()).toString()) ?? DateTime.now(),
+      isActive: (json['isActive'] as bool?) ?? (json['active'] as bool?) ?? true,
       settings: json['settingsJson'] != null
           ? jsonDecode(json['settingsJson'] as String) as Map<String, dynamic>?
           : null,

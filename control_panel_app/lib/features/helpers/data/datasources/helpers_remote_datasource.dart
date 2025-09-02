@@ -72,7 +72,8 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
       '${ApiConstants.adminBaseUrl}/Users/search',
       queryParameters: {
         'searchTerm': searchTerm,
-        'roleId': role,
+        // backend expects GUID RoleId (nullable). Do not send if not GUID.
+        'roleId': _tryGuid(role),
         'isActive': isActive,
         'pageNumber': pageNumber,
         'pageSize': pageSize,
@@ -80,7 +81,9 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
     );
 
     final paginatedResult = PaginatedResult<UserModel>.fromJson(
-      response.data,
+      response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : <String, dynamic>{},
       (json) => UserModel.fromJson(json),
     );
 
@@ -90,7 +93,7 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
           item: user,
           id: user.id,
           title: user.name,
-          subtitle: '${user.email} • ${user.role}',
+          subtitle: [user.email, user.role].where((s) => (s).isNotEmpty).join(' • '),
           imageUrl: user.profileImage,
           metadata: {
             'email': user.email,
@@ -104,6 +107,13 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
       pageSize: paginatedResult.pageSize,
       totalCount: paginatedResult.totalCount,
     );
+  }
+
+  String? _tryGuid(String? value) {
+    if (value == null) return null;
+    final guidRegex = RegExp(r'^[{(]?[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}[)}]?
+$');
+    return guidRegex.hasMatch(value) ? value : null;
   }
 
   @override
