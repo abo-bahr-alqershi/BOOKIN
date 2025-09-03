@@ -59,7 +59,8 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
       final currentState = state as UnitFormReady;
       emit(currentState.copyWith(isLoadingUnitTypes: true));
       
-      final result = await getUnitTypesByPropertyUseCase(event.propertyId);
+      final targetPropertyTypeId = event.propertyTypeId ?? event.propertyId;
+      final result = await getUnitTypesByPropertyUseCase(targetPropertyTypeId!);
       
       result.fold(
         (failure) => emit(UnitFormError(message: failure.message)),

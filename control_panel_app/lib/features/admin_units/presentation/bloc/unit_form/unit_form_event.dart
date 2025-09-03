@@ -17,12 +17,13 @@ class InitializeFormEvent extends UnitFormEvent {
 }
 
 class PropertySelectedEvent extends UnitFormEvent {
-  final String propertyId;
+  final String? propertyId; // physical property id (used in submission)
+  final String? propertyTypeId; // used to load unit types
 
-  const PropertySelectedEvent({required this.propertyId});
+  const PropertySelectedEvent({this.propertyId, this.propertyTypeId});
 
   @override
-  List<Object?> get props => [propertyId];
+  List<Object?> get props => [propertyId, propertyTypeId];
 }
 
 class UnitTypeSelectedEvent extends UnitFormEvent {

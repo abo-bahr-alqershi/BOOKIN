@@ -37,8 +37,10 @@ class _CreateUnitPageState extends State<CreateUnitPage>
   // State
   String? _selectedPropertyId;
   String? _selectedUnitTypeId;
+  bool _isHasAdults = false;
+  bool _isHasChildren = false;
   int _currentStep = 0;
-  int _adultCapacity = 2;
+  int _adultCapacity = 0;
   int _childrenCapacity = 0;
   String _pricingMethod = 'per_night';
   Map<String, dynamic> _dynamicFieldValues = {};
@@ -413,58 +415,63 @@ class _CreateUnitPageState extends State<CreateUnitPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Capacity Section
-          Text(
-            'السعة الاستيعابية',
-            style: AppTextStyles.heading3.copyWith(
-              color: AppTheme.textWhite,
-              fontWeight: FontWeight.bold,
+          if(_isHasAdults || _isHasChildren)...[
+            // Capacity Section
+            Text(
+              'السعة الاستيعابية',
+              style: AppTextStyles.heading3.copyWith(
+                color: AppTheme.textWhite,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          
-          Row(
-            children: [
-              Expanded(
-                child: _buildCapacityCounter(
-                  label: 'البالغين',
-                  value: _adultCapacity,
-                  icon: Icons.person,
-                  onIncrement: () {
-                    setState(() => _adultCapacity++);
-                    _updateCapacity();
-                  },
-                  onDecrement: () {
-                    if (_adultCapacity > 1) {
-                      setState(() => _adultCapacity--);
-                      _updateCapacity();
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildCapacityCounter(
-                  label: 'الأطفال',
-                  value: _childrenCapacity,
-                  icon: Icons.child_care,
-                  onIncrement: () {
-                    setState(() => _childrenCapacity++);
-                    _updateCapacity();
-                  },
-                  onDecrement: () {
-                    if (_childrenCapacity > 0) {
-                      setState(() => _childrenCapacity--);
-                      _updateCapacity();
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 30),
-          
+            const SizedBox(height: 16),
+            
+            Row(
+              children: [
+                if(_isHasAdults)...[
+                  Expanded(
+                    child: _buildCapacityCounter(
+                      label: 'البالغين',
+                      value: _adultCapacity,
+                      icon: Icons.person,
+                      onIncrement: () {
+                        setState(() => _adultCapacity++);
+                        _updateCapacity();
+                      },
+                      onDecrement: () {
+                        if (_adultCapacity > 1) {
+                          setState(() => _adultCapacity--);
+                          _updateCapacity();
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                ],
+                if(_isHasChildren)...[
+                  Expanded(
+                    child: _buildCapacityCounter(
+                      label: 'الأطفال',
+                      value: _childrenCapacity,
+                      icon: Icons.child_care,
+                      onIncrement: () {
+                        setState(() => _childrenCapacity++);
+                        _updateCapacity();
+                      },
+                      onDecrement: () {
+                        if (_childrenCapacity > 0) {
+                          setState(() => _childrenCapacity--);
+                          _updateCapacity();
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            
+            const SizedBox(height: 30),
+          ],
           // Pricing Section
           Text(
             'التسعير',
@@ -633,7 +640,7 @@ class _CreateUnitPageState extends State<CreateUnitPage>
                     _selectedUnitTypeId = null;
                   });
                   context.read<UnitFormBloc>().add(
-                    PropertySelectedEvent(propertyId: property.id),
+                    PropertySelectedEvent(propertyId: property.id, propertyTypeId: property.typeId),
                   );
                 },
               },
@@ -688,6 +695,9 @@ class _CreateUnitPageState extends State<CreateUnitPage>
     
     if (state is UnitFormReady && state.availableUnitTypes.isNotEmpty) {
       items = state.availableUnitTypes.map((unitType) {
+        _isHasAdults = unitType.isHasAdults;
+        _isHasChildren = unitType.isHasChildren;
+        _adultCapacity = _isHasAdults ? 2 : 0;
         return DropdownMenuItem<String>(
           value: unitType.id,
           child: Text(unitType.name),
