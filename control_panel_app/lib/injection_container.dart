@@ -12,6 +12,20 @@ import 'package:bookn_cp_app/features/admin_properties/domain/usecases/property_
 import 'package:bookn_cp_app/features/admin_properties/domain/usecases/property_images/upload_multiple_images_usecase.dart';
 import 'package:bookn_cp_app/features/admin_properties/domain/usecases/property_images/upload_property_image_usecase.dart'; // إضافة هذا الاستيراد
 import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/property_images/property_images_bloc.dart';
+
+import 'package:bookn_cp_app/features/admin_units/data/datasources/unit_images_remote_datasource.dart';
+import 'package:bookn_cp_app/features/admin_units/data/repositories/unit_images_repository_impl.dart';
+import 'package:bookn_cp_app/features/admin_units/domain/repositories/unit_images_repository.dart';
+import 'package:bookn_cp_app/features/admin_units/domain/usecases/unit_images/delete_multiple_unit_images_usecase.dart';
+import 'package:bookn_cp_app/features/admin_units/domain/usecases/unit_images/delete_unit_image_usecase.dart';
+import 'package:bookn_cp_app/features/admin_units/domain/usecases/unit_images/get_unit_images_usecase.dart';
+import 'package:bookn_cp_app/features/admin_units/domain/usecases/unit_images/reorder_unit_images_usecase.dart';
+import 'package:bookn_cp_app/features/admin_units/domain/usecases/unit_images/set_primary_unit_image_usecase.dart';
+import 'package:bookn_cp_app/features/admin_units/domain/usecases/unit_images/update_unit_image_usecase.dart';
+import 'package:bookn_cp_app/features/admin_units/domain/usecases/unit_images/upload_multiple_unit_images_usecase.dart';
+import 'package:bookn_cp_app/features/admin_units/domain/usecases/unit_images/upload_unit_image_usecase.dart'; // إضافة هذا الاستيراد
+import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_bloc.dart';
+
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
@@ -480,6 +494,15 @@ void _initAdminUnits() {
   sl.registerLazySingleton(() => GetUnitFieldsUseCase(sl()));
   sl.registerLazySingleton(() => AssignUnitToSectionsUseCase(sl()));
 
+  sl.registerLazySingleton(() => UploadUnitImageUseCase(sl())); 
+  sl.registerLazySingleton(() => GetUnitImagesUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateUnitImageUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteUnitImageUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteMultipleUnitImagesUseCase(sl()));
+  sl.registerLazySingleton(() => ReorderUnitImagesUseCase(sl()));
+  sl.registerLazySingleton(() => SetPrimaryUnitImageUseCase(sl()));
+  sl.registerLazySingleton(() => UploadMultipleUnitImagesUseCase(sl()));
+
   // Repository
   sl.registerLazySingleton<UnitsRepository>(() => UnitsRepositoryImpl(
         remoteDataSource: sl(),
@@ -488,8 +511,23 @@ void _initAdminUnits() {
       ));
 
   // Data sources
-  sl.registerLazySingleton<UnitsRemoteDataSource>(() => UnitsRemoteDataSourceImpl(dio: sl()));
+  sl.registerLazySingleton<UnitsRemoteDataSource>(() => UnitsRemoteDataSourceImpl(apiClient: sl()));
   sl.registerLazySingleton<UnitsLocalDataSource>(() => UnitsLocalDataSourceImpl(sharedPreferences: sl()));
+
+  // Unit Images Repository
+  sl.registerLazySingleton<UnitImagesRepository>(
+    () => UnitImagesRepositoryImpl(
+      remoteDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+
+  // Unit Images Data Sources
+  sl.registerLazySingleton<UnitImagesRemoteDataSource>(
+    () => UnitImagesRemoteDataSourceImpl(apiClient: sl()),
+  );
+
+
 }
 
 void _initPropertyTypes() {

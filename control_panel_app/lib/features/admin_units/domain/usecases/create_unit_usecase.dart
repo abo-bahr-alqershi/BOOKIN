@@ -30,6 +30,7 @@ class CreateUnitParams extends Equatable {
   final String propertyId;
   final String unitTypeId;
   final String name;
+  final String description; 
   final Map<String, dynamic> basePrice;
   final String customFeatures;
   final String pricingMethod;
@@ -42,6 +43,7 @@ class CreateUnitParams extends Equatable {
     required this.propertyId,
     required this.unitTypeId,
     required this.name,
+    required this.description,
     required this.basePrice,
     required this.customFeatures,
     required this.pricingMethod,
@@ -51,17 +53,33 @@ class CreateUnitParams extends Equatable {
     this.childrenCapacity,
   });
 
+  // إضافة toJson للـ debugging
+  Map<String, dynamic> toJson() => {
+    'propertyId': propertyId,
+    'unitTypeId': unitTypeId,
+    'name': name,
+    'description': description,
+    'basePrice': basePrice,
+    'customFeatures': customFeatures,
+    'pricingMethod': pricingMethod,
+    'fieldValues': fieldValues,
+    'images': images,
+    'adultCapacity': adultCapacity,
+    'childrenCapacity': childrenCapacity,
+  };
+
   @override
   List<Object?> get props => [
-        propertyId,
-        unitTypeId,
-        name,
-        basePrice,
-        customFeatures,
-        pricingMethod,
-        fieldValues,
-        images,
-        adultCapacity,
-        childrenCapacity,
-      ];
+    propertyId,
+    unitTypeId,
+    name,
+    description,
+    basePrice,
+    customFeatures,
+    pricingMethod,
+    fieldValues,
+    images,
+    adultCapacity,
+    childrenCapacity,
+  ];
 }

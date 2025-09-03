@@ -1,3 +1,5 @@
+import 'package:bookn_cp_app/core/error/exceptions.dart';
+import 'package:bookn_cp_app/core/network/api_client.dart';
 import 'package:dio/dio.dart';
 import '../models/unit_model.dart';
 import '../models/unit_type_model.dart';
@@ -31,9 +33,9 @@ abstract class UnitsRemoteDataSource {
 }
 
 class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
-  final Dio dio;
-
-  UnitsRemoteDataSourceImpl({required this.dio});
+  final ApiClient apiClient;
+  
+  UnitsRemoteDataSourceImpl({required this.apiClient});
 
   @override
   Future<List<UnitModel>> getUnits({
@@ -57,7 +59,7 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
       if (maxPrice != null) queryParams['maxPrice'] = maxPrice;
       if (searchQuery != null) queryParams['nameContains'] = searchQuery;
 
-      final response = await dio.get(
+      final response = await apiClient.get(
         '/api/admin/Units',
         queryParameters: queryParams,
       );
@@ -72,7 +74,7 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
   @override
   Future<UnitModel> getUnitDetails(String unitId) async {
     try {
-      final response = await dio.get('/api/admin/Units/$unitId/details');
+      final response = await apiClient.get('/api/admin/Units/$unitId/details');
       return UnitModel.fromJson(response.data['data']);
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -82,9 +84,31 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
   @override
   Future<String> createUnit(Map<String, dynamic> unitData) async {
     try {
-      final response = await dio.post('/api/admin/Units', data: unitData);
-      return response.data['data'] as String;
+      // إضافة logging لمعرفة البيانات المرسلة
+      print('=== Creating Unit with Data ===');
+      print(unitData);
+      
+      final response = await apiClient.post('/api/admin/Units', data: unitData);
+      
+      // التحقق من استجابة السيرفر
+      print('=== Server Response ===');
+      print(response.data);
+      
+      // تحسين استخراج ID
+      if (response.data is Map && response.data.containsKey('data')) {
+        return response.data['data'].toString();
+      } else if (response.data is String) {
+        return response.data;
+      } else {
+        throw Exception('Invalid response format');
+      }
     } on DioException catch (e) {
+      // تحسين معالجة الأخطاء
+      print('=== DioException Details ===');
+      print('Status Code: ${e.response?.statusCode}');
+      print('Response Data: ${e.response?.data}');
+      print('Request Data: ${e.requestOptions.data}');
+      
       throw _handleDioError(e);
     }
   }
@@ -92,7 +116,7 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
   @override
   Future<bool> updateUnit(String unitId, Map<String, dynamic> unitData) async {
     try {
-      final response = await dio.put('/api/admin/Units/$unitId', data: unitData);
+      final response = await apiClient.put('/api/admin/Units/$unitId', data: unitData);
       return response.data['success'] ?? false;
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -102,7 +126,7 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
   @override
   Future<bool> deleteUnit(String unitId) async {
     try {
-      final response = await dio.delete('/api/admin/Units/$unitId');
+      final response = await apiClient.delete('/api/admin/Units/$unitId');
       return response.data['success'] ?? false;
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -112,7 +136,7 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
   @override
   Future<List<UnitTypeModel>> getUnitTypesByProperty(String propertyTypeId) async {
     try {
-      final response = await dio.get(
+      final response = await apiClient.get(
         '/api/admin/unit-types/property-type/$propertyTypeId',
       );
       final List<dynamic> items = response.data['items'] ?? [];
@@ -125,7 +149,7 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
   @override
   Future<List<UnitTypeField>> getUnitFields(String unitTypeId) async {
     try {
-      final response = await dio.get(
+      final response = await apiClient.get(
         '/api/admin/unit-type-fields/unit-type/$unitTypeId',
       );
       final List<dynamic> items = response.data ?? [];
@@ -138,7 +162,7 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
   @override
   Future<bool> assignUnitToSections(String unitId, List<String> sectionIds) async {
     try {
-      final response = await dio.post(
+      final response = await apiClient.post(
         '/api/admin/units/$unitId/sections',
         data: {'sectionIds': sectionIds},
       );
@@ -150,14 +174,27 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
 
   Exception _handleDioError(DioException error) {
     if (error.response != null) {
-      final message = error.response?.data['message'] ?? 'حدث خطأ في الخادم';
-      return Exception(message);
+      // إظهار تفاصيل الخطأ من السيرفر
+      final responseData = error.response?.data;
+      String message = 'حدث خطأ في الخادم';
+      
+      if (responseData is Map) {
+        message = responseData['message'] ?? 
+                  responseData['error'] ?? 
+                  responseData['errors']?.toString() ?? 
+                  message;
+      } else if (responseData is String) {
+        message = responseData;
+      }
+      
+      print('Server Error Message: $message');
+      return ServerException(message);
     } else if (error.type == DioExceptionType.connectionTimeout) {
-      return Exception('انتهت مهلة الاتصال');
+      return const ServerException('انتهت مهلة الاتصال');
     } else if (error.type == DioExceptionType.connectionError) {
-      return Exception('لا يوجد اتصال بالإنترنت');
+      return const ServerException('لا يوجد اتصال بالإنترنت');
     } else {
-      return Exception('حدث خطأ غير متوقع');
+      return ServerException('حدث خطأ غير متوقع: ${error.message}');
     }
   }
 }

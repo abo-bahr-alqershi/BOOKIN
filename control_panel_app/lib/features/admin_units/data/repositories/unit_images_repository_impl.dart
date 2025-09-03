@@ -1,0 +1,209 @@
+// lib/features/admin_units/data/repositories/unit_images_repository_impl.dart
+
+import 'package:dartz/dartz.dart';
+import 'package:bookn_cp_app/core/error/failures.dart';
+import 'package:bookn_cp_app/core/error/exceptions.dart';
+import 'package:bookn_cp_app/core/network/network_info.dart';
+import '../../domain/entities/unit_image.dart';
+import '../../domain/repositories/unit_images_repository.dart';
+import '../datasources/unit_images_remote_datasource.dart';
+import '../models/unit_image_model.dart';
+
+class UnitImagesRepositoryImpl implements UnitImagesRepository {
+  final UnitImagesRemoteDataSource remoteDataSource;
+  final NetworkInfo networkInfo;
+
+  UnitImagesRepositoryImpl({
+    required this.remoteDataSource,
+    required this.networkInfo,
+  });
+
+  @override
+  Future<Either<Failure, UnitImage>> uploadImage({
+    String? unitId,
+    required String filePath,
+    String? category,
+    String? alt,
+    bool isPrimary = false,
+    int? order,
+    List<String>? tags,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final UnitImageModel result = await remoteDataSource.uploadImage(
+          unitId: unitId,
+          filePath: filePath,
+          category: category,
+          alt: alt,
+          isPrimary: isPrimary,
+          order: order,
+          tags: tags,
+        );
+        return Right(result);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      } catch (e) {
+        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+      }
+    } else {
+      return Left(NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<UnitImage>>> getUnitImages(String? unitId) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final List<UnitImageModel> result = await remoteDataSource.getUnitImages(unitId);
+        return Right(result);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      } catch (e) {
+        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+      }
+    } else {
+      return Left(NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> updateImage(
+    String imageId,
+    Map<String, dynamic> data,
+  ) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final bool result = await remoteDataSource.updateImage(imageId, data);
+        return Right(result);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      } catch (e) {
+        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+      }
+    } else {
+      return Left(NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> deleteImage(String imageId) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final bool result = await remoteDataSource.deleteImage(imageId);
+        return Right(result);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      } catch (e) {
+        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+      }
+    } else {
+      return Left(NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> reorderImages(
+    String? unitId,
+    List<String> imageIds,
+  ) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final bool result = await remoteDataSource.reorderImages(unitId, imageIds);
+        return Right(result);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      } catch (e) {
+        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+      }
+    } else {
+      return Left(NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> setAsPrimaryImage(
+    String? unitId,
+    String imageId,
+  ) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final bool result = await remoteDataSource.setAsPrimaryImage(unitId, imageId);
+        return Right(result);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      } catch (e) {
+        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+      }
+    } else {
+      return Left(NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> deleteMultipleImages(List<String> imageIds) async {
+    if (await networkInfo.isConnected) {
+      try {
+        bool allDeleted = true;
+        for (final imageId in imageIds) {
+          final result = await remoteDataSource.deleteImage(imageId);
+          if (!result) {
+            allDeleted = false;
+            break;
+          }
+        }
+        return Right(allDeleted);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      } catch (e) {
+        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+      }
+    } else {
+      return Left(NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<UnitImage>>> uploadMultipleImages({
+    String? unitId,
+    required List<String> filePaths,
+    String? category,
+    List<String>? tags,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final List<UnitImageModel> uploadedImages = [];
+        int order = 0;
+        
+        for (final filePath in filePaths) {
+          try {
+            final result = await remoteDataSource.uploadImage(
+              unitId: unitId,
+              filePath: filePath,
+              category: category,
+              isPrimary: order == 0, // الصورة الأولى تكون رئيسية
+              order: order,
+              tags: tags,
+            );
+            uploadedImages.add(result);
+            order++;
+          } catch (e) {
+            // تجاهل الصور الفاشلة والاستمرار
+            continue;
+          }
+        }
+        
+        if (uploadedImages.isEmpty) {
+          return Left(ServerFailure('Failed to upload any images'));
+        }
+        
+        return Right(uploadedImages);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      } catch (e) {
+        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+      }
+    } else {
+      return Left(NetworkFailure());
+    }
+  }
+}

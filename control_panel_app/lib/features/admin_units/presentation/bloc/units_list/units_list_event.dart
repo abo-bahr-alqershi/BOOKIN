@@ -48,3 +48,4 @@ class DeleteUnitEvent extends UnitsListEvent {
 }
 
 class RefreshUnitsEvent extends UnitsListEvent {}
+

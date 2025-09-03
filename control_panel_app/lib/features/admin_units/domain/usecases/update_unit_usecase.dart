@@ -28,6 +28,7 @@ class UpdateUnitUseCase implements UseCase<bool, UpdateUnitParams> {
 class UpdateUnitParams extends Equatable {
   final String unitId;
   final String? name;
+  final String? description;
   final Map<String, dynamic>? basePrice;
   final String? customFeatures;
   final String? pricingMethod;
@@ -39,6 +40,7 @@ class UpdateUnitParams extends Equatable {
   const UpdateUnitParams({
     required this.unitId,
     this.name,
+    this.description,
     this.basePrice,
     this.customFeatures,
     this.pricingMethod,
@@ -52,6 +54,7 @@ class UpdateUnitParams extends Equatable {
   List<Object?> get props => [
         unitId,
         name,
+        description,
         basePrice,
         customFeatures,
         pricingMethod,

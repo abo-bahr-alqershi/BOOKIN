@@ -1,11 +1,11 @@
-// lib/features/admin_properties/presentation/widgets/futuristic_units_table.dart
+// lib/features/admin_units/presentation/widgets/futuristic_units_table.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/theme/app_text_styles.dart';
-import '../../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../domain/entities/unit.dart';
 
 class FuturisticUnitsTable extends StatefulWidget {
@@ -32,7 +32,10 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
   late Animation<double> _fadeAnimation;
   
   String? _hoveredUnitId;
-  String? _selectedFilter;
+  String? _selectedUnitType;
+  List<String> _unitTypes = [];
+  List<Unit> _filteredUnits = [];
+  bool _isLoadingTypes = false;
   
   // Breakpoints
   static const double _mobileBreakpoint = 600;
@@ -55,6 +58,37 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
     ));
     
     _animationController.forward();
+    _extractUnitTypes();
+    _filterUnits();
+  }
+  
+  void _extractUnitTypes() {
+    setState(() => _isLoadingTypes = true);
+    final typesSet = <String>{};
+    for (final unit in widget.units) {
+      typesSet.add(unit.unitTypeName);
+    }
+    _unitTypes = typesSet.toList()..sort();
+    setState(() => _isLoadingTypes = false);
+  }
+  
+  void _filterUnits() {
+    if (_selectedUnitType == null) {
+      _filteredUnits = List.from(widget.units);
+    } else {
+      _filteredUnits = widget.units
+          .where((unit) => unit.unitTypeName == _selectedUnitType)
+          .toList();
+    }
+  }
+  
+  @override
+  void didUpdateWidget(FuturisticUnitsTable oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.units.length != widget.units.length) {
+      _extractUnitTypes();
+      _filterUnits();
+    }
   }
   
   @override
@@ -84,16 +118,16 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       opacity: _fadeAnimation,
       child: Column(
         children: [
-          // Filter Bar
+          // Filter Bar - نفس التصميم القديم بالضبط
           _buildMobileFilterBar(),
           
           // Units List
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(12),
-              itemCount: widget.units.length,
+              itemCount: _filteredUnits.length,
               itemBuilder: (context, index) {
-                final unit = widget.units[index];
+                final unit = _filteredUnits[index];
                 return _buildMobileUnitCard(unit, index);
               },
             ),
@@ -120,32 +154,47 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
           width: 1,
         ),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            _buildFilterChip('الكل', null),
-            const SizedBox(width: 8),
-            _buildFilterChip('متاحة', 'available'),
-            const SizedBox(width: 8),
-            _buildFilterChip('غير متاحة', 'unavailable'),
-            const SizedBox(width: 8),
-            _buildFilterChip('السعر الأعلى', 'high_price'),
-            const SizedBox(width: 8),
-            _buildFilterChip('السعر الأقل', 'low_price'),
-          ],
-        ),
+      child: Stack(
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildFilterChip('الكل', null),
+                const SizedBox(width: 8),
+                ..._unitTypes.map((type) => Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: _buildFilterChip(type, type),
+                )),
+              ],
+            ),
+          ),
+          if (_isLoadingTypes)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: LinearProgressIndicator(
+                backgroundColor: Colors.transparent,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppTheme.primaryBlue.withOpacity(0.3),
+                ),
+                minHeight: 2,
+              ),
+            ),
+        ],
       ),
     );
   }
   
   Widget _buildFilterChip(String label, String? value) {
-    final isSelected = _selectedFilter == value;
+    final isSelected = _selectedUnitType == value;
     
     return GestureDetector(
       onTap: () {
         setState(() {
-          _selectedFilter = value;
+          _selectedUnitType = value;
+          _filterUnits();
         });
         HapticFeedback.lightImpact();
       },
@@ -575,9 +624,9 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                     child: SizedBox(
                       width: 900, // Fixed width for tablet
                       child: ListView.builder(
-                        itemCount: widget.units.length,
+                        itemCount: _filteredUnits.length,
                         itemBuilder: (context, index) {
-                          final unit = widget.units[index];
+                          final unit = _filteredUnits[index];
                           return _buildTabletRow(unit, index);
                         },
                       ),
@@ -593,31 +642,71 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
   }
   
   Widget _buildTabletHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primaryBlue.withOpacity(0.1),
-            AppTheme.primaryPurple.withOpacity(0.05),
-          ],
-        ),
-        border: Border(
-          bottom: BorderSide(
-            color: AppTheme.primaryBlue.withOpacity(0.2),
-            width: 1,
+    return Column(
+      children: [
+        // Filter Bar for tablet
+        Container(
+          padding: const EdgeInsets.all(12),
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildFilterChip('الكل', null),
+                    const SizedBox(width: 8),
+                    ..._unitTypes.map((type) => Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: _buildFilterChip(type, type),
+                    )),
+                  ],
+                ),
+              ),
+              if (_isLoadingTypes)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: LinearProgressIndicator(
+                    backgroundColor: Colors.transparent,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppTheme.primaryBlue.withOpacity(0.3),
+                    ),
+                    minHeight: 2,
+                  ),
+                ),
+            ],
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          _buildHeaderCell('الوحدة', flex: 3),
-          _buildHeaderCell('النوع', flex: 2),
-          _buildHeaderCell('السعر', flex: 2),
-          _buildHeaderCell('الحالة', flex: 1),
-          _buildHeaderCell('الإجراءات', flex: 2),
-        ],
-      ),
+        
+        // Table Header
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.primaryBlue.withOpacity(0.1),
+                AppTheme.primaryPurple.withOpacity(0.05),
+              ],
+            ),
+            border: Border(
+              bottom: BorderSide(
+                color: AppTheme.primaryBlue.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              _buildHeaderCell('الوحدة', flex: 3),
+              _buildHeaderCell('النوع', flex: 2),
+              _buildHeaderCell('السعر', flex: 2),
+              _buildHeaderCell('الحالة', flex: 1),
+              _buildHeaderCell('الإجراءات', flex: 2),
+            ],
+          ),
+        ),
+      ],
     );
   }
   
@@ -800,8 +889,8 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                 _buildDesktopHeader(),
                 Expanded(
                   child: ListView.builder(
-                    itemCount: widget.units.length,
-                    itemBuilder: (context, index) => _buildDesktopRow(widget.units[index], index),
+                    itemCount: _filteredUnits.length,
+                    itemBuilder: (context, index) => _buildDesktopRow(_filteredUnits[index], index),
                   ),
                 ),
               ],
@@ -813,33 +902,73 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
   }
   
   Widget _buildDesktopHeader() {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primaryBlue.withOpacity(0.1),
-            AppTheme.primaryPurple.withOpacity(0.05),
-          ],
-        ),
-        border: Border(
-          bottom: BorderSide(
-            color: AppTheme.primaryBlue.withOpacity(0.2),
-            width: 1,
+    return Column(
+      children: [
+        // Filter Bar for desktop
+        Container(
+          padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildFilterChip('الكل', null),
+                    const SizedBox(width: 8),
+                    ..._unitTypes.map((type) => Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: _buildFilterChip(type, type),
+                    )),
+                  ],
+                ),
+              ),
+              if (_isLoadingTypes)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: LinearProgressIndicator(
+                    backgroundColor: Colors.transparent,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppTheme.primaryBlue.withOpacity(0.3),
+                    ),
+                    minHeight: 2,
+                  ),
+                ),
+            ],
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          _buildHeaderCell('الوحدة', flex: 2),
-          _buildHeaderCell('النوع', flex: 1),
-          _buildHeaderCell('الكيان', flex: 2),
-          _buildHeaderCell('السعر', flex: 1),
-          _buildHeaderCell('السعة', flex: 1),
-          _buildHeaderCell('الحالة', flex: 1),
-          _buildHeaderCell('الإجراءات', flex: 1),
-        ],
-      ),
+        
+        // Table Header
+        Container(
+          padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.primaryBlue.withOpacity(0.1),
+                AppTheme.primaryPurple.withOpacity(0.05),
+              ],
+            ),
+            border: Border(
+              bottom: BorderSide(
+                color: AppTheme.primaryBlue.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              _buildHeaderCell('الوحدة', flex: 2),
+              _buildHeaderCell('النوع', flex: 1),
+              _buildHeaderCell('الكيان', flex: 2),
+              _buildHeaderCell('السعر', flex: 1),
+              _buildHeaderCell('السعة', flex: 1),
+              _buildHeaderCell('الحالة', flex: 1),
+              _buildHeaderCell('الإجراءات', flex: 1),
+            ],
+          ),
+        ),
+      ],
     );
   }
   
@@ -1024,6 +1153,11 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       case 'chalet':
       case 'شاليه':
         return Icons.house_rounded;
+      case 'studio':
+      case 'ستوديو':
+        return Icons.meeting_room_rounded;
+      case 'الكل':
+        return Icons.dashboard_rounded;
       default:
         return Icons.home_rounded;
     }

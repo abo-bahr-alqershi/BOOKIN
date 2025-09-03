@@ -79,4 +79,22 @@ class UpdateDynamicFieldsEvent extends UnitFormEvent {
   List<Object?> get props => [values];
 }
 
+class UpdateUnitNameEvent extends UnitFormEvent {
+  final String name;
+
+  const UpdateUnitNameEvent({required this.name});
+
+  @override
+  List<Object?> get props => [name];
+}
+
+class UpdateDescriptionEvent extends UnitFormEvent {
+  final String description;
+
+  const UpdateDescriptionEvent({required this.description});
+
+  @override
+  List<Object?> get props => [description];
+}
+
 class SubmitFormEvent extends UnitFormEvent {}

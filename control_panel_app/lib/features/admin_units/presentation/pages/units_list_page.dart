@@ -39,7 +39,7 @@ class _UnitsListPageState extends State<UnitsListPage>
   // State
   final ScrollController _scrollController = ScrollController();
   bool _showFilters = false;
-  String _selectedView = 'grid'; // grid, table, map
+  String _selectedView = 'table'; // grid, table, map
   String _searchQuery = '';
   
   @override
@@ -254,8 +254,8 @@ class _UnitsListPageState extends State<UnitsListPage>
                       _buildActionButton(
                         icon: Icons.filter_list_rounded,
                         label: 'فلتر',
-                        onTap: () => setState(() => _showFilters = !_showFilters),
-                        isActive: _showFilters,
+                        onTap: _showFilterBottomSheet,//() => setState(() => _showFilters = !_showFilters),
+                        isActive: false//_showFilters,
                       ),
                       const SizedBox(width: 8),
                       _buildActionButton(
@@ -517,24 +517,334 @@ class _UnitsListPageState extends State<UnitsListPage>
     );
   }
   
-  Widget _buildFiltersSection() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      constraints: const BoxConstraints(minHeight: 0, maxHeight: 120),
-      height: _showFilters ? 80 : 0,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: UnitFiltersWidget(
-          onFiltersChanged: (filters) {
-            context.read<UnitsListBloc>().add(
-              FilterUnitsEvent(filters: filters),
-            );
-          },
+Widget _buildFiltersSection() {
+  return AnimatedContainer(
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.easeInOut,
+    height: _showFilters ? null : 0, // استخدم null للارتفاع التلقائي
+    child: AnimatedOpacity(
+      duration: const Duration(milliseconds: 200),
+      opacity: _showFilters ? 1.0 : 0.0,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.darkCard.withOpacity(0.95),
+              AppTheme.darkCard.withOpacity(0.85),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppTheme.primaryBlue.withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryBlue.withOpacity(0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: AppTheme.darkBackground,
+              blurRadius: 30,
+              spreadRadius: -5,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: _showFilters
+                ? UnitFiltersWidget(
+                    onFiltersChanged: (filters) {
+                      context.read<UnitsListBloc>().add(
+                        FilterUnitsEvent(filters: filters),
+                      );
+                    },
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+  
+  void _showFilterBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.7),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppTheme.darkCard,
+                AppTheme.darkBackground,
+              ],
+            ),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(30),
+            ),
+            border: Border.all(
+              color: AppTheme.primaryBlue.withOpacity(0.3),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryBlue.withOpacity(0.3),
+                blurRadius: 30,
+                spreadRadius: 5,
+                offset: const Offset(0, -10),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(28),
+            ),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Column(
+                children: [
+                  // مقبض السحب
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.primaryGradient,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  
+                  // Header مع عنوان وزر إغلاق
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: AppTheme.darkBorder.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            gradient: AppTheme.primaryGradient,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primaryBlue.withOpacity(0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.filter_list_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'الفلاتر المتقدمة',
+                                style: AppTextStyles.heading3.copyWith(
+                                  color: AppTheme.textWhite,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'تصفية وترتيب الوحدات',
+                                style: AppTextStyles.caption.copyWith(
+                                  color: AppTheme.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.pop(context);
+                          },
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: AppTheme.darkSurface.withOpacity(0.5),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppTheme.darkBorder.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child:  Icon(
+                              Icons.close_rounded,
+                              color: AppTheme.textMuted,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // محتوى الفلتر
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.all(20),
+                      child: UnitFiltersWidget(
+                        onFiltersChanged: (filters) {
+                          context.read<UnitsListBloc>().add(
+                            FilterUnitsEvent(filters: filters),
+                          );
+                          // إغلاق BottomSheet بعد تطبيق الفلاتر
+                          Future.delayed(const Duration(milliseconds: 300), () {
+                            if (mounted) {
+                              Navigator.pop(context);
+                            }
+                          });
+                          
+                          // إظهار SnackBar للتأكيد
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.check_circle_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'تم تطبيق الفلاتر',
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              backgroundColor: AppTheme.success,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  
+                  // زر تطبيق في الأسفل (اختياري)
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(
+                          color: AppTheme.darkBorder.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              // إعادة تعيين الفلاتر
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                color: AppTheme.darkSurface.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppTheme.darkBorder.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'إلغاء',
+                                  style: AppTextStyles.buttonMedium.copyWith(
+                                    color: AppTheme.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.mediumImpact();
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                gradient: AppTheme.primaryGradient,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.primaryBlue.withOpacity(0.3),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'تطبيق الفلاتر',
+                                  style: AppTextStyles.buttonMedium.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
-  
+
   Widget _buildContent() {
     return BlocBuilder<UnitsListBloc, UnitsListState>(
       builder: (context, state) {

@@ -19,6 +19,7 @@ class UnitFormReady extends UnitFormState {
   final UnitType? selectedUnitType;
   final List<UnitTypeField> unitTypeFields;
   final String? unitName;
+  final String? description;
   final Money? basePrice;
   final PricingMethod? pricingMethod;
   final String? customFeatures;
@@ -37,6 +38,7 @@ class UnitFormReady extends UnitFormState {
     this.selectedUnitType,
     this.unitTypeFields = const [],
     this.unitName,
+    this.description,
     this.basePrice,
     this.pricingMethod,
     this.customFeatures,
@@ -56,6 +58,7 @@ class UnitFormReady extends UnitFormState {
     UnitType? selectedUnitType,
     List<UnitTypeField>? unitTypeFields,
     String? unitName,
+    String? description,
     Money? basePrice,
     PricingMethod? pricingMethod,
     String? customFeatures,
@@ -74,6 +77,7 @@ class UnitFormReady extends UnitFormState {
       selectedUnitType: selectedUnitType ?? this.selectedUnitType,
       unitTypeFields: unitTypeFields ?? this.unitTypeFields,
       unitName: unitName ?? this.unitName,
+      description: description ?? this.description,
       basePrice: basePrice ?? this.basePrice,
       pricingMethod: pricingMethod ?? this.pricingMethod,
       customFeatures: customFeatures ?? this.customFeatures,
@@ -95,6 +99,7 @@ class UnitFormReady extends UnitFormState {
         selectedUnitType,
         unitTypeFields,
         unitName,
+        description,
         basePrice,
         pricingMethod,
         customFeatures,

@@ -27,6 +27,8 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
     on<InitializeFormEvent>(_onInitializeForm);
     on<PropertySelectedEvent>(_onPropertySelected);
     on<UnitTypeSelectedEvent>(_onUnitTypeSelected);
+    on<UpdateUnitNameEvent>(_onUpdateUnitName);  // أضف هذا
+    on<UpdateDescriptionEvent>(_onUpdateDescription);  // أضف هذا
     on<UpdateCapacityEvent>(_onUpdateCapacity);
     on<UpdatePricingEvent>(_onUpdatePricing);
     on<UpdateFeaturesEvent>(_onUpdateFeatures);
@@ -50,6 +52,31 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
       emit(const UnitFormReady());
     }
   }
+
+  Future<void> _onUpdateUnitName(
+    UpdateUnitNameEvent event,
+    Emitter<UnitFormState> emit,
+  ) async {
+    if (state is UnitFormReady) {
+      final currentState = state as UnitFormReady;
+      emit(currentState.copyWith(
+        unitName: event.name,
+      ));
+    }
+  }
+
+  Future<void> _onUpdateDescription(
+    UpdateDescriptionEvent event,
+    Emitter<UnitFormState> emit,
+  ) async {
+    if (state is UnitFormReady) {
+      final currentState = state as UnitFormReady;
+      emit(currentState.copyWith(
+        description: event.description,
+      ));
+    }
+  }
+
 
   Future<void> _onPropertySelected(
     PropertySelectedEvent event,
@@ -156,6 +183,13 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
   ) async {
     if (state is UnitFormReady) {
       final currentState = state as UnitFormReady;
+      
+      // التحقق من البيانات المطلوبة قبل الإرسال
+      if (!_validateFormData(currentState)) {
+        emit(const UnitFormError(message: 'الرجاء ملء جميع الحقول المطلوبة'));
+        return;
+      }
+      
       emit(UnitFormLoading());
       
       if (currentState.isEditMode) {
@@ -163,6 +197,7 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
         final result = await updateUnitUseCase(UpdateUnitParams(
           unitId: currentState.unitId!,
           name: currentState.unitName,
+          description: currentState.description ?? '',
           basePrice: currentState.basePrice?.toJson(),
           customFeatures: currentState.customFeatures,
           pricingMethod: currentState.pricingMethod?.value,
@@ -177,18 +212,19 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
           (_) => emit(UnitFormSubmitted()),
         );
       } else {
-        // Create new unit
+        // Create new unit - مع التحقق الآمن
         final result = await createUnitUseCase(CreateUnitParams(
           propertyId: currentState.selectedPropertyId!,
           unitTypeId: currentState.selectedUnitType!.id,
           name: currentState.unitName!,
+          description: currentState.description ?? '',
           basePrice: currentState.basePrice!.toJson(),
           customFeatures: currentState.customFeatures ?? '',
           pricingMethod: currentState.pricingMethod!.value,
           fieldValues: _convertDynamicFieldsToList(currentState.dynamicFieldValues),
           images: currentState.images,
-          adultCapacity: currentState.adultCapacity,
-          childrenCapacity: currentState.childrenCapacity,
+          adultCapacity: currentState.adultCapacity ?? 0,
+          childrenCapacity: currentState.childrenCapacity ?? 0,
         ));
         
         result.fold(
@@ -197,6 +233,23 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
         );
       }
     }
+  }
+
+  // دالة للتحقق من صحة البيانات
+  bool _validateFormData(UnitFormReady state) {
+    if (state.isEditMode) {
+      return state.unitId != null;
+    }
+    
+    // للإنشاء، تحقق من جميع الحقول المطلوبة
+    return state.selectedPropertyId != null &&
+           state.selectedUnitType != null &&
+           state.unitName != null &&
+           state.unitName!.isNotEmpty &&
+           state.basePrice != null &&
+           state.pricingMethod != null &&
+           state.description != null &&
+           state.description!.isNotEmpty;
   }
 
   List<Map<String, dynamic>> _convertDynamicFieldsToList(

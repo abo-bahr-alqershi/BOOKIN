@@ -1,6 +1,8 @@
 // lib/features/admin_units/presentation/pages/create_unit_page.dart
 
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
+import 'package:bookn_cp_app/features/admin_units/domain/entities/money.dart';
+import 'package:bookn_cp_app/features/admin_units/domain/entities/pricing_method.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -358,56 +360,58 @@ class _CreateUnitPageState extends State<CreateUnitPage>
     );
   }
   
-  Widget _buildBasicInfoStep(UnitFormState state) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Unit Name
-          _buildInputField(
-            controller: _nameController,
-            label: 'اسم الوحدة',
-            hint: 'أدخل اسم الوحدة',
-            icon: Icons.home_rounded,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'الرجاء إدخال اسم الوحدة';
-              }
-              return null;
-            },
-          ),
-          
-          const SizedBox(height: 20),
-          
-          // Property Selector
-          _buildPropertySelector(state),
-          
-          const SizedBox(height: 20),
-          
-          // Unit Type Selector
-          _buildUnitTypeSelector(state),
-          
-          const SizedBox(height: 20),
-          
-          // Description
-          _buildInputField(
-            controller: _descriptionController,
-            label: 'الوصف',
-            hint: 'أدخل وصف الوحدة',
-            icon: Icons.description_rounded,
-            maxLines: 5,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'الرجاء إدخال وصف الوحدة';
-              }
-              return null;
-            },
-          ),
-        ],
-      ),
-    );
-  }
+Widget _buildBasicInfoStep(UnitFormState state) {
+  return SingleChildScrollView(
+    padding: const EdgeInsets.all(20),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Unit Name
+        _buildInputField(
+          controller: _nameController,
+          label: 'اسم الوحدة',
+          hint: 'أدخل اسم الوحدة',
+          icon: Icons.home_rounded,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'الرجاء إدخال اسم الوحدة';
+            }
+            return null;
+          },
+          onChanged: (value) => _updateUnitName(), // أضف هذا
+        ),
+        
+        const SizedBox(height: 20),
+        
+        // Property Selector
+        _buildPropertySelector(state),
+        
+        const SizedBox(height: 20),
+        
+        // Unit Type Selector
+        _buildUnitTypeSelector(state),
+        
+        const SizedBox(height: 20),
+        
+        // Description
+        _buildInputField(
+          controller: _descriptionController,
+          label: 'الوصف',
+          hint: 'أدخل وصف الوحدة',
+          icon: Icons.description_rounded,
+          maxLines: 5,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'الرجاء إدخال وصف الوحدة';
+            }
+            return null;
+          },
+          onChanged: (value) => _updateDescription(), // أضف هذا
+        ),
+      ],
+    ),
+  );
+}
   
   Widget _buildCapacityPricingStep(UnitFormState state) {
     return SingleChildScrollView(
@@ -690,10 +694,92 @@ class _CreateUnitPageState extends State<CreateUnitPage>
     );
   }
   
-  Widget _buildUnitTypeSelector(UnitFormState state) {
-    List<DropdownMenuItem<String>> items = [];
+  // Widget _buildUnitTypeSelector(UnitFormState state) {
+  //   List<DropdownMenuItem<String>> items = [];
     
-    if (state is UnitFormReady && state.availableUnitTypes.isNotEmpty) {
+  //   if (state is UnitFormReady && state.availableUnitTypes.isNotEmpty) {
+  //     items = state.availableUnitTypes.map((unitType) {
+  //       _isHasAdults = unitType.isHasAdults;
+  //       _isHasChildren = unitType.isHasChildren;
+  //       _adultCapacity = _isHasAdults ? 2 : 0;
+  //       return DropdownMenuItem<String>(
+  //         value: unitType.id,
+  //         child: Text(unitType.name),
+  //       );
+  //     }).toList();
+  //   }
+    
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Text(
+  //         'نوع الوحدة',
+  //         style: AppTextStyles.bodyMedium.copyWith(
+  //           color: AppTheme.textWhite,
+  //           fontWeight: FontWeight.w600,
+  //         ),
+  //       ),
+  //       const SizedBox(height: 8),
+  //       Container(
+  //         padding: const EdgeInsets.symmetric(horizontal: 16),
+  //         decoration: BoxDecoration(
+  //           gradient: LinearGradient(
+  //             colors: [
+  //               AppTheme.darkCard.withOpacity(0.5),
+  //               AppTheme.darkCard.withOpacity(0.3),
+  //             ],
+  //           ),
+  //           borderRadius: BorderRadius.circular(12),
+  //           border: Border.all(
+  //             color: AppTheme.darkBorder.withOpacity(0.3),
+  //             width: 1,
+  //           ),
+  //         ),
+  //         child: DropdownButtonHideUnderline(
+  //           child: DropdownButton<String>(
+  //             value: _selectedUnitTypeId,
+  //             isExpanded: true,
+  //             dropdownColor: AppTheme.darkCard,
+  //             icon: Icon(
+  //               Icons.arrow_drop_down_rounded,
+  //               color: AppTheme.primaryBlue.withOpacity(0.7),
+  //             ),
+  //             style: AppTextStyles.bodyMedium.copyWith(
+  //               color: AppTheme.textWhite,
+  //             ),
+  //             hint: Text(
+  //               'اختر نوع الوحدة',
+  //               style: AppTextStyles.bodyMedium.copyWith(
+  //                 color: AppTheme.textMuted.withOpacity(0.5),
+  //               ),
+  //             ),
+  //             items: items,
+  //             onChanged: _selectedPropertyId == null
+  //                 ? null
+  //                 : (value) {
+  //                     setState(() {
+  //                       _selectedUnitTypeId = value;
+  //                     });
+  //                     if (value != null) {
+  //                       context.read<UnitFormBloc>().add(
+  //                         UnitTypeSelectedEvent(unitTypeId: value),
+  //                       );
+  //                     }
+  //                   },
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+  Widget _buildUnitTypeSelector(UnitFormState state) {
+  List<DropdownMenuItem<String>> items = [];
+  bool isLoadingUnitTypes = false;
+  
+  if (state is UnitFormReady) {
+    isLoadingUnitTypes = state.isLoadingUnitTypes;
+    
+    if (state.availableUnitTypes.isNotEmpty) {
       items = state.availableUnitTypes.map((unitType) {
         _isHasAdults = unitType.isHasAdults;
         _isHasChildren = unitType.isHasChildren;
@@ -704,76 +790,148 @@ class _CreateUnitPageState extends State<CreateUnitPage>
         );
       }).toList();
     }
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'نوع الوحدة',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppTheme.textWhite,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTheme.darkCard.withOpacity(0.5),
-                AppTheme.darkCard.withOpacity(0.3),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppTheme.darkBorder.withOpacity(0.3),
-              width: 1,
-            ),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _selectedUnitTypeId,
-              isExpanded: true,
-              dropdownColor: AppTheme.darkCard,
-              icon: Icon(
-                Icons.arrow_drop_down_rounded,
-                color: AppTheme.primaryBlue.withOpacity(0.7),
-              ),
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppTheme.textWhite,
-              ),
-              hint: Text(
-                'اختر نوع الوحدة',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppTheme.textMuted.withOpacity(0.5),
-                ),
-              ),
-              items: items,
-              onChanged: _selectedPropertyId == null
-                  ? null
-                  : (value) {
-                      setState(() {
-                        _selectedUnitTypeId = value;
-                      });
-                      if (value != null) {
-                        context.read<UnitFormBloc>().add(
-                          UnitTypeSelectedEvent(unitTypeId: value),
-                        );
-                      }
-                    },
-            ),
-          ),
-        ),
-      ],
-    );
   }
   
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Text(
+            'نوع الوحدة',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (isLoadingUnitTypes) ...[
+            const SizedBox(width: 8),
+            // Animated Loading Dots
+            _buildLoadingDots(),
+          ],
+        ],
+      ),
+      const SizedBox(height: 8),
+      AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.darkCard.withOpacity(isLoadingUnitTypes ? 0.3 : 0.5),
+              AppTheme.darkCard.withOpacity(0.3),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isLoadingUnitTypes 
+              ? AppTheme.primaryBlue.withOpacity(0.3)
+              : AppTheme.darkBorder.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Stack(
+          alignment: Alignment.centerRight,
+          children: [
+            DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedUnitTypeId,
+                isExpanded: true,
+                dropdownColor: AppTheme.darkCard,
+                icon: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: isLoadingUnitTypes 
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppTheme.primaryBlue.withOpacity(0.7),
+                          ),
+                        ),
+                      )
+                    : Icon(
+                        Icons.arrow_drop_down_rounded,
+                        key: const ValueKey('dropdown_icon'),
+                        color: AppTheme.primaryBlue.withOpacity(0.7),
+                      ),
+                ),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppTheme.textWhite,
+                ),
+                hint: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Text(
+                    isLoadingUnitTypes 
+                      ? 'جاري تحميل أنواع الوحدات...'
+                      : 'اختر نوع الوحدة',
+                    key: ValueKey(isLoadingUnitTypes),
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppTheme.textMuted.withOpacity(0.5),
+                    ),
+                  ),
+                ),
+                items: items,
+                onChanged: (_selectedPropertyId == null || isLoadingUnitTypes)
+                    ? null
+                    : (value) {
+                        setState(() {
+                          _selectedUnitTypeId = value;
+                        });
+                        if (value != null) {
+                          context.read<UnitFormBloc>().add(
+                            UnitTypeSelectedEvent(unitTypeId: value),
+                          );
+                        }
+                      },
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+// أضف هذه الدالة المساعدة بعد دالة _buildUnitTypeSelector
+Widget _buildLoadingDots() {
+  return TweenAnimationBuilder<double>(
+    tween: Tween(begin: 0.0, end: 1.0),
+    duration: const Duration(milliseconds: 1500),
+    builder: (context, value, child) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(3, (index) {
+          final delay = index * 0.3;
+          final opacity = ((value - delay).clamp(0.0, 1.0) * 2 - 1).clamp(0.0, 1.0);
+          
+          return AnimatedOpacity(
+            opacity: opacity,
+            duration: const Duration(milliseconds: 300),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryBlue,
+                shape: BoxShape.circle,
+              ),
+            ),
+          );
+        }),
+      );
+    },
+    onEnd: () {
+    },
+  );
+}
+
   Widget _buildPricingMethodSelector() {
     final methods = [
-      {'value': 'per_night', 'label': 'لليلة الواحدة'},
-      {'value': 'per_week', 'label': 'للأسبوع'},
-      {'value': 'per_month', 'label': 'للشهر'},
+      {'value': 'daily', 'label': 'لليلة الواحدة'},
+      {'value': 'weekly', 'label': 'للأسبوع'},
+      {'value': 'monthly', 'label': 'للشهر'},
     ];
     
     return Column(
@@ -832,18 +990,18 @@ class _CreateUnitPageState extends State<CreateUnitPage>
     return Column(
       children: fields.map((field) {
         final controller = TextEditingController(
-          text: _dynamicFieldValues[field.id]?.toString() ?? '',
+          text: _dynamicFieldValues[field.fieldId]?.toString() ?? '',
         );
         
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: _buildInputField(
             controller: controller,
-            label: field.name,
-            hint: field.hint ?? 'أدخل ${field.name}',
+            label: field.displayName,
+            hint: field.description ?? 'أدخل ${field.displayName}',
             icon: Icons.info_rounded,
             onChanged: (value) {
-              _dynamicFieldValues[field.id] = value;
+              _dynamicFieldValues[field.fieldId] = value;
               _updateDynamicFields();
             },
           ),
@@ -1186,21 +1344,29 @@ class _CreateUnitPageState extends State<CreateUnitPage>
     );
   }
   
-  void _updatePricing() {
-    if (_priceController.text.isNotEmpty) {
-      final price = double.tryParse(_priceController.text);
-      if (price != null && price > 0) {
-        // You'll need to create Money object based on your implementation
-        // For now, I'll comment this out as I don't have the Money class definition
-        // context.read<UnitFormBloc>().add(
-        //   UpdatePricingEvent(
-        //     basePrice: Money(amount: price, currency: 'YER'),
-        //     pricingMethod: PricingMethod.fromString(_pricingMethod),
-        //   ),
-        // );
-      }
+void _updatePricing() {
+  if (_priceController.text.isNotEmpty) {
+    final price = double.tryParse(_priceController.text);
+    if (price != null && price > 0) {
+      // إنشاء Money و PricingMethod objects
+      final money = Money(
+        amount: price,
+        currency: 'YER', // أو العملة المناسبة
+        formattedAmount: price.toString(),
+      );
+      
+      // استخدام قيم enum بدلاً من constructor
+      final pricingMethod = _getPricingMethodEnum();
+      
+      context.read<UnitFormBloc>().add(
+        UpdatePricingEvent(
+          basePrice: money,
+          pricingMethod: pricingMethod,
+        ),
+      );
     }
   }
+}
   
   void _updateFeatures() {
     if (_featuresController.text.isNotEmpty) {
@@ -1208,6 +1374,22 @@ class _CreateUnitPageState extends State<CreateUnitPage>
         UpdateFeaturesEvent(features: _featuresController.text),
       );
     }
+  }
+
+  void _updateUnitName() {
+    // if (_nameController.text.isNotEmpty) {
+      context.read<UnitFormBloc>().add(
+        UpdateUnitNameEvent(name: _nameController.text),
+      );
+    // }
+  }
+
+  void _updateDescription() {
+    // if (_descriptionController.text.isNotEmpty) {
+      context.read<UnitFormBloc>().add(
+        UpdateDescriptionEvent(description: _descriptionController.text),
+      );
+    // }
   }
   
   void _updateDynamicFields() {
@@ -1232,18 +1414,30 @@ class _CreateUnitPageState extends State<CreateUnitPage>
   
   String _getPricingMethodText() {
     switch (_pricingMethod) {
-      case 'per_night':
-        return 'لليلة الواحدة';
-      case 'per_week':
+      case 'daily':
+        return 'لليوم الواحد';
+      case 'weekly':
         return 'للأسبوع';
-      case 'per_month':
+      case 'monthly':
         return 'للشهر';
       default:
-        return 'غير محدد';
+        return 'للساعة';
     }
   }
   
-  void _handleBack() {
+  PricingMethod _getPricingMethodEnum() {
+    switch (_pricingMethod) {
+      case 'daily':
+        return PricingMethod.daily;
+      case 'weekly':
+        return PricingMethod.weekly;
+      case 'monthly':
+        return PricingMethod.monthly;
+      default:
+        return PricingMethod.hourly;
+    }
+  }
+    void _handleBack() {
     if (_currentStep > 0) {
       setState(() {
         _currentStep--;
@@ -1252,7 +1446,8 @@ class _CreateUnitPageState extends State<CreateUnitPage>
       context.pop();
     }
   }
-  
+
+
   void _previousStep() {
     if (_currentStep > 0) {
       setState(() {
@@ -1306,13 +1501,21 @@ class _CreateUnitPageState extends State<CreateUnitPage>
     return true;
   }
   
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      // Just trigger the submit event, the BLoC should have all the data
-      // from the individual update events we've been sending
+void _submitForm() {
+  if (_formKey.currentState!.validate()) {
+    // تأكد من تحديث جميع البيانات قبل الإرسال
+    _updateUnitName();
+    _updateDescription();
+    _updatePricing();
+    _updateFeatures();
+    _updateCapacity();
+    
+    // انتظر قليلاً للتأكد من تحديث البلوك
+    Future.delayed(const Duration(milliseconds: 100), () {
       context.read<UnitFormBloc>().add(SubmitFormEvent());
-    }
+    });
   }
+}
   
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
