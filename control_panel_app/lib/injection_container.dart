@@ -528,6 +528,21 @@ void _initAdminUnits() {
   );
 
 
+  // Unit Images BLoC
+  sl.registerFactory(
+    () => UnitImagesBloc(
+      uploadUnitImage: sl(),
+      uploadMultipleImages: sl(),
+      getUnitImages: sl(),
+      updateUnitImage: sl(),
+      deleteUnitImage: sl(),
+      deleteMultipleImages: sl(),
+      reorderImages: sl(),
+      setPrimaryImage: sl(),
+    ),
+  );
+
+
 }
 
 void _initPropertyTypes() {

@@ -229,8 +229,15 @@ class AppRouter {
         GoRoute(
           path: '/admin/units/create',
           builder: (context, state) {
-            return BlocProvider<UnitFormBloc>(
-              create: (_) => di.sl<UnitFormBloc>()..add(const InitializeFormEvent()),
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider<UnitFormBloc>(
+                  create: (_) => di.sl<UnitFormBloc>()..add(const InitializeFormEvent()),
+                ),
+                BlocProvider<UnitImagesBloc>(
+                  create: (_) => di.sl<UnitImagesBloc>(),
+                ),
+              ],
               child: const CreateUnitPage(),
             );
           },
