@@ -31,6 +31,9 @@ namespace YemenBooking.Application.Handlers.Queries.Images
             // 1. بناء الاستعلام مع الفلاتر
             var query = _imageRepository.GetQueryable().AsNoTracking();
 
+            if (!string.IsNullOrWhiteSpace(request.TempKey))
+                query = query.Where(i => i.TempKey == request.TempKey);
+
             if (request.PropertyId.HasValue && !request.UnitId.HasValue)
                 query = query.Where(i => i.PropertyId == request.PropertyId.Value);
             if (request.UnitId.HasValue)

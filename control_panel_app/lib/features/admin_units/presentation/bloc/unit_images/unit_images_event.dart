@@ -11,15 +11,17 @@ abstract class UnitImagesEvent extends Equatable {
 
 class LoadUnitImagesEvent extends UnitImagesEvent {
   final String? unitId;
+  final String? tempKey;
 
-  const LoadUnitImagesEvent({this.unitId});
+  const LoadUnitImagesEvent({this.unitId, this.tempKey});
 
   @override
-  List<Object?> get props => [unitId];
+  List<Object?> get props => [unitId, tempKey];
 }
 
 class UploadUnitImageEvent extends UnitImagesEvent {
   final String? unitId;
+  final String? tempKey;
   final String filePath;
   final String? category;
   final String? alt;
@@ -29,6 +31,7 @@ class UploadUnitImageEvent extends UnitImagesEvent {
 
   const UploadUnitImageEvent({
     this.unitId,
+    this.tempKey,
     required this.filePath,
     this.category,
     this.alt,
@@ -38,24 +41,26 @@ class UploadUnitImageEvent extends UnitImagesEvent {
   });
 
   @override
-  List<Object?> get props => [unitId, filePath, category, alt, isPrimary, order, tags];
+  List<Object?> get props => [unitId, tempKey, filePath, category, alt, isPrimary, order, tags];
 }
 
 class UploadMultipleUnitImagesEvent extends UnitImagesEvent {
   final String? unitId;
+  final String? tempKey;
   final List<String> filePaths;
   final String? category;
   final List<String>? tags;
 
   const UploadMultipleUnitImagesEvent({
     this.unitId,
+    this.tempKey,
     required this.filePaths,
     this.category,
     this.tags,
   });
 
   @override
-  List<Object?> get props => [unitId, filePaths, category, tags];
+  List<Object?> get props => [unitId, tempKey, filePaths, category, tags];
 }
 
 class UpdateUnitImageEvent extends UnitImagesEvent {

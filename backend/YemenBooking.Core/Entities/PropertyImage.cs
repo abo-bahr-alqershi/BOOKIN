@@ -12,6 +12,13 @@ using YemenBooking.Core.Enums;
 public class PropertyImage : BaseEntity<Guid>
 {
     /// <summary>
+    /// مفتاح مؤقت لجلسة الرفع قبل إنشاء السجل المرتبط
+    /// Temporary key to group uploads before entity/unit is created
+    /// </summary>
+    [Display(Name = "المفتاح المؤقت")]
+    public string? TempKey { get; set; }
+
+    /// <summary>
     /// معرف الكيان (قابل للتمرير إلى NULL)
     /// Property identifier (nullable)
     /// </summary>

@@ -21,6 +21,7 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
   @override
   Future<Either<Failure, PropertyImage>> uploadImage({
     String? propertyId,
+    String? tempKey,
     required String filePath,
     String? category,
     String? alt,
@@ -32,6 +33,7 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
       try {
         final PropertyImageModel result = await remoteDataSource.uploadImage(
           propertyId: propertyId,
+          tempKey: tempKey,
           filePath: filePath,
           category: category,
           alt: alt,
@@ -51,10 +53,10 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
   }
 
   @override
-  Future<Either<Failure, List<PropertyImage>>> getPropertyImages(String? propertyId) async {
+  Future<Either<Failure, List<PropertyImage>>> getPropertyImages(String? propertyId, {String? tempKey}) async {
     if (await networkInfo.isConnected) {
       try {
-        final List<PropertyImageModel> result = await remoteDataSource.getPropertyImages(propertyId);
+        final List<PropertyImageModel> result = await remoteDataSource.getPropertyImages(propertyId, tempKey: tempKey);
         return Right(result);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));

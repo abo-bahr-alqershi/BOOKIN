@@ -181,4 +181,15 @@ public class PropertyImageRepository : BaseRepository<PropertyImage>, IPropertyI
             .Where(pi => paths.Contains(pi.Url))
             .ToListAsync(cancellationToken);
     }
+
+    /// <summary>
+    /// جلب صور حسب المفتاح المؤقت
+    /// </summary>
+    public async Task<IEnumerable<PropertyImage>> GetImagesByTempKeyAsync(string tempKey, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Where(pi => pi.TempKey == tempKey && !pi.IsDeleted)
+            .OrderBy(pi => pi.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
 }

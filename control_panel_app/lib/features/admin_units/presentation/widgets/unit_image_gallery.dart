@@ -21,6 +21,7 @@ import '../bloc/unit_images/unit_images_state.dart';
 
 class UnitImageGallery extends StatefulWidget {
   final String? unitId;
+  final String? tempKey;
   final bool isReadOnly;
   final int maxImages;
   final Function(List<UnitImage>)? onImagesChanged;
@@ -31,6 +32,7 @@ class UnitImageGallery extends StatefulWidget {
   const UnitImageGallery({
     super.key,
     this.unitId,
+    this.tempKey,
     this.isReadOnly = false,
     this.maxImages = 10,
     this.onImagesChanged,
@@ -69,7 +71,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
   int? _primaryImageIndex = 0;
   
   // تحديد الوضع المحلي بناءً على وجود unitId
-  bool get _isLocalMode => widget.unitId == null || widget.unitId!.isEmpty;
+  bool get _isLocalMode => (widget.unitId == null || widget.unitId!.isEmpty) && (widget.tempKey == null || widget.tempKey!.isEmpty);
   bool _isInitialLoadDone = false;
   
   @override
@@ -113,8 +115,8 @@ class UnitImageGalleryState extends State<UnitImageGallery>
     if (!_isLocalMode && !_isInitialLoadDone) {
       try {
         _imagesBloc = context.read<UnitImagesBloc?>();
-        if (_imagesBloc != null && widget.unitId != null && widget.unitId!.isNotEmpty) {
-          _imagesBloc!.add(LoadUnitImagesEvent(unitId: widget.unitId!));
+        if (_imagesBloc != null && ((widget.unitId != null && widget.unitId!.isNotEmpty) || (widget.tempKey != null && widget.tempKey!.isNotEmpty))) {
+          _imagesBloc!.add(LoadUnitImagesEvent(unitId: widget.unitId, tempKey: widget.tempKey));
           _isInitialLoadDone = true;
         }
       } catch (e) {
@@ -489,7 +491,8 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             _uploadingFiles.add(image.path);
           });
           _imagesBloc!.add(UploadUnitImageEvent(
-            unitId: widget.unitId!,
+            unitId: widget.unitId,
+            tempKey: widget.tempKey,
             filePath: image.path,
             isPrimary: _displayImages.isEmpty,
           ));
@@ -528,7 +531,8 @@ class UnitImageGalleryState extends State<UnitImageGallery>
               }
             });
             _imagesBloc!.add(UploadMultipleUnitImagesEvent(
-              unitId: widget.unitId!,
+              unitId: widget.unitId,
+              tempKey: widget.tempKey,
               filePaths: imagesToAdd.map((img) => img.path).toList(),
             ));
           }

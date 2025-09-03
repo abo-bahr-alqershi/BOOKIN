@@ -11,15 +11,17 @@ abstract class PropertyImagesEvent extends Equatable {
 
 class LoadPropertyImagesEvent extends PropertyImagesEvent {
   final String? propertyId;
+  final String? tempKey;
 
-  const LoadPropertyImagesEvent({this.propertyId});
+  const LoadPropertyImagesEvent({this.propertyId, this.tempKey});
 
   @override
-  List<Object?> get props => [propertyId];
+  List<Object?> get props => [propertyId, tempKey];
 }
 
 class UploadPropertyImageEvent extends PropertyImagesEvent {
   final String? propertyId;
+  final String? tempKey;
   final String filePath;
   final String? category;
   final String? alt;
@@ -29,6 +31,7 @@ class UploadPropertyImageEvent extends PropertyImagesEvent {
 
   const UploadPropertyImageEvent({
     this.propertyId,
+    this.tempKey,
     required this.filePath,
     this.category,
     this.alt,
@@ -38,24 +41,26 @@ class UploadPropertyImageEvent extends PropertyImagesEvent {
   });
 
   @override
-  List<Object?> get props => [propertyId, filePath, category, alt, isPrimary, order, tags];
+  List<Object?> get props => [propertyId, tempKey, filePath, category, alt, isPrimary, order, tags];
 }
 
 class UploadMultipleImagesEvent extends PropertyImagesEvent {
   final String? propertyId;
+  final String? tempKey;
   final List<String> filePaths;
   final String? category;
   final List<String>? tags;
 
   const UploadMultipleImagesEvent({
     this.propertyId,
+    this.tempKey,
     required this.filePaths,
     this.category,
     this.tags,
   });
 
   @override
-  List<Object?> get props => [propertyId, filePaths, category, tags];
+  List<Object?> get props => [propertyId, tempKey, filePaths, category, tags];
 }
 
 class UpdatePropertyImageEvent extends PropertyImagesEvent {

@@ -69,7 +69,7 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                 // تحويل المحتوى إلى تيار
                 var stream = new MemoryStream(request.File.FileContent);
 
-                // Determine dynamic folder path based on ImageType, PropertyId, and UnitId
+                // Determine dynamic folder path based on ImageType, PropertyId, UnitId or TempKey
                 Guid effectivePropertyId = request.PropertyId ?? Guid.Empty;
                 if (effectivePropertyId == Guid.Empty && request.UnitId.HasValue)
                 {
@@ -77,7 +77,11 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     effectivePropertyId = unitEntity?.PropertyId ?? Guid.Empty;
                 }
                 string folderPath;
-                if (effectivePropertyId == Guid.Empty)
+                if (!string.IsNullOrWhiteSpace(request.TempKey))
+                {
+                    folderPath = $"temp/{request.TempKey}";
+                }
+                else if (effectivePropertyId == Guid.Empty)
                 {
                     folderPath = "temp";
                 }
@@ -230,6 +234,7 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     Id = imageDto.Id,
                     PropertyId = propertyAssociation,
                     UnitId = request.UnitId,
+                    TempKey = string.IsNullOrWhiteSpace(request.TempKey) ? null : request.TempKey,
                     Name = fileName,
                     Url = uploadResult.FileUrl,
                     SizeBytes = uploadResult.FileSizeBytes,

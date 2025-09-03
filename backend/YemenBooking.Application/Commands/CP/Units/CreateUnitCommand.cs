@@ -11,6 +11,12 @@ namespace YemenBooking.Application.Commands.Units;
 public class CreateUnitCommand : IRequest<ResultDto<Guid>>
 {
     /// <summary>
+    /// مفتاح مؤقت للصور المرفوعة قبل الحفظ
+    /// Temporary key for pre-saved image uploads
+    /// </summary>
+    public string? TempKey { get; set; }
+
+    /// <summary>
     /// معرف الكيان
     /// Property ID
     /// </summary>

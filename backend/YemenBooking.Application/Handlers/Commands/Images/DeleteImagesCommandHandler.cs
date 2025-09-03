@@ -7,6 +7,9 @@ using YemenBooking.Application.DTOs;
 using YemenBooking.Core.Interfaces.Repositories;
 using YemenBooking.Application.Interfaces.Services;
 using YemenBooking.Core.Interfaces;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
+using YemenBooking.Core.Entities;
 
 namespace YemenBooking.Application.Handlers.Commands.Images
 {
@@ -48,6 +51,48 @@ namespace YemenBooking.Application.Handlers.Commands.Images
             }, cancellationToken);
 
             return ResultDto<bool>.Ok(true, "تم حذف الصور المطلوبة بنجاح");
+        }
+    }
+
+    /// <summary>
+    /// معالج أمر حذف الصور وفق مفتاح مؤقت
+    /// </summary>
+    public class DeleteImagesByTempKeyCommandHandler : IRequestHandler<DeleteImagesByTempKeyCommand, ResultDto<bool>>
+    {
+        private readonly IPropertyImageRepository _imageRepository;
+        private readonly IFileStorageService _fileStorageService;
+        private readonly IUnitOfWork _unitOfWork;
+
+        public DeleteImagesByTempKeyCommandHandler(
+            IPropertyImageRepository imageRepository,
+            IFileStorageService fileStorageService,
+            IUnitOfWork unitOfWork)
+        {
+            _imageRepository = imageRepository;
+            _fileStorageService = fileStorageService;
+            _unitOfWork = unitOfWork;
+        }
+
+        public async Task<ResultDto<bool>> Handle(DeleteImagesByTempKeyCommand request, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(request.TempKey))
+                return ResultDto<bool>.Failed("TempKey is required");
+
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                var query = _imageRepository.GetQueryable().Where(i => i.TempKey == request.TempKey);
+                var toDelete = await query.ToListAsync(cancellationToken);
+                foreach (var image in toDelete)
+                {
+                    var deleted = await _imageRepository.DeletePropertyImageAsync(image.Id, cancellationToken);
+                    if (deleted && request.Permanent && !string.IsNullOrEmpty(image.Url))
+                    {
+                        await _fileStorageService.DeleteFileAsync(image.Url, cancellationToken);
+                    }
+                }
+            }, cancellationToken);
+
+            return ResultDto<bool>.Ok(true, "تم حذف صور المفتاح المؤقت بنجاح");
         }
     }
 } 

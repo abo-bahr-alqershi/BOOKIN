@@ -12,6 +12,9 @@ namespace YemenBooking.Api.Controllers.Images
         [FromForm(Name = "file")]
         public IFormFile File { get; set; } = null!;
 
+        [FromForm(Name = "tempKey")]
+        public string? TempKey { get; set; }
+
         [FromForm(Name = "category")]
         public string Category { get; set; } = string.Empty;
 

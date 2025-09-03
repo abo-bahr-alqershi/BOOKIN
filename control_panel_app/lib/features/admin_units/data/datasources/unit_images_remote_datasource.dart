@@ -8,6 +8,7 @@ import '../models/unit_image_model.dart';
 abstract class UnitImagesRemoteDataSource {
   Future<UnitImageModel> uploadImage({
     String? unitId,
+    String? tempKey,
     required String filePath,
     String? category,
     String? alt,
@@ -16,7 +17,7 @@ abstract class UnitImagesRemoteDataSource {
     List<String>? tags,
   });
   
-  Future<List<UnitImageModel>> getUnitImages(String? unitId);
+  Future<List<UnitImageModel>> getUnitImages(String? unitId, {String? tempKey});
   Future<bool> updateImage(String imageId, Map<String, dynamic> data);
   Future<bool> deleteImage(String imageId);
   Future<bool> reorderImages(String? unitId, List<String> imageIds);
@@ -32,6 +33,7 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
   @override
   Future<UnitImageModel> uploadImage({
     String? unitId,
+    String? tempKey,
     required String filePath,
     String? category,
     String? alt,
@@ -43,6 +45,7 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath),
         'unitId': unitId,
+        if (tempKey != null) 'tempKey': tempKey,
         if (category != null) 'category': category,
         if (alt != null) 'alt': alt,
         'isPrimary': isPrimary,
@@ -80,11 +83,11 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
   }
   
   @override
-  Future<List<UnitImageModel>> getUnitImages(String? unitId) async {
+  Future<List<UnitImageModel>> getUnitImages(String? unitId, {String? tempKey}) async {
     try {
-      final response = await apiClient.get('$_imagesEndpoint', queryParameters: {
-        'unitId': unitId,
-      });
+      final qp = <String, dynamic>{'unitId': unitId};
+      if (tempKey != null) qp['tempKey'] = tempKey;
+      final response = await apiClient.get('$_imagesEndpoint', queryParameters: qp);
       
       if (response.data is Map<String, dynamic>) {
         final map = response.data as Map<String, dynamic>;

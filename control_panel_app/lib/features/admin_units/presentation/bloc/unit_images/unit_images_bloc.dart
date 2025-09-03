@@ -59,8 +59,8 @@ class UnitImagesBloc extends Bloc<UnitImagesEvent, UnitImagesState> {
     LoadUnitImagesEvent event,
     Emitter<UnitImagesState> emit,
   ) async {
-    // منع جلب الصور إذا لم يكن هناك unitId
-    if (event.unitId == null || event.unitId!.isEmpty) {
+    // منع جلب الصور إذا لم يكن هناك unitId أو tempKey
+    if ((event.unitId == null || event.unitId!.isEmpty) && (event.tempKey == null || event.tempKey!.isEmpty)) {
       emit(const UnitImagesLoaded(images: []));
       return;
     }
@@ -68,7 +68,7 @@ class UnitImagesBloc extends Bloc<UnitImagesEvent, UnitImagesState> {
     emit(const UnitImagesLoading(message: 'Loading images...'));
 
     final Either<Failure, List<UnitImage>> result =
-        await getUnitImages(event.unitId!);
+        await getUnitImages(GetUnitImagesParams(unitId: event.unitId, tempKey: event.tempKey));
 
     result.fold(
       (failure) => emit(UnitImagesError(
@@ -90,10 +90,10 @@ class UnitImagesBloc extends Bloc<UnitImagesEvent, UnitImagesState> {
     UploadUnitImageEvent event,
     Emitter<UnitImagesState> emit,
   ) async {
-    // تحقق من وجود unitId قبل الرفع
-    if (event.unitId == null || event.unitId!.isEmpty) {
+    // تحقق من وجود unitId أو tempKey قبل الرفع
+    if ((event.unitId == null || event.unitId!.isEmpty) && (event.tempKey == null || event.tempKey!.isEmpty)) {
       emit(UnitImagesError(
-        message: 'لا يمكن رفع الصور بدون معرف الوحدة',
+        message: 'لا يمكن رفع الصور بدون معرف الوحدة أو tempKey',
         previousImages: _currentImages,
       ));
       return;
@@ -106,6 +106,7 @@ class UnitImagesBloc extends Bloc<UnitImagesEvent, UnitImagesState> {
 
     final params = UploadImageParams(
       unitId: event.unitId,
+      tempKey: event.tempKey,
       filePath: event.filePath,
       category: event.category,
       alt: event.alt,
@@ -170,7 +171,7 @@ class UnitImagesBloc extends Bloc<UnitImagesEvent, UnitImagesState> {
         ));
         // بعد ثانية واحدة، عرض قائمة الصور المحدثة
         Future.delayed(const Duration(seconds: 1), () {
-          add(LoadUnitImagesEvent(unitId: event.unitId));
+          add(LoadUnitImagesEvent(unitId: event.unitId, tempKey: event.tempKey));
         });
       },
     );
