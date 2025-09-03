@@ -12,16 +12,18 @@ class SetPrimaryUnitImageUseCase implements UseCase<bool, SetPrimaryImageParams>
 
   @override
   Future<Either<Failure, bool>> call(SetPrimaryImageParams params) async {
-    return await repository.setAsPrimaryImage(params.unitId, params.imageId);
+    return await repository.setAsPrimaryImage(params.unitId, params.tempKey, params.imageId);
   }
 }
 
 class SetPrimaryImageParams {
   final String? unitId;
+  final String? tempKey;
   final String imageId;
 
   SetPrimaryImageParams({
     this.unitId,
+    this.tempKey,
     required this.imageId,
   });
 }

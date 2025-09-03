@@ -20,8 +20,8 @@ abstract class PropertyImagesRemoteDataSource {
   Future<List<PropertyImageModel>> getPropertyImages(String? propertyId, {String? tempKey});
   Future<bool> updateImage(String imageId, Map<String, dynamic> data);
   Future<bool> deleteImage(String imageId);
-  Future<bool> reorderImages(String? propertyId, List<String> imageIds);
-  Future<bool> setAsPrimaryImage(String? propertyId, String imageId);
+  Future<bool> reorderImages(String? propertyId,String? tempKey, List<String> imageIds);
+  Future<bool> setAsPrimaryImage(String? propertyId,String? tempKey, String imageId);
 }
 
 class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSource {
@@ -125,7 +125,7 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   }
   
   @override
-  Future<bool> reorderImages(String? propertyId, List<String> imageIds) async {
+  Future<bool> reorderImages(String? propertyId,String? tempKey, List<String> imageIds) async {
     try {
       // لا يوجد مسار لإعادة الترتيب دفعة واحدة في الـ backend الحالي.
       // نقوم بتطبيق الترتيب عبر تحديث كل صورة على حدة.
@@ -133,8 +133,8 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
       for (final id in imageIds) {
         await apiClient.put(
           '$_imagesEndpoint/$id',
-          data: {'order': order},
-      );
+          data: {'order': order, 'propertyId': propertyId, 'tempKey': tempKey},
+        );
         order++;
       }
       return true;
@@ -144,12 +144,12 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   }
   
   @override
-  Future<bool> setAsPrimaryImage(String? propertyId, String imageId) async {
+  Future<bool> setAsPrimaryImage(String? propertyId,String? tempKey, String imageId) async {
     try {
       // لا يوجد مسار صريح لتعيين الرئيسية؛ سنقوم بالتحديث المباشر للصورة
       final response = await apiClient.put(
         '$_imagesEndpoint/$imageId',
-        data: {'isPrimary': true, 'propertyId': propertyId},
+        data: {'isPrimary': true, 'propertyId': propertyId, 'tempKey': tempKey},
       );
       return response.data['success'] == true;
     } on DioException catch (e) {

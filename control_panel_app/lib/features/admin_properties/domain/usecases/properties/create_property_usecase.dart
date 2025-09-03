@@ -17,6 +17,7 @@ class CreatePropertyParams {
   final int starRating;
   final List<String>? images;
   final List<String>? amenityIds; // أضف هذا السطر
+  final String? tempKey;
   
   CreatePropertyParams({
     required this.name,
@@ -30,6 +31,7 @@ class CreatePropertyParams {
     required this.starRating,
     this.images,
     this.amenityIds, // أضف هذا السطر
+    this.tempKey,
   });
   
   Map<String, dynamic> toJson() {
@@ -45,6 +47,7 @@ class CreatePropertyParams {
     'starRating': starRating,
       if (images != null && images!.isNotEmpty) 'images': images,
       if (amenityIds != null && amenityIds!.isNotEmpty) 'amenityIds': amenityIds,
+      if (tempKey != null && tempKey!.isNotEmpty) 'tempKey': tempKey,
     };
   }
 }

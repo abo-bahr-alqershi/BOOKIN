@@ -147,6 +147,7 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
     
     final params = UploadMultipleImagesParams(
       propertyId: event.propertyId,
+      tempKey: event.tempKey,
       filePaths: event.filePaths,
       category: event.category,
       tags: event.tags,
@@ -272,6 +273,7 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
     
     final params = ReorderImagesParams(
       propertyId: event.propertyId,
+      tempKey: event.tempKey,
       imageIds: event.imageIds,
     );
     
@@ -309,6 +311,7 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
     
     final params = SetPrimaryImageParams(
       propertyId: event.propertyId,
+      tempKey: event.tempKey,
       imageId: event.imageId,
     );
     
@@ -352,7 +355,7 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
   ) async {
     // لا نظهر loading state عند التحديث
     final Either<Failure, List<PropertyImage>> result = 
-        await getPropertyImages(GetImagesParams(propertyId: event.propertyId));
+        await getPropertyImages(GetImagesParams(propertyId: event.propertyId, tempKey: event.tempKey));
     
     result.fold(
       (failure) => emit(PropertyImagesError(

@@ -12,16 +12,18 @@ class ReorderUnitImagesUseCase implements UseCase<bool, ReorderImagesParams> {
 
   @override
   Future<Either<Failure, bool>> call(ReorderImagesParams params) async {
-    return await repository.reorderImages(params.unitId, params.imageIds);
+    return await repository.reorderImages(params.unitId, params.tempKey, params.imageIds);
   }
 }
 
 class ReorderImagesParams {
   final String? unitId;
+  final String? tempKey;
   final List<String> imageIds;
 
   ReorderImagesParams({
     this.unitId,
+    this.tempKey,
     required this.imageIds,
   });
 }

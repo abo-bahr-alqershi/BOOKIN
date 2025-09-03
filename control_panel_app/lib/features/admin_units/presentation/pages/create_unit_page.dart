@@ -16,6 +16,8 @@ import 'package:bookn_cp_app/features/admin_properties/domain/entities/property.
 import 'package:bookn_cp_app/features/admin_units/presentation/widgets/unit_image_gallery.dart';
 import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_bloc.dart';
 import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_event.dart';
+import 'package:get_it/get_it.dart';
+import 'package:bookn_cp_app/core/network/api_client.dart';
 
 class CreateUnitPage extends StatefulWidget {
   const CreateUnitPage({super.key});
@@ -52,12 +54,17 @@ class _CreateUnitPageState extends State<CreateUnitPage>
   String? _selectedPropertyName;
   final GlobalKey<UnitImageGalleryState> _galleryKey = GlobalKey();
   List<String> _selectedLocalImages = [];
+  String? _tempKey;
   
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _loadInitialData();
+    // Generate a temp key to allow pre-save image uploads
+    _tempKey = DateTime.now().millisecondsSinceEpoch.toString();
+    // Re-initialize form with tempKey
+    context.read<UnitFormBloc>().add(InitializeFormEvent(tempKey: _tempKey));
   }
   
   void _initializeAnimations() {
@@ -102,6 +109,12 @@ class _CreateUnitPageState extends State<CreateUnitPage>
   
   @override
   void dispose() {
+    // Purge temp images if user leaves without saving
+    if (_tempKey != null) {
+      try {
+        GetIt.instance<ApiClient>().delete('/api/images/purge-temp', queryParameters: {'tempKey': _tempKey});
+      } catch (_) {}
+    }
     _animationController.dispose();
     _glowController.dispose();
     _nameController.dispose();
@@ -124,6 +137,8 @@ class _CreateUnitPageState extends State<CreateUnitPage>
               _galleryKey.currentState?.uploadLocalImages(unitId);
             } catch (_) {}
           }
+          // clear tempKey since entity is saved
+          _tempKey = null;
           _showSuccessMessage('تم إنشاء الوحدة بنجاح');
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) {
@@ -568,6 +583,7 @@ Widget _buildBasicInfoStep(UnitFormState state) {
           UnitImageGallery(
             key: _galleryKey,
             unitId: null,
+            tempKey: _tempKey,
             maxImages: 10,
             onLocalImagesChanged: (paths) {
               setState(() {

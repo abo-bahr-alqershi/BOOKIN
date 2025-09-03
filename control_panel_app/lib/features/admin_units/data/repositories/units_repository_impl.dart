@@ -98,6 +98,7 @@ class UnitsRepositoryImpl implements UnitsRepository {
     List<String>? images,
     int? adultCapacity,
     int? childrenCapacity,
+    String? tempKey,
   }) async {
     if (await networkInfo.isConnected) {
       try {
@@ -112,6 +113,7 @@ class UnitsRepositoryImpl implements UnitsRepository {
           'images': images,
           'adultCapacity': adultCapacity,
           'childrenCapacity': childrenCapacity,
+          if (tempKey != null && tempKey.isNotEmpty) 'tempKey': tempKey,
         };
         final unitId = await remoteDataSource.createUnit(unitData);
         return Right(unitId);

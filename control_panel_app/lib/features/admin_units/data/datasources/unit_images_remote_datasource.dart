@@ -20,8 +20,8 @@ abstract class UnitImagesRemoteDataSource {
   Future<List<UnitImageModel>> getUnitImages(String? unitId, {String? tempKey});
   Future<bool> updateImage(String imageId, Map<String, dynamic> data);
   Future<bool> deleteImage(String imageId);
-  Future<bool> reorderImages(String? unitId, List<String> imageIds);
-  Future<bool> setAsPrimaryImage(String? unitId, String imageId);
+  Future<bool> reorderImages(String? unitId, String? tempKey, List<String> imageIds);
+  Future<bool> setAsPrimaryImage(String? unitId, String? tempKey, String imageId);
 }
 
 class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
@@ -125,7 +125,7 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
   }
   
   @override
-  Future<bool> reorderImages(String? unitId, List<String> imageIds) async {
+  Future<bool> reorderImages(String? unitId, String? tempKey, List<String> imageIds) async {
     try {
       // لا يوجد مسار لإعادة الترتيب دفعة واحدة في الـ backend الحالي.
       // نقوم بتطبيق الترتيب عبر تحديث كل صورة على حدة.
@@ -133,8 +133,8 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
       for (final id in imageIds) {
         await apiClient.put(
           '$_imagesEndpoint/$id',
-          data: {'order': order},
-      );
+          data: {'order': order, 'unitId': unitId, 'tempKey': tempKey},
+        );
         order++;
       }
       return true;
@@ -144,12 +144,12 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
   }
   
   @override
-  Future<bool> setAsPrimaryImage(String? unitId, String imageId) async {
+  Future<bool> setAsPrimaryImage(String? unitId, String? tempKey, String imageId) async {
     try {
       // لا يوجد مسار صريح لتعيين الرئيسية؛ سنقوم بالتحديث المباشر للصورة
       final response = await apiClient.put(
         '$_imagesEndpoint/$imageId',
-        data: {'isPrimary': true, 'unitId': unitId},
+        data: {'isPrimary': true, 'unitId': unitId, 'tempKey': tempKey},
       );
       return response.data['success'] == true;
     } on DioException catch (e) {

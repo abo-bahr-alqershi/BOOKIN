@@ -22,6 +22,7 @@ class CreateUnitUseCase implements UseCase<String, CreateUnitParams> {
       images: params.images,
       adultCapacity: params.adultCapacity,
       childrenCapacity: params.childrenCapacity,
+      tempKey: params.tempKey,
     );
   }
 }
@@ -38,6 +39,7 @@ class CreateUnitParams extends Equatable {
   final List<String>? images;
   final int? adultCapacity;
   final int? childrenCapacity;
+  final String? tempKey;
 
   const CreateUnitParams({
     required this.propertyId,
@@ -51,6 +53,7 @@ class CreateUnitParams extends Equatable {
     this.images,
     this.adultCapacity,
     this.childrenCapacity,
+    this.tempKey,
   });
 
   // إضافة toJson للـ debugging
@@ -66,6 +69,7 @@ class CreateUnitParams extends Equatable {
     'images': images,
     'adultCapacity': adultCapacity,
     'childrenCapacity': childrenCapacity,
+    'tempKey': tempKey,
   };
 
   @override
@@ -81,5 +85,6 @@ class CreateUnitParams extends Equatable {
     images,
     adultCapacity,
     childrenCapacity,
+    tempKey,
   ];
 }

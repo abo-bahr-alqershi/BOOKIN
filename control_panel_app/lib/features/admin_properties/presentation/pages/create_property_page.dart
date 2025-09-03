@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:get_it/get_it.dart';
+import 'package:bookn_cp_app/core/network/api_client.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 import 'package:bookn_cp_app/core/theme/app_colors.dart';
@@ -84,6 +85,7 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
   List<String> _selectedLocalImages = [];
   List<String> _selectedAmenities = [];
   int _currentStep = 0;
+  String? _tempKey;
   
   // Track if widget is mounted
   bool _isDisposed = false;
@@ -92,6 +94,8 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
   void initState() {
     super.initState();
     _initializeAnimations();
+    // Generate a temp key (timestamp-based) for pre-save uploads
+    _tempKey = DateTime.now().millisecondsSinceEpoch.toString();
   }
   
   void _initializeAnimations() {
@@ -131,6 +135,12 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
   
   @override
   void dispose() {
+    // If user leaves without saving, purge temp images
+    if (_tempKey != null) {
+      try {
+        GetIt.instance<ApiClient>().delete('/api/images/purge-temp', queryParameters: {'tempKey': _tempKey});
+      } catch (_) {}
+    }
     _isDisposed = true;
     _animationController.dispose();
     _glowController.dispose();
@@ -167,6 +177,8 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
               ));
             } catch (_) {}
           }
+          // clear tempKey since entity is saved
+          _tempKey = null;
 
           _showSuccessMessage('تم إنشاء العقار بنجاح');
           // الرجوع بعد مهلة قصيرة
@@ -624,6 +636,7 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
             PropertyImageGallery(
               key: _galleryKey,
               propertyId: null, // لا يوجد معرف بعد
+              tempKey: _tempKey,
               maxImages: 10,
               onLocalImagesChanged: (paths) {
                 setState(() {
@@ -1402,6 +1415,7 @@ void _submitForm() {
         starRating: _starRating,
         images: imageUrls.isEmpty ? null : imageUrls,
         amenityIds: _selectedAmenities.isEmpty ? null : _selectedAmenities,
+        tempKey: _tempKey,
         shortDescription: _descriptionController.text.length > 100 
             ? _descriptionController.text.substring(0, 100) + '...'
             : _descriptionController.text,

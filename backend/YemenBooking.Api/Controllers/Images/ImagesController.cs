@@ -228,6 +228,12 @@ namespace YemenBooking.Api.Controllers.Images
             public List<string> ImageIds { get; set; } = new List<string>();
             public string? PropertyId { get; set; }
             public string? UnitId { get; set; }
+            /// <summary>
+            /// مفتاح مؤقت لتجميع الصور قبل الربط
+            /// Temporary key to group images prior to binding
+            /// </summary>
+            public string? TempKey { get; set; }
+
         }
 
         /// <summary>

@@ -106,11 +106,12 @@ class UnitImagesRepositoryImpl implements UnitImagesRepository {
   @override
   Future<Either<Failure, bool>> reorderImages(
     String? unitId,
+    String? tempKey,
     List<String> imageIds,
   ) async {
     if (await networkInfo.isConnected) {
       try {
-        final bool result = await remoteDataSource.reorderImages(unitId, imageIds);
+        final bool result = await remoteDataSource.reorderImages(unitId, tempKey, imageIds);
         return Right(result);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
@@ -125,11 +126,12 @@ class UnitImagesRepositoryImpl implements UnitImagesRepository {
   @override
   Future<Either<Failure, bool>> setAsPrimaryImage(
     String? unitId,
+    String? tempKey,
     String imageId,
   ) async {
     if (await networkInfo.isConnected) {
       try {
-        final bool result = await remoteDataSource.setAsPrimaryImage(unitId, imageId);
+        final bool result = await remoteDataSource.setAsPrimaryImage(unitId, tempKey, imageId);
         return Right(result);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
@@ -167,6 +169,7 @@ class UnitImagesRepositoryImpl implements UnitImagesRepository {
   @override
   Future<Either<Failure, List<UnitImage>>> uploadMultipleImages({
     String? unitId,
+    String? tempKey,
     required List<String> filePaths,
     String? category,
     List<String>? tags,
@@ -180,6 +183,7 @@ class UnitImagesRepositoryImpl implements UnitImagesRepository {
           try {
             final result = await remoteDataSource.uploadImage(
               unitId: unitId,
+              tempKey: tempKey,
               filePath: filePath,
               category: category,
               isPrimary: order == 0, // الصورة الأولى تكون رئيسية

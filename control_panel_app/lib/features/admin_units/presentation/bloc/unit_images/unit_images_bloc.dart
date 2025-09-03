@@ -148,6 +148,7 @@ class UnitImagesBloc extends Bloc<UnitImagesEvent, UnitImagesState> {
 
     final params = UploadMultipleImagesParams(
       unitId: event.unitId,
+      tempKey: event.tempKey,
       filePaths: event.filePaths,
       category: event.category,
       tags: event.tags,
@@ -273,6 +274,7 @@ class UnitImagesBloc extends Bloc<UnitImagesEvent, UnitImagesState> {
 
     final params = ReorderImagesParams(
       unitId: event.unitId,
+      tempKey: event.tempKey,
       imageIds: event.imageIds,
     );
 
@@ -310,6 +312,7 @@ class UnitImagesBloc extends Bloc<UnitImagesEvent, UnitImagesState> {
 
     final params = SetPrimaryImageParams(
       unitId: event.unitId,
+      tempKey: event.tempKey,
       imageId: event.imageId,
     );
 
@@ -353,7 +356,7 @@ class UnitImagesBloc extends Bloc<UnitImagesEvent, UnitImagesState> {
   ) async {
     // لا نظهر loading state عند التحديث
     final Either<Failure, List<UnitImage>> result =
-        await getUnitImages(event.unitId);
+        await getUnitImages(GetUnitImagesParams(unitId: event.unitId, tempKey: event.tempKey));
 
     result.fold(
       (failure) => emit(UnitImagesError(

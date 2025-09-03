@@ -96,28 +96,32 @@ class DeleteMultipleUnitImagesEvent extends UnitImagesEvent {
 
 class ReorderUnitImagesEvent extends UnitImagesEvent {
   final String? unitId;
+  final String? tempKey;
   final List<String> imageIds;
 
   const ReorderUnitImagesEvent({
     this.unitId,
+    this.tempKey,
     required this.imageIds,
   });
 
   @override
-  List<Object?> get props => [unitId, imageIds];
+  List<Object?> get props => [unitId, tempKey, imageIds];
 }
 
 class SetPrimaryUnitImageEvent extends UnitImagesEvent {
   final String? unitId;
+  final String? tempKey;
   final String imageId;
 
   const SetPrimaryUnitImageEvent({
     this.unitId,
+    this.tempKey,
     required this.imageId,
   });
 
   @override
-  List<Object?> get props => [unitId, imageId];
+  List<Object?> get props => [unitId, tempKey, imageId];
 }
 
 class ClearUnitImagesEvent extends UnitImagesEvent {
@@ -125,12 +129,13 @@ class ClearUnitImagesEvent extends UnitImagesEvent {
 }
 
 class RefreshUnitImagesEvent extends UnitImagesEvent {
-  final String unitId;
+  final String? unitId;
+  final String? tempKey;
 
-  const RefreshUnitImagesEvent({required this.unitId});
+  const RefreshUnitImagesEvent({this.unitId, this.tempKey});
 
   @override
-  List<Object?> get props => [unitId];
+  List<Object?> get props => [unitId, tempKey];
 }
 
 class ToggleUnitImageSelectionEvent extends UnitImagesEvent {

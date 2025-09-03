@@ -15,6 +15,7 @@ class UploadMultipleImagesUseCase implements UseCase<List<PropertyImage>, Upload
   Future<Either<Failure, List<PropertyImage>>> call(UploadMultipleImagesParams params) async {
     return await repository.uploadMultipleImages(
       propertyId: params.propertyId,
+      tempKey: params.tempKey,
       filePaths: params.filePaths,
       category: params.category,
       tags: params.tags,
@@ -24,12 +25,14 @@ class UploadMultipleImagesUseCase implements UseCase<List<PropertyImage>, Upload
 
 class UploadMultipleImagesParams {
   final String? propertyId;
+  final String? tempKey;
   final List<String> filePaths;
   final String? category;
   final List<String>? tags;
 
   UploadMultipleImagesParams({
     this.propertyId,
+    this.tempKey,
     required this.filePaths,
     this.category,
     this.tags,

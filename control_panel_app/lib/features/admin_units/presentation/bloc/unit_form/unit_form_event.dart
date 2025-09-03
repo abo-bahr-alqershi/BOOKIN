@@ -9,11 +9,12 @@ abstract class UnitFormEvent extends Equatable {
 
 class InitializeFormEvent extends UnitFormEvent {
   final String? unitId;
+  final String? tempKey;
 
-  const InitializeFormEvent({this.unitId});
+  const InitializeFormEvent({this.unitId, this.tempKey});
 
   @override
-  List<Object?> get props => [unitId];
+  List<Object?> get props => [unitId, tempKey];
 }
 
 class PropertySelectedEvent extends UnitFormEvent {

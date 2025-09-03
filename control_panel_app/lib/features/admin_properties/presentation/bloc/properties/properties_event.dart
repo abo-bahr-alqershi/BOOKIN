@@ -54,6 +54,7 @@ class CreatePropertyEvent extends PropertiesEvent {
   final int starRating;
   final List<String>? images;
   final List<String>? amenityIds;
+  final String? tempKey;
   
   const CreatePropertyEvent({
     required this.name,
@@ -67,6 +68,7 @@ class CreatePropertyEvent extends PropertiesEvent {
     required this.starRating,
     this.images,
     this.amenityIds, 
+    this.tempKey,
     required String shortDescription, 
     required double basePricePerNight, 
     required String currency, 
@@ -76,7 +78,7 @@ class CreatePropertyEvent extends PropertiesEvent {
   @override
   List<Object?> get props => [
     name, address, propertyTypeId, ownerId, description,
-    latitude, longitude, city, starRating, images, amenityIds,
+    latitude, longitude, city, starRating, images, amenityIds, tempKey,
   ];
 }
 

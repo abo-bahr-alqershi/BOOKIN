@@ -96,28 +96,32 @@ class DeleteMultipleImagesEvent extends PropertyImagesEvent {
 
 class ReorderImagesEvent extends PropertyImagesEvent {
   final String? propertyId;
+  final String? tempKey;
   final List<String> imageIds;
 
   const ReorderImagesEvent({
     this.propertyId,
+    this.tempKey,
     required this.imageIds,
   });
 
   @override
-  List<Object?> get props => [propertyId, imageIds];
+  List<Object?> get props => [propertyId, tempKey, imageIds];
 }
 
 class SetPrimaryImageEvent extends PropertyImagesEvent {
   final String? propertyId;
+  final String? tempKey;
   final String imageId;
 
   const SetPrimaryImageEvent({
     this.propertyId,
+    this.tempKey,
     required this.imageId,
   });
 
   @override
-  List<Object?> get props => [propertyId, imageId];
+  List<Object?> get props => [propertyId, tempKey, imageId];
 }
 
 class ClearPropertyImagesEvent extends PropertyImagesEvent {
@@ -125,12 +129,13 @@ class ClearPropertyImagesEvent extends PropertyImagesEvent {
 }
 
 class RefreshPropertyImagesEvent extends PropertyImagesEvent {
-  final String propertyId;
+  final String? propertyId;
+  final String? tempKey;
 
-  const RefreshPropertyImagesEvent({required this.propertyId});
+  const RefreshPropertyImagesEvent({this.propertyId, this.tempKey});
 
   @override
-  List<Object?> get props => [propertyId];
+  List<Object?> get props => [propertyId, tempKey];
 }
 
 class ToggleImageSelectionEvent extends PropertyImagesEvent {

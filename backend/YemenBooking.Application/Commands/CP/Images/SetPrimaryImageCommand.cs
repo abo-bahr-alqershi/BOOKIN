@@ -27,5 +27,12 @@ namespace YemenBooking.Application.Commands.Images
         /// Associated unit ID (optional)
         /// </summary>
         public Guid? UnitId { get; set; }
+        
+        /// <summary>
+        /// مفتاح مؤقت لتجميع الصور قبل الربط
+        /// Temporary key to group images prior to binding
+        /// </summary>
+        public string? TempKey { get; set; }
+
     }
 } 

@@ -7,6 +7,7 @@ import 'package:bookn_cp_app/core/error/failures.dart';
 abstract class UnitImagesRepository {
   Future<Either<Failure, UnitImage>> uploadImage({
     String? unitId,
+    String? tempKey,
     required String filePath,
     String? category,
     String? alt,
@@ -15,7 +16,7 @@ abstract class UnitImagesRepository {
     List<String>? tags,
   });
   
-  Future<Either<Failure, List<UnitImage>>> getUnitImages(String? unitId);
+  Future<Either<Failure, List<UnitImage>>> getUnitImages(String? unitId, {String? tempKey});
   
   Future<Either<Failure, bool>> updateImage(
     String imageId,
@@ -26,11 +27,13 @@ abstract class UnitImagesRepository {
   
   Future<Either<Failure, bool>> reorderImages(
     String? unitId,
+    String? tempKey,
     List<String> imageIds,
   );
   
   Future<Either<Failure, bool>> setAsPrimaryImage(
     String? unitId,
+    String? tempKey,
     String imageId,
   );
   
@@ -38,6 +41,7 @@ abstract class UnitImagesRepository {
   
   Future<Either<Failure, List<UnitImage>>> uploadMultipleImages({
     String? unitId,
+    String? tempKey,
     required List<String> filePaths,
     String? category,
     List<String>? tags,
