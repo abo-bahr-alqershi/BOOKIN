@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -229,8 +230,15 @@ class AppRouter {
         GoRoute(
           path: '/admin/units/create',
           builder: (context, state) {
-            return BlocProvider<UnitFormBloc>(
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider<UnitFormBloc>(
               create: (_) => di.sl<UnitFormBloc>()..add(const InitializeFormEvent()),
+                ),
+                BlocProvider<UnitImagesBloc>(
+                  create: (_) => di.sl<UnitImagesBloc>(),
+                ),
+              ],
               child: const CreateUnitPage(),
             );
           },

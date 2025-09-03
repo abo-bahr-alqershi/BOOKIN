@@ -112,7 +112,14 @@ class UnitFormReady extends UnitFormState {
       ];
 }
 
-class UnitFormSubmitted extends UnitFormState {}
+class UnitFormSubmitted extends UnitFormState {
+  final String? unitId;
+
+  const UnitFormSubmitted({this.unitId});
+
+  @override
+  List<Object?> get props => [unitId];
+}
 
 class UnitFormError extends UnitFormState {
   final String message;

@@ -209,7 +209,7 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
         
         result.fold(
           (failure) => emit(UnitFormError(message: failure.message)),
-          (_) => emit(UnitFormSubmitted()),
+          (_) => emit(UnitFormSubmitted(unitId: currentState.unitId)),
         );
       } else {
         // Create new unit - مع التحقق الآمن
@@ -229,7 +229,7 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
         
         result.fold(
           (failure) => emit(UnitFormError(message: failure.message)),
-          (_) => emit(UnitFormSubmitted()),
+          (newUnitId) => emit(UnitFormSubmitted(unitId: newUnitId)),
         );
       }
     }

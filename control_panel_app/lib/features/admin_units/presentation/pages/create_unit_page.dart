@@ -13,6 +13,9 @@ import 'package:bookn_cp_app/core/theme/app_colors.dart';
 import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import '../bloc/unit_form/unit_form_bloc.dart';
 import 'package:bookn_cp_app/features/admin_properties/domain/entities/property.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/widgets/unit_image_gallery.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_bloc.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_event.dart';
 
 class CreateUnitPage extends StatefulWidget {
   const CreateUnitPage({super.key});
@@ -47,6 +50,8 @@ class _CreateUnitPageState extends State<CreateUnitPage>
   String _pricingMethod = 'per_night';
   Map<String, dynamic> _dynamicFieldValues = {};
   String? _selectedPropertyName;
+  final GlobalKey<UnitImageGalleryState> _galleryKey = GlobalKey();
+  List<String> _selectedLocalImages = [];
   
   @override
   void initState() {
@@ -111,6 +116,14 @@ class _CreateUnitPageState extends State<CreateUnitPage>
     return BlocListener<UnitFormBloc, UnitFormState>(
       listener: (context, state) {
         if (state is UnitFormSubmitted) {
+          // If we have local images and unitId, trigger upload then pop
+          final unitId = state.unitId;
+          if (unitId != null && _selectedLocalImages.isNotEmpty) {
+            try {
+              // Use gallery helper to upload queued images
+              _galleryKey.currentState?.uploadLocalImages(unitId);
+            } catch (_) {}
+          }
           _showSuccessMessage('تم إنشاء الوحدة بنجاح');
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) {
@@ -539,6 +552,27 @@ Widget _buildBasicInfoStep(UnitFormState state) {
             maxLines: 3,
             onChanged: (value) {
               _updateFeatures();
+            },
+          ),
+          
+          const SizedBox(height: 30),
+
+          Text(
+            'صور الوحدة',
+            style: AppTextStyles.heading3.copyWith(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          UnitImageGallery(
+            key: _galleryKey,
+            unitId: null,
+            maxImages: 10,
+            onLocalImagesChanged: (paths) {
+              setState(() {
+                _selectedLocalImages = paths;
+              });
             },
           ),
           
