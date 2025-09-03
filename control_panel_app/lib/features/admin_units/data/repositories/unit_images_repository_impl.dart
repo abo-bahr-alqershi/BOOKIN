@@ -167,6 +167,7 @@ class UnitImagesRepositoryImpl implements UnitImagesRepository {
   @override
   Future<Either<Failure, List<UnitImage>>> uploadMultipleImages({
     String? unitId,
+    String? tempKey,
     required List<String> filePaths,
     String? category,
     List<String>? tags,
@@ -180,6 +181,7 @@ class UnitImagesRepositoryImpl implements UnitImagesRepository {
           try {
             final result = await remoteDataSource.uploadImage(
               unitId: unitId,
+              tempKey: tempKey,
               filePath: filePath,
               category: category,
               isPrimary: order == 0, // الصورة الأولى تكون رئيسية

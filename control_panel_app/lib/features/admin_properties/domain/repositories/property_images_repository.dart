@@ -7,6 +7,7 @@ import 'package:bookn_cp_app/core/error/failures.dart';
 abstract class PropertyImagesRepository {
   Future<Either<Failure, PropertyImage>> uploadImage({
     String? propertyId,
+    String? tempKey,
     required String filePath,
     String? category,
     String? alt,
@@ -15,7 +16,7 @@ abstract class PropertyImagesRepository {
     List<String>? tags,
   });
   
-  Future<Either<Failure, List<PropertyImage>>> getPropertyImages(String? propertyId);
+  Future<Either<Failure, List<PropertyImage>>> getPropertyImages(String? propertyId, {String? tempKey});
   
   Future<Either<Failure, bool>> updateImage(
     String imageId,
@@ -38,6 +39,7 @@ abstract class PropertyImagesRepository {
   
   Future<Either<Failure, List<PropertyImage>>> uploadMultipleImages({
     String? propertyId,
+    String? tempKey,
     required List<String> filePaths,
     String? category,
     List<String>? tags,

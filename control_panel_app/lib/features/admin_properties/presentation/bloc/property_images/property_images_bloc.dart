@@ -147,6 +147,7 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
     
     final params = UploadMultipleImagesParams(
       propertyId: event.propertyId,
+      tempKey: event.tempKey,
       filePaths: event.filePaths,
       category: event.category,
       tags: event.tags,

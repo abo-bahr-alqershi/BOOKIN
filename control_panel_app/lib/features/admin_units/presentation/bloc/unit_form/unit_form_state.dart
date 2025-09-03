@@ -15,6 +15,7 @@ class UnitFormReady extends UnitFormState {
   final bool isEditMode;
   final String? unitId;
   final String? selectedPropertyId;
+  final String? tempKey;
   final List<UnitType> availableUnitTypes;
   final UnitType? selectedUnitType;
   final List<UnitTypeField> unitTypeFields;
@@ -34,6 +35,7 @@ class UnitFormReady extends UnitFormState {
     this.isEditMode = false,
     this.unitId,
     this.selectedPropertyId,
+    this.tempKey,
     this.availableUnitTypes = const [],
     this.selectedUnitType,
     this.unitTypeFields = const [],
@@ -54,6 +56,7 @@ class UnitFormReady extends UnitFormState {
     bool? isEditMode,
     String? unitId,
     String? selectedPropertyId,
+    String? tempKey,
     List<UnitType>? availableUnitTypes,
     UnitType? selectedUnitType,
     List<UnitTypeField>? unitTypeFields,
@@ -73,6 +76,7 @@ class UnitFormReady extends UnitFormState {
       isEditMode: isEditMode ?? this.isEditMode,
       unitId: unitId ?? this.unitId,
       selectedPropertyId: selectedPropertyId ?? this.selectedPropertyId,
+      tempKey: tempKey ?? this.tempKey,
       availableUnitTypes: availableUnitTypes ?? this.availableUnitTypes,
       selectedUnitType: selectedUnitType ?? this.selectedUnitType,
       unitTypeFields: unitTypeFields ?? this.unitTypeFields,
@@ -95,6 +99,7 @@ class UnitFormReady extends UnitFormState {
         isEditMode,
         unitId,
         selectedPropertyId,
+        tempKey,
         availableUnitTypes,
         selectedUnitType,
         unitTypeFields,

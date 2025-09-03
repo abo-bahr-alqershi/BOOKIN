@@ -49,7 +49,7 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
         unitId: event.unitId,
       ));
     } else {
-      emit(const UnitFormReady());
+      emit(UnitFormReady(tempKey: event.tempKey));
     }
   }
 
@@ -225,6 +225,7 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
           images: currentState.images,
           adultCapacity: currentState.adultCapacity ?? 0,
           childrenCapacity: currentState.childrenCapacity ?? 0,
+          tempKey: currentState.tempKey,
         ));
         
         result.fold(

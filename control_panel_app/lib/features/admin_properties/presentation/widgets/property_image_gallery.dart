@@ -1749,6 +1749,7 @@ class PropertyImageGalleryState extends State<PropertyImageGallery>
           });
           _imagesBloc!.add(UploadMultipleImagesEvent(
             propertyId: widget.propertyId!,
+            tempKey: widget.tempKey,
             filePaths: filesToAdd.map((file) => file.path).toList(),
           ));
         }

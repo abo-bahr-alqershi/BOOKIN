@@ -29,6 +29,7 @@ abstract class UnitsRepository {
     List<String>? images,
     int? adultCapacity,
     int? childrenCapacity,
+    String? tempKey,
   });
 
   Future<Either<Failure, bool>> updateUnit({

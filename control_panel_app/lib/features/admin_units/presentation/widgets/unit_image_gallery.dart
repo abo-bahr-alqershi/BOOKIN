@@ -485,7 +485,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             widget.onLocalImagesChanged!(_localImages);
           }
           _showSuccessSnackBar('تم إضافة الصورة (سيتم الرفع عند الحفظ)');
-        } else if (_imagesBloc != null && widget.unitId != null) {
+        } else if (_imagesBloc != null && (widget.unitId != null || (widget.tempKey != null && widget.tempKey!.isNotEmpty))) {
           // في وضع التعديل، ارفع مباشرة
           setState(() {
             _uploadingFiles.add(image.path);
@@ -1748,7 +1748,8 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             }
           });
           _imagesBloc!.add(UploadMultipleUnitImagesEvent(
-            unitId: widget.unitId!,
+            unitId: widget.unitId,
+            tempKey: widget.tempKey,
             filePaths: filesToAdd.map((file) => file.path).toList(),
           ));
         }

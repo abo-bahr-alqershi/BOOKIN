@@ -148,6 +148,7 @@ class UnitImagesBloc extends Bloc<UnitImagesEvent, UnitImagesState> {
 
     final params = UploadMultipleImagesParams(
       unitId: event.unitId,
+      tempKey: event.tempKey,
       filePaths: event.filePaths,
       category: event.category,
       tags: event.tags,

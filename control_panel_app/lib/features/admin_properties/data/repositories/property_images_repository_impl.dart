@@ -167,6 +167,7 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
   @override
   Future<Either<Failure, List<PropertyImage>>> uploadMultipleImages({
     String? propertyId,
+    String? tempKey,
     required List<String> filePaths,
     String? category,
     List<String>? tags,
@@ -180,6 +181,7 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
           try {
             final result = await remoteDataSource.uploadImage(
               propertyId: propertyId,
+              tempKey: tempKey,
               filePath: filePath,
               category: category,
               isPrimary: order == 0, // الصورة الأولى تكون رئيسية

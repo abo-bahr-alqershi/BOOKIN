@@ -112,6 +112,7 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
         starRating: event.starRating,
         images: event.images,
         amenityIds: event.amenityIds,
+        tempKey: event.tempKey,
       ),
     );
     
