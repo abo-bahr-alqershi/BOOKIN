@@ -21,6 +21,7 @@ class UnitImagesRepositoryImpl implements UnitImagesRepository {
   @override
   Future<Either<Failure, UnitImage>> uploadImage({
     String? unitId,
+    String? tempKey,
     required String filePath,
     String? category,
     String? alt,
@@ -32,6 +33,7 @@ class UnitImagesRepositoryImpl implements UnitImagesRepository {
       try {
         final UnitImageModel result = await remoteDataSource.uploadImage(
           unitId: unitId,
+          tempKey: tempKey,
           filePath: filePath,
           category: category,
           alt: alt,
@@ -51,10 +53,10 @@ class UnitImagesRepositoryImpl implements UnitImagesRepository {
   }
 
   @override
-  Future<Either<Failure, List<UnitImage>>> getUnitImages(String? unitId) async {
+  Future<Either<Failure, List<UnitImage>>> getUnitImages(String? unitId, {String? tempKey}) async {
     if (await networkInfo.isConnected) {
       try {
-        final List<UnitImageModel> result = await remoteDataSource.getUnitImages(unitId);
+        final List<UnitImageModel> result = await remoteDataSource.getUnitImages(unitId, tempKey: tempKey);
         return Right(result);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));

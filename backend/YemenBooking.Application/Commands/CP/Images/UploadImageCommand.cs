@@ -13,6 +13,12 @@ namespace YemenBooking.Application.Commands.Images
     public class UploadImageCommand : IRequest<ResultDto<ImageDto>>
     {
         /// <summary>
+        /// مفتاح مؤقت لربط الصور قبل إنشاء السجل المرتبط
+        /// Temporary key to associate images before entity/unit exists
+        /// </summary>
+        public string? TempKey { get; set; }
+
+        /// <summary>
         /// الملف المراد رفعه
         /// The file to upload
         /// </summary>

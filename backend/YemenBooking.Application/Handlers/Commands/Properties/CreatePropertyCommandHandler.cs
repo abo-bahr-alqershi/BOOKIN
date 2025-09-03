@@ -168,7 +168,7 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
                     var folderSegments = segments.Skip(1).Take(segments.Length - 2);
                     var fileName = segments[^1];
                     // استخدم مجلد "Management" للصور الدائمة
-                    var tempFolder = string.Join("/", folderSegments);                                        // e.g. "temp"
+                    var tempFolder = string.Join("/", folderSegments);                                        // e.g. "temp" or "temp/{tempKey}"
                     var sourceRelativePath = $"{tempFolder}/{fileName}";                                       // e.g. "temp/file.png"
                     var persistentFolder = ImageType.Management.ToString();                                    // e.g. "Management"
                     var destFolderPath = $"{persistentFolder}/{created.Id}";                                  // e.g. "Management/{propertyId}"
@@ -192,6 +192,41 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
                         var thumbSource = $"{tempFolder}/{nameWithoutExt}{suffix}{ext}";
                         var thumbDest = $"{destFolderPath}/{nameWithoutExt}{suffix}{ext}";
                         await _fileStorageService.MoveFileAsync(thumbSource, thumbDest, cancellationToken);
+                    }
+                }
+            }
+
+            // إذا تم تمرير TempKey بدون قائمة Images، حاول ربط جميع صور المفتاح المؤقت
+            if (!string.IsNullOrWhiteSpace(request.TempKey) && (request.Images == null || !request.Images.Any()))
+            {
+                var tempImages = await _propertyImageRepository.GetImagesByTempKeyAsync(request.TempKey, cancellationToken);
+                foreach (var img in tempImages)
+                {
+                    // انقل الملفات من temp/{tempKey} إلى المسار الرسمي
+                    var absolutePath = new Uri(img.Url, UriKind.RelativeOrAbsolute).IsAbsoluteUri
+                        ? new Uri(img.Url).AbsolutePath
+                        : (img.Url.StartsWith("/") ? img.Url : "/" + img.Url);
+                    var relativePath = Uri.UnescapeDataString(absolutePath);
+                    var fileName = Path.GetFileName(relativePath);
+                    var destFolderPath = $"{ImageType.Management}/{created.Id}";
+                    var destRelativePath = $"{destFolderPath}/{fileName}";
+                    var nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
+                    var ext = Path.GetExtension(fileName);
+
+                    // move main
+                    await _fileStorageService.MoveFileAsync($"temp/{request.TempKey}/{fileName}", destRelativePath, cancellationToken);
+                    var newUrl = await _fileStorageService.GetFileUrlAsync(destRelativePath, null, cancellationToken);
+                    img.PropertyId = created.Id;
+                    img.TempKey = null;
+                    img.Url = newUrl;
+                    img.Sizes = newUrl;
+                    await _propertyImageRepository.UpdatePropertyImageAsync(img, cancellationToken);
+
+                    // move thumbs if exist
+                    var thumbnailSuffixes = new[] { "_thumb", "_thumb48", "_thumb64" };
+                    foreach (var suffix in thumbnailSuffixes)
+                    {
+                        await _fileStorageService.MoveFileAsync($"temp/{request.TempKey}/{nameWithoutExt}{suffix}{ext}", $"{destFolderPath}/{nameWithoutExt}{suffix}{ext}", cancellationToken);
                     }
                 }
             }

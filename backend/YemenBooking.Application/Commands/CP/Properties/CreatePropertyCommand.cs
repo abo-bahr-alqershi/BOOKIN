@@ -10,6 +10,12 @@ namespace YemenBooking.Application.Commands.Properties;
 public class CreatePropertyCommand : IRequest<ResultDto<Guid>>
 {
     /// <summary>
+    /// مفتاح مؤقت للصور المرفوعة قبل الحفظ
+    /// Temporary key for pre-saved image uploads
+    /// </summary>
+    public string? TempKey { get; set; }
+
+    /// <summary>
     /// اسم الكيان
     /// Property name
     /// </summary>

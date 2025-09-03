@@ -41,6 +41,7 @@ namespace YemenBooking.Api.Controllers.Images
 
             var command = new UploadImageCommand
             {
+                TempKey = string.IsNullOrWhiteSpace(request.TempKey) ? null : request.TempKey,
                 File = new FileUploadRequest
                 {
                     FileName = request.File.FileName,
@@ -116,6 +117,23 @@ namespace YemenBooking.Api.Controllers.Images
                 limit = data.Limit,
                 totalPages = data.TotalPages
             });
+        }
+
+        /// <summary>
+        /// حذف جميع الصور التي تخص مفتاحاً مؤقتاً معيناً وتنظيف الملفات
+        /// Purge all images associated with a temporary key
+        /// </summary>
+        [HttpDelete("purge-temp")]
+        public async Task<IActionResult> PurgeTempImages([FromQuery] string tempKey)
+        {
+            if (string.IsNullOrWhiteSpace(tempKey))
+                return BadRequest("tempKey is required");
+
+            var result = await _mediator.Send(new DeleteImagesByTempKeyCommand { TempKey = tempKey });
+            if (!result.Success)
+                return BadRequest(result.Message);
+
+            return NoContent();
         }
 
         // /// <summary>

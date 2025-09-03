@@ -21,6 +21,7 @@ import '../bloc/property_images/property_images_state.dart';
 
 class PropertyImageGallery extends StatefulWidget {
   final String? propertyId;
+  final String? tempKey;
   final bool isReadOnly;
   final int maxImages;
   final Function(List<PropertyImage>)? onImagesChanged;
@@ -31,6 +32,7 @@ class PropertyImageGallery extends StatefulWidget {
   const PropertyImageGallery({
     super.key,
     this.propertyId,
+    this.tempKey,
     this.isReadOnly = false,
     this.maxImages = 10,
     this.onImagesChanged,
@@ -69,7 +71,7 @@ class PropertyImageGalleryState extends State<PropertyImageGallery>
   int? _primaryImageIndex = 0;
   
   // تحديد الوضع المحلي بناءً على وجود propertyId
-  bool get _isLocalMode => widget.propertyId == null || widget.propertyId!.isEmpty;
+  bool get _isLocalMode => (widget.propertyId == null || widget.propertyId!.isEmpty) && (widget.tempKey == null || widget.tempKey!.isEmpty);
   bool _isInitialLoadDone = false;
   
   @override
@@ -113,8 +115,8 @@ class PropertyImageGalleryState extends State<PropertyImageGallery>
     if (!_isLocalMode && !_isInitialLoadDone) {
       try {
         _imagesBloc = context.read<PropertyImagesBloc?>();
-        if (_imagesBloc != null && widget.propertyId != null && widget.propertyId!.isNotEmpty) {
-          _imagesBloc!.add(LoadPropertyImagesEvent(propertyId: widget.propertyId!));
+        if (_imagesBloc != null && ((widget.propertyId != null && widget.propertyId!.isNotEmpty) || (widget.tempKey != null && widget.tempKey!.isNotEmpty))) {
+          _imagesBloc!.add(LoadPropertyImagesEvent(propertyId: widget.propertyId, tempKey: widget.tempKey));
           _isInitialLoadDone = true;
         }
       } catch (e) {
@@ -483,13 +485,14 @@ class PropertyImageGalleryState extends State<PropertyImageGallery>
             widget.onLocalImagesChanged!(_localImages);
           }
           _showSuccessSnackBar('تم إضافة الصورة (سيتم الرفع عند الحفظ)');
-        } else if (_imagesBloc != null && widget.propertyId != null) {
+        } else if (_imagesBloc != null) {
           // في وضع التعديل، ارفع مباشرة
           setState(() {
             _uploadingFiles.add(image.path);
           });
           _imagesBloc!.add(UploadPropertyImageEvent(
-            propertyId: widget.propertyId!,
+            propertyId: widget.propertyId,
+            tempKey: widget.tempKey,
             filePath: image.path,
             isPrimary: _displayImages.isEmpty,
           ));
@@ -520,7 +523,7 @@ class PropertyImageGalleryState extends State<PropertyImageGallery>
               widget.onLocalImagesChanged!(_localImages);
             }
             _showSuccessSnackBar('تم إضافة ${imagesToAdd.length} صورة (سيتم الرفع عند الحفظ)');
-          } else if (_imagesBloc != null && widget.propertyId != null) {
+          } else if (_imagesBloc != null) {
             // في وضع التعديل
             setState(() {
               for (var img in imagesToAdd) {
@@ -528,7 +531,8 @@ class PropertyImageGalleryState extends State<PropertyImageGallery>
               }
             });
             _imagesBloc!.add(UploadMultipleImagesEvent(
-              propertyId: widget.propertyId!,
+              propertyId: widget.propertyId,
+              tempKey: widget.tempKey,
               filePaths: imagesToAdd.map((img) => img.path).toList(),
             ));
           }

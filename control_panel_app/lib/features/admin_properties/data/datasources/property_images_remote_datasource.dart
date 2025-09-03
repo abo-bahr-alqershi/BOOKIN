@@ -8,6 +8,7 @@ import '../models/property_image_model.dart';
 abstract class PropertyImagesRemoteDataSource {
   Future<PropertyImageModel> uploadImage({
     String? propertyId,
+    String? tempKey,
     required String filePath,
     String? category,
     String? alt,
@@ -16,7 +17,7 @@ abstract class PropertyImagesRemoteDataSource {
     List<String>? tags,
   });
   
-  Future<List<PropertyImageModel>> getPropertyImages(String? propertyId);
+  Future<List<PropertyImageModel>> getPropertyImages(String? propertyId, {String? tempKey});
   Future<bool> updateImage(String imageId, Map<String, dynamic> data);
   Future<bool> deleteImage(String imageId);
   Future<bool> reorderImages(String? propertyId, List<String> imageIds);
@@ -32,6 +33,7 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   @override
   Future<PropertyImageModel> uploadImage({
     String? propertyId,
+    String? tempKey,
     required String filePath,
     String? category,
     String? alt,
@@ -43,6 +45,7 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath),
         'propertyId': propertyId,
+        if (tempKey != null) 'tempKey': tempKey,
         if (category != null) 'category': category,
         if (alt != null) 'alt': alt,
         'isPrimary': isPrimary,
@@ -80,11 +83,11 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   }
   
   @override
-  Future<List<PropertyImageModel>> getPropertyImages(String? propertyId) async {
+  Future<List<PropertyImageModel>> getPropertyImages(String? propertyId, {String? tempKey}) async {
     try {
-      final response = await apiClient.get('$_imagesEndpoint', queryParameters: {
-        'propertyId': propertyId,
-      });
+      final qp = <String, dynamic>{'propertyId': propertyId};
+      if (tempKey != null) qp['tempKey'] = tempKey;
+      final response = await apiClient.get('$_imagesEndpoint', queryParameters: qp);
       
       if (response.data is Map<String, dynamic>) {
         final map = response.data as Map<String, dynamic>;

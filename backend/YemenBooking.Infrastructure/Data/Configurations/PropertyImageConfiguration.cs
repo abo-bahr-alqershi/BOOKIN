@@ -29,6 +29,11 @@ public class PropertyImageConfiguration : IEntityTypeConfiguration<PropertyImage
             .HasMaxLength(500)
             .HasComment("مسار الصورة");
 
+        // TempKey column config
+        builder.Property(pi => pi.TempKey)
+            .HasMaxLength(100)
+            .HasComment("مفتاح مؤقت لرفع الصور قبل الربط");
+
         builder.Property(pi => pi.AltText)
             .HasMaxLength(500)
             .HasComment("وصف الصورة");
@@ -84,6 +89,7 @@ public class PropertyImageConfiguration : IEntityTypeConfiguration<PropertyImage
         // تكوين الفهرس
         builder.HasIndex(pi => pi.PropertyId);
         builder.HasIndex(pi => pi.UnitId);
+        builder.HasIndex(pi => pi.TempKey);
 
         builder.HasQueryFilter(pi => !pi.IsDeleted);
     }

@@ -15,6 +15,12 @@ namespace YemenBooking.Application.Queries.Images
     public class GetImagesQuery : IRequest<ResultDto<PaginatedResultDto<ImageDto>>>
     {
         /// <summary>
+        /// مفتاح مؤقت لتجميع الصور قبل الربط
+        /// Temporary key to group images prior to binding
+        /// </summary>
+        public string? TempKey { get; set; }
+
+        /// <summary>
         /// معرف الكيان (اختياري)
         /// Property ID (optional)
         /// </summary>

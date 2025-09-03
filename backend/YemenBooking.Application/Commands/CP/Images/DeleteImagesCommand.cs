@@ -22,4 +22,14 @@ namespace YemenBooking.Application.Commands.Images
         /// </summary>
         public bool Permanent { get; set; } = false;
     }
+
+    /// <summary>
+    /// أمر لحذف الصور وفق مفتاح مؤقت
+    /// Command to delete images by temporary key
+    /// </summary>
+    public class DeleteImagesByTempKeyCommand : IRequest<ResultDto<bool>>
+    {
+        public string TempKey { get; set; } = string.Empty;
+        public bool Permanent { get; set; } = true;
+    }
 } 

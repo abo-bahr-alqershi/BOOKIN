@@ -102,4 +102,10 @@ public interface IPropertyImageRepository : IRepository<PropertyImage>
     /// Fetch images by their stored path values
     /// </summary>
     Task<IEnumerable<PropertyImage>> GetImagesByPathAsync(IEnumerable<string> paths, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// الحصول على صور بحسب المفتاح المؤقت
+    /// Get images by temporary key
+    /// </summary>
+    Task<IEnumerable<PropertyImage>> GetImagesByTempKeyAsync(string tempKey, CancellationToken cancellationToken = default);
 }
