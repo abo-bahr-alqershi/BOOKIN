@@ -803,14 +803,16 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
   }
 
   void _showPropertyTypeModal({dynamic propertyType}) {
+    final parentContext = context;
     showDialog(
       context: context,
+      useRootNavigator: false,
       barrierDismissible: false,
       builder: (context) => PropertyTypeModal(
         propertyType: propertyType,
         onSave: (data) {
           if (propertyType != null) {
-            context.read<PropertyTypesBloc>().add(
+            parentContext.read<PropertyTypesBloc>().add(
               UpdatePropertyTypeEvent(
                 propertyTypeId: propertyType.id,
                 name: data['name'],
@@ -820,7 +822,7 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
               ),
             );
           } else {
-            context.read<PropertyTypesBloc>().add(
+            parentContext.read<PropertyTypesBloc>().add(
               CreatePropertyTypeEvent(
                 name: data['name'],
                 description: data['description'],
@@ -840,15 +842,17 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
       return;
     }
     
+    final parentContext = context;
     showDialog(
       context: context,
+      useRootNavigator: false,
       barrierDismissible: false,
       builder: (context) => UnitTypeModal(
         unitType: unitType,
         propertyTypeId: _selectedPropertyTypeId!,
         onSave: (data) {
           if (unitType != null) {
-            context.read<UnitTypesBloc>().add(
+            parentContext.read<UnitTypesBloc>().add(
               UpdateUnitTypeEvent(
                 unitTypeId: unitType.id,
                 name: data['name'],
@@ -861,7 +865,7 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
               ),
             );
           } else {
-            context.read<UnitTypesBloc>().add(
+            parentContext.read<UnitTypesBloc>().add(
               CreateUnitTypeEvent(
                 propertyTypeId: _selectedPropertyTypeId!,
                 name: data['name'],
@@ -885,22 +889,24 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
       return;
     }
     
+    final parentContext = context;
     showDialog(
       context: context,
+      useRootNavigator: false,
       barrierDismissible: false,
       builder: (context) => UnitTypeFieldModal(
         field: field,
         unitTypeId: _selectedUnitTypeId!,
         onSave: (data) {
           if (field != null) {
-            context.read<UnitTypeFieldsBloc>().add(
+            parentContext.read<UnitTypeFieldsBloc>().add(
               UpdateFieldEvent(
                 fieldId: field.fieldId,
                 fieldData: data,
               ),
             );
           } else {
-            context.read<UnitTypeFieldsBloc>().add(
+            parentContext.read<UnitTypeFieldsBloc>().add(
               CreateFieldEvent(
                 unitTypeId: _selectedUnitTypeId!,
                 fieldData: data,
@@ -919,6 +925,7 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
   }) {
     showDialog(
       context: context,
+      useRootNavigator: false,
       builder: (context) => _DeleteConfirmationDialog(
         title: title,
         message: message,
