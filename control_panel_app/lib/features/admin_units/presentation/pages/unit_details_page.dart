@@ -1482,7 +1482,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
   void _navigateToGallery() {
     final state = context.read<UnitDetailsBloc>().state;
     if (state is UnitDetailsLoaded) {
-      context.go(
+      context.push(
         '/admin/units/${widget.unitId}/gallery',
         extra: state.unit,
       );
