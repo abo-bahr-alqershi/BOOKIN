@@ -524,70 +524,73 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
       padding: EdgeInsets.all(
         isDesktop ? AppDimensions.paddingXLarge : AppDimensions.paddingLarge,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Stats Cards
-          _buildStatsCards(isDesktop, isTablet),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Stats Cards
+            _buildStatsCards(isDesktop, isTablet),
 
-          const SizedBox(height: AppDimensions.paddingLarge),
+            const SizedBox(height: AppDimensions.paddingLarge),
 
-          // Filters
-          AmenityFiltersWidget(
-            onFilterChanged: (isAssigned, isFree) {
-              context.read<AmenitiesBloc>().add(
-                    ApplyFiltersEvent(
-                      isAssigned: isAssigned,
-                      isFree: isFree,
-                    ),
-                  );
-            },
-          ),
-
-          const SizedBox(height: AppDimensions.paddingLarge),
-
-          // Content View
-          Expanded(
-            child: BlocBuilder<AmenitiesBloc, AmenitiesState>(
-              builder: (context, state) {
-                if (state is AmenitiesLoading) {
-                  return _buildLoadingView();
-                }
-
-                if (state is AmenitiesError) {
-                  return _buildErrorView(state.message);
-                }
-
-                if (state is AmenitiesLoaded) {
-                  if (_isGridView) {
-                    return _buildGridView(state, isDesktop, isTablet);
-                  } else {
-                    return FuturisticAmenitiesTable(
-                      amenities: state.amenities.items,
-                      totalCount: state.amenities.totalCount,
-                      currentPage: state.amenities.pageNumber,
-                      pageSize: state.amenities.pageSize,
-                      onPageChanged: (page) {
-                        context.read<AmenitiesBloc>().add(
-                              ChangePageEvent(pageNumber: page),
-                            );
-                      },
-                      onEdit: _showEditAmenityDialog,
-                      onDelete: _showDeleteConfirmation,
-                      onToggleStatus: (amenity) {
-                        context.read<AmenitiesBloc>().add(
-                              ToggleAmenityStatusEvent(amenityId: amenity.id),
-                            );
-                      },
+            // Filters
+            AmenityFiltersWidget(
+              onFilterChanged: (isAssigned, isFree) {
+                context.read<AmenitiesBloc>().add(
+                      ApplyFiltersEvent(
+                        isAssigned: isAssigned,
+                        isFree: isFree,
+                      ),
                     );
-                  }
-                }
-
-                return const SizedBox.shrink();
               },
             ),
-          ),
-        ],
+
+            const SizedBox(height: AppDimensions.paddingLarge),
+
+            // Content View
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6, // Adjust height as needed
+              child: BlocBuilder<AmenitiesBloc, AmenitiesState>(
+                builder: (context, state) {
+                  if (state is AmenitiesLoading) {
+                    return _buildLoadingView();
+                  }
+
+                  if (state is AmenitiesError) {
+                    return _buildErrorView(state.message);
+                  }
+
+                  if (state is AmenitiesLoaded) {
+                    if (_isGridView) {
+                      return _buildGridView(state, isDesktop, isTablet);
+                    } else {
+                      return FuturisticAmenitiesTable(
+                        amenities: state.amenities.items,
+                        totalCount: state.amenities.totalCount,
+                        currentPage: state.amenities.pageNumber,
+                        pageSize: state.amenities.pageSize,
+                        onPageChanged: (page) {
+                          context.read<AmenitiesBloc>().add(
+                                ChangePageEvent(pageNumber: page),
+                              );
+                        },
+                        onEdit: _showEditAmenityDialog,
+                        onDelete: _showDeleteConfirmation,
+                        onToggleStatus: (amenity) {
+                          context.read<AmenitiesBloc>().add(
+                                ToggleAmenityStatusEvent(amenityId: amenity.id),
+                              );
+                        },
+                      );
+                    }
+                  }
+
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

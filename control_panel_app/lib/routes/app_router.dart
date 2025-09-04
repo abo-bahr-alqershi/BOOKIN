@@ -296,12 +296,20 @@ class AppRouter {
         // Admin Units - gallery
         GoRoute(
           path: '/admin/units/:unitId/gallery',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final unitId = state.pathParameters['unitId']!;
             final unit = state.extra as Unit?;
-            return BlocProvider<UnitImagesBloc>(
-              create: (_) => di.sl<UnitImagesBloc>()..add(LoadUnitImagesEvent(unitId: unitId)),
-              child: UnitGalleryPage(unitId: unitId, unit: unit),
+            return CustomTransitionPage(
+              child: BlocProvider<UnitImagesBloc>(
+                create: (_) => di.sl<UnitImagesBloc>()..add(LoadUnitImagesEvent(unitId: unitId)),
+                child: UnitGalleryPage(unitId: unitId, unit: unit),
+              ),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: child,
+                );
+              },
             );
           },
         ),
