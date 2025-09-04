@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:bookn_cp_app/features/admin_units/domain/entities/unit.dart';
 import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_bloc.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -84,6 +86,7 @@ import 'package:bookn_cp_app/features/helpers/presentation/pages/property_search
 import 'package:bookn_cp_app/features/helpers/presentation/pages/unit_search_page.dart';
 import 'package:bookn_cp_app/features/helpers/presentation/pages/city_search_page.dart';
 import 'package:bookn_cp_app/features/helpers/presentation/pages/booking_search_page.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/pages/unit_gallery_page.dart';
 import 'route_animations.dart';
 import 'route_guards.dart' as guards;
 
@@ -257,6 +260,9 @@ class AppRouter {
                 BlocProvider<UnitDetailsBloc>(
                   create: (_) => di.sl<UnitDetailsBloc>()..add(LoadUnitDetailsEvent(unitId: unitId)),
                 ),
+                BlocProvider<UnitImagesBloc>(
+                  create: (_) => di.sl<UnitImagesBloc>(),
+                ),
               ],
               child: EditUnitPage(unitId: unitId),
             );
@@ -268,9 +274,34 @@ class AppRouter {
           path: '/admin/units/:unitId',
           builder: (context, state) {
             final unitId = state.pathParameters['unitId']!;
-            return BlocProvider<UnitDetailsBloc>(
-              create: (_) => di.sl<UnitDetailsBloc>()..add(LoadUnitDetailsEvent(unitId: unitId)),
+            // return BlocProvider<UnitDetailsBloc>(
+            //   create: (_) => di.sl<UnitDetailsBloc>()..add(LoadUnitDetailsEvent(unitId: unitId)),
+            //   child: UnitDetailsPage(unitId: unitId),
+            // );
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider<UnitDetailsBloc>(
+                  create: (_) => di.sl<UnitDetailsBloc>()..add(LoadUnitDetailsEvent(unitId: unitId)),
+                ),
+                BlocProvider<UnitImagesBloc>(
+                  create: (_) => di.sl<UnitImagesBloc>(),
+                ),
+              ],
               child: UnitDetailsPage(unitId: unitId),
+            );
+
+          },
+        ),
+
+        // Admin Units - gallery
+        GoRoute(
+          path: '/admin/units/:unitId/gallery',
+          builder: (context, state) {
+            final unitId = state.pathParameters['unitId']!;
+            final unit = state.extra as Unit?;
+            return BlocProvider<UnitImagesBloc>(
+              create: (_) => di.sl<UnitImagesBloc>()..add(LoadUnitImagesEvent(unitId: unitId)),
+              child: UnitGalleryPage(unitId: unitId, unit: unit),
             );
           },
         ),
