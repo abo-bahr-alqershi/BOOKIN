@@ -1385,10 +1385,10 @@ void _submitForm() {
     }
     
     // تحويل PropertyImage إلى URLs
-    final List<String> imageUrls = _selectedImages
-        .where((img) => img.url.isNotEmpty)
-        .map((img) => img.url)
-        .toList();
+    // final List<String> imageUrls = _selectedImages
+    //     .where((img) => img.url.isNotEmpty)
+    //     .map((img) => img.url)
+    //     .toList();
     
     // طباعة للتأكد من البيانات (للتطوير فقط)
     debugPrint('=== Creating Property ===');
@@ -1397,7 +1397,7 @@ void _submitForm() {
     debugPrint('City: ${_cityController.text}');
     debugPrint('Owner: ${_selectedOwner?.name} (${_selectedOwner?.id})');
     debugPrint('Rating: $_starRating');
-    debugPrint('Images Count: ${imageUrls.length}');
+    debugPrint('Images Count: ${_selectedLocalImages.length}');
     debugPrint('Selected Amenities: $_selectedAmenities');
     debugPrint('========================');
     
@@ -1413,7 +1413,7 @@ void _submitForm() {
         longitude: double.tryParse(_longitudeController.text) ?? 0.0,
         city: _cityController.text.trim(),
         starRating: _starRating,
-        images: imageUrls.isEmpty ? null : imageUrls,
+        images: _selectedLocalImages.isEmpty ? [] : _selectedLocalImages,
         amenityIds: _selectedAmenities.isEmpty ? null : _selectedAmenities,
         tempKey: _tempKey,
         shortDescription: _descriptionController.text.length > 100 

@@ -27,9 +27,10 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
     on<InitializeFormEvent>(_onInitializeForm);
     on<PropertySelectedEvent>(_onPropertySelected);
     on<UnitTypeSelectedEvent>(_onUnitTypeSelected);
-    on<UpdateUnitNameEvent>(_onUpdateUnitName);  // أضف هذا
-    on<UpdateDescriptionEvent>(_onUpdateDescription);  // أضف هذا
+    on<UpdateUnitNameEvent>(_onUpdateUnitName); 
+    on<UpdateDescriptionEvent>(_onUpdateDescription);
     on<UpdateCapacityEvent>(_onUpdateCapacity);
+    on<UpdateUnitImageEvent>(_onUpdateUnitImage);
     on<UpdatePricingEvent>(_onUpdatePricing);
     on<UpdateFeaturesEvent>(_onUpdateFeatures);
     on<UpdateDynamicFieldsEvent>(_onUpdateDynamicFields);
@@ -139,6 +140,20 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
       ));
     }
   }
+
+    Future<void> _onUpdateUnitImage(
+    UpdateUnitImageEvent event,
+    Emitter<UnitFormState> emit,
+  ) async {
+    if (state is UnitFormReady) {
+      final currentState = state as UnitFormReady;
+      emit(currentState.copyWith(
+        images: event.images,
+      ));
+    }
+  }
+
+
 
   Future<void> _onUpdatePricing(
     UpdatePricingEvent event,

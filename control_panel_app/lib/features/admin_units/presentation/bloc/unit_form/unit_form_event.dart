@@ -49,6 +49,17 @@ class UpdateCapacityEvent extends UnitFormEvent {
   List<Object?> get props => [adultCapacity, childrenCapacity];
 }
 
+class UpdateUnitImageEvent extends UnitFormEvent {
+  final List<String>? images;
+
+  const UpdateUnitImageEvent({
+    this.images,
+  });
+
+  @override
+  List<Object?> get props => [images];
+}
+
 class UpdatePricingEvent extends UnitFormEvent {
   final Money basePrice;
   final PricingMethod pricingMethod;

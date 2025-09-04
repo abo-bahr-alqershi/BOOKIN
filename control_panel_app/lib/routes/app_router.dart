@@ -249,8 +249,15 @@ class AppRouter {
           path: '/admin/units/:unitId/edit',
           builder: (context, state) {
             final unitId = state.pathParameters['unitId']!;
-            return BlocProvider<UnitFormBloc>(
-              create: (_) => di.sl<UnitFormBloc>()..add(InitializeFormEvent(unitId: unitId)),
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider<UnitFormBloc>(
+                  create: (_) => di.sl<UnitFormBloc>()..add(InitializeFormEvent(unitId: unitId)),
+                ),
+                BlocProvider<UnitDetailsBloc>(
+                  create: (_) => di.sl<UnitDetailsBloc>()..add(LoadUnitDetailsEvent(unitId: unitId)),
+                ),
+              ],
               child: EditUnitPage(unitId: unitId),
             );
           },

@@ -1,19 +1,26 @@
+// lib/features/admin_units/presentation/pages/unit_details_page.dart
+
+import 'package:bookn_cp_app/core/theme/app_theme.dart';
+import 'package:bookn_cp_app/features/admin_units/domain/entities/money.dart';
+import 'package:bookn_cp_app/features/admin_units/domain/entities/pricing_method.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:ui';
 import 'dart:math' as math;
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/theme/app_text_styles.dart';
-import '../../../../../core/theme/app_dimensions.dart';
+import 'package:bookn_cp_app/core/theme/app_colors.dart';
+import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import '../bloc/unit_details/unit_details_bloc.dart';
-import '../widgets/unit_stats_card.dart';
-import '../widgets/assign_sections_modal.dart';
+import '../../domain/entities/unit.dart';
+import '../../domain/entities/unit_field_value.dart';
+import '../widgets/unit_image_gallery.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 class UnitDetailsPage extends StatefulWidget {
   final String unitId;
-
+  
   const UnitDetailsPage({
     super.key,
     required this.unitId,
@@ -25,107 +32,220 @@ class UnitDetailsPage extends StatefulWidget {
 
 class _UnitDetailsPageState extends State<UnitDetailsPage>
     with TickerProviderStateMixin {
-  late AnimationController _backgroundController;
-  late AnimationController _contentController;
-  late Animation<double> _backgroundAnimation;
-  late Animation<double> _contentFadeAnimation;
-  late Animation<Offset> _contentSlideAnimation;
-
-  bool _showAssignSectionsModal = false;
-
+  // Animation Controllers
+  late AnimationController _backgroundAnimationController;
+  late AnimationController _glowController;
+  late AnimationController _contentAnimationController;
+  late AnimationController _floatingButtonController;
+  late AnimationController _parallaxController;
+  
+  // Animations
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _glowAnimation;
+  late Animation<double> _parallaxAnimation;
+  
+  // Scroll Controller
+  final ScrollController _scrollController = ScrollController();
+  double _scrollOffset = 0.0;
+  bool _showFloatingHeader = false;
+  
+  // Tab Controller
+  late TabController _tabController;
+  int _currentTabIndex = 0;
+  
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _loadUnitDetails();
+    _setupScrollListener();
   }
-
+  
   void _initializeAnimations() {
-    _backgroundController = AnimationController(
-      duration: const Duration(seconds: 15),
+    // Background Animation
+    _backgroundAnimationController = AnimationController(
+      duration: const Duration(seconds: 30),
       vsync: this,
     )..repeat();
-
-    _contentController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+    
+    // Glow Animation
+    _glowController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..repeat(reverse: true);
+    
+    _glowAnimation = Tween<double>(
+      begin: 0.3,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _glowController,
+      curve: Curves.easeInOut,
+    ));
+    
+    // Content Animation
+    _contentAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-
-    _backgroundAnimation = Tween<double>(
-      begin: 0,
-      end: 2 * math.pi,
-    ).animate(_backgroundController);
-
-    _contentFadeAnimation = Tween<double>(
-      begin: 0,
-      end: 1,
+    
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _contentController,
-      curve: Curves.easeIn,
+      parent: _contentAnimationController,
+      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
     ));
-
-    _contentSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.05),
+    
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
       end: Offset.zero,
     ).animate(CurvedAnimation(
-      parent: _contentController,
-      curve: Curves.easeOutQuart,
+      parent: _contentAnimationController,
+      curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
     ));
-
-    _contentController.forward();
+    
+    _scaleAnimation = Tween<double>(
+      begin: 0.95,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _contentAnimationController,
+      curve: const Interval(0.4, 1.0, curve: Curves.easeOutBack),
+    ));
+    
+    // Floating Button Animation
+    _floatingButtonController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    
+    // Parallax Animation
+    _parallaxController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    _parallaxAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _parallaxController,
+      curve: Curves.easeOutCubic,
+    ));
+    
+    // Tab Controller
+    _tabController = TabController(
+      length: 4,
+      vsync: this,
+    );
+    
+    _tabController.addListener(() {
+      setState(() {
+        _currentTabIndex = _tabController.index;
+      });
+    });
+    
+    // Start animations
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _contentAnimationController.forward();
+        _floatingButtonController.forward();
+      }
+    });
   }
-
+  
+  void _setupScrollListener() {
+    _scrollController.addListener(() {
+      setState(() {
+        _scrollOffset = _scrollController.offset;
+        _showFloatingHeader = _scrollOffset > 200;
+      });
+      
+      // Update parallax
+      if (_scrollOffset > 0 && _scrollOffset < 300) {
+        _parallaxController.value = _scrollOffset / 300;
+      }
+    });
+  }
+  
   void _loadUnitDetails() {
-    context.read<UnitDetailsBloc>().add(
-          LoadUnitDetailsEvent(unitId: widget.unitId),
-        );
+    context.read<UnitDetailsBloc>().add(LoadUnitDetailsEvent(unitId: widget.unitId));
   }
-
+  
   @override
   void dispose() {
-    _backgroundController.dispose();
-    _contentController.dispose();
+    _backgroundAnimationController.dispose();
+    _glowController.dispose();
+    _contentAnimationController.dispose();
+    _floatingButtonController.dispose();
+    _parallaxController.dispose();
+    _scrollController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
-
+  
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      body: Stack(
-        children: [
-          _buildAnimatedBackground(),
-          _buildMainContent(),
-          if (_showAssignSectionsModal)
-            AssignSectionsModal(
-              unitId: widget.unitId,
-              onClose: () => setState(() => _showAssignSectionsModal = false),
-              onAssign: (sectionIds) {
-                context.read<UnitDetailsBloc>().add(
-                      AssignToSectionsEvent(
-                        unitId: widget.unitId,
-                        sectionIds: sectionIds,
-                      ),
-                    );
-                setState(() => _showAssignSectionsModal = false);
-              },
-            ),
-        ],
-      ),
+    return BlocConsumer<UnitDetailsBloc, UnitDetailsState>(
+      listener: (context, state) {
+        if (state is UnitDeleted) {
+          _showSuccessMessage('تم حذف الوحدة بنجاح');
+          context.pop();
+        } else if (state is UnitDetailsError) {
+          _showErrorMessage(state.message);
+        }
+      },
+      builder: (context, state) {
+        return Scaffold(
+          backgroundColor: AppTheme.darkBackground,
+          body: Stack(
+            children: [
+              // Animated Background
+              _buildAnimatedBackground(),
+              
+              // Main Content
+              if (state is UnitDetailsLoaded)
+                _buildLoadedContent(state.unit)
+              else if (state is UnitDetailsLoading)
+                _buildLoadingState()
+              else if (state is UnitDetailsError)
+                _buildErrorState(state.message),
+              
+              // Floating Header (appears on scroll)
+              if (_showFloatingHeader && state is UnitDetailsLoaded)
+                _buildFloatingHeader(state.unit),
+              
+              // Floating Action Buttons
+              if (state is UnitDetailsLoaded)
+                _buildFloatingActionButtons(state.unit),
+            ],
+          ),
+        );
+      },
     );
   }
-
+  
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
-      animation: _backgroundAnimation,
+      animation: Listenable.merge([_backgroundAnimationController, _glowAnimation]),
       builder: (context, child) {
         return Container(
           decoration: BoxDecoration(
-            gradient: AppTheme.darkGradient,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.darkBackground,
+                AppTheme.darkBackground2.withOpacity(0.8),
+                AppTheme.darkBackground3.withOpacity(0.6),
+              ],
+            ),
           ),
           child: CustomPaint(
-            painter: _DetailsBackgroundPainter(
-              rotation: _backgroundAnimation.value,
+            painter: _AdvancedBackgroundPainter(
+              animation: _backgroundAnimationController.value,
+              glowIntensity: _glowAnimation.value,
             ),
             size: Size.infinite,
           ),
@@ -133,206 +253,808 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       },
     );
   }
-
-  Widget _buildMainContent() {
-    return SafeArea(
-      child: BlocConsumer<UnitDetailsBloc, UnitDetailsState>(
-        listener: (context, state) {
-          if (state is UnitDeleted) {
-            context.pop();
-          }
-        },
-        builder: (context, state) {
-          if (state is UnitDetailsLoading) {
-            return _buildLoadingState();
-          }
-
-          if (state is UnitDetailsError) {
-            return _buildErrorState(state.message);
-          }
-
-          if (state is UnitDetailsLoaded) {
-            return FadeTransition(
-              opacity: _contentFadeAnimation,
-              child: SlideTransition(
-                position: _contentSlideAnimation,
-                child: Column(
-                  children: [
-                    _buildResponsiveHeader(state),
-                    Expanded(
-                      child: _buildContent(state),
-                    ),
+  
+  Widget _buildLoadedContent(Unit unit) {
+    return CustomScrollView(
+      controller: _scrollController,
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        // Hero Image Header
+        _buildSliverHeader(unit),
+        
+        // Unit Info Card
+        SliverToBoxAdapter(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: _buildUnitInfoCard(unit),
+              ),
+            ),
+          ),
+        ),
+        
+        // Tabs Section
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _TabBarDelegate(
+            tabController: _tabController,
+            currentIndex: _currentTabIndex,
+          ),
+        ),
+        
+        // Tab Content
+        SliverToBoxAdapter(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _buildTabContent(unit),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildSliverHeader(Unit unit) {
+    final hasImages = unit.images?.isNotEmpty ?? false;
+    
+    return SliverAppBar(
+      expandedHeight: 400,
+      pinned: false,
+      backgroundColor: Colors.transparent,
+      leading: _buildBackButton(),
+      actions: [
+        _buildShareButton(),
+        const SizedBox(width: 8),
+        _buildGalleryButton(),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Image or Gradient Placeholder
+            if (hasImages)
+              Hero(
+                tag: 'unit-image-${unit.id}',
+                child: _buildHeaderImage(unit.images!.first),
+              )
+            else
+              _buildGradientPlaceholder(),
+            
+            // Gradient Overlay
+            _buildGradientOverlay(),
+            
+            // Unit Basic Info
+            Positioned(
+              bottom: 20,
+              left: 20,
+              right: 20,
+              child: _buildHeaderInfo(unit),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildHeaderImage(String imageUrl) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        CachedNetworkImage(
+          imageUrl: imageUrl,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(
+            color: AppTheme.darkCard.withOpacity(0.5),
+            child: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppTheme.primaryBlue.withOpacity(0.5),
+                ),
+              ),
+            ),
+          ),
+          errorWidget: (context, url, error) => _buildGradientPlaceholder(),
+        ),
+        
+        // Parallax Effect
+        AnimatedBuilder(
+          animation: _parallaxAnimation,
+          builder: (context, child) {
+            return Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.1 + (0.2 * _parallaxAnimation.value)),
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.3 + (0.3 * _parallaxAnimation.value)),
                   ],
                 ),
               ),
             );
-          }
-
-          return const SizedBox.shrink();
-        },
+          },
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildGradientPlaceholder() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.primaryBlue.withOpacity(0.3),
+            AppTheme.primaryPurple.withOpacity(0.2),
+            AppTheme.primaryViolet.withOpacity(0.1),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.apartment_rounded,
+          size: 80,
+          color: AppTheme.textWhite.withOpacity(0.3),
+        ),
       ),
     );
   }
-
-  // تحسين الـ Header ليكون responsive
-  Widget _buildResponsiveHeader(UnitDetailsLoaded state) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 600;
-    
+  
+  Widget _buildGradientOverlay() {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.glassLight.withOpacity(0.1),
-                  AppTheme.glassDark.withOpacity(0.05),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            Colors.black.withOpacity(0.1),
+            Colors.black.withOpacity(0.6),
+            Colors.black.withOpacity(0.8),
+          ],
+          stops: const [0.0, 0.4, 0.7, 1.0],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildHeaderInfo(Unit unit) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.darkCard.withOpacity(0.5),
+                AppTheme.darkCard.withOpacity(0.3),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppTheme.darkBorder.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Unit Name
+              Text(
+                unit.name,
+                style: AppTextStyles.heading1.copyWith(
+                  color: AppTheme.textWhite,
+                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              
+              // Property & Type
+              Row(
+                children: [
+                  Icon(
+                    Icons.location_city_rounded,
+                    size: 16,
+                    color: AppTheme.primaryBlue,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      '${unit.propertyName} • ${unit.unitTypeName}',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppTheme.textLight,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
-              borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
-              border: Border.all(
-                color: AppTheme.primaryBlue.withOpacity(0.2),
-                width: 1,
+              const SizedBox(height: 12),
+              
+              // Price & Status Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Price
+                  _buildPriceTag(unit.basePrice, unit.pricingMethod),
+                  
+                  // Status
+                  _buildStatusBadge(unit.isAvailable),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildPriceTag(Money price, PricingMethod method) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        gradient: AppTheme.primaryGradient,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryBlue.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            price.displayAmount,
+            style: AppTextStyles.heading3.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            method.arabicLabel,
+            style: AppTextStyles.caption.copyWith(
+              color: Colors.white.withOpacity(0.9),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildStatusBadge(bool isAvailable) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isAvailable
+            ? AppTheme.success.withOpacity(0.2)
+            : AppTheme.warning.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isAvailable
+              ? AppTheme.success.withOpacity(0.5)
+              : AppTheme.warning.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: isAvailable ? AppTheme.success : AppTheme.warning,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            isAvailable ? 'متاحة' : 'محجوزة',
+            style: AppTextStyles.caption.copyWith(
+              color: isAvailable ? AppTheme.success : AppTheme.warning,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildUnitInfoCard(Unit unit) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.7),
+            AppTheme.darkCard.withOpacity(0.5),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryBlue.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Stats Row
+          _buildStatsRow(unit),
+          
+          const SizedBox(height: 20),
+          const Divider(height: 1),
+          const SizedBox(height: 20),
+          
+          // Quick Info Grid
+          _buildQuickInfoGrid(unit),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildStatsRow(Unit unit) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _buildStatItem(
+          icon: Icons.visibility_rounded,
+          value: unit.viewCount.toString(),
+          label: 'مشاهدة',
+          color: AppTheme.primaryCyan,
+        ),
+        _buildStatItem(
+          icon: Icons.calendar_month_rounded,
+          value: unit.bookingCount.toString(),
+          label: 'حجز',
+          color: AppTheme.primaryPurple,
+        ),
+        _buildStatItem(
+          icon: Icons.star_rounded,
+          value: '4.8',
+          label: 'تقييم',
+          color: AppTheme.warning,
+        ),
+        _buildStatItem(
+          icon: Icons.favorite_rounded,
+          value: '32',
+          label: 'مفضلة',
+          color: AppTheme.error,
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildStatItem({
+    required IconData icon,
+    required String value,
+    required String label,
+    required Color color,
+  }) {
+    return Column(
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            color: color,
+            size: 24,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: AppTextStyles.heading3.copyWith(
+            color: AppTheme.textWhite,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: AppTextStyles.caption.copyWith(
+            color: AppTheme.textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildQuickInfoGrid(Unit unit) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildInfoTile(
+                icon: Icons.people_rounded,
+                title: 'السعة',
+                value: unit.capacityDisplay.isNotEmpty 
+                    ? unit.capacityDisplay 
+                    : '${unit.maxCapacity} أشخاص',
               ),
             ),
-            padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildInfoTile(
+                icon: Icons.discount_rounded,
+                title: 'الخصم',
+                value: unit.discountPercentage > 0
+                    ? '${unit.discountPercentage}%'
+                    : 'لا يوجد',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (unit.distanceKm != null)
+          _buildInfoTile(
+            icon: Icons.location_on_rounded,
+            title: 'المسافة',
+            value: '${unit.distanceKm} كم',
+          ),
+      ],
+    );
+  }
+  
+  Widget _buildInfoTile({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.darkSurface.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: AppTheme.primaryBlue,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // الصف الأول: زر الرجوع والعنوان والإجراءات الأساسية
-                Row(
-                  children: [
-                    _buildBackButton(),
-                    const SizedBox(width: AppDimensions.spaceMedium),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ShaderMask(
-                            shaderCallback: (bounds) =>
-                                AppTheme.primaryGradient.createShader(bounds),
-                            child: Text(
-                              state.unit.name,
-                              style: AppTextStyles.heading2.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(height: AppDimensions.spaceXSmall),
-                          // استخدام Wrap بدلاً من Row للـ chips
-                          Wrap(
-                            spacing: AppDimensions.spaceSmall,
-                            runSpacing: AppDimensions.spaceXSmall,
-                            children: [
-                              _buildInfoChip(
-                                Icons.apartment,
-                                state.unit.unitTypeName,
-                              ),
-                              _buildInfoChip(
-                                Icons.location_city,
-                                state.unit.propertyName,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: AppDimensions.spaceMedium),
-                    // استخدام PopupMenuButton للإجراءات على الشاشات الصغيرة
-                    if (isSmallScreen)
-                      _buildActionsMenu(state)
-                    else
-                      _buildActionButtonsRow(state),
-                  ],
+                Text(
+                  title,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textWhite,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildTabContent(Unit unit) {
+    switch (_currentTabIndex) {
+      case 0:
+        return _buildDetailsTab(unit);
+      case 1:
+        return _buildGalleryTab(unit);
+      case 2:
+        return _buildFeaturesTab(unit);
+      case 3:
+        return _buildReviewsTab(unit);
+      default:
+        return _buildDetailsTab(unit);
+    }
+  }
+  
+  Widget _buildDetailsTab(Unit unit) {
+    return AnimationLimiter(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: AnimationConfiguration.toStaggeredList(
+            duration: const Duration(milliseconds: 375),
+            childAnimationBuilder: (widget) => SlideAnimation(
+              verticalOffset: 50.0,
+              child: FadeInAnimation(child: widget),
+            ),
+            children: [
+              // Description Section
+              _buildSectionTitle('الوصف', Icons.description_rounded),
+              const SizedBox(height: 12),
+              _buildDescriptionCard(unit.customFeatures),
+              
+              const SizedBox(height: 24),
+              
+              // Dynamic Fields Section
+              if (unit.dynamicFields.isNotEmpty) ...[
+                _buildSectionTitle('معلومات إضافية', Icons.info_rounded),
+                const SizedBox(height: 12),
+                _buildDynamicFieldsCard(unit.dynamicFields),
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
-
-  // قائمة منسدلة للإجراءات على الشاشات الصغيرة
-  Widget _buildActionsMenu(UnitDetailsLoaded state) {
-    return PopupMenuButton<String>(
-      icon: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.primaryBlue.withOpacity(0.2),
-              AppTheme.primaryPurple.withOpacity(0.1),
-            ],
+  
+  Widget _buildGalleryTab(Unit unit) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle('معرض الصور', Icons.photo_library_rounded),
+          const SizedBox(height: 16),
+          
+          // Gallery Widget
+          UnitImageGallery(
+            unitId: widget.unitId,
+            isReadOnly: true,
+            maxImages: 20,
           ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-          border: Border.all(
-            color: AppTheme.primaryBlue.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-        child: Icon(
-          Icons.more_vert,
-          color: AppTheme.textWhite,
-          size: 20,
+          
+          // View All Button
+          if (unit.images?.isNotEmpty ?? false)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Center(
+                child: _buildViewAllButton(),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildFeaturesTab(Unit unit) {
+    final features = unit.featuresList;
+    
+    return AnimationLimiter(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionTitle('المميزات', Icons.stars_rounded),
+            const SizedBox(height: 16),
+            
+            if (features.isEmpty)
+              _buildEmptyFeatures()
+            else
+              _buildFeaturesGrid(features),
+          ],
         ),
       ),
-      color: AppTheme.darkCard,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-        side: BorderSide(
-          color: AppTheme.darkBorder.withOpacity(0.3),
-          width: 0.5,
-        ),
+    );
+  }
+  
+  Widget _buildReviewsTab(Unit unit) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle('التقييمات', Icons.rate_review_rounded),
+          const SizedBox(height: 16),
+          
+          // Reviews placeholder
+          _buildNoReviewsPlaceholder(),
+        ],
       ),
-      onSelected: (value) {
-        HapticFeedback.lightImpact();
-        switch (value) {
-          case 'edit':
-            context.push('/admin/units/${widget.unitId}/edit');
-            break;
-          case 'gallery':
-            context.push('/admin/units/${widget.unitId}/gallery');
-            break;
-          case 'sections':
-            setState(() => _showAssignSectionsModal = true);
-            break;
-          case 'delete':
-            _showDeleteConfirmation(state);
-            break;
-        }
-      },
-      itemBuilder: (context) => [
-        _buildMenuItem('edit', Icons.edit, 'تعديل', AppTheme.primaryBlue),
-        _buildMenuItem('gallery', Icons.image, 'الصور', AppTheme.primaryPurple),
-        _buildMenuItem('sections', Icons.category, 'الأقسام', AppTheme.success),
-        _buildMenuItem('delete', Icons.delete, 'حذف', AppTheme.error),
+    );
+  }
+  
+  Widget _buildSectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            gradient: AppTheme.primaryGradient,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: AppTextStyles.heading2.copyWith(
+            color: AppTheme.textWhite,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
-
-  PopupMenuItem<String> _buildMenuItem(
-    String value,
-    IconData icon,
-    String label,
-    Color color,
-  ) {
-    return PopupMenuItem<String>(
-      value: value,
+  
+  Widget _buildDescriptionCard(String description) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.5),
+            AppTheme.darkCard.withOpacity(0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        description.isEmpty ? 'لا يوجد وصف' : description,
+        style: AppTextStyles.bodyMedium.copyWith(
+          color: AppTheme.textLight,
+          height: 1.6,
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildDynamicFieldsCard(List<FieldGroupWithValues> fieldGroups) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.5),
+            AppTheme.darkCard.withOpacity(0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: fieldGroups.map((group) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  group.displayName,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.primaryBlue,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...group.fieldValues.map((field) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          field.displayName ?? field.fieldName ?? '',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                        Text(
+                          field.fieldValue,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppTheme.textLight,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+  
+  Widget _buildFeaturesGrid(List<String> features) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: features.map((feature) {
+        return AnimationConfiguration.staggeredList(
+          position: features.indexOf(feature),
+          duration: const Duration(milliseconds: 375),
+          child: ScaleAnimation(
+            child: FadeInAnimation(
+              child: _buildFeatureChip(feature),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+  
+  Widget _buildFeatureChip(String feature) {
+    final icon = _getFeatureIcon(feature);
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primaryBlue.withOpacity(0.1),
+            AppTheme.primaryPurple.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.primaryBlue.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: AppDimensions.spaceSmall),
+          Icon(
+            icon,
+            size: 18,
+            color: AppTheme.primaryBlue,
+          ),
+          const SizedBox(width: 8),
           Text(
-            label,
-            style: AppTextStyles.bodySmall.copyWith(
+            feature,
+            style: AppTextStyles.bodyMedium.copyWith(
               color: AppTheme.textWhite,
             ),
           ),
@@ -340,82 +1062,250 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-
-  // أزرار الإجراءات للشاشات الكبيرة (أيقونات فقط)
-  Widget _buildActionButtonsRow(UnitDetailsLoaded state) {
-    return Row(
-      children: [
-        _buildIconActionButton(
-          Icons.edit,
-          'تعديل',
-          AppTheme.primaryBlue,
-          () => context.push('/admin/units/${widget.unitId}/edit'),
+  
+  Widget _buildEmptyFeatures() {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.1),
+          width: 1,
         ),
-        const SizedBox(width: 8),
-        _buildIconActionButton(
-          Icons.image,
-          'الصور',
-          AppTheme.primaryPurple,
-          () => context.push('/admin/units/${widget.unitId}/gallery'),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.featured_play_list_rounded,
+              size: 48,
+              color: AppTheme.textMuted.withOpacity(0.3),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'لا توجد مميزات',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textMuted.withOpacity(0.5),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        _buildIconActionButton(
-          Icons.category,
-          'الأقسام',
-          AppTheme.success,
-          () => setState(() => _showAssignSectionsModal = true),
-        ),
-        const SizedBox(width: 8),
-        _buildIconActionButton(
-          Icons.delete,
-          'حذف',
-          AppTheme.error,
-          () => _showDeleteConfirmation(state),
-        ),
-      ],
+      ),
     );
   }
-
-  // زر إجراء بأيقونة فقط مع Tooltip
-  Widget _buildIconActionButton(
-    IconData icon,
-    String tooltip,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return Tooltip(
-      message: tooltip,
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                color.withOpacity(0.2),
-                color.withOpacity(0.1),
-              ],
+  
+  Widget _buildNoReviewsPlaceholder() {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.3),
+            AppTheme.darkCard.withOpacity(0.2),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.rate_review_outlined,
+              size: 48,
+              color: AppTheme.textMuted.withOpacity(0.3),
             ),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-            border: Border.all(
-              color: color.withOpacity(0.3),
-              width: 1,
+            const SizedBox(height: 12),
+            Text(
+              'لا توجد تقييمات بعد',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textMuted.withOpacity(0.5),
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildViewAllButton() {
+    return GestureDetector(
+      onTap: () => _navigateToGallery(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: AppTheme.primaryGradient,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryBlue.withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.photo_library_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'عرض جميع الصور',
+              style: AppTextStyles.buttonMedium.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildFloatingHeader(Unit unit) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      height: 80,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.95),
+            AppTheme.darkCard.withOpacity(0.85),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryBlue.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
-          child: Icon(
-            icon,
-            size: 18,
-            color: color,
+        ],
+      ),
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  _buildBackButton(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          unit.name,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppTheme.textWhite,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          unit.propertyName,
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppTheme.textMuted,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  _buildShareButton(),
+                  const SizedBox(width: 8),
+                  _buildGalleryButton(),
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
   }
-
+  
+  Widget _buildFloatingActionButtons(Unit unit) {
+    return Positioned(
+      bottom: 24,
+      right: 24,
+      child: ScaleTransition(
+        scale: CurvedAnimation(
+          parent: _floatingButtonController,
+          curve: Curves.elasticOut,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildFloatingButton(
+              icon: Icons.edit_rounded,
+              color: AppTheme.primaryBlue,
+              onTap: () => _navigateToEdit(unit.id),
+            ),
+            const SizedBox(height: 12),
+            _buildFloatingButton(
+              icon: Icons.delete_rounded,
+              color: AppTheme.error,
+              onTap: () => _showDeleteConfirmation(unit),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildFloatingButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onTap();
+      },
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              color,
+              color.withOpacity(0.8),
+            ],
+          ),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.4),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Icon(
+          icon,
+          color: Colors.white,
+          size: 24,
+        ),
+      ),
+    );
+  }
+  
   Widget _buildBackButton() {
     return GestureDetector(
       onTap: () {
@@ -426,386 +1316,96 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.darkCard.withOpacity(0.5),
-              AppTheme.darkCard.withOpacity(0.3),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+          color: AppTheme.darkCard.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: AppTheme.darkBorder.withOpacity(0.3),
-            width: 0.5,
+            width: 1,
           ),
         ),
-        child: Icon(
-          Icons.arrow_back,
-          color: AppTheme.textWhite,
+        child: const Icon(
+          Icons.arrow_back_rounded,
+          color: Colors.white,
           size: 20,
         ),
       ),
     );
   }
-
-  Widget _buildInfoChip(IconData icon, String label) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 150), // تحديد عرض أقصى
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingSmall,
-        vertical: AppDimensions.paddingXSmall,
-      ),
-      decoration: BoxDecoration(
-        color: AppTheme.darkCard.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: AppTheme.textMuted),
-          const SizedBox(width: AppDimensions.spaceXSmall),
-          Flexible(
-            child: Text(
-              label,
-              style: AppTextStyles.caption.copyWith(
-                color: AppTheme.textMuted,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContent(UnitDetailsLoaded state) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-      child: Column(
-        children: [
-          // Statistics Cards - جعلها responsive
-          _buildResponsiveStatsSection(state),
-          const SizedBox(height: AppDimensions.spaceLarge),
-          
-          // Basic Information
-          _buildInfoSection(state),
-          const SizedBox(height: AppDimensions.spaceLarge),
-          
-          // Pricing Information
-          _buildPricingSection(state),
-          const SizedBox(height: AppDimensions.spaceLarge),
-          
-          // Features
-          if (state.unit.featuresList.isNotEmpty)
-            _buildFeaturesSection(state),
-          const SizedBox(height: AppDimensions.spaceLarge),
-          
-          // Dynamic Fields
-          if (state.unit.dynamicFields.isNotEmpty)
-            _buildDynamicFieldsSection(state),
-          const SizedBox(height: AppDimensions.spaceLarge),
-          
-          // Images Preview
-          if (state.unit.images?.isNotEmpty == true)
-            _buildImagesSection(state),
-        ],
-      ),
-    );
-  }
-
-  // تحسين قسم الإحصائيات ليكون responsive
-  Widget _buildResponsiveStatsSection(UnitDetailsLoaded state) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 600;
-
-    if (isSmallScreen) {
-      return Column(
-        children: [
-          UnitStatsCard(
-            title: 'المشاهدات',
-            value: '${state.unit.viewCount ?? 0}',
-            icon: Icons.visibility,
-            color: AppTheme.primaryBlue,
-          ),
-          const SizedBox(height: AppDimensions.spaceMedium),
-          UnitStatsCard(
-            title: 'الحجوزات',
-            value: '${state.unit.bookingCount ?? 0}',
-            icon: Icons.calendar_today,
-            color: AppTheme.primaryPurple,
-          ),
-          const SizedBox(height: AppDimensions.spaceMedium),
-          UnitStatsCard(
-            title: 'الحالة',
-            value: state.unit.isAvailable ? 'متاحة' : 'غير متاحة',
-            icon: Icons.check_circle,
-            color: state.unit.isAvailable ? AppTheme.success : AppTheme.error,
-          ),
-        ],
-      );
-    }
-
-    return Row(
-      children: [
-        Expanded(
-          child: UnitStatsCard(
-            title: 'المشاهدات',
-            value: '${state.unit.viewCount ?? 0}',
-            icon: Icons.visibility,
-            color: AppTheme.primaryBlue,
+  
+  Widget _buildShareButton() {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        // Implement share functionality
+      },
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: AppTheme.darkCard.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.darkBorder.withOpacity(0.3),
+            width: 1,
           ),
         ),
-        const SizedBox(width: AppDimensions.spaceMedium),
-        Expanded(
-          child: UnitStatsCard(
-            title: 'الحجوزات',
-            value: '${state.unit.bookingCount ?? 0}',
-            icon: Icons.calendar_today,
-            color: AppTheme.primaryPurple,
-          ),
-        ),
-        const SizedBox(width: AppDimensions.spaceMedium),
-        Expanded(
-          child: UnitStatsCard(
-            title: 'الحالة',
-            value: state.unit.isAvailable ? 'متاحة' : 'غير متاحة',
-            icon: Icons.check_circle,
-            color: state.unit.isAvailable ? AppTheme.success : AppTheme.error,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoSection(UnitDetailsLoaded state) {
-    return _buildSectionContainer(
-      title: 'المعلومات الأساسية',
-      icon: Icons.info,
-      child: Column(
-        children: [
-          _buildInfoRow('الاسم', state.unit.name),
-          _buildInfoRow('نوع الوحدة', state.unit.unitTypeName),
-          _buildInfoRow('الكيان', state.unit.propertyName),
-          if (state.unit.capacityDisplay.isNotEmpty)
-            _buildInfoRow('السعة', state.unit.capacityDisplay),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPricingSection(UnitDetailsLoaded state) {
-    return _buildSectionContainer(
-      title: 'التسعير',
-      icon: Icons.attach_money,
-      child: Column(
-        children: [
-          _buildInfoRow('السعر الأساسي', state.unit.basePrice.displayAmount),
-          _buildInfoRow('طريقة التسعير', state.unit.pricingMethod.arabicLabel),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeaturesSection(UnitDetailsLoaded state) {
-    return _buildSectionContainer(
-      title: 'الميزات',
-      icon: Icons.star,
-      child: Wrap(
-        spacing: AppDimensions.spaceSmall,
-        runSpacing: AppDimensions.spaceSmall,
-        children: state.unit.featuresList.map((feature) {
-          return Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.paddingMedium,
-              vertical: AppDimensions.paddingSmall,
-            ),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.primaryBlue.withOpacity(0.1),
-                  AppTheme.primaryPurple.withOpacity(0.05),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-              border: Border.all(
-                color: AppTheme.primaryBlue.withOpacity(0.3),
-                width: 0.5,
-              ),
-            ),
-            child: Text(
-              feature,
-              style: AppTextStyles.caption.copyWith(
-                color: AppTheme.primaryBlue,
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildDynamicFieldsSection(UnitDetailsLoaded state) {
-    return _buildSectionContainer(
-      title: 'معلومات إضافية',
-      icon: Icons.dynamic_form,
-      child: Column(
-        children: state.unit.dynamicFields.map((group) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                group.displayName,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppTheme.primaryBlue,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: AppDimensions.spaceSmall),
-              ...group.fieldValues.map((field) {
-                return _buildInfoRow(
-                  field.displayName ?? field.fieldName ?? '',
-                  field.fieldValue,
-                );
-              }).toList(),
-              const SizedBox(height: AppDimensions.spaceMedium),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildImagesSection(UnitDetailsLoaded state) {
-    return _buildSectionContainer(
-      title: 'الصور',
-      icon: Icons.image,
-      child: SizedBox(
-        height: 120,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: state.unit.images!.length,
-          itemBuilder: (context, index) {
-            return Container(
-              width: 120,
-              margin: EdgeInsets.only(
-                left: index == state.unit.images!.length - 1
-                    ? 0
-                    : AppDimensions.spaceSmall,
-              ),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-                image: DecorationImage(
-                  image: NetworkImage(state.unit.images![index]),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            );
-          },
+        child: const Icon(
+          Icons.share_rounded,
+          color: Colors.white,
+          size: 20,
         ),
       ),
     );
   }
-
-  Widget _buildSectionContainer({
-    required String title,
-    required IconData icon,
-    required Widget child,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.glassLight.withOpacity(0.05),
-            AppTheme.glassDark.withOpacity(0.02),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-        border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.3),
-          width: 0.5,
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      icon,
-                      size: 20,
-                      color: AppTheme.primaryBlue,
-                    ),
-                    const SizedBox(width: AppDimensions.spaceSmall),
-                    Text(
-                      title,
-                      style: AppTextStyles.heading3.copyWith(
-                        color: AppTheme.textWhite,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppDimensions.spaceMedium),
-                child,
-              ],
-            ),
+  
+  Widget _buildGalleryButton() {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        _navigateToGallery();
+      },
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: AppTheme.darkCard.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.darkBorder.withOpacity(0.3),
+            width: 1,
           ),
+        ),
+        child: const Icon(
+          Icons.photo_library_rounded,
+          color: Colors.white,
+          size: 20,
         ),
       ),
     );
   }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppDimensions.spaceSmall),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              label,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppTheme.textMuted,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: AppDimensions.spaceSmall),
-          Expanded(
-            flex: 3,
-            child: Text(
-              value,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppTheme.textWhite,
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.end,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 2,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
+  
   Widget _buildLoadingState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            color: AppTheme.primaryBlue,
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+              shape: BoxShape.circle,
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                strokeWidth: 3,
+              ),
+            ),
           ),
-          const SizedBox(height: AppDimensions.spaceMedium),
+          const SizedBox(height: 24),
           Text(
-            'جاري تحميل التفاصيل...',
+            'جاري تحميل البيانات...',
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppTheme.textMuted,
             ),
@@ -814,224 +1414,451 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-
+  
   Widget _buildErrorState(String message) {
     return Center(
-      child: Container(
-        margin: const EdgeInsets.all(AppDimensions.paddingLarge),
-        padding: const EdgeInsets.all(AppDimensions.paddingXLarge),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.error.withOpacity(0.1),
-              AppTheme.error.withOpacity(0.05),
-            ],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline_rounded,
+            size: 80,
+            color: AppTheme.error.withOpacity(0.7),
           ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
-          border: Border.all(
-            color: AppTheme.error.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
+          const SizedBox(height: 24),
+          Text(
+            message,
+            style: AppTextStyles.bodyMedium.copyWith(
               color: AppTheme.error,
             ),
-            const SizedBox(height: AppDimensions.spaceLarge),
-            Text(
-              'حدث خطأ',
-              style: AppTextStyles.heading2.copyWith(
-                color: AppTheme.error,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.spaceSmall),
-            Text(
-              message,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppTheme.textMuted,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppDimensions.spaceLarge),
-            _buildRetryButton(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRetryButton() {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        _loadUnitDetails();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingLarge,
-          vertical: AppDimensions.paddingMedium,
-        ),
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-        ),
-        child: Text(
-          'إعادة المحاولة',
-          style: AppTextStyles.buttonMedium.copyWith(
-            color: Colors.white,
+            textAlign: TextAlign.center,
           ),
-        ),
+          const SizedBox(height: 32),
+          GestureDetector(
+            onTap: _loadUnitDetails,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+              decoration: BoxDecoration(
+                gradient: AppTheme.primaryGradient,
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Text(
+                'إعادة المحاولة',
+                style: AppTextStyles.buttonMedium.copyWith(
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
-
-  void _showDeleteConfirmation(UnitDetailsLoaded state) {
+  
+  // Helper Methods
+  IconData _getFeatureIcon(String feature) {
+    final featureLower = feature.toLowerCase();
+    if (featureLower.contains('واي فاي') || featureLower.contains('wifi')) {
+      return Icons.wifi_rounded;
+    } else if (featureLower.contains('تكييف') || featureLower.contains('ac')) {
+      return Icons.ac_unit_rounded;
+    } else if (featureLower.contains('مطبخ')) {
+      return Icons.kitchen_rounded;
+    } else if (featureLower.contains('موقف') || featureLower.contains('parking')) {
+      return Icons.local_parking_rounded;
+    } else if (featureLower.contains('مسبح') || featureLower.contains('pool')) {
+      return Icons.pool_rounded;
+    } else if (featureLower.contains('جيم') || featureLower.contains('gym')) {
+      return Icons.fitness_center_rounded;
+    } else {
+      return Icons.check_circle_rounded;
+    }
+  }
+  
+  void _navigateToEdit(String unitId) {
+    context.push('/admin/units/$unitId/edit');
+  }
+  
+  void _navigateToGallery() {
+    final state = context.read<UnitDetailsBloc>().state;
+    if (state is UnitDetailsLoaded) {
+      context.push(
+        '/admin/units/$widget.unitId/gallery',
+        extra: state.unit,
+      );
+    }
+  }
+  
+  void _showDeleteConfirmation(Unit unit) {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: AppTheme.darkGradient,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
-            border: Border.all(
-              color: AppTheme.error.withOpacity(0.3),
-              width: 1,
+      builder: (context) => _DeleteConfirmationDialog(
+        unitName: unit.name,
+        onConfirm: () {
+          Navigator.pop(context);
+          context.read<UnitDetailsBloc>().add(
+            DeleteUnitDetailsEvent(unitId: unit.id),
+          );
+        },
+      ),
+    );
+  }
+  
+  void _showSuccessMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(
+              Icons.check_circle_rounded,
+              color: Colors.white,
             ),
-          ),
-          padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.warning_amber_rounded,
-                size: 64,
-                color: AppTheme.error,
-              ),
-              const SizedBox(height: AppDimensions.spaceMedium),
-              Text(
-                'تأكيد الحذف',
-                style: AppTextStyles.heading2.copyWith(
-                  color: AppTheme.textWhite,
-                ),
-              ),
-              const SizedBox(height: AppDimensions.spaceSmall),
-              Text(
-                'هل أنت متأكد من حذف الوحدة "${state.unit.name}"؟',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppTheme.textMuted,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppDimensions.spaceLarge),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildDialogButton(
-                      label: 'إلغاء',
-                      onTap: () => Navigator.of(context).pop(),
-                      isPrimary: false,
-                    ),
-                  ),
-                  const SizedBox(width: AppDimensions.spaceMedium),
-                  Expanded(
-                    child: _buildDialogButton(
-                      label: 'حذف',
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        context.read<UnitDetailsBloc>().add(
-                              DeleteUnitDetailsEvent(unitId: widget.unitId),
-                            );
-                      },
-                      isPrimary: true,
-                      isDanger: true,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(message),
+            ),
+          ],
+        ),
+        backgroundColor: AppTheme.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );
   }
-
-  Widget _buildDialogButton({
-    required String label,
-    required VoidCallback onTap,
-    bool isPrimary = false,
-    bool isDanger = false,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          vertical: AppDimensions.paddingMedium,
+  
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(
+              Icons.error_outline_rounded,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(message),
+            ),
+          ],
         ),
-        decoration: BoxDecoration(
-          gradient: isPrimary
-              ? (isDanger
-                  ? LinearGradient(
-                      colors: [
-                        AppTheme.error,
-                        AppTheme.error.withOpacity(0.8),
-                      ],
-                    )
-                  : AppTheme.primaryGradient)
-              : null,
-          border: isPrimary
-              ? null
-              : Border.all(
-                  color: AppTheme.textMuted.withOpacity(0.3),
-                  width: 1,
-                ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-        ),
-        child: Text(
-          label,
-          style: AppTextStyles.buttonMedium.copyWith(
-            color: isPrimary ? Colors.white : AppTheme.textMuted,
-          ),
-          textAlign: TextAlign.center,
+        backgroundColor: AppTheme.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );
   }
 }
 
-class _DetailsBackgroundPainter extends CustomPainter {
-  final double rotation;
+// Tab Bar Delegate
+class _TabBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabController tabController;
+  final int currentIndex;
+  
+  _TabBarDelegate({
+    required this.tabController,
+    required this.currentIndex,
+  });
+  
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      height: 60,
+      decoration: BoxDecoration(
+        color: AppTheme.darkBackground.withOpacity(0.95),
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.darkBorder.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+      ),
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: TabBar(
+            controller: tabController,
+            isScrollable: false,
+            indicatorSize: TabBarIndicatorSize.label,
+            indicator: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: AppTheme.primaryGradient,
+            ),
+            indicatorPadding: const EdgeInsets.symmetric(horizontal: -20, vertical: 8),
+            labelColor: Colors.white,
+            unselectedLabelColor: AppTheme.textMuted,
+            labelStyle: AppTextStyles.bodyMedium.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+            tabs: [
+              _buildTab('التفاصيل', Icons.info_rounded, currentIndex == 0),
+              _buildTab('الصور', Icons.photo_library_rounded, currentIndex == 1),
+              _buildTab('المميزات', Icons.stars_rounded, currentIndex == 2),
+              _buildTab('التقييمات', Icons.rate_review_rounded, currentIndex == 3),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildTab(String label, IconData icon, bool isSelected) {
+    return Tab(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? Colors.white : AppTheme.textMuted,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : AppTheme.textMuted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  @override
+  double get maxExtent => 60;
+  
+  @override
+  double get minExtent => 60;
+  
+  @override
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) => true;
+}
 
-  _DetailsBackgroundPainter({required this.rotation});
+// Delete Confirmation Dialog
+class _DeleteConfirmationDialog extends StatelessWidget {
+  final String unitName;
+  final VoidCallback onConfirm;
+  
+  const _DeleteConfirmationDialog({
+    required this.unitName,
+    required this.onConfirm,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.darkCard.withOpacity(0.95),
+              AppTheme.darkCard.withOpacity(0.85),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppTheme.error.withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.error.withOpacity(0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.error.withOpacity(0.2),
+                    AppTheme.error.withOpacity(0.1),
+                  ],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.warning_rounded,
+                color: AppTheme.error,
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'تأكيد الحذف',
+              style: AppTextStyles.heading3.copyWith(
+                color: AppTheme.textWhite,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'هل أنت متأكد من حذف "$unitName"؟\nلا يمكن التراجع عن هذا الإجراء.',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textMuted,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.darkSurface.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppTheme.darkBorder.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'إلغاء',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      onConfirm();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppTheme.error,
+                            AppTheme.error.withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.error.withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          'حذف',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
+// Advanced Background Painter
+class _AdvancedBackgroundPainter extends CustomPainter {
+  final double animation;
+  final double glowIntensity;
+  
+  _AdvancedBackgroundPainter({
+    required this.animation,
+    required this.glowIntensity,
+  });
+  
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5
-      ..color = AppTheme.primaryBlue.withOpacity(0.05);
-
-    // Draw animated circles
-    canvas.save();
-    canvas.translate(size.width / 2, size.height / 2);
-    canvas.rotate(rotation);
-
-    for (int i = 1; i <= 5; i++) {
-      final radius = 100.0 * i;
-      paint.color = AppTheme.primaryPurple.withOpacity(0.02);
-      canvas.drawCircle(Offset.zero, radius, paint);
+    final paint = Paint()..style = PaintingStyle.fill;
+    
+    // Draw animated gradient circles
+    for (int i = 0; i < 3; i++) {
+      final progress = (animation + i * 0.33) % 1.0;
+      final radius = 200 + (100 * math.sin(progress * math.pi * 2));
+      final opacity = 0.03 + (0.02 * glowIntensity);
+      
+      paint.shader = RadialGradient(
+        colors: [
+          AppTheme.primaryBlue.withOpacity(opacity),
+          AppTheme.primaryPurple.withOpacity(opacity * 0.5),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromCircle(
+        center: Offset(
+          size.width * (0.3 + 0.4 * math.cos(progress * math.pi * 2)),
+          size.height * (0.3 + 0.4 * math.sin(progress * math.pi * 2)),
+        ),
+        radius: radius,
+      ));
+      
+      canvas.drawCircle(
+        Offset(
+          size.width * (0.3 + 0.4 * math.cos(progress * math.pi * 2)),
+          size.height * (0.3 + 0.4 * math.sin(progress * math.pi * 2)),
+        ),
+        radius,
+        paint,
+      );
     }
-
-    canvas.restore();
+    
+    // Draw grid pattern
+    paint.shader = null;
+    paint.color = AppTheme.primaryBlue.withOpacity(0.02);
+    paint.strokeWidth = 0.5;
+    paint.style = PaintingStyle.stroke;
+    
+    const spacing = 50.0;
+    for (double x = 0; x < size.width; x += spacing) {
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x, size.height),
+        paint,
+      );
+    }
+    
+    for (double y = 0; y < size.height; y += spacing) {
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y),
+        paint,
+      );
+    }
   }
-
+  
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

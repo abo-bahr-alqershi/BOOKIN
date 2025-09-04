@@ -15,7 +15,7 @@ import '../bloc/unit_form/unit_form_bloc.dart';
 import 'package:bookn_cp_app/features/admin_properties/domain/entities/property.dart';
 import 'package:bookn_cp_app/features/admin_units/presentation/widgets/unit_image_gallery.dart';
 import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_bloc.dart';
-import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_event.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_event.dart' hide UpdateUnitImageEvent;
 import 'package:get_it/get_it.dart';
 import 'package:bookn_cp_app/core/network/api_client.dart';
 
@@ -588,6 +588,7 @@ Widget _buildBasicInfoStep(UnitFormState state) {
             onLocalImagesChanged: (paths) {
               setState(() {
                 _selectedLocalImages = paths;
+                _updateUnitImage();
               });
             },
           ),
@@ -1394,6 +1395,15 @@ Widget _buildLoadingDots() {
     );
   }
   
+  // Helper Methods
+  void _updateUnitImage() {
+    context.read<UnitFormBloc>().add(
+      UpdateUnitImageEvent(
+        images: _selectedLocalImages,
+      ),
+    );
+  }
+
 void _updatePricing() {
   if (_priceController.text.isNotEmpty) {
     final price = double.tryParse(_priceController.text);
@@ -1559,6 +1569,7 @@ void _submitForm() {
     _updatePricing();
     _updateFeatures();
     _updateCapacity();
+    _updateUnitImage();
     
     // انتظر قليلاً للتأكد من تحديث البلوك
     Future.delayed(const Duration(milliseconds: 100), () {
