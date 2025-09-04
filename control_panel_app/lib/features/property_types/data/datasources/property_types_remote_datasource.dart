@@ -133,7 +133,8 @@ class PropertyTypesRemoteDataSourceImpl implements PropertyTypesRemoteDataSource
         data: {
           'name': name,
           'description': description,
-          'defaultAmenities': defaultAmenities,
+          // Backend expects a JSON string for DefaultAmenities
+          'defaultAmenities': jsonEncode(defaultAmenities),
           'icon': icon,
         },
       );
@@ -165,7 +166,8 @@ class PropertyTypesRemoteDataSourceImpl implements PropertyTypesRemoteDataSource
           'propertyTypeId': propertyTypeId,
           'name': name,
           'description': description,
-          'defaultAmenities': defaultAmenities,
+          // Backend expects a JSON string for DefaultAmenities
+          'defaultAmenities': jsonEncode(defaultAmenities),
           'icon': icon,
         },
       );
