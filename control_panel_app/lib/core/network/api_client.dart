@@ -13,8 +13,9 @@ class ApiClient {
   }
   
   void _setupDioClient() {
+    final normalizedBaseUrl = _normalizeBaseUrl(ApiConstants.baseUrl);
     _dio.options = BaseOptions(
-      baseUrl: ApiConstants.baseUrl.trim(),
+      baseUrl: normalizedBaseUrl,
       connectTimeout: ApiConstants.connectTimeout,
       receiveTimeout: ApiConstants.receiveTimeout,
       sendTimeout: ApiConstants.sendTimeout,
@@ -37,6 +38,15 @@ class ApiClient {
           compact: true,
         ),
     ]);
+  }
+  
+  String _normalizeBaseUrl(String baseUrl) {
+    var v = baseUrl.trim();
+    // Remove trailing slash to avoid double slashes when passing relative paths
+    if (v.endsWith('/')) {
+      v = v.substring(0, v.length - 1);
+    }
+    return v;
   }
   
   Future<Response> get(
@@ -269,7 +279,7 @@ class ApiClient {
   }
   
   void updateBaseUrl(String baseUrl) {
-    _dio.options.baseUrl = baseUrl.trim();
+    _dio.options.baseUrl = _normalizeBaseUrl(baseUrl);
   }
   
   void updateHeaders(Map<String, dynamic> headers) {
