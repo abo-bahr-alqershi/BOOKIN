@@ -62,7 +62,7 @@ abstract class UnitTypeFieldsRemoteDataSource {
 
 class UnitTypeFieldsRemoteDataSourceImpl implements UnitTypeFieldsRemoteDataSource {
   final ApiClient apiClient;
-  static const String _baseEndpoint = '${ApiConstants.baseUrl}/api/admin/unit-type-fields';
+  static const String _baseEndpoint = '/api/admin/unit-type-fields';
 
   UnitTypeFieldsRemoteDataSourceImpl({required this.apiClient});
 
