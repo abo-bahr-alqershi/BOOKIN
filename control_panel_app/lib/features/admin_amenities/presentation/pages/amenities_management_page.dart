@@ -548,8 +548,11 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
             const SizedBox(height: AppDimensions.paddingLarge),
 
             // Content View
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.6, // Adjust height as needed
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height * 0.4,
+                maxHeight: MediaQuery.of(context).size.height * 0.8,
+              ),
               child: BlocBuilder<AmenitiesBloc, AmenitiesState>(
                 builder: (context, state) {
                   if (state is AmenitiesLoading) {

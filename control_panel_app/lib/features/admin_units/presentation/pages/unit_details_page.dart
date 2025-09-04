@@ -1483,7 +1483,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
     final state = context.read<UnitDetailsBloc>().state;
     if (state is UnitDetailsLoaded) {
       context.go(
-        '/admin/units/$widget.unitId/gallery',
+        '/admin/units/${widget.unitId}/gallery',
         extra: state.unit,
       );
     }
