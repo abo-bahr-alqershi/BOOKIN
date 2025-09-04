@@ -1,86 +1,212 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/utils/icon_helper.dart';
+import 'package:bookn_cp_app/core/theme/app_theme.dart';
+import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 
 class IconPickerModal extends StatefulWidget {
   final String selectedIcon;
-  final Function(String) onIconSelected;
+  final Function(String) onSelectIcon;
+  final String? iconCategory;
 
   const IconPickerModal({
     super.key,
     required this.selectedIcon,
-    required this.onIconSelected,
+    required this.onSelectIcon,
+    this.iconCategory,
   });
 
   @override
   State<IconPickerModal> createState() => _IconPickerModalState();
+
+  static IconData getIconFromString(String iconName) {
+    final iconMap = {
+      'home': Icons.home_rounded,
+      'apartment': Icons.apartment_rounded,
+      'villa': Icons.villa_rounded,
+      'business': Icons.business_rounded,
+      'store': Icons.store_rounded,
+      'hotel': Icons.hotel_rounded,
+      'house': Icons.house_rounded,
+      'cabin': Icons.cabin_rounded,
+      'meeting_room': Icons.meeting_room_rounded,
+      'stairs': Icons.stairs_rounded,
+      'roofing': Icons.roofing_rounded,
+      'warehouse': Icons.warehouse_rounded,
+      'terrain': Icons.terrain_rounded,
+      'grass': Icons.grass_rounded,
+      'location_city': Icons.location_city_rounded,
+      'cottage': Icons.cottage_rounded,
+      'holiday_village': Icons.holiday_village_rounded,
+      'gite': Icons.gite_rounded,
+      'domain': Icons.domain_rounded,
+      'foundation': Icons.foundation_rounded,
+      'bed': Icons.bed_rounded,
+      'king_bed': Icons.king_bed_rounded,
+      'single_bed': Icons.single_bed_rounded,
+      'bedroom_parent': Icons.bedroom_parent_rounded,
+      'bedroom_child': Icons.bedroom_child_rounded,
+      'living_room': Icons.living_rounded,
+      'dining_room': Icons.dining_rounded,
+      'kitchen': Icons.kitchen_rounded,
+      'bathroom': Icons.bathroom_rounded,
+      'bathtub': Icons.bathtub_rounded,
+      'shower': Icons.shower_rounded,
+      'garage': Icons.garage_rounded,
+      'balcony': Icons.balcony_rounded,
+      'deck': Icons.deck_rounded,
+      'yard': Icons.yard_rounded,
+      'pool': Icons.pool_rounded,
+      'hot_tub': Icons.hot_tub_rounded,
+      'fitness_center': Icons.fitness_center_rounded,
+      'sports_tennis': Icons.sports_tennis_rounded,
+      'sports_soccer': Icons.sports_soccer_rounded,
+      'sports_basketball': Icons.sports_basketball_rounded,
+      'spa': Icons.spa_rounded,
+      'local_parking': Icons.local_parking_rounded,
+      'elevator': Icons.elevator_rounded,
+      'wifi': Icons.wifi_rounded,
+      'ac_unit': Icons.ac_unit_rounded,
+      'fireplace': Icons.fireplace_rounded,
+      'water_drop': Icons.water_drop_rounded,
+      'electric_bolt': Icons.electric_bolt_rounded,
+      'cleaning_services': Icons.cleaning_services_rounded,
+      'room_service': Icons.room_service_rounded,
+      'local_laundry_service': Icons.local_laundry_service_rounded,
+      'dry_cleaning': Icons.dry_cleaning_rounded,
+      'iron': Icons.iron_rounded,
+      'breakfast_dining': Icons.breakfast_dining_rounded,
+      'lunch_dining': Icons.lunch_dining_rounded,
+      'dinner_dining': Icons.dinner_dining_rounded,
+      'restaurant': Icons.restaurant_rounded,
+      'local_cafe': Icons.local_cafe_rounded,
+      'local_bar': Icons.local_bar_rounded,
+      'security': Icons.security_rounded,
+      'lock': Icons.lock_rounded,
+      'key': Icons.key_rounded,
+      'shield': Icons.shield_rounded,
+      'verified_user': Icons.verified_user_rounded,
+      'safety_check': Icons.safety_check_rounded,
+      'emergency': Icons.emergency_rounded,
+      'local_police': Icons.local_police_rounded,
+      'local_fire_department': Icons.local_fire_department_rounded,
+      'medical_services': Icons.medical_services_rounded,
+      'location_on': Icons.location_on_rounded,
+      'map': Icons.map_rounded,
+      'place': Icons.place_rounded,
+      'near_me': Icons.near_me_rounded,
+      'my_location': Icons.my_location_rounded,
+      'directions': Icons.directions_rounded,
+      'navigation': Icons.navigation_rounded,
+    };
+    return iconMap[iconName] ?? Icons.home_rounded;
+  }
 }
 
-class _IconPickerModalState extends State<IconPickerModal>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
-  
-  final TextEditingController _searchController = TextEditingController();
-  String _selectedCategory = 'all';
-  String _searchTerm = '';
-  String _tempSelectedIcon = '';
+class _IconPickerModalState extends State<IconPickerModal> {
+  String _searchQuery = '';
+  String _selectedCategory = 'الكل';
 
-  final Map<String, List<MapEntry<String, IconData>>> _categorizedIcons = {
-    'all': IconHelper.getAllIcons(),
-    'property': IconHelper.getIconsByCategory('property'),
-    'room': IconHelper.getIconsByCategory('room'),
-    'facility': IconHelper.getIconsByCategory('facility'),
+  final Map<String, List<Map<String, dynamic>>> _iconCategories = {
+    'عقارات': [
+      {'name': 'home', 'label': 'منزل'},
+      {'name': 'apartment', 'label': 'شقة'},
+      {'name': 'villa', 'label': 'فيلا'},
+      {'name': 'business', 'label': 'مكتب'},
+      {'name': 'store', 'label': 'محل'},
+      {'name': 'hotel', 'label': 'فندق'},
+      {'name': 'house', 'label': 'بيت'},
+      {'name': 'cabin', 'label': 'شاليه'},
+      {'name': 'meeting_room', 'label': 'استوديو'},
+      {'name': 'stairs', 'label': 'دوبلكس'},
+      {'name': 'roofing', 'label': 'بنتهاوس'},
+      {'name': 'warehouse', 'label': 'مستودع'},
+      {'name': 'terrain', 'label': 'أرض'},
+      {'name': 'grass', 'label': 'مزرعة'},
+      {'name': 'location_city', 'label': 'مدينة'},
+      {'name': 'cottage', 'label': 'كوخ'},
+      {'name': 'holiday_village', 'label': 'قرية سياحية'},
+      {'name': 'gite', 'label': 'نزل'},
+      {'name': 'domain', 'label': 'نطاق'},
+      {'name': 'foundation', 'label': 'أساس'},
+    ],
+    'غرف': [
+      {'name': 'bed', 'label': 'سرير'},
+      {'name': 'king_bed', 'label': 'سرير كبير'},
+      {'name': 'single_bed', 'label': 'سرير مفرد'},
+      {'name': 'bedroom_parent', 'label': 'غرفة نوم رئيسية'},
+      {'name': 'bedroom_child', 'label': 'غرفة أطفال'},
+      {'name': 'living_room', 'label': 'غرفة معيشة'},
+      {'name': 'dining_room', 'label': 'غرفة طعام'},
+      {'name': 'kitchen', 'label': 'مطبخ'},
+      {'name': 'bathroom', 'label': 'حمام'},
+      {'name': 'bathtub', 'label': 'حوض استحمام'},
+      {'name': 'shower', 'label': 'دش'},
+      {'name': 'garage', 'label': 'كراج'},
+      {'name': 'balcony', 'label': 'شرفة'},
+      {'name': 'deck', 'label': 'سطح'},
+      {'name': 'yard', 'label': 'فناء'},
+    ],
+    'مرافق': [
+      {'name': 'pool', 'label': 'مسبح'},
+      {'name': 'hot_tub', 'label': 'جاكوزي'},
+      {'name': 'fitness_center', 'label': 'صالة رياضية'},
+      {'name': 'sports_tennis', 'label': 'ملعب تنس'},
+      {'name': 'sports_soccer', 'label': 'ملعب كرة قدم'},
+      {'name': 'sports_basketball', 'label': 'ملعب كرة سلة'},
+      {'name': 'spa', 'label': 'سبا'},
+      {'name': 'local_parking', 'label': 'موقف سيارات'},
+      {'name': 'elevator', 'label': 'مصعد'},
+      {'name': 'stairs', 'label': 'درج'},
+      {'name': 'wifi', 'label': 'واي فاي'},
+      {'name': 'ac_unit', 'label': 'تكييف'},
+      {'name': 'fireplace', 'label': 'مدفأة'},
+      {'name': 'water_drop', 'label': 'ماء'},
+      {'name': 'electric_bolt', 'label': 'كهرباء'},
+    ],
+    'خدمات': [
+      {'name': 'cleaning_services', 'label': 'خدمة تنظيف'},
+      {'name': 'room_service', 'label': 'خدمة الغرف'},
+      {'name': 'local_laundry_service', 'label': 'غسيل'},
+      {'name': 'dry_cleaning', 'label': 'تنظيف جاف'},
+      {'name': 'iron', 'label': 'كوي'},
+      {'name': 'breakfast_dining', 'label': 'إفطار'},
+      {'name': 'lunch_dining', 'label': 'غداء'},
+      {'name': 'dinner_dining', 'label': 'عشاء'},
+      {'name': 'restaurant', 'label': 'مطعم'},
+      {'name': 'local_cafe', 'label': 'مقهى'},
+      {'name': 'local_bar', 'label': 'بار'},
+    ],
+    'أمان': [
+      {'name': 'security', 'label': 'أمن'},
+      {'name': 'lock', 'label': 'قفل'},
+      {'name': 'key', 'label': 'مفتاح'},
+      {'name': 'shield', 'label': 'درع'},
+      {'name': 'verified_user', 'label': 'مستخدم موثق'},
+      {'name': 'safety_check', 'label': 'فحص أمان'},
+      {'name': 'emergency', 'label': 'طوارئ'},
+      {'name': 'local_police', 'label': 'شرطة'},
+      {'name': 'local_fire_department', 'label': 'إطفاء'},
+      {'name': 'medical_services', 'label': 'خدمات طبية'},
+    ],
   };
 
-  @override
-  void initState() {
-    super.initState();
-    _tempSelectedIcon = widget.selectedIcon;
+  List<Map<String, dynamic>> get filteredIcons {
+    List<Map<String, dynamic>> icons = [];
     
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
+    if (_selectedCategory == 'الكل') {
+      _iconCategories.values.forEach((categoryIcons) {
+        icons.addAll(categoryIcons);
+      });
+    } else {
+      icons = _iconCategories[_selectedCategory] ?? [];
+    }
     
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutBack,
-    ));
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    ));
-    
-    _animationController.forward();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  List<MapEntry<String, IconData>> get filteredIcons {
-    var icons = _categorizedIcons[_selectedCategory] ?? [];
-    
-    if (_searchTerm.isNotEmpty) {
-      icons = icons.where((icon) => 
-        icon.key.toLowerCase().contains(_searchTerm.toLowerCase())
-      ).toList();
+    if (_searchQuery.isNotEmpty) {
+      icons = icons.where((icon) {
+        return icon['label'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
+               icon['name'].toLowerCase().contains(_searchQuery.toLowerCase());
+      }).toList();
     }
     
     return icons;
@@ -88,64 +214,39 @@ class _IconPickerModalState extends State<IconPickerModal>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Dialog(
-              backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.all(20),
-              child: _buildModalContent(),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildModalContent() {
-    return Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 600, maxHeight: 600),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.darkCard.withOpacity(0.95),
-            AppTheme.darkCard.withOpacity(0.85),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
-        border: Border.all(
-          color: AppTheme.primaryBlue.withOpacity(0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryBlue.withOpacity(0.2),
-            blurRadius: 30,
-            spreadRadius: 5,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Column(
-            children: [
-              _buildHeader(),
-              _buildSearchBar(),
-              _buildCategoryTabs(),
-              Expanded(
-                child: _buildIconGrid(),
-              ),
-              _buildActions(),
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: 700,
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.darkCard.withOpacity(0.95),
+              AppTheme.darkCard.withOpacity(0.85),
             ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppTheme.primaryBlue.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Column(
+              children: [
+                _buildHeader(),
+                _buildSearchBar(),
+                _buildCategoryTabs(),
+                Expanded(
+                  child: _buildIconGrid(),
+                ),
+                _buildFooter(),
+              ],
+            ),
           ),
         ),
       ),
@@ -154,12 +255,12 @@ class _IconPickerModalState extends State<IconPickerModal>
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
             AppTheme.primaryBlue.withOpacity(0.1),
-            AppTheme.primaryCyan.withOpacity(0.05),
+            AppTheme.primaryPurple.withOpacity(0.05),
           ],
         ),
         border: Border(
@@ -172,40 +273,33 @@ class _IconPickerModalState extends State<IconPickerModal>
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               gradient: AppTheme.primaryGradient,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryBlue.withOpacity(0.3),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                ),
-              ],
+              borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
-              Icons.apps_rounded,
+              Icons.category_rounded,
               color: Colors.white,
-              size: 24,
+              size: 20,
             ),
           ),
-          const SizedBox(width: AppDimensions.spaceMedium),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'اختر أيقونة',
-                  style: AppTextStyles.heading2.copyWith(
+                  style: AppTextStyles.heading3.copyWith(
                     color: AppTheme.textWhite,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  'اختر من مجموعة الأيقونات المتاحة',
-                  style: AppTextStyles.bodySmall.copyWith(
+                  'هذه الأيقونات متوافقة مع Material Icons في Flutter',
+                  style: AppTextStyles.caption.copyWith(
                     color: AppTheme.textMuted,
                   ),
                 ),
@@ -213,18 +307,10 @@ class _IconPickerModalState extends State<IconPickerModal>
             ),
           ),
           IconButton(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.darkSurface.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.close_rounded,
-                color: AppTheme.textMuted,
-                size: 20,
-              ),
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(
+              Icons.close_rounded,
+              color: AppTheme.textMuted,
             ),
           ),
         ],
@@ -234,108 +320,77 @@ class _IconPickerModalState extends State<IconPickerModal>
 
   Widget _buildSearchBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLarge,
-        vertical: AppDimensions.paddingMedium,
-      ),
+      padding: const EdgeInsets.all(16),
       child: Container(
-        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.darkSurface.withOpacity(0.5),
-              AppTheme.darkSurface.withOpacity(0.3),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+          color: AppTheme.darkSurface.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: AppTheme.darkBorder.withOpacity(0.3),
             width: 1,
           ),
         ),
         child: TextField(
-          controller: _searchController,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppTheme.textWhite,
-          ),
+          onChanged: (value) => setState(() => _searchQuery = value),
+          style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
           decoration: InputDecoration(
             hintText: 'ابحث عن أيقونة...',
-            hintStyle: AppTextStyles.bodySmall.copyWith(
+            hintStyle: AppTextStyles.bodyMedium.copyWith(
               color: AppTheme.textMuted.withOpacity(0.5),
             ),
             prefixIcon: Icon(
               Icons.search_rounded,
-              color: AppTheme.primaryBlue.withOpacity(0.7),
-              size: 20,
+              color: AppTheme.textMuted.withOpacity(0.5),
             ),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
           ),
-          onChanged: (value) {
-            setState(() {
-              _searchTerm = value;
-            });
-          },
         ),
       ),
     );
   }
 
   Widget _buildCategoryTabs() {
-    final categories = {
-      'all': 'الكل',
-      'property': 'العقارات',
-      'room': 'الغرف',
-      'facility': 'المرافق',
-    };
+    final categories = ['الكل', ..._iconCategories.keys];
     
     return Container(
-      height: 40,
-      margin: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLarge),
+      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: categories.length,
         itemBuilder: (context, index) {
-          final entry = categories.entries.elementAt(index);
-          final isSelected = _selectedCategory == entry.key;
+          final category = categories[index];
+          final isSelected = _selectedCategory == category;
           
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              setState(() {
-                _selectedCategory = entry.key;
-              });
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                gradient: isSelected
-                    ? AppTheme.primaryGradient
-                    : LinearGradient(
-                        colors: [
-                          AppTheme.darkSurface.withOpacity(0.5),
-                          AppTheme.darkSurface.withOpacity(0.3),
-                        ],
-                      ),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isSelected
-                      ? Colors.transparent
-                      : AppTheme.darkBorder.withOpacity(0.3),
-                  width: 1,
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                setState(() => _selectedCategory = category);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: isSelected ? AppTheme.primaryGradient : null,
+                  color: isSelected ? null : AppTheme.darkSurface.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppTheme.primaryBlue.withOpacity(0.5)
+                        : AppTheme.darkBorder.withOpacity(0.3),
+                    width: 1,
+                  ),
                 ),
-              ),
-              child: Center(
-                child: Text(
-                  entry.value,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: isSelected ? Colors.white : AppTheme.textMuted,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                child: Center(
+                  child: Text(
+                    category,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: isSelected ? Colors.white : AppTheme.textMuted,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
                   ),
                 ),
               ),
@@ -361,7 +416,7 @@ class _IconPickerModalState extends State<IconPickerModal>
             ),
             const SizedBox(height: 16),
             Text(
-              'لا توجد أيقونات مطابقة',
+              'لا توجد أيقونات مطابقة للبحث',
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppTheme.textMuted,
               ),
@@ -371,91 +426,85 @@ class _IconPickerModalState extends State<IconPickerModal>
       );
     }
     
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-      child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 6,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-        ),
-        itemCount: icons.length,
-        itemBuilder: (context, index) {
-          final icon = icons[index];
-          final isSelected = _tempSelectedIcon == icon.key;
-          
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              setState(() {
-                _tempSelectedIcon = icon.key;
-              });
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              decoration: BoxDecoration(
-                gradient: isSelected
-                    ? AppTheme.primaryGradient
-                    : LinearGradient(
-                        colors: [
-                          AppTheme.darkSurface.withOpacity(0.5),
-                          AppTheme.darkSurface.withOpacity(0.3),
-                        ],
-                      ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected
-                      ? Colors.transparent
-                      : AppTheme.darkBorder.withOpacity(0.3),
-                  width: 1,
-                ),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: AppTheme.primaryBlue.withOpacity(0.3),
-                          blurRadius: 8,
-                          spreadRadius: 1,
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    icon.value,
-                    size: 28,
-                    color: isSelected ? Colors.white : AppTheme.textLight,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    icon.key,
-                    style: AppTextStyles.caption.copyWith(
-                      color: isSelected ? Colors.white : AppTheme.textMuted,
-                      fontSize: 9,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 6,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1,
       ),
+      itemCount: icons.length,
+      itemBuilder: (context, index) {
+        final icon = icons[index];
+        final isSelected = widget.selectedIcon == icon['name'];
+        
+        return GestureDetector(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            widget.onSelectIcon(icon['name']);
+            Navigator.pop(context);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? AppTheme.primaryGradient
+                  : LinearGradient(
+                      colors: [
+                        AppTheme.darkCard.withOpacity(0.5),
+                        AppTheme.darkCard.withOpacity(0.3),
+                      ],
+                    ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected
+                    ? AppTheme.primaryBlue.withOpacity(0.5)
+                    : AppTheme.darkBorder.withOpacity(0.3),
+                width: 1,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: AppTheme.primaryBlue.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  IconPickerModal.getIconFromString(icon['name']),
+                  size: 32,
+                  color: isSelected ? Colors.white : AppTheme.primaryBlue,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  icon['label'],
+                  style: AppTextStyles.caption.copyWith(
+                    color: isSelected ? Colors.white : AppTheme.textMuted,
+                    fontSize: 10,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildActions() {
+  Widget _buildFooter() {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkSurface.withOpacity(0.3),
-            AppTheme.darkSurface.withOpacity(0.1),
-          ],
-        ),
+        color: AppTheme.darkSurface.withOpacity(0.3),
         border: Border(
           top: BorderSide(
             color: AppTheme.darkBorder.withOpacity(0.3),
@@ -465,80 +514,42 @@ class _IconPickerModalState extends State<IconPickerModal>
       ),
       child: Row(
         children: [
-          Expanded(
-            child: _buildCancelButton(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryBlue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppTheme.primaryBlue.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  IconPickerModal.getIconFromString(widget.selectedIcon),
+                  size: 20,
+                  color: AppTheme.primaryBlue,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'الأيقونة المختارة: ${widget.selectedIcon}',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textWhite,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(width: AppDimensions.spaceMedium),
-          Expanded(
-            child: _buildSelectButton(),
+          const Spacer(),
+          Text(
+            'استخدم Icons.${widget.selectedIcon} في Flutter',
+            style: AppTextStyles.caption.copyWith(
+              color: AppTheme.textMuted,
+              fontFamily: 'monospace',
+            ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildCancelButton() {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        Navigator.of(context).pop();
-      },
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.darkCard.withOpacity(0.5),
-              AppTheme.darkCard.withOpacity(0.3),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-          border: Border.all(
-            color: AppTheme.darkBorder.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-        child: Center(
-          child: Text(
-            'إلغاء',
-            style: AppTextStyles.buttonMedium.copyWith(
-              color: AppTheme.textMuted,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSelectButton() {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        widget.onIconSelected(_tempSelectedIcon);
-        Navigator.of(context).pop();
-      },
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryBlue.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            'اختيار',
-            style: AppTextStyles.buttonMedium.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
       ),
     );
   }

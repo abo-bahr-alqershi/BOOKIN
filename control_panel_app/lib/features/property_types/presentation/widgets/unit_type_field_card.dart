@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
+import 'package:bookn_cp_app/core/theme/app_theme.dart';
+import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import '../../domain/entities/unit_type_field.dart';
 
 class UnitTypeFieldCard extends StatefulWidget {
   final UnitTypeField field;
-  final Duration animationDelay;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const UnitTypeFieldCard({
     super.key,
     required this.field,
-    required this.animationDelay,
     required this.onEdit,
     required this.onDelete,
   });
@@ -28,39 +25,22 @@ class _UnitTypeFieldCardState extends State<UnitTypeFieldCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
   bool _isHovered = false;
-  bool _isExpanded = false;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-
     _scaleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
+      begin: 1.0,
+      end: 1.02,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: Curves.elasticOut,
+      curve: Curves.easeOutCubic,
     ));
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    ));
-
-    Future.delayed(widget.animationDelay, () {
-      if (mounted) {
-        _animationController.forward();
-      }
-    });
   }
 
   @override
@@ -69,329 +49,281 @@ class _UnitTypeFieldCardState extends State<UnitTypeFieldCard>
     super.dispose();
   }
 
-  String _getFieldTypeIcon(String fieldType) {
-    final icons = {
-      'text': '📝',
-      'textarea': '📄',
-      'number': '🔢',
-      'currency': '💰',
-      'boolean': '☑️',
-      'select': '📋',
-      'multiselect': '📋',
-      'date': '📅',
-      'email': '📧',
-      'phone': '📞',
-      'file': '📎',
-      'image': '🖼️',
+  IconData _getFieldTypeIcon(String fieldType) {
+    final iconMap = {
+      'text': Icons.text_fields_rounded,
+      'textarea': Icons.notes_rounded,
+      'number': Icons.numbers_rounded,
+      'currency': Icons.attach_money_rounded,
+      'boolean': Icons.toggle_on_rounded,
+      'select': Icons.arrow_drop_down_circle_rounded,
+      'multiselect': Icons.checklist_rounded,
+      'date': Icons.calendar_today_rounded,
+      'email': Icons.email_rounded,
+      'phone': Icons.phone_rounded,
+      'file': Icons.attach_file_rounded,
+      'image': Icons.image_rounded,
     };
-    return icons[fieldType] ?? '📝';
+    return iconMap[fieldType] ?? Icons.text_fields_rounded;
+  }
+
+  Color _getFieldTypeColor(String fieldType) {
+    final colorMap = {
+      'text': AppTheme.primaryBlue,
+      'textarea': AppTheme.primaryPurple,
+      'number': AppTheme.neonGreen,
+      'currency': AppTheme.warning,
+      'boolean': AppTheme.info,
+      'select': AppTheme.primaryViolet,
+      'multiselect': AppTheme.primaryCyan,
+      'date': AppTheme.neonPurple,
+      'email': AppTheme.primaryBlue,
+      'phone': AppTheme.neonGreen,
+      'file': AppTheme.warning,
+      'image': AppTheme.primaryPurple,
+    };
+    return colorMap[fieldType] ?? AppTheme.primaryBlue;
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: _buildCard(),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildCard() {
+    final fieldColor = _getFieldTypeColor(widget.field.fieldTypeId);
+    
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.darkCard.withOpacity(0.5),
-              AppTheme.darkCard.withOpacity(0.3),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-          border: Border.all(
-            color: _isHovered
-                ? AppTheme.neonPurple.withOpacity(0.3)
-                : AppTheme.darkBorder.withOpacity(0.3),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: _isHovered
-                  ? AppTheme.neonPurple.withOpacity(0.2)
-                  : Colors.black.withOpacity(0.1),
-              blurRadius: _isHovered ? 20 : 10,
-              offset: Offset(0, _isHovered ? 4 : 2),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => setState(() => _isExpanded = !_isExpanded),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(),
-                      if (_isExpanded) ...[
-                        const SizedBox(height: 12),
-                        _buildDetails(),
+      onEnter: (_) {
+        setState(() => _isHovered = true);
+        _animationController.forward();
+      },
+      onExit: (_) {
+        setState(() => _isHovered = false);
+        _animationController.reverse();
+      },
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: _isHovered
+                      ? [
+                          fieldColor.withOpacity(0.15),
+                          fieldColor.withOpacity(0.08),
+                        ]
+                      : [
+                          AppTheme.darkCard.withOpacity(0.5),
+                          AppTheme.darkCard.withOpacity(0.3),
+                        ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _isHovered
+                      ? fieldColor.withOpacity(0.4)
+                      : AppTheme.darkBorder.withOpacity(0.3),
+                  width: 1,
+                ),
+                boxShadow: _isHovered
+                    ? [
+                        BoxShadow(
+                          color: fieldColor.withOpacity(0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                fieldColor,
+                                fieldColor.withOpacity(0.7),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            _getFieldTypeIcon(widget.field.fieldTypeId),
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      widget.field.displayName,
+                                      style: AppTextStyles.bodyMedium.copyWith(
+                                        color: AppTheme.textWhite,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  if (widget.field.isRequired)
+                                    Container(
+                                      margin: const EdgeInsets.only(left: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.error.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        'مطلوب',
+                                        style: AppTextStyles.overline.copyWith(
+                                          color: AppTheme.error,
+                                          fontSize: 9,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                widget.field.fieldName,
+                                style: AppTextStyles.caption.copyWith(
+                                  color: AppTheme.textMuted.withOpacity(0.7),
+                                  fontFamily: 'monospace',
+                                ),
+                              ),
+                              if (widget.field.description.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  widget.field.description,
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: AppTheme.textMuted,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                              const SizedBox(height: 4),
+                              Wrap(
+                                spacing: 4,
+                                runSpacing: 2,
+                                children: [
+                                  _buildBadge(
+                                    widget.field.fieldTypeId.toUpperCase(),
+                                    fieldColor,
+                                  ),
+                                  if (widget.field.isSearchable)
+                                    _buildBadge(
+                                      'قابل للبحث',
+                                      AppTheme.info,
+                                      icon: Icons.search_rounded,
+                                    ),
+                                  if (widget.field.isPublic)
+                                    _buildBadge(
+                                      'عام',
+                                      AppTheme.success,
+                                      icon: Icons.public_rounded,
+                                    )
+                                  else
+                                    _buildBadge(
+                                      'خاص',
+                                      AppTheme.warning,
+                                      icon: Icons.lock_rounded,
+                                    ),
+                                  if (widget.field.showInCards)
+                                    _buildBadge(
+                                      'البطاقات',
+                                      AppTheme.primaryPurple,
+                                      icon: Icons.view_agenda_rounded,
+                                    ),
+                                  if (widget.field.isPrimaryFilter)
+                                    _buildBadge(
+                                      'فلتر أساسي',
+                                      AppTheme.primaryCyan,
+                                      icon: Icons.filter_alt_rounded,
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_isHovered) ...[
+                          IconButton(
+                            onPressed: () {
+                              HapticFeedback.lightImpact();
+                              widget.onEdit();
+                            },
+                            icon: Icon(
+                              Icons.edit_rounded,
+                              color: fieldColor,
+                              size: 18,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              HapticFeedback.mediumImpact();
+                              widget.onDelete();
+                            },
+                            icon: Icon(
+                              Icons.delete_rounded,
+                              color: AppTheme.error,
+                              size: 18,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        // Field Type Icon
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTheme.neonPurple.withOpacity(0.2),
-                AppTheme.neonGreen.withOpacity(0.1),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: AppTheme.neonPurple.withOpacity(0.3),
-              width: 1,
-            ),
-          ),
-          child: Center(
-            child: Text(
-              _getFieldTypeIcon(widget.field.fieldTypeId),
-              style: const TextStyle(fontSize: 20),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        // Field Info
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    widget.field.displayName,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppTheme.textWhite,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (widget.field.isRequired) ...[
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: AppTheme.error.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.star,
-                        size: 8,
-                        color: AppTheme.error,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 2),
-              Text(
-                widget.field.fieldName,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppTheme.textMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Tags
-        _buildTags(),
-        // Actions
-        if (_isHovered) ...[
-          const SizedBox(width: 8),
-          _buildActions(),
-        ],
-        // Expand Icon
-        Icon(
-          _isExpanded ? Icons.expand_less : Icons.expand_more,
-          color: AppTheme.textMuted,
-          size: 20,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTags() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (widget.field.isSearchable)
-          _buildTag(Icons.search, AppTheme.primaryBlue),
-        if (widget.field.isPublic)
-          _buildTag(Icons.public, AppTheme.success),
-        if (widget.field.showInCards)
-          _buildTag(Icons.credit_card, AppTheme.warning),
-        if (widget.field.isPrimaryFilter)
-          _buildTag(Icons.filter_alt, AppTheme.neonPurple),
-      ],
-    );
-  }
-
-  Widget _buildTag(IconData icon, Color color) {
+  Widget _buildBadge(String label, Color color, {IconData? icon}) {
     return Container(
-      margin: const EdgeInsets.only(left: 4),
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(4),
-      ),
-      child: Icon(
-        icon,
-        size: 12,
-        color: color,
-      ),
-    );
-  }
-
-  Widget _buildActions() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildActionButton(
-          icon: Icons.edit_rounded,
-          color: AppTheme.primaryBlue,
-          onTap: widget.onEdit,
-        ),
-        const SizedBox(width: 4),
-        _buildActionButton(
-          icon: Icons.delete_rounded,
-          color: AppTheme.error,
-          onTap: widget.onDelete,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-        child: Icon(
-          icon,
-          size: 14,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetails() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.darkSurface.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.2),
-          width: 1,
+          color: color.withOpacity(0.3),
+          width: 0.5,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (widget.field.description.isNotEmpty) ...[
-            _buildDetailRow('الوصف', widget.field.description),
-            const SizedBox(height: 8),
+          if (icon != null) ...[
+            Icon(icon, size: 10, color: color),
+            const SizedBox(width: 2),
           ],
-          _buildDetailRow('النوع', widget.field.fieldTypeId),
-          const SizedBox(height: 8),
-          _buildDetailRow('الفئة', widget.field.category.isEmpty ? 'عام' : widget.field.category),
-          const SizedBox(height: 8),
-          _buildDetailRow('الترتيب', widget.field.sortOrder.toString()),
-          const SizedBox(height: 8),
-          _buildDetailRow('الأولوية', widget.field.priority.toString()),
-          if (widget.field.fieldOptions.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _buildDetailRow(
-              'الخيارات',
-              widget.field.fieldOptions.toString(),
+          Text(
+            label,
+            style: AppTextStyles.overline.copyWith(
+              color: color,
+              fontSize: 9,
             ),
-          ],
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 80,
-          child: Text(
-            label,
-            style: AppTextStyles.caption.copyWith(
-              color: AppTheme.textMuted,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: AppTextStyles.caption.copyWith(
-              color: AppTheme.textLight,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

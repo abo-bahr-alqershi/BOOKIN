@@ -324,7 +324,7 @@ class AppRouter {
                 BlocProvider(create: (_) => di.sl<UnitTypesBloc>()),
                 BlocProvider(create: (_) => di.sl<UnitTypeFieldsBloc>()),
               ],
-              child: const PropertyTypesPage(),
+              child: const AdminPropertyTypesPage(),
             );
           },
         ),

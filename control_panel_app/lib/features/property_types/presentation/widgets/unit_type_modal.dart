@@ -1,24 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'dart:ui';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
-import '../../domain/entities/unit_type.dart';
+import 'package:bookn_cp_app/core/theme/app_theme.dart';
+import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import 'icon_picker_modal.dart';
 
 class UnitTypeModal extends StatefulWidget {
-  final UnitType? unitType;
+  final dynamic unitType;
   final String propertyTypeId;
-  final Function(
-    String name,
-    int maxCapacity,
-    String icon,
-    bool isHasAdults,
-    bool isHasChildren,
-    bool isMultiDays,
-    bool isRequiredToDetermineTheHour,
-  ) onSave;
+  final Function(Map<String, dynamic>) onSave;
 
   const UnitTypeModal({
     super.key,
@@ -31,131 +20,86 @@ class UnitTypeModal extends StatefulWidget {
   State<UnitTypeModal> createState() => _UnitTypeModalState();
 }
 
-class _UnitTypeModalState extends State<UnitTypeModal>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
-  
+class _UnitTypeModalState extends State<UnitTypeModal> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
-  late TextEditingController _maxCapacityController;
-  String _selectedIcon = 'apartment';
-  
-  bool _isHasAdults = false;
-  bool _isHasChildren = false;
-  bool _isMultiDays = false;
-  bool _isRequiredToDetermineTheHour = false;
-  bool _isLoading = false;
+  late int _maxCapacity;
+  late String _selectedIcon;
+  late bool _isHasAdults;
+  late bool _isHasChildren;
+  late bool _isMultiDays;
+  late bool _isRequiredToDetermineTheHour;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-    
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutBack,
-    ));
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    ));
-    
-    _nameController = TextEditingController(
-      text: widget.unitType?.name ?? '',
-    );
-    _maxCapacityController = TextEditingController(
-      text: widget.unitType?.maxCapacity.toString() ?? '1',
-    );
+    _nameController = TextEditingController(text: widget.unitType?.name ?? '');
+    _maxCapacity = widget.unitType?.maxCapacity ?? 1;
     _selectedIcon = widget.unitType?.icon ?? 'apartment';
     _isHasAdults = widget.unitType?.isHasAdults ?? false;
     _isHasChildren = widget.unitType?.isHasChildren ?? false;
     _isMultiDays = widget.unitType?.isMultiDays ?? false;
     _isRequiredToDetermineTheHour = widget.unitType?.isRequiredToDetermineTheHour ?? false;
-    
-    _animationController.forward();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
     _nameController.dispose();
-    _maxCapacityController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Dialog(
-              backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.all(20),
-              child: _buildModalContent(),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildModalContent() {
-    return Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 500),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.darkCard.withOpacity(0.95),
-            AppTheme.darkCard.withOpacity(0.85),
-          ],
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: 500,
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
-        border: Border.all(
-          color: AppTheme.primaryPurple.withOpacity(0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryPurple.withOpacity(0.2),
-            blurRadius: 30,
-            spreadRadius: 5,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildHeader(),
-              Flexible(
-                child: SingleChildScrollView(
-                  child: _buildForm(),
-                ),
-              ),
-              _buildActions(),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.darkCard.withOpacity(0.95),
+              AppTheme.darkCard.withOpacity(0.85),
             ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppTheme.neonGreen.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildHeader(),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        children: [
+                          _buildNameField(),
+                          const SizedBox(height: 16),
+                          _buildIconSelector(),
+                          const SizedBox(height: 16),
+                          _buildCapacityField(),
+                          const SizedBox(height: 20),
+                          _buildFeaturesSection(),
+                        ],
+                      ),
+                    ),
+                  ),
+                  _buildActions(),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -164,12 +108,12 @@ class _UnitTypeModalState extends State<UnitTypeModal>
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.primaryPurple.withOpacity(0.1),
-            AppTheme.primaryViolet.withOpacity(0.05),
+            AppTheme.neonGreen.withOpacity(0.1),
+            AppTheme.primaryBlue.withOpacity(0.05),
           ],
         ),
         border: Border(
@@ -182,63 +126,39 @@ class _UnitTypeModalState extends State<UnitTypeModal>
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppTheme.primaryPurple, AppTheme.primaryViolet],
+                colors: [AppTheme.neonGreen, AppTheme.neonGreen.withOpacity(0.7)],
               ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryPurple.withOpacity(0.3),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                ),
-              ],
+              borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.home_rounded,
               color: Colors.white,
-              size: 24,
+              size: 20,
             ),
           ),
-          const SizedBox(width: AppDimensions.spaceMedium),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.unitType == null 
-                      ? 'إضافة نوع وحدة جديد'
-                      : 'تعديل نوع الوحدة',
-                  style: AppTextStyles.heading2.copyWith(
+                  widget.unitType == null ? 'إضافة نوع وحدة جديد' : 'تعديل نوع الوحدة',
+                  style: AppTextStyles.heading3.copyWith(
                     color: AppTheme.textWhite,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  'قم بإدخال معلومات نوع الوحدة',
-                  style: AppTextStyles.bodySmall.copyWith(
+                  'قم بملء البيانات المطلوبة',
+                  style: AppTextStyles.caption.copyWith(
                     color: AppTheme.textMuted,
                   ),
                 ),
               ],
-            ),
-          ),
-          IconButton(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.darkSurface.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.close_rounded,
-                color: AppTheme.textMuted,
-                size: 20,
-              ),
             ),
           ),
         ],
@@ -246,115 +166,53 @@ class _UnitTypeModalState extends State<UnitTypeModal>
     );
   }
 
-  Widget _buildForm() {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildTextField(
-              controller: _nameController,
-              label: 'اسم النوع',
-              hint: 'مثال: غرفة مفردة، جناح، استديو',
-              icon: Icons.text_fields_rounded,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى إدخال اسم النوع';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: AppDimensions.spaceMedium),
-            
-            _buildIconSelector(),
-            
-            const SizedBox(height: AppDimensions.spaceMedium),
-            
-            _buildTextField(
-              controller: _maxCapacityController,
-              label: 'السعة القصوى',
-              hint: 'عدد الأشخاص',
-              icon: Icons.people_rounded,
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى إدخال السعة القصوى';
-                }
-                if (int.tryParse(value) == null) {
-                  return 'يرجى إدخال رقم صحيح';
-                }
-                return null;
-              },
-            ),
-            
-            const SizedBox(height: AppDimensions.spaceLarge),
-            
-            _buildFeatureToggles(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-    String? Function(String?)? validator,
-  }) {
+  Widget _buildNameField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
+          'اسم النوع',
           style: AppTextStyles.bodyMedium.copyWith(
-            color: AppTheme.textLight,
+            color: AppTheme.textWhite,
             fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTheme.darkSurface.withOpacity(0.5),
-                AppTheme.darkSurface.withOpacity(0.3),
-              ],
+        TextFormField(
+          controller: _nameController,
+          style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+          decoration: InputDecoration(
+            hintText: 'أدخل اسم نوع الوحدة',
+            hintStyle: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textMuted.withOpacity(0.5),
             ),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-            border: Border.all(
-              color: AppTheme.darkBorder.withOpacity(0.3),
-              width: 1,
+            filled: true,
+            fillColor: AppTheme.darkSurface.withOpacity(0.5),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppTheme.darkBorder.withOpacity(0.3),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppTheme.darkBorder.withOpacity(0.3),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppTheme.neonGreen.withOpacity(0.5),
+              ),
             ),
           ),
-          child: TextFormField(
-            controller: controller,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.textWhite,
-            ),
-            keyboardType: keyboardType,
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: AppTextStyles.bodySmall.copyWith(
-                color: AppTheme.textMuted.withOpacity(0.5),
-              ),
-              prefixIcon: Icon(
-                icon,
-                color: AppTheme.primaryPurple.withOpacity(0.7),
-                size: 20,
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 14,
-              ),
-            ),
-            validator: validator,
-          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'الرجاء إدخال اسم النوع';
+            }
+            return null;
+          },
         ),
       ],
     );
@@ -367,7 +225,7 @@ class _UnitTypeModalState extends State<UnitTypeModal>
         Text(
           'الأيقونة',
           style: AppTextStyles.bodyMedium.copyWith(
-            color: AppTheme.textLight,
+            color: AppTheme.textWhite,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -375,38 +233,32 @@ class _UnitTypeModalState extends State<UnitTypeModal>
         GestureDetector(
           onTap: () => _showIconPicker(),
           child: Container(
-            padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.darkSurface.withOpacity(0.5),
-                  AppTheme.darkSurface.withOpacity(0.3),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+              color: AppTheme.darkSurface.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppTheme.primaryPurple.withOpacity(0.3),
-                width: 1,
+                color: AppTheme.darkBorder.withOpacity(0.3),
               ),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [AppTheme.primaryPurple, AppTheme.primaryViolet],
+                      colors: [AppTheme.neonGreen, AppTheme.neonGreen.withOpacity(0.7)],
                     ),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
-                    _getIconData(_selectedIcon),
+                    IconPickerModal.getIconFromString(_selectedIcon),
                     color: Colors.white,
-                    size: 24,
+                    size: 20,
                   ),
                 ),
-                const SizedBox(width: AppDimensions.spaceMedium),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -439,66 +291,146 @@ class _UnitTypeModalState extends State<UnitTypeModal>
     );
   }
 
-  Widget _buildFeatureToggles() {
+  Widget _buildCapacityField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'السعة القصوى',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textWhite,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppTheme.darkSurface.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.darkBorder.withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  if (_maxCapacity > 1) {
+                    setState(() => _maxCapacity--);
+                  }
+                },
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.darkSurface,
+                        AppTheme.darkSurface.withOpacity(0.7),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppTheme.darkBorder.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.remove_rounded,
+                    color: AppTheme.textMuted,
+                    size: 20,
+                  ),
+                ),
+              ),
+              Text(
+                '$_maxCapacity',
+                style: AppTextStyles.heading2.copyWith(
+                  color: AppTheme.textWhite,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  setState(() => _maxCapacity++);
+                },
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppTheme.neonGreen, AppTheme.neonGreen.withOpacity(0.7)],
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeaturesSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'خصائص نوع الوحدة',
           style: AppTextStyles.bodyMedium.copyWith(
-            color: AppTheme.textLight,
+            color: AppTheme.textWhite,
             fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 12),
         Container(
-          padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTheme.darkSurface.withOpacity(0.3),
-                AppTheme.darkSurface.withOpacity(0.1),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+            color: AppTheme.darkSurface.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: AppTheme.darkBorder.withOpacity(0.2),
-              width: 1,
             ),
           ),
           child: Column(
             children: [
-              _buildToggleTile(
+              _buildFeatureToggle(
+                icon: Icons.person_rounded,
                 title: 'يحتوي على بالغين',
                 subtitle: 'تفعيل حقل عدد البالغين في الحجز',
-                icon: Icons.person,
                 value: _isHasAdults,
                 onChanged: (value) => setState(() => _isHasAdults = value),
                 color: AppTheme.primaryBlue,
               ),
-              const Divider(height: 20),
-              _buildToggleTile(
+              const SizedBox(height: 12),
+              _buildFeatureToggle(
+                icon: Icons.child_care_rounded,
                 title: 'يحتوي على أطفال',
                 subtitle: 'تفعيل حقل عدد الأطفال في الحجز',
-                icon: Icons.child_care,
                 value: _isHasChildren,
                 onChanged: (value) => setState(() => _isHasChildren = value),
-                color: AppTheme.success,
+                color: AppTheme.neonGreen,
               ),
-              const Divider(height: 20),
-              _buildToggleTile(
+              const SizedBox(height: 12),
+              _buildFeatureToggle(
+                icon: Icons.calendar_month_rounded,
                 title: 'متعدد الأيام',
                 subtitle: 'السماح بالحجز لعدة أيام',
-                icon: Icons.calendar_month,
                 value: _isMultiDays,
                 onChanged: (value) => setState(() => _isMultiDays = value),
                 color: AppTheme.warning,
               ),
-              const Divider(height: 20),
-              _buildToggleTile(
+              const SizedBox(height: 12),
+              _buildFeatureToggle(
+                icon: Icons.access_time_rounded,
                 title: 'يتطلب تحديد الساعة',
                 subtitle: 'إلزام تحديد الوقت عند الحجز',
-                icon: Icons.access_time,
                 value: _isRequiredToDetermineTheHour,
                 onChanged: (value) => setState(() => _isRequiredToDetermineTheHour = value),
                 color: AppTheme.primaryPurple,
@@ -510,74 +442,89 @@ class _UnitTypeModalState extends State<UnitTypeModal>
     );
   }
 
-  Widget _buildToggleTile({
+  Widget _buildFeatureToggle({
+    required IconData icon,
     required String title,
     required String subtitle,
-    required IconData icon,
     required bool value,
     required Function(bool) onChanged,
     required Color color,
   }) {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: color.withOpacity(0.3),
-              width: 1,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: value
+            ? LinearGradient(
+                colors: [
+                  color.withOpacity(0.1),
+                  color.withOpacity(0.05),
+                ],
+              )
+            : null,
+        color: value ? null : AppTheme.darkSurface.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: value ? color.withOpacity(0.3) : AppTheme.darkBorder.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 20,
             ),
           ),
-          child: Icon(
-            icon,
-            color: color,
-            size: 20,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppTheme.textWhite,
-                  fontWeight: FontWeight.w600,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textWhite,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              Text(
-                subtitle,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppTheme.textMuted,
+                Text(
+                  subtitle,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeColor: color,
-          activeTrackColor: color.withOpacity(0.3),
-          inactiveThumbColor: AppTheme.textMuted,
-          inactiveTrackColor: AppTheme.darkBorder.withOpacity(0.3),
-        ),
-      ],
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: color,
+            activeTrackColor: color.withOpacity(0.3),
+            inactiveThumbColor: AppTheme.textMuted,
+            inactiveTrackColor: AppTheme.darkSurface,
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildActions() {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.darkSurface.withOpacity(0.3),
-            AppTheme.darkSurface.withOpacity(0.1),
+            AppTheme.darkSurface.withOpacity(0.7),
+            AppTheme.darkSurface.withOpacity(0.5),
           ],
         ),
         border: Border(
@@ -590,86 +537,61 @@ class _UnitTypeModalState extends State<UnitTypeModal>
       child: Row(
         children: [
           Expanded(
-            child: _buildCancelButton(),
-          ),
-          const SizedBox(width: AppDimensions.spaceMedium),
-          Expanded(
-            child: _buildSaveButton(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCancelButton() {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        Navigator.of(context).pop();
-      },
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.darkCard.withOpacity(0.5),
-              AppTheme.darkCard.withOpacity(0.3),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-          border: Border.all(
-            color: AppTheme.darkBorder.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-        child: Center(
-          child: Text(
-            'إلغاء',
-            style: AppTextStyles.buttonMedium.copyWith(
-              color: AppTheme.textMuted,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSaveButton() {
-    return GestureDetector(
-      onTap: _isLoading ? null : _handleSave,
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppTheme.primaryPurple, AppTheme.primaryViolet],
-          ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryPurple.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Center(
-          child: _isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : Text(
-                  widget.unitType == null ? 'إضافة' : 'تحديث',
-                  style: AppTextStyles.buttonMedium.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.darkSurface.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppTheme.darkBorder.withOpacity(0.3),
+                    width: 1,
                   ),
                 ),
-        ),
+                child: Center(
+                  child: Text(
+                    'إلغاء',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: AppTheme.textMuted,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: GestureDetector(
+              onTap: _save,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppTheme.neonGreen, AppTheme.neonGreen.withOpacity(0.7)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.neonGreen.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    widget.unitType == null ? 'إضافة' : 'تحديث',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -679,41 +601,28 @@ class _UnitTypeModalState extends State<UnitTypeModal>
       context: context,
       builder: (context) => IconPickerModal(
         selectedIcon: _selectedIcon,
-        onIconSelected: (icon) {
+        onSelectIcon: (icon) {
           setState(() {
             _selectedIcon = icon;
           });
         },
+        iconCategory: 'units',
       ),
     );
   }
 
-  void _handleSave() {
+  void _save() {
     if (_formKey.currentState!.validate()) {
-      HapticFeedback.mediumImpact();
-      widget.onSave(
-        _nameController.text,
-        int.parse(_maxCapacityController.text),
-        _selectedIcon,
-        _isHasAdults,
-        _isHasChildren,
-        _isMultiDays,
-        _isRequiredToDetermineTheHour,
-      );
-      Navigator.of(context).pop();
+      widget.onSave({
+        'name': _nameController.text,
+        'maxCapacity': _maxCapacity,
+        'icon': _selectedIcon,
+        'isHasAdults': _isHasAdults,
+        'isHasChildren': _isHasChildren,
+        'isMultiDays': _isMultiDays,
+        'isRequiredToDetermineTheHour': _isRequiredToDetermineTheHour,
+      });
+      Navigator.pop(context);
     }
-  }
-
-  IconData _getIconData(String iconName) {
-    // This should use the IconHelper utility
-    final iconMap = {
-      'home': Icons.home,
-      'apartment': Icons.apartment,
-      'bed': Icons.bed,
-      'meeting_room': Icons.meeting_room,
-      'villa': Icons.villa,
-      'house': Icons.house,
-    };
-    return iconMap[iconName] ?? Icons.apartment;
   }
 }

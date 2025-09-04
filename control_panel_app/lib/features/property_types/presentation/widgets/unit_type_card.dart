@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/utils/icon_helper.dart';
+import 'package:bookn_cp_app/core/theme/app_theme.dart';
+import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import '../../domain/entities/unit_type.dart';
 
 class UnitTypeCard extends StatefulWidget {
   final UnitType unitType;
   final bool isSelected;
-  final Duration animationDelay;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -19,7 +16,6 @@ class UnitTypeCard extends StatefulWidget {
     super.key,
     required this.unitType,
     required this.isSelected,
-    required this.animationDelay,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -33,39 +29,22 @@ class _UnitTypeCardState extends State<UnitTypeCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
   bool _isHovered = false;
-  bool _isPressed = false;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-
     _scaleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
+      begin: 1.0,
+      end: 1.02,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: Curves.elasticOut,
+      curve: Curves.easeOutCubic,
     ));
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    ));
-
-    Future.delayed(widget.animationDelay, () {
-      if (mounted) {
-        _animationController.forward();
-      }
-    });
   }
 
   @override
@@ -74,250 +53,232 @@ class _UnitTypeCardState extends State<UnitTypeCard>
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: _buildCard(),
-          ),
-        );
-      },
-    );
+  IconData _getIconFromString(String iconName) {
+    final iconMap = {
+      'apartment': Icons.apartment_rounded,
+      'bed': Icons.bed_rounded,
+      'king_bed': Icons.king_bed_rounded,
+      'single_bed': Icons.single_bed_rounded,
+      'bedroom_parent': Icons.bedroom_parent_rounded,
+      'bedroom_child': Icons.bedroom_child_rounded,
+      'living_room': Icons.living_rounded,
+      'meeting_room': Icons.meeting_room_rounded,
+      'house': Icons.house_rounded,
+      'cottage': Icons.cottage_rounded,
+      'villa': Icons.villa_rounded,
+      'cabin': Icons.cabin_rounded,
+      'pool': Icons.pool_rounded,
+      'hot_tub': Icons.hot_tub_rounded,
+      'spa': Icons.spa_rounded,
+      'kitchen': Icons.kitchen_rounded,
+      'bathroom': Icons.bathroom_rounded,
+      'balcony': Icons.balcony_rounded,
+      'deck': Icons.deck_rounded,
+      'yard': Icons.yard_rounded,
+    };
+    return iconMap[iconName] ?? Icons.apartment_rounded;
   }
 
-  Widget _buildCard() {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
-      onTap: () {
-        HapticFeedback.lightImpact();
-        widget.onTap();
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) {
+        setState(() => _isHovered = true);
+        _animationController.forward();
       },
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.only(bottom: 12),
-          transform: Matrix4.identity()
-            ..translate(0.0, _isPressed ? 2.0 : (_isHovered ? -2.0 : 0.0))
-            ..scale(_isPressed ? 0.98 : 1.0),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: widget.isSelected
-                    ? [
-                        AppTheme.primaryPurple.withOpacity(0.15),
-                        AppTheme.primaryViolet.withOpacity(0.1),
-                      ]
-                    : [
-                        AppTheme.darkCard.withOpacity(0.5),
-                        AppTheme.darkCard.withOpacity(0.3),
-                      ],
-              ),
-              borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-              border: Border.all(
-                color: widget.isSelected
-                    ? AppTheme.primaryPurple.withOpacity(0.5)
-                    : AppTheme.darkBorder.withOpacity(0.3),
-                width: widget.isSelected ? 1.5 : 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: widget.isSelected
-                      ? AppTheme.primaryPurple.withOpacity(0.2)
-                      : Colors.black.withOpacity(0.1),
-                  blurRadius: _isHovered ? 20 : 10,
-                  offset: Offset(0, _isHovered ? 4 : 2),
+      onExit: (_) {
+        setState(() => _isHovered = false);
+        _animationController.reverse();
+      },
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          widget.onTap();
+        },
+        child: AnimatedBuilder(
+          animation: _scaleAnimation,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: _scaleAnimation.value,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: widget.isSelected
+                        ? [
+                            AppTheme.neonGreen.withOpacity(0.2),
+                            AppTheme.primaryBlue.withOpacity(0.1),
+                          ]
+                        : _isHovered
+                            ? [
+                                AppTheme.darkCard.withOpacity(0.8),
+                                AppTheme.darkCard.withOpacity(0.6),
+                              ]
+                            : [
+                                AppTheme.darkCard.withOpacity(0.5),
+                                AppTheme.darkCard.withOpacity(0.3),
+                              ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: widget.isSelected
+                        ? AppTheme.neonGreen.withOpacity(0.5)
+                        : _isHovered
+                            ? AppTheme.darkBorder.withOpacity(0.5)
+                            : AppTheme.darkBorder.withOpacity(0.3),
+                    width: 1,
+                  ),
+                  boxShadow: widget.isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppTheme.neonGreen.withOpacity(0.2),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
                 ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
                         children: [
-                          _buildIcon(),
-                          const SizedBox(width: AppDimensions.spaceMedium),
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppTheme.neonGreen,
+                                  AppTheme.neonGreen.withOpacity(0.7),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              _getIconFromString(widget.unitType.icon),
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   widget.unitType.name,
-                                  style: AppTextStyles.heading3.copyWith(
-                                    color: widget.isSelected
-                                        ? AppTheme.primaryPurple
-                                        : AppTheme.textWhite,
-                                    fontWeight: FontWeight.bold,
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    color: AppTheme.textWhite,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                if (widget.unitType.description.isNotEmpty) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    widget.unitType.description,
-                                    style: AppTextStyles.bodySmall.copyWith(
-                                      color: AppTheme.textMuted,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
+                                const SizedBox(height: 4),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 4,
+                                  children: [
+                                    if (widget.unitType.isHasAdults)
+                                      _buildFeatureBadge(
+                                        Icons.person_rounded,
+                                        'بالغين',
+                                        AppTheme.primaryBlue,
+                                      ),
+                                    if (widget.unitType.isHasChildren)
+                                      _buildFeatureBadge(
+                                        Icons.child_care_rounded,
+                                        'أطفال',
+                                        AppTheme.neonGreen,
+                                      ),
+                                    if (widget.unitType.isMultiDays)
+                                      _buildFeatureBadge(
+                                        Icons.calendar_month_rounded,
+                                        'متعدد',
+                                        AppTheme.warning,
+                                      ),
+                                    if (widget.unitType.isRequiredToDetermineTheHour)
+                                      _buildFeatureBadge(
+                                        Icons.access_time_rounded,
+                                        'بالساعة',
+                                        AppTheme.primaryPurple,
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'السعة القصوى: ${widget.unitType.maxCapacity}',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: AppTheme.textMuted,
                                   ),
-                                ],
+                                ),
                               ],
                             ),
                           ),
-                          _buildActions(),
+                          if (_isHovered) ...[
+                            IconButton(
+                              onPressed: () {
+                                HapticFeedback.lightImpact();
+                                widget.onEdit();
+                              },
+                              icon: Icon(
+                                Icons.edit_rounded,
+                                color: AppTheme.neonGreen,
+                                size: 18,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                HapticFeedback.mediumImpact();
+                                widget.onDelete();
+                              },
+                              icon: Icon(
+                                Icons.delete_rounded,
+                                color: AppTheme.error,
+                                size: 18,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      _buildFeatureTags(),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildIcon() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        gradient: widget.isSelected
-            ? LinearGradient(
-                colors: [AppTheme.primaryPurple, AppTheme.primaryViolet],
-              )
-            : LinearGradient(
-                colors: [
-                  AppTheme.darkSurface.withOpacity(0.5),
-                  AppTheme.darkSurface.withOpacity(0.3),
-                ],
-              ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: widget.isSelected
-            ? [
-                BoxShadow(
-                  color: AppTheme.primaryPurple.withOpacity(0.3),
-                  blurRadius: 12,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
-      ),
-      child: Icon(
-        IconHelper.getIconData(widget.unitType.icon),
-        color: widget.isSelected ? Colors.white : AppTheme.primaryPurple,
-        size: 24,
-      ),
-    );
-  }
-
-  Widget _buildFeatureTags() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        if (widget.unitType.isHasAdults)
-          _buildFeatureTag('👨 بالغين', AppTheme.primaryBlue),
-        if (widget.unitType.isHasChildren)
-          _buildFeatureTag('👶 أطفال', AppTheme.success),
-        if (widget.unitType.isMultiDays)
-          _buildFeatureTag('📅 متعدد الأيام', AppTheme.warning),
-        if (widget.unitType.isRequiredToDetermineTheHour)
-          _buildFeatureTag('⏰ تحديد الساعة', AppTheme.primaryPurple),
-      ],
-    );
-  }
-
-  Widget _buildFeatureTag(String label, Color color) {
+  Widget _buildFeatureBadge(IconData icon, String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(
           color: color.withOpacity(0.3),
-          width: 1,
+          width: 0.5,
         ),
       ),
-      child: Text(
-        label,
-        style: AppTextStyles.caption.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActions() {
-    return AnimatedOpacity(
-      opacity: _isHovered ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 200),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildActionButton(
-            icon: Icons.edit_rounded,
-            color: AppTheme.primaryPurple,
-            onTap: widget.onEdit,
-          ),
-          const SizedBox(width: 8),
-          _buildActionButton(
-            icon: Icons.delete_rounded,
-            color: AppTheme.error,
-            onTap: widget.onDelete,
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 2),
+          Text(
+            label,
+            style: AppTextStyles.overline.copyWith(
+              color: color,
+              fontSize: 9,
+            ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-        child: Icon(
-          icon,
-          size: 16,
-          color: color,
-        ),
       ),
     );
   }

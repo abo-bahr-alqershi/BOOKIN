@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/utils/icon_helper.dart';
+import 'package:bookn_cp_app/core/theme/app_theme.dart';
+import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import '../../domain/entities/property_type.dart';
 
 class PropertyTypeCard extends StatefulWidget {
   final PropertyType propertyType;
   final bool isSelected;
-  final Duration animationDelay;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -19,7 +16,6 @@ class PropertyTypeCard extends StatefulWidget {
     super.key,
     required this.propertyType,
     required this.isSelected,
-    required this.animationDelay,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -33,39 +29,22 @@ class _PropertyTypeCardState extends State<PropertyTypeCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
   bool _isHovered = false;
-  bool _isPressed = false;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-
     _scaleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
+      begin: 1.0,
+      end: 1.02,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: Curves.elasticOut,
+      curve: Curves.easeOutCubic,
     ));
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    ));
-
-    Future.delayed(widget.animationDelay, () {
-      if (mounted) {
-        _animationController.forward();
-      }
-    });
   }
 
   @override
@@ -74,224 +53,197 @@ class _PropertyTypeCardState extends State<PropertyTypeCard>
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: _buildCard(),
-          ),
-        );
-      },
-    );
+  IconData _getIconFromString(String iconName) {
+    final iconMap = {
+      'home': Icons.home_rounded,
+      'apartment': Icons.apartment_rounded,
+      'villa': Icons.villa_rounded,
+      'business': Icons.business_rounded,
+      'store': Icons.store_rounded,
+      'hotel': Icons.hotel_rounded,
+      'house': Icons.house_rounded,
+      'cabin': Icons.cabin_rounded,
+      'meeting_room': Icons.meeting_room_rounded,
+      'stairs': Icons.stairs_rounded,
+      'roofing': Icons.roofing_rounded,
+      'warehouse': Icons.warehouse_rounded,
+      'terrain': Icons.terrain_rounded,
+      'grass': Icons.grass_rounded,
+      'location_city': Icons.location_city_rounded,
+      'cottage': Icons.cottage_rounded,
+      'holiday_village': Icons.holiday_village_rounded,
+      'gite': Icons.gite_rounded,
+      'domain': Icons.domain_rounded,
+      'foundation': Icons.foundation_rounded,
+    };
+    return iconMap[iconName] ?? Icons.business_rounded;
   }
 
-  Widget _buildCard() {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
-      onTap: () {
-        HapticFeedback.lightImpact();
-        widget.onTap();
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) {
+        setState(() => _isHovered = true);
+        _animationController.forward();
       },
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.only(bottom: 12),
-          transform: Matrix4.identity()
-            ..translate(0.0, _isPressed ? 2.0 : (_isHovered ? -2.0 : 0.0))
-            ..scale(_isPressed ? 0.98 : 1.0),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: widget.isSelected
-                    ? [
-                        AppTheme.primaryBlue.withOpacity(0.15),
-                        AppTheme.primaryPurple.withOpacity(0.1),
-                      ]
-                    : [
-                        AppTheme.darkCard.withOpacity(0.5),
-                        AppTheme.darkCard.withOpacity(0.3),
-                      ],
-              ),
-              borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-              border: Border.all(
-                color: widget.isSelected
-                    ? AppTheme.primaryBlue.withOpacity(0.5)
-                    : AppTheme.darkBorder.withOpacity(0.3),
-                width: widget.isSelected ? 1.5 : 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: widget.isSelected
-                      ? AppTheme.primaryBlue.withOpacity(0.2)
-                      : Colors.black.withOpacity(0.1),
-                  blurRadius: _isHovered ? 20 : 10,
-                  offset: Offset(0, _isHovered ? 4 : 2),
+      onExit: (_) {
+        setState(() => _isHovered = false);
+        _animationController.reverse();
+      },
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          widget.onTap();
+        },
+        child: AnimatedBuilder(
+          animation: _scaleAnimation,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: _scaleAnimation.value,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: widget.isSelected
+                        ? [
+                            AppTheme.primaryBlue.withOpacity(0.2),
+                            AppTheme.primaryPurple.withOpacity(0.1),
+                          ]
+                        : _isHovered
+                            ? [
+                                AppTheme.darkCard.withOpacity(0.8),
+                                AppTheme.darkCard.withOpacity(0.6),
+                              ]
+                            : [
+                                AppTheme.darkCard.withOpacity(0.5),
+                                AppTheme.darkCard.withOpacity(0.3),
+                              ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: widget.isSelected
+                        ? AppTheme.primaryBlue.withOpacity(0.5)
+                        : _isHovered
+                            ? AppTheme.darkBorder.withOpacity(0.5)
+                            : AppTheme.darkBorder.withOpacity(0.3),
+                    width: 1,
+                  ),
+                  boxShadow: widget.isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppTheme.primaryBlue.withOpacity(0.2),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
                 ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-                  child: Row(
-                    children: [
-                      // Icon
-                      _buildIcon(),
-                      const SizedBox(width: AppDimensions.spaceMedium),
-                      // Content
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.propertyType.name,
-                              style: AppTextStyles.heading3.copyWith(
-                                color: widget.isSelected
-                                    ? AppTheme.primaryBlue
-                                    : AppTheme.textWhite,
-                                fontWeight: FontWeight.bold,
-                              ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              gradient: AppTheme.primaryGradient,
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            if (widget.propertyType.description.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                widget.propertyType.description,
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppTheme.textMuted,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                            if (widget.propertyType.defaultAmenities.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryBlue.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  widget.propertyType.defaultAmenities.join(', '),
-                                  style: AppTextStyles.caption.copyWith(
-                                    color: AppTheme.primaryBlue,
+                            child: Icon(
+                              _getIconFromString(widget.propertyType.icon),
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.propertyType.name,
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    color: AppTheme.textWhite,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
+                                if (widget.propertyType.description.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    widget.propertyType.description,
+                                    style: AppTextStyles.caption.copyWith(
+                                      color: AppTheme.textMuted,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                                if (widget.propertyType.defaultAmenities.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Wrap(
+                                    spacing: 4,
+                                    runSpacing: 2,
+                                    children: widget.propertyType.defaultAmenities
+                                        .take(3)
+                                        .map((amenity) => Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 6,
+                                                vertical: 2,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.primaryBlue.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                amenity,
+                                                style: AppTextStyles.overline.copyWith(
+                                                  color: AppTheme.primaryBlue,
+                                                ),
+                                              ),
+                                            ))
+                                        .toList(),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          if (_isHovered) ...[
+                            IconButton(
+                              onPressed: () {
+                                HapticFeedback.lightImpact();
+                                widget.onEdit();
+                              },
+                              icon: Icon(
+                                Icons.edit_rounded,
+                                color: AppTheme.primaryBlue,
+                                size: 18,
                               ),
-                            ],
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                HapticFeedback.mediumImpact();
+                                widget.onDelete();
+                              },
+                              icon: Icon(
+                                Icons.delete_rounded,
+                                color: AppTheme.error,
+                                size: 18,
+                              ),
+                            ),
                           ],
-                        ),
+                        ],
                       ),
-                      // Actions
-                      _buildActions(),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIcon() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        gradient: widget.isSelected
-            ? AppTheme.primaryGradient
-            : LinearGradient(
-                colors: [
-                  AppTheme.darkSurface.withOpacity(0.5),
-                  AppTheme.darkSurface.withOpacity(0.3),
-                ],
-              ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: widget.isSelected
-            ? [
-                BoxShadow(
-                  color: AppTheme.primaryBlue.withOpacity(0.3),
-                  blurRadius: 12,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
-      ),
-      child: Icon(
-        IconHelper.getIconData(widget.propertyType.icon),
-        color: widget.isSelected ? Colors.white : AppTheme.primaryBlue,
-        size: 24,
-      ),
-    );
-  }
-
-  Widget _buildActions() {
-    return AnimatedOpacity(
-      opacity: _isHovered ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 200),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildActionButton(
-            icon: Icons.edit_rounded,
-            color: AppTheme.primaryBlue,
-            onTap: widget.onEdit,
-          ),
-          const SizedBox(width: 8),
-          _buildActionButton(
-            icon: Icons.delete_rounded,
-            color: AppTheme.error,
-            onTap: widget.onDelete,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-        child: Icon(
-          icon,
-          size: 16,
-          color: color,
+            );
+          },
         ),
       ),
     );
