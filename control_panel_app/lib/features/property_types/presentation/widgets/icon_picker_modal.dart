@@ -214,11 +214,20 @@ class _IconPickerModalState extends State<IconPickerModal> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final bool isSmall = size.width < 600;
+    final EdgeInsets inset = isSmall
+        ? const EdgeInsets.symmetric(horizontal: 12, vertical: 12)
+        : const EdgeInsets.all(20);
+    final double dialogWidth = isSmall ? (size.width - inset.horizontal) : 800;
+    final double dialogHeight = isSmall ? (size.height * 0.95) : (size.height * 0.85);
+
     return Dialog(
       backgroundColor: Colors.transparent,
+      insetPadding: inset,
       child: Container(
-        width: 700,
-        height: MediaQuery.of(context).size.height * 0.8,
+        width: dialogWidth,
+        height: dialogHeight,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -241,9 +250,7 @@ class _IconPickerModalState extends State<IconPickerModal> {
                 _buildHeader(),
                 _buildSearchBar(),
                 _buildCategoryTabs(),
-                Expanded(
-                  child: _buildIconGrid(),
-                ),
+                Expanded(child: _buildIconGrid()),
                 _buildFooter(),
               ],
             ),
@@ -403,6 +410,17 @@ class _IconPickerModalState extends State<IconPickerModal> {
 
   Widget _buildIconGrid() {
     final icons = filteredIcons;
+    final width = MediaQuery.of(context).size.width;
+    int columns;
+    if (width < 380) {
+      columns = 3;
+    } else if (width < 600) {
+      columns = 4;
+    } else if (width < 900) {
+      columns = 5;
+    } else {
+      columns = 6;
+    }
     
     if (icons.isEmpty) {
       return Center(
@@ -428,8 +446,8 @@ class _IconPickerModalState extends State<IconPickerModal> {
     
     return GridView.builder(
       padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 6,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
         childAspectRatio: 1,
@@ -473,26 +491,35 @@ class _IconPickerModalState extends State<IconPickerModal> {
                     ]
                   : null,
             ),
-            child: Column(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final cellH = constraints.maxHeight;
+                final double iconSize = cellH < 90 ? 24 : 32;
+                final double gap = cellH < 90 ? 6 : 8;
+                final double labelFont = cellH < 90 ? 9 : 10;
+                return Column(
               mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   IconPickerModal.getIconFromString(icon['name']),
-                  size: 32,
+                      size: iconSize,
                   color: isSelected ? Colors.white : AppTheme.primaryBlue,
                 ),
-                const SizedBox(height: 8),
+                    SizedBox(height: gap),
                 Text(
                   icon['label'],
                   style: AppTextStyles.caption.copyWith(
                     color: isSelected ? Colors.white : AppTheme.textMuted,
-                    fontSize: 10,
+                        fontSize: labelFont,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
+                );
+              },
             ),
           ),
         );

@@ -50,12 +50,21 @@ class _UnitTypeModalState extends State<UnitTypeModal> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final bool isSmall = screenSize.width < 600;
+    final EdgeInsets inset = isSmall
+        ? const EdgeInsets.symmetric(horizontal: 12, vertical: 12)
+        : const EdgeInsets.all(20);
+    final double dialogWidth = isSmall ? (screenSize.width - inset.horizontal) : 640;
+    final double maxHeight = isSmall ? (screenSize.height * 0.95) : (screenSize.height * 0.85);
+
     return Dialog(
       backgroundColor: Colors.transparent,
+      insetPadding: inset,
       child: Container(
-        width: 500,
+        width: dialogWidth,
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
+          maxHeight: maxHeight,
         ),
         decoration: BoxDecoration(
           gradient: LinearGradient(

@@ -2236,12 +2236,21 @@ class _UnitTypeFieldModalState extends State<UnitTypeFieldModal> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final bool isSmall = screenSize.width < 600;
+    final EdgeInsets inset = isSmall
+        ? const EdgeInsets.symmetric(horizontal: 12, vertical: 12)
+        : const EdgeInsets.all(20);
+    final double dialogWidth = isSmall ? (screenSize.width - inset.horizontal) : 760;
+    final double maxHeight = isSmall ? (screenSize.height * 0.95) : (screenSize.height * 0.9);
+
     return Dialog(
       backgroundColor: Colors.transparent,
+      insetPadding: inset,
       child: Container(
-        width: 600,
+        width: dialogWidth,
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.9,
+          maxHeight: maxHeight,
         ),
         decoration: BoxDecoration(
           gradient: LinearGradient(

@@ -20,7 +20,8 @@ class AuthInterceptor extends Interceptor {
     final localStorage = sl<LocalStorageService>();
     final token = localStorage.getData(StorageConstants.accessToken) as String?;
     
-    if (token != null && token.isNotEmpty && !options.headers.containsKey(ApiConstants.authorization)) {
+    if (token != null && token.isNotEmpty) {
+      // Always overwrite Authorization with the latest token
       options.headers[ApiConstants.authorization] = '${ApiConstants.bearer} $token';
     }
     

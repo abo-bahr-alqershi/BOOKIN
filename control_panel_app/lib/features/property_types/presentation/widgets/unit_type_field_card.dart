@@ -88,6 +88,7 @@ class _UnitTypeFieldCardState extends State<UnitTypeFieldCard>
   @override
   Widget build(BuildContext context) {
     final fieldColor = _getFieldTypeColor(widget.field.fieldTypeId);
+    final isSmall = MediaQuery.of(context).size.width < 600;
     
     return MouseRegion(
       onEnter: (_) {
@@ -261,7 +262,7 @@ class _UnitTypeFieldCardState extends State<UnitTypeFieldCard>
                             ],
                           ),
                         ),
-                        if (_isHovered) ...[
+                        if (_isHovered && !isSmall) ...[
                           IconButton(
                             onPressed: () {
                               HapticFeedback.lightImpact();
@@ -283,6 +284,41 @@ class _UnitTypeFieldCardState extends State<UnitTypeFieldCard>
                               color: AppTheme.error,
                               size: 18,
                             ),
+                          ),
+                        ]
+                        else if (isSmall) ...[
+                          PopupMenuButton<String>(
+                            color: AppTheme.darkCard,
+                            onSelected: (value) {
+                              if (value == 'edit') {
+                                widget.onEdit();
+                              } else if (value == 'delete') {
+                                widget.onDelete();
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'edit',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.edit_rounded, color: fieldColor, size: 18),
+                                    const SizedBox(width: 8),
+                                    const Text('تعديل'),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete_rounded, color: AppTheme.error, size: 18),
+                                    const SizedBox(width: 8),
+                                    const Text('حذف'),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            icon: Icon(Icons.more_vert_rounded, color: AppTheme.textMuted),
                           ),
                         ],
                       ],
