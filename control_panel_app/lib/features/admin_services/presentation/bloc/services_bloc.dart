@@ -112,10 +112,8 @@ class ServicesBloc extends Bloc<ServicesEvent, ServicesState> {
       (failure) => emit(ServicesError(failure.message)),
       (serviceId) {
         emit(const ServiceOperationSuccess('تم إنشاء الخدمة بنجاح'));
-        // Reload services
-        if (_selectedPropertyId != null) {
-          add(LoadServicesEvent(propertyId: _selectedPropertyId));
-        }
+        // Reload services for the same property the service was created for
+        add(LoadServicesEvent(propertyId: event.propertyId));
       },
     );
   }

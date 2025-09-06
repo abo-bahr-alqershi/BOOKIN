@@ -94,7 +94,10 @@ class _CreateServicePageState extends State<CreateServicePage>
         if (state is ServiceOperationSuccess) {
           _showSuccessMessage(state.message);
           Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) context.pop();
+            if (mounted) context.pop({
+              'refresh': true,
+              'propertyId': _selectedPropertyId,
+            });
           });
         } else if (state is ServicesError) {
           _showErrorMessage(state.message);

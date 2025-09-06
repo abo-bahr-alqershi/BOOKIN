@@ -505,9 +505,15 @@ class _AdminServicesPageState extends State<AdminServicesPage>
     );
   }
 
-  void _navigateToCreatePage() {
+  Future<void> _navigateToCreatePage() async {
     HapticFeedback.mediumImpact();
-    context.push('/admin/services/create', extra: {'propertyId': _selectedPropertyId});
+    final result = await context.push('/admin/services/create', extra: {'propertyId': _selectedPropertyId});
+    if (result is Map && result['refresh'] == true) {
+      final pid = (result['propertyId'] as String?) ?? _selectedPropertyId;
+      if (pid != null) {
+        context.read<ServicesBloc>().add(LoadServicesEvent(propertyId: pid));
+      }
+    }
   }
 
   void _showEditDialog(Service service) {
