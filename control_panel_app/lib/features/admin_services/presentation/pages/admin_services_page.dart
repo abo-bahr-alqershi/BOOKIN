@@ -104,7 +104,8 @@ class _AdminServicesPageState extends State<AdminServicesPage>
   }
 
   void _loadInitialData() {
-    context.read<ServicesBloc>().add(const LoadServicesEvent());
+    // Proactively load latest services without filter on initial open
+    context.read<ServicesBloc>().add(const LoadServicesEvent(serviceType: null));
   }
 
   @override
@@ -386,6 +387,19 @@ class _AdminServicesPageState extends State<AdminServicesPage>
           context.read<ServicesBloc>().add(
                 SelectPropertyEvent(propertyId),
               );
+        },
+        onPropertyFieldTap: () async {
+          final result = await context.push('/helpers/search/properties', extra: {
+            'allowMultiSelect': false,
+          });
+          if (result is Map && result['property'] != null) {
+            final property = result['property'];
+            final String? pid = property.id as String?;
+            if (pid != null) {
+              setState(() => _selectedPropertyId = pid);
+              context.read<ServicesBloc>().add(SelectPropertyEvent(pid));
+            }
+          }
         },
         searchQuery: _searchQuery,
         onSearchChanged: (query) {

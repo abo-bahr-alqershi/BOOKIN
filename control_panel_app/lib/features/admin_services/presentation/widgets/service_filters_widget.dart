@@ -7,6 +7,7 @@ import '../../../../core/theme/app_text_styles.dart';
 class ServiceFiltersWidget extends StatelessWidget {
   final String? selectedPropertyId;
   final Function(String?) onPropertyChanged;
+  final VoidCallback onPropertyFieldTap;
   final String searchQuery;
   final Function(String) onSearchChanged;
 
@@ -14,6 +15,7 @@ class ServiceFiltersWidget extends StatelessWidget {
     super.key,
     required this.selectedPropertyId,
     required this.onPropertyChanged,
+    required this.onPropertyFieldTap,
     required this.searchQuery,
     required this.onSearchChanged,
   });
@@ -72,47 +74,38 @@ class ServiceFiltersWidget extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: AppTheme.darkSurface.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppTheme.darkBorder.withOpacity(0.2),
-              width: 0.5,
+        GestureDetector(
+          onTap: onPropertyFieldTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            decoration: BoxDecoration(
+              color: AppTheme.darkSurface.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppTheme.darkBorder.withOpacity(0.2),
+                width: 0.5,
+              ),
             ),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String?>(
-              value: selectedPropertyId,
-              isExpanded: true,
-              dropdownColor: AppTheme.darkCard,
-              icon: Icon(
-                Icons.expand_more_rounded,
-                color: AppTheme.textMuted,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppTheme.textWhite,
-              ),
-              hint: Text(
-                'اختر العقار',
-                style: AppTextStyles.bodyMedium.copyWith(
+            child: Row(
+              children: [
+                Icon(
+                  Icons.home_work_outlined,
                   color: AppTheme.textMuted,
                 ),
-              ),
-              items: [
-                DropdownMenuItem(
-                  value: null,
+                const SizedBox(width: 10),
+                Expanded(
                   child: Text(
-                    'جميع العقارات',
+                    selectedPropertyId == null ? 'اختر العقار' : 'تم اختيار العقار',
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppTheme.textLight,
+                      color: selectedPropertyId == null ? AppTheme.textMuted : AppTheme.textWhite,
                     ),
                   ),
                 ),
-                // Add property items here from BLoC or state
+                Icon(
+                  Icons.search,
+                  color: AppTheme.textMuted,
+                ),
               ],
-              onChanged: onPropertyChanged,
             ),
           ),
         ),
