@@ -37,7 +37,8 @@ abstract class ServicesRemoteDataSource {
 
 class ServicesRemoteDataSourceImpl implements ServicesRemoteDataSource {
   final ApiClient apiClient;
-  static const String _basePath = '/api/admin/PropertyServices';
+  // Backend uses kebab-case controller token due to RouteTokenTransformerConvention
+  static const String _basePath = '/api/admin/property-services';
 
   ServicesRemoteDataSourceImpl({required this.apiClient});
 
@@ -59,7 +60,8 @@ class ServicesRemoteDataSourceImpl implements ServicesRemoteDataSource {
             'amount': price.amount,
             'currency': price.currency,
           },
-          'pricingModel': pricingModel.value,
+          // Map app enum values to backend-supported enum strings
+          'pricingModel': _toServerPricingModel(pricingModel),
           'icon': icon,
         },
       );
@@ -93,7 +95,7 @@ class ServicesRemoteDataSourceImpl implements ServicesRemoteDataSource {
           'currency': price.currency,
         };
       }
-      if (pricingModel != null) data['pricingModel'] = pricingModel.value;
+      if (pricingModel != null) data['pricingModel'] = _toServerPricingModel(pricingModel);
       if (icon != null) data['icon'] = icon;
 
       final response = await apiClient.put(
@@ -167,6 +169,21 @@ class ServicesRemoteDataSourceImpl implements ServicesRemoteDataSource {
       );
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
+    }
+  }
+
+  String _toServerPricingModel(PricingModel model) {
+    // Backend enum YemenBooking.Core.Enums.PricingModel supports: Fixed, PerPerson, PerNight
+    switch (model) {
+      case PricingModel.fixed:
+        return 'Fixed';
+      case PricingModel.perPerson:
+        return 'PerPerson';
+      case PricingModel.perDay:
+      case PricingModel.perBooking:
+      case PricingModel.perUnit:
+      case PricingModel.perHour:
+        return 'PerNight';
     }
   }
 }
