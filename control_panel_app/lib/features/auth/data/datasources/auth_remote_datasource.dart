@@ -87,8 +87,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       logRequestSuccess(requestName, statusCode: response.statusCode);
 
       final resultDto = ResultDto<Map<String, dynamic>>.fromJson(
-        response.data,
-        (json) => json,
+        response.data is Map<String, dynamic> ? response.data as Map<String, dynamic> : null,
+        (json) => json as Map<String, dynamic>,
       );
 
       if (resultDto.success && resultDto.data != null) {
@@ -139,8 +139,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       logRequestSuccess(requestName, statusCode: response.statusCode);
 
       final resultDto = ResultDto<Map<String, dynamic>>.fromJson(
-        response.data,
-        (json) => json,
+        response.data is Map<String, dynamic> ? response.data as Map<String, dynamic> : null,
+        (json) => json as Map<String, dynamic>,
       );
 
       if (resultDto.success && resultDto.data != null) {
@@ -265,8 +265,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       logRequestSuccess(requestName, statusCode: response.statusCode);
 
       final resultDto = ResultDto<Map<String, dynamic>>.fromJson(
-        response.data,
-        (json) => json,
+        response.data is Map<String, dynamic> ? response.data as Map<String, dynamic> : null,
+        (json) => json as Map<String, dynamic>,
       );
 
       if (resultDto.success && resultDto.data != null) {
@@ -297,8 +297,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       logRequestSuccess(requestName, statusCode: response.statusCode);
 
       final resultDto = ResultDto<Map<String, dynamic>>.fromJson(
-        response.data,
-        (json) => json,
+        response.data is Map<String, dynamic> ? response.data as Map<String, dynamic> : null,
+        (json) => json as Map<String, dynamic>,
       );
 
       if (resultDto.success && resultDto.data != null) {

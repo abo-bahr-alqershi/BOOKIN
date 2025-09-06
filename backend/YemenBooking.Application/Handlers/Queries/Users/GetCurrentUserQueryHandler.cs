@@ -39,12 +39,14 @@ namespace YemenBooking.Application.Handlers.Queries.Users
 
                 if (_currentUserService.UserId == Guid.Empty)
                 {
+                    _logger.LogWarning("طلب غير مصادق عليه لبيانات المستخدم الحالي");
                     return ResultDto<UserDto>.Failure("يجب تسجيل الدخول للوصول إلى بيانات المستخدم");
                 }
 
                 var user = await _currentUserService.GetCurrentUserAsync(cancellationToken);
                 if (user == null)
                 {
+                    _logger.LogWarning("تعذر العثور على المستخدم: {UserId}", _currentUserService.UserId);
                     return ResultDto<UserDto>.Failure($"المستخدم بالمعرف {_currentUserService.UserId} غير موجود");
                 }
 

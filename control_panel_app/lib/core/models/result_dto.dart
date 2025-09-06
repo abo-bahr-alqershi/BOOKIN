@@ -22,31 +22,58 @@ class ResultDto<T> extends Equatable {
   bool get isSuccess => success;
 
   factory ResultDto.fromJson(
-    Map<String, dynamic> json,
+    Map<String, dynamic>? json,
     T Function(dynamic)? fromJsonT,
   ) {
+    if (json == null) {
+      return ResultDto<T>(
+        success: false,
+        data: null,
+        message: 'استجابة غير صالحة',
+        errors: const ['الاستجابة فارغة'],
+        errorCode: 'INVALID_RESPONSE',
+        timestamp: DateTime.now(),
+        code: null,
+      );
+    }
+
     T? parsedData;
     if (json.containsKey('data')) {
       final raw = json['data'];
-      if (fromJsonT != null) {
+      if (raw != null && fromJsonT != null) {
         parsedData = fromJsonT(raw);
       } else {
         parsedData = raw as T?;
       }
     }
 
+    List<String> parsedErrors = [];
+    final errorsField = json['errors'];
+    if (errorsField is List) {
+      parsedErrors = errorsField.map((e) => e.toString()).toList();
+    } else if (errorsField is String) {
+      parsedErrors = [errorsField];
+    }
+
+    DateTime ts;
+    if (json['timestamp'] != null) {
+      try {
+        ts = DateTime.parse(json['timestamp'].toString());
+      } catch (_) {
+        ts = DateTime.now();
+      }
+    } else {
+      ts = DateTime.now();
+    }
+
     return ResultDto<T>(
-      success: json['success'] ?? false,
+      success: (json['success'] is bool) ? json['success'] as bool : false,
       data: parsedData,
-      message: json['message'],
-      errors: json['errors'] != null
-          ? List<String>.from(json['errors'])
-          : [],
-      errorCode: json['errorCode'],
-      timestamp: json['timestamp'] != null
-          ? DateTime.parse(json['timestamp'])
-          : DateTime.now(),
-      code: json['code'],
+      message: json['message']?.toString(),
+      errors: parsedErrors,
+      errorCode: json['errorCode']?.toString(),
+      timestamp: ts,
+      code: json['code']?.toString(),
     );
   }
 

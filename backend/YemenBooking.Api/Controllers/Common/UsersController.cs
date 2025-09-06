@@ -20,6 +20,7 @@ namespace YemenBooking.Api.Controllers.Common
         /// Get current user details
         /// </summary>
         [HttpGet("current")]
+        [Authorize]
         public async Task<IActionResult> GetCurrentUser()
         {
             var query = new GetCurrentUserQuery();
