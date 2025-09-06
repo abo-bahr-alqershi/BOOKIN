@@ -134,59 +134,13 @@ namespace YemenBooking.Infrastructure.Services
                 }
             }
 
-            // إعداد التوكن
-            var secret = string.IsNullOrWhiteSpace(_jwtSettings.Secret)
-                ? "fallback-development-secret-change-in-production-please-32+chars"
-                : _jwtSettings.Secret;
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var now = DateTime.UtcNow;
-            // إنشاء Access Token
-            var accessExpiryMinutes = _jwtSettings.AccessTokenExpirationMinutes > 0
-                ? _jwtSettings.AccessTokenExpirationMinutes
-                : 60; // default 60 minutes
-            var accessTokenExpires = now.AddMinutes(accessExpiryMinutes);
-            var accessTokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims),
-                Expires = accessTokenExpires,
-                Issuer = _jwtSettings.Issuer,
-                Audience = _jwtSettings.Audience,
-                SigningCredentials = creds
-            };
-            var tokenHandler = new JwtSecurityTokenHandler();
-            string accessToken;
-            try
-            {
-                accessToken = tokenHandler.WriteToken(tokenHandler.CreateToken(accessTokenDescriptor));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error generating access token for user {Email}", email);
-                throw;
-            }
-
-            // إنشاء Refresh Token كـJWT
-            var refreshExpiryDays = _jwtSettings.RefreshTokenExpirationDays > 0
-                ? _jwtSettings.RefreshTokenExpirationDays
-                : 7; // default 7 days
-            var refreshTokenExpires = now.AddDays(refreshExpiryDays);
-            var refreshClaims = new List<Claim>(claims) { new Claim("tokenType", "refresh") };
-            var refreshDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(refreshClaims),
-                Expires = refreshTokenExpires,
-                Issuer = _jwtSettings.Issuer,
-                Audience = _jwtSettings.Audience,
-                SigningCredentials = creds
-            };
-            var refreshToken = tokenHandler.WriteToken(tokenHandler.CreateToken(refreshDescriptor));
+            var tokens = GenerateTokens(claims);
 
             return new AuthResultDto
             {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
-                ExpiresAt = accessTokenExpires,
+                AccessToken = tokens.AccessToken,
+                RefreshToken = tokens.RefreshToken,
+                ExpiresAt = tokens.AccessTokenExpiresAt,
                 UserId = user.Id,
                 UserName = user.Name,
                 Email = user.Email,
@@ -203,23 +157,107 @@ namespace YemenBooking.Infrastructure.Services
         {
             _logger.LogInformation("بدء تجديد رمز المصادقة");
             var tokenHandler = new JwtSecurityTokenHandler();
-            var principal = tokenHandler.ValidateToken(refreshToken, new TokenValidationParameters
+            ClaimsPrincipal principal;
+            try
             {
-                ValidateIssuer = true,
-                ValidIssuer = _jwtSettings.Issuer,
-                ValidateAudience = true,
-                ValidAudience = _jwtSettings.Audience,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret)),
-                ValidateLifetime = true
-            }, out var validatedToken);
+                principal = tokenHandler.ValidateToken(refreshToken, new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = _jwtSettings.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = _jwtSettings.Audience,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret)),
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromMinutes(1)
+                }, out var _);
+            }
+            catch (SecurityTokenException ex)
+            {
+                _logger.LogWarning(ex, "رمز التحديث غير صالح");
+                throw;
+            }
+
             // التحقق من نوع التوكن
             if (principal.FindFirst("tokenType")?.Value != "refresh")
+            {
                 throw new SecurityTokenException("رمز التحديث غير صالح");
+            }
 
-            var userId = Guid.Parse(principal.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            // إعادة إنشاء توكن بنفس البيانات
-            return await LoginAsync(principal.FindFirst(ClaimTypes.Email)!.Value, string.Empty, cancellationToken);
+            var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                throw new SecurityTokenException("تعذر تحديد المستخدم من رمز التحديث");
+            }
+
+            var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken);
+            if (user == null)
+            {
+                throw new SecurityTokenException("المستخدم غير موجود");
+            }
+
+            // إعادة بناء نفس المطالبات المعتمدة في تسجيل الدخول
+            var userRoles = await _userRoleRepository.GetUserRolesAsync(user.Id, cancellationToken);
+            var roleNames = new List<string>();
+            foreach (var ur in userRoles)
+            {
+                var role = await _roleRepository.GetRoleByIdAsync(ur.RoleId, cancellationToken);
+                if (role != null) roleNames.Add(role.Name);
+            }
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Name),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("correlationId", Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.Role, "Admin")
+            };
+            foreach (var rn in roleNames)
+                claims.Add(new Claim(ClaimTypes.Role, rn));
+
+            if (roleNames.Contains("Staff"))
+            {
+                var staff = await _staffRepository.GetStaffByUserAsync(user.Id, cancellationToken);
+                if (staff != null)
+                {
+                    var perms = System.Text.Json.JsonSerializer.Deserialize<string[]>(staff.Permissions);
+                    if (perms != null)
+                        foreach (var p in perms)
+                            claims.Add(new Claim("permission", p));
+                    claims.Add(new Claim("propertyId", staff.PropertyId.ToString()));
+                    var prop = await _propertyRepository.GetPropertyByIdAsync(staff.PropertyId, cancellationToken);
+                    if (prop != null)
+                        claims.Add(new Claim("propertyName", prop.Name));
+                }
+            }
+            if (roleNames.Contains("Owner"))
+            {
+                var props = await _propertyRepository.GetPropertiesByOwnerAsync(user.Id, cancellationToken);
+                var firstProp = props.FirstOrDefault();
+                if (firstProp != null)
+                {
+                    claims.Add(new Claim("propertyId", firstProp.Id.ToString()));
+                    claims.Add(new Claim("propertyName", firstProp.Name));
+                }
+            }
+
+            var tokens = GenerateTokens(claims);
+
+            return new AuthResultDto
+            {
+                AccessToken = tokens.AccessToken,
+                RefreshToken = tokens.RefreshToken,
+                ExpiresAt = tokens.AccessTokenExpiresAt,
+                UserId = user.Id,
+                UserName = user.Name,
+                Email = user.Email,
+                Role = roleNames.FirstOrDefault() ?? string.Empty,
+                ProfileImage = user.ProfileImage,
+                PropertyName = claims.FirstOrDefault(c => c.Type == "propertyName")?.Value,
+                PropertyId = claims.FirstOrDefault(c => c.Type == "propertyId")?.Value,
+                StaffId = claims.FirstOrDefault(c => c.Type == "staffId")?.Value
+            };
         }
 
         /// <inheritdoc />
@@ -297,5 +335,48 @@ namespace YemenBooking.Infrastructure.Services
             _logger.LogInformation("تفعيل المستخدم بعد التحقق: {UserId}", userId);
             throw new NotImplementedException();
         }
+    }
+
+    private (string AccessToken, string RefreshToken, DateTime AccessTokenExpiresAt, DateTime RefreshTokenExpiresAt) GenerateTokens(IEnumerable<Claim> claims)
+    {
+        // إعداد التوكن
+        var secret = string.IsNullOrWhiteSpace(_jwtSettings.Secret)
+            ? "fallback-development-secret-change-in-production-please-32+chars"
+            : _jwtSettings.Secret;
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var now = DateTime.UtcNow;
+
+        var accessExpiryMinutes = _jwtSettings.AccessTokenExpirationMinutes > 0
+            ? _jwtSettings.AccessTokenExpirationMinutes
+            : 60;
+        var accessTokenExpires = now.AddMinutes(accessExpiryMinutes);
+        var accessTokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(claims),
+            Expires = accessTokenExpires,
+            Issuer = _jwtSettings.Issuer,
+            Audience = _jwtSettings.Audience,
+            SigningCredentials = creds
+        };
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var accessToken = tokenHandler.WriteToken(tokenHandler.CreateToken(accessTokenDescriptor));
+
+        var refreshExpiryDays = _jwtSettings.RefreshTokenExpirationDays > 0
+            ? _jwtSettings.RefreshTokenExpirationDays
+            : 7;
+        var refreshTokenExpires = now.AddDays(refreshExpiryDays);
+        var refreshClaims = new List<Claim>(claims) { new Claim("tokenType", "refresh") };
+        var refreshDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(refreshClaims),
+            Expires = refreshTokenExpires,
+            Issuer = _jwtSettings.Issuer,
+            Audience = _jwtSettings.Audience,
+            SigningCredentials = creds
+        };
+        var refreshToken = tokenHandler.WriteToken(tokenHandler.CreateToken(refreshDescriptor));
+
+        return (accessToken, refreshToken, accessTokenExpires, refreshTokenExpires);
     }
 } 

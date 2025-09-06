@@ -64,36 +64,28 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
                 return ResultDto<RefreshTokenResponse>.Failed("رمز الوصول مطلوب", "ACCESS_TOKEN_REQUIRED");
             }
 
-            // تم تبسيط عملية تحديث الرموز
             _logger.LogInformation("بدء عملية تحديث رمز الوصول");
-            
-            // افتراض معرف مستخدم صالح (تبسيط)
-            var userId = Guid.NewGuid(); // سيتم استبداله بالمعرف الفعلي لاحقاً
-            
-            _logger.LogInformation("تم التحقق من صحة رمز التحديث");
 
-            // تم تبسيط عملية تحديث الرموز
             try
             {
                 var newTokens = await _authService.RefreshTokenAsync(request.RefreshToken, cancellationToken);
-                _logger.LogInformation("تم تحديث رمز الوصول بنجاح للمستخدم: {UserId}", userId);
+
+                var response = new RefreshTokenResponse
+                {
+                    NewAccessToken = newTokens.AccessToken,
+                    NewRefreshToken = newTokens.RefreshToken,
+                    AccessTokenExpiry = newTokens.ExpiresAt,
+                    RefreshTokenExpiry = newTokens.ExpiresAt.AddDays(0) // لا نملك قيمة منفصلة حالياً
+                };
+
+                _logger.LogInformation("تم تحديث رمز الوصول بنجاح للمستخدم: {UserId}", newTokens.UserId);
+                return ResultDto<RefreshTokenResponse>.Ok(response, "تم تحديث رمز الوصول بنجاح");
             }
             catch (Exception refreshEx)
             {
-                _logger.LogWarning(refreshEx, "فشل في تحديث رمز الوصول للمستخدم: {UserId}", userId);
-                // لا نفشل العملية بسبب فشل إلغاء الرمز القديم
+                _logger.LogWarning(refreshEx, "فشل في تحديث رمز الوصول");
+                return ResultDto<RefreshTokenResponse>.Failed("فشل تحديث رمز الوصول", "REFRESH_TOKEN_ERROR");
             }
-
-            _logger.LogInformation("تم تحديث رمز الوصول بنجاح للمستخدم: {UserId}", userId);
-
-            var response = new RefreshTokenResponse
-            {
-                NewAccessToken = "new_access_token", // قيمة افتراضية مؤقتة
-                NewRefreshToken = "new_refresh_token", // قيمة افتراضية مؤقتة
-                AccessTokenExpiry = DateTime.UtcNow.AddHours(1) // قيمة افتراضية
-            };
-
-            return ResultDto<RefreshTokenResponse>.Ok(response, "تم تحديث رمز الوصول بنجاح");
         }
         catch (Exception ex)
         {
