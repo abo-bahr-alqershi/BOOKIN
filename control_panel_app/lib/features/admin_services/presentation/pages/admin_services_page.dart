@@ -18,7 +18,7 @@ import '../bloc/services_event.dart';
 import '../bloc/services_state.dart';
 import '../widgets/futuristic_service_card.dart';
 import '../widgets/futuristic_services_table.dart';
-import '../widgets/service_form_dialog.dart';
+import 'create_service_page.dart';
 import '../widgets/service_icon_picker.dart';
 import '../widgets/service_details_dialog.dart';
 import '../widgets/service_stats_card.dart';
@@ -490,7 +490,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
               ],
             ),
             child: FloatingActionButton(
-              onPressed: _showCreateDialog,
+              onPressed: _navigateToCreatePage,
               backgroundColor: Colors.transparent,
               elevation: 0,
               child: const Icon(
@@ -505,27 +505,9 @@ class _AdminServicesPageState extends State<AdminServicesPage>
     );
   }
 
-  // Dialog Methods
-  void _showCreateDialog() {
+  void _navigateToCreatePage() {
     HapticFeedback.mediumImpact();
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => ServiceFormDialog(
-        propertyId: _selectedPropertyId,
-        onSubmit: (data) {
-          context.read<ServicesBloc>().add(
-                CreateServiceEvent(
-                  propertyId: data['propertyId'],
-                  name: data['name'],
-                  price: data['price'],
-                  pricingModel: data['pricingModel'],
-                  icon: data['icon'],
-                ),
-              );
-        },
-      ),
-    );
+    context.push('/admin/services/create', extra: {'propertyId': _selectedPropertyId});
   }
 
   void _showEditDialog(Service service) {

@@ -40,6 +40,7 @@ import 'package:bookn_cp_app/features/property_types/presentation/bloc/unit_type
 import 'package:bookn_cp_app/features/property_types/presentation/bloc/unit_type_fields/unit_type_fields_bloc.dart';
 // removed wrong properties pages imports (files do not exist)
 import 'package:bookn_cp_app/features/admin_services/presentation/pages/admin_services_page.dart';
+import 'package:bookn_cp_app/features/admin_services/presentation/pages/create_service_page.dart';
 import 'package:bookn_cp_app/features/admin_amenities/presentation/pages/amenities_management_page.dart';
 import 'package:bookn_cp_app/features/admin_reviews/presentation/pages/reviews_list_page.dart';
 import 'package:bookn_cp_app/features/admin_reviews/presentation/pages/review_details_page.dart';
@@ -382,6 +383,18 @@ class AppRouter {
             return BlocProvider<ServicesBloc>(
               create: (_) => di.sl<ServicesBloc>(),
               child: const AdminServicesPage(),
+            );
+          },
+        ),
+
+        GoRoute(
+          path: '/admin/services/create',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            final initialPropertyId = extra != null ? extra['propertyId'] as String? : null;
+            return BlocProvider<ServicesBloc>(
+              create: (_) => di.sl<ServicesBloc>(),
+              child: CreateServicePage(initialPropertyId: initialPropertyId),
             );
           },
         ),
