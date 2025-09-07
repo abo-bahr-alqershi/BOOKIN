@@ -230,33 +230,36 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
             Expanded(
               child: Row(
                 children: [
-                  // Main Content Area
                   Expanded(
                     flex: isDesktop ? 3 : 1,
                     child: _buildContentArea(isDesktop, isTablet),
                   ),
-
-                  // Side Panel (Desktop Only)
                   if (isDesktop)
-                    Container(
-                      width: 380,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            AppTheme.darkCard.withOpacity(0.5),
-                            AppTheme.darkCard.withOpacity(0.3),
-                          ],
-                        ),
-                        border: Border(
-                          left: BorderSide(
-                            color: AppTheme.primaryBlue.withOpacity(0.2),
-                            width: 1,
+                    Flexible(
+                      flex: 0,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 360),
+                        child: Container(
+                          width: 360,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                AppTheme.darkCard.withOpacity(0.5),
+                                AppTheme.darkCard.withOpacity(0.3),
+                              ],
+                            ),
+                            border: Border(
+                              left: BorderSide(
+                                color: AppTheme.primaryBlue.withOpacity(0.2),
+                                width: 1,
+                              ),
+                            ),
                           ),
+                          child: _buildSidePanel(),
                         ),
                       ),
-                      child: _buildSidePanel(),
                     ),
                 ],
               ),

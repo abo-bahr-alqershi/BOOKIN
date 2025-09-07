@@ -75,31 +75,33 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
       ),
     );
 
-    result.fold(
-      (failure) => emit(AmenitiesError(message: failure.message)),
+    await result.fold(
+      (failure) async {
+        emit(AmenitiesError(message: failure.message));
+      },
       (amenities) async {
-        // تحميل المرافق الشائعة
         final popularResult = await repository.getPopularAmenities();
         final popularAmenities = popularResult.fold(
           (_) => <Amenity>[],
           (amenities) => amenities,
         );
 
-        // تحميل الإحصائيات
         final statsResult = await repository.getAmenityStats();
         final stats = statsResult.fold(
           (_) => null,
           (stats) => stats,
         );
 
-        emit(AmenitiesLoaded(
-          amenities: amenities,
-          searchTerm: event.searchTerm,
-          isAssigned: event.isAssigned,
-          isFree: event.isFree,
-          popularAmenities: popularAmenities,
-          stats: stats,
-        ));
+        if (!emit.isDone) {
+          emit(AmenitiesLoaded(
+            amenities: amenities,
+            searchTerm: event.searchTerm,
+            isAssigned: event.isAssigned,
+            isFree: event.isFree,
+            popularAmenities: popularAmenities,
+            stats: stats,
+          ));
+        }
       },
     );
   }
