@@ -118,6 +118,7 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
           _selectedCurrency = d.price.currency;
           _selectedPricingModel = d.pricingModel;
           _propertyName = d.propertyName;
+          _selectedIcon = d.icon;
         }
       },
       child: Scaffold(
