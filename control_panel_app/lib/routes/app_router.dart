@@ -43,6 +43,8 @@ import 'package:bookn_cp_app/features/admin_services/presentation/pages/admin_se
 import 'package:bookn_cp_app/features/admin_services/presentation/pages/create_service_page.dart';
 import 'package:bookn_cp_app/features/admin_services/presentation/pages/edit_service_page.dart';
 import 'package:bookn_cp_app/features/admin_amenities/presentation/pages/amenities_management_page.dart';
+import 'package:bookn_cp_app/features/admin_amenities/presentation/pages/create_amenity_page.dart';
+import 'package:bookn_cp_app/features/admin_amenities/presentation/pages/edit_amenity_page.dart';
 import 'package:bookn_cp_app/features/admin_reviews/presentation/pages/reviews_list_page.dart';
 import 'package:bookn_cp_app/features/admin_reviews/presentation/pages/review_details_page.dart';
 import 'package:bookn_cp_app/features/admin_reviews/domain/entities/review.dart';
@@ -422,6 +424,31 @@ class AppRouter {
             return BlocProvider<aa_bloc.AmenitiesBloc>(
               create: (_) => di.sl<aa_bloc.AmenitiesBloc>(),
               child: const AmenitiesManagementPage(),
+            );
+          },
+        ),
+
+        GoRoute(
+          path: '/admin/amenities/create',
+          builder: (context, state) {
+            return BlocProvider<aa_bloc.AmenitiesBloc>(
+              create: (_) => di.sl<aa_bloc.AmenitiesBloc>(),
+              child: const CreateAmenityPage(),
+            );
+          },
+        ),
+
+        GoRoute(
+          path: '/admin/amenities/:amenityId/edit',
+          builder: (context, state) {
+            final amenityId = state.pathParameters['amenityId']!;
+            final initialAmenity = state.extra;
+            return BlocProvider<aa_bloc.AmenitiesBloc>(
+              create: (_) => di.sl<aa_bloc.AmenitiesBloc>(),
+              child: EditAmenityPage(
+                amenityId: amenityId,
+                initialAmenity: initialAmenity is Object ? initialAmenity as dynamic : null,
+              ),
             );
           },
         ),

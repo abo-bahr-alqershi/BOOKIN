@@ -487,7 +487,7 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
     return GestureDetector(
       onTap: () {
         HapticFeedback.mediumImpact();
-        _showAddAmenityDialog();
+        context.push('/admin/amenities/create');
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -1126,23 +1126,7 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
   }
 
   void _showEditAmenityDialog(amenity) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AmenityFormDialog(
-        amenity: amenity,
-        onSave: (name, description, icon) {
-          context.read<AmenitiesBloc>().add(
-                UpdateAmenityEvent(
-                  amenityId: amenity.id,
-                  name: name,
-                  description: description,
-                  icon: icon,
-                ),
-              );
-        },
-      ),
-    );
+    context.push('/admin/amenities/${amenity.id}/edit', extra: amenity);
   }
 
   void _showDeleteConfirmation(amenity) {
