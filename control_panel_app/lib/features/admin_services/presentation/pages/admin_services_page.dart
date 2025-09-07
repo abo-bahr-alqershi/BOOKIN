@@ -105,7 +105,8 @@ class _AdminServicesPageState extends State<AdminServicesPage>
   }
 
   void _loadInitialData() {
-    context.read<ServicesBloc>().add(const LoadServicesEvent());
+    // Load all services by default so the page is not empty on first open
+    context.read<ServicesBloc>().add(const LoadServicesEvent(serviceType: 'all', pageNumber: 1, pageSize: 50));
   }
 
   @override
