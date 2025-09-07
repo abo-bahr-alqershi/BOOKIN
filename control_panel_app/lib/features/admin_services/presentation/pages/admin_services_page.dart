@@ -388,6 +388,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
                 SelectPropertyEvent(propertyId),
               );
         },
+        onPropertyFieldTap: _onPropertyFieldTap,
         searchQuery: _searchQuery,
         onSearchChanged: (query) {
           setState(() => _searchQuery = query);
@@ -509,6 +510,17 @@ class _AdminServicesPageState extends State<AdminServicesPage>
   void _navigateToCreatePage() {
     HapticFeedback.mediumImpact();
     context.push('/admin/services/create', extra: {'propertyId': _selectedPropertyId});
+  }
+
+  void _onPropertyFieldTap() {
+    HapticFeedback.lightImpact();
+    // TODO: Navigate to property selection or show property selection dialog
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Property selection will be implemented'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   void _showEditDialog(Service service) {
