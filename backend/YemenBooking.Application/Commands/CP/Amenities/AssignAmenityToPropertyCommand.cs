@@ -20,4 +20,19 @@ public class AssignAmenityToPropertyCommand : IRequest<ResultDto<bool>>
     /// Amenity ID
     /// </summary>
     public Guid AmenityId { get; set; }
+
+    /// <summary>
+    /// Is the amenity available for the property
+    /// </summary>
+    public bool IsAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Optional extra cost
+    /// </summary>
+    public decimal? ExtraCost { get; set; }
+
+    /// <summary>
+    /// Optional description
+    /// </summary>
+    public string? Description { get; set; }
 } 

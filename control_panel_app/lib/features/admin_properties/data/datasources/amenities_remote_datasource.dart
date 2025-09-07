@@ -66,9 +66,11 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
   Future<AmenityModel> getAmenityById(String amenityId) async {
     try {
       final response = await apiClient.get('$_baseEndpoint/$amenityId');
-      
-      if (response.data['success'] == true) {
-        return AmenityModel.fromJson(response.data['data']);
+      final root = response.data['data'] is Map<String, dynamic>
+          ? response.data['data']
+          : response.data;
+      if (response.data['success'] == true || response.data['isSuccess'] == true || root is Map<String, dynamic>) {
+        return AmenityModel.fromJson(root as Map<String, dynamic>);
       } else {
         throw ServerException(response.data['message'] ?? 'Failed to get amenity');
       }
@@ -81,9 +83,8 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
   Future<String> createAmenity(Map<String, dynamic> data) async {
     try {
       final response = await apiClient.post(_baseEndpoint, data: data);
-      
-      if (response.data['success'] == true) {
-        return response.data['data'] as String;
+      if (response.data['success'] == true || response.data['isSuccess'] == true) {
+        return (response.data['data'] ?? response.data['id'] ?? '').toString();
       } else {
         throw ServerException(response.data['message'] ?? 'Failed to create amenity');
       }
@@ -99,8 +100,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
         '$_baseEndpoint/$amenityId',
         data: data,
       );
-      
-      return response.data['success'] == true;
+      return response.data['success'] == true || response.data['isSuccess'] == true;
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to update amenity');
     }
@@ -110,7 +110,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
   Future<bool> deleteAmenity(String amenityId) async {
     try {
       final response = await apiClient.delete('$_baseEndpoint/$amenityId');
-      return response.data['success'] == true;
+      return response.data['success'] == true || response.data['isSuccess'] == true;
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to delete amenity');
     }
@@ -127,8 +127,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
         '$_baseEndpoint/$amenityId/assign/property/$propertyId',
         data: data,
       );
-      
-      return response.data['success'] == true;
+      return response.data['success'] == true || response.data['isSuccess'] == true;
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to assign amenity to property');
     }
@@ -144,7 +143,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
       });
       if (response.data is Map<String, dynamic>) {
         final map = response.data as Map<String, dynamic>;
-        if (map['success'] == true && map['data'] is Map<String, dynamic>) {
+        if ((map['success'] == true || map['isSuccess'] == true) && map['data'] is Map<String, dynamic>) {
           final data = map['data'] as Map<String, dynamic>;
           final List<dynamic> list = (data['amenities'] as List?) ?? const [];
           return list.map((j) => AmenityModel.fromJson(j as Map<String, dynamic>)).toList();

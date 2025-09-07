@@ -66,8 +66,8 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
         },
       );
 
-      if (response.data['isSuccess'] == true) {
-        return response.data['data'] ?? '';
+      if (response.data['isSuccess'] == true || response.data['success'] == true) {
+        return (response.data['data'] ?? response.data['id'] ?? '').toString();
       } else {
         throw ServerException(
            response.data['message'] ?? 'Failed to create amenity',
@@ -97,7 +97,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
         },
       );
 
-      if (response.data['isSuccess'] == true) {
+      if (response.data['isSuccess'] == true || response.data['success'] == true) {
         return true;
       } else {
         throw ServerException(
@@ -116,7 +116,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
     try {
       final response = await apiClient.delete('$_baseEndpoint/$amenityId');
 
-      if (response.data['isSuccess'] == true) {
+      if (response.data['isSuccess'] == true || response.data['success'] == true) {
         return true;
       } else {
         throw ServerException(
@@ -156,15 +156,18 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
       );
 
       if (response.data != null) {
-        final items = (response.data['items'] as List? ?? [])
+        final root = response.data['items'] == null && response.data['data'] is Map
+            ? response.data['data']
+            : response.data;
+        final items = (root['items'] as List? ?? [])
             .map((json) => AmenityModel.fromJson(json))
             .toList();
 
         return PaginatedResult<AmenityModel>(
           items: items,
-          totalCount: response.data['totalCount'] ?? 0,
-          pageNumber: response.data['pageNumber'] ?? 1,
-          pageSize: response.data['pageSize'] ?? 10,
+          totalCount: root['totalCount'] ?? items.length,
+          pageNumber: root['pageNumber'] ?? 1,
+          pageSize: root['pageSize'] ?? items.length,
         );
       } else {
         throw const ServerException( 'Invalid response format');
@@ -213,7 +216,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
     try {
       final response = await apiClient.get('$_baseEndpoint/stats');
 
-      if (response.data['isSuccess'] == true) {
+      if (response.data['isSuccess'] == true || response.data['success'] == true) {
         return AmenityStatsModel.fromJson(response.data['data']);
       } else {
         throw ServerException(
@@ -234,7 +237,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
         '$_baseEndpoint/$amenityId/toggle-status',
       );
 
-      if (response.data['isSuccess'] == true) {
+      if (response.data['isSuccess'] == true || response.data['success'] == true) {
         return true;
       } else {
         throw ServerException(
@@ -256,7 +259,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
         queryParameters: {'limit': limit},
       );
 
-      if (response.data['isSuccess'] == true) {
+      if (response.data['isSuccess'] == true || response.data['success'] == true) {
         return (response.data['data'] as List? ?? [])
             .map((json) => AmenityModel.fromJson(json))
             .toList();

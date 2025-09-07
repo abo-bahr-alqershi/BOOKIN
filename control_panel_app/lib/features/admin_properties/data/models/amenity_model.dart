@@ -35,10 +35,10 @@ class AmenityModel extends Amenity {
     }
     
     return AmenityModel(
-      id: json['id'] as String,
+      id: (json['id'] ?? json['amenityId'] ?? '').toString(),
       name: json['name'] as String,
       description: json['description'] as String? ?? '',
-      icon: json['icon'] as String? ?? '',
+      icon: (json['icon'] ?? json['iconUrl'] ?? '') as String,
       isAvailable: json['isAvailable'] as bool? ?? true,
       extraCost: cost,
       currency: curr ?? 'YER',

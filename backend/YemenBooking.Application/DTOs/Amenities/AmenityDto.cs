@@ -62,5 +62,11 @@ namespace YemenBooking.Application.DTOs.Amenities
         /// </summary>
         public DateTime CreatedAt { get; set; }
         
+        /// <summary>
+        /// تاريخ آخر تحديث
+        /// Last update date
+        /// </summary>
+        public DateTime? UpdatedAt { get; set; }
+        
     }
 }
