@@ -6,7 +6,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/service.dart';
 import '../utils/service_icons.dart';
 
-/// 📊 Futuristic Services Table
+/// 📊 Premium Services Table
 class FuturisticServicesTable extends StatefulWidget {
   final List<Service> services;
   final Function(Service) onServiceTap;
@@ -33,12 +33,13 @@ class _FuturisticServicesTableState extends State<FuturisticServicesTable>
   int? _hoveredIndex;
   String _sortBy = 'name';
   bool _isAscending = true;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
     
@@ -47,7 +48,7 @@ class _FuturisticServicesTableState extends State<FuturisticServicesTable>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: Curves.easeOut,
+      curve: Curves.easeOutCubic,
     ));
     
     _animationController.forward();
@@ -56,6 +57,7 @@ class _FuturisticServicesTableState extends State<FuturisticServicesTable>
   @override
   void dispose() {
     _animationController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -85,48 +87,56 @@ class _FuturisticServicesTableState extends State<FuturisticServicesTable>
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isMobile = size.width < 600;
+    final isTablet = size.width >= 600 && size.width < 1200;
+    
     return FadeTransition(
       opacity: _fadeAnimation,
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.darkCard.withOpacity(0.7),
-              AppTheme.darkCard.withOpacity(0.5),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(20),
+          color: AppTheme.isDark 
+            ? AppTheme.darkCard.withOpacity(0.6)
+            : Colors.white,
+          borderRadius: BorderRadius.circular(isMobile ? 16 : 20),
           border: Border.all(
-            color: AppTheme.darkBorder.withOpacity(0.3),
-            width: 0.5,
+            color: AppTheme.darkBorder.withOpacity(0.1),
+            width: 1,
           ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Column(
-              children: [
-                _buildHeader(),
-                Expanded(
-                  child: _buildTable(),
-                ),
-              ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(AppTheme.isDark ? 0.2 : 0.05),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
             ),
-          ),
+          ],
+        ),
+        child: Column(
+          children: [
+            if (!isMobile) _buildDesktopHeader(),
+            if (isMobile) _buildMobileHeader(),
+            Expanded(
+              child: isMobile 
+                ? _buildMobileList() 
+                : _buildDesktopTable(),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildDesktopHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
+        color: AppTheme.isDark 
+          ? AppTheme.darkSurface.withOpacity(0.3)
+          : AppTheme.lightBackground.withOpacity(0.5),
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.darkBorder.withOpacity(0.2),
-            width: 0.5,
+            color: AppTheme.darkBorder.withOpacity(0.1),
+            width: 1,
           ),
         ),
       ),
@@ -136,21 +146,109 @@ class _FuturisticServicesTableState extends State<FuturisticServicesTable>
             'الخدمة',
             'name',
             flex: 3,
-            icon: Icons.room_service_rounded,
+            icon: Icons.room_service_outlined,
           ),
           _buildHeaderCell(
             'العقار',
             'property',
             flex: 2,
-            icon: Icons.business_rounded,
+            icon: Icons.business_outlined,
           ),
           _buildHeaderCell(
             'السعر',
             'price',
             flex: 2,
-            icon: Icons.attach_money_rounded,
+            icon: Icons.payments_outlined,
           ),
-          const SizedBox(width: 100), // Space for actions
+          const SizedBox(width: 100),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.isDark 
+          ? AppTheme.darkSurface.withOpacity(0.3)
+          : AppTheme.lightBackground.withOpacity(0.5),
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.darkBorder.withOpacity(0.1),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'الخدمات (${widget.services.length})',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textWhite,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          PopupMenuButton<String>(
+            icon: Icon(
+              Icons.sort_rounded,
+              color: AppTheme.textMuted,
+              size: 20,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            color: AppTheme.isDark ? AppTheme.darkCard : Colors.white,
+            onSelected: (value) {
+              setState(() {
+                if (_sortBy == value) {
+                  _isAscending = !_isAscending;
+                } else {
+                  _sortBy = value;
+                  _isAscending = true;
+                }
+              });
+            },
+            itemBuilder: (context) => [
+              _buildSortMenuItem('name', 'الاسم', Icons.text_fields),
+              _buildSortMenuItem('property', 'العقار', Icons.business_outlined),
+              _buildSortMenuItem('price', 'السعر', Icons.payments_outlined),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _buildSortMenuItem(String value, String label, IconData icon) {
+    final isActive = _sortBy == value;
+    return PopupMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: isActive ? AppTheme.primaryBlue : AppTheme.textMuted,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: isActive ? AppTheme.primaryBlue : AppTheme.textWhite,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ),
+          if (isActive)
+            Icon(
+              _isAscending ? Icons.arrow_upward : Icons.arrow_downward,
+              size: 14,
+              color: AppTheme.primaryBlue,
+            ),
         ],
       ),
     );
@@ -166,124 +264,117 @@ class _FuturisticServicesTableState extends State<FuturisticServicesTable>
     
     return Expanded(
       flex: flex,
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          setState(() {
-            if (_sortBy == sortKey) {
-              _isAscending = !_isAscending;
-            } else {
-              _sortBy = sortKey;
-              _isAscending = true;
-            }
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            gradient: isActive
-                ? LinearGradient(
-                    colors: [
-                      AppTheme.primaryBlue.withOpacity(0.1),
-                      AppTheme.primaryPurple.withOpacity(0.05),
-                    ],
-                  )
-                : null,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              if (icon != null) ...[
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() {
+              if (_sortBy == sortKey) {
+                _isAscending = !_isAscending;
+              } else {
+                _sortBy = sortKey;
+                _isAscending = true;
+              }
+            });
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(
+                    icon,
+                    size: 16,
+                    color: isActive ? AppTheme.primaryBlue : AppTheme.textMuted,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  title,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: isActive ? AppTheme.primaryBlue : AppTheme.textLight,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 4),
                 Icon(
-                  icon,
-                  size: 16,
-                  color: isActive ? AppTheme.primaryBlue : AppTheme.textMuted,
-                ),
-                const SizedBox(width: 8),
-              ],
-              Text(
-                title,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: isActive ? AppTheme.primaryBlue : AppTheme.textLight,
-                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                isActive
+                  isActive
                     ? (_isAscending
                         ? Icons.arrow_upward_rounded
                         : Icons.arrow_downward_rounded)
                     : Icons.unfold_more_rounded,
-                size: 14,
-                color: isActive ? AppTheme.primaryBlue : AppTheme.textMuted,
-              ),
-            ],
+                  size: 14,
+                  color: isActive 
+                    ? AppTheme.primaryBlue 
+                    : AppTheme.textMuted.withOpacity(0.5),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTable() {
+  Widget _buildDesktopTable() {
     final sortedServices = _sortedServices;
     
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: sortedServices.length,
-      itemBuilder: (context, index) {
-        final service = sortedServices[index];
-        final isHovered = _hoveredIndex == index;
-        
-        return MouseRegion(
-          onEnter: (_) => setState(() => _hoveredIndex = index),
-          onExit: (_) => setState(() => _hoveredIndex = null),
-          child: GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              widget.onServiceTap(service);
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: isHovered
-                    ? LinearGradient(
-                        colors: [
-                          AppTheme.primaryBlue.withOpacity(0.05),
-                          AppTheme.primaryPurple.withOpacity(0.02),
-                        ],
-                      )
-                    : null,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isHovered
-                      ? AppTheme.primaryBlue.withOpacity(0.3)
-                      : AppTheme.darkBorder.withOpacity(0.1),
-                  width: 0.5,
-                ),
-              ),
-              child: Row(
-                children: [
-                  // Service Info
-                  Expanded(
-                    flex: 3,
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isTight = constraints.maxWidth < 380;
-                        return Row(
+    return Scrollbar(
+      controller: _scrollController,
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        itemCount: sortedServices.length,
+        itemBuilder: (context, index) {
+          final service = sortedServices[index];
+          final isHovered = _hoveredIndex == index;
+          
+          return MouseRegion(
+            onEnter: (_) => setState(() => _hoveredIndex = index),
+            onExit: (_) => setState(() => _hoveredIndex = null),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  widget.onServiceTap(service);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 2,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isHovered
+                      ? AppTheme.primaryBlue.withOpacity(0.05)
+                      : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    border: isHovered 
+                      ? Border.all(
+                          color: AppTheme.primaryBlue.withOpacity(0.2),
+                          width: 1,
+                        )
+                      : null,
+                  ),
+                  child: Row(
+                    children: [
+                      // Service Info
+                      Expanded(
+                        flex: 3,
+                        child: Row(
                           children: [
                             Container(
-                              width: 36,
-                              height: 36,
+                              width: 40,
+                              height: 40,
                               decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    AppTheme.primaryBlue.withOpacity(0.2),
-                                    AppTheme.primaryPurple.withOpacity(0.1),
-                                  ],
-                                ),
+                                color: AppTheme.primaryBlue.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Icon(
@@ -306,93 +397,267 @@ class _FuturisticServicesTableState extends State<FuturisticServicesTable>
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  if (!isTight)
-                                    Text(
-                                      'Icons.${service.icon}',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppTextStyles.caption.copyWith(
-                                        color: AppTheme.textMuted,
-                                        fontFamily: 'monospace',
-                                      ),
+                                  Text(
+                                    'Icons.${service.icon}',
+                                    style: AppTextStyles.caption.copyWith(
+                                      color: AppTheme.textMuted,
+                                      fontFamily: 'monospace',
                                     ),
+                                  ),
                                 ],
                               ),
                             ),
                           ],
-                        );
-                      },
-                    ),
+                        ),
+                      ),
+                      
+                      // Property
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          service.propertyName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppTheme.textLight,
+                          ),
+                        ),
+                      ),
+                      
+                      // Price
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${service.price.amount} ${service.price.currency}',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppTheme.success,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              service.pricingModel.label,
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppTheme.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      // Actions
+                      SizedBox(
+                        width: 100,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (widget.onEdit != null)
+                              IconButton(
+                                onPressed: () {
+                                  HapticFeedback.selectionClick();
+                                  widget.onEdit!(service);
+                                },
+                                icon: Icon(
+                                  Icons.edit_outlined,
+                                  size: 18,
+                                  color: AppTheme.textMuted,
+                                ),
+                                tooltip: 'تعديل',
+                              ),
+                            if (widget.onDelete != null)
+                              IconButton(
+                                onPressed: () {
+                                  HapticFeedback.mediumImpact();
+                                  widget.onDelete!(service);
+                                },
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  size: 18,
+                                  color: AppTheme.error.withOpacity(0.8),
+                                ),
+                                tooltip: 'حذف',
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  
-                  // Property
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      service.propertyName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppTheme.textLight,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMobileList() {
+    final sortedServices = _sortedServices;
+    
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: sortedServices.length,
+      itemBuilder: (context, index) {
+        final service = sortedServices[index];
+        
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                widget.onServiceTap(service);
+              },
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppTheme.isDark
+                    ? AppTheme.darkSurface.withOpacity(0.3)
+                    : AppTheme.lightSurface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppTheme.darkBorder.withOpacity(0.1),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryBlue.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            ServiceIcons.getIconByName(service.icon),
+                            color: AppTheme.primaryBlue,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                service.name,
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: AppTheme.textWhite,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                service.propertyName,
+                                style: AppTextStyles.caption.copyWith(
+                                  color: AppTheme.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (widget.onEdit != null || widget.onDelete != null)
+                          PopupMenuButton<String>(
+                            icon: Icon(
+                              Icons.more_vert_rounded,
+                              color: AppTheme.textMuted,
+                              size: 20,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            color: AppTheme.isDark ? AppTheme.darkCard : Colors.white,
+                            onSelected: (value) {
+                              HapticFeedback.selectionClick();
+                              if (value == 'edit') {
+                                widget.onEdit?.call(service);
+                              } else if (value == 'delete') {
+                                widget.onDelete?.call(service);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              if (widget.onEdit != null)
+                                PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.edit_outlined,
+                                        size: 18,
+                                        color: AppTheme.textMuted,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        'تعديل',
+                                        style: AppTextStyles.bodyMedium.copyWith(
+                                          color: AppTheme.textWhite,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              if (widget.onDelete != null)
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.delete_outline,
+                                        size: 18,
+                                        color: AppTheme.error,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        'حذف',
+                                        style: AppTextStyles.bodyMedium.copyWith(
+                                          color: AppTheme.error,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.success.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            service.pricingModel.label,
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                          Text(
+                            '${service.price.amount} ${service.price.currency}',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppTheme.success,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  
-                  // Price
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${service.price.amount} ${service.price.currency}',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppTheme.success,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          service.pricingModel.label,
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppTheme.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  // Actions
-                  SizedBox(
-                    width: 100,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        if (widget.onEdit != null)
-                          IconButton(
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              widget.onEdit!(service);
-                            },
-                            icon: const Icon(Icons.edit_rounded),
-                            iconSize: 18,
-                            color: AppTheme.primaryBlue,
-                            tooltip: 'تعديل',
-                          ),
-                        if (widget.onDelete != null)
-                          IconButton(
-                            onPressed: () {
-                              HapticFeedback.mediumImpact();
-                              widget.onDelete!(service);
-                            },
-                            icon: const Icon(Icons.delete_rounded),
-                            iconSize: 18,
-                            color: AppTheme.error,
-                            tooltip: 'حذف',
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

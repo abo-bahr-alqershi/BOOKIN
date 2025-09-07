@@ -5,7 +5,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../utils/service_icons.dart';
 
-/// 🎨 Service Icon Picker Dialog
+/// 🎨 Premium Service Icon Picker Dialog
 class ServiceIconPicker extends StatefulWidget {
   final String selectedIcon;
   final Function(String) onIconSelected;
@@ -23,6 +23,7 @@ class ServiceIconPicker extends StatefulWidget {
 class _ServiceIconPickerState extends State<ServiceIconPicker>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
   
   final _searchController = TextEditingController();
@@ -40,16 +41,24 @@ class _ServiceIconPickerState extends State<ServiceIconPicker>
 
   void _initializeAnimations() {
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
+    
+    _scaleAnimation = Tween<double>(
+      begin: 0.95,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
     
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: Curves.easeOut,
+      curve: Curves.easeIn,
     ));
     
     _animationController.forward();
@@ -59,12 +68,10 @@ class _ServiceIconPickerState extends State<ServiceIconPicker>
     setState(() {
       List<ServiceIconData> icons = ServiceIcons.icons;
       
-      // Filter by category
       if (_selectedCategory != 'الكل') {
         icons = ServiceIcons.filterByCategory(_selectedCategory);
       }
       
-      // Filter by search
       if (_searchQuery.isNotEmpty) {
         icons = icons.where((icon) {
           return icon.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -85,112 +92,192 @@ class _ServiceIconPickerState extends State<ServiceIconPicker>
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          width: 800,
-          height: 600,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.darkCard.withOpacity(0.95),
-                AppTheme.darkCard.withOpacity(0.85),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: AppTheme.primaryBlue.withOpacity(0.3),
-              width: 1,
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  _buildSearchBar(),
-                  _buildCategoryTabs(),
-                  Expanded(
-                    child: _buildIconGrid(),
+    final size = MediaQuery.of(context).size;
+    final isTablet = size.width > 600;
+    final isMobile = size.width < 400;
+    
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: isMobile ? 16 : 40,
+                vertical: isMobile ? 60 : 40,
+              ),
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: isTablet ? 720 : 600,
+                  maxHeight: size.height * 0.85,
+                ),
+                decoration: BoxDecoration(
+                  color: AppTheme.isDark 
+                    ? AppTheme.darkCard.withOpacity(0.98)
+                    : Colors.white,
+                  borderRadius: BorderRadius.circular(isMobile ? 20 : 28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(AppTheme.isDark ? 0.3 : 0.08),
+                      blurRadius: 30,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(isMobile ? 20 : 28),
+                  child: Column(
+                    children: [
+                      _buildHeader(isMobile),
+                      _buildSearchBar(isMobile),
+                      _buildCategoryTabs(isMobile),
+                      Expanded(
+                        child: _buildIconGrid(isMobile, isTablet),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isMobile) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
       decoration: BoxDecoration(
+        color: AppTheme.isDark 
+          ? AppTheme.darkSurface.withOpacity(0.5)
+          : AppTheme.lightBackground.withOpacity(0.8),
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.darkBorder.withOpacity(0.2),
-            width: 0.5,
+            color: AppTheme.darkBorder.withOpacity(0.1),
+            width: 1,
           ),
         ),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(isMobile ? 8 : 10),
             decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
+              color: AppTheme.primaryBlue.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.palette_rounded,
-              color: Colors.white,
-              size: 20,
+            child: Icon(
+              Icons.palette_outlined,
+              color: AppTheme.primaryBlue,
+              size: isMobile ? 18 : 20,
             ),
           ),
-          const SizedBox(width: 16),
-          Text(
-            'اختر أيقونة للخدمة',
-            style: AppTextStyles.heading2.copyWith(
-              color: AppTheme.textWhite,
-              fontWeight: FontWeight.bold,
+          SizedBox(width: isMobile ? 12 : 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'اختر أيقونة',
+                  style: (isMobile ? AppTextStyles.heading3 : AppTextStyles.heading2).copyWith(
+                    color: AppTheme.textWhite,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  'حدد الأيقونة المناسبة للخدمة',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+              ],
             ),
           ),
-          const Spacer(),
-          IconButton(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.close_rounded),
-            color: AppTheme.textMuted,
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => Navigator.of(context).pop(),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                child: Icon(
+                  Icons.close_rounded,
+                  color: AppTheme.textMuted,
+                  size: isMobile ? 20 : 24,
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(bool isMobile) {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : 24,
+        vertical: isMobile ? 12 : 16,
+      ),
       child: TextField(
         controller: _searchController,
-        style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+        style: AppTextStyles.bodyMedium.copyWith(
+          color: AppTheme.textWhite,
+        ),
         decoration: InputDecoration(
           hintText: 'ابحث عن أيقونة...',
-          hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textMuted),
+          hintStyle: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textMuted,
+          ),
           filled: true,
-          fillColor: AppTheme.darkSurface.withOpacity(0.3),
+          fillColor: AppTheme.isDark
+            ? AppTheme.darkSurface.withOpacity(0.5)
+            : AppTheme.inputBackground,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: isMobile ? 12 : 14,
+          ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: AppTheme.darkBorder.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: AppTheme.primaryBlue.withOpacity(0.3),
+              width: 1,
+            ),
           ),
           prefixIcon: Icon(
             Icons.search_rounded,
             color: AppTheme.textMuted,
+            size: isMobile ? 20 : 22,
           ),
+          suffixIcon: _searchQuery.isNotEmpty
+            ? IconButton(
+                icon: Icon(
+                  Icons.clear_rounded,
+                  color: AppTheme.textMuted,
+                  size: isMobile ? 18 : 20,
+                ),
+                onPressed: () {
+                  _searchController.clear();
+                  _searchQuery = '';
+                  _filterIcons();
+                },
+              )
+            : null,
         ),
         onChanged: (value) {
           _searchQuery = value;
@@ -200,45 +287,66 @@ class _ServiceIconPickerState extends State<ServiceIconPicker>
     );
   }
 
-  Widget _buildCategoryTabs() {
+  Widget _buildCategoryTabs(bool isMobile) {
     final categories = ServiceIcons.getCategories();
     
     return Container(
-      height: 40,
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      height: isMobile ? 36 : 42,
+      margin: EdgeInsets.only(
+        left: isMobile ? 16 : 24,
+        right: isMobile ? 16 : 24,
+        bottom: isMobile ? 8 : 12,
+      ),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: categories.length,
+        padding: EdgeInsets.zero,
         itemBuilder: (context, index) {
           final category = categories[index];
           final isSelected = _selectedCategory == category;
           
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              _selectedCategory = category;
-              _filterIcons();
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: isSelected ? AppTheme.primaryGradient : null,
-                color: isSelected ? null : AppTheme.darkSurface.withOpacity(0.3),
+          return Padding(
+            padding: EdgeInsets.only(right: isMobile ? 6 : 8),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() {
+                    _selectedCategory = category;
+                    _filterIcons();
+                  });
+                },
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isSelected
-                      ? AppTheme.primaryBlue.withOpacity(0.5)
-                      : AppTheme.darkBorder.withOpacity(0.2),
-                  width: isSelected ? 1.5 : 0.5,
-                ),
-              ),
-              child: Text(
-                category,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: isSelected ? Colors.white : AppTheme.textMuted,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 14 : 18,
+                    vertical: isMobile ? 8 : 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                      ? AppTheme.primaryBlue.withOpacity(0.1)
+                      : Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected
+                        ? AppTheme.primaryBlue.withOpacity(0.3)
+                        : AppTheme.darkBorder.withOpacity(0.15),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    category,
+                    style: (isMobile ? AppTextStyles.caption : AppTextStyles.bodySmall).copyWith(
+                      color: isSelected 
+                        ? AppTheme.primaryBlue 
+                        : AppTheme.textMuted,
+                      fontWeight: isSelected 
+                        ? FontWeight.w600 
+                        : FontWeight.normal,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -248,21 +356,36 @@ class _ServiceIconPickerState extends State<ServiceIconPicker>
     );
   }
 
-  Widget _buildIconGrid() {
+  Widget _buildIconGrid(bool isMobile, bool isTablet) {
     if (_filteredIcons.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.search_off_rounded,
-              size: 64,
-              color: AppTheme.textMuted.withOpacity(0.5),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.darkSurface.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.search_off_rounded,
+                size: isMobile ? 40 : 48,
+                color: AppTheme.textMuted.withOpacity(0.5),
+              ),
             ),
             const SizedBox(height: 16),
             Text(
-              'لا توجد أيقونات مطابقة للبحث',
+              'لا توجد نتائج',
               style: AppTextStyles.bodyLarge.copyWith(
+                color: AppTheme.textWhite,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'جرب البحث بكلمات أخرى',
+              style: AppTextStyles.bodySmall.copyWith(
                 color: AppTheme.textMuted,
               ),
             ),
@@ -271,64 +394,97 @@ class _ServiceIconPickerState extends State<ServiceIconPicker>
       );
     }
     
+    final crossAxisCount = isMobile ? 4 : (isTablet ? 6 : 8);
+    final aspectRatio = isMobile ? 0.85 : 0.9; // تعديل نسبة العرض للطول
+    
     return GridView.builder(
-      padding: const EdgeInsets.all(20),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 8,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1,
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : 24,
+        vertical: 8,
+      ),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: isMobile ? 8 : 12,
+        mainAxisSpacing: isMobile ? 8 : 12,
+        childAspectRatio: aspectRatio, // استخدام النسبة المعدلة
       ),
       itemCount: _filteredIcons.length,
       itemBuilder: (context, index) {
         final iconData = _filteredIcons[index];
         final isSelected = widget.selectedIcon == iconData.name;
         
-        return GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            widget.onIconSelected(iconData.name);
-            Navigator.of(context).pop();
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              gradient: isSelected
-                  ? AppTheme.primaryGradient
-                  : LinearGradient(
-                      colors: [
-                        AppTheme.darkSurface.withOpacity(0.3),
-                        AppTheme.darkSurface.withOpacity(0.2),
-                      ],
-                    ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              widget.onIconSelected(iconData.name);
+              Navigator.of(context).pop();
+            },
+            borderRadius: BorderRadius.circular(14),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: EdgeInsets.all(isMobile ? 4 : 6),
+              decoration: BoxDecoration(
                 color: isSelected
-                    ? AppTheme.primaryBlue
-                    : AppTheme.darkBorder.withOpacity(0.2),
-                width: isSelected ? 2 : 0.5,
+                  ? AppTheme.primaryBlue.withOpacity(0.1)
+                  : AppTheme.isDark
+                    ? AppTheme.darkSurface.withOpacity(0.3)
+                    : AppTheme.lightSurface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isSelected
+                    ? AppTheme.primaryBlue.withOpacity(0.4)
+                    : AppTheme.darkBorder.withOpacity(0.1),
+                  width: isSelected ? 1.5 : 1,
+                ),
               ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  iconData.icon,
-                  color: isSelected ? Colors.white : AppTheme.primaryBlue,
-                  size: 24,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  iconData.label,
-                  style: AppTextStyles.caption.copyWith(
-                    color: isSelected ? Colors.white : AppTheme.textMuted,
-                    fontSize: 9,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        flex: 3,
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: Icon(
+                            iconData.icon,
+                            color: isSelected 
+                              ? AppTheme.primaryBlue 
+                              : AppTheme.textLight,
+                            size: isMobile ? 20 : 24,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Flexible(
+                        flex: 2,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: Text(
+                            iconData.label,
+                            style: TextStyle(
+                              fontSize: isMobile ? 7 : 8,
+                              height: 1.1, // تقليل ارتفاع السطر
+                              color: isSelected 
+                                ? AppTheme.primaryBlue 
+                                : AppTheme.textMuted,
+                              fontWeight: isSelected 
+                                ? FontWeight.w600 
+                                : FontWeight.normal,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         );

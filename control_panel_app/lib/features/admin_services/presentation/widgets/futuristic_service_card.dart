@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
-import 'dart:math' as math;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
 import '../../domain/entities/service.dart';
 import '../../domain/entities/pricing_model.dart';
 import '../utils/service_icons.dart';
 
-/// 🎴 Futuristic Service Card
+/// 🎴 Premium Service Card - Professional Version
 class FuturisticServiceCard extends StatefulWidget {
   final Service service;
   final VoidCallback? onTap;
@@ -31,13 +29,9 @@ class FuturisticServiceCard extends StatefulWidget {
 }
 
 class _FuturisticServiceCardState extends State<FuturisticServiceCard>
-    with TickerProviderStateMixin {
-  late AnimationController _glowController;
-  late AnimationController _floatController;
-  late AnimationController _rotationController;
-  late Animation<double> _glowAnimation;
-  late Animation<double> _floatAnimation;
-  late Animation<double> _rotationAnimation;
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
   
   bool _isHovered = false;
   bool _isPressed = false;
@@ -49,188 +43,100 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
   }
 
   void _initAnimations() {
-    _glowController = AnimationController(
-      duration: const Duration(seconds: 2),
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
       vsync: this,
-    )..repeat(reverse: true);
+    );
     
-    _floatController = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    )..repeat(reverse: true);
-    
-    _rotationController = AnimationController(
-      duration: const Duration(seconds: 20),
-      vsync: this,
-    )..repeat();
-    
-    _glowAnimation = Tween<double>(
-      begin: 0.3,
-      end: 1.0,
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.02,
     ).animate(CurvedAnimation(
-      parent: _glowController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _floatAnimation = Tween<double>(
-      begin: -5,
-      end: 5,
-    ).animate(CurvedAnimation(
-      parent: _floatController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _rotationAnimation = Tween<double>(
-      begin: 0,
-      end: 2 * math.pi,
-    ).animate(CurvedAnimation(
-      parent: _rotationController,
-      curve: Curves.linear,
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
     ));
   }
 
   @override
   void dispose() {
-    _glowController.dispose();
-    _floatController.dispose();
-    _rotationController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final screenWidth = size.width;
+    
+    // تحديد نوع الجهاز بدقة
+    final isMobile = screenWidth < 400;
+    final isSmallTablet = screenWidth >= 400 && screenWidth < 600;
+    final isTablet = screenWidth >= 600 && screenWidth < 900;
+    final isDesktop = screenWidth >= 900;
+    
     final icon = ServiceIcons.getIconByName(widget.service.icon);
     
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
+      onEnter: isDesktop ? (_) {
+        setState(() => _isHovered = true);
+        _animationController.forward();
+      } : null,
+      onExit: isDesktop ? (_) {
+        setState(() => _isHovered = false);
+        _animationController.reverse();
+      } : null,
       child: GestureDetector(
         onTapDown: (_) => setState(() => _isPressed = true),
         onTapUp: (_) => setState(() => _isPressed = false),
         onTapCancel: () => setState(() => _isPressed = false),
         onTap: () {
-          HapticFeedback.lightImpact();
+          HapticFeedback.selectionClick();
           widget.onTap?.call();
         },
         child: AnimatedBuilder(
-          animation: Listenable.merge([
-            _glowAnimation,
-            _floatAnimation,
-            _rotationAnimation,
-          ]),
+          animation: _scaleAnimation,
           builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(0, _isHovered ? _floatAnimation.value : 0),
-              child: AnimatedScale(
-                scale: _isPressed ? 0.95 : (_isHovered ? 1.02 : 1.0),
-                duration: const Duration(milliseconds: 150),
-                child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.25),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+            return Transform.scale(
+              scale: _isPressed ? 0.98 : (_isHovered ? _scaleAnimation.value : 1.0),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: EdgeInsets.symmetric(
+                  vertical: isMobile ? 3 : 5,
+                ),
+                child: Material(
+                  color: AppTheme.isDark 
+                    ? AppTheme.darkCard.withOpacity(0.6)
+                    : Colors.white,
+                  borderRadius: BorderRadius.circular(
+                    isMobile ? 10 : 12,
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: 14,
-                        sigmaY: 14,
+                  elevation: _isHovered ? 3 : 1,
+                  shadowColor: widget.isSelected
+                    ? AppTheme.primaryBlue.withOpacity(0.15)
+                    : Colors.black.withOpacity(0.08),
+                  child: InkWell(
+                    onTap: widget.onTap,
+                    borderRadius: BorderRadius.circular(
+                      isMobile ? 10 : 12,
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(
+                          isMobile ? 10 : 12,
+                        ),
+                        border: Border.all(
+                          color: widget.isSelected
+                            ? AppTheme.primaryBlue.withOpacity(0.25)
+                            : AppTheme.darkBorder.withOpacity(0.08),
+                          width: widget.isSelected ? 1.2 : 0.8,
+                        ),
                       ),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              AppTheme.darkCard.withOpacity(0.8),
-                              AppTheme.darkCard.withOpacity(0.6),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: widget.isSelected
-                                ? AppTheme.primaryBlue.withOpacity(0.4)
-                                : AppTheme.darkBorder.withOpacity(0.2),
-                            width: 1,
-                          ),
-                        ),
-                        child: Stack(
-                          children: [
-                            Positioned.fill(
-                              child: Opacity(
-                                opacity: 0.03,
-                                child: CustomPaint(
-                                  painter: _GridPatternPainter(
-                                    rotation: _rotationAnimation.value * 0.1,
-                                    opacity: 0.5,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            
-                            // Content
-                            Row(
-                              children: [
-                                // Icon Section
-                                _buildIconSection(icon),
-                                
-                                const SizedBox(width: 12),
-                                
-                                // Info Section
-                                Expanded(child: _buildInfoSection()),
-                                
-                                // Price Section
-                                const SizedBox(width: 8),
-                                Flexible(
-                                  fit: FlexFit.loose,
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(maxWidth: 140),
-                                    child: _buildPriceSection(),
-                                  ),
-                                ),
-                                
-                                // Actions
-                                if (widget.onEdit != null || widget.onDelete != null)
-                                  const SizedBox(width: 8),
-                                if (widget.onEdit != null || widget.onDelete != null)
-                                  SizedBox(width: 40, child: _buildActionsSection()),
-                              ],
-                            ),
-                            
-                            // Selection Indicator
-                            if (widget.isSelected)
-                              Positioned(
-                                top: 0,
-                                right: 0,
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    gradient: AppTheme.primaryGradient,
-                                    borderRadius: BorderRadius.circular(10),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppTheme.primaryBlue.withOpacity(0.5),
-                                        blurRadius: 10,
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Icon(
-                                    Icons.check_rounded,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
+                      child: _buildOptimizedLayout(
+                        icon: icon,
+                        isMobile: isMobile,
+                        isSmallTablet: isSmallTablet,
+                        isTablet: isTablet,
+                        isDesktop: isDesktop,
                       ),
                     ),
                   ),
@@ -243,240 +149,657 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
     );
   }
 
-  Widget _buildIconSection(IconData icon) {
-    return AnimatedBuilder(
-      animation: _glowAnimation,
-      builder: (context, child) {
-        return Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTheme.primaryBlue.withOpacity(0.18),
-                AppTheme.primaryPurple.withOpacity(0.08),
+  Widget _buildOptimizedLayout({
+    required IconData icon,
+    required bool isMobile,
+    required bool isSmallTablet,
+    required bool isTablet,
+    required bool isDesktop,
+  }) {
+    if (isMobile) {
+      return _buildMobileLayout(icon);
+    } else if (isSmallTablet) {
+      return _buildSmallTabletLayout(icon);
+    } else if (isTablet) {
+      return _buildTabletLayout(icon);
+    } else {
+      return _buildDesktopLayout(icon);
+    }
+  }
+
+  // تصميم محسّن للموبايل
+  Widget _buildMobileLayout(IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      child: Row(
+        children: [
+          // Icon
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryBlue.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: AppTheme.primaryBlue,
+              size: 18,
+            ),
+          ),
+          
+          const SizedBox(width: 8),
+          
+          // Content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Service Name
+                Text(
+                  widget.service.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textWhite,
+                  ),
+                ),
+                
+                const SizedBox(height: 2),
+                
+                // Property & Price في سطر واحد محسّن
+                _buildCompactInfo(),
               ],
             ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppTheme.primaryBlue.withOpacity(0.25),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primaryBlue.withOpacity(
-                  0.15 * _glowAnimation.value,
+          ),
+          
+          // Actions
+          if (widget.onEdit != null || widget.onDelete != null)
+            _buildMobileActions(),
+        ],
+      ),
+    );
+  }
+
+  // معلومات مضغوطة محسّنة لتجنب overflow
+  Widget _buildCompactInfo() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth;
+        
+        return Row(
+          children: [
+            // Property - مرن
+            Flexible(
+              flex: 3,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 1,
                 ),
-                blurRadius: 14,
-                spreadRadius: 2,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryBlue.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: Text(
+                  widget.service.propertyName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: AppTheme.primaryBlue,
+                  ),
+                ),
               ),
-            ],
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Icon
-              Icon(
-                icon,
-                color: AppTheme.primaryBlue,
-                size: 24,
+            ),
+            
+            const SizedBox(width: 6),
+            
+            // Price - مرن أيضاً
+            Flexible(
+              flex: 2,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      '${widget.service.price.amount}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.success,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  Text(
+                    widget.service.price.currency,
+                    style: TextStyle(
+                      fontSize: 8,
+                      color: AppTheme.success.withOpacity(0.7),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _buildInfoSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          widget.service.name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: AppTextStyles.bodyLarge.copyWith(
-            color: AppTheme.textWhite,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryBlue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: AppTheme.primaryBlue.withOpacity(0.3),
-                  width: 0.5,
-                ),
-              ),
-              child: Text(
-                widget.service.propertyName,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppTheme.primaryBlue,
-                ),
-              ),
+  // تصميم للتابلت الصغير
+  Widget _buildSmallTabletLayout(IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          // Icon
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryBlue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
             ),
+            child: Icon(
+              icon,
+              color: AppTheme.primaryBlue,
+              size: 20,
+            ),
+          ),
+          
+          const SizedBox(width: 10),
+          
+          // Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.service.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textWhite,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    Flexible(
+                      flex: 2,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 1.5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryBlue.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          widget.service.propertyName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppTheme.primaryBlue,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${widget.service.price.amount}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.success,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            widget.service.price.currency,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: AppTheme.success.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          
+          // Actions
+          if (widget.onEdit != null || widget.onDelete != null)
+            _buildTabletActions(),
+        ],
+      ),
+    );
+  }
+
+  // تصميم للتابلت
+  Widget _buildTabletLayout(IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          // Icon
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.primaryBlue.withOpacity(0.15),
+                  AppTheme.primaryBlue.withOpacity(0.08),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(
+              icon,
+              color: AppTheme.primaryBlue,
+              size: 22,
+            ),
+          ),
+          
+          const SizedBox(width: 12),
+          
+          // Info
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.service.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textWhite,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBlue.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Text(
+                    widget.service.propertyName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppTheme.primaryBlue,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Price
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${widget.service.price.amount}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        color: AppTheme.success,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      widget.service.price.currency,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppTheme.success.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  widget.service.pricingModel.label,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Actions
+          if (widget.onEdit != null || widget.onDelete != null) ...[
             const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                'Icons.${widget.service.icon}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppTheme.textMuted,
-                  fontFamily: 'monospace',
-                ),
-              ),
-            ),
+            _buildDesktopActions(),
           ],
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildPriceSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Row(
-          children: [
-            Text(
-              '${widget.service.price.amount}',
-              style: AppTextStyles.heading2.copyWith(
-                color: AppTheme.success,
-                fontWeight: FontWeight.bold,
+  // تصميم للديسكتوب
+  Widget _buildDesktopLayout(IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          // Icon with gradient
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.primaryBlue.withOpacity(0.15),
+                  AppTheme.primaryPurple.withOpacity(0.08),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+              borderRadius: BorderRadius.circular(12),
+              border: _isHovered
+                ? Border.all(
+                    color: AppTheme.primaryBlue.withOpacity(0.2),
+                    width: 1,
+                  )
+                : null,
             ),
-            const SizedBox(width: 4),
-            Text(
-              widget.service.price.currency,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppTheme.success.withOpacity(0.7),
-              ),
+            child: Icon(
+              icon,
+              color: AppTheme.primaryBlue,
+              size: 24,
             ),
-          ],
-        ),
-        Text(
-          widget.service.pricingModel.label,
-          style: AppTextStyles.caption.copyWith(
-            color: AppTheme.textMuted,
           ),
-        ),
-      ],
+          
+          const SizedBox(width: 14),
+          
+          // Info Section
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.service.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    color: AppTheme.textWhite,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    Container(
+                      constraints: const BoxConstraints(maxWidth: 160),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryBlue.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: AppTheme.primaryBlue.withOpacity(0.15),
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Text(
+                        widget.service.propertyName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppTheme.primaryBlue,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    if (_isHovered)
+                      Flexible(
+                        child: Text(
+                          'Icons.${widget.service.icon}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppTheme.textMuted.withOpacity(0.5),
+                            fontFamily: 'monospace',
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          
+          // Price Section
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${widget.service.price.amount}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.heading3.copyWith(
+                        color: AppTheme.success,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      widget.service.price.currency,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppTheme.success.withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.success.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    widget.service.pricingModel.label,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppTheme.success.withOpacity(0.9),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Actions
+          if (widget.onEdit != null || widget.onDelete != null) ...[
+            const SizedBox(width: 12),
+            _buildDesktopActions(),
+          ],
+        ],
+      ),
     );
   }
 
-  Widget _buildActionsSection() {
+  // أزرار محسّنة للموبايل
+  Widget _buildMobileActions() {
+    return SizedBox(
+      width: 24,
+      height: 24,
+      child: PopupMenuButton<String>(
+        padding: EdgeInsets.zero,
+        iconSize: 16,
+        icon: Icon(
+          Icons.more_vert_rounded,
+          color: AppTheme.textMuted.withOpacity(0.7),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        color: AppTheme.isDark ? AppTheme.darkCard : Colors.white,
+        elevation: 3,
+        onSelected: _handleAction,
+        itemBuilder: (context) => _buildMenuItems(isCompact: true),
+      ),
+    );
+  }
+
+  // أزرار للتابلت
+  Widget _buildTabletActions() {
     return PopupMenuButton<String>(
+      iconSize: 18,
       icon: Icon(
         Icons.more_vert_rounded,
         color: AppTheme.textMuted,
       ),
-      color: AppTheme.darkCard,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: AppTheme.darkBorder.withOpacity(0.3),
-          width: 0.5,
-        ),
+        borderRadius: BorderRadius.circular(10),
       ),
-      onSelected: (value) {
-        HapticFeedback.lightImpact();
-        switch (value) {
-          case 'edit':
-            widget.onEdit?.call();
-            break;
-          case 'delete':
-            widget.onDelete?.call();
-            break;
-        }
-      },
-      itemBuilder: (context) => [
-        if (widget.onEdit != null)
-          PopupMenuItem(
-            value: 'edit',
-            child: Row(
-              children: [
-                Icon(Icons.edit_rounded, color: AppTheme.primaryBlue, size: 18),
-                const SizedBox(width: 12),
-                Text(
-                  'تعديل',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppTheme.textWhite,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        if (widget.onDelete != null)
-          PopupMenuItem(
-            value: 'delete',
-            child: Row(
-              children: [
-                Icon(Icons.delete_rounded, color: AppTheme.error, size: 18),
-                const SizedBox(width: 12),
-                Text(
-                  'حذف',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppTheme.error,
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
+      color: AppTheme.isDark ? AppTheme.darkCard : Colors.white,
+      elevation: 4,
+      onSelected: _handleAction,
+      itemBuilder: (context) => _buildMenuItems(isCompact: false),
     );
   }
-}
 
-// Grid Pattern Painter
-class _GridPatternPainter extends CustomPainter {
-  final double rotation;
-  final double opacity;
-
-  _GridPatternPainter({
-    required this.rotation,
-    required this.opacity,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppTheme.primaryBlue.withOpacity(opacity)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5;
-
-    canvas.save();
-    canvas.translate(size.width / 2, size.height / 2);
-    canvas.rotate(rotation);
-    canvas.translate(-size.width / 2, -size.height / 2);
-
-    const spacing = 20.0;
-    
-    for (double x = -size.width; x < size.width * 2; x += spacing) {
-      canvas.drawLine(
-        Offset(x, -size.height),
-        Offset(x, size.height * 2),
-        paint,
-      );
-    }
-    
-    for (double y = -size.height; y < size.height * 2; y += spacing) {
-      canvas.drawLine(
-        Offset(-size.width, y),
-        Offset(size.width * 2, y),
-        paint,
-      );
-    }
-    
-    canvas.restore();
+  // أزرار للديسكتوب
+  Widget _buildDesktopActions() {
+    return PopupMenuButton<String>(
+      icon: Icon(
+        Icons.more_vert_rounded,
+        color: AppTheme.textMuted,
+        size: 20,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      color: AppTheme.isDark ? AppTheme.darkCard : Colors.white,
+      elevation: 6,
+      onSelected: _handleAction,
+      itemBuilder: (context) => _buildMenuItems(isCompact: false),
+    );
   }
 
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  // بناء عناصر القائمة
+  List<PopupMenuEntry<String>> _buildMenuItems({required bool isCompact}) {
+    return [
+      if (widget.onEdit != null)
+        PopupMenuItem(
+          value: 'edit',
+          height: isCompact ? 32 : 40,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.edit_outlined,
+                color: AppTheme.textMuted,
+                size: isCompact ? 14 : 16,
+              ),
+              SizedBox(width: isCompact ? 6 : 10),
+              Text(
+                'تعديل',
+                style: (isCompact ? AppTextStyles.caption : AppTextStyles.bodySmall).copyWith(
+                  color: AppTheme.textWhite,
+                ),
+              ),
+            ],
+          ),
+        ),
+      if (widget.onDelete != null)
+        PopupMenuItem(
+          value: 'delete',
+          height: isCompact ? 32 : 40,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.delete_outline,
+                color: AppTheme.error,
+                size: isCompact ? 14 : 16,
+              ),
+              SizedBox(width: isCompact ? 6 : 10),
+              Text(
+                'حذف',
+                style: (isCompact ? AppTextStyles.caption : AppTextStyles.bodySmall).copyWith(
+                  color: AppTheme.error,
+                ),
+              ),
+            ],
+          ),
+        ),
+    ];
+  }
+
+  // معالج الأحداث
+  void _handleAction(String value) {
+    HapticFeedback.selectionClick();
+    switch (value) {
+      case 'edit':
+        widget.onEdit?.call();
+        break;
+      case 'delete':
+        widget.onDelete?.call();
+        break;
+    }
+  }
 }
