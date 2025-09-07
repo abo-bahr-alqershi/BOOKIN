@@ -32,16 +32,37 @@ class ReviewImageModel extends ReviewImage {
   }
   
   static ImageCategory _parseCategory(dynamic value) {
-    if (value is int) {
-      switch (value) {
-        case 0: return ImageCategory.exterior;
-        case 1: return ImageCategory.interior;
-        case 2: return ImageCategory.room;
-        case 3: return ImageCategory.facility;
-        default: return ImageCategory.room;
+    // Backend serializes enums as strings (JsonStringEnumConverter)
+    if (value is String) {
+      switch (value.toLowerCase()) {
+        case 'exterior':
+          return ImageCategory.exterior;
+        case 'interior':
+          return ImageCategory.interior;
+        case 'amenity':
+          return ImageCategory.amenity;
+        case 'floorplan':
+        case 'floor_plan':
+          return ImageCategory.floorPlan;
+        case 'documents':
+          return ImageCategory.documents;
+        case 'avatar':
+          return ImageCategory.avatar;
+        case 'cover':
+          return ImageCategory.cover;
+        case 'gallery':
+          return ImageCategory.gallery;
       }
     }
-    return ImageCategory.room;
+    if (value is int) {
+      // Fallback if server ever sends numeric
+      final index = value;
+      final values = ImageCategory.values;
+      if (index >= 0 && index < values.length) {
+        return values[index];
+      }
+    }
+    return ImageCategory.gallery;
   }
   
   Map<String, dynamic> toJson() {
@@ -52,10 +73,32 @@ class ReviewImageModel extends ReviewImage {
       'url': url,
       'sizeBytes': sizeBytes,
       'type': type,
-      'category': category.index,
+      // Keep string value to match backend JsonStringEnumConverter
+      'category': _categoryToString(category),
       'caption': caption,
       'altText': altText,
       'uploadedAt': uploadedAt.toIso8601String(),
     };
+  }
+
+  static String _categoryToString(ImageCategory category) {
+    switch (category) {
+      case ImageCategory.exterior:
+        return 'Exterior';
+      case ImageCategory.interior:
+        return 'Interior';
+      case ImageCategory.amenity:
+        return 'Amenity';
+      case ImageCategory.floorPlan:
+        return 'FloorPlan';
+      case ImageCategory.documents:
+        return 'Documents';
+      case ImageCategory.avatar:
+        return 'Avatar';
+      case ImageCategory.cover:
+        return 'Cover';
+      case ImageCategory.gallery:
+        return 'Gallery';
+    }
   }
 }

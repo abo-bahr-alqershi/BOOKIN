@@ -118,10 +118,18 @@ class ReviewImagesGallery extends StatelessWidget {
         return 'خارجي';
       case ImageCategory.interior:
         return 'داخلي';
-      case ImageCategory.room:
-        return 'غرفة';
-      case ImageCategory.facility:
+      case ImageCategory.amenity:
         return 'مرفق';
+      case ImageCategory.floorPlan:
+        return 'مخطط طابق';
+      case ImageCategory.documents:
+        return 'مستندات';
+      case ImageCategory.avatar:
+        return 'صورة شخصية';
+      case ImageCategory.cover:
+        return 'غلاف';
+      case ImageCategory.gallery:
+        return 'معرض';
     }
   }
   
