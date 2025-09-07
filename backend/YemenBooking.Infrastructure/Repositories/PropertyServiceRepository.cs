@@ -47,19 +47,25 @@ namespace YemenBooking.Infrastructure.Repositories
         }
 
         public async Task<IEnumerable<PropertyService>> GetPropertyServicesAsync(Guid propertyId, CancellationToken cancellationToken = default)
-            => await _dbSet.Where(ps => ps.PropertyId == propertyId).ToListAsync(cancellationToken);
+            => await _dbSet
+                .Include(ps => ps.Property)
+                .Where(ps => ps.PropertyId == propertyId)
+                .ToListAsync(cancellationToken);
 
         public async Task<IEnumerable<PropertyService>> GetServicesByTypeAsync(string serviceType, CancellationToken cancellationToken = default)
         {
             // If no type provided or explicitly requesting all, return all services
             if (string.IsNullOrWhiteSpace(serviceType) || string.Equals(serviceType, "all", StringComparison.OrdinalIgnoreCase))
             {
-                return await _dbSet.ToListAsync(cancellationToken);
+                return await _dbSet
+                    .Include(ps => ps.Property)
+                    .ToListAsync(cancellationToken);
             }
 
             var term = serviceType.Trim();
             // Case-insensitive contains to make filtering more user-friendly
             return await _dbSet
+                .Include(ps => ps.Property)
                 .Where(ps => EF.Functions.Like(ps.Name, $"%{term}%"))
                 .ToListAsync(cancellationToken);
         }
