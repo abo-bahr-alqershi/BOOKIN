@@ -182,19 +182,26 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
                                 // Icon Section
                                 _buildIconSection(icon),
                                 
-                                const SizedBox(width: 20),
+                                const SizedBox(width: 12),
                                 
                                 // Info Section
-                                Expanded(
-                                  child: _buildInfoSection(),
-                                ),
+                                Expanded(child: _buildInfoSection()),
                                 
                                 // Price Section
-                                _buildPriceSection(),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  fit: FlexFit.loose,
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(maxWidth: 140),
+                                    child: _buildPriceSection(),
+                                  ),
+                                ),
                                 
                                 // Actions
                                 if (widget.onEdit != null || widget.onDelete != null)
-                                  _buildActionsSection(),
+                                  const SizedBox(width: 8),
+                                if (widget.onEdit != null || widget.onDelete != null)
+                                  SizedBox(width: 40, child: _buildActionsSection()),
                               ],
                             ),
                             

@@ -269,49 +269,59 @@ class _FuturisticServicesTableState extends State<FuturisticServicesTable>
                   // Service Info
                   Expanded(
                     flex: 3,
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppTheme.primaryBlue.withOpacity(0.2),
-                                AppTheme.primaryPurple.withOpacity(0.1),
-                              ],
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isTight = constraints.maxWidth < 380;
+                        return Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppTheme.primaryBlue.withOpacity(0.2),
+                                    AppTheme.primaryPurple.withOpacity(0.1),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                ServiceIcons.getIconByName(service.icon),
+                                color: AppTheme.primaryBlue,
+                                size: 20,
+                              ),
                             ),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            ServiceIcons.getIconByName(service.icon),
-                            color: AppTheme.primaryBlue,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                service.name,
-                                style: AppTextStyles.bodyMedium.copyWith(
-                                  color: AppTheme.textWhite,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    service.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      color: AppTheme.textWhite,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  if (!isTight)
+                                    Text(
+                                      'Icons.${service.icon}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: AppTheme.textMuted,
+                                        fontFamily: 'monospace',
+                                      ),
+                                    ),
+                                ],
                               ),
-                              Text(
-                                'Icons.${service.icon}',
-                                style: AppTextStyles.caption.copyWith(
-                                  color: AppTheme.textMuted,
-                                  fontFamily: 'monospace',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                   
@@ -320,6 +330,8 @@ class _FuturisticServicesTableState extends State<FuturisticServicesTable>
                     flex: 2,
                     child: Text(
                       service.propertyName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.bodySmall.copyWith(
                         color: AppTheme.textLight,
                       ),
