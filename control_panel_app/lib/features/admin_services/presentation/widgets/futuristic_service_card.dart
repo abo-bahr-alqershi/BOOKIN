@@ -228,8 +228,6 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
   Widget _buildCompactInfo() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final availableWidth = constraints.maxWidth;
-        
         return Row(
           children: [
             // Property - مرن
@@ -262,7 +260,7 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
             Flexible(
               flex: 2,
               child: Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize: MainAxisSize.max,
                 children: [
                   Flexible(
                     child: Text(
@@ -277,11 +275,15 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
                     ),
                   ),
                   const SizedBox(width: 2),
-                  Text(
-                    widget.service.price.currency,
-                    style: TextStyle(
-                      fontSize: 8,
-                      color: AppTheme.success.withOpacity(0.7),
+                  Flexible(
+                    child: Text(
+                      widget.service.price.currency,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: AppTheme.success.withOpacity(0.7),
+                      ),
                     ),
                   ),
                 ],
@@ -360,26 +362,30 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
                     const SizedBox(width: 8),
                     Flexible(
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisSize: MainAxisSize.max,
                         children: [
-                          Text(
-                            '${widget.service.price.amount}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppTheme.success,
-                              fontWeight: FontWeight.w600,
+                          Flexible(
+                            child: Text(
+                              '${widget.service.price.amount}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.success,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 3),
-                          Text(
-                            widget.service.price.currency,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: AppTheme.success.withOpacity(0.7),
+                          Flexible(
+                            child: Text(
+                              widget.service.price.currency,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppTheme.success.withOpacity(0.7),
+                              ),
                             ),
                           ),
                         ],
@@ -471,37 +477,45 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
             flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.max,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.max,
                   children: [
-                    Text(
-                      '${widget.service.price.amount}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        color: AppTheme.success,
-                        fontWeight: FontWeight.w600,
+                    Flexible(
+                      child: Text(
+                        '${widget.service.price.amount}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppTheme.success,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      widget.service.price.currency,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.success.withOpacity(0.7),
+                    Flexible(
+                      child: Text(
+                        widget.service.price.currency,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppTheme.success.withOpacity(0.7),
+                        ),
                       ),
                     ),
                   ],
                 ),
-                Text(
-                  widget.service.pricingModel.label,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppTheme.textMuted,
-                    fontSize: 10,
+                Flexible(
+                  child: Text(
+                    widget.service.pricingModel.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppTheme.textMuted,
+                      fontSize: 10,
+                    ),
                   ),
                 ),
               ],
@@ -622,28 +636,32 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
             flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.max,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.max,
                   children: [
-                    Text(
-                      '${widget.service.price.amount}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.heading3.copyWith(
-                        color: AppTheme.success,
-                        fontWeight: FontWeight.w700,
+                    Flexible(
+                      child: Text(
+                        '${widget.service.price.amount}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.heading3.copyWith(
+                          color: AppTheme.success,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 5),
-                    Text(
-                      widget.service.price.currency,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppTheme.success.withOpacity(0.8),
+                    Flexible(
+                      child: Text(
+                        widget.service.price.currency,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppTheme.success.withOpacity(0.8),
+                        ),
                       ),
                     ),
                   ],
@@ -660,6 +678,8 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
                   ),
                   child: Text(
                     widget.service.pricingModel.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.caption.copyWith(
                       color: AppTheme.success.withOpacity(0.9),
                       fontSize: 10,
