@@ -404,10 +404,13 @@ class AppRouter {
           path: '/admin/services/:serviceId/edit',
           builder: (context, state) {
             final serviceId = state.pathParameters['serviceId']!;
-            final service = state.extra as dynamic; // may pass a Service instance
+            final service = state.extra; // may pass a Service instance
             return BlocProvider<ServicesBloc>(
               create: (_) => di.sl<ServicesBloc>(),
-              child: EditServicePage(serviceId: serviceId, initialService: service is Map<String, dynamic> ? null : service),
+              child: EditServicePage(
+                serviceId: serviceId,
+                initialService: service is Object ? service as dynamic : null,
+              ),
             );
           },
         ),

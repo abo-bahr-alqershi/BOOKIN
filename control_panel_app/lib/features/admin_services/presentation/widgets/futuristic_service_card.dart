@@ -294,6 +294,8 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
       children: [
         Text(
           widget.service.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: AppTextStyles.bodyLarge.copyWith(
             color: AppTheme.textWhite,
             fontWeight: FontWeight.w700,
@@ -320,11 +322,15 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              'Icons.${widget.service.icon}',
-              style: AppTextStyles.caption.copyWith(
-                color: AppTheme.textMuted,
-                fontFamily: 'monospace',
+            Flexible(
+              child: Text(
+                'Icons.${widget.service.icon}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.caption.copyWith(
+                  color: AppTheme.textMuted,
+                  fontFamily: 'monospace',
+                ),
               ),
             ),
           ],
