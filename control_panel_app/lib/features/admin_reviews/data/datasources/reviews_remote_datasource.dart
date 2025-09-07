@@ -26,6 +26,7 @@ abstract class ReviewsRemoteDataSource {
   // Not available in backend; kept for interface compatibility but unused
   Future<ReviewModel> getReviewDetails(String reviewId);
   Future<bool> approveReview(String reviewId);
+  // Currently not supported by backend (no endpoint). Keep for future.
   Future<bool> rejectReview(String reviewId);
   Future<bool> deleteReview(String reviewId);
   Future<ReviewResponseModel> respondToReview({
@@ -104,6 +105,7 @@ class ReviewsRemoteDataSourceImpl implements ReviewsRemoteDataSource {
       final response = await apiClient.post(
         '/api/admin/reviews/$reviewId/approve',
         data: {
+          // Matches ApproveReviewCommand AdminId
           'adminId': adminId,
         },
       );
@@ -141,6 +143,7 @@ class ReviewsRemoteDataSourceImpl implements ReviewsRemoteDataSource {
       final response = await apiClient.post(
         '/api/admin/reviews/$reviewId/respond',
         data: {
+          // Matches RespondToReviewCommand fields
           'responseText': responseText,
           'ownerId': respondedBy,
         },

@@ -5,8 +5,12 @@ import 'package:equatable/equatable.dart';
 enum ImageCategory {
   exterior,
   interior,
-  room,
-  facility,
+  amenity,
+  floorPlan,
+  documents,
+  avatar,
+  cover,
+  gallery,
 }
 
 class ReviewImage extends Equatable {
