@@ -5,6 +5,7 @@ import '../../domain/usecases/delete_service_usecase.dart';
 import '../../domain/usecases/get_services_by_property_usecase.dart';
 import '../../domain/usecases/get_service_details_usecase.dart';
 import '../../domain/usecases/get_services_by_type_usecase.dart';
+import '../../domain/entities/service.dart';
 import 'services_event.dart';
 import 'services_state.dart';
 
@@ -19,6 +20,7 @@ class ServicesBloc extends Bloc<ServicesEvent, ServicesState> {
 
   String? _selectedPropertyId;
   String? _currentSearchQuery;
+  String? _currentServiceType;
 
   ServicesBloc({
     required this.createServiceUseCase,
@@ -29,6 +31,7 @@ class ServicesBloc extends Bloc<ServicesEvent, ServicesState> {
     required this.getServicesByTypeUseCase,
   }) : super(ServicesInitial()) {
     on<LoadServicesEvent>(_onLoadServices);
+    on<LoadMoreServicesEvent>(_onLoadMoreServices);
     on<CreateServiceEvent>(_onCreateService);
     on<UpdateServiceEvent>(_onUpdateService);
     on<DeleteServiceEvent>(_onDeleteService);
@@ -69,6 +72,7 @@ class ServicesBloc extends Bloc<ServicesEvent, ServicesState> {
             pageSize: event.pageSize,
           ),
         );
+        _currentServiceType = event.serviceType;
         
         result.fold(
           (failure) => emit(ServicesError(failure.message)),
@@ -81,6 +85,7 @@ class ServicesBloc extends Bloc<ServicesEvent, ServicesState> {
               paginatedServices: paginatedResult,
               totalServices: paginatedResult.totalCount,
               paidServices: paidServices,
+              isLoadingMore: false,
             ));
           },
         );
@@ -90,6 +95,51 @@ class ServicesBloc extends Bloc<ServicesEvent, ServicesState> {
     } catch (e) {
       emit(ServicesError(e.toString()));
     }
+  }
+
+  Future<void> _onLoadMoreServices(
+    LoadMoreServicesEvent event,
+    Emitter<ServicesState> emit,
+  ) async {
+    if (state is! ServicesLoaded) return;
+    final current = state as ServicesLoaded;
+    final page = current.paginatedServices;
+    if (page == null || !page.hasNextPage) return;
+
+    // Avoid duplicate triggers
+    if (current.isLoadingMore) return;
+    emit(current.copyWith(isLoadingMore: true));
+
+    final nextPageNumber = page.nextPageNumber ?? (page.pageNumber + 1);
+    final result = await getServicesByTypeUseCase(
+      GetServicesByTypeParams(
+        serviceType: _currentServiceType ?? 'all',
+        pageNumber: nextPageNumber,
+        pageSize: page.pageSize,
+      ),
+    );
+
+    result.fold(
+      (failure) {
+        // Stop loading more but keep existing data
+        emit(current.copyWith(isLoadingMore: false));
+      },
+      (nextPage) {
+        final List<Service> combined = List<Service>.from(current.services)
+          ..addAll(nextPage.items);
+        final paidServices = combined.where((s) => s.price.amount > 0).length;
+
+        emit(ServicesLoaded(
+          services: combined,
+          paginatedServices: nextPage,
+          selectedPropertyId: current.selectedPropertyId,
+          searchQuery: current.searchQuery,
+          totalServices: nextPage.totalCount,
+          paidServices: paidServices,
+          isLoadingMore: false,
+        ));
+      },
+    );
   }
 
   Future<void> _onCreateService(

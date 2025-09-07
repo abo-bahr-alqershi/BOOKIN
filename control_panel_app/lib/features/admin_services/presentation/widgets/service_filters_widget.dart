@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import 'selected_property_badge.dart';
 
 /// 🔍 Service Filters Widget
 class ServiceFiltersWidget extends StatelessWidget {
@@ -45,22 +46,47 @@ class ServiceFiltersWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Row(
-            children: [
-              // Property Selector
-              Expanded(
-                flex: 2,
-                child: _buildPropertySelector(),
-              ),
-              
-              const SizedBox(width: 16),
-              
-              // Search Field
-              Expanded(
-                flex: 3,
-                child: _buildSearchField(),
-              ),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 680;
+              if (isNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPropertySelector(),
+                    const SizedBox(height: 12),
+                    _buildSearchField(),
+                    if (selectedPropertyId != null && (selectedPropertyName?.isNotEmpty ?? false)) ...[
+                      const SizedBox(height: 12),
+                      SelectedPropertyBadge(
+                        propertyName: selectedPropertyName!,
+                        onClear: onClearProperty ?? () {},
+                      ),
+                    ],
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: _buildPropertySelector(),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 3,
+                    child: _buildSearchField(),
+                  ),
+                  if (selectedPropertyId != null && (selectedPropertyName?.isNotEmpty ?? false)) ...[
+                    const SizedBox(width: 16),
+                    SelectedPropertyBadge(
+                      propertyName: selectedPropertyName!,
+                      onClear: onClearProperty ?? () {},
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -102,6 +128,8 @@ class ServiceFiltersWidget extends StatelessWidget {
                     selectedPropertyId == null
                         ? 'اختر العقار'
                         : (selectedPropertyName ?? 'تم اختيار العقار'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: selectedPropertyId == null ? AppTheme.textMuted : AppTheme.textWhite,
                     ),
