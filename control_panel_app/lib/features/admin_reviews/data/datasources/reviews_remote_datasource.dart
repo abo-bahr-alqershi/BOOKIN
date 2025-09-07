@@ -80,8 +80,13 @@ class ReviewsRemoteDataSourceImpl implements ReviewsRemoteDataSource {
       );
       
       if (response.statusCode == 200) {
-        final data = response.data['data'] as List;
-        return data.map((json) => ReviewModel.fromJson(json)).toList();
+        final body = response.data;
+        final success = (body is Map<String, dynamic>) && (body['success'] == true || body['isSuccess'] == true);
+        if (success) {
+          final data = (body['data'] as List?) ?? const [];
+          return data.map((json) => ReviewModel.fromJson(json)).toList();
+        }
+        throw ServerException((body is Map && body['message'] is String) ? body['message'] as String : 'Failed to load reviews');
       }
       throw ServerException('Failed to load reviews');
     } on DioException catch (e) {
@@ -110,7 +115,19 @@ class ReviewsRemoteDataSourceImpl implements ReviewsRemoteDataSource {
         },
       );
       
-      return response.statusCode == 200;
+      if (response.statusCode == 200) {
+        final body = response.data;
+        final success = (body is Map<String, dynamic>) && (body['success'] == true || body['isSuccess'] == true);
+        if (success) {
+          // Prefer returned data if present, else true
+          if (body is Map<String, dynamic> && body['data'] is bool) {
+            return body['data'] as bool;
+          }
+          return true;
+        }
+        throw ServerException((body is Map && body['message'] is String) ? body['message'] as String : 'Failed to approve review');
+      }
+      throw ServerException('Failed to approve review');
     } on DioException catch (e) {
       throw ServerException(e.message ?? 'Failed to approve review');
     }
@@ -127,7 +144,18 @@ class ReviewsRemoteDataSourceImpl implements ReviewsRemoteDataSource {
     try {
       final response = await apiClient.delete('/api/admin/reviews/$reviewId');
       
-      return response.statusCode == 200;
+      if (response.statusCode == 200) {
+        final body = response.data;
+        final success = (body is Map<String, dynamic>) && (body['success'] == true || body['isSuccess'] == true);
+        if (success) {
+          if (body is Map<String, dynamic> && body['data'] is bool) {
+            return body['data'] as bool;
+          }
+          return true;
+        }
+        throw ServerException((body is Map && body['message'] is String) ? body['message'] as String : 'Failed to delete review');
+      }
+      throw ServerException('Failed to delete review');
     } on DioException catch (e) {
       throw ServerException(e.message ?? 'Failed to delete review');
     }
@@ -150,7 +178,12 @@ class ReviewsRemoteDataSourceImpl implements ReviewsRemoteDataSource {
       );
       
       if (response.statusCode == 200) {
-        return ReviewResponseModel.fromJson(response.data['data']);
+        final body = response.data;
+        final success = (body is Map<String, dynamic>) && (body['success'] == true || body['isSuccess'] == true);
+        if (success) {
+          return ReviewResponseModel.fromJson(body['data'] as Map<String, dynamic>);
+        }
+        throw ServerException((body is Map && body['message'] is String) ? body['message'] as String : 'Failed to add response');
       }
       throw ServerException('Failed to add response');
     } on DioException catch (e) {
@@ -166,8 +199,13 @@ class ReviewsRemoteDataSourceImpl implements ReviewsRemoteDataSource {
       );
       
       if (response.statusCode == 200) {
-        final data = response.data['data'] as List;
-        return data.map((json) => ReviewResponseModel.fromJson(json)).toList();
+        final body = response.data;
+        final success = (body is Map<String, dynamic>) && (body['success'] == true || body['isSuccess'] == true);
+        if (success) {
+          final data = (body['data'] as List?) ?? const [];
+          return data.map((json) => ReviewResponseModel.fromJson(json)).toList();
+        }
+        throw ServerException((body is Map && body['message'] is String) ? body['message'] as String : 'Failed to load responses');
       }
       throw ServerException('Failed to load responses');
     } on DioException catch (e) {
@@ -182,7 +220,18 @@ class ReviewsRemoteDataSourceImpl implements ReviewsRemoteDataSource {
         '/api/admin/reviews/responses/$responseId',
       );
       
-      return response.statusCode == 200;
+      if (response.statusCode == 200) {
+        final body = response.data;
+        final success = (body is Map<String, dynamic>) && (body['success'] == true || body['isSuccess'] == true);
+        if (success) {
+          if (body is Map<String, dynamic> && body['data'] is bool) {
+            return body['data'] as bool;
+          }
+          return true;
+        }
+        throw ServerException((body is Map && body['message'] is String) ? body['message'] as String : 'Failed to delete response');
+      }
+      throw ServerException('Failed to delete response');
     } on DioException catch (e) {
       throw ServerException(e.message ?? 'Failed to delete response');
     }
