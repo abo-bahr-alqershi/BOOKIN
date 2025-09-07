@@ -1228,19 +1228,19 @@ class _FuturisticAmenitiesTableState extends State<FuturisticAmenitiesTable>
                                     ],
                                   ),
                                 ),
-                                                              if (widget.onEditAmenity != null)
+                              if (widget.onAssignAmenity != null)
                                 PopupMenuItem(
-                                  value: 'edit',
+                                  value: 'assign',
                                   child: Row(
                                     children: [
                                       Icon(
-                                        Icons.edit_outlined,
+                                        Icons.assignment_outlined,
                                         size: 18,
                                         color: AppTheme.primaryPurple,
                                       ),
                                       const SizedBox(width: 12),
                                       Text(
-                                        'تعديل',
+                                        'تعيين',
                                         style: AppTextStyles.bodyMedium.copyWith(
                                           color: AppTheme.textWhite,
                                         ),

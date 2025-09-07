@@ -1,4 +1,5 @@
 import 'package:bookn_cp_app/core/theme/app_dimensions.dart';
+import 'package:bookn_cp_app/features/admin_amenities/domain/entities/amenity.dart';
 import 'package:bookn_cp_app/features/admin_amenities/presentation/bloc/amenities_event.dart';
 import 'package:bookn_cp_app/features/admin_amenities/presentation/bloc/amenities_state.dart';
 import 'package:bookn_cp_app/features/admin_amenities/presentation/widgets/assign_amenity_dialog.dart';
@@ -175,8 +176,8 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
   Widget _buildPremiumHeader() {
     return Container(
       padding: const EdgeInsets.all(20),
-      color: AppTheme.darkCard.withOpacity(0.7),
       decoration: BoxDecoration(
+        color: AppTheme.darkCard.withOpacity(0.7),
         border: Border(
           bottom: BorderSide(
             color: AppTheme.primaryPurple.withOpacity(0.3), // Purple للمرافق
@@ -275,8 +276,8 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
   Widget _buildSearchBar() {
     return Container(
       height: 48,
-      color: AppTheme.darkSurface.withOpacity(0.5),
       decoration: BoxDecoration(
+        color: AppTheme.darkSurface.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: AppTheme.darkBorder.withOpacity(0.3),
@@ -966,14 +967,39 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
     );
   }
 
-  void _showAssignAmenityDialog(dynamic amenity) {
+
+  // عند استدعاء الديالوج
+  void _showAssignAmenityDialog(Amenity amenity) {
     AssignAmenityDialog.show(
       context: context,
       amenity: amenity,
-      preSelectedPropertyId: null, //propertyId, // اختياري
+      onAssign: ({
+        required String amenityId,
+        required String propertyId,
+        required bool isAvailable,
+        double? extraCost,
+        String? description,
+      }) async {
+        // استخدام الـ Bloc من الـ context الحالي
+        context.read<AmenitiesBloc>().add(
+          AssignAmenityToPropertyEvent(
+            amenityId: amenityId,
+            propertyId: propertyId,
+            isAvailable: isAvailable,
+            extraCost: extraCost,
+            description: description,
+          ),
+        );
+      },
       onSuccess: () {
-        // إعادة تحميل البيانات أو أي إجراء آخر
+        // إعادة تحميل البيانات
         context.read<AmenitiesBloc>().add(const RefreshAmenitiesEvent());
+      },
+      onError: (message) {
+        // معالجة الخطأ
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
       },
     );
   }

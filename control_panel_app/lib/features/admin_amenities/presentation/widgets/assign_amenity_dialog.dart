@@ -1,43 +1,58 @@
-import 'package:bookn_cp_app/features/admin_amenities/presentation/utils/amenity_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/amenity.dart';
-import '../bloc/amenities_bloc.dart';
-import '../bloc/amenities_event.dart';
-import '../bloc/amenities_state.dart';
 
 class AssignAmenityDialog extends StatefulWidget {
   final Amenity amenity;
   final String? preSelectedPropertyId;
+  final Function({
+    required String amenityId,
+    required String propertyId,
+    required bool isAvailable,
+    double? extraCost,
+    String? description,
+  })? onAssign;
   final VoidCallback? onSuccess;
+  final Function(String message)? onError;
 
   const AssignAmenityDialog({
     super.key,
     required this.amenity,
     this.preSelectedPropertyId,
+    this.onAssign,
     this.onSuccess,
+    this.onError,
   });
 
   static Future<void> show({
     required BuildContext context,
     required Amenity amenity,
     String? preSelectedPropertyId,
+    required Function({
+      required String amenityId,
+      required String propertyId,
+      required bool isAvailable,
+      double? extraCost,
+      String? description,
+    }) onAssign,
     VoidCallback? onSuccess,
+    Function(String message)? onError,
   }) {
     return showDialog(
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.black.withOpacity(0.7),
-      builder: (context) => AssignAmenityDialog(
+      builder: (dialogContext) => AssignAmenityDialog(
         amenity: amenity,
         preSelectedPropertyId: preSelectedPropertyId,
+        onAssign: onAssign,
         onSuccess: onSuccess,
+        onError: onError,
       ),
     );
   }
@@ -175,84 +190,73 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
   
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AmenitiesBloc, AmenitiesState>(
-      listener: (context, state) {
-        if (state is AmenityOperationSuccess) {
-          _handleSuccess();
-        } else if (state is AmenityOperationFailure) {
-          _handleError(state.message);
-        } else if (state is AmenityOperationInProgress) {
-          setState(() => _isLoading = true);
-        }
-      },
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Dialog(
-            backgroundColor: Colors.transparent,
-            insetPadding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 24,
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
+          child: Container(
+            width: 520,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
             ),
-            child: Container(
-              width: 520,
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.85,
-              ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppTheme.darkCard.withOpacity(0.95),
-                    const Color(0xFF1A0E2E).withOpacity(0.8),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(24), // زوايا حادة هادئة
-                border: Border.all(
-                  color: AppTheme.primaryPurple.withOpacity(0.3),
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryPurple.withOpacity(0.3),
-                    blurRadius: 40,
-                    spreadRadius: 10,
-                    offset: const Offset(0, 10),
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
-                    blurRadius: 30,
-                    offset: const Offset(0, 15),
-                  ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppTheme.darkCard.withOpacity(0.95),
+                  const Color(0xFF1A0E2E).withOpacity(0.8),
                 ],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                  child: Stack(
-                    children: [
-                      // Background Pattern
-                      _buildBackgroundPattern(),
-                      
-                      // Main Content
-                      SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        child: Column(
-                          children: [
-                            _buildHeader(),
-                            _buildContent(),
-                            _buildFooter(),
-                          ],
-                        ),
+              borderRadius: BorderRadius.circular(24), // زوايا حادة هادئة
+              border: Border.all(
+                color: AppTheme.primaryPurple.withOpacity(0.3),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryPurple.withOpacity(0.3),
+                  blurRadius: 40,
+                  spreadRadius: 10,
+                  offset: const Offset(0, 10),
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.5),
+                  blurRadius: 30,
+                  offset: const Offset(0, 15),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Stack(
+                  children: [
+                    // Background Pattern
+                    _buildBackgroundPattern(),
+                    
+                    // Main Content
+                    SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        children: [
+                          _buildHeader(),
+                          _buildContent(),
+                          _buildFooter(),
+                        ],
                       ),
-                      
-                      // Loading Overlay
-                      if (_isLoading) _buildLoadingOverlay(),
-                    ],
-                  ),
+                    ),
+                    
+                    // Loading Overlay
+                    if (_isLoading) _buildLoadingOverlay(),
+                  ],
                 ),
               ),
             ),
@@ -1241,19 +1245,22 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
     );
   }
   
-  void _handleAssign() {
+  Future<void> _handleAssign() async {
     if (_formKey.currentState?.validate() ?? false) {
       if (_selectedPropertyId == null) {
         _showError('الرجاء اختيار عقار');
         return;
       }
       
-      final cost = _costController.text.isNotEmpty
-        ? double.tryParse(_costController.text)
-        : null;
+      setState(() => _isLoading = true);
       
-      context.read<AmenitiesBloc>().add(
-        AssignAmenityToPropertyEvent(
+      try {
+        final cost = _costController.text.isNotEmpty
+          ? double.tryParse(_costController.text)
+          : null;
+        
+        // Call the callback function
+        await widget.onAssign?.call(
           amenityId: widget.amenity.id,
           propertyId: _selectedPropertyId!,
           isAvailable: _isAvailable,
@@ -1261,8 +1268,15 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
           description: _descriptionController.text.isNotEmpty
             ? _descriptionController.text
             : null,
-        ),
-      );
+        );
+        
+        // Simulate delay for better UX
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        _handleSuccess();
+      } catch (e) {
+        _handleError(e.toString());
+      }
     }
   }
   
@@ -1313,6 +1327,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
   
   void _handleError(String message) {
     setState(() => _isLoading = false);
+    widget.onError?.call(message);
     _showError(message);
   }
   
@@ -1360,11 +1375,26 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
   }
   
   IconData _getAmenityIcon(String iconName) {
-    return AmenityIcons.getIconByName(iconName)?.icon ?? Icons.star_rounded;
+    final iconMap = {
+      'wifi': Icons.wifi_rounded,
+      'parking': Icons.local_parking_rounded,
+      'pool': Icons.pool_rounded,
+      'gym': Icons.fitness_center_rounded,
+      'restaurant': Icons.restaurant_rounded,
+      'spa': Icons.spa_rounded,
+      'laundry': Icons.local_laundry_service_rounded,
+      'ac': Icons.ac_unit_rounded,
+      'tv': Icons.tv_rounded,
+      'kitchen': Icons.kitchen_rounded,
+      'elevator': Icons.elevator_rounded,
+      'safe': Icons.lock_rounded,
+    };
+    
+    return iconMap[iconName] ?? Icons.star_rounded;
   }
 }
 
-// Custom Pattern Painter for Dialog
+// Custom Pattern Painter remains the same...
 class _DialogPatternPainter extends CustomPainter {
   final double animation;
   final Color color;
