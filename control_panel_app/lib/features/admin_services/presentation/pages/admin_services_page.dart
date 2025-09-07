@@ -526,24 +526,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
 
   void _showEditDialog(Service service) {
     HapticFeedback.lightImpact();
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => ServiceFormDialog(
-        service: service,
-        onSubmit: (data) {
-          context.read<ServicesBloc>().add(
-                UpdateServiceEvent(
-                  serviceId: service.id,
-                  name: data['name'],
-                  price: data['price'],
-                  pricingModel: data['pricingModel'],
-                  icon: data['icon'],
-                ),
-              );
-        },
-      ),
-    );
+    context.push('/admin/services/${service.id}/edit', extra: service);
   }
 
   void _showServiceDetails(Service service) {

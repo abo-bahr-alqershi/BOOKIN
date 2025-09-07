@@ -127,62 +127,54 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
                 child: Container(
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.primaryBlue.withOpacity(
-                          widget.isSelected ? 0.3 : 0.1,
-                        ),
-                        blurRadius: 20,
+                        color: Colors.black.withOpacity(0.25),
+                        blurRadius: 16,
                         offset: const Offset(0, 8),
-                        spreadRadius: widget.isSelected ? 2 : 0,
                       ),
-                      if (_isHovered)
-                        BoxShadow(
-                          color: AppTheme.neonBlue.withOpacity(0.3),
-                          blurRadius: 30,
-                          offset: const Offset(0, 10),
-                        ),
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                     child: BackdropFilter(
                       filter: ImageFilter.blur(
-                        sigmaX: 20,
-                        sigmaY: 20,
+                        sigmaX: 14,
+                        sigmaY: 14,
                       ),
                       child: Container(
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              AppTheme.darkCard.withOpacity(0.7),
-                              AppTheme.darkCard.withOpacity(0.5),
+                              AppTheme.darkCard.withOpacity(0.8),
+                              AppTheme.darkCard.withOpacity(0.6),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: widget.isSelected
-                                ? AppTheme.primaryBlue.withOpacity(0.5)
-                                : AppTheme.darkBorder.withOpacity(0.3),
-                            width: widget.isSelected ? 1.5 : 1,
+                                ? AppTheme.primaryBlue.withOpacity(0.4)
+                                : AppTheme.darkBorder.withOpacity(0.2),
+                            width: 1,
                           ),
                         ),
                         child: Stack(
                           children: [
-                            // Background Pattern
-                            if (_isHovered)
-                              Positioned.fill(
+                            Positioned.fill(
+                              child: Opacity(
+                                opacity: 0.03,
                                 child: CustomPaint(
                                   painter: _GridPatternPainter(
-                                    rotation: _rotationAnimation.value,
-                                    opacity: 0.05,
+                                    rotation: _rotationAnimation.value * 0.1,
+                                    opacity: 0.5,
                                   ),
                                 ),
                               ),
+                            ),
                             
                             // Content
                             Row(
@@ -249,26 +241,26 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
       animation: _glowAnimation,
       builder: (context, child) {
         return Container(
-          width: 60,
-          height: 60,
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTheme.primaryBlue.withOpacity(0.2),
-                AppTheme.primaryPurple.withOpacity(0.1),
+                AppTheme.primaryBlue.withOpacity(0.18),
+                AppTheme.primaryPurple.withOpacity(0.08),
               ],
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppTheme.primaryBlue.withOpacity(0.3),
+              color: AppTheme.primaryBlue.withOpacity(0.25),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
                 color: AppTheme.primaryBlue.withOpacity(
-                  0.2 * _glowAnimation.value,
+                  0.15 * _glowAnimation.value,
                 ),
-                blurRadius: 20,
+                blurRadius: 14,
                 spreadRadius: 2,
               ),
             ],
@@ -276,36 +268,11 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Orbiting particle
-              if (_isHovered)
-                Transform.rotate(
-                  angle: _rotationAnimation.value * 2,
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    alignment: Alignment.topCenter,
-                    child: Container(
-                      width: 4,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppTheme.neonBlue,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.neonBlue,
-                            blurRadius: 6,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              
               // Icon
               Icon(
                 icon,
                 color: AppTheme.primaryBlue,
-                size: 28,
+                size: 24,
               ),
             ],
           ),
@@ -320,9 +287,9 @@ class _FuturisticServiceCardState extends State<FuturisticServiceCard>
       children: [
         Text(
           widget.service.name,
-          style: AppTextStyles.heading3.copyWith(
+          style: AppTextStyles.bodyLarge.copyWith(
             color: AppTheme.textWhite,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 4),

@@ -41,6 +41,7 @@ import 'package:bookn_cp_app/features/property_types/presentation/bloc/unit_type
 // removed wrong properties pages imports (files do not exist)
 import 'package:bookn_cp_app/features/admin_services/presentation/pages/admin_services_page.dart';
 import 'package:bookn_cp_app/features/admin_services/presentation/pages/create_service_page.dart';
+import 'package:bookn_cp_app/features/admin_services/presentation/pages/edit_service_page.dart';
 import 'package:bookn_cp_app/features/admin_amenities/presentation/pages/amenities_management_page.dart';
 import 'package:bookn_cp_app/features/admin_reviews/presentation/pages/reviews_list_page.dart';
 import 'package:bookn_cp_app/features/admin_reviews/presentation/pages/review_details_page.dart';
@@ -395,6 +396,18 @@ class AppRouter {
             return BlocProvider<ServicesBloc>(
               create: (_) => di.sl<ServicesBloc>(),
               child: CreateServicePage(initialPropertyId: initialPropertyId),
+            );
+          },
+        ),
+
+        GoRoute(
+          path: '/admin/services/:serviceId/edit',
+          builder: (context, state) {
+            final serviceId = state.pathParameters['serviceId']!;
+            final service = state.extra as dynamic; // may pass a Service instance
+            return BlocProvider<ServicesBloc>(
+              create: (_) => di.sl<ServicesBloc>(),
+              child: EditServicePage(serviceId: serviceId, initialService: service is Map<String, dynamic> ? null : service),
             );
           },
         ),
