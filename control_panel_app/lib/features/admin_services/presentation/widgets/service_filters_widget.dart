@@ -6,16 +6,20 @@ import '../../../../core/theme/app_text_styles.dart';
 /// 🔍 Service Filters Widget
 class ServiceFiltersWidget extends StatelessWidget {
   final String? selectedPropertyId;
+  final String? selectedPropertyName;
   final Function(String?) onPropertyChanged;
   final VoidCallback onPropertyFieldTap;
+  final VoidCallback? onClearProperty;
   final String searchQuery;
   final Function(String) onSearchChanged;
 
   const ServiceFiltersWidget({
     super.key,
     required this.selectedPropertyId,
+    this.selectedPropertyName,
     required this.onPropertyChanged,
     required this.onPropertyFieldTap,
+    this.onClearProperty,
     required this.searchQuery,
     required this.onSearchChanged,
   });
@@ -95,16 +99,36 @@ class ServiceFiltersWidget extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    selectedPropertyId == null ? 'اختر العقار' : 'تم اختيار العقار',
+                    selectedPropertyId == null
+                        ? 'اختر العقار'
+                        : (selectedPropertyName ?? 'تم اختيار العقار'),
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: selectedPropertyId == null ? AppTheme.textMuted : AppTheme.textWhite,
                     ),
                   ),
                 ),
-                Icon(
-                  Icons.search,
-                  color: AppTheme.textMuted,
-                ),
+                if (selectedPropertyId != null && onClearProperty != null)
+                  GestureDetector(
+                    onTap: onClearProperty,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.darkSurface.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppTheme.darkBorder.withOpacity(0.2), width: 0.5),
+                      ),
+                      child: Icon(
+                        Icons.clear_rounded,
+                        color: AppTheme.textMuted,
+                        size: 16,
+                      ),
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.search,
+                    color: AppTheme.textMuted,
+                  ),
               ],
             ),
           ),

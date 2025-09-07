@@ -54,6 +54,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
   
   // Selected Property
   String? _selectedPropertyId;
+  String? _selectedPropertyName;
   
   // Search
   String _searchQuery = '';
@@ -384,6 +385,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: ServiceFiltersWidget(
         selectedPropertyId: _selectedPropertyId,
+        selectedPropertyName: _selectedPropertyName,
         onPropertyChanged: (propertyId) {
           setState(() => _selectedPropertyId = propertyId);
           context.read<ServicesBloc>().add(
@@ -391,6 +393,13 @@ class _AdminServicesPageState extends State<AdminServicesPage>
               );
         },
         onPropertyFieldTap: _onPropertyFieldTap,
+        onClearProperty: () {
+          setState(() {
+            _selectedPropertyId = null;
+            _selectedPropertyName = null;
+          });
+          context.read<ServicesBloc>().add(const SelectPropertyEvent(null));
+        },
         searchQuery: _searchQuery,
         onSearchChanged: (query) {
           setState(() => _searchQuery = query);
@@ -606,6 +615,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
         // property has id & name per PropertySearchPage model
         setState(() {
           _selectedPropertyId = property.id as String?;
+          _selectedPropertyName = property.name as String?;
         });
         context.read<ServicesBloc>().add(SelectPropertyEvent(_selectedPropertyId));
       },

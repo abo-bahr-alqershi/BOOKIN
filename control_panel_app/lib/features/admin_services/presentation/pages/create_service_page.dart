@@ -13,6 +13,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
+import 'package:bookn_cp_app/features/admin_currencies/domain/usecases/get_currencies_usecase.dart';
+import 'package:bookn_cp_app/core/usecases/usecase.dart';
 
 class CreateServicePage extends StatefulWidget {
   final String? initialPropertyId;
@@ -501,32 +504,10 @@ class _CreateServicePageState extends State<CreateServicePage>
           ),
         ),
         const SizedBox(width: 12),
-        Expanded(
-          child: DropdownButtonFormField<String>(
-            value: _selectedCurrency,
-            decoration: InputDecoration(
-              labelText: 'العملة',
-              labelStyle: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
-              filled: true,
-              fillColor: AppTheme.darkSurface.withOpacity(0.3),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-            ),
-            dropdownColor: AppTheme.darkCard,
-            style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
-            items: const ['SAR', 'USD', 'EUR', 'YER'].map((currency) {
-              return DropdownMenuItem(
-                value: currency,
-                child: Text(currency),
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() => _selectedCurrency = value!);
-            },
-          ),
-        ),
+        Expanded(child: _CurrencyDropdown(
+          value: _selectedCurrency,
+          onChanged: (v) => setState(() => _selectedCurrency = v),
+        )),
       ],
     );
   }
@@ -742,6 +723,90 @@ class _CreateServicePageState extends State<CreateServicePage>
           borderRadius: BorderRadius.circular(12),
         ),
       ),
+    );
+  }
+}
+
+class _CurrencyDropdown extends StatefulWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+  const _CurrencyDropdown({required this.value, required this.onChanged});
+
+  @override
+  State<_CurrencyDropdown> createState() => _CurrencyDropdownState();
+}
+
+class _CurrencyDropdownState extends State<_CurrencyDropdown> {
+  List<String> _codes = const [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final usecase = di.sl<GetCurrenciesUseCase>();
+      final result = await usecase(NoParams());
+      result.fold(
+        (f) => setState(() { _error = f.message; _loading = false; }),
+        (list) => setState(() {
+          _codes = list.map((c) => c.code).toList();
+          _loading = false;
+          if (_codes.isNotEmpty && !_codes.contains(widget.value)) {
+            widget.onChanged(_codes.first);
+          }
+        }),
+      );
+    } catch (e) {
+      setState(() { _error = e.toString(); _loading = false; });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final decoration = InputDecoration(
+      labelText: 'العملة',
+      labelStyle: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
+      filled: true,
+      fillColor: AppTheme.darkSurface.withOpacity(0.3),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+    );
+    if (_loading) {
+      return InputDecorator(
+        decoration: decoration,
+        child: Row(children: [
+          const SizedBox(width: 4, height: 4),
+          SizedBox(
+            width: 18, height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.textMuted),
+          ),
+          const SizedBox(width: 8),
+          Text('جاري تحميل العملات...', style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted)),
+        ]),
+      );
+    }
+    if (_error != null) {
+      return DropdownButtonFormField<String>(
+        value: _codes.contains(widget.value) ? widget.value : null,
+        decoration: decoration.copyWith(errorText: _error),
+        items: _codes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+        onChanged: (v) { if (v != null) widget.onChanged(v); },
+      );
+    }
+    return DropdownButtonFormField<String>(
+      value: _codes.contains(widget.value) ? widget.value : null,
+      decoration: decoration,
+      dropdownColor: AppTheme.darkCard,
+      style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+      items: _codes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+      onChanged: (v) { if (v != null) widget.onChanged(v); },
     );
   }
 }
