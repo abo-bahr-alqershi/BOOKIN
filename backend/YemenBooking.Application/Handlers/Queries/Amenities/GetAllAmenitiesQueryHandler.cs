@@ -99,7 +99,11 @@ namespace YemenBooking.Application.Handlers.Queries.Amenities
                 {
                     Id = a.Id,
                     Name = a.Name,
-                    Description = a.Description
+                    Description = a.Description,
+                    Icon = a.Icon,
+                    IsActive = a.IsActive,
+                    CreatedAt = a.CreatedAt,
+                    UpdatedAt = a.UpdatedAt
                 })
                 .ToList();
 

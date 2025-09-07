@@ -25,17 +25,17 @@ class AmenityModel extends Amenity {
 
   factory AmenityModel.fromJson(Map<String, dynamic> json) {
     return AmenityModel(
-      id: json['id'] ?? '',
+      id: (json['id'] ?? json['amenityId'] ?? '').toString(),
       name: json['name'] ?? '',
       description: json['description'] ?? '',
-      icon: json['icon'] ?? 'star',
+      icon: (json['icon'] ?? json['iconUrl'] ?? 'star') as String,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : null,
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'])
           : null,
-      isActive: json['isActive'] ?? true,
+      isActive: json['isActive'] ?? json['active'] ?? true,
       propertiesCount: json['propertiesCount'] ?? 0,
       averageExtraCost: (json['averageExtraCost'] ?? 0).toDouble(),
     );
