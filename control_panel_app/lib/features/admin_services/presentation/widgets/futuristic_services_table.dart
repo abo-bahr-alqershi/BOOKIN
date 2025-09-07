@@ -12,6 +12,10 @@ class FuturisticServicesTable extends StatefulWidget {
   final Function(Service) onServiceTap;
   final Function(Service)? onEdit;
   final Function(Service)? onDelete;
+  final VoidCallback? onLoadMore;
+  final bool hasReachedMax;
+  final bool isLoadingMore;
+  final ScrollController? controller;
 
   const FuturisticServicesTable({
     super.key,
@@ -19,6 +23,10 @@ class FuturisticServicesTable extends StatefulWidget {
     required this.onServiceTap,
     this.onEdit,
     this.onDelete,
+    this.onLoadMore,
+    this.hasReachedMax = true,
+    this.isLoadingMore = false,
+    this.controller,
   });
 
   @override
@@ -33,7 +41,8 @@ class _FuturisticServicesTableState extends State<FuturisticServicesTable>
   int? _hoveredIndex;
   String _sortBy = 'name';
   bool _isAscending = true;
-  final ScrollController _scrollController = ScrollController();
+  late final ScrollController _scrollController;
+  bool _ownsController = false;
 
   @override
   void initState() {
@@ -52,13 +61,30 @@ class _FuturisticServicesTableState extends State<FuturisticServicesTable>
     ));
     
     _animationController.forward();
+
+    _scrollController = widget.controller ?? ScrollController();
+    _ownsController = widget.controller == null;
+    _scrollController.addListener(_handleScroll);
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    if (_ownsController) {
     _scrollController.dispose();
+    } else {
+      _scrollController.removeListener(_handleScroll);
+    }
     super.dispose();
+  }
+
+  void _handleScroll() {
+    if (widget.onLoadMore == null || widget.hasReachedMax) return;
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent * 0.9) {
+      widget.onLoadMore!.call();
+    }
   }
 
   List<Service> get _sortedServices {
@@ -120,6 +146,22 @@ class _FuturisticServicesTableState extends State<FuturisticServicesTable>
                 ? _buildMobileList() 
                 : _buildDesktopTable(),
             ),
+            if (widget.isLoadingMore) ...[
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -497,6 +539,7 @@ class _FuturisticServicesTableState extends State<FuturisticServicesTable>
     final sortedServices = _sortedServices;
     
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.all(16),
       itemCount: sortedServices.length,
       itemBuilder: (context, index) {

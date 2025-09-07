@@ -25,6 +25,7 @@ class ServicesLoaded extends ServicesState {
   final String? searchQuery;
   final int totalServices;
   final int paidServices;
+  final bool isLoadingMore;
 
   const ServicesLoaded({
     required this.services,
@@ -33,6 +34,7 @@ class ServicesLoaded extends ServicesState {
     this.searchQuery,
     this.totalServices = 0,
     this.paidServices = 0,
+    this.isLoadingMore = false,
   });
 
   @override
@@ -43,6 +45,7 @@ class ServicesLoaded extends ServicesState {
         searchQuery,
         totalServices,
         paidServices,
+        isLoadingMore,
       ];
 
   ServicesLoaded copyWith({
@@ -52,6 +55,7 @@ class ServicesLoaded extends ServicesState {
     String? searchQuery,
     int? totalServices,
     int? paidServices,
+    bool? isLoadingMore,
   }) {
     return ServicesLoaded(
       services: services ?? this.services,
@@ -60,6 +64,7 @@ class ServicesLoaded extends ServicesState {
       searchQuery: searchQuery ?? this.searchQuery,
       totalServices: totalServices ?? this.totalServices,
       paidServices: paidServices ?? this.paidServices,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
 }

@@ -1,4 +1,3 @@
-import 'package:bookn_cp_app/features/admin_services/presentation/widgets/service_form_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,7 +10,6 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/error_widget.dart';
 import '../../../../core/widgets/empty_widget.dart';
-import '../../../../core/models/paginated_result.dart';
 import '../../domain/entities/service.dart';
 import '../../domain/entities/money.dart';
 import '../../domain/entities/pricing_model.dart';
@@ -59,12 +57,16 @@ class _AdminServicesPageState extends State<AdminServicesPage>
   // Search
   String _searchQuery = '';
 
+  // Scroll
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _generateParticles();
     _loadInitialData();
+    _scrollController.addListener(_onScroll);
   }
 
   void _initializeAnimations() {
@@ -116,7 +118,22 @@ class _AdminServicesPageState extends State<AdminServicesPage>
     _backgroundAnimationController.dispose();
     _particlesAnimationController.dispose();
     _glowAnimationController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent * 0.9) {
+      final current = context.read<ServicesBloc>().state;
+      if (current is ServicesLoaded &&
+          current.paginatedServices != null &&
+          current.paginatedServices!.hasNextPage &&
+          !current.isLoadingMore) {
+        context.read<ServicesBloc>().add(const LoadMoreServicesEvent());
+      }
+    }
   }
 
   @override
@@ -440,11 +457,9 @@ class _AdminServicesPageState extends State<AdminServicesPage>
             children: [
               Expanded(
                 child: _isGridView
-                    ? _buildGridView(state.services)
-                    : _buildListView(state.services),
+                    ? _buildGridView(state.services, state)
+                    : _buildListView(state.services, state),
               ),
-              if (state.paginatedServices != null)
-                _buildPaginationBar(state.paginatedServices!),
             ],
           );
         }
@@ -454,10 +469,13 @@ class _AdminServicesPageState extends State<AdminServicesPage>
     );
   }
 
-  Widget _buildGridView(List<Service> services) {
+  Widget _buildGridView(List<Service> services, ServicesLoaded state) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: GridView.builder(
+      child: Stack(
+        children: [
+          GridView.builder(
+        controller: _scrollController,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 16,
@@ -475,10 +493,28 @@ class _AdminServicesPageState extends State<AdminServicesPage>
           );
         },
       ),
+          if (state.isLoadingMore)
+            Positioned(
+              bottom: 8,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 
-  Widget _buildListView(List<Service> services) {
+  Widget _buildListView(List<Service> services, ServicesLoaded state) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: FuturisticServicesTable(
@@ -486,82 +522,12 @@ class _AdminServicesPageState extends State<AdminServicesPage>
         onServiceTap: _showServiceDetails,
         onEdit: _showEditDialog,
         onDelete: _confirmDelete,
-      ),
-    );
-  }
-
-  Widget _buildPaginationBar(PaginatedResult<Service> page) {
-    final canPrev = page.hasPreviousPage;
-    final canNext = page.hasNextPage;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppTheme.darkCard.withOpacity(0.4),
-        border: Border(
-          top: BorderSide(color: AppTheme.darkBorder.withOpacity(0.2), width: 0.5),
-        ),
-      ),
-      child: Row(
-        children: [
-          Text(
-            'النتائج ${page.startIndex}–${page.endIndex} من ${page.totalCount}',
-            style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted),
-          ),
-          const Spacer(),
-          _pageButton(
-            icon: Icons.chevron_left_rounded,
-            enabled: canPrev,
-            onTap: () {
-              if (!canPrev) return;
-              context.read<ServicesBloc>().add(LoadServicesEvent(
-                    serviceType: 'all',
-                    pageNumber: page.previousPageNumber,
-                    pageSize: page.pageSize,
-                  ));
-            },
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '${page.currentPage}/${page.totalPages}',
-            style: AppTextStyles.bodySmall.copyWith(color: AppTheme.textLight),
-          ),
-          const SizedBox(width: 8),
-          _pageButton(
-            icon: Icons.chevron_right_rounded,
-            enabled: canNext,
-            onTap: () {
-              if (!canNext) return;
-              context.read<ServicesBloc>().add(LoadServicesEvent(
-                    serviceType: 'all',
-                    pageNumber: page.nextPageNumber,
-                    pageSize: page.pageSize,
-                  ));
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _pageButton({
-    required IconData icon,
-    required bool enabled,
-    required VoidCallback onTap,
-  }) {
-    return Opacity(
-      opacity: enabled ? 1 : 0.4,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: enabled ? () { HapticFeedback.selectionClick(); onTap(); } : null,
-        child: Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: AppTheme.darkSurface.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppTheme.darkBorder.withOpacity(0.2), width: 0.5),
-          ),
-          child: Icon(icon, color: AppTheme.textWhite, size: 20),
-        ),
+        controller: _scrollController,
+        onLoadMore: state.paginatedServices?.hasNextPage == true
+            ? () => context.read<ServicesBloc>().add(const LoadMoreServicesEvent())
+            : null,
+        hasReachedMax: !(state.paginatedServices?.hasNextPage == true),
+        isLoadingMore: state.isLoadingMore,
       ),
     );
   }

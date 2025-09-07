@@ -529,7 +529,7 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Stats Cards
-            _buildStatsCards(isDesktop, isTablet),
+            // _buildStatsCards(isDesktop, isTablet),
 
             const SizedBox(height: AppDimensions.paddingLarge),
 

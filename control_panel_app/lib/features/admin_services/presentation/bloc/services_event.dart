@@ -107,3 +107,8 @@ class SearchServicesEvent extends ServicesEvent {
   @override
   List<Object> get props => [query];
 }
+
+/// تحميل المزيد من الخدمات (للباجنيشن اللانهائي)
+class LoadMoreServicesEvent extends ServicesEvent {
+  const LoadMoreServicesEvent();
+}
