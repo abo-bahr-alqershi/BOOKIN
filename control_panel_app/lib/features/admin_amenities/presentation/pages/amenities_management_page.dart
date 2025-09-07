@@ -1,410 +1,296 @@
+import 'package:bookn_cp_app/core/theme/app_dimensions.dart';
+import 'package:bookn_cp_app/features/admin_amenities/presentation/bloc/amenities_event.dart';
+import 'package:bookn_cp_app/features/admin_amenities/presentation/bloc/amenities_state.dart';
+import 'package:bookn_cp_app/features/admin_amenities/presentation/widgets/assign_amenity_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
 import '../bloc/amenities_bloc.dart';
-import '../bloc/amenities_event.dart';
-import '../bloc/amenities_state.dart';
 import '../widgets/futuristic_amenities_table.dart';
-import '../widgets/amenity_form_dialog.dart';
+import '../widgets/futuristic_amenity_card.dart';
 import '../widgets/amenity_filters_widget.dart';
 import '../widgets/amenity_stats_card.dart';
-import '../widgets/futuristic_amenity_card.dart';
 
 class AmenitiesManagementPage extends StatefulWidget {
   const AmenitiesManagementPage({super.key});
 
   @override
-  State<AmenitiesManagementPage> createState() =>
-      _AmenitiesManagementPageState();
+  State<AmenitiesManagementPage> createState() => _AmenitiesManagementPageState();
 }
 
 class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
     with TickerProviderStateMixin {
-  // Animation Controllers
-  late AnimationController _backgroundAnimationController;
-  late AnimationController _glowAnimationController;
-  late AnimationController _particleAnimationController;
+  // Animation Controllers - نفس نمط الوحدات
+  late AnimationController _glowController;
   late AnimationController _contentAnimationController;
-
+  
   // Animations
-  late Animation<double> _backgroundRotation;
   late Animation<double> _glowAnimation;
   late Animation<double> _contentFadeAnimation;
   late Animation<Offset> _contentSlideAnimation;
-
-  // Controllers
-  final TextEditingController _searchController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-
+  
   // State
-  bool _isGridView = false;
-  String _selectedFilter = 'all';
-
+  final ScrollController _scrollController = ScrollController();
+  bool _showFilters = false;
+  String _selectedView = 'table'; // grid, table
+  String _searchQuery = '';
+  
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
-    _loadData();
+    _loadAmenities();
   }
-
+  
   void _initializeAnimations() {
-    _backgroundAnimationController = AnimationController(
-      duration: const Duration(seconds: 30),
-      vsync: this,
-    )..repeat();
-
-    _glowAnimationController = AnimationController(
+    _glowController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-
-    _particleAnimationController = AnimationController(
-      duration: const Duration(seconds: 15),
-      vsync: this,
-    )..repeat();
-
+    
     _contentAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-
-    _backgroundRotation = Tween<double>(
-      begin: 0,
-      end: 2 * math.pi,
-    ).animate(CurvedAnimation(
-      parent: _backgroundAnimationController,
-      curve: Curves.linear,
-    ));
-
+    
     _glowAnimation = Tween<double>(
       begin: 0.3,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _glowAnimationController,
+      parent: _glowController,
       curve: Curves.easeInOut,
     ));
-
+    
     _contentFadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _contentAnimationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      curve: Curves.easeOut,
     ));
-
+    
     _contentSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
+      begin: const Offset(0, 0.05),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _contentAnimationController,
-      curve: const Interval(0.2, 1.0, curve: Curves.easeOutQuart),
+      curve: Curves.easeOutQuart,
     ));
-
-    _contentAnimationController.forward();
+    
+    // Start animations
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _contentAnimationController.forward();
+      }
+    });
   }
-
-  void _loadData() {
+  
+  void _loadAmenities() {
     context.read<AmenitiesBloc>().add(const LoadAmenitiesEvent());
-    context.read<AmenitiesBloc>().add(const LoadAmenityStatsEvent());
-    context.read<AmenitiesBloc>().add(const LoadPopularAmenitiesEvent());
   }
-
+  
   @override
   void dispose() {
-    _backgroundAnimationController.dispose();
-    _glowAnimationController.dispose();
-    _particleAnimationController.dispose();
+    _glowController.dispose();
     _contentAnimationController.dispose();
-    _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
-
+  
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth > AppDimensions.desktopBreakpoint;
-        final isTablet = constraints.maxWidth > AppDimensions.tabletBreakpoint;
-
-        return Scaffold(
-          backgroundColor: AppTheme.darkBackground,
-          body: Stack(
-            children: [
-              // Animated Background
-              _buildAnimatedBackground(),
-
-              // Particle Effects
-              _buildParticleEffects(),
-
-              // Main Content
-              _buildMainContent(isDesktop, isTablet),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildAnimatedBackground() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([
-        _backgroundRotation,
-        _glowAnimation,
-      ]),
-      builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.darkBackground,
-                AppTheme.darkBackground2.withOpacity(0.95),
-                AppTheme.darkBackground3.withOpacity(0.9),
+    return Scaffold(
+      backgroundColor: AppTheme.darkBackground,
+      body: Stack(
+        children: [
+          // Animated Background - نفس نمط الوحدات مع ألوان مختلفة
+          _buildAnimatedBackground(),
+          
+          // Main Content
+          SafeArea(
+            child: Column(
+              children: [
+                // Premium Header - محسّن ليطابق الوحدات
+                _buildPremiumHeader(),
+                
+                // Stats Cards - محسّن
+                // LayoutBuilder(
+                //   builder: (context, constraints) {
+                //     final width = constraints.maxWidth;
+                //     final bool isDesktop = width >= 1024;
+                //     final bool isTablet = width >= 600 && width < 1024;
+                //     return _buildStatsSection(isDesktop, isTablet);
+                //   },
+                // ),
+                
+                // Filters Section
+                if (_showFilters) _buildFiltersSection(),
+                
+                // Content Area
+                Expanded(
+                  child: FadeTransition(
+                    opacity: _contentFadeAnimation,
+                    child: SlideTransition(
+                      position: _contentSlideAnimation,
+                      child: _buildContent(),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-          child: Stack(
-            children: [
-              // Grid Pattern
-              CustomPaint(
-                painter: _GridPatternPainter(
-                  rotation: _backgroundRotation.value * 0.1,
-                  opacity: 0.03,
-                ),
-                size: Size.infinite,
-              ),
-
-              // Gradient Overlay
-              Container(
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    center: const Alignment(0.5, -0.5),
-                    radius: 1.5,
-                    colors: [
-                      AppTheme.primaryBlue.withOpacity(0.05 * _glowAnimation.value),
-                      AppTheme.primaryPurple.withOpacity(0.03 * _glowAnimation.value),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildParticleEffects() {
-    return AnimatedBuilder(
-      animation: _particleAnimationController,
-      builder: (context, child) {
-        return CustomPaint(
-          painter: _ParticlePainter(
-            animationValue: _particleAnimationController.value,
-          ),
-          size: Size.infinite,
-        );
-      },
-    );
-  }
-
-  Widget _buildMainContent(bool isDesktop, bool isTablet) {
-    return FadeTransition(
-      opacity: _contentFadeAnimation,
-      child: SlideTransition(
-        position: _contentSlideAnimation,
-        child: Column(
-          children: [
-            // App Bar
-            _buildFuturisticAppBar(isDesktop),
-
-            // Content
-            Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: isDesktop ? 3 : 1,
-                    child: _buildContentArea(isDesktop, isTablet),
-                  ),
-                  if (isDesktop)
-                    Flexible(
-                      flex: 0,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 360),
-                        child: Container(
-                          width: 360,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                AppTheme.darkCard.withOpacity(0.5),
-                                AppTheme.darkCard.withOpacity(0.3),
-                              ],
-                            ),
-                            border: Border(
-                              left: BorderSide(
-                                color: AppTheme.primaryBlue.withOpacity(0.2),
-                                width: 1,
-                              ),
-                            ),
-                          ),
-                          child: _buildSidePanel(),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          
+          // Floating Action Button
+          _buildFloatingActionButton(),
+        ],
       ),
     );
   }
-
-  Widget _buildFuturisticAppBar(bool isDesktop) {
+  
+  Widget _buildAnimatedBackground() {
     return Container(
-      height: 80,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppTheme.darkCard.withOpacity(0.8),
-            AppTheme.darkCard.withOpacity(0.6),
+            AppTheme.darkBackground,
+            AppTheme.darkBackground2.withOpacity(0.8),
+            AppTheme.darkBackground3.withOpacity(0.6),
           ],
         ),
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: const SizedBox.expand(),
+      ),
+    );
+  }
+  
+  Widget _buildPremiumHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      color: AppTheme.darkCard.withOpacity(0.7),
+      decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.primaryBlue.withOpacity(0.3),
+            color: AppTheme.primaryPurple.withOpacity(0.3), // Purple للمرافق
             width: 1,
           ),
         ),
       ),
       child: ClipRRect(
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isDesktop ? AppDimensions.paddingXLarge : AppDimensions.paddingLarge,
-            ),
-            child: Row(
-              children: [
-                // Title Section
-                _buildTitleSection(),
-
-                const Spacer(),
-
-                // Search Bar
-                if (isDesktop)
-                  SizedBox(
-                    width: 300,
-                    child: _buildSearchBar(),
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  // Title with gradient
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: [
+                              AppTheme.primaryPurple,
+                              AppTheme.primaryBlue,
+                            ],
+                          ).createShader(bounds),
+                          child: Text(
+                            'إدارة المرافق',
+                            style: AppTextStyles.heading1.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'إدارة جميع مرافق وخدمات العقارات',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-
-                if (isDesktop) const SizedBox(width: AppDimensions.paddingMedium),
-
-                // View Toggle
-                _buildViewToggle(),
-
-                const SizedBox(width: AppDimensions.paddingMedium),
-
-                // Add Button
-                _buildAddButton(),
-              ],
-            ),
+                  
+                  // Action Buttons
+                  Flexible(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildActionButton(
+                            icon: Icons.filter_list_rounded,
+                            label: 'فلتر',
+                            onTap: () => setState(() => _showFilters = !_showFilters),
+                            isActive: _showFilters,
+                          ),
+                          const SizedBox(width: 8),
+                          _buildActionButton(
+                            icon: Icons.grid_view_rounded,
+                            label: 'شبكة',
+                            onTap: () => setState(() => _selectedView = 'grid'),
+                            isActive: _selectedView == 'grid',
+                          ),
+                          const SizedBox(width: 8),
+                          _buildActionButton(
+                            icon: Icons.table_chart_rounded,
+                            label: 'جدول',
+                            onTap: () => setState(() => _selectedView = 'table'),
+                            isActive: _selectedView == 'table',
+                          ),
+                          const SizedBox(width: 16),
+                          _buildPrimaryActionButton(
+                            icon: Icons.add_rounded,
+                            label: 'إضافة مرفق',
+                            onTap: () => context.push('/admin/amenities/create'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Search Bar - محسّن
+              _buildSearchBar(),
+            ],
           ),
         ),
       ),
     );
   }
-
-  Widget _buildTitleSection() {
-    return Row(
-      children: [
-        // Icon with Glow
-        AnimatedBuilder(
-          animation: _glowAnimation,
-          builder: (context, child) {
-            return Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                gradient: AppTheme.primaryGradient,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryBlue.withOpacity(0.3 * _glowAnimation.value),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.star_rounded,
-                color: Colors.white,
-                size: 24,
-              ),
-            );
-          },
-        ),
-
-        const SizedBox(width: AppDimensions.paddingMedium),
-
-        // Title
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ShaderMask(
-              shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
-              child: Text(
-                'إدارة المرافق',
-                style: AppTextStyles.heading2.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Text(
-              'إدارة مرافق وخدمات العقارات',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppTheme.textMuted,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
+  
   Widget _buildSearchBar() {
     return Container(
-      height: 40,
+      height: 48,
+      color: AppTheme.darkSurface.withOpacity(0.5),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkSurface.withOpacity(0.5),
-            AppTheme.darkSurface.withOpacity(0.3),
-          ],
-        ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.primaryBlue.withOpacity(0.2),
+          color: AppTheme.darkBorder.withOpacity(0.3),
           width: 1,
         ),
       ),
       child: TextField(
-        controller: _searchController,
-        style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+        onChanged: (value) {
+          setState(() => _searchQuery = value);
+          context.read<AmenitiesBloc>().add(SearchAmenitiesEvent(searchTerm: value));
+        },
+        style: AppTextStyles.bodyMedium.copyWith(
+          color: AppTheme.textWhite,
+        ),
         decoration: InputDecoration(
           hintText: 'البحث عن مرفق...',
           hintStyle: AppTextStyles.bodyMedium.copyWith(
@@ -412,55 +298,34 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
           ),
           prefixIcon: Icon(
             Icons.search_rounded,
-            color: AppTheme.primaryBlue.withOpacity(0.7),
+            color: AppTheme.primaryPurple.withOpacity(0.7),
             size: 20,
           ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: Icon(
+                    Icons.clear_rounded,
+                    color: AppTheme.textMuted.withOpacity(0.5),
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    setState(() => _searchQuery = '');
+                    context.read<AmenitiesBloc>().add(const SearchAmenitiesEvent(searchTerm: ''));
+                  },
+                )
+              : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
-        onChanged: (value) {
-          context.read<AmenitiesBloc>().add(SearchAmenitiesEvent(searchTerm: value));
-        },
       ),
     );
   }
-
-  Widget _buildViewToggle() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkSurface.withOpacity(0.5),
-            AppTheme.darkSurface.withOpacity(0.3),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.primaryBlue.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          _buildToggleButton(
-            icon: Icons.grid_view_rounded,
-            isSelected: _isGridView,
-            onTap: () => setState(() => _isGridView = true),
-          ),
-          _buildToggleButton(
-            icon: Icons.table_rows_rounded,
-            isSelected: !_isGridView,
-            onTap: () => setState(() => _isGridView = false),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildToggleButton({
+  
+  Widget _buildActionButton({
     required IconData icon,
-    required bool isSelected,
+    required String label,
     required VoidCallback onTap,
+    bool isActive = false,
   }) {
     return GestureDetector(
       onTap: () {
@@ -469,49 +334,78 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          gradient: isSelected ? AppTheme.primaryGradient : null,
-          borderRadius: BorderRadius.circular(8),
+          color: isActive
+              ? AppTheme.primaryPurple
+              : AppTheme.darkCard.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isActive
+                ? AppTheme.primaryPurple.withOpacity(0.5)
+                : AppTheme.darkBorder.withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: AppTheme.primaryPurple.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
-        child: Icon(
-          icon,
-          color: isSelected ? Colors.white : AppTheme.textMuted,
-          size: 20,
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isActive ? Colors.white : AppTheme.textMuted,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: isActive ? Colors.white : AppTheme.textMuted,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
-
-  Widget _buildAddButton() {
+  
+  Widget _buildPrimaryActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: () {
         HapticFeedback.mediumImpact();
-        context.push('/admin/amenities/create');
+        onTap();
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
+          color: AppTheme.primaryPurple,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primaryBlue.withOpacity(0.3),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
+              color: AppTheme.primaryPurple.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.add_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
+            Icon(icon, size: 18, color: Colors.white),
             const SizedBox(width: 8),
             Text(
-              'إضافة مرفق',
+              label,
               style: AppTextStyles.buttonMedium.copyWith(
                 color: Colors.white,
               ),
@@ -521,87 +415,9 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
       ),
     );
   }
+  
 
-  Widget _buildContentArea(bool isDesktop, bool isTablet) {
-    return Container(
-      padding: EdgeInsets.all(
-        isDesktop ? AppDimensions.paddingXLarge : AppDimensions.paddingLarge,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Stats Cards
-            // _buildStatsCards(isDesktop, isTablet),
-
-            const SizedBox(height: AppDimensions.paddingLarge),
-
-            // Filters
-            AmenityFiltersWidget(
-              onFilterChanged: (isAssigned, isFree) {
-                context.read<AmenitiesBloc>().add(
-                      ApplyFiltersEvent(
-                        isAssigned: isAssigned,
-                        isFree: isFree,
-                      ),
-                    );
-              },
-            ),
-
-            const SizedBox(height: AppDimensions.paddingLarge),
-
-            // Content View
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height * 0.4,
-                maxHeight: MediaQuery.of(context).size.height * 0.8,
-              ),
-              child: BlocBuilder<AmenitiesBloc, AmenitiesState>(
-                builder: (context, state) {
-                  if (state is AmenitiesLoading) {
-                    return _buildLoadingView();
-                  }
-
-                  if (state is AmenitiesError) {
-                    return _buildErrorView(state.message);
-                  }
-
-                  if (state is AmenitiesLoaded) {
-                    if (_isGridView) {
-                      return _buildGridView(state, isDesktop, isTablet);
-                    } else {
-                      return FuturisticAmenitiesTable(
-                        amenities: state.amenities.items,
-                        totalCount: state.amenities.totalCount,
-                        currentPage: state.amenities.pageNumber,
-                        pageSize: state.amenities.pageSize,
-                        onPageChanged: (page) {
-                          context.read<AmenitiesBloc>().add(
-                                ChangePageEvent(pageNumber: page),
-                              );
-                        },
-                        onEdit: _showEditAmenityDialog,
-                        onDelete: _showDeleteConfirmation,
-                        onToggleStatus: (amenity) {
-                          context.read<AmenitiesBloc>().add(
-                                ToggleAmenityStatusEvent(amenityId: amenity.id),
-                              );
-                        },
-                      );
-                    }
-                  }
-
-                  return const SizedBox.shrink();
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatsCards(bool isDesktop, bool isTablet) {
+    Widget _buildStatsSection(bool isDesktop, bool isTablet) {
     return BlocBuilder<AmenitiesBloc, AmenitiesState>(
       builder: (context, state) {
         if (state is AmenitiesLoaded && state.stats != null) {
@@ -670,12 +486,7 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
         4,
         (index) => Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTheme.darkCard.withOpacity(0.5),
-                AppTheme.darkCard.withOpacity(0.3),
-              ],
-            ),
+            color: AppTheme.darkCard.withOpacity(0.5),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: AppTheme.primaryBlue.withOpacity(0.1),
@@ -687,352 +498,293 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
     );
   }
 
-  Widget _buildGridView(AmenitiesLoaded state, bool isDesktop, bool isTablet) {
-    final columns = isDesktop ? 4 : (isTablet ? 3 : 2);
-    
-    return GridView.builder(
-      controller: _scrollController,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        crossAxisSpacing: AppDimensions.paddingMedium,
-        mainAxisSpacing: AppDimensions.paddingMedium,
-        childAspectRatio: 1,
+
+  Widget _buildFiltersSection() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.darkSurface.withOpacity(0.4),
+        border: Border(
+          top: BorderSide(
+            color: AppTheme.darkBorder.withOpacity(0.2),
+            width: 1,
+          ),
+          bottom: BorderSide(
+            color: AppTheme.darkBorder.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
       ),
-      itemCount: state.amenities.items.length,
-      itemBuilder: (context, index) {
-        final amenity = state.amenities.items[index];
-        return FuturisticAmenityCard(
-          amenity: amenity,
-          animationDelay: Duration(milliseconds: index * 50),
-          onTap: () => _showAmenityDetails(amenity),
-          onEdit: () => _showEditAmenityDialog(amenity),
-          onDelete: () => _showDeleteConfirmation(amenity),
+      child: AmenityFiltersWidget(
+        onFilterChanged: (isAssigned, isFree) {
+          context.read<AmenitiesBloc>().add(
+            ApplyFiltersEvent(
+              isAssigned: isAssigned,
+              isFree: isFree,
+            ),
+          );
+        },
+      ),
+    );
+  }
+  
+  void _showFilterBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.7),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: AppTheme.darkCard,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(30),
+            ),
+            border: Border.all(
+              color: AppTheme.primaryPurple.withOpacity(0.3),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryPurple.withOpacity(0.3),
+                blurRadius: 30,
+                spreadRadius: 5,
+                offset: const Offset(0, -10),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(28),
+            ),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Column(
+                children: [
+                  // Handle
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppTheme.primaryPurple, AppTheme.primaryBlue],
+                      ),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: AppTheme.darkBorder.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [AppTheme.primaryPurple, AppTheme.primaryBlue],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primaryPurple.withOpacity(0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.filter_list_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'الفلاتر المتقدمة',
+                                style: AppTextStyles.heading3.copyWith(
+                                  color: AppTheme.textWhite,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'تصفية وترتيب المرافق',
+                                style: AppTextStyles.caption.copyWith(
+                                  color: AppTheme.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.pop(context);
+                          },
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: AppTheme.darkSurface.withOpacity(0.5),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppTheme.darkBorder.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.close_rounded,
+                              color: AppTheme.textMuted,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Filter Content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.all(20),
+                      child: AmenityFiltersWidget(
+                        onFilterChanged: (isAssigned, isFree) {
+                          context.read<AmenitiesBloc>().add(
+                            ApplyFiltersEvent(
+                              isAssigned: isAssigned,
+                              isFree: isFree,
+                            ),
+                          );
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    return BlocBuilder<AmenitiesBloc, AmenitiesState>(
+      builder: (context, state) {
+        if (state is AmenitiesLoading) {
+          return _buildLoadingState();
+        }
+        
+        if (state is AmenitiesError) {
+          return _buildErrorState(state.message);
+        }
+        
+        if (state is AmenitiesLoaded) {
+          if (state.amenities.items.isEmpty) {
+            return _buildEmptyState();
+          }
+          
+          switch (_selectedView) {
+            case 'grid':
+              return _buildGridView(state);
+            case 'table':
+              return FuturisticAmenitiesTable(
+                amenities: state.amenities.items,
+                onAmenitySelected: (amenity) => _navigateToAmenity(amenity.id),
+                onEditAmenity: (amenity) => _navigateToEditAmenity(amenity.id),
+                onDeleteAmenity: (amenity) => _showDeleteConfirmation(amenity),
+                onAssignAmenity: (amenity) => _showAssignAmenityDialog(amenity),
+              );
+            default:
+              return _buildGridView(state);
+          }
+        }
+        
+        return const SizedBox.shrink();
+      },
+    );
+  }
+  
+  Widget _buildGridView(AmenitiesLoaded state) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        int crossAxisCount = 3;
+        if (constraints.maxWidth < 900) {
+          crossAxisCount = 2;
+        }
+        if (constraints.maxWidth < 600) {
+          crossAxisCount = 1;
+        }
+        
+        return GridView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.all(16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.5,
+          ),
+          itemCount: state.amenities.items.length,
+          itemBuilder: (context, index) {
+            final amenity = state.amenities.items[index];
+            return FuturisticAmenityCard(
+              amenity: amenity,
+              onTap: () => _navigateToAmenity(amenity.id),
+              onEdit: () => _navigateToEditAmenity(amenity.id),
+              onDelete: () => _showDeleteConfirmation(amenity),
+            );
+          },
         );
       },
     );
   }
-
-  Widget _buildSidePanel() {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Popular Amenities
-          _buildPopularAmenitiesSection(),
-          
-          const SizedBox(height: AppDimensions.paddingLarge),
-          
-          // Recent Activities
-          _buildRecentActivitiesSection(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPopularAmenitiesSection() {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkCard.withOpacity(0.5),
-            AppTheme.darkCard.withOpacity(0.3),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.primaryBlue.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.trending_up_rounded,
-                  color: Colors.white,
-                  size: 16,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'المرافق الشائعة',
-                style: AppTextStyles.heading3.copyWith(
-                  color: AppTheme.textWhite,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimensions.paddingMedium),
-          BlocBuilder<AmenitiesBloc, AmenitiesState>(
-            builder: (context, state) {
-              if (state is AmenitiesLoaded) {
-                return Column(
-                  children: state.popularAmenities
-                      .take(5)
-                      .map((amenity) => _buildPopularAmenityItem(amenity))
-                      .toList(),
-                );
-              }
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPopularAmenityItem(amenity) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkSurface.withOpacity(0.3),
-            AppTheme.darkSurface.withOpacity(0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.primaryBlue.withOpacity(0.1),
-          width: 0.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient.scale(0.8),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              _getIconForAmenity(amenity.icon),
-              color: Colors.white,
-              size: 16,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  amenity.name,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppTheme.textWhite,
-                  ),
-                ),
-                Text(
-                  '${amenity.propertiesCount} عقار',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppTheme.success.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              '+${((amenity.propertiesCount ?? 0) * 2.5).toInt()}%',
-              style: AppTextStyles.caption.copyWith(
-                color: AppTheme.success,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecentActivitiesSection() {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.darkCard.withOpacity(0.5),
-              AppTheme.darkCard.withOpacity(0.3),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppTheme.primaryBlue.withOpacity(0.2),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.primaryGradient,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.history_rounded,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'النشاطات الأخيرة',
-                  style: AppTextStyles.heading3.copyWith(
-                    color: AppTheme.textWhite,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppDimensions.paddingMedium),
-            Expanded(
-              child: ListView.builder(
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return _buildActivityItem(index);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActivityItem(int index) {
-    final activities = [
-      {'action': 'إضافة', 'item': 'واي فاي مجاني', 'time': 'قبل 5 دقائق'},
-      {'action': 'تحديث', 'item': 'موقف سيارات', 'time': 'قبل 15 دقيقة'},
-      {'action': 'حذف', 'item': 'خدمة الغرف', 'time': 'قبل ساعة'},
-      {'action': 'إسناد', 'item': 'مسبح', 'time': 'قبل ساعتين'},
-      {'action': 'تفعيل', 'item': 'صالة رياضية', 'time': 'قبل 3 ساعات'},
-    ];
-
-    final activity = activities[index];
-    
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkSurface.withOpacity(0.2),
-            AppTheme.darkSurface.withOpacity(0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: _getActivityColor(activity['action']!),
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: activity['action'],
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: _getActivityColor(activity['action']!),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      TextSpan(
-                        text: ' ${activity['item']}',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppTheme.textWhite,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  activity['time']!,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppTheme.textMuted.withOpacity(0.5),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getActivityColor(String action) {
-    switch (action) {
-      case 'إضافة':
-        return AppTheme.success;
-      case 'تحديث':
-        return AppTheme.primaryBlue;
-      case 'حذف':
-        return AppTheme.error;
-      case 'إسناد':
-        return AppTheme.warning;
-      case 'تفعيل':
-        return AppTheme.neonGreen;
-      default:
-        return AppTheme.textMuted;
-    }
-  }
-
-  Widget _buildLoadingView() {
+  
+  Widget _buildLoadingState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 80,
-            height: 80,
+            width: 60,
+            height: 60,
             decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
+              gradient: LinearGradient(
+                colors: [AppTheme.primaryPurple, AppTheme.primaryBlue],
+              ),
               shape: BoxShape.circle,
             ),
-            child: const Center(
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 2,
-              ),
+            child: const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              strokeWidth: 2,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Text(
             'جاري تحميل المرافق...',
-            style: AppTextStyles.bodyLarge.copyWith(
+            style: AppTextStyles.bodyMedium.copyWith(
               color: AppTheme.textMuted,
             ),
           ),
@@ -1040,17 +792,236 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
       ),
     );
   }
-
-  Widget _buildErrorView(String message) {
+  
+  Widget _buildErrorState(String message) {
     return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline_rounded,
+            size: 64,
+            color: AppTheme.error.withOpacity(0.7),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.error,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          GestureDetector(
+            onTap: _loadAmenities,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppTheme.primaryPurple, AppTheme.primaryBlue],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'إعادة المحاولة',
+                style: AppTextStyles.buttonMedium.copyWith(
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.primaryPurple.withOpacity(0.1),
+                  AppTheme.primaryBlue.withOpacity(0.05),
+                ],
+              ),
+            ),
+            child: Icon(
+              Icons.star_outline_rounded,
+              size: 60,
+              color: AppTheme.primaryPurple.withOpacity(0.5),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'لا توجد مرافق',
+            style: AppTextStyles.heading2.copyWith(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'ابدأ بإضافة مرفق جديد',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textMuted,
+            ),
+          ),
+          const SizedBox(height: 32),
+          GestureDetector(
+            onTap: () => context.push('/admin/amenities/create'),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppTheme.primaryPurple, AppTheme.primaryBlue],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryPurple.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.add_rounded, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text(
+                    'إضافة مرفق جديد',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildFloatingActionButton() {
+    return Positioned(
+      bottom: 24,
+      right: 24,
+      child: AnimatedBuilder(
+        animation: _glowAnimation,
+        builder: (context, child) {
+          return Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryPurple.withOpacity(0.4 * _glowAnimation.value),
+                  blurRadius: 20 + 10 * _glowAnimation.value,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: FloatingActionButton(
+              onPressed: () => context.push('/admin/amenities/create'),
+              backgroundColor: AppTheme.primaryPurple,
+              child: const Icon(
+                Icons.add_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+  
+  void _navigateToAmenity(String amenityId) {
+    context.push('/admin/amenities/$amenityId');
+  }
+  
+  void _navigateToEditAmenity(String amenityId) {
+    context.push('/admin/amenities/$amenityId/edit');
+  }
+  
+  void _showDeleteConfirmation(dynamic amenity) {
+    showDialog(
+      context: context,
+      builder: (context) => _DeleteConfirmationDialog(
+        amenityName: amenity.name ?? 'المرفق',
+        onConfirm: () {
+          context.read<AmenitiesBloc>().add(DeleteAmenityEvent(amenityId: amenity.id));
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  void _showAssignAmenityDialog(dynamic amenity) {
+    AssignAmenityDialog.show(
+      context: context,
+      amenity: amenity,
+      preSelectedPropertyId: null, //propertyId, // اختياري
+      onSuccess: () {
+        // إعادة تحميل البيانات أو أي إجراء آخر
+        context.read<AmenitiesBloc>().add(const RefreshAmenitiesEvent());
+      },
+    );
+  }
+}
+
+// Delete Confirmation Dialog
+class _DeleteConfirmationDialog extends StatelessWidget {
+  final String amenityName;
+  final VoidCallback onConfirm;
+  
+  const _DeleteConfirmationDialog({
+    required this.amenityName,
+    required this.onConfirm,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
       child: Container(
-        padding: const EdgeInsets.all(AppDimensions.paddingXLarge),
+        width: 400,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.darkCard.withOpacity(0.95),
+              AppTheme.darkCard.withOpacity(0.85),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppTheme.error.withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.error.withOpacity(0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -1061,225 +1032,174 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.error_outline_rounded,
+                Icons.warning_rounded,
                 color: AppTheme.error,
-                size: 40,
+                size: 32,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Text(
-              'حدث خطأ',
-              style: AppTextStyles.heading2.copyWith(
-                color: AppTheme.error,
+              'تأكيد الحذف',
+              style: AppTextStyles.heading3.copyWith(
+                color: AppTheme.textWhite,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
-              message,
+              'هل أنت متأكد من حذف "$amenityName"؟\nلا يمكن التراجع عن هذا الإجراء.',
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppTheme.textMuted,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 30),
-            GestureDetector(
-              onTap: _loadData,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'إعادة المحاولة',
-                  style: AppTextStyles.buttonMedium.copyWith(
-                    color: Colors.white,
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.darkSurface.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppTheme.darkBorder.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'إلغاء',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      onConfirm();
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryPurple,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.primaryPurple.withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          'حذف',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
   }
-
-  void _showAddAmenityDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AmenityFormDialog(
-        onSave: (name, description, icon) {
-          context.read<AmenitiesBloc>().add(
-                CreateAmenityEvent(
-                  name: name,
-                  description: description,
-                  icon: icon,
-                ),
-              );
-        },
-      ),
-    );
-  }
-
-  void _showEditAmenityDialog(amenity) {
-    context.push('/admin/amenities/${amenity.id}/edit', extra: amenity);
-  }
-
-  void _showDeleteConfirmation(amenity) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.darkCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: AppTheme.error.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-        title: Text(
-          'تأكيد الحذف',
-          style: AppTextStyles.heading2.copyWith(
-            color: AppTheme.error,
-          ),
-        ),
-        content: Text(
-          'هل أنت متأكد من حذف المرفق "${amenity.name}"؟',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppTheme.textWhite,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'إلغاء',
-              style: AppTextStyles.buttonMedium.copyWith(
-                color: AppTheme.textMuted,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              context.read<AmenitiesBloc>().add(
-                    DeleteAmenityEvent(amenityId: amenity.id),
-                  );
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.error,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text(
-              'حذف',
-              style: AppTextStyles.buttonMedium.copyWith(
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAmenityDetails(amenity) {
-    // TODO: Implement amenity details dialog
-  }
-
-  IconData _getIconForAmenity(String iconName) {
-    final iconMap = {
-      'wifi': Icons.wifi_rounded,
-      'parking': Icons.local_parking_rounded,
-      'pool': Icons.pool_rounded,
-      'gym': Icons.fitness_center_rounded,
-      'restaurant': Icons.restaurant_rounded,
-      'spa': Icons.spa_rounded,
-      'laundry': Icons.local_laundry_service_rounded,
-      'ac': Icons.ac_unit_rounded,
-      'tv': Icons.tv_rounded,
-      'kitchen': Icons.kitchen_rounded,
-    };
-    
-    return iconMap[iconName] ?? Icons.star_rounded;
-  }
 }
 
-// Custom Painters
-class _GridPatternPainter extends CustomPainter {
+// Background Painter - محسّن للمرافق
+class _AmenitiesBackgroundPainter extends CustomPainter {
   final double rotation;
-  final double opacity;
-
-  _GridPatternPainter({
+  final double glowIntensity;
+  
+  _AmenitiesBackgroundPainter({
     required this.rotation,
-    required this.opacity,
+    required this.glowIntensity,
   });
-
+  
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppTheme.primaryBlue.withOpacity(opacity)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
-
-    canvas.save();
-    canvas.translate(size.width / 2, size.height / 2);
-    canvas.rotate(rotation);
-    canvas.translate(-size.width / 2, -size.height / 2);
-
-    const spacing = 30.0;
-
-    for (double x = -size.width; x < size.width * 2; x += spacing) {
+    
+    // Draw grid with purple tint
+    paint.color = AppTheme.primaryPurple.withOpacity(0.05);
+    const spacing = 50.0;
+    
+    for (double x = 0; x < size.width; x += spacing) {
       canvas.drawLine(
-        Offset(x, -size.height),
-        Offset(x, size.height * 2),
+        Offset(x, 0),
+        Offset(x, size.height),
         paint,
       );
     }
-
-    for (double y = -size.height; y < size.height * 2; y += spacing) {
+    
+    for (double y = 0; y < size.height; y += spacing) {
       canvas.drawLine(
-        Offset(-size.width, y),
-        Offset(size.width * 2, y),
+        Offset(0, y),
+        Offset(size.width, y),
         paint,
       );
     }
-
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-class _ParticlePainter extends CustomPainter {
-  final double animationValue;
-
-  _ParticlePainter({required this.animationValue});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final random = math.Random(42);
-    final paint = Paint()..style = PaintingStyle.fill;
-
-    for (int i = 0; i < 30; i++) {
-      final x = random.nextDouble() * size.width;
-      final baseY = random.nextDouble() * size.height;
-      final y = (baseY - animationValue * size.height) % size.height;
-      final radius = random.nextDouble() * 2 + 0.5;
-      final opacity = random.nextDouble() * 0.3 + 0.1;
-
-      paint.color = AppTheme.primaryBlue.withOpacity(opacity);
-
-      canvas.drawCircle(Offset(x, y), radius, paint);
+    
+    // Draw rotating circles with gradient
+    final center = Offset(size.width / 2, size.height / 2);
+    
+    for (int i = 0; i < 3; i++) {
+      final radius = 200.0 + i * 100;
+      paint.color = Color.lerp(
+        AppTheme.primaryPurple,
+        AppTheme.primaryBlue,
+        i / 3,
+      )!.withOpacity(0.03 * glowIntensity);
+      
+      canvas.save();
+      canvas.translate(center.dx, center.dy);
+      canvas.rotate(rotation + i * 0.5);
+      canvas.translate(-center.dx, -center.dy);
+      canvas.drawCircle(center, radius, paint);
+      canvas.restore();
+    }
+    
+    // Draw hexagon pattern
+    paint.color = AppTheme.primaryPurple.withOpacity(0.02 * glowIntensity);
+    paint.style = PaintingStyle.stroke;
+    
+    for (int i = 0; i < 5; i++) {
+      final path = Path();
+      final hexRadius = 150.0 + i * 50;
+      for (int j = 0; j < 6; j++) {
+        final angle = (j * 60 - 30) * math.pi / 180 + rotation * 0.5;
+        final x = center.dx + hexRadius * math.cos(angle);
+        final y = center.dy + hexRadius * math.sin(angle);
+        
+        if (j == 0) {
+          path.moveTo(x, y);
+        } else {
+          path.lineTo(x, y);
+        }
+      }
+      path.close();
+      canvas.drawPath(path, paint);
     }
   }
-
+  
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

@@ -94,7 +94,7 @@ namespace YemenBooking.Application.Handlers.Commands.Amenities
                     PtaId = pta.Id,
                     IsAvailable = request.IsAvailable,
                     ExtraCost = request.ExtraCost.HasValue ? new Money(request.ExtraCost.Value, "YER") : Money.Zero("YER"),
-                    Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description!.Trim()
+                    // Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description!.Trim()
                 };
 
                 await _unitOfWork.Repository<PropertyAmenity>().AddAsync(propertyAmenity, cancellationToken);

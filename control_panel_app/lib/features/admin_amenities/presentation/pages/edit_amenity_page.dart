@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
-import 'package:bookn_cp_app/features/admin_services/presentation/widgets/service_icon_picker.dart';
+import 'package:bookn_cp_app/features/admin_amenities/presentation/widgets/amenity_icon_picker.dart';
 import 'package:bookn_cp_app/features/admin_amenities/domain/entities/amenity.dart' as am_entity;
 import 'package:bookn_cp_app/features/admin_amenities/presentation/bloc/amenities_bloc.dart';
 import 'package:bookn_cp_app/features/admin_amenities/presentation/bloc/amenities_event.dart';
@@ -350,7 +350,7 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
   void _showIconPicker() {
     showDialog(
       context: context,
-      builder: (context) => ServiceIconPicker(
+      builder: (context) => AmenityIconPicker(
         selectedIcon: _selectedIcon,
         onIconSelected: (icon) {
           setState(() => _selectedIcon = icon);
