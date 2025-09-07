@@ -975,7 +975,7 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
         onConfirm: () {
           // استخدم سياق الصفحة الذي يحتوي على مزود البلوك، وليس سياق الديالوج
           this.context.read<AmenitiesBloc>().add(DeleteAmenityEvent(amenityId: amenity.id));
-          Navigator.pop(dialogCtx);
+          // Navigator.pop(dialogCtx);
         },
       ),
     );
