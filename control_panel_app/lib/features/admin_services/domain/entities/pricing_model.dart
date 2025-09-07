@@ -12,10 +12,23 @@ enum PricingModel {
 
   const PricingModel(this.value, this.label);
 
+  /// يدعم قيَم التطبيق وقيَم الباك اند (Fixed/PerPerson/PerNight)
   static PricingModel fromValue(String value) {
-    return PricingModel.values.firstWhere(
-      (model) => model.value == value,
-      orElse: () => PricingModel.perBooking,
-    );
+    final normalized = value.trim();
+    // Try app values
+    for (final model in PricingModel.values) {
+      if (model.value == normalized) return model;
+    }
+    // Map backend enum strings
+    switch (normalized) {
+      case 'Fixed':
+        return PricingModel.fixed;
+      case 'PerPerson':
+        return PricingModel.perPerson;
+      case 'PerNight':
+        return PricingModel.perDay; // أقرب تمثيل لدينا
+      default:
+        return PricingModel.perBooking;
+    }
   }
 }
