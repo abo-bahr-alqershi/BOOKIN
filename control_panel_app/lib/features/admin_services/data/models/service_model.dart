@@ -22,7 +22,7 @@ class ServiceModel extends Service {
     if (pricingModelData is Map) {
       pricingModel = PricingModel.fromValue(pricingModelData.keys.first);
     } else {
-      pricingModel = PricingModel.fromValue(pricingModelData ?? 'PerBooking');
+      pricingModel = PricingModel.fromValue('${pricingModelData ?? 'PerBooking'}');
     }
 
     return ServiceModel(
