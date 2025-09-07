@@ -125,10 +125,10 @@ class ServiceFiltersWidget extends StatelessWidget {
                     ),
                   )
                 else
-                Icon(
-                  Icons.search,
-                  color: AppTheme.textMuted,
-                ),
+                  Icon(
+                    Icons.search,
+                    color: AppTheme.textMuted,
+                  ),
               ],
             ),
           ),

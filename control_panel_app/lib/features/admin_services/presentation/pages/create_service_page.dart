@@ -505,7 +505,7 @@ class _CreateServicePageState extends State<CreateServicePage>
         ),
         const SizedBox(width: 12),
         Expanded(child: _CurrencyDropdown(
-            value: _selectedCurrency,
+          value: _selectedCurrency,
           onChanged: (v) => setState(() => _selectedCurrency = v),
         )),
       ],

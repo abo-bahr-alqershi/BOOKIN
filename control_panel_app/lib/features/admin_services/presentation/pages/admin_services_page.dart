@@ -54,6 +54,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
   
   // Selected Property
   String? _selectedPropertyId;
+  String? _selectedPropertyName;
   
   // Search
   String _searchQuery = '';
@@ -384,6 +385,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: ServiceFiltersWidget(
         selectedPropertyId: _selectedPropertyId,
+        selectedPropertyName: _selectedPropertyName,
         onPropertyChanged: (propertyId) {
           setState(() => _selectedPropertyId = propertyId);
           context.read<ServicesBloc>().add(
@@ -391,6 +393,13 @@ class _AdminServicesPageState extends State<AdminServicesPage>
               );
         },
         onPropertyFieldTap: _onPropertyFieldTap,
+        onClearProperty: () {
+          setState(() {
+            _selectedPropertyId = null;
+            _selectedPropertyName = null;
+          });
+          context.read<ServicesBloc>().add(const SelectPropertyEvent(null));
+        },
         searchQuery: _searchQuery,
         onSearchChanged: (query) {
           setState(() => _searchQuery = query);
@@ -431,7 +440,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
             children: [
               Expanded(
                 child: _isGridView
-              ? _buildGridView(state.services)
+                    ? _buildGridView(state.services)
                     : _buildListView(state.services),
               ),
               if (state.paginatedServices != null)
@@ -593,9 +602,18 @@ class _AdminServicesPageState extends State<AdminServicesPage>
     );
   }
 
-  void _navigateToCreatePage() {
+  Future<void> _navigateToCreatePage() async {
     HapticFeedback.mediumImpact();
-    context.push('/admin/services/create', extra: {'propertyId': _selectedPropertyId});
+    final result = await context.push('/admin/services/create', extra: {'propertyId': _selectedPropertyId});
+    if (result is Map && result['refresh'] == true) {
+      final pid = (result['propertyId'] as String?) ?? _selectedPropertyId;
+      setState(() => _selectedPropertyId = pid);
+      if (pid != null) {
+        context.read<ServicesBloc>().add(LoadServicesEvent(propertyId: pid));
+      } else {
+        context.read<ServicesBloc>().add(const LoadServicesEvent(serviceType: 'all', pageNumber: 1, pageSize: 20));
+      }
+    }
   }
 
   void _onPropertyFieldTap() {
@@ -606,15 +624,23 @@ class _AdminServicesPageState extends State<AdminServicesPage>
         // property has id & name per PropertySearchPage model
         setState(() {
           _selectedPropertyId = property.id as String?;
+          _selectedPropertyName = property.name as String?;
         });
         context.read<ServicesBloc>().add(SelectPropertyEvent(_selectedPropertyId));
       },
     });
   }
 
-  void _showEditDialog(Service service) {
+  Future<void> _showEditDialog(Service service) async {
     HapticFeedback.lightImpact();
-    context.push('/admin/services/${service.id}/edit', extra: service);
+    final result = await context.push('/admin/services/${service.id}/edit', extra: service);
+    if (result is Map && result['refresh'] == true) {
+      if (_selectedPropertyId != null) {
+        context.read<ServicesBloc>().add(LoadServicesEvent(propertyId: _selectedPropertyId));
+      } else {
+        context.read<ServicesBloc>().add(const LoadServicesEvent(serviceType: 'all', pageNumber: 1, pageSize: 20));
+      }
+    }
   }
 
   void _showServiceDetails(Service service) {

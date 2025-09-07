@@ -11,6 +11,7 @@ import 'package:bookn_cp_app/features/admin_services/presentation/bloc/services_
 import 'package:bookn_cp_app/features/admin_services/presentation/bloc/services_event.dart';
 import 'package:bookn_cp_app/features/admin_services/presentation/bloc/services_state.dart';
 import 'package:bookn_cp_app/features/admin_services/presentation/widgets/service_icon_picker.dart';
+import 'package:bookn_cp_app/features/admin_services/domain/entities/service.dart' as svc_entity;
 import 'package:bookn_cp_app/injection_container.dart' as di;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -513,7 +514,7 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
         ),
         const SizedBox(width: 12),
         Expanded(child: _CurrencyDropdown(
-            value: _selectedCurrency,
+          value: _selectedCurrency,
           onChanged: (v) => setState(() => _selectedCurrency = v),
         )),
       ],
