@@ -238,7 +238,8 @@ class ServicesBloc extends Bloc<ServicesEvent, ServicesState> {
     if (event.propertyId != null) {
       add(LoadServicesEvent(propertyId: event.propertyId));
     } else {
-      emit(const ServicesLoaded(services: []));
+      _currentServiceType = 'all';
+      add(const LoadServicesEvent(serviceType: 'all', pageNumber: 1, pageSize: 20));
     }
   }
 
