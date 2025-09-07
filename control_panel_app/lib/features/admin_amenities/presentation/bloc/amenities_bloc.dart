@@ -128,13 +128,15 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
           amenityId: amenityId,
         ));
         // إعادة تحميل القائمة
-        add(LoadAmenitiesEvent(
+        if (!isClosed) {
+          add(LoadAmenitiesEvent(
           pageNumber: _currentPageNumber,
           pageSize: _currentPageSize,
           searchTerm: _currentSearchTerm,
           isAssigned: _currentIsAssigned,
           isFree: _currentIsFree,
-        ));
+          ));
+        }
       },
     );
   }
@@ -168,13 +170,15 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
           amenityId: event.amenityId,
         ));
         // إعادة تحميل القائمة
-        add(LoadAmenitiesEvent(
+        if (!isClosed) {
+          add(LoadAmenitiesEvent(
           pageNumber: _currentPageNumber,
           pageSize: _currentPageSize,
           searchTerm: _currentSearchTerm,
           isAssigned: _currentIsAssigned,
           isFree: _currentIsFree,
-        ));
+          ));
+        }
       },
     );
   }
@@ -201,13 +205,15 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
           amenityId: event.amenityId,
         ));
         // إعادة تحميل القائمة
-        add(LoadAmenitiesEvent(
+        if (!isClosed) {
+          add(LoadAmenitiesEvent(
           pageNumber: _currentPageNumber,
           pageSize: _currentPageSize,
           searchTerm: _currentSearchTerm,
           isAssigned: _currentIsAssigned,
           isFree: _currentIsFree,
-        ));
+          ));
+        }
       },
     );
   }
@@ -234,13 +240,15 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
           amenityId: event.amenityId,
         ));
         // إعادة تحميل القائمة
-        add(LoadAmenitiesEvent(
+        if (!isClosed) {
+          add(LoadAmenitiesEvent(
           pageNumber: _currentPageNumber,
           pageSize: _currentPageSize,
           searchTerm: _currentSearchTerm,
           isAssigned: _currentIsAssigned,
           isFree: _currentIsFree,
-        ));
+          ));
+        }
       },
     );
   }
