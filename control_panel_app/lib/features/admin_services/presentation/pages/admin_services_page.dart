@@ -622,7 +622,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
     HapticFeedback.mediumImpact();
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogCtx) => AlertDialog(
         backgroundColor: AppTheme.darkCard,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -662,7 +662,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogCtx).pop(),
             child: Text(
               'إلغاء',
               style: AppTextStyles.buttonMedium.copyWith(
@@ -672,10 +672,11 @@ class _AdminServicesPageState extends State<AdminServicesPage>
           ),
           ElevatedButton(
             onPressed: () {
-              context.read<ServicesBloc>().add(
+              // استخدم سياق الصفحة الذي يحتوي على مزود البلوك، وليس سياق الديالوج
+              this.context.read<ServicesBloc>().add(
                     DeleteServiceEvent(service.id),
                   );
-              Navigator.of(context).pop();
+              Navigator.of(dialogCtx).pop();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.error,

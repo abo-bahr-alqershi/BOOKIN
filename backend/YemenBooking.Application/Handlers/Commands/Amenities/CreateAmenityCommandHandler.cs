@@ -64,6 +64,7 @@ namespace YemenBooking.Application.Handlers.Commands.Amenities
                     Id = Guid.NewGuid(),
                     Name = request.Name.Trim(),
                     Description = request.Description.Trim(),
+                    Icon = (request.Icon ?? string.Empty).Trim(),
                     CreatedAt = DateTime.UtcNow
                 };
 

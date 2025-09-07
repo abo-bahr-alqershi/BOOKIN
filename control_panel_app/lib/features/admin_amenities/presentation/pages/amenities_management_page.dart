@@ -253,7 +253,12 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
                           _buildPrimaryActionButton(
                             icon: Icons.add_rounded,
                             label: 'إضافة مرفق',
-                            onTap: () => context.push('/admin/amenities/create'),
+                            onTap: () async {
+                              final result = await context.push('/admin/amenities/create');
+                              if (result is Map && result['refresh'] == true) {
+                                _loadAmenities();
+                              }
+                            },
                           ),
                         ],
                       ),
@@ -932,7 +937,12 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
               ],
             ),
             child: FloatingActionButton(
-              onPressed: () => context.push('/admin/amenities/create'),
+              onPressed: () async {
+                final result = await context.push('/admin/amenities/create');
+                if (result is Map && result['refresh'] == true) {
+                  _loadAmenities();
+                }
+              },
               backgroundColor: AppTheme.primaryPurple,
               child: const Icon(
                 Icons.add_rounded,
@@ -950,18 +960,22 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
     context.push('/admin/amenities/$amenityId');
   }
   
-  void _navigateToEditAmenity(String amenityId) {
-    context.push('/admin/amenities/$amenityId/edit');
+  Future<void> _navigateToEditAmenity(String amenityId) async {
+    final result = await context.push('/admin/amenities/$amenityId/edit');
+    if (result is Map && result['refresh'] == true) {
+      _loadAmenities();
+    }
   }
   
   void _showDeleteConfirmation(dynamic amenity) {
     showDialog(
       context: context,
-      builder: (context) => _DeleteConfirmationDialog(
+      builder: (dialogCtx) => _DeleteConfirmationDialog(
         amenityName: amenity.name ?? 'المرفق',
         onConfirm: () {
-          context.read<AmenitiesBloc>().add(DeleteAmenityEvent(amenityId: amenity.id));
-          Navigator.pop(context);
+          // استخدم سياق الصفحة الذي يحتوي على مزود البلوك، وليس سياق الديالوج
+          this.context.read<AmenitiesBloc>().add(DeleteAmenityEvent(amenityId: amenity.id));
+          Navigator.pop(dialogCtx);
         },
       ),
     );

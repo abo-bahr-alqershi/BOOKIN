@@ -77,8 +77,12 @@ namespace YemenBooking.Application.Handlers.Commands.Amenities
                 };
 
                 // التنفيذ: تحديث بيانات المرفق
-                existing.Name = request.Name.Trim();
-                existing.Description = request.Description.Trim();
+                if (!string.IsNullOrWhiteSpace(request.Name))
+                    existing.Name = request.Name.Trim();
+                if (!string.IsNullOrWhiteSpace(request.Description))
+                    existing.Description = request.Description.Trim();
+                if (!string.IsNullOrWhiteSpace(request.Icon))
+                    existing.Icon = request.Icon.Trim();
                 existing.UpdatedAt = DateTime.UtcNow;
 
                 await _unitOfWork.Repository<Amenity>().UpdateAsync(existing, cancellationToken);
