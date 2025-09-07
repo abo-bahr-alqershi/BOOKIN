@@ -73,6 +73,8 @@ namespace YemenBooking.Application.Handlers.Commands.Services
                 service.Price = new Money(request.Price.Amount, request.Price.Currency);
             if (request.PricingModel.HasValue)
                 service.PricingModel = request.PricingModel.Value;
+            if (!string.IsNullOrWhiteSpace(request.Icon))
+                service.Icon = request.Icon.Trim();
 
             service.UpdatedBy = _currentUserService.UserId;
             service.UpdatedAt = DateTime.UtcNow;

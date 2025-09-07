@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
+import 'package:bookn_cp_app/core/usecases/usecase.dart';
+import 'package:bookn_cp_app/features/admin_currencies/domain/usecases/get_currencies_usecase.dart';
 import 'package:bookn_cp_app/features/admin_services/domain/entities/money.dart';
 import 'package:bookn_cp_app/features/admin_services/domain/entities/pricing_model.dart';
 import 'package:bookn_cp_app/features/admin_services/domain/entities/service.dart' as svc_entity;
@@ -9,6 +11,7 @@ import 'package:bookn_cp_app/features/admin_services/presentation/bloc/services_
 import 'package:bookn_cp_app/features/admin_services/presentation/bloc/services_event.dart';
 import 'package:bookn_cp_app/features/admin_services/presentation/bloc/services_state.dart';
 import 'package:bookn_cp_app/features/admin_services/presentation/widgets/service_icon_picker.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -118,6 +121,7 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
           _selectedCurrency = d.price.currency;
           _selectedPricingModel = d.pricingModel;
           _propertyName = d.propertyName;
+          _selectedIcon = d.icon;
         }
       },
       child: Scaffold(
@@ -369,7 +373,7 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
                   border: Border.all(color: AppTheme.darkBorder.withOpacity(0.2), width: 0.5),
                 ),
                 child: Text(
-                  'ثابت',
+                  'لا يمكن التعديل',
                   style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted),
                 ),
               ),
@@ -508,32 +512,10 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
           ),
         ),
         const SizedBox(width: 12),
-        Expanded(
-          child: DropdownButtonFormField<String>(
+        Expanded(child: _CurrencyDropdown(
             value: _selectedCurrency,
-            decoration: InputDecoration(
-              labelText: 'العملة',
-              labelStyle: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
-              filled: true,
-              fillColor: AppTheme.darkSurface.withOpacity(0.3),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-            ),
-            dropdownColor: AppTheme.darkCard,
-            style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
-            items: const ['SAR', 'USD', 'EUR', 'YER'].map((currency) {
-              return DropdownMenuItem(
-                value: currency,
-                child: Text(currency),
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() => _selectedCurrency = value!);
-            },
-          ),
-        ),
+          onChanged: (v) => setState(() => _selectedCurrency = v),
+        )),
       ],
     );
   }
@@ -744,6 +726,90 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
           borderRadius: BorderRadius.circular(12),
         ),
       ),
+    );
+  }
+}
+
+class _CurrencyDropdown extends StatefulWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+  const _CurrencyDropdown({required this.value, required this.onChanged});
+
+  @override
+  State<_CurrencyDropdown> createState() => _CurrencyDropdownState();
+}
+
+class _CurrencyDropdownState extends State<_CurrencyDropdown> {
+  List<String> _codes = const [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final usecase = di.sl<GetCurrenciesUseCase>();
+      final result = await usecase(NoParams());
+      result.fold(
+        (f) => setState(() { _error = f.message; _loading = false; }),
+        (list) => setState(() {
+          _codes = list.map((c) => c.code).toList();
+          _loading = false;
+          if (_codes.isNotEmpty && !_codes.contains(widget.value)) {
+            widget.onChanged(_codes.first);
+          }
+        }),
+      );
+    } catch (e) {
+      setState(() { _error = e.toString(); _loading = false; });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final decoration = InputDecoration(
+      labelText: 'العملة',
+      labelStyle: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
+      filled: true,
+      fillColor: AppTheme.darkSurface.withOpacity(0.3),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+    );
+    if (_loading) {
+      return InputDecorator(
+        decoration: decoration,
+        child: Row(children: [
+          const SizedBox(width: 4, height: 4),
+          SizedBox(
+            width: 18, height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.textMuted),
+          ),
+          const SizedBox(width: 8),
+          Text('جاري تحميل العملات...', style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted)),
+        ]),
+      );
+    }
+    if (_error != null) {
+      return DropdownButtonFormField<String>(
+        value: _codes.contains(widget.value) ? widget.value : null,
+        decoration: decoration.copyWith(errorText: _error),
+        items: _codes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+        onChanged: (v) { if (v != null) widget.onChanged(v); },
+      );
+    }
+    return DropdownButtonFormField<String>(
+      value: _codes.contains(widget.value) ? widget.value : null,
+      decoration: decoration,
+      dropdownColor: AppTheme.darkCard,
+      style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+      items: _codes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+      onChanged: (v) { if (v != null) widget.onChanged(v); },
     );
   }
 }

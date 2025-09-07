@@ -66,6 +66,7 @@ namespace YemenBooking.Application.Handlers.Commands.Services
                 Name = request.Name.Trim(),
                 Price = new Money(request.Price.Amount, request.Price.Currency),
                 PricingModel = request.PricingModel,
+                Icon = (request.Icon ?? string.Empty).Trim(),
                 CreatedBy = _currentUserService.UserId,
                 CreatedAt = DateTime.UtcNow
             };
