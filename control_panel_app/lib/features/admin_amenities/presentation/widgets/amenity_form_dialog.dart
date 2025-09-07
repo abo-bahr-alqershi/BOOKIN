@@ -101,12 +101,12 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
               ),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: AppTheme.primaryPurple.withOpacity(0.3),
+                color: AppTheme.primaryBlue.withOpacity(0.3),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primaryPurple.withOpacity(0.2),
+                  color: AppTheme.primaryBlue.withOpacity(0.2),
                   blurRadius: 30,
                   spreadRadius: 5,
                 ),
@@ -165,7 +165,7 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
         ),
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.primaryPurple.withOpacity(0.2),
+            color: AppTheme.primaryBlue.withOpacity(0.2),
             width: 1,
           ),
         ),
@@ -180,7 +180,7 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primaryPurple.withOpacity(0.3),
+                  color: AppTheme.primaryBlue.withOpacity(0.3),
                   blurRadius: 15,
                   spreadRadius: 2,
                 ),
@@ -264,7 +264,7 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: AppTheme.primaryPurple.withOpacity(0.3),
+                color: AppTheme.primaryBlue.withOpacity(0.3),
               ),
             ),
             enabledBorder: OutlineInputBorder(
@@ -276,7 +276,7 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: AppTheme.primaryPurple.withOpacity(0.5),
+                color: AppTheme.primaryBlue.withOpacity(0.5),
                 width: 2,
               ),
             ),
@@ -288,7 +288,7 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
             ),
             prefixIcon: Icon(
               Icons.label_rounded,
-              color: AppTheme.primaryPurple.withOpacity(0.7),
+              color: AppTheme.primaryBlue.withOpacity(0.7),
             ),
           ),
           validator: (value) {
@@ -328,7 +328,7 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: AppTheme.primaryPurple.withOpacity(0.3),
+                color: AppTheme.primaryBlue.withOpacity(0.3),
               ),
             ),
             enabledBorder: OutlineInputBorder(
@@ -340,7 +340,7 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: AppTheme.primaryPurple.withOpacity(0.5),
+                color: AppTheme.primaryBlue.withOpacity(0.5),
                 width: 2,
               ),
             ),
@@ -354,7 +354,7 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
               padding: const EdgeInsets.only(bottom: 40),
               child: Icon(
                 Icons.description_rounded,
-                color: AppTheme.primaryPurple.withOpacity(0.7),
+                color: AppTheme.primaryBlue.withOpacity(0.7),
               ),
             ),
           ),
@@ -723,7 +723,7 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
         ),
         border: Border(
           top: BorderSide(
-            color: AppTheme.primaryPurple.withOpacity(0.2),
+            color: AppTheme.primaryBlue.withOpacity(0.2),
             width: 1,
           ),
         ),
