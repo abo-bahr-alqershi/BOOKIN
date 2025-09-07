@@ -210,8 +210,9 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppTheme.darkCard.withOpacity(0.95),
-                  const Color(0xFF1A0E2E).withOpacity(0.8),
+                  AppTheme.darkBackground,
+                  AppTheme.darkBackground2.withOpacity(0.8),
+                  AppTheme.darkBackground3.withOpacity(0.6),
                 ],
               ),
               borderRadius: BorderRadius.circular(24), // زوايا حادة هادئة
