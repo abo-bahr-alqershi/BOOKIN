@@ -1249,7 +1249,9 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
     HapticFeedback.lightImpact();
 
     final City? result = await Navigator.of(context).pushNamed<City>(
-      '/city-form',
+      city == null
+          ? '/admin/cities/create'
+          : '/admin/cities/${Uri.encodeComponent(city.name)}/edit',
       arguments: city,
     );
 

@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:bookn_cp_app/features/admin_cities/domain/entities/city.dart';
+import 'package:bookn_cp_app/features/admin_cities/presentation/pages/city_form_page.dart';
 import 'package:bookn_cp_app/features/admin_units/domain/entities/unit.dart';
 import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_bloc.dart';
 import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_event.dart';
@@ -569,6 +571,24 @@ class AppRouter {
                 ..add(ci_events.LoadCitiesStatisticsEvent()),
               child: const ci_pages.AdminCitiesPage(),
             );
+          },
+        ),
+
+        // Admin Cities - create
+        GoRoute(
+          path: '/admin/cities/create',
+          builder: (context, state) {
+            return const CityFormPage();
+          },
+        ),
+
+        // Admin Cities - edit
+        GoRoute(
+          path: '/admin/cities/:cityId/edit',
+          builder: (context, state) {
+            final cityId = state.pathParameters['cityId']!;
+            final city = state.extra as City?;
+            return CityFormPage(city: city);
           },
         ),
 
