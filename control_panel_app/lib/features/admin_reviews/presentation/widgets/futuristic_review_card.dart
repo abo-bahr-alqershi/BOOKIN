@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/review.dart';
 
 class FuturisticReviewCard extends StatefulWidget {
@@ -105,7 +106,7 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                     child: Stack(
                       children: [
-                        // Background Pattern
+                        // نمط الخلفية
                         if (_isHovered)
                           Positioned(
                             top: -50,
@@ -125,16 +126,16 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                             ),
                           ),
                         
-                        // Content
+                        // المحتوى
                         Padding(
                           padding: const EdgeInsets.all(20),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Header
+                              // الرأس
                               Row(
                                 children: [
-                                  // User Avatar
+                                  // صورة المستخدم
                                   Container(
                                     width: 48,
                                     height: 48,
@@ -152,9 +153,8 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                     child: Center(
                                       child: Text(
                                         widget.review.userName.substring(0, 2).toUpperCase(),
-                                        style: const TextStyle(
+                                        style: AppTextStyles.bodyMedium.copyWith(
                                           color: Colors.white,
-                                          fontSize: 16,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -162,15 +162,14 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                   ),
                                   const SizedBox(width: 12),
                                   
-                                  // User Info
+                                  // معلومات المستخدم
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           widget.review.userName,
-                                          style: TextStyle(
-                                            fontSize: 16,
+                                          style: AppTextStyles.bodyMedium.copyWith(
                                             fontWeight: FontWeight.w600,
                                             color: AppTheme.textWhite,
                                           ),
@@ -178,8 +177,7 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                         const SizedBox(height: 2),
                                         Text(
                                           widget.review.propertyName,
-                                          style: TextStyle(
-                                            fontSize: 12,
+                                          style: AppTextStyles.caption.copyWith(
                                             color: AppTheme.textMuted,
                                           ),
                                           maxLines: 1,
@@ -189,20 +187,20 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                     ),
                                   ),
                                   
-                                  // Status Badge
+                                  // شارة الحالة
                                   _buildStatusBadge(),
                                 ],
                               ),
                               
                               const SizedBox(height: 16),
                               
-                              // Rating
+                              // التقييم
                               Row(
                                 children: [
                                   ...List.generate(5, (index) {
                                     final filled = index < widget.review.averageRating.floor();
                                     return Padding(
-                                      padding: const EdgeInsets.only(right: 2),
+                                      padding: const EdgeInsets.only(left: 2),
                                       child: Icon(
                                         filled ? Icons.star_rounded : Icons.star_outline_rounded,
                                         color: filled ? AppTheme.warning : AppTheme.textMuted,
@@ -213,8 +211,7 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                   const SizedBox(width: 8),
                                   Text(
                                     widget.review.averageRating.toStringAsFixed(1),
-                                    style: TextStyle(
-                                      fontSize: 14,
+                                    style: AppTextStyles.bodySmall.copyWith(
                                       fontWeight: FontWeight.w600,
                                       color: AppTheme.warning,
                                     ),
@@ -224,11 +221,10 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                               
                               const SizedBox(height: 12),
                               
-                              // Comment Preview
+                              // معاينة التعليق
                               Text(
                                 widget.review.comment,
-                                style: TextStyle(
-                                  fontSize: 13,
+                                style: AppTextStyles.bodySmall.copyWith(
                                   height: 1.5,
                                   color: AppTheme.textLight,
                                 ),
@@ -238,11 +234,11 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                               
                               const SizedBox(height: 16),
                               
-                              // Footer
+                              // التذييل
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  // Date
+                                  // التاريخ
                                   Row(
                                     children: [
                                       Icon(
@@ -253,15 +249,14 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                       const SizedBox(width: 4),
                                       Text(
                                         _formatDate(widget.review.createdAt),
-                                        style: TextStyle(
-                                          fontSize: 12,
+                                        style: AppTextStyles.caption.copyWith(
                                           color: AppTheme.textMuted,
                                         ),
                                       ),
                                     ],
                                   ),
                                   
-                                  // Actions
+                                  // الإجراءات
                                   Row(
                                     children: [
                                       if (widget.review.isPending)
@@ -281,7 +276,7 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                 ],
                               ),
                               
-                              // Indicators
+                              // المؤشرات
                               if (widget.review.images.isNotEmpty || widget.review.hasResponse)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 12),
@@ -312,8 +307,7 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                               const SizedBox(width: 4),
                                               Text(
                                                 '${widget.review.images.length}',
-                                                style: TextStyle(
-                                                  fontSize: 11,
+                                                style: AppTextStyles.caption.copyWith(
                                                   fontWeight: FontWeight.w600,
                                                   color: AppTheme.primaryBlue,
                                                 ),
@@ -347,9 +341,8 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
-                                                'Responded',
-                                                style: TextStyle(
-                                                  fontSize: 11,
+                                                'تم الرد',
+                                                style: AppTextStyles.caption.copyWith(
                                                   fontWeight: FontWeight.w600,
                                                   color: AppTheme.success,
                                                 ),
@@ -434,11 +427,11 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
     
     if (difference.inDays == 0) {
       if (difference.inHours == 0) {
-        return '${difference.inMinutes}m ago';
+        return 'منذ ${difference.inMinutes} دقيقة';
       }
-      return '${difference.inHours}h ago';
+      return 'منذ ${difference.inHours} ساعة';
     } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
+      return 'منذ ${difference.inDays} يوم';
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }

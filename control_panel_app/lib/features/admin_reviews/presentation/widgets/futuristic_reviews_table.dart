@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/review.dart';
 
 class FuturisticReviewsTable extends StatefulWidget {
@@ -101,7 +102,7 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Column(
             children: [
-              // Table Header
+              // رأس الجدول
               Container(
                 decoration: BoxDecoration(
                   border: Border(
@@ -125,35 +126,35 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                   child: Row(
                     children: [
                       _buildHeaderCell(
-                        'User',
+                        'المستخدم',
                         flex: 2,
                         sortKey: 'user',
                         isFirst: true,
                       ),
                       _buildHeaderCell(
-                        'Property',
+                        'العقار',
                         flex: 2,
                         sortKey: 'property',
                       ),
                       _buildHeaderCell(
-                        'Rating',
+                        'التقييم',
                         flex: 1,
                         sortKey: 'rating',
                       ),
                       if (isDesktop) ...[
                         _buildHeaderCell(
-                          'Date',
+                          'التاريخ',
                           flex: 1,
                           sortKey: 'date',
                         ),
                         _buildHeaderCell(
-                          'Status',
+                          'الحالة',
                           flex: 1,
                           sortKey: 'status',
                         ),
                       ],
                       _buildHeaderCell(
-                        'Actions',
+                        'الإجراءات',
                         flex: 1,
                         sortable: false,
                       ),
@@ -162,7 +163,7 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                 ),
               ),
               
-              // Table Body
+              // جسم الجدول
               Expanded(
                 child: ListView.builder(
                   physics: const BouncingScrollPhysics(),
@@ -208,8 +209,8 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: EdgeInsets.only(
-            left: isFirst ? 0 : 8,
-            right: 8,
+            right: isFirst ? 0 : 8,
+            left: 8,
             top: 4,
             bottom: 4,
           ),
@@ -217,8 +218,7 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
             children: [
               Text(
                 title,
-                style: TextStyle(
-                  fontSize: 13,
+                style: AppTextStyles.bodySmall.copyWith(
                   fontWeight: FontWeight.w600,
                   color: isActive 
                       ? AppTheme.primaryBlue
@@ -278,7 +278,7 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
             ),
             child: Row(
               children: [
-                // User Cell
+                // خلية المستخدم
                 Expanded(
                   flex: 2,
                   child: Row(
@@ -293,9 +293,8 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                         child: Center(
                           child: Text(
                             review.userName.substring(0, 2).toUpperCase(),
-                            style: const TextStyle(
+                            style: AppTextStyles.caption.copyWith(
                               color: Colors.white,
-                              fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -308,8 +307,7 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                           children: [
                             Text(
                               review.userName,
-                              style: TextStyle(
-                                fontSize: 14,
+                              style: AppTextStyles.bodySmall.copyWith(
                                 fontWeight: FontWeight.w500,
                                 color: AppTheme.textWhite,
                               ),
@@ -319,8 +317,7 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                               const SizedBox(height: 2),
                               Text(
                                 _formatDate(review.createdAt),
-                                style: TextStyle(
-                                  fontSize: 11,
+                                style: AppTextStyles.caption.copyWith(
                                   color: AppTheme.textMuted,
                                 ),
                               ),
@@ -332,15 +329,14 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                   ),
                 ),
                 
-                // Property Cell
+                // خلية العقار
                 Expanded(
                   flex: 2,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(
                       review.propertyName,
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: AppTextStyles.bodySmall.copyWith(
                         color: AppTheme.textLight,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -348,7 +344,7 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                   ),
                 ),
                 
-                // Rating Cell
+                // خلية التقييم
                 Expanded(
                   flex: 1,
                   child: Row(
@@ -377,8 +373,7 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                             const SizedBox(width: 4),
                             Text(
                               review.averageRating.toStringAsFixed(1),
-                              style: TextStyle(
-                                fontSize: 12,
+                              style: AppTextStyles.caption.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: _getRatingColor(review.averageRating),
                               ),
@@ -390,27 +385,26 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                   ),
                 ),
                 
-                // Date Cell (Desktop only)
+                // خلية التاريخ (سطح المكتب فقط)
                 if (isDesktop) ...[
                   Expanded(
                     flex: 1,
                     child: Text(
                       _formatDate(review.createdAt),
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: AppTextStyles.bodySmall.copyWith(
                         color: AppTheme.textMuted,
                       ),
                     ),
                   ),
                   
-                  // Status Cell
+                  // خلية الحالة
                   Expanded(
                     flex: 1,
                     child: _buildStatusBadge(review),
                   ),
                 ],
                 
-                // Actions Cell
+                // خلية الإجراءات
                 Expanded(
                   flex: 1,
                   child: Row(
@@ -447,10 +441,10 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
             : AppTheme.error;
     
     final text = review.isPending
-        ? 'Pending'
+        ? 'قيد المراجعة'
         : review.isApproved
-            ? 'Approved'
-            : 'Rejected';
+            ? 'معتمد'
+            : 'مرفوض';
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -476,8 +470,7 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
           const SizedBox(width: 6),
           Text(
             text,
-            style: TextStyle(
-              fontSize: 11,
+            style: AppTextStyles.caption.copyWith(
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -528,11 +521,11 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
     final difference = now.difference(date);
     
     if (difference.inDays == 0) {
-      return 'Today';
+      return 'اليوم';
     } else if (difference.inDays == 1) {
-      return 'Yesterday';
+      return 'أمس';
     } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
+      return 'منذ ${difference.inDays} أيام';
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }

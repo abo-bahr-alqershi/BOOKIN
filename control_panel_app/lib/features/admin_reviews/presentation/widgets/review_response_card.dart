@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/review_response.dart';
 
 class ReviewResponseCard extends StatefulWidget {
@@ -87,7 +88,7 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Column(
               children: [
-                // Main Content
+                // المحتوى الرئيسي
                 InkWell(
                   onTap: () {
                     HapticFeedback.lightImpact();
@@ -106,10 +107,10 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header
+                        // الرأس
                         Row(
                           children: [
-                            // Admin Avatar
+                            // صورة المدير
                             Container(
                               width: 40,
                               height: 40,
@@ -139,7 +140,7 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                             ),
                             const SizedBox(width: 12),
                             
-                            // Response Info
+                            // معلومات الرد
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,8 +149,7 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                                     children: [
                                       Text(
                                         widget.response.respondedByName,
-                                        style: TextStyle(
-                                          fontSize: 14,
+                                        style: AppTextStyles.bodySmall.copyWith(
                                           fontWeight: FontWeight.w600,
                                           color: AppTheme.textWhite,
                                         ),
@@ -169,9 +169,8 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                                           ),
                                         ),
                                         child: Text(
-                                          'Admin Response',
-                                          style: TextStyle(
-                                            fontSize: 10,
+                                          'رد الإدارة',
+                                          style: AppTextStyles.caption.copyWith(
                                             fontWeight: FontWeight.w600,
                                             color: AppTheme.success,
                                           ),
@@ -190,17 +189,15 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                                       const SizedBox(width: 4),
                                       Text(
                                         _formatDate(widget.response.createdAt),
-                                        style: TextStyle(
-                                          fontSize: 12,
+                                        style: AppTextStyles.caption.copyWith(
                                           color: AppTheme.textMuted,
                                         ),
                                       ),
                                       if (widget.response.updatedAt != null) ...[
                                         const SizedBox(width: 8),
                                         Text(
-                                          '(edited)',
-                                          style: TextStyle(
-                                            fontSize: 11,
+                                          '(معدّل)',
+                                          style: AppTextStyles.caption.copyWith(
                                             fontStyle: FontStyle.italic,
                                             color: AppTheme.textMuted.withOpacity(0.7),
                                           ),
@@ -212,7 +209,7 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                               ),
                             ),
                             
-                            // Actions
+                            // الإجراءات
                             Row(
                               children: [
                                 AnimatedRotation(
@@ -237,11 +234,10 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                         
                         const SizedBox(height: 12),
                         
-                        // Response Text Preview
+                        // معاينة نص الرد
                         Text(
                           widget.response.responseText,
-                          style: TextStyle(
-                            fontSize: 13,
+                          style: AppTextStyles.bodySmall.copyWith(
                             height: 1.5,
                             color: AppTheme.textLight,
                           ),
@@ -255,7 +251,7 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                   ),
                 ),
                 
-                // Expanded Details
+                // التفاصيل الموسعة
                 SizeTransition(
                   sizeFactor: _expandAnimation,
                   child: Container(
@@ -272,18 +268,18 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Response ID
+                          // معرف الرد
                           _buildDetailRow(
                             icon: Icons.tag,
-                            label: 'Response ID',
+                            label: 'معرف الرد',
                             value: widget.response.id,
                           ),
                           const SizedBox(height: 12),
                           
-                          // Created Date
+                          // تاريخ الإنشاء
                           _buildDetailRow(
                             icon: Icons.calendar_today_outlined,
-                            label: 'Created',
+                            label: 'تاريخ الإنشاء',
                             value: _formatFullDate(widget.response.createdAt),
                           ),
                           
@@ -291,7 +287,7 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                             const SizedBox(height: 12),
                             _buildDetailRow(
                               icon: Icons.edit_calendar_outlined,
-                              label: 'Last Updated',
+                              label: 'آخر تحديث',
                               value: _formatFullDate(widget.response.updatedAt!),
                             ),
                           ],
@@ -363,16 +359,14 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 11,
+                style: AppTextStyles.caption.copyWith(
                   color: AppTheme.textMuted,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: TextStyle(
-                  fontSize: 12,
+                style: AppTextStyles.caption.copyWith(
                   fontWeight: FontWeight.w500,
                   color: AppTheme.textWhite,
                 ),
@@ -420,18 +414,15 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Delete Response?',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
+                  'حذف الرد؟',
+                  style: AppTextStyles.heading3.copyWith(
                     color: AppTheme.textWhite,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'This action cannot be undone.',
-                  style: TextStyle(
-                    fontSize: 14,
+                  'لا يمكن التراجع عن هذا الإجراء',
+                  style: AppTextStyles.bodySmall.copyWith(
                     color: AppTheme.textMuted,
                   ),
                 ),
@@ -445,8 +436,8 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         child: Text(
-                          'Cancel',
-                          style: TextStyle(
+                          'إلغاء',
+                          style: AppTextStyles.buttonMedium.copyWith(
                             color: AppTheme.textLight,
                           ),
                         ),
@@ -466,11 +457,10 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'Delete',
-                          style: TextStyle(
+                        child: Text(
+                          'حذف',
+                          style: AppTextStyles.buttonMedium.copyWith(
                             color: Colors.white,
-                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -492,15 +482,15 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
     if (difference.inDays == 0) {
       if (difference.inHours == 0) {
         if (difference.inMinutes == 0) {
-          return 'Just now';
+          return 'الآن';
         }
-        return '${difference.inMinutes}m ago';
+        return 'منذ ${difference.inMinutes} دقيقة';
       }
-      return '${difference.inHours}h ago';
+      return 'منذ ${difference.inHours} ساعة';
     } else if (difference.inDays == 1) {
-      return 'Yesterday';
+      return 'أمس';
     } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
+      return 'منذ ${difference.inDays} أيام';
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }
@@ -508,13 +498,13 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
   
   String _formatFullDate(DateTime date) {
     final months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
     ];
     
     final hour = date.hour.toString().padLeft(2, '0');
     final minute = date.minute.toString().padLeft(2, '0');
     
-    return '${months[date.month - 1]} ${date.day}, ${date.year} at $hour:$minute';
+    return '${date.day} ${months[date.month - 1]}، ${date.year} الساعة $hour:$minute';
   }
 }

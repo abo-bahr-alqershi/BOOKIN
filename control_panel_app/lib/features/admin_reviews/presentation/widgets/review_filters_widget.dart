@@ -25,7 +25,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
   final TextEditingController _searchController = TextEditingController();
   bool _isExpanded = false;
   
-  // Filter values
+  // قيم الفلاتر
   String _searchQuery = '';
   double? _minRating;
   bool? _isPending;
@@ -118,12 +118,12 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Column(
             children: [
-              // Main Filter Bar
+              // شريط الفلتر الرئيسي
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    // Search Field
+                    // حقل البحث
                     Expanded(
                       flex: isDesktop ? 3 : 2,
                       child: _buildSearchField(),
@@ -131,10 +131,10 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
                     
                     const SizedBox(width: 12),
                     
-                    // Quick Filters (Desktop)
+                    // فلاتر سريعة (سطح المكتب)
                     if (isDesktop) ...[
                       _buildQuickFilter(
-                        label: 'Pending',
+                        label: 'قيد المراجعة',
                         isActive: _isPending == true,
                         onTap: () {
                           setState(() => _isPending = _isPending == true ? null : true);
@@ -143,7 +143,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
                       ),
                       const SizedBox(width: 8),
                       _buildQuickFilter(
-                        label: 'With Response',
+                        label: 'مع رد',
                         isActive: _hasResponse == true,
                         onTap: () {
                           setState(() => _hasResponse = _hasResponse == true ? null : true);
@@ -153,10 +153,10 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
                       const SizedBox(width: 12),
                     ],
                     
-                    // Expand Button
+                    // زر التوسع
                     _buildExpandButton(),
                     
-                    // Clear Button
+                    // زر المسح
                     if (_activeFiltersCount > 0) ...[
                       const SizedBox(width: 8),
                       _buildClearButton(),
@@ -165,7 +165,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
                 ),
               ),
               
-              // Expanded Filters
+              // الفلاتر الموسعة
               SizeTransition(
                 sizeFactor: _expandAnimation,
                 child: Container(
@@ -199,7 +199,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
         border: Border.all(
           color: _searchController.text.isNotEmpty
               ? AppTheme.primaryBlue.withOpacity(0.3)
-              : AppTheme.glowWhite.withOpacity(0.2),
+              : AppTheme.darkBorder.withOpacity(0.2),
           width: 0.5,
         ),
       ),
@@ -208,12 +208,14 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
         style: TextStyle(
           fontSize: 14,
           color: AppTheme.textWhite,
+          fontFamily: 'Cairo',
         ),
         decoration: InputDecoration(
-          hintText: 'Search reviews...',
+          hintText: 'البحث في التقييمات...',
           hintStyle: TextStyle(
             fontSize: 14,
             color: AppTheme.textMuted.withOpacity(0.5),
+            fontFamily: 'Cairo',
           ),
           prefixIcon: Icon(
             Icons.search,
@@ -286,6 +288,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: isActive ? Colors.white : AppTheme.textMuted,
+            fontFamily: 'Cairo',
           ),
         ),
       ),
@@ -380,12 +383,12 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
   Widget _buildExpandedFilters(bool isDesktop) {
     return Column(
       children: [
-        // Rating Filter
+        // فلتر التقييم
         _buildRatingFilter(),
         
         const SizedBox(height: 16),
         
-        // Status Filters
+        // فلاتر الحالة
         Row(
           children: [
             Expanded(
@@ -413,11 +416,12 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Minimum Rating',
+          'الحد الأدنى للتقييم',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: AppTheme.textLight,
+            fontFamily: 'Cairo',
           ),
         ),
         const SizedBox(height: 12),
@@ -427,7 +431,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
             final isSelected = _minRating == rating;
             
             return Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(left: 8),
               child: GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
@@ -491,11 +495,12 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Status',
+          'الحالة',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: AppTheme.textLight,
+            fontFamily: 'Cairo',
           ),
         ),
         const SizedBox(height: 12),
@@ -504,7 +509,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
           runSpacing: 8,
           children: [
             _buildChip(
-              label: 'Pending',
+              label: 'قيد المراجعة',
               isSelected: _isPending == true,
               onTap: () {
                 setState(() => _isPending = _isPending == true ? null : true);
@@ -512,7 +517,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
               },
             ),
             _buildChip(
-              label: 'Approved',
+              label: 'معتمد',
               isSelected: _isPending == false,
               onTap: () {
                 setState(() => _isPending = _isPending == false ? null : false);
@@ -520,7 +525,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
               },
             ),
             _buildChip(
-              label: 'Has Response',
+              label: 'مع رد',
               isSelected: _hasResponse == true,
               onTap: () {
                 setState(() => _hasResponse = _hasResponse == true ? null : true);
@@ -535,22 +540,23 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
   
   Widget _buildDateRangeFilter() {
     final ranges = {
-      'all': 'All Time',
-      'today': 'Today',
-      'week': 'This Week',
-      'month': 'This Month',
-      'year': 'This Year',
+      'all': 'كل الأوقات',
+      'today': 'اليوم',
+      'week': 'هذا الأسبوع',
+      'month': 'هذا الشهر',
+      'year': 'هذه السنة',
     };
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Date Range',
+          'النطاق الزمني',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: AppTheme.textLight,
+            fontFamily: 'Cairo',
           ),
         ),
         const SizedBox(height: 12),
@@ -576,6 +582,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
             style: TextStyle(
               fontSize: 13,
               color: AppTheme.textWhite,
+              fontFamily: 'Cairo',
             ),
             items: ranges.entries.map((entry) {
               return DropdownMenuItem(
@@ -625,6 +632,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: isSelected ? Colors.white : AppTheme.textMuted,
+            fontFamily: 'Cairo',
           ),
         ),
       ),

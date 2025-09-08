@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/review.dart';
 
 class ReviewStatsCard extends StatefulWidget {
@@ -131,7 +132,7 @@ class _ReviewStatsCardState extends State<ReviewStatsCard>
               mainAxisSpacing: 16,
               children: [
                 _buildStatCard(
-                  title: 'Total Reviews',
+                  title: 'إجمالي التقييمات',
                   value: widget.totalReviews.toString(),
                   icon: Icons.reviews_outlined,
                   gradient: [
@@ -141,7 +142,7 @@ class _ReviewStatsCardState extends State<ReviewStatsCard>
                   index: 0,
                 ),
                 _buildStatCard(
-                  title: 'Pending',
+                  title: 'قيد المراجعة',
                   value: widget.pendingReviews.toString(),
                   icon: Icons.pending_outlined,
                   gradient: [
@@ -152,7 +153,7 @@ class _ReviewStatsCardState extends State<ReviewStatsCard>
                   isPulsing: widget.pendingReviews > 0,
                 ),
                 _buildStatCard(
-                  title: 'Average Rating',
+                  title: 'متوسط التقييم',
                   value: widget.averageRating.toStringAsFixed(1),
                   icon: Icons.star_rounded,
                   gradient: [
@@ -163,7 +164,7 @@ class _ReviewStatsCardState extends State<ReviewStatsCard>
                   suffix: '/ 5.0',
                 ),
                 _buildStatCard(
-                  title: 'Response Rate',
+                  title: 'معدل الرد',
                   value: widget.totalReviews > 0
                       ? '${((stats['withResponse'] / widget.totalReviews) * 100).toStringAsFixed(0)}%'
                       : '0%',
@@ -232,7 +233,7 @@ class _ReviewStatsCardState extends State<ReviewStatsCard>
                       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                       child: Stack(
                         children: [
-                          // Background Gradient Orb
+                          // كرة التدرج في الخلفية
                           Positioned(
                             top: -30,
                             right: -30,
@@ -251,14 +252,14 @@ class _ReviewStatsCardState extends State<ReviewStatsCard>
                             ),
                           ),
                           
-                          // Content
+                          // المحتوى
                           Padding(
                             padding: const EdgeInsets.all(20),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                // Icon
+                                // الأيقونة
                                 Container(
                                   width: 48,
                                   height: 48,
@@ -282,14 +283,13 @@ class _ReviewStatsCardState extends State<ReviewStatsCard>
                                   ),
                                 ),
                                 
-                                // Text
+                                // النص
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       title,
-                                      style: TextStyle(
-                                        fontSize: 12,
+                                      style: AppTextStyles.caption.copyWith(
                                         fontWeight: FontWeight.w500,
                                         color: AppTheme.textMuted,
                                       ),
@@ -319,8 +319,7 @@ class _ReviewStatsCardState extends State<ReviewStatsCard>
                                             
                                             return Text(
                                               displayValue,
-                                              style: TextStyle(
-                                                fontSize: 24,
+                                              style: AppTextStyles.heading3.copyWith(
                                                 fontWeight: FontWeight.w700,
                                                 color: AppTheme.textWhite,
                                               ),
@@ -331,8 +330,7 @@ class _ReviewStatsCardState extends State<ReviewStatsCard>
                                           const SizedBox(width: 4),
                                           Text(
                                             suffix,
-                                            style: TextStyle(
-                                              fontSize: 14,
+                                            style: AppTextStyles.bodySmall.copyWith(
                                               fontWeight: FontWeight.w500,
                                               color: AppTheme.textMuted.withOpacity(0.7),
                                             ),
@@ -346,7 +344,7 @@ class _ReviewStatsCardState extends State<ReviewStatsCard>
                             ),
                           ),
                           
-                          // Shimmer Effect
+                          // تأثير اللمعان
                           if (isPulsing)
                             Positioned.fill(
                               child: AnimatedBuilder(

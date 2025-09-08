@@ -5,9 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:ui';
 import 'dart:math' as math;
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
 
 class AdminHubPage extends StatefulWidget {
   const AdminHubPage({super.key});
@@ -16,106 +16,104 @@ class AdminHubPage extends StatefulWidget {
   State<AdminHubPage> createState() => _AdminHubPageState();
 }
 
-class _AdminHubPageState extends State<AdminHubPage> 
+class _AdminHubPageState extends State<AdminHubPage>
     with TickerProviderStateMixin {
   // Animation Controllers
-  late final AnimationController _glowController;
-  late final AnimationController _floatController;
-  late final AnimationController _pulseController;
-  late final AnimationController _entranceController;
+  late AnimationController _mainAnimationController;
+  late AnimationController _floatingAnimationController;
+  late AnimationController _pulseAnimationController;
   
   // Animations
-  late final Animation<double> _glowAnim;
-  late final Animation<double> _floatAnim;
-  late final Animation<double> _pulseAnim;
-  late final Animation<double> _entranceAnim;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _scaleAnimation;
   
   // UI State
-  String? _hoveredCard;
   final ScrollController _scrollController = ScrollController();
+  bool _showFloatingHeader = false;
+  int? _hoveredCardIndex;
   
-  // Stats (في الواقع يجب جلبها من backend)
+  // Stats Data (Should be fetched from backend)
   final Map<String, dynamic> _stats = {
     'properties': 156,
     'users': 2341,
     'bookings': 89,
-    'revenue': '45.2K',
+    'revenue': 45.2,
+    'growth': 12.5,
+    'occupancy': 78,
   };
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
+    _setupScrollListener();
   }
 
   void _initializeAnimations() {
-    // Glow Animation
-    _glowController = AnimationController(
+    // Main entrance animation
+    _mainAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
       vsync: this,
+    );
+    
+    // Floating animation for background elements
+    _floatingAnimationController = AnimationController(
       duration: const Duration(seconds: 4),
+      vsync: this,
     )..repeat(reverse: true);
     
-    _glowAnim = Tween<double>(
-      begin: 0.3,
+    // Pulse animation for interactive elements
+    _pulseAnimationController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+    
+    // Setup animations
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _glowController,
-      curve: Curves.easeInOut,
+      parent: _mainAnimationController,
+      curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
     ));
     
-    // Float Animation
-    _floatController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 6),
-    )..repeat(reverse: true);
-    
-    _floatAnim = Tween<double>(
-      begin: -10,
-      end: 10,
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.2),
+      end: Offset.zero,
     ).animate(CurvedAnimation(
-      parent: _floatController,
-      curve: Curves.easeInOut,
+      parent: _mainAnimationController,
+      curve: const Interval(0.2, 0.7, curve: Curves.easeOutCubic),
     ));
     
-    // Pulse Animation
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
-    
-    _pulseAnim = Tween<double>(
-      begin: 0.95,
-      end: 1.05,
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
+      parent: _mainAnimationController,
+      curve: const Interval(0.3, 0.8, curve: Curves.easeOutBack),
     ));
     
-    // Entrance Animation
-    _entranceController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    );
-    
-    _entranceAnim = CurvedAnimation(
-      parent: _entranceController,
-      curve: Curves.easeOutCubic,
-    );
-    
-    // Start entrance animation
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (mounted) {
-        _entranceController.forward();
+    // Start animations
+    _mainAnimationController.forward();
+  }
+  
+  void _setupScrollListener() {
+    _scrollController.addListener(() {
+      final shouldShow = _scrollController.offset > 200;
+      if (shouldShow != _showFloatingHeader) {
+        setState(() {
+          _showFloatingHeader = shouldShow;
+        });
       }
     });
   }
 
   @override
   void dispose() {
-    _glowController.dispose();
-    _floatController.dispose();
-    _pulseController.dispose();
-    _entranceController.dispose();
+    _mainAnimationController.dispose();
+    _floatingAnimationController.dispose();
+    _pulseAnimationController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -123,131 +121,199 @@ class _AdminHubPageState extends State<AdminHubPage>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isSmallScreen = size.width < 600;
-    final isMediumScreen = size.width < 1024;
+    final isTablet = size.width > 600;
+    final isDesktop = size.width > 1200;
     
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: Stack(
         children: [
-          // Premium Background
-          _buildPremiumBackground(),
+          // Animated Background
+          _buildAnimatedBackground(),
           
           // Main Content
           CustomScrollView(
             controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // App Bar
-              _buildSliverAppBar(),
+              // Premium App Bar
+              _buildPremiumAppBar(context, isDesktop),
               
-              // Content
+              // Hero Section
+              SliverToBoxAdapter(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: _buildHeroSection(isDesktop, isTablet),
+                  ),
+                ),
+              ),
+              
+              // Quick Stats
+              SliverToBoxAdapter(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: _buildQuickStats(isDesktop, isTablet),
+                  ),
+                ),
+              ),
+              
+              // Admin Features Grid
               SliverPadding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: isSmallScreen ? 16 : 24,
-                  vertical: 24,
+                  horizontal: isDesktop ? 32 : 20,
+                  vertical: 32,
                 ),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    // Welcome Section
-                    FadeTransition(
-                      opacity: _entranceAnim,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, 0.1),
-                          end: Offset.zero,
-                        ).animate(_entranceAnim),
-                        child: _buildWelcomeSection(),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Quick Stats
-                    FadeTransition(
-                      opacity: _entranceAnim,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, 0.15),
-                          end: Offset.zero,
-                        ).animate(CurvedAnimation(
-                          parent: _entranceAnim,
-                          curve: const Interval(0.2, 1.0),
-                        )),
-                        child: _buildQuickStats(isSmallScreen),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 40),
-                    
-                    // Section Title
-                    FadeTransition(
-                      opacity: _entranceAnim,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, 0.2),
-                          end: Offset.zero,
-                        ).animate(CurvedAnimation(
-                          parent: _entranceAnim,
-                          curve: const Interval(0.3, 1.0),
-                        )),
-                        child: _buildSectionTitle(),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Admin Cards Grid
-                    FadeTransition(
-                      opacity: _entranceAnim,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, 0.25),
-                          end: Offset.zero,
-                        ).animate(CurvedAnimation(
-                          parent: _entranceAnim,
-                          curve: const Interval(0.4, 1.0),
-                        )),
-                        child: _buildAdminGrid(
-                          isSmallScreen: isSmallScreen,
-                          isMediumScreen: isMediumScreen,
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 40),
-                  ]),
+                sliver: SliverToBoxAdapter(
+                  child: _buildAdminFeaturesSection(isDesktop, isTablet),
                 ),
+              ),
+              
+              // Bottom Padding
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 100),
               ),
             ],
           ),
+          
+          // Floating Header
+          if (_showFloatingHeader) _buildFloatingHeader(context),
+          
+          // Floating Action Button
+          if (_showFloatingHeader) _buildFloatingActionButton(),
         ],
       ),
     );
   }
 
-  Widget _buildSliverAppBar() {
+  Widget _buildAnimatedBackground() {
+    return Stack(
+      children: [
+        // Gradient Background
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.darkBackground,
+                AppTheme.darkBackground2,
+                AppTheme.darkBackground3.withOpacity(0.5),
+              ],
+            ),
+          ),
+        ),
+        
+        // Animated Orbs
+        AnimatedBuilder(
+          animation: _floatingAnimationController,
+          builder: (context, child) {
+            return Stack(
+              children: [
+                // Top Right Orb
+                Positioned(
+                  top: -100 + (30 * _floatingAnimationController.value),
+                  right: -100,
+                  child: Container(
+                    width: 400,
+                    height: 400,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          AppTheme.primaryBlue.withOpacity(0.15),
+                          AppTheme.primaryBlue.withOpacity(0.05),
+                          AppTheme.primaryBlue.withOpacity(0.01),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                
+                // Bottom Left Orb
+                Positioned(
+                  bottom: -200 + (20 * _floatingAnimationController.value),
+                  left: -150,
+                  child: Container(
+                    width: 500,
+                    height: 500,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          AppTheme.primaryPurple.withOpacity(0.12),
+                          AppTheme.primaryPurple.withOpacity(0.04),
+                          AppTheme.primaryPurple.withOpacity(0.01),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                
+                // Center Orb
+                Positioned(
+                  top: MediaQuery.of(context).size.height * 0.5,
+                  right: MediaQuery.of(context).size.width * 0.3,
+                  child: Transform.scale(
+                    scale: 0.8 + (0.2 * _floatingAnimationController.value),
+                    child: Container(
+                      width: 300,
+                      height: 300,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            AppTheme.primaryViolet.withOpacity(0.08),
+                            AppTheme.primaryViolet.withOpacity(0.02),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        
+        // Subtle Grid Pattern
+        CustomPaint(
+          size: MediaQuery.of(context).size,
+          painter: _GridPatternPainter(
+            color: AppTheme.darkBorder.withOpacity(0.03),
+            spacing: 60,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPremiumAppBar(BuildContext context, bool isDesktop) {
     return SliverAppBar(
       expandedHeight: 0,
       floating: true,
-      backgroundColor: AppTheme.darkBackground.withOpacity(0.8),
+      backgroundColor: Colors.transparent,
       elevation: 0,
-      flexibleSpace: ClipRect(
+      flexibleSpace: ClipRRect(
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AppTheme.darkBackground.withOpacity(0.9),
-                  AppTheme.darkBackground.withOpacity(0.7),
+                  AppTheme.darkCard.withOpacity(0.8),
+                  AppTheme.darkCard.withOpacity(0.4),
                 ],
               ),
               border: Border(
                 bottom: BorderSide(
-                  color: AppTheme.darkBorder.withOpacity(0.2),
+                  color: AppTheme.glowBlue.withOpacity(0.1),
                   width: 0.5,
                 ),
               ),
@@ -257,53 +323,102 @@ class _AdminHubPageState extends State<AdminHubPage>
       ),
       title: Row(
         children: [
-          // Logo
+          // Logo with Glow
           Container(
-            width: 36,
-            height: 36,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               gradient: AppTheme.primaryGradient,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primaryBlue.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: AppTheme.glowBlue.withOpacity(0.5),
+                  blurRadius: 20,
+                  spreadRadius: 2,
                 ),
               ],
             ),
             child: const Icon(
               Icons.dashboard_rounded,
               color: Colors.white,
-              size: 20,
+              size: 24,
             ),
           ),
-          const SizedBox(width: 12),
-          ShaderMask(
-            shaderCallback: (rect) => AppTheme.primaryGradient.createShader(rect),
-            child: Text(
-              'لوحة التحكم',
-              style: AppTextStyles.heading2.copyWith(
-                color: Colors.white,
-                fontSize: 20,
-              ),
+          const SizedBox(width: 16),
+          
+          // Title
+          Expanded( // Fix overflow issue
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'لوحة التحكم',
+                  style: AppTextStyles.heading2.copyWith(
+                    color: AppTheme.textWhite,
+                    fontSize: isDesktop ? 20 : 18,
+                  ),
+                ),
+                Text(
+                  'نظام الإدارة',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted.withOpacity(0.7),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
       actions: [
+        // Search Button
+        _buildAppBarAction(
+          icon: Icons.search_rounded,
+          onTap: () => _showSearchDialog(context),
+        ),
+        
         // Notifications
         _buildAppBarAction(
-          icon: Icons.notifications_outlined,
+          icon: Icons.notifications_none_rounded,
           onTap: () => context.push('/notifications'),
           badge: '3',
         ),
-        // Settings
-        _buildAppBarAction(
-          icon: Icons.settings_outlined,
-          onTap: () => context.push('/settings'),
+        
+        // Profile
+        Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              context.push('/profile');
+            },
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primaryPurple,
+                    AppTheme.primaryViolet,
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryPurple.withOpacity(0.3),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.person_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          ),
         ),
-        const SizedBox(width: 16),
       ],
     );
   }
@@ -313,38 +428,51 @@ class _AdminHubPageState extends State<AdminHubPage>
     required VoidCallback onTap,
     String? badge,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          IconButton(
-            icon: Icon(
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        IconButton(
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: AppTheme.glassDark.withOpacity(0.3),
+            ),
+            child: Icon(
               icon,
               color: AppTheme.textLight,
-              size: 22,
+              size: 20,
             ),
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              onTap();
-            },
           ),
-          if (badge != null)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppTheme.error, AppTheme.primaryViolet],
+        ),
+        if (badge != null)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppTheme.error, AppTheme.primaryViolet],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.error.withOpacity(0.5),
+                    blurRadius: 8,
+                    spreadRadius: 1,
                   ),
-                  shape: BoxShape.circle,
-                ),
-                constraints: const BoxConstraints(
-                  minWidth: 16,
-                  minHeight: 16,
-                ),
+                ],
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 18,
+                minHeight: 18,
+              ),
+              child: Center(
                 child: Text(
                   badge,
                   style: AppTextStyles.caption.copyWith(
@@ -352,111 +480,15 @@ class _AdminHubPageState extends State<AdminHubPage>
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 
-  Widget _buildPremiumBackground() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_glowAnim, _floatAnim]),
-      builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.darkBackground,
-                AppTheme.darkBackground2,
-                AppTheme.darkBackground3,
-              ],
-            ),
-          ),
-          child: Stack(
-            children: [
-              // Gradient Orbs
-              Positioned(
-                top: -100 + _floatAnim.value,
-                right: -50,
-                child: Transform.scale(
-                  scale: _pulseAnim.value,
-                  child: Container(
-                    width: 300,
-                    height: 300,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          AppTheme.primaryBlue.withOpacity(0.08 * _glowAnim.value),
-                          AppTheme.primaryBlue.withOpacity(0.02 * _glowAnim.value),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              
-              Positioned(
-                bottom: -150 + (_floatAnim.value * -1),
-                left: -100,
-                child: Container(
-                  width: 400,
-                  height: 400,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        AppTheme.primaryPurple.withOpacity(0.06 * _glowAnim.value),
-                        AppTheme.primaryPurple.withOpacity(0.01 * _glowAnim.value),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              
-              Positioned(
-                top: MediaQuery.of(context).size.height * 0.4,
-                right: MediaQuery.of(context).size.width * 0.3,
-                child: Transform.scale(
-                  scale: 1 / _pulseAnim.value,
-                  child: Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          AppTheme.neonPurple.withOpacity(0.05 * _glowAnim.value),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              
-              // Grid Pattern
-              CustomPaint(
-                size: MediaQuery.of(context).size,
-                painter: _GridPatternPainter(
-                  color: AppTheme.darkBorder.withOpacity(0.03),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildWelcomeSection() {
+  Widget _buildHeroSection(bool isDesktop, bool isTablet) {
     final hour = DateTime.now().hour;
     String greeting;
     IconData greetingIcon;
@@ -473,107 +505,250 @@ class _AdminHubPageState extends State<AdminHubPage>
     }
     
     return Container(
-      padding: const EdgeInsets.all(24),
+      margin: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 32 : 20,
+        vertical: 24,
+      ),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppTheme.primaryBlue.withOpacity(0.05),
-            AppTheme.primaryPurple.withOpacity(0.03),
+            AppTheme.darkCard.withOpacity(0.6),
+            AppTheme.darkCard.withOpacity(0.3),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.2),
+          color: AppTheme.glowBlue.withOpacity(0.1),
           width: 0.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryBlue.withOpacity(0.1),
+            blurRadius: 30,
+            spreadRadius: 5,
+          ),
+        ],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      greetingIcon,
-                      color: AppTheme.warning,
-                      size: 24,
+                    // Greeting
+                    Row(
+                      children: [
+                        AnimatedBuilder(
+                          animation: _pulseAnimationController,
+                          builder: (context, child) {
+                            return Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppTheme.warning.withOpacity(0.2),
+                                    AppTheme.warning.withOpacity(0.1),
+                                  ],
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.warning.withOpacity(
+                                      0.2 * _pulseAnimationController.value,
+                                    ),
+                                    blurRadius: 20,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                greetingIcon,
+                                color: AppTheme.warning,
+                                size: 24,
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          greeting,
+                          style: AppTextStyles.displaySmall.copyWith(
+                            color: AppTheme.textWhite,
+                            fontSize: isDesktop ? 28 : 24,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // Welcome Message
                     Text(
-                      greeting,
-                      style: AppTextStyles.heading2.copyWith(
-                        color: AppTheme.textWhite,
-                        fontSize: 24,
+                      'مرحباً بك في لوحة التحكم الخاصة بك',
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        color: AppTheme.textLight,
                       ),
+                    ),
+                    
+                    const SizedBox(height: 6),
+                    
+                    // Last Login
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          size: 14,
+                          color: AppTheme.textMuted.withOpacity(0.7),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'آخر تسجيل دخول: ${_formatLastLogin()}',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppTheme.textMuted.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Quick Actions
+                    Row(
+                      children: [
+                        _buildQuickActionButton(
+                          label: 'إضافة عقار',
+                          icon: Icons.add_business,
+                          onTap: () => context.push('/admin/properties/add'),
+                        ),
+                        const SizedBox(width: 12),
+                        _buildQuickActionButton(
+                          label: 'التقارير',
+                          icon: Icons.assessment_outlined,
+                          onTap: () => context.push('/admin/reports'),
+                          isPrimary: false,
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'مرحباً بك في لوحة التحكم الخاصة بك',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'آخر تسجيل دخول: ${_formatLastLogin()}',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppTheme.textMuted.withOpacity(0.7),
-                  ),
+              ),
+              
+              if (!isTablet) const SizedBox.shrink()
+              else ...[
+                const SizedBox(width: 32),
+                // Decorative Element
+                AnimatedBuilder(
+                  animation: _floatingAnimationController,
+                  builder: (context, child) {
+                    return Transform.translate(
+                      offset: Offset(0, 10 * _floatingAnimationController.value),
+                      child: Container(
+                        width: isDesktop ? 120 : 100,
+                        height: isDesktop ? 120 : 100,
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.primaryGradient,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryBlue.withOpacity(0.3),
+                              blurRadius: 30,
+                              spreadRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.admin_panel_settings_rounded,
+                          color: Colors.white,
+                          size: isDesktop ? 56 : 48,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
-            ),
+            ],
           ),
-          // Decorative Element
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryBlue.withOpacity(0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.admin_panel_settings_rounded,
-              color: Colors.white,
-              size: 40,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildQuickStats(bool isSmallScreen) {
+  Widget _buildQuickActionButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+    bool isPrimary = true,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: isPrimary ? AppTheme.primaryGradient : null,
+          color: isPrimary ? null : AppTheme.glassDark.withOpacity(0.3),
+          border: isPrimary
+              ? null
+              : Border.all(
+                  color: AppTheme.darkBorder.withOpacity(0.3),
+                  width: 0.5,
+                ),
+          boxShadow: isPrimary
+              ? [
+                  BoxShadow(
+                    color: AppTheme.primaryBlue.withOpacity(0.3),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isPrimary ? Colors.white : AppTheme.textLight,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: AppTextStyles.buttonMedium.copyWith(
+                color: isPrimary ? Colors.white : AppTheme.textLight,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickStats(bool isDesktop, bool isTablet) {
     final stats = [
       _StatItem(
         label: 'العقارات',
         value: _stats['properties'].toString(),
         icon: Icons.apartment_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.primaryBlue, AppTheme.primaryCyan],
-        ),
+        gradient: [AppTheme.primaryBlue, AppTheme.primaryCyan],
         trend: '+12%',
         isPositive: true,
       ),
       _StatItem(
         label: 'المستخدمون',
-        value: _stats['users'].toString(),
+        value: '${(_stats['users'] / 1000).toStringAsFixed(1)}ك',
         icon: Icons.people_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.primaryPurple, AppTheme.primaryViolet],
-        ),
+        gradient: [AppTheme.primaryPurple, AppTheme.primaryViolet],
         trend: '+8%',
         isPositive: true,
       ),
@@ -581,364 +756,645 @@ class _AdminHubPageState extends State<AdminHubPage>
         label: 'الحجوزات',
         value: _stats['bookings'].toString(),
         icon: Icons.calendar_month_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.neonGreen, AppTheme.primaryCyan],
-        ),
+        gradient: [AppTheme.neonGreen, AppTheme.primaryCyan],
         trend: '-3%',
         isPositive: false,
       ),
       _StatItem(
         label: 'الإيرادات',
-        value: '\$${_stats['revenue']}',
+        value: '\$${_stats['revenue']}ك',
         icon: Icons.attach_money_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.warning, AppTheme.neonPurple],
-        ),
+        gradient: [AppTheme.warning, AppTheme.neonPurple],
         trend: '+24%',
+        isPositive: true,
+      ),
+      _StatItem(
+        label: 'النمو',
+        value: '${_stats['growth']}%',
+        icon: Icons.trending_up_rounded,
+        gradient: [AppTheme.success, AppTheme.neonGreen],
+        trend: '+5%',
+        isPositive: true,
+      ),
+      _StatItem(
+        label: 'الإشغال',
+        value: '${_stats['occupancy']}%',
+        icon: Icons.hotel_rounded,
+        gradient: [AppTheme.info, AppTheme.neonBlue],
+        trend: '+10%',
         isPositive: true,
       ),
     ];
     
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: isSmallScreen ? 2 : 4,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: isSmallScreen ? 1.3 : 1.5,
+    return Container(
+      margin: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 32 : 20,
       ),
-      itemCount: stats.length,
-      itemBuilder: (context, index) {
-        return TweenAnimationBuilder<double>(
-          duration: Duration(milliseconds: 400 + (index * 100)),
-          tween: Tween(begin: 0.0, end: 1.0),
-          curve: Curves.easeOutCubic, // تغيير المنحنى لتجنب تجاوز القيمة 1.0
-          builder: (context, value, child) {
-            // التأكد من أن القيمة بين 0 و 1
-            final clampedValue = value.clamp(0.0, 1.0);
-            return Transform.scale(
-              scale: 0.8 + (0.2 * clampedValue), // تأثير scale أكثر نعومة
-              child: Opacity(
-                opacity: clampedValue,
-                child: _buildStatCard(stats[index]),
+      child: AnimationLimiter(
+        child: GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: isDesktop ? 6 : (isTablet ? 3 : 2),
+            childAspectRatio: isDesktop ? 1.3 : 1.2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+          ),
+          itemCount: stats.length,
+          itemBuilder: (context, index) {
+            return AnimationConfiguration.staggeredGrid(
+              position: index,
+              duration: const Duration(milliseconds: 600),
+              columnCount: isDesktop ? 6 : (isTablet ? 3 : 2),
+              child: ScaleAnimation(
+                child: FadeInAnimation(
+                  child: _buildStatCard(stats[index]),
+                ),
               ),
             );
           },
-        );
-      },
+        ),
+      ),
     );
   }
 
   Widget _buildStatCard(_StatItem stat) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
+            AppTheme.darkCard.withOpacity(0.7),
             AppTheme.darkCard.withOpacity(0.5),
-            AppTheme.darkCard.withOpacity(0.3),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: AppTheme.darkBorder.withOpacity(0.2),
           width: 0.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: stat.gradient.colors.first.withOpacity(0.1),
+            color: stat.gradient[0].withOpacity(0.1),
             blurRadius: 20,
-            offset: const Offset(0, 4),
+            spreadRadius: 2,
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  gradient: stat.gradient,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  stat.icon,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: stat.isPositive
-                      ? AppTheme.success.withOpacity(0.1)
-                      : AppTheme.error.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      stat.isPositive
-                          ? Icons.trending_up_rounded
-                          : Icons.trending_down_rounded,
-                      color: stat.isPositive
-                          ? AppTheme.success
-                          : AppTheme.error,
-                      size: 12,
+              // Icon and Trend
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: stat.gradient),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: stat.gradient[0].withOpacity(0.3),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 2),
-                    Text(
-                      stat.trend,
-                      style: AppTextStyles.caption.copyWith(
+                    child: Icon(
+                      stat.icon,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: stat.isPositive
+                          ? AppTheme.success.withOpacity(0.1)
+                          : AppTheme.error.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
                         color: stat.isPositive
-                            ? AppTheme.success
-                            : AppTheme.error,
-                        fontWeight: FontWeight.bold,
+                            ? AppTheme.success.withOpacity(0.3)
+                            : AppTheme.error.withOpacity(0.3),
+                        width: 0.5,
                       ),
                     ),
-                  ],
-                ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          stat.isPositive
+                              ? Icons.trending_up_rounded
+                              : Icons.trending_down_rounded,
+                          color: stat.isPositive
+                              ? AppTheme.success
+                              : AppTheme.error,
+                          size: 12,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          stat.trend,
+                          style: AppTextStyles.caption.copyWith(
+                            color: stat.isPositive
+                                ? AppTheme.success
+                                : AppTheme.error,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Value and Label
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: 1),
+                    duration: const Duration(milliseconds: 1000),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) {
+                      return Text(
+                        stat.value,
+                        style: AppTextStyles.heading2.copyWith(
+                          color: AppTheme.textWhite,
+                          fontSize: 22,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    stat.label,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppTheme.textMuted,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                stat.value,
-                style: AppTextStyles.heading2.copyWith(
-                  color: AppTheme.textWhite,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                stat.label,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppTheme.textMuted,
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildSectionTitle() {
+  Widget _buildAdminFeaturesSection(bool isDesktop, bool isTablet) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Section Header
         Row(
           children: [
             Container(
               width: 4,
-              height: 24,
+              height: 28,
               decoration: BoxDecoration(
                 gradient: AppTheme.primaryGradient,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(width: 12),
-            Text(
-              'الوصول السريع',
-              style: AppTextStyles.heading2.copyWith(
-                color: AppTheme.textWhite,
-                fontSize: 22,
-              ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'أدوات الإدارة',
+                  style: AppTextStyles.heading1.copyWith(
+                    color: AppTheme.textWhite,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'وصول سريع لجميع مميزات الإدارة',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: Text(
-            'اختر القسم الذي تريد إدارته',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.textMuted,
+        
+        const SizedBox(height: 32),
+        
+        // Features Grid
+        AnimationLimiter(
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: isDesktop ? 4 : (isTablet ? 3 : 2),
+              childAspectRatio: isDesktop ? 1.15 : (isTablet ? 1.1 : 1.05), // Fix overflow
+              crossAxisSpacing: 20,
+              mainAxisSpacing: 20,
             ),
+            itemCount: _adminFeatures.length,
+            itemBuilder: (context, index) {
+              return AnimationConfiguration.staggeredGrid(
+                position: index,
+                duration: const Duration(milliseconds: 600),
+                columnCount: isDesktop ? 4 : (isTablet ? 3 : 2),
+                child: ScaleAnimation(
+                  child: FadeInAnimation(
+                    child: _buildFeatureCard(
+                      _adminFeatures[index],
+                      index,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],
     );
   }
 
-  Widget _buildAdminGrid({
-    required bool isSmallScreen,
-    required bool isMediumScreen,
-  }) {
-    final items = _adminItems(context);
+  Widget _buildFeatureCard(_AdminFeature feature, int index) {
+    final isHovered = _hoveredCardIndex == index;
     
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: isSmallScreen ? 2 : (isMediumScreen ? 3 : 4),
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 1.0,
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return TweenAnimationBuilder<double>(
-          duration: Duration(milliseconds: 500 + (index * 50)),
-          tween: Tween(begin: 0.0, end: 1.0),
-          curve: Curves.easeOutCubic, // منحنى آمن
-          builder: (context, value, child) {
-            final clampedValue = value.clamp(0.0, 1.0);
-            return Transform.translate(
-              offset: Offset(0, 20 * (1 - clampedValue)),
-              child: Opacity(
-                opacity: clampedValue,
-                child: _PremiumAdminCard(
-                  item: item,
-                  onHover: (isHovered) {
-                    setState(() {
-                      _hoveredCard = isHovered ? item.id : null;
-                    });
-                  },
-                  isHovered: _hoveredCard == item.id,
-                ),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredCardIndex = index),
+      onExit: (_) => setState(() => _hoveredCardIndex = null),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          feature.onTap();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          transform: Matrix4.identity()
+            ..translate(0.0, isHovered ? -8.0 : 0.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isHovered
+                  ? [
+                      AppTheme.darkCard.withOpacity(0.9),
+                      AppTheme.darkCard.withOpacity(0.7),
+                    ]
+                  : [
+                      AppTheme.darkCard.withOpacity(0.6),
+                      AppTheme.darkCard.withOpacity(0.4),
+                    ],
+            ),
+            border: Border.all(
+              color: isHovered
+                  ? feature.gradient[0].withOpacity(0.5)
+                  : AppTheme.darkBorder.withOpacity(0.2),
+              width: isHovered ? 1.5 : 0.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isHovered
+                    ? feature.gradient[0].withOpacity(0.3)
+                    : Colors.black.withOpacity(0.1),
+                blurRadius: isHovered ? 30 : 20,
+                spreadRadius: isHovered ? 5 : 0,
+                offset: Offset(0, isHovered ? 12 : 8),
               ),
-            );
-          },
-        );
-      },
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(
+                sigmaX: isHovered ? 20 : 10,
+                sigmaY: isHovered ? 20 : 10,
+              ),
+              child: Stack(
+                children: [
+                  // Background Glow
+                  if (isHovered)
+                    Positioned(
+                      top: -50,
+                      right: -50,
+                      child: Container(
+                        width: 150,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              feature.gradient[0].withOpacity(0.3),
+                              feature.gradient[0].withOpacity(0.1),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  
+                  // Content
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Icon
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: isHovered ? 52 : 48,
+                          height: isHovered ? 52 : 48,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(colors: feature.gradient),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: feature.gradient[0].withOpacity(0.4),
+                                blurRadius: 16,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            feature.icon,
+                            color: Colors.white,
+                            size: isHovered ? 26 : 24,
+                          ),
+                        ),
+                        
+                        const Spacer(), // Use Spacer instead of fixed spacing
+                        
+                        // Text Content
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min, // Fix overflow
+                          children: [
+                            Text(
+                              feature.title,
+                              style: AppTextStyles.bodyLarge.copyWith(
+                                color: AppTheme.textWhite,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              feature.description,
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppTheme.textMuted,
+                                height: 1.2,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            
+                            // Count Badge (if available)
+                            if (feature.count != null) ...[
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: feature.gradient[0].withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: feature.gradient[0].withOpacity(0.3),
+                                    width: 0.5,
+                                  ),
+                                ),
+                                child: Text(
+                                  '${feature.count} عنصر',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: feature.gradient[0],
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Arrow Indicator
+                  Positioned(
+                    bottom: 16,
+                    left: 16,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: isHovered ? 1.0 : 0.0,
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppTheme.glassLight.withOpacity(0.2),
+                          border: Border.all(
+                            color: AppTheme.glowWhite.withOpacity(0.2),
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.arrow_forward_rounded,
+                          color: AppTheme.textWhite,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  List<_AdminItem> _adminItems(BuildContext context) {
-    return [
-      _AdminItem(
-        id: 'properties',
-        label: 'العقارات',
-        icon: Icons.apartment_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.primaryBlue, AppTheme.primaryCyan],
+  Widget _buildFloatingHeader(BuildContext context) {
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      top: _showFloatingHeader ? 0 : -100,
+      left: 0,
+      right: 0,
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 12,
+              bottom: 12,
+              left: 20,
+              right: 20,
+            ),
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard.withOpacity(0.8),
+              border: Border(
+                bottom: BorderSide(
+                  color: AppTheme.glowBlue.withOpacity(0.2),
+                  width: 0.5,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.dashboard_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'لوحة التحكم',
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    color: AppTheme.textWhite,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                // Quick Stats
+                Row(
+                  children: [
+                    _buildMiniStat(
+                      icon: Icons.notifications_active,
+                      value: '3',
+                      color: AppTheme.warning,
+                    ),
+                    const SizedBox(width: 16),
+                    _buildMiniStat(
+                      icon: Icons.people,
+                      value: '127',
+                      color: AppTheme.success,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
-        onTap: () => context.push('/admin/properties'),
-        description: 'إدارة جميع العقارات',
       ),
-      _AdminItem(
-        id: 'property-types',
-        label: 'أنواع العقارات',
-        icon: Icons.category_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.primaryViolet, AppTheme.neonPurple],
+    );
+  }
+
+  Widget _buildMiniStat({
+    required IconData icon,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 0.5,
         ),
-        onTap: () => context.push('/admin/property-types'),
-        description: 'تصنيفات العقارات',
       ),
-      _AdminItem(
-        id: 'units',
-        label: 'الوحدات',
-        icon: Icons.maps_home_work_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.neonPurple, AppTheme.neonBlue],
-        ),
-        onTap: () => context.push('/admin/units'),
-        description: 'الوحدات السكنية',
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: color,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            value,
+            style: AppTextStyles.caption.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
-      _AdminItem(
-        id: 'services',
-        label: 'الخدمات',
-        icon: Icons.room_service_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.primaryCyan, AppTheme.primaryBlue],
-        ),
-        onTap: () => context.push('/admin/services'),
-        description: 'خدمات إضافية',
+    );
+  }
+
+  Widget _buildFloatingActionButton() {
+    return Positioned(
+      bottom: 32,
+      right: 32,
+      child: AnimatedBuilder(
+        animation: _pulseAnimationController,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: 1.0 + (0.05 * _pulseAnimationController.value),
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: AppTheme.primaryGradient,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.glowBlue.withOpacity(0.5),
+                    blurRadius: 20 + (10 * _pulseAnimationController.value),
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _scrollController.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeOutCubic,
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(28),
+                  child: const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Icon(
+                      Icons.arrow_upward_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
-      _AdminItem(
-        id: 'amenities',
-        label: 'المرافق',
-        icon: Icons.auto_awesome_mosaic_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.primaryBlue, AppTheme.primaryPurple],
-        ),
-        onTap: () => context.push('/admin/amenities'),
-        description: 'مرافق العقارات',
-      ),
-      _AdminItem(
-        id: 'reviews',
-        label: 'المراجعات',
-        icon: Icons.reviews_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.primaryPurple, AppTheme.primaryViolet],
-        ),
-        onTap: () => context.push('/admin/reviews'),
-        description: 'آراء العملاء',
-      ),
-      _AdminItem(
-        id: 'cities',
-        label: 'المدن',
-        icon: Icons.location_city_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.primaryViolet, AppTheme.neonGreen],
-        ),
-        onTap: () => context.push('/admin/cities'),
-        description: 'المدن المتاحة',
-      ),
-      _AdminItem(
-        id: 'users',
-        label: 'المستخدمون',
-        icon: Icons.people_alt_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.neonGreen, AppTheme.neonBlue],
-        ),
-        onTap: () => context.push('/admin/users'),
-        description: 'إدارة المستخدمين',
-      ),
-      _AdminItem(
-        id: 'audit-logs',
-        label: 'سجلات التدقيق',
-        icon: Icons.receipt_long_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.neonBlue, AppTheme.primaryBlue],
-        ),
-        onTap: () => context.push('/admin/audit-logs'),
-        description: 'سجل النشاطات',
-      ),
-      _AdminItem(
-        id: 'availability',
-        label: 'التوفر والأسعار',
-        icon: Icons.calendar_month_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.primaryBlue, AppTheme.neonPurple],
-        ),
-        onTap: () => context.push('/admin/availability-pricing'),
-        description: 'جدولة الأسعار',
-      ),
-      _AdminItem(
-        id: 'currencies',
-        label: 'العملات',
-        icon: Icons.payments_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.warning, AppTheme.neonPurple],
-        ),
-        onTap: () => context.push('/admin/currencies'),
-        description: 'إدارة العملات',
-      ),
-      _AdminItem(
-        id: 'notifications',
-        label: 'الإشعارات',
-        icon: Icons.notifications_active_rounded,
-        gradient: LinearGradient(
-          colors: [AppTheme.primaryPurple, AppTheme.primaryCyan],
-        ),
-        onTap: () => context.push('/notifications'),
-        description: 'رسائل النظام',
-      ),
-    ];
+    );
+  }
+
+  void _showSearchDialog(BuildContext context) {
+    HapticFeedback.lightImpact();
+    // Implement search dialog
   }
 
   String _formatLastLogin() {
@@ -954,24 +1410,114 @@ class _AdminHubPageState extends State<AdminHubPage>
       return 'منذ ${difference.inDays} يوم';
     }
   }
+
+  // Admin Features List
+  List<_AdminFeature> get _adminFeatures => [
+    _AdminFeature(
+      title: 'العقارات',
+      description: 'إدارة جميع العقارات',
+      icon: Icons.apartment_rounded,
+      gradient: [AppTheme.primaryBlue, AppTheme.primaryCyan],
+      onTap: () => context.push('/admin/properties'),
+      count: _stats['properties'],
+    ),
+    _AdminFeature(
+      title: 'أنواع العقارات',
+      description: 'الفئات والأنواع',
+      icon: Icons.category_rounded,
+      gradient: [AppTheme.primaryViolet, AppTheme.neonPurple],
+      onTap: () => context.push('/admin/property-types'),
+    ),
+    _AdminFeature(
+      title: 'الوحدات',
+      description: 'الوحدات السكنية',
+      icon: Icons.home_work_rounded,
+      gradient: [AppTheme.neonPurple, AppTheme.neonBlue],
+      onTap: () => context.push('/admin/units'),
+    ),
+    _AdminFeature(
+      title: 'الخدمات',
+      description: 'الخدمات الإضافية',
+      icon: Icons.room_service_rounded,
+      gradient: [AppTheme.primaryCyan, AppTheme.primaryBlue],
+      onTap: () => context.push('/admin/services'),
+    ),
+    _AdminFeature(
+      title: 'المرافق',
+      description: 'مرافق العقارات',
+      icon: Icons.pool_rounded,
+      gradient: [AppTheme.primaryBlue, AppTheme.primaryPurple],
+      onTap: () => context.push('/admin/amenities'),
+    ),
+    _AdminFeature(
+      title: 'المراجعات',
+      description: 'آراء العملاء',
+      icon: Icons.reviews_rounded,
+      gradient: [AppTheme.primaryPurple, AppTheme.primaryViolet],
+      onTap: () => context.push('/admin/reviews'),
+    ),
+    _AdminFeature(
+      title: 'المدن',
+      description: 'المواقع المتاحة',
+      icon: Icons.location_city_rounded,
+      gradient: [AppTheme.primaryViolet, AppTheme.neonGreen],
+      onTap: () => context.push('/admin/cities'),
+    ),
+    _AdminFeature(
+      title: 'المستخدمون',
+      description: 'إدارة المستخدمين',
+      icon: Icons.people_alt_rounded,
+      gradient: [AppTheme.neonGreen, AppTheme.neonBlue],
+      onTap: () => context.push('/admin/users'),
+      count: _stats['users'].toInt(),
+    ),
+    _AdminFeature(
+      title: 'سجلات التدقيق',
+      description: 'أنشطة النظام',
+      icon: Icons.receipt_long_rounded,
+      gradient: [AppTheme.neonBlue, AppTheme.primaryBlue],
+      onTap: () => context.push('/admin/audit-logs'),
+    ),
+    _AdminFeature(
+      title: 'الأسعار',
+      description: 'التوفر والأسعار',
+      icon: Icons.calendar_month_rounded,
+      gradient: [AppTheme.primaryBlue, AppTheme.neonPurple],
+      onTap: () => context.push('/admin/availability-pricing'),
+    ),
+    _AdminFeature(
+      title: 'العملات',
+      description: 'إعدادات العملة',
+      icon: Icons.payments_rounded,
+      gradient: [AppTheme.warning, AppTheme.neonPurple],
+      onTap: () => context.push('/admin/currencies'),
+    ),
+    _AdminFeature(
+      title: 'الإعدادات',
+      description: 'إعدادات النظام',
+      icon: Icons.settings_rounded,
+      gradient: [AppTheme.primaryPurple, AppTheme.primaryCyan],
+      onTap: () => context.push('/admin/settings'),
+    ),
+  ];
 }
 
 // Data Models
-class _AdminItem {
-  final String id;
-  final String label;
-  final IconData icon;
-  final Gradient gradient;
-  final VoidCallback onTap;
+class _AdminFeature {
+  final String title;
   final String description;
+  final IconData icon;
+  final List<Color> gradient;
+  final VoidCallback onTap;
+  final int? count;
 
-  _AdminItem({
-    required this.id,
-    required this.label,
+  _AdminFeature({
+    required this.title,
+    required this.description,
     required this.icon,
     required this.gradient,
     required this.onTap,
-    required this.description,
+    this.count,
   });
 }
 
@@ -979,7 +1525,7 @@ class _StatItem {
   final String label;
   final String value;
   final IconData icon;
-  final Gradient gradient;
+  final List<Color> gradient;
   final String trend;
   final bool isPositive;
 
@@ -993,263 +1539,15 @@ class _StatItem {
   });
 }
 
-// Premium Admin Card Widget
-class _PremiumAdminCard extends StatefulWidget {
-  final _AdminItem item;
-  final Function(bool) onHover;
-  final bool isHovered;
-
-  const _PremiumAdminCard({
-    required this.item,
-    required this.onHover,
-    required this.isHovered,
-  });
-
-  @override
-  State<_PremiumAdminCard> createState() => _PremiumAdminCardState();
-}
-
-class _PremiumAdminCardState extends State<_PremiumAdminCard>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _scaleAnimation;
-  late final Animation<double> _rotateAnimation;
-  bool _isPressed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-    
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.95,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
-    
-    _rotateAnimation = Tween<double>(
-      begin: 0,
-      end: 0.02,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => widget.onHover(true),
-      onExit: (_) => widget.onHover(false),
-      child: GestureDetector(
-        onTapDown: (_) {
-          setState(() => _isPressed = true);
-          _controller.forward();
-        },
-        onTapUp: (_) {
-          setState(() => _isPressed = false);
-          _controller.reverse();
-          HapticFeedback.lightImpact();
-          widget.item.onTap();
-        },
-        onTapCancel: () {
-          setState(() => _isPressed = false);
-          _controller.reverse();
-        },
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _scaleAnimation.value,
-              child: Transform.rotate(
-                angle: widget.isHovered ? _rotateAnimation.value : 0,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: widget.isHovered
-                            ? widget.item.gradient.colors.first.withOpacity(0.3)
-                            : AppTheme.shadowDark.withOpacity(0.2),
-                        blurRadius: widget.isHovered ? 20 : 10,
-                        offset: Offset(0, widget.isHovered ? 8 : 4),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: widget.isHovered ? 20 : 10,
-                        sigmaY: widget.isHovered ? 20 : 10,
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: widget.isHovered
-                                ? [
-                                    AppTheme.darkCard.withOpacity(0.9),
-                                    AppTheme.darkCard.withOpacity(0.7),
-                                  ]
-                                : [
-                                    AppTheme.darkCard.withOpacity(0.6),
-                                    AppTheme.darkCard.withOpacity(0.4),
-                                  ],
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: widget.isHovered
-                                ? widget.item.gradient.colors.first.withOpacity(0.3)
-                                : AppTheme.darkBorder.withOpacity(0.2),
-                            width: widget.isHovered ? 1.5 : 0.5,
-                          ),
-                        ),
-                        child: Stack(
-                          children: [
-                            // Background Glow
-                            if (widget.isHovered)
-                              Positioned(
-                                top: -30,
-                                right: -30,
-                                child: Container(
-                                  width: 100,
-                                  height: 100,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: RadialGradient(
-                                      colors: [
-                                        widget.item.gradient.colors.first
-                                            .withOpacity(0.2),
-                                        Colors.transparent,
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            
-                            // Content
-                            Padding(
-                              padding: const EdgeInsets.all(20),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // Icon
-                                  AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    width: widget.isHovered ? 48 : 44,
-                                    height: widget.isHovered ? 48 : 44,
-                                    decoration: BoxDecoration(
-                                      gradient: widget.item.gradient,
-                                      borderRadius: BorderRadius.circular(14),
-                                      boxShadow: widget.isHovered
-                                          ? [
-                                              BoxShadow(
-                                                color: widget.item.gradient.colors.first
-                                                    .withOpacity(0.5),
-                                                blurRadius: 12,
-                                                offset: const Offset(0, 4),
-                                              ),
-                                            ]
-                                          : [],
-                                    ),
-                                    child: Icon(
-                                      widget.item.icon,
-                                      color: Colors.white,
-                                      size: widget.isHovered ? 24 : 22,
-                                    ),
-                                  ),
-                                  
-                                  // Text
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        widget.item.label,
-                                        style: AppTextStyles.bodyMedium.copyWith(
-                                          color: AppTheme.textWhite,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      AnimatedContainer(
-                                        duration: const Duration(milliseconds: 200),
-                                        height: widget.isHovered ? 18 : 0,
-                                        child: AnimatedOpacity(
-                                          duration: const Duration(milliseconds: 200),
-                                          opacity: widget.isHovered ? 1 : 0,
-                                          child: Text(
-                                            widget.item.description,
-                                            style: AppTextStyles.caption.copyWith(
-                                              color: AppTheme.textMuted,
-                                              fontSize: 11,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            
-                            // Arrow Indicator
-                            Positioned(
-                              bottom: 12,
-                              left: 12,
-                              child: AnimatedOpacity(
-                                duration: const Duration(milliseconds: 200),
-                                opacity: widget.isHovered ? 1 : 0,
-                                child: Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: AppTheme.glassLight,
-                                  ),
-                                  child: Icon(
-                                    Icons.arrow_forward_rounded,
-                                    color: AppTheme.textWhite,
-                                    size: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
 // Grid Pattern Painter
 class _GridPatternPainter extends CustomPainter {
   final Color color;
+  final double spacing;
 
-  _GridPatternPainter({required this.color});
+  _GridPatternPainter({
+    required this.color,
+    this.spacing = 60,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1258,9 +1556,7 @@ class _GridPatternPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
 
-    const spacing = 40.0;
-    
-    // Vertical lines
+    // Draw vertical lines
     for (double x = 0; x < size.width; x += spacing) {
       canvas.drawLine(
         Offset(x, 0),
@@ -1269,7 +1565,7 @@ class _GridPatternPainter extends CustomPainter {
       );
     }
     
-    // Horizontal lines
+    // Draw horizontal lines
     for (double y = 0; y < size.height; y += spacing) {
       canvas.drawLine(
         Offset(0, y),

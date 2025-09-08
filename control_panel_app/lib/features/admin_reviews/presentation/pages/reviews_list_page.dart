@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:ui';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../injection_container.dart' as di;
 import '../bloc/reviews_list/reviews_list_bloc.dart';
 import '../widgets/review_stats_card.dart';
@@ -84,7 +85,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       backgroundColor: AppTheme.darkBackground,
       body: Stack(
         children: [
-          // Animated Background Gradient
+          // خلفية متحركة بتدرج لوني
           Positioned.fill(
             child: AnimatedContainer(
               duration: const Duration(seconds: 3),
@@ -102,18 +103,18 @@ class _ReviewsListPageState extends State<ReviewsListPage>
             ),
           ),
           
-          // Floating Orbs Animation
+          // كرات متوهجة متحركة
           ..._buildFloatingOrbs(),
           
-          // Main Content
+          // المحتوى الرئيسي
           CustomScrollView(
             controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // Premium App Bar
+              // شريط التطبيق الفاخر
               _buildPremiumAppBar(context, isDesktop),
               
-              // Stats Cards Section
+              // قسم الإحصائيات
               SliverToBoxAdapter(
                 child: FadeTransition(
                   opacity: _fadeAnimation,
@@ -124,7 +125,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                 ),
               ),
               
-              // Filters Section
+              // قسم الفلاتر
               SliverToBoxAdapter(
                 child: FadeTransition(
                   opacity: _fadeAnimation,
@@ -149,13 +150,13 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                 ),
               ),
               
-              // View Toggle
+              // تبديل العرض
               if (!isDesktop)
                 SliverToBoxAdapter(
                   child: _buildViewToggle(),
                 ),
               
-              // Reviews Content
+              // محتوى التقييمات
               BlocBuilder<ReviewsListBloc, ReviewsListState>(
                 builder: (context, state) {
                   if (state is ReviewsListLoading) {
@@ -214,14 +215,14 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                 },
               ),
               
-              // Bottom Padding
+              // حشوة سفلية
               const SliverToBoxAdapter(
                 child: SizedBox(height: 100),
               ),
             ],
           ),
           
-          // Floating Action Button
+          // زر عائم
           if (_showBackToTop)
             Positioned(
               bottom: 32,
@@ -306,8 +307,8 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppTheme.glassLight.withOpacity(0.8),
-                  AppTheme.glassLight.withOpacity(0.4),
+                  AppTheme.glassDark.withOpacity(0.8),
+                  AppTheme.glassDark.withOpacity(0.4),
                 ],
               ),
               border: Border(
@@ -326,7 +327,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
               ),
               title: Row(
                 children: [
-                  // Icon with glow effect
+                  // أيقونة مع تأثير التوهج
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -353,17 +354,15 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                   ),
                   const SizedBox(width: 12),
                   
-                  // Title
+                  // العنوان
                   Expanded(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Reviews Management',
-                          style: TextStyle(
-                            fontSize: isDesktop ? 24 : 20,
-                            fontWeight: FontWeight.w700,
+                          'إدارة التقييمات',
+                          style: AppTextStyles.heading3.copyWith(
                             color: AppTheme.textWhite,
                             letterSpacing: -0.5,
                           ),
@@ -373,10 +372,8 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                           builder: (context, state) {
                             if (state is ReviewsListLoaded) {
                               return Text(
-                                '${state.filteredReviews.length} Total Reviews',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
+                                '${state.filteredReviews.length} تقييم إجمالي',
+                                style: AppTextStyles.caption.copyWith(
                                   color: AppTheme.textLight.withOpacity(0.8),
                                 ),
                               );
@@ -388,7 +385,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                     ),
                   ),
                   
-                  // Refresh Button
+                  // زر التحديث
                   IconButton(
                     onPressed: () {
                       HapticFeedback.lightImpact();
@@ -572,10 +569,8 @@ class _ReviewsListPageState extends State<ReviewsListPage>
           ),
           const SizedBox(height: 24),
           Text(
-            'Loading reviews...',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
+            'جاري تحميل التقييمات...',
+            style: AppTextStyles.bodyMedium.copyWith(
               color: AppTheme.textLight,
             ),
           ),
@@ -607,10 +602,8 @@ class _ReviewsListPageState extends State<ReviewsListPage>
           ),
           const SizedBox(height: 24),
           Text(
-            'Error Loading Reviews',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
+            'خطأ في تحميل التقييمات',
+            style: AppTextStyles.heading3.copyWith(
               color: AppTheme.textWhite,
             ),
           ),
@@ -620,8 +613,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
             child: Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
+              style: AppTextStyles.bodySmall.copyWith(
                 color: AppTheme.textMuted,
               ),
             ),
@@ -632,7 +624,10 @@ class _ReviewsListPageState extends State<ReviewsListPage>
               context.read<ReviewsListBloc>().add(const LoadReviewsEvent());
             },
             icon: const Icon(Icons.refresh, size: 20),
-            label: const Text('Try Again'),
+            label: Text(
+              'حاول مرة أخرى',
+              style: AppTextStyles.buttonMedium,
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryBlue,
               foregroundColor: Colors.white,
@@ -671,18 +666,15 @@ class _ReviewsListPageState extends State<ReviewsListPage>
           ),
           const SizedBox(height: 24),
           Text(
-            'No Reviews Found',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
+            'لا توجد تقييمات',
+            style: AppTextStyles.heading2.copyWith(
               color: AppTheme.textWhite,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'There are no reviews matching your filters',
-            style: TextStyle(
-              fontSize: 14,
+            'لا توجد تقييمات تطابق معايير البحث',
+            style: AppTextStyles.bodyMedium.copyWith(
               color: AppTheme.textMuted,
             ),
           ),
@@ -811,18 +803,15 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Delete Review?',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
+                  'حذف التقييم؟',
+                  style: AppTextStyles.heading3.copyWith(
                     color: AppTheme.textWhite,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'This action cannot be undone.',
-                  style: TextStyle(
-                    fontSize: 14,
+                  'لا يمكن التراجع عن هذا الإجراء',
+                  style: AppTextStyles.bodyMedium.copyWith(
                     color: AppTheme.textMuted,
                   ),
                 ),
@@ -839,10 +828,9 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                           ),
                         ),
                         child: Text(
-                          'Cancel',
-                          style: TextStyle(
+                          'إلغاء',
+                          style: AppTextStyles.buttonMedium.copyWith(
                             color: AppTheme.textLight,
-                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -864,9 +852,11 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'Delete',
-                          style: TextStyle(fontWeight: FontWeight.w600),
+                        child: Text(
+                          'حذف',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),

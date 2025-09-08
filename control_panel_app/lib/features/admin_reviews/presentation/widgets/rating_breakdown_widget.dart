@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
 
 class RatingBreakdownWidget extends StatefulWidget {
   final double cleanliness;
@@ -124,10 +125,10 @@ class _RatingBreakdownWidgetState extends State<RatingBreakdownWidget>
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Column(
               children: [
-                // Header with Overall Rating
+                // الرأس مع التقييم الإجمالي
                 Row(
                   children: [
-                    // Overall Score Circle
+                    // دائرة النتيجة الإجمالية
                     TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0.0, end: _overallRating),
                       duration: const Duration(milliseconds: 1500),
@@ -155,7 +156,7 @@ class _RatingBreakdownWidgetState extends State<RatingBreakdownWidget>
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              // Background Circle Progress
+                              // دائرة التقدم في الخلفية
                               CustomPaint(
                                 size: Size(
                                   widget.isDesktop ? 100 : 80,
@@ -167,22 +168,20 @@ class _RatingBreakdownWidgetState extends State<RatingBreakdownWidget>
                                   strokeWidth: 3,
                                 ),
                               ),
-                              // Score Text
+                              // نص النتيجة
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
                                     value.toStringAsFixed(1),
-                                    style: TextStyle(
-                                      fontSize: widget.isDesktop ? 28 : 24,
-                                      fontWeight: FontWeight.w700,
+                                    style: AppTextStyles.heading2.copyWith(
                                       color: Colors.white,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                   Text(
-                                    'out of 5',
-                                    style: TextStyle(
-                                      fontSize: widget.isDesktop ? 11 : 10,
+                                    'من 5',
+                                    style: AppTextStyles.caption.copyWith(
                                       color: Colors.white.withOpacity(0.8),
                                     ),
                                   ),
@@ -196,17 +195,16 @@ class _RatingBreakdownWidgetState extends State<RatingBreakdownWidget>
                     
                     const SizedBox(width: 24),
                     
-                    // Rating Text and Stars
+                    // نص التقييم والنجوم
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             _getRatingText(_overallRating),
-                            style: TextStyle(
-                              fontSize: widget.isDesktop ? 24 : 20,
-                              fontWeight: FontWeight.w600,
+                            style: AppTextStyles.heading3.copyWith(
                               color: AppTheme.textWhite,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -245,13 +243,13 @@ class _RatingBreakdownWidgetState extends State<RatingBreakdownWidget>
                 
                 const SizedBox(height: 24),
                 
-                // Rating Categories
+                // فئات التقييم
                 if (widget.isDesktop || isTablet)
                   Row(
                     children: [
                       Expanded(
                         child: _buildRatingCategory(
-                          'Cleanliness',
+                          'النظافة',
                           widget.cleanliness,
                           Icons.cleaning_services,
                           _progressAnimations[0],
@@ -260,7 +258,7 @@ class _RatingBreakdownWidgetState extends State<RatingBreakdownWidget>
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildRatingCategory(
-                          'Service',
+                          'الخدمة',
                           widget.service,
                           Icons.room_service,
                           _progressAnimations[1],
@@ -272,14 +270,14 @@ class _RatingBreakdownWidgetState extends State<RatingBreakdownWidget>
                   Column(
                     children: [
                       _buildRatingCategory(
-                        'Cleanliness',
+                        'النظافة',
                         widget.cleanliness,
                         Icons.cleaning_services,
                         _progressAnimations[0],
                       ),
                       const SizedBox(height: 12),
                       _buildRatingCategory(
-                        'Service',
+                        'الخدمة',
                         widget.service,
                         Icons.room_service,
                         _progressAnimations[1],
@@ -294,7 +292,7 @@ class _RatingBreakdownWidgetState extends State<RatingBreakdownWidget>
                     children: [
                       Expanded(
                         child: _buildRatingCategory(
-                          'Location',
+                          'الموقع',
                           widget.location,
                           Icons.location_on,
                           _progressAnimations[2],
@@ -303,7 +301,7 @@ class _RatingBreakdownWidgetState extends State<RatingBreakdownWidget>
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildRatingCategory(
-                          'Value',
+                          'القيمة',
                           widget.value,
                           Icons.attach_money,
                           _progressAnimations[3],
@@ -315,14 +313,14 @@ class _RatingBreakdownWidgetState extends State<RatingBreakdownWidget>
                   Column(
                     children: [
                       _buildRatingCategory(
-                        'Location',
+                        'الموقع',
                         widget.location,
                         Icons.location_on,
                         _progressAnimations[2],
                       ),
                       const SizedBox(height: 12),
                       _buildRatingCategory(
-                        'Value',
+                        'القيمة',
                         widget.value,
                         Icons.attach_money,
                         _progressAnimations[3],
@@ -380,16 +378,14 @@ class _RatingBreakdownWidgetState extends State<RatingBreakdownWidget>
                       children: [
                         Text(
                           label,
-                          style: TextStyle(
-                            fontSize: 13,
+                          style: AppTextStyles.bodySmall.copyWith(
                             fontWeight: FontWeight.w500,
                             color: AppTheme.textLight,
                           ),
                         ),
                         Text(
                           rating.toStringAsFixed(1),
-                          style: TextStyle(
-                            fontSize: 13,
+                          style: AppTextStyles.bodySmall.copyWith(
                             fontWeight: FontWeight.w600,
                             color: _getRatingColor(rating),
                           ),
@@ -426,16 +422,16 @@ class _RatingBreakdownWidgetState extends State<RatingBreakdownWidget>
   }
   
   String _getRatingText(double rating) {
-    if (rating >= 4.5) return 'Excellent';
-    if (rating >= 4.0) return 'Very Good';
-    if (rating >= 3.5) return 'Good';
-    if (rating >= 3.0) return 'Average';
-    if (rating >= 2.0) return 'Below Average';
-    return 'Poor';
+    if (rating >= 4.5) return 'ممتاز';
+    if (rating >= 4.0) return 'جيد جداً';
+    if (rating >= 3.5) return 'جيد';
+    if (rating >= 3.0) return 'متوسط';
+    if (rating >= 2.0) return 'دون المتوسط';
+    return 'ضعيف';
   }
 }
 
-// Custom Circular Progress Painter
+// رسام دائرة التقدم المخصصة
 class CircularProgressPainter extends CustomPainter {
   final double progress;
   final Color color;
@@ -452,7 +448,7 @@ class CircularProgressPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
     
-    // Background Circle
+    // دائرة الخلفية
     final backgroundPaint = Paint()
       ..color = color.withOpacity(0.2)
       ..strokeWidth = strokeWidth
@@ -461,7 +457,7 @@ class CircularProgressPainter extends CustomPainter {
     
     canvas.drawCircle(center, radius, backgroundPaint);
     
-    // Progress Arc
+    // قوس التقدم
     final progressPaint = Paint()
       ..color = color
       ..strokeWidth = strokeWidth

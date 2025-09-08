@@ -1,11 +1,13 @@
 // lib/features/admin_reviews/presentation/pages/review_details_page.dart
 
+import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/reviews_list/reviews_list_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:ui';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/review.dart';
 import '../bloc/review_details/review_details_bloc.dart';
 import '../widgets/review_images_gallery.dart';
@@ -117,18 +119,18 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
           if (state is ReviewDetailsLoaded) {
             return Stack(
               children: [
-                // Animated Background
+                // خلفية متحركة
                 _buildAnimatedBackground(),
                 
-                // Main Content
+                // المحتوى الرئيسي
                 CustomScrollView(
                   controller: _scrollController,
                   physics: const BouncingScrollPhysics(),
                   slivers: [
-                    // Premium App Bar with Hero Image
+                    // شريط التطبيق مع صورة البطل
                     _buildHeroAppBar(context, state.review, isDesktop),
                     
-                    // Review Content
+                    // محتوى التقييم
                     SliverToBoxAdapter(
                       child: FadeTransition(
                         opacity: _fadeAnimation,
@@ -145,18 +147,18 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                       ),
                     ),
                     
-                    // Bottom Padding
+                    // حشوة سفلية
                     const SliverToBoxAdapter(
                       child: SizedBox(height: 100),
                     ),
                   ],
                 ),
                 
-                // Floating Header
+                // الرأس العائم
                 if (_showFloatingHeader)
                   _buildFloatingHeader(context, state.review),
                 
-                // Floating Action Buttons
+                // الأزرار العائمة
                 _buildFloatingActions(context, state.review),
               ],
             );
@@ -171,7 +173,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
   Widget _buildAnimatedBackground() {
     return Stack(
       children: [
-        // Gradient Background
+        // خلفية متدرجة
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -185,7 +187,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
           ),
         ),
         
-        // Floating Orbs
+        // كرات عائمة
         Positioned(
           top: 100,
           left: -50,
@@ -267,7 +269,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
         background: Stack(
           fit: StackFit.expand,
           children: [
-            // Background Image or Gradient
+            // صورة الخلفية أو التدرج
             if (review.images.isNotEmpty)
               Image.network(
                 review.images.first.url,
@@ -278,7 +280,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
             else
               _buildGradientBackground(),
             
-            // Overlay Gradient
+            // تدرج التراكب
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -294,7 +296,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
               ),
             ),
             
-            // Review Info
+            // معلومات التقييم
             Positioned(
               bottom: 40,
               left: isDesktop ? 32 : 20,
@@ -304,7 +306,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // User Info
+                    // معلومات المستخدم
                     Row(
                       children: [
                         Container(
@@ -324,9 +326,8 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                           child: Center(
                             child: Text(
                               review.userName.substring(0, 2).toUpperCase(),
-                              style: const TextStyle(
+                              style: AppTextStyles.heading3.copyWith(
                                 color: Colors.white,
-                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -339,9 +340,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                             children: [
                               Text(
                                 review.userName,
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
+                                style: AppTextStyles.heading3.copyWith(
                                   color: AppTheme.textWhite,
                                 ),
                               ),
@@ -357,8 +356,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                                   Expanded(
                                     child: Text(
                                       review.propertyName,
-                                      style: TextStyle(
-                                        fontSize: 14,
+                                      style: AppTextStyles.bodySmall.copyWith(
                                         color: AppTheme.textLight.withOpacity(0.7),
                                       ),
                                       overflow: TextOverflow.ellipsis,
@@ -370,14 +368,14 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                           ),
                         ),
                         
-                        // Status Badge
+                        // شارة الحالة
                         _buildStatusBadge(review),
                       ],
                     ),
                     
                     const SizedBox(height: 20),
                     
-                    // Rating
+                    // التقييم
                     _buildRatingStars(review.averageRating),
                   ],
                 ),
@@ -438,10 +436,10 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
             : AppTheme.error;
     
     final text = review.isPending 
-        ? 'Pending' 
+        ? 'قيد المراجعة' 
         : review.isApproved 
-            ? 'Approved' 
-            : 'Rejected';
+            ? 'مُعتمد' 
+            : 'مرفوض';
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -467,8 +465,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
           const SizedBox(width: 6),
           Text(
             text,
-            style: TextStyle(
-              fontSize: 12,
+            style: AppTextStyles.caption.copyWith(
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -516,7 +513,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
         children: [
           const SizedBox(height: 24),
           
-          // Rating Breakdown
+          // تفصيل التقييم
           ScaleTransition(
             scale: _scaleAnimation,
             child: RatingBreakdownWidget(
@@ -530,14 +527,14 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
           
           const SizedBox(height: 32),
           
-          // Review Comment Section
+          // قسم التعليق
           _buildCommentSection(review),
           
           const SizedBox(height: 32),
           
-          // Images Gallery
+          // معرض الصور
           if (review.images.isNotEmpty) ...[
-            _buildSectionTitle('Review Images'),
+            _buildSectionTitle('صور التقييم'),
             const SizedBox(height: 16),
             ReviewImagesGallery(
               images: review.images,
@@ -546,12 +543,12 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
             const SizedBox(height: 32),
           ],
           
-          // Review Info
+          // معلومات التقييم
           _buildInfoSection(review),
           
           const SizedBox(height: 32),
           
-          // Responses Section
+          // قسم الردود
           _buildResponsesSection(context, review, responses),
         ],
       ),
@@ -586,9 +583,8 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
               ),
               const SizedBox(width: 8),
               Text(
-                'Review Comment',
-                style: TextStyle(
-                  fontSize: 16,
+                'تعليق التقييم',
+                style: AppTextStyles.bodyMedium.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppTheme.textWhite,
                 ),
@@ -598,8 +594,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
           const SizedBox(height: 16),
           Text(
             review.comment,
-            style: TextStyle(
-              fontSize: 14,
+            style: AppTextStyles.bodyMedium.copyWith(
               height: 1.6,
               color: AppTheme.textLight,
             ),
@@ -624,20 +619,20 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
         children: [
           _buildInfoRow(
             icon: Icons.confirmation_number_outlined,
-            label: 'Booking ID',
+            label: 'رقم الحجز',
             value: review.bookingId,
           ),
           const SizedBox(height: 16),
           _buildInfoRow(
             icon: Icons.calendar_today_outlined,
-            label: 'Review Date',
+            label: 'تاريخ التقييم',
             value: _formatDate(review.createdAt),
           ),
           if (review.hasResponse) ...[
             const SizedBox(height: 16),
             _buildInfoRow(
               icon: Icons.reply_outlined,
-              label: 'Response Date',
+              label: 'تاريخ الرد',
               value: _formatDate(review.responseDate!),
             ),
           ],
@@ -672,16 +667,14 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 12,
+                style: AppTextStyles.caption.copyWith(
                   color: AppTheme.textMuted,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: TextStyle(
-                  fontSize: 14,
+                style: AppTextStyles.bodySmall.copyWith(
                   fontWeight: FontWeight.w500,
                   color: AppTheme.textWhite,
                 ),
@@ -704,7 +697,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildSectionTitle('Management Responses'),
+            _buildSectionTitle('ردود الإدارة'),
             IconButton(
               onPressed: () => _showAddResponseDialog(context, review.id),
               icon: Container(
@@ -745,17 +738,15 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No responses yet',
-                    style: TextStyle(
-                      fontSize: 16,
+                    'لا توجد ردود حتى الآن',
+                    style: AppTextStyles.bodyMedium.copyWith(
                       color: AppTheme.textMuted,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Add a response to this review',
-                    style: TextStyle(
-                      fontSize: 14,
+                    'أضف رداً على هذا التقييم',
+                    style: AppTextStyles.bodySmall.copyWith(
                       color: AppTheme.textMuted.withOpacity(0.7),
                     ),
                   ),
@@ -795,9 +786,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
+      style: AppTextStyles.heading3.copyWith(
         color: AppTheme.textWhite,
       ),
     );
@@ -840,8 +829,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                     children: [
                       Text(
                         review.userName,
-                        style: TextStyle(
-                          fontSize: 16,
+                        style: AppTextStyles.bodyMedium.copyWith(
                           fontWeight: FontWeight.w600,
                           color: AppTheme.textWhite,
                         ),
@@ -861,8 +849,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                           const SizedBox(width: 8),
                           Text(
                             review.averageRating.toStringAsFixed(1),
-                            style: TextStyle(
-                              fontSize: 12,
+                            style: AppTextStyles.caption.copyWith(
                               fontWeight: FontWeight.w600,
                               color: AppTheme.textLight,
                             ),
@@ -894,10 +881,9 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
               color: AppTheme.success,
               onTap: () {
                 HapticFeedback.mediumImpact();
-                context.read<ReviewDetailsBloc>().add(
-                  LoadReviewDetailsEvent(widget.reviewId),
+                context.read<ReviewsListBloc>().add(
+                  ApproveReviewEvent(widget.reviewId),
                 );
-                // Approve action
               },
             ),
             const SizedBox(height: 12),
@@ -906,7 +892,9 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
               color: AppTheme.error,
               onTap: () {
                 HapticFeedback.mediumImpact();
-                // Reject action
+                // context.read<ReviewsListBloc>().add(
+                //   RejectReviewEvent(widget.reviewId),
+                // );
               },
             ),
             const SizedBox(height: 12),
@@ -987,10 +975,8 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
           ),
           const SizedBox(height: 32),
           Text(
-            'Loading review details...',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
+            'جاري تحميل تفاصيل التقييم...',
+            style: AppTextStyles.bodyMedium.copyWith(
               color: AppTheme.textLight,
             ),
           ),
@@ -1022,10 +1008,8 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
           ),
           const SizedBox(height: 24),
           Text(
-            'Error Loading Review',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
+            'خطأ في تحميل التقييم',
+            style: AppTextStyles.heading2.copyWith(
               color: AppTheme.textWhite,
             ),
           ),
@@ -1035,8 +1019,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
             child: Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
+              style: AppTextStyles.bodyMedium.copyWith(
                 color: AppTheme.textMuted,
               ),
             ),
@@ -1049,7 +1032,10 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
               );
             },
             icon: const Icon(Icons.refresh),
-            label: const Text('Try Again'),
+            label: Text(
+              'حاول مرة أخرى',
+              style: AppTextStyles.buttonMedium,
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryBlue,
               foregroundColor: Colors.white,
@@ -1066,33 +1052,44 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       ),
     );
   }
-  
+
   void _showAddResponseDialog(BuildContext context, String reviewId) {
     HapticFeedback.lightImpact();
-    showModalBottomSheet(
+    
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => AddResponseDialog(
-        reviewId: reviewId,
-        onSubmit: (responseText) {
-          context.read<ReviewDetailsBloc>().add(
-            AddResponseEvent(
-              reviewId: reviewId,
-              responseText: responseText,
-              respondedBy: 'admin_id', // Replace with actual admin ID
-            ),
-          );
-        },
+      barrierColor: Colors.black87,
+      barrierDismissible: true,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
+          child: AddResponseDialog(
+            reviewId: reviewId,
+            onSubmit: (responseText) {
+              context.read<ReviewDetailsBloc>().add(
+                AddResponseEvent(
+                  reviewId: reviewId,
+                  responseText: responseText,
+                  respondedBy: 'admin_id', // استبدل بمعرف المدير الفعلي
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
-  
+
   String _formatDate(DateTime date) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
     ];
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+    return '${date.day} ${months[date.month - 1]}، ${date.year}';
   }
 }

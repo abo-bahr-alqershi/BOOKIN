@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/review_image.dart';
 
 class ReviewImagesGallery extends StatefulWidget {
@@ -61,7 +62,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Gallery Grid
+        // معرض الصور بشبكة
         ScaleTransition(
           scale: _scaleAnimation,
           child: GridView.builder(
@@ -80,7 +81,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
           ),
         ),
         
-        // Image Info
+        // معلومات الصور
         if (widget.images.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 16),
@@ -130,7 +131,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Image
+                  // الصورة
                   ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: Image.network(
@@ -172,7 +173,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
                     ),
                   ),
                   
-                  // Overlay Gradient
+                  // تدرج التراكب
                   Positioned.fill(
                     child: Container(
                       decoration: BoxDecoration(
@@ -190,7 +191,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
                     ),
                   ),
                   
-                  // Category Badge
+                  // شارة الفئة
                   Positioned(
                     top: 8,
                     right: 8,
@@ -209,8 +210,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
                       ),
                       child: Text(
                         _getCategoryName(image.category),
-                        style: const TextStyle(
-                          fontSize: 10,
+                        style: AppTextStyles.caption.copyWith(
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),
@@ -218,7 +218,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
                     ),
                   ),
                   
-                  // Image Number
+                  // رقم الصورة
                   Positioned(
                     bottom: 8,
                     left: 8,
@@ -242,8 +242,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
                           const SizedBox(width: 4),
                           Text(
                             '${index + 1}/${widget.images.length}',
-                            style: TextStyle(
-                              fontSize: 11,
+                            style: AppTextStyles.caption.copyWith(
                               fontWeight: FontWeight.w600,
                               color: AppTheme.glowWhite,
                             ),
@@ -284,23 +283,23 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
       ),
       child: Row(
         children: [
-          // Total Images
+          // إجمالي الصور
           _buildInfoItem(
             icon: Icons.collections_outlined,
-            label: 'Total',
-            value: '${widget.images.length} images',
+            label: 'الإجمالي',
+            value: '${widget.images.length} صورة',
           ),
           const SizedBox(width: 24),
           
-          // Total Size
+          // الحجم الإجمالي
           _buildInfoItem(
             icon: Icons.storage_outlined,
-            label: 'Size',
+            label: 'الحجم',
             value: _formatFileSize(totalSize),
           ),
           const SizedBox(width: 24),
           
-          // Categories
+          // الفئات
           Expanded(
             child: Wrap(
               spacing: 8,
@@ -321,8 +320,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
                   ),
                   child: Text(
                     '${_getCategoryName(entry.key)} (${entry.value})',
-                    style: TextStyle(
-                      fontSize: 11,
+                    style: AppTextStyles.caption.copyWith(
                       fontWeight: FontWeight.w600,
                       color: AppTheme.primaryBlue,
                     ),
@@ -354,15 +352,13 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
           children: [
             Text(
               label,
-              style: TextStyle(
-                fontSize: 11,
+              style: AppTextStyles.caption.copyWith(
                 color: AppTheme.textMuted,
               ),
             ),
             Text(
               value,
-              style: TextStyle(
-                fontSize: 13,
+              style: AppTextStyles.bodySmall.copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textWhite,
               ),
@@ -387,35 +383,35 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
   String _getCategoryName(ImageCategory category) {
     switch (category) {
       case ImageCategory.exterior:
-        return 'Exterior';
+        return 'خارجي';
       case ImageCategory.interior:
-        return 'Interior';
+        return 'داخلي';
       case ImageCategory.amenity:
-        return 'Amenity';
+        return 'مرافق';
       case ImageCategory.floorPlan:
-        return 'Floor Plan';
+        return 'مخطط';
       case ImageCategory.documents:
-        return 'Documents';
+        return 'مستندات';
       case ImageCategory.avatar:
-        return 'Avatar';
+        return 'صورة شخصية';
       case ImageCategory.cover:
-        return 'Cover';
+        return 'غلاف';
       case ImageCategory.gallery:
-        return 'Gallery';
+        return 'معرض';
     }
   }
   
   String _formatFileSize(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    if (bytes < 1024) return '$bytes بايت';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} كيلوبايت';
     if (bytes < 1024 * 1024 * 1024) {
-      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} ميجابايت';
     }
-    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} جيجابايت';
   }
 }
 
-// Image Viewer Dialog
+// نافذة عرض الصور
 class _ImageViewerDialog extends StatefulWidget {
   final List<ReviewImage> images;
   final int initialIndex;
@@ -491,7 +487,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
               filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Column(
                 children: [
-                  // Header
+                  // الرأس
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -504,24 +500,22 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
                     ),
                     child: Row(
                       children: [
-                        // Image Info
+                        // معلومات الصورة
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 widget.images[_currentIndex].name,
-                                style: TextStyle(
-                                  fontSize: 16,
+                                style: AppTextStyles.bodyMedium.copyWith(
                                   fontWeight: FontWeight.w600,
                                   color: AppTheme.textWhite,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${_currentIndex + 1} of ${widget.images.length}',
-                                style: TextStyle(
-                                  fontSize: 13,
+                                '${_currentIndex + 1} من ${widget.images.length}',
+                                style: AppTextStyles.caption.copyWith(
                                   color: AppTheme.textMuted,
                                 ),
                               ),
@@ -529,7 +523,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
                           ),
                         ),
                         
-                        // Close Button
+                        // زر الإغلاق
                         IconButton(
                           onPressed: () {
                             HapticFeedback.lightImpact();
@@ -552,7 +546,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
                     ),
                   ),
                   
-                  // Image Viewer
+                  // عارض الصور
                   Expanded(
                     child: Stack(
                       children: [
@@ -589,7 +583,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
                           },
                         ),
                         
-                        // Navigation Buttons
+                        // أزرار التنقل
                         if (_currentIndex > 0)
                           Positioned(
                             left: 16,
@@ -629,7 +623,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
                     ),
                   ),
                   
-                  // Thumbnails
+                  // الصور المصغرة
                   Container(
                     height: 80,
                     padding: const EdgeInsets.all(12),
@@ -658,7 +652,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             width: 56,
-                            margin: const EdgeInsets.only(right: 8),
+                            margin: const EdgeInsets.only(left: 8),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
