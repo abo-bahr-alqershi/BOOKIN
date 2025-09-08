@@ -106,7 +106,8 @@ class _CityStatsCardState extends State<CityStatsCard>
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisCount: columns,
-              childAspectRatio: widget.isDesktop ? 1.8 : (widget.isTablet ? 1.6 : 1.4),
+              // Slightly taller tiles on small screens to avoid vertical overflow of internal Column
+              childAspectRatio: widget.isDesktop ? 1.8 : (widget.isTablet ? 1.55 : 1.3),
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
               children: [

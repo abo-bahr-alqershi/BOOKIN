@@ -2,6 +2,7 @@
 
 import 'package:bookn_cp_app/features/admin_cities/domain/entities/city.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:ui';
@@ -310,16 +311,16 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
           ),
           child: Column(
             children: [
-              // Status Bar Space
-              SizedBox(height: statusBarHeight),
-              
-              // AppBar Content
-              Container(
-                height: appBarHeight,
-                padding: EdgeInsets.symmetric(
-                  horizontal: isMobile ? 16 : (isDesktop ? 32 : 24),
-                ),
-                child: Row(
+              // AppBar Content within SafeArea to handle status bar height precisely
+              SafeArea(
+                top: true,
+                bottom: false,
+                child: Container(
+                  height: appBarHeight,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 16 : (isDesktop ? 32 : 24),
+                  ),
+                  child: Row(
                   children: [
                     // Back button if needed
                     if (Navigator.of(context).canPop()) ...[
@@ -1645,11 +1646,13 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
   Future<void> _showCityModal({City? city}) async {
     HapticFeedback.lightImpact();
 
-    final City? result = await Navigator.of(context).pushNamed<City>(
-      city == null
-          ? '/admin/cities/create'
-          : '/admin/cities/${Uri.encodeComponent(city.name)}/edit',
-      arguments: city,
+    final String path = city == null
+        ? '/admin/cities/create'
+        : '/admin/cities/${Uri.encodeComponent(city.name)}/edit';
+
+    final City? result = await context.push<City>(
+      path,
+      extra: city,
     );
 
     if (result == null) return;
