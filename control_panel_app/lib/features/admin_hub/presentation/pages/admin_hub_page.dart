@@ -386,7 +386,7 @@ class _AdminHubPageState extends State<AdminHubPage>
         
         // Profile
         Padding(
-          padding: const EdgeInsets.only(right: 16),
+          padding: const EdgeInsets.only(right: 8,left: 8),
           child: GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
@@ -440,7 +440,7 @@ class _AdminHubPageState extends State<AdminHubPage>
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              color: AppTheme.glassDark.withOpacity(0.3),
+              color: AppTheme.inputBackground.withOpacity(0.3),
             ),
             child: Icon(
               icon,
@@ -696,7 +696,7 @@ class _AdminHubPageState extends State<AdminHubPage>
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           gradient: isPrimary ? AppTheme.primaryGradient : null,
-          color: isPrimary ? null : AppTheme.glassDark.withOpacity(0.3),
+          color: isPrimary ? null : AppTheme.inputBackground.withOpacity(0.3),
           border: isPrimary
               ? null
               : Border.all(
