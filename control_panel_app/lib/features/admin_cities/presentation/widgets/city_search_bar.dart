@@ -1,66 +1,99 @@
+// lib/features/admin_cities/presentation/widgets/city_search_bar.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
+import 'dart:async';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
 
 class CitySearchBar extends StatefulWidget {
   final Function(String) onSearch;
-  final VoidCallback? onFilter;
-
+  final String? initialValue;
+  
   const CitySearchBar({
     super.key,
     required this.onSearch,
-    this.onFilter,
+    this.initialValue,
   });
-
+  
   @override
   State<CitySearchBar> createState() => _CitySearchBarState();
 }
 
 class _CitySearchBarState extends State<CitySearchBar>
     with SingleTickerProviderStateMixin {
-  final TextEditingController _searchController = TextEditingController();
-  final FocusNode _focusNode = FocusNode();
-  
+  late TextEditingController _controller;
+  late FocusNode _focusNode;
   late AnimationController _animationController;
-  late Animation<double> _widthAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _glowAnimation;
   
+  Timer? _debounce;
   bool _isFocused = false;
+  bool _hasText = false;
   
   @override
   void initState() {
     super.initState();
+    
+    _controller = TextEditingController(text: widget.initialValue);
+    _focusNode = FocusNode();
+    
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
     
-    _widthAnimation = Tween<double>(
-      begin: 0.95,
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.02,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _glowAnimation = Tween<double>(
+      begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: Curves.easeOutExpo,
+      curve: Curves.easeInOut,
     ));
     
-    _focusNode.addListener(() {
-      setState(() {
-        _isFocused = _focusNode.hasFocus;
-      });
-      
-      if (_focusNode.hasFocus) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
+    _focusNode.addListener(_onFocusChange);
+    _controller.addListener(_onTextChange);
+    
+    _hasText = _controller.text.isNotEmpty;
+  }
+  
+  void _onFocusChange() {
+    setState(() {
+      _isFocused = _focusNode.hasFocus;
+    });
+    
+    if (_isFocused) {
+      _animationController.forward();
+    } else {
+      _animationController.reverse();
+    }
+  }
+  
+  void _onTextChange() {
+    setState(() {
+      _hasText = _controller.text.isNotEmpty;
+    });
+    
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      widget.onSearch(_controller.text);
     });
   }
   
   @override
   void dispose() {
-    _searchController.dispose();
+    _debounce?.cancel();
+    _controller.dispose();
     _focusNode.dispose();
     _animationController.dispose();
     super.dispose();
@@ -72,117 +105,151 @@ class _CitySearchBarState extends State<CitySearchBar>
       animation: _animationController,
       builder: (context, child) {
         return Transform.scale(
-          scale: _widthAnimation.value,
+          scale: _scaleAnimation.value,
           child: Container(
             height: 56,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: _isFocused
-                    ? [
-                        AppTheme.primaryBlue.withOpacity(0.1),
-                        AppTheme.primaryPurple.withOpacity(0.05),
-                      ]
-                    : [
-                        AppTheme.darkCard.withOpacity(0.5),
-                        AppTheme.darkCard.withOpacity(0.3),
-                      ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: _isFocused
-                    ? AppTheme.primaryBlue.withOpacity(0.5)
-                    : AppTheme.darkBorder.withOpacity(0.3),
-                width: _isFocused ? 2 : 1,
-              ),
-              boxShadow: _isFocused
-                  ? [
-                      BoxShadow(
-                        color: AppTheme.primaryBlue.withOpacity(0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                  : null,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                if (_isFocused)
+                  BoxShadow(
+                    color: AppTheme.primaryBlue.withOpacity(
+                      0.2 * _glowAnimation.value,
+                    ),
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                  ),
+              ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Row(
-                  children: [
-                    // Search Icon
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Icon(
-                        Icons.search_rounded,
-                        color: _isFocused
-                            ? AppTheme.primaryBlue
-                            : AppTheme.textMuted,
-                        size: 24,
-                      ),
+                filter: ImageFilter.blur(
+                  sigmaX: _isFocused ? 20 : 10,
+                  sigmaY: _isFocused ? 20 : 10,
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppTheme.darkCard.withOpacity(_isFocused ? 0.8 : 0.5),
+                        AppTheme.darkCard.withOpacity(_isFocused ? 0.6 : 0.3),
+                      ],
                     ),
-                    
-                    // Search Input
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        focusNode: _focusNode,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppTheme.textWhite,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'ابحث عن المدن...',
-                          hintStyle: AppTextStyles.bodyMedium.copyWith(
-                            color: AppTheme.textMuted.withOpacity(0.5),
-                          ),
-                          border: InputBorder.none,
-                        ),
-                        onChanged: widget.onSearch,
-                      ),
+                    border: Border.all(
+                      color: _isFocused
+                          ? AppTheme.primaryBlue.withOpacity(0.5)
+                          : AppTheme.darkBorder.withOpacity(0.2),
+                      width: _isFocused ? 1.5 : 0.5,
                     ),
-                    
-                    // Clear Button
-                    if (_searchController.text.isNotEmpty)
-                      GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          _searchController.clear();
-                          widget.onSearch('');
-                        },
-                        child: Container(
+                  ),
+                  child: Row(
+                    children: [
+                      // Search Icon with Animation
+                      Padding(
+                        padding: const EdgeInsets.only(left: 16, right: 8),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
                           padding: const EdgeInsets.all(8),
-                          child: Icon(
-                            Icons.clear_rounded,
-                            color: AppTheme.textMuted,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    
-                    // Filter Button
-                    if (widget.onFilter != null)
-                      GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          widget.onFilter!();
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.only(left: 8),
-                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            gradient: AppTheme.primaryGradient,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
+                            color: _isFocused
+                                ? AppTheme.primaryBlue.withOpacity(0.2)
+                                : Colors.transparent,
                           ),
-                          child: const Icon(
-                            Icons.tune_rounded,
-                            color: Colors.white,
+                          child: Icon(
+                            Icons.search_rounded,
+                            color: _isFocused
+                                ? AppTheme.primaryBlue
+                                : AppTheme.textMuted.withOpacity(0.7),
                             size: 20,
                           ),
                         ),
                       ),
-                    
-                    const SizedBox(width: 8),
-                  ],
+                      
+                      // Text Field
+                      Expanded(
+                        child: TextField(
+                          controller: _controller,
+                          focusNode: _focusNode,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppTheme.textWhite,
+                            fontWeight: FontWeight.w300,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'البحث عن مدينة...',
+                            hintStyle: AppTextStyles.bodyMedium.copyWith(
+                              color: AppTheme.textMuted.withOpacity(0.5),
+                              fontWeight: FontWeight.w300,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                            ),
+                          ),
+                          onSubmitted: (value) {
+                            widget.onSearch(value);
+                          },
+                        ),
+                      ),
+                      
+                      // Clear Button
+                      if (_hasText)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: IconButton(
+                            onPressed: () {
+                              HapticFeedback.lightImpact();
+                              _controller.clear();
+                              widget.onSearch('');
+                            },
+                            icon: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppTheme.textMuted.withOpacity(0.2),
+                              ),
+                              child: Icon(
+                                Icons.close_rounded,
+                                color: AppTheme.textMuted.withOpacity(0.8),
+                                size: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      
+                      // Voice Search Button
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: IconButton(
+                          onPressed: () {
+                            HapticFeedback.lightImpact();
+                            // Implement voice search
+                          },
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppTheme.primaryPurple.withOpacity(0.2),
+                                  AppTheme.primaryViolet.withOpacity(0.2),
+                                ],
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.mic_none_rounded,
+                              color: AppTheme.primaryPurple,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
