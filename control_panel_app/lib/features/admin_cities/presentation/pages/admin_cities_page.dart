@@ -71,10 +71,10 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
     )..repeat(reverse: true);
     
     // Shimmer animation
-        _shimmerAnimationController = AnimationController(
-          duration: const Duration(milliseconds: 1500),
-          vsync: this,
-        )..repeat();
+    _shimmerAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat();
     
     // Setup animations
     _fadeAnimation = Tween<double>(
@@ -115,7 +115,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
   
   void _setupScrollListener() {
     _scrollController.addListener(() {
-      final shouldShow = _scrollController.offset > 200;
+      final shouldShow = _scrollController.offset > 100;
       if (shouldShow != _showFloatingHeader) {
         setState(() {
           _showFloatingHeader = shouldShow;
@@ -145,6 +145,12 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
     final size = MediaQuery.of(context).size;
     final isTablet = size.width > 600;
     final isDesktop = size.width > 1200;
+    final isMobile = size.width < 600;
+    
+    // حساب ارتفاع الـ AppBar الثابت
+    final appBarHeight = isMobile ? 70.0 : (isDesktop ? 90.0 : 80.0);
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    final totalHeaderHeight = appBarHeight + statusBarHeight;
     
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
@@ -156,104 +162,726 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
           // Floating Orbs
           ..._buildFloatingOrbs(),
           
-          // Main Content
-          CustomScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // Premium App Bar
-              _buildPremiumAppBar(context, isDesktop),
-              
-              // Hero Section with Stats
-              SliverToBoxAdapter(
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: _buildHeroSection(isDesktop, isTablet),
+          // Main Scrollable Content with padding for fixed header
+          Positioned.fill(
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                children: [
+                  // مساحة فارغة بحجم الـ Header الثابت
+                  SizedBox(height: totalHeaderHeight),
+                  
+                  // Hero Section with Stats
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: _buildHeroSection(isDesktop, isTablet),
+                    ),
                   ),
-                ),
-              ),
-              
-              // Search and Filters Section
-              SliverToBoxAdapter(
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: _buildSearchSection(isDesktop, isTablet),
+                  
+                  // Search and Filters Section
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: _buildSearchSection(isDesktop, isTablet),
+                    ),
                   ),
-                ),
-              ),
-              
-              // Cities Content
-              BlocBuilder<CitiesBloc, CitiesState>(
-                builder: (context, state) {
-                  if (state is CitiesLoading) {
-                    return SliverFillRemaining(
-                      child: _buildLoadingState(),
-                    );
-                  }
                   
-                  if (state is CitiesError) {
-                    return SliverFillRemaining(
-                      child: _buildErrorState(state.message),
-                    );
-                  }
+                  // Cities Content
+                  BlocBuilder<CitiesBloc, CitiesState>(
+                    builder: (context, state) {
+                      if (state is CitiesLoading) {
+                        return _buildLoadingState();
+                      }
+                      
+                      if (state is CitiesError) {
+                        return _buildErrorState(state.message);
+                      }
+                      
+                      if (state is CitiesLoaded) {
+                        if (state.filteredCities.isEmpty) {
+                          return _buildEmptyState();
+                        }
+                        
+                        return Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isDesktop ? 32 : 20,
+                            vertical: 20,
+                          ),
+                          child: _buildCitiesGrid(
+                            state.filteredCities,
+                            isDesktop,
+                            isTablet,
+                          ),
+                        );
+                      }
+                      
+                      return const SizedBox();
+                    },
+                  ),
                   
-                  if (state is CitiesLoaded) {
-                    if (state.filteredCities.isEmpty) {
-                      return SliverFillRemaining(
-                        child: _buildEmptyState(),
-                      );
-                    }
-                    
-                    return SliverPadding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isDesktop ? 32 : 20,
-                        vertical: 20,
-                      ),
-                      sliver: FuturisticCitiesGrid(
-                        cities: state.filteredCities,
-                        isGridView: _isGridView,
-                        isDesktop: isDesktop,
-                        isTablet: isTablet,
-                        onEdit: (city) => _showCityModal(city: city),
-                        onDelete: (city) => _confirmDelete(city),
-                        onImageTap: (city) => _showImageGallery(city),
-                      ),
-                    );
-                  }
+                  // Pagination
+                  BlocBuilder<CitiesBloc, CitiesState>(
+                    builder: (context, state) {
+                      if (state is CitiesLoaded && state.totalPages > 1) {
+                        return _buildPagination(state);
+                      }
+                      return const SizedBox();
+                    },
+                  ),
                   
-                  return const SliverToBoxAdapter(child: SizedBox());
-                },
+                  // Bottom Padding
+                  const SizedBox(height: 100),
+                ],
               ),
-              
-              // Pagination
-              BlocBuilder<CitiesBloc, CitiesState>(
-                builder: (context, state) {
-                  if (state is CitiesLoaded && state.totalPages > 1) {
-                    return SliverToBoxAdapter(
-                      child: _buildPagination(state),
-                    );
-                  }
-                  return const SliverToBoxAdapter(child: SizedBox());
-                },
-              ),
-              
-              // Bottom Padding
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 100),
-              ),
-            ],
+            ),
           ),
           
-          // Floating Header
-          if (_showFloatingHeader) _buildFloatingHeader(context),
+          // Fixed Header - ثابت تماماً بدون أي تمدد
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: totalHeaderHeight,
+            child: _buildFixedHeader(
+              context,
+              appBarHeight,
+              statusBarHeight,
+              isDesktop,
+              isMobile,
+            ),
+          ),
+          
+          // Floating Header when scrolled
+          if (_showFloatingHeader)
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              top: _showFloatingHeader ? 0 : -100,
+              left: 0,
+              right: 0,
+              child: _buildCompactFloatingHeader(context),
+            ),
           
           // Floating Action Button
           _buildFloatingActionButton(),
         ],
+      ),
+    );
+  }
+
+  // Header ثابت تماماً - لا يتمدد أبداً
+  Widget _buildFixedHeader(
+    BuildContext context,
+    double appBarHeight,
+    double statusBarHeight,
+    bool isDesktop,
+    bool isMobile,
+  ) {
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppTheme.darkCard.withOpacity(0.95),
+                AppTheme.darkCard.withOpacity(0.85),
+              ],
+            ),
+            border: Border(
+              bottom: BorderSide(
+                color: AppTheme.glowBlue.withOpacity(0.1),
+                width: 0.5,
+              ),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Status Bar Space
+              SizedBox(height: statusBarHeight),
+              
+              // AppBar Content
+              Container(
+                height: appBarHeight,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 16 : (isDesktop ? 32 : 24),
+                ),
+                child: Row(
+                  children: [
+                    // Back button if needed
+                    if (Navigator.of(context).canPop()) ...[
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 40,
+                          minHeight: 40,
+                        ),
+                        icon: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: AppTheme.inputBackground.withOpacity(0.2),
+                          ),
+                          child: Icon(
+                            Icons.arrow_back_ios_rounded,
+                            color: AppTheme.textLight,
+                            size: isMobile ? 16 : 18,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: isMobile ? 8 : 12),
+                    ],
+                    
+                    // Main Icon
+                    AnimatedBuilder(
+                      animation: _pulseAnimationController,
+                      builder: (context, child) {
+                        return Container(
+                          padding: EdgeInsets.all(isMobile ? 8 : 10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                AppTheme.primaryBlue.withOpacity(0.2),
+                                AppTheme.primaryPurple.withOpacity(0.2),
+                              ],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.glowBlue.withOpacity(
+                                  0.2 + (0.1 * _pulseAnimationController.value),
+                                ),
+                                blurRadius: 15,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.location_city_rounded,
+                            color: AppTheme.glowWhite,
+                            size: isMobile ? 20 : 24,
+                          ),
+                        );
+                      },
+                    ),
+                    
+                    SizedBox(width: isMobile ? 12 : 16),
+                    
+                    // Title and Subtitle
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'إدارة المدن',
+                            style: AppTextStyles.heading2.copyWith(
+                              color: AppTheme.textWhite,
+                              fontSize: isMobile ? 18 : (isDesktop ? 24 : 22),
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          if (!isMobile) ...[
+                            const SizedBox(height: 4),
+                            BlocBuilder<CitiesBloc, CitiesState>(
+                              builder: (context, state) {
+                                if (state is CitiesLoaded) {
+                                  return Text(
+                                    '${state.cities.length} مدينة متاحة',
+                                    style: AppTextStyles.caption.copyWith(
+                                      color: AppTheme.textMuted.withOpacity(0.7),
+                                      fontSize: 12,
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    
+                    // Action buttons
+                    if (!isMobile) ...[
+                      _buildViewToggle(),
+                      const SizedBox(width: 12),
+                    ],
+                    
+                    // Refresh Button
+                    IconButton(
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        context.read<CitiesBloc>().add(RefreshCitiesEvent());
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
+                      ),
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: AppTheme.inputBackground.withOpacity(0.2),
+                        ),
+                        child: Icon(
+                          Icons.refresh_rounded,
+                          color: AppTheme.textLight,
+                          size: isMobile ? 18 : 20,
+                        ),
+                      ),
+                    ),
+                    
+                    // Menu button for mobile
+                    if (isMobile) ...[
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          _showMobileMenu();
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 40,
+                          minHeight: 40,
+                        ),
+                        icon: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: AppTheme.inputBackground.withOpacity(0.2),
+                          ),
+                          child: Icon(
+                            Icons.more_vert_rounded,
+                            color: AppTheme.textLight,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Compact floating header عند التمرير
+  Widget _buildCompactFloatingHeader(BuildContext context) {
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).padding.top + 12,
+            bottom: 12,
+            left: 20,
+            right: 20,
+          ),
+          decoration: BoxDecoration(
+            color: AppTheme.darkCard.withOpacity(0.95),
+            border: Border(
+              bottom: BorderSide(
+                color: AppTheme.glowBlue.withOpacity(0.2),
+                width: 0.5,
+              ),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.location_city_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'المدن',
+                style: AppTextStyles.bodyLarge.copyWith(
+                  color: AppTheme.textWhite,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              BlocBuilder<CitiesBloc, CitiesState>(
+                builder: (context, state) {
+                  if (state is CitiesLoaded) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color: AppTheme.primaryBlue.withOpacity(0.1),
+                        border: Border.all(
+                          color: AppTheme.primaryBlue.withOpacity(0.3),
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Text(
+                        '${state.cities.length}',
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppTheme.primaryBlue,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Cities Grid Widget
+  Widget _buildCitiesGrid(
+    List<City> cities,
+    bool isDesktop,
+    bool isTablet,
+  ) {
+    if (_isGridView) {
+      final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 1);
+      
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          childAspectRatio: isDesktop ? 1.2 : (isTablet ? 1.1 : 1.3),
+          crossAxisSpacing: 20,
+          mainAxisSpacing: 20,
+        ),
+        itemCount: cities.length,
+        itemBuilder: (context, index) {
+          final city = cities[index];
+          return AnimationConfiguration.staggeredGrid(
+            position: index,
+            duration: const Duration(milliseconds: 375),
+            columnCount: crossAxisCount,
+            child: ScaleAnimation(
+              child: FadeInAnimation(
+                child: _buildCityCard(city),
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      return ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: cities.length,
+        itemBuilder: (context, index) {
+          final city = cities[index];
+          return AnimationConfiguration.staggeredList(
+            position: index,
+            duration: const Duration(milliseconds: 375),
+            child: SlideAnimation(
+              verticalOffset: 50.0,
+              child: FadeInAnimation(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildCityListItem(city),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+  }
+
+  // City Card Widget
+  Widget _buildCityCard(City city) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: AppTheme.darkCard,
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.2),
+          width: 0.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showCityModal(city: city),
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // City image placeholder
+                Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.primaryBlue.withOpacity(0.1),
+                        AppTheme.primaryPurple.withOpacity(0.1),
+                      ],
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.location_city,
+                      size: 40,
+                      color: AppTheme.textMuted.withOpacity(0.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  city.name,
+                  style: AppTextStyles.heading3.copyWith(
+                    color: AppTheme.textWhite,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.flag,
+                      size: 16,
+                      color: AppTheme.textMuted.withOpacity(0.7),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      city.country,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      onPressed: () => _showCityModal(city: city),
+                      icon: Icon(
+                        Icons.edit_rounded,
+                        color: AppTheme.primaryBlue,
+                        size: 20,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => _confirmDelete(city),
+                      icon: Icon(
+                        Icons.delete_rounded,
+                        color: AppTheme.error,
+                        size: 20,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // City List Item Widget
+  Widget _buildCityListItem(City city) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: AppTheme.darkCard,
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.2),
+          width: 0.5,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showCityModal(city: city),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.primaryBlue.withOpacity(0.1),
+                        AppTheme.primaryPurple.withOpacity(0.1),
+                      ],
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.location_city,
+                      color: AppTheme.textMuted.withOpacity(0.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        city.name,
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppTheme.textWhite,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        city.country,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => _showCityModal(city: city),
+                  icon: Icon(
+                    Icons.edit_rounded,
+                    color: AppTheme.primaryBlue,
+                    size: 20,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => _confirmDelete(city),
+                  icon: Icon(
+                    Icons.delete_rounded,
+                    color: AppTheme.error,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Mobile menu modal
+  void _showMobileMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: AppTheme.darkCard,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          border: Border.all(
+            color: AppTheme.darkBorder.withOpacity(0.2),
+            width: 0.5,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(2),
+                  color: AppTheme.textMuted.withOpacity(0.3),
+                ),
+              ),
+              ListTile(
+                leading: Icon(
+                  _isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
+                  color: AppTheme.primaryBlue,
+                ),
+                title: Text(
+                  _isGridView ? 'عرض قائمة' : 'عرض شبكي',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textLight,
+                  ),
+                ),
+                onTap: () {
+                  setState(() => _isGridView = !_isGridView);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.filter_list_rounded,
+                  color: AppTheme.primaryBlue,
+                ),
+                title: Text(
+                  'تصفية حسب البلد',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textLight,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  // Show country filter
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -392,132 +1020,6 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
     ];
   }
 
-  Widget _buildPremiumAppBar(BuildContext context, bool isDesktop) {
-    return SliverAppBar(
-      expandedHeight: isDesktop ? 180 : 160,
-      floating: true,
-      pinned: true,
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      flexibleSpace: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppTheme.darkCard.withOpacity(0.8),
-                  AppTheme.darkCard.withOpacity(0.4),
-                ],
-              ),
-              border: Border(
-                bottom: BorderSide(
-                  color: AppTheme.glowBlue.withOpacity(0.1),
-                  width: 0.5,
-                ),
-              ),
-            ),
-            child: FlexibleSpaceBar(
-              centerTitle: false,
-              titlePadding: EdgeInsets.only(
-                left: isDesktop ? 32 : 20,
-                bottom: 16,
-                right: isDesktop ? 32 : 20,
-              ),
-              title: Row(
-                children: [
-                  // Animated Icon
-                  AnimatedBuilder(
-                    animation: _pulseAnimationController,
-                    builder: (context, child) {
-                      return Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          gradient: LinearGradient(
-                            colors: [
-                              AppTheme.primaryBlue.withOpacity(0.2),
-                              AppTheme.primaryPurple.withOpacity(0.2),
-                            ],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.glowBlue.withOpacity(
-                                0.3 + (0.2 * _pulseAnimationController.value),
-                              ),
-                              blurRadius: 20,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.location_city_rounded,
-                          color: AppTheme.glowWhite,
-                          size: isDesktop ? 32 : 28,
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 16),
-                  
-                  // Title and Subtitle
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'إدارة المدن',
-                          style: AppTextStyles.heading2.copyWith(
-                            color: AppTheme.textWhite,
-                            fontSize: isDesktop ? 24 : 20,
-                            fontWeight: FontWeight.w300,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        BlocBuilder<CitiesBloc, CitiesState>(
-                          builder: (context, state) {
-                            if (state is CitiesLoaded) {
-                              return Text(
-                                '${state.cities.length} مدينة متاحة',
-                                style: AppTextStyles.caption.copyWith(
-                                  color: AppTheme.textMuted.withOpacity(0.7),
-                                  letterSpacing: 0.3,
-                                ),
-                              );
-                            }
-                            return const SizedBox();
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  // View Toggle
-                  _buildViewToggle(),
-                  
-                  const SizedBox(width: 16),
-                  
-                  // Refresh Button
-                  _buildAppBarAction(
-                    icon: Icons.refresh_rounded,
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      context.read<CitiesBloc>().add(RefreshCitiesEvent());
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildViewToggle() {
     return Container(
       padding: const EdgeInsets.all(4),
@@ -575,27 +1077,6 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
           color: isSelected 
               ? AppTheme.glowBlue
               : AppTheme.textMuted.withOpacity(0.5),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAppBarAction({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return IconButton(
-      onPressed: onTap,
-      icon: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: AppTheme.inputBackground.withOpacity(0.3),
-        ),
-        child: Icon(
-          icon,
-          color: AppTheme.textLight,
-          size: 20,
         ),
       ),
     );
@@ -885,315 +1366,231 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
   }
 
   Widget _buildLoadingState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Premium Loading Animation
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: AppTheme.primaryGradient,
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.glowBlue.withOpacity(0.5),
-                  blurRadius: 40,
-                  spreadRadius: 10,
+    return SizedBox(
+      height: 400,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Premium Loading Animation
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: AppTheme.primaryGradient,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.glowBlue.withOpacity(0.5),
+                    blurRadius: 40,
+                    spreadRadius: 10,
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 3,
                 ),
-              ],
-            ),
-            child: const Center(
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 3,
               ),
             ),
-          ),
-          const SizedBox(height: 32),
-          AnimatedBuilder(
-            animation: _shimmerAnimationController,
-            builder: (context, child) {
-              return ShaderMask(
-                shaderCallback: (bounds) {
-                  return LinearGradient(
-                    begin: Alignment(-1.0 + 2 * _shimmerAnimationController.value, 0),
-                    end: Alignment(1.0 + 2 * _shimmerAnimationController.value, 0),
-                    colors: [
-                      AppTheme.textMuted,
-                      AppTheme.glowWhite,
-                      AppTheme.textMuted,
-                    ],
-                  ).createShader(bounds);
-                },
-                child: Text(
-                  'جاري تحميل المدن...',
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w300,
+            const SizedBox(height: 32),
+            AnimatedBuilder(
+              animation: _shimmerAnimationController,
+              builder: (context, child) {
+                return ShaderMask(
+                  shaderCallback: (bounds) {
+                    return LinearGradient(
+                      begin: Alignment(-1.0 + 2 * _shimmerAnimationController.value, 0),
+                      end: Alignment(1.0 + 2 * _shimmerAnimationController.value, 0),
+                      colors: [
+                        AppTheme.textMuted,
+                        AppTheme.glowWhite,
+                        AppTheme.textMuted,
+                      ],
+                    ).createShader(bounds);
+                  },
+                  child: Text(
+                    'جاري تحميل المدن...',
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w300,
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
-        ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildErrorState(String message) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppTheme.error.withOpacity(0.1),
-              border: Border.all(
-                color: AppTheme.error.withOpacity(0.3),
-                width: 1,
+    return SizedBox(
+      height: 400,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.error.withOpacity(0.1),
+                border: Border.all(
+                  color: AppTheme.error.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                Icons.error_outline,
+                size: 56,
+                color: AppTheme.error,
               ),
             ),
-            child: Icon(
-              Icons.error_outline,
-              size: 56,
-              color: AppTheme.error,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'حدث خطأ',
-            style: AppTextStyles.heading2.copyWith(
-              color: AppTheme.textWhite,
-              fontWeight: FontWeight.w300,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 48),
-            child: Text(
-              message,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppTheme.textMuted,
+            const SizedBox(height: 24),
+            Text(
+              'حدث خطأ',
+              style: AppTextStyles.heading2.copyWith(
+                color: AppTheme.textWhite,
                 fontWeight: FontWeight.w300,
               ),
             ),
-          ),
-          const SizedBox(height: 32),
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              context.read<CitiesBloc>().add(const LoadCitiesEvent());
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: AppTheme.primaryGradient,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryBlue.withOpacity(0.3),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 48),
               child: Text(
-                'إعادة المحاولة',
-                style: AppTextStyles.buttonMedium.copyWith(
-                  color: Colors.white,
+                message,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppTheme.textMuted,
+                  fontWeight: FontWeight.w300,
                 ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 32),
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                context.read<CitiesBloc>().add(const LoadCitiesEvent());
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: AppTheme.primaryGradient,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryBlue.withOpacity(0.3),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Text(
+                  'إعادة المحاولة',
+                  style: AppTextStyles.buttonMedium.copyWith(
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Empty State Illustration
-          AnimatedBuilder(
-            animation: _floatingAnimationController,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(0, 10 * _floatingAnimationController.value),
-                child: Container(
-                  width: 150,
-                  height: 150,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        AppTheme.primaryBlue.withOpacity(0.1),
-                        AppTheme.primaryPurple.withOpacity(0.1),
-                      ],
+    return SizedBox(
+      height: 400,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Empty State Illustration
+            AnimatedBuilder(
+              animation: _floatingAnimationController,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, 10 * _floatingAnimationController.value),
+                  child: Container(
+                    width: 150,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.primaryBlue.withOpacity(0.1),
+                          AppTheme.primaryPurple.withOpacity(0.1),
+                        ],
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.location_city_outlined,
+                      size: 80,
+                      color: AppTheme.textMuted.withOpacity(0.5),
                     ),
                   ),
-                  child: Icon(
-                    Icons.location_city_outlined,
-                    size: 80,
-                    color: AppTheme.textMuted.withOpacity(0.5),
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 32),
-          Text(
-            'لا توجد مدن',
-            style: AppTextStyles.heading1.copyWith(
-              color: AppTheme.textWhite,
-              fontWeight: FontWeight.w300,
+                );
+              },
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'ابدأ بإضافة أول مدينة',
-            style: AppTextStyles.bodyLarge.copyWith(
-              color: AppTheme.textMuted,
-              fontWeight: FontWeight.w300,
-            ),
-          ),
-          const SizedBox(height: 32),
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              _showCityModal();
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: AppTheme.primaryGradient,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryBlue.withOpacity(0.3),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
+            const SizedBox(height: 32),
+            Text(
+              'لا توجد مدن',
+              style: AppTextStyles.heading1.copyWith(
+                color: AppTheme.textWhite,
+                fontWeight: FontWeight.w300,
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.add_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'إضافة مدينة',
-                    style: AppTextStyles.buttonMedium.copyWith(
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'ابدأ بإضافة أول مدينة',
+              style: AppTextStyles.bodyLarge.copyWith(
+                color: AppTheme.textMuted,
+                fontWeight: FontWeight.w300,
+              ),
+            ),
+            const SizedBox(height: 32),
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _showCityModal();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: AppTheme.primaryGradient,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryBlue.withOpacity(0.3),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.add_rounded,
                       color: Colors.white,
+                      size: 20,
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFloatingHeader(BuildContext context) {
-    return AnimatedPositioned(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-      top: _showFloatingHeader ? 0 : -100,
-      left: 0,
-      right: 0,
-      child: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 12,
-              bottom: 12,
-              left: 20,
-              right: 20,
-            ),
-            decoration: BoxDecoration(
-              color: AppTheme.darkCard.withOpacity(0.8),
-              border: Border(
-                bottom: BorderSide(
-                  color: AppTheme.glowBlue.withOpacity(0.2),
-                  width: 0.5,
+                    const SizedBox(width: 8),
+                    Text(
+                      'إضافة مدينة',
+                      style: AppTextStyles.buttonMedium.copyWith(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, 5),
-                ),
-              ],
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.primaryGradient,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.location_city_rounded,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'المدن',
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: AppTheme.textWhite,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                BlocBuilder<CitiesBloc, CitiesState>(
-                  builder: (context, state) {
-                    if (state is CitiesLoaded) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: AppTheme.primaryBlue.withOpacity(0.1),
-                          border: Border.all(
-                            color: AppTheme.primaryBlue.withOpacity(0.3),
-                            width: 0.5,
-                          ),
-                        ),
-                        child: Text(
-                          '${state.cities.length}',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppTheme.primaryBlue,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      );
-                    }
-                    return const SizedBox();
-                  },
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );
