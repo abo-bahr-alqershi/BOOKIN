@@ -1008,7 +1008,7 @@ class _AdminHubPageState extends State<AdminHubPage>
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: isDesktop ? 4 : (isTablet ? 3 : 2),
-              childAspectRatio: isDesktop ? 1.15 : (isTablet ? 1.1 : 1.05), // Fix overflow
+              childAspectRatio: isDesktop ? 1.15 : (isTablet ? 1.05 : 0.95), // Slightly taller on smaller screens
               crossAxisSpacing: 20,
               mainAxisSpacing: 20,
             ),
@@ -1113,7 +1113,7 @@ class _AdminHubPageState extends State<AdminHubPage>
                   
                   // Content
                   Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
