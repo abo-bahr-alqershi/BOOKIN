@@ -46,25 +46,25 @@ class _MainScreenState extends State<MainScreen>
   //   const ProfilePage(),
   // ];
   List<Widget> get _pages => [
-    const NavigationPage(child: ConversationsPage()),
     const NavigationPage(child: AdminHubPage()),
+    const NavigationPage(child: ConversationsPage()),
     const NavigationPage(child: ProfilePage()),
   ];
   final List<_NavItem> _navItems = [
-    _NavItem(
-      icon: Icons.chat_bubble_outline_rounded,
-      activeIcon: Icons.chat_bubble_rounded,
-      label: 'الرسائل',
-      gradient: LinearGradient(
-        colors: [AppTheme.primaryBlue, AppTheme.primaryViolet],
-      ),
-    ),
     _NavItem(
       icon: Icons.dashboard_customize_outlined,
       activeIcon: Icons.dashboard_customize_rounded,
       label: 'الإدارة',
       gradient: LinearGradient(
         colors: [AppTheme.neonBlue, AppTheme.neonPurple],
+      ),
+    ),
+    _NavItem(
+      icon: Icons.chat_bubble_outline_rounded,
+      activeIcon: Icons.chat_bubble_rounded,
+      label: 'الرسائل',
+      gradient: LinearGradient(
+        colors: [AppTheme.primaryBlue, AppTheme.primaryViolet],
       ),
     ),
     _NavItem(

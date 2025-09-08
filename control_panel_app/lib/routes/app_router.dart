@@ -641,10 +641,10 @@ class AppRouter {
         GoRoute(
           path: '/admin/reviews/details',
           builder: (context, state) {
-            final review = state.extra as Review;
+            final reviewId = state.extra as String;
             return BlocProvider<ar_details_bloc.ReviewDetailsBloc>(
               create: (_) => di.sl<ar_details_bloc.ReviewDetailsBloc>(),
-              child: ReviewDetailsPage(review: review),
+              child: ReviewDetailsPage(reviewId: reviewId),
             );
           },
         ),

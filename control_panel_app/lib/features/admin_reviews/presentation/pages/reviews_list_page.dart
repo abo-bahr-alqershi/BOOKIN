@@ -4,254 +4,405 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:ui';
-import 'dart:math' as math;
-import 'package:bookn_cp_app/core/theme/app_theme.dart';
-import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
-import 'package:bookn_cp_app/core/theme/app_dimensions.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../bloc/reviews_list/reviews_list_bloc.dart';
-import '../widgets/futuristic_reviews_table.dart';
-import '../widgets/review_filters_widget.dart';
 import '../widgets/review_stats_card.dart';
+import '../widgets/review_filters_widget.dart';
+import '../widgets/futuristic_review_card.dart';
+import '../widgets/futuristic_reviews_table.dart';
+import 'review_details_page.dart';
 
 class ReviewsListPage extends StatefulWidget {
   const ReviewsListPage({super.key});
-  
+
   @override
   State<ReviewsListPage> createState() => _ReviewsListPageState();
 }
 
-class _ReviewsListPageState extends State<ReviewsListPage>
-    with TickerProviderStateMixin {
-  // Animation Controllers
-  late AnimationController _backgroundAnimController;
-  late AnimationController _glowAnimController;
-  late AnimationController _particleAnimController;
-  late AnimationController _contentAnimController;
+class _ReviewsListPageState extends State<ReviewsListPage> 
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
   
-  // Animations
-  late Animation<double> _backgroundRotation;
-  late Animation<double> _glowAnimation;
-  late Animation<double> _contentFadeAnimation;
-  late Animation<Offset> _contentSlideAnimation;
-  
-  // Filters
-  String _searchQuery = '';
-  double? _minRating;
-  bool? _isPending;
-  bool? _hasResponse;
+  bool _isGridView = false;
+  final ScrollController _scrollController = ScrollController();
+  bool _showBackToTop = false;
   
   @override
   void initState() {
     super.initState();
-    _initializeAnimations();
-    _loadReviews();
-  }
-  
-  void _initializeAnimations() {
-    _backgroundAnimController = AnimationController(
-      duration: const Duration(seconds: 20),
-      vsync: this,
-    )..repeat();
-    
-    _glowAnimController = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    )..repeat(reverse: true);
-    
-    _particleAnimController = AnimationController(
-      duration: const Duration(seconds: 15),
-      vsync: this,
-    )..repeat();
-    
-    _contentAnimController = AnimationController(
+    _animationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
     
-    _backgroundRotation = Tween<double>(
-      begin: 0,
-      end: 2 * math.pi,
-    ).animate(_backgroundAnimController);
-    
-    _glowAnimation = Tween<double>(
-      begin: 0.3,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _glowAnimController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _contentFadeAnimation = Tween<double>(
+    _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _contentAnimController,
+      parent: _animationController,
       curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
     ));
     
-    _contentSlideAnimation = Tween<Offset>(
+    _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
     ).animate(CurvedAnimation(
-      parent: _contentAnimController,
-      curve: const Interval(0.2, 1.0, curve: Curves.easeOutQuart),
+      parent: _animationController,
+      curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
     ));
     
-    // Start animations
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (mounted) {
-        _contentAnimController.forward();
-      }
+    _animationController.forward();
+    
+    _scrollController.addListener(() {
+      setState(() {
+        _showBackToTop = _scrollController.offset > 200;
+      });
     });
-  }
-  
-  void _loadReviews() {
+    
     context.read<ReviewsListBloc>().add(const LoadReviewsEvent());
   }
   
   @override
   void dispose() {
-    _backgroundAnimController.dispose();
-    _glowAnimController.dispose();
-    _particleAnimController.dispose();
-    _contentAnimController.dispose();
+    _animationController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
   
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isDesktop = size.width > AppDimensions.desktopBreakpoint;
-    final isTablet = size.width > AppDimensions.tabletBreakpoint;
+    final isTablet = size.width > 600;
+    final isDesktop = size.width > 1200;
     
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: Stack(
         children: [
-          // Animated Background
-          _buildAnimatedBackground(),
+          // Animated Background Gradient
+          Positioned.fill(
+            child: AnimatedContainer(
+              duration: const Duration(seconds: 3),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.darkBackground,
+                    AppTheme.darkBackground2.withOpacity(0.8),
+                    AppTheme.primaryPurple.withOpacity(0.05),
+                  ],
+                ),
+              ),
+            ),
+          ),
           
-          // Particles
-          _buildParticles(),
+          // Floating Orbs Animation
+          ..._buildFloatingOrbs(),
           
           // Main Content
-          _buildMainContent(isDesktop, isTablet),
+          CustomScrollView(
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // Premium App Bar
+              _buildPremiumAppBar(context, isDesktop),
+              
+              // Stats Cards Section
+              SliverToBoxAdapter(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: _buildStatsSection(isDesktop, isTablet),
+                  ),
+                ),
+              ),
+              
+              // Filters Section
+              SliverToBoxAdapter(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isDesktop ? 32 : 20,
+                      vertical: 16,
+                    ),
+                    child: ReviewFiltersWidget(
+                      onFilterChanged: (filters) {
+                        context.read<ReviewsListBloc>().add(
+                          FilterReviewsEvent(
+                            searchQuery: filters['search'] ?? '',
+                            minRating: filters['minRating'],
+                            isPending: filters['isPending'],
+                            hasResponse: filters['hasResponse'],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              
+              // View Toggle
+              if (!isDesktop)
+                SliverToBoxAdapter(
+                  child: _buildViewToggle(),
+                ),
+              
+              // Reviews Content
+              BlocBuilder<ReviewsListBloc, ReviewsListState>(
+                builder: (context, state) {
+                  if (state is ReviewsListLoading) {
+                    return SliverFillRemaining(
+                      child: _buildLoadingState(),
+                    );
+                  }
+                  
+                  if (state is ReviewsListError) {
+                    return SliverFillRemaining(
+                      child: _buildErrorState(state.message),
+                    );
+                  }
+                  
+                  if (state is ReviewsListLoaded) {
+                    if (state.filteredReviews.isEmpty) {
+                      return SliverFillRemaining(
+                        child: _buildEmptyState(),
+                      );
+                    }
+                    
+                    if (isDesktop || (!_isGridView && isTablet)) {
+                      return SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isDesktop ? 32 : 20,
+                          ),
+                          child: FuturisticReviewsTable(
+                            reviews: state.filteredReviews,
+                            onReviewTap: (review) => _navigateToDetails(context, review.id),
+                            onApproveTap: (review) {
+                              context.read<ReviewsListBloc>().add(
+                                ApproveReviewEvent(review.id),
+                              );
+                            },
+                            onDeleteTap: (review) {
+                              _showDeleteConfirmation(context, review.id);
+                            },
+                          ),
+                        ),
+                      );
+                    }
+                    
+                    return SliverPadding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isDesktop ? 32 : 20,
+                      ),
+                      sliver: _buildReviewsGrid(
+                        state.filteredReviews,
+                        isTablet: isTablet,
+                      ),
+                    );
+                  }
+                  
+                  return const SliverToBoxAdapter(child: SizedBox());
+                },
+              ),
+              
+              // Bottom Padding
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 100),
+              ),
+            ],
+          ),
+          
+          // Floating Action Button
+          if (_showBackToTop)
+            Positioned(
+              bottom: 32,
+              right: isDesktop ? 32 : 20,
+              child: _buildFloatingActionButton(),
+            ),
         ],
       ),
     );
   }
   
-  Widget _buildAnimatedBackground() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_backgroundRotation, _glowAnimation]),
-      builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.darkBackground,
-                AppTheme.darkBackground2.withOpacity(0.9),
-                AppTheme.darkBackground3.withOpacity(0.8),
-              ],
-            ),
-          ),
-          child: CustomPaint(
-            painter: _GridPatternPainter(
-              rotation: _backgroundRotation.value * 0.1,
-              opacity: 0.03,
-            ),
-            size: Size.infinite,
-          ),
-        );
-      },
-    );
-  }
-  
-  Widget _buildParticles() {
-    return AnimatedBuilder(
-      animation: _particleAnimController,
-      builder: (context, child) {
-        return CustomPaint(
-          painter: _ParticlesPainter(
-            animation: _particleAnimController.value,
-          ),
-          size: Size.infinite,
-        );
-      },
-    );
-  }
-  
-  Widget _buildMainContent(bool isDesktop, bool isTablet) {
-    return SafeArea(
-      child: FadeTransition(
-        opacity: _contentFadeAnimation,
-        child: SlideTransition(
-          position: _contentSlideAnimation,
-          child: Padding(
-            padding: EdgeInsets.all(isDesktop ? 32 : 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                _buildHeader(),
-                
-                const SizedBox(height: 24),
-                
-                // Stats Cards
-                _buildStatsSection(isDesktop, isTablet),
-                
-                const SizedBox(height: 24),
-                
-                // Filters
-                _buildFiltersSection(),
-                
-                const SizedBox(height: 24),
-                
-                // Reviews Table
-                Expanded(
-                  child: _buildReviewsSection(),
+  List<Widget> _buildFloatingOrbs() {
+    return [
+      Positioned(
+        top: -100,
+        right: -100,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(seconds: 2),
+          builder: (context, value, child) {
+            return Transform.scale(
+              scale: value,
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppTheme.primaryBlue.withOpacity(0.1 * value),
+                      AppTheme.primaryBlue.withOpacity(0.01),
+                    ],
+                  ),
                 ),
-              ],
+              ),
+            );
+          },
+        ),
+      ),
+      Positioned(
+        bottom: -150,
+        left: -150,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(seconds: 2, milliseconds: 500),
+          builder: (context, value, child) {
+            return Transform.scale(
+              scale: value,
+              child: Container(
+                width: 400,
+                height: 400,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppTheme.primaryPurple.withOpacity(0.08 * value),
+                      AppTheme.primaryPurple.withOpacity(0.01),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    ];
+  }
+  
+  Widget _buildPremiumAppBar(BuildContext context, bool isDesktop) {
+    return SliverAppBar(
+      expandedHeight: isDesktop ? 140 : 120,
+      floating: true,
+      pinned: true,
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      flexibleSpace: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppTheme.glassDark.withOpacity(0.8),
+                  AppTheme.glassDark.withOpacity(0.4),
+                ],
+              ),
+              border: Border(
+                bottom: BorderSide(
+                  color: AppTheme.glowBlue.withOpacity(0.2),
+                  width: 0.5,
+                ),
+              ),
+            ),
+            child: FlexibleSpaceBar(
+              centerTitle: false,
+              titlePadding: EdgeInsets.only(
+                left: isDesktop ? 32 : 20,
+                bottom: 16,
+                right: isDesktop ? 32 : 20,
+              ),
+              title: Row(
+                children: [
+                  // Icon with glow effect
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.primaryBlue.withOpacity(0.2),
+                          AppTheme.primaryPurple.withOpacity(0.2),
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.glowBlue.withOpacity(0.3),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.reviews_outlined,
+                      color: AppTheme.glowWhite,
+                      size: isDesktop ? 28 : 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  
+                  // Title
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Reviews Management',
+                          style: TextStyle(
+                            fontSize: isDesktop ? 24 : 20,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textWhite,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        BlocBuilder<ReviewsListBloc, ReviewsListState>(
+                          builder: (context, state) {
+                            if (state is ReviewsListLoaded) {
+                              return Text(
+                                '${state.filteredReviews.length} Total Reviews',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppTheme.textLight.withOpacity(0.8),
+                                ),
+                              );
+                            }
+                            return const SizedBox();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Refresh Button
+                  IconButton(
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      context.read<ReviewsListBloc>().add(RefreshReviewsEvent());
+                    },
+                    icon: Icon(
+                      Icons.refresh_rounded,
+                      color: AppTheme.textLight,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    );
-  }
-  
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        // Title with gradient
-        ShaderMask(
-          shaderCallback: (bounds) {
-            return LinearGradient(
-              colors: [
-                AppTheme.primaryCyan,
-                AppTheme.primaryBlue,
-                AppTheme.primaryPurple,
-              ],
-            ).createShader(bounds);
-          },
-          child: Text(
-            'إدارة التقييمات',
-            style: AppTextStyles.displaySmall.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        
-        const Spacer(),
-        
-        // Refresh Button
-        _buildGlowingIconButton(
-          icon: Icons.refresh_rounded,
-          onTap: _loadReviews,
-        ),
-      ],
     );
   }
   
@@ -259,227 +410,233 @@ class _ReviewsListPageState extends State<ReviewsListPage>
     return BlocBuilder<ReviewsListBloc, ReviewsListState>(
       builder: (context, state) {
         if (state is ReviewsListLoaded) {
-          final columns = isDesktop ? 4 : (isTablet ? 2 : 1);
-          
-          return GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: columns,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: isDesktop ? 3 : 2.5,
-            children: [
-              ReviewStatsCard(
-                title: 'إجمالي التقييمات',
-                value: state.reviews.length.toString(),
-                icon: Icons.rate_review_rounded,
-                gradient: AppTheme.primaryGradient,
-                animationDelay: const Duration(milliseconds: 100),
-              ),
-              ReviewStatsCard(
-                title: 'في انتظار الموافقة',
-                value: state.pendingCount.toString(),
-                icon: Icons.pending_actions_rounded,
-                gradient: LinearGradient(
-                  colors: [AppTheme.warning, AppTheme.warning.withOpacity(0.6)],
-                ),
-                animationDelay: const Duration(milliseconds: 200),
-              ),
-              ReviewStatsCard(
-                title: 'متوسط التقييم',
-                value: state.averageRating.toStringAsFixed(1),
-                icon: Icons.star_rounded,
-                gradient: LinearGradient(
-                  colors: [AppTheme.success, AppTheme.success.withOpacity(0.6)],
-                ),
-                animationDelay: const Duration(milliseconds: 300),
-              ),
-              ReviewStatsCard(
-                title: 'لديها ردود',
-                value: state.reviews.where((r) => r.hasResponse).length.toString(),
-                icon: Icons.reply_rounded,
-                gradient: LinearGradient(
-                  colors: [AppTheme.info, AppTheme.info.withOpacity(0.6)],
-                ),
-                animationDelay: const Duration(milliseconds: 400),
-              ),
-            ],
-          );
-        }
-        
-        return const Center(
-          child: CircularProgressIndicator(),
-        );
-      },
-    );
-  }
-  
-  Widget _buildFiltersSection() {
-    return ReviewFiltersWidget(
-      onSearchChanged: (query) {
-        setState(() => _searchQuery = query);
-        _applyFilters();
-      },
-      onRatingFilterChanged: (rating) {
-        setState(() => _minRating = rating);
-        _applyFilters();
-      },
-      onPendingFilterChanged: (isPending) {
-        setState(() => _isPending = isPending);
-        _applyFilters();
-      },
-      onResponseFilterChanged: (hasResponse) {
-        setState(() => _hasResponse = hasResponse);
-        _applyFilters();
-      },
-    );
-  }
-  
-  Widget _buildReviewsSection() {
-    return BlocBuilder<ReviewsListBloc, ReviewsListState>(
-      builder: (context, state) {
-        if (state is ReviewsListLoading) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-        
-        if (state is ReviewsListLoaded) {
-          return FuturisticReviewsTable(
-            reviews: state.filteredReviews,
-            onApprove: (reviewId) {
-              HapticFeedback.mediumImpact();
-              context.read<ReviewsListBloc>().add(ApproveReviewEvent(reviewId));
-            },
-            onDelete: (reviewId) {
-              HapticFeedback.heavyImpact();
-              _showDeleteConfirmation(reviewId);
-            },
-            onViewDetails: (review) {
-              Navigator.pushNamed(
-                context,
-                '/admin/reviews/details',
-                arguments: review,
-              );
-            },
-          );
-        }
-        
-        if (state is ReviewsListError) {
-          return Center(
-            child: Text(
-              state.message,
-              style: AppTextStyles.bodyLarge.copyWith(
-                color: AppTheme.error,
-              ),
+          return Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 32 : 20,
+              vertical: 20,
+            ),
+            child: ReviewStatsCard(
+              totalReviews: state.reviews.length,
+              pendingReviews: state.pendingCount,
+              averageRating: state.averageRating,
+              reviews: state.reviews,
+              isDesktop: isDesktop,
+              isTablet: isTablet,
             ),
           );
         }
-        
-        return const SizedBox.shrink();
+        return const SizedBox();
       },
     );
   }
   
-  Widget _buildGlowingIconButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: AnimatedBuilder(
-        animation: _glowAnimation,
-        builder: (context, child) {
-          return Container(
-            width: 48,
-            height: 48,
+  Widget _buildViewToggle() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryBlue.withOpacity(
-                    0.3 + 0.2 * _glowAnimation.value,
-                  ),
-                  blurRadius: 10 + 5 * _glowAnimation.value,
-                  spreadRadius: 1,
+              color: AppTheme.darkCard.withOpacity(0.5),
+              border: Border.all(
+                color: AppTheme.glowBlue.withOpacity(0.2),
+                width: 0.5,
+              ),
+            ),
+            child: Row(
+              children: [
+                _buildToggleButton(
+                  icon: Icons.view_list_rounded,
+                  isSelected: !_isGridView,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() => _isGridView = false);
+                  },
+                ),
+                const SizedBox(width: 4),
+                _buildToggleButton(
+                  icon: Icons.grid_view_rounded,
+                  isSelected: _isGridView,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() => _isGridView = true);
+                  },
                 ),
               ],
             ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 24,
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildToggleButton({
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: isSelected 
+              ? AppTheme.primaryBlue.withOpacity(0.2)
+              : Colors.transparent,
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: isSelected 
+              ? AppTheme.glowBlue
+              : AppTheme.textLight.withOpacity(0.5),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildReviewsGrid(
+    List<dynamic> reviews, {
+    required bool isTablet,
+  }) {
+    final crossAxisCount = isTablet ? 2 : 1;
+    
+    return SliverGrid(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        childAspectRatio: isTablet ? 1.5 : 1.8,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          return AnimationConfiguration.staggeredGrid(
+            position: index,
+            duration: const Duration(milliseconds: 600),
+            columnCount: crossAxisCount,
+            child: ScaleAnimation(
+              child: FadeInAnimation(
+                child: FuturisticReviewCard(
+                  review: reviews[index],
+                  onTap: () => _navigateToDetails(context, reviews[index].id),
+                  onApprove: () {
+                    context.read<ReviewsListBloc>().add(
+                      ApproveReviewEvent(reviews[index].id),
+                    );
+                  },
+                  onDelete: () {
+                    _showDeleteConfirmation(context, reviews[index].id);
+                  },
+                ),
+              ),
             ),
           );
         },
+        childCount: reviews.length,
       ),
     );
   }
   
-  void _applyFilters() {
-    context.read<ReviewsListBloc>().add(
-      FilterReviewsEvent(
-        searchQuery: _searchQuery,
-        minRating: _minRating,
-        isPending: _isPending,
-        hasResponse: _hasResponse,
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: AppTheme.primaryGradient,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.glowBlue.withOpacity(0.5),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 3,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Loading reviews...',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textLight,
+            ),
+          ),
+        ],
       ),
     );
   }
   
-  void _showDeleteConfirmation(String reviewId) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.darkCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Text(
-          'تأكيد الحذف',
-          style: AppTextStyles.heading3.copyWith(
-            color: AppTheme.textWhite,
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: AppTheme.error.withOpacity(0.1),
+              border: Border.all(
+                color: AppTheme.error.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              Icons.error_outline,
+              size: 48,
+              color: AppTheme.error,
+            ),
           ),
-        ),
-        content: Text(
-          'هل أنت متأكد من حذف هذا التقييم؟',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppTheme.textLight,
+          const SizedBox(height: 24),
+          Text(
+            'Error Loading Reviews',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textWhite,
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Text(
-              'إلغاء',
-              style: AppTextStyles.buttonMedium.copyWith(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
                 color: AppTheme.textMuted,
               ),
             ),
           ),
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppTheme.error, AppTheme.error.withOpacity(0.8)],
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                context.read<ReviewsListBloc>().add(
-                  DeleteReviewEvent(reviewId),
-                );
-              },
-              child: Text(
-                'حذف',
-                style: AppTextStyles.buttonMedium.copyWith(
-                  color: Colors.white,
-                ),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            onPressed: () {
+              context.read<ReviewsListBloc>().add(const LoadReviewsEvent());
+            },
+            icon: const Icon(Icons.refresh, size: 20),
+            label: const Text('Try Again'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryBlue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),
@@ -487,80 +644,234 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       ),
     );
   }
-}
-
-// Custom Painters
-class _GridPatternPainter extends CustomPainter {
-  final double rotation;
-  final double opacity;
   
-  _GridPatternPainter({
-    required this.rotation,
-    required this.opacity,
-  });
-  
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppTheme.primaryBlue.withOpacity(opacity)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5;
-    
-    canvas.save();
-    canvas.translate(size.width / 2, size.height / 2);
-    canvas.rotate(rotation);
-    canvas.translate(-size.width / 2, -size.height / 2);
-    
-    const spacing = 30.0;
-    
-    for (double x = 0; x < size.width + spacing; x += spacing) {
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x, size.height),
-        paint,
-      );
-    }
-    
-    for (double y = 0; y < size.height + spacing; y += spacing) {
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(size.width, y),
-        paint,
-      );
-    }
-    
-    canvas.restore();
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.primaryBlue.withOpacity(0.1),
+                  AppTheme.primaryPurple.withOpacity(0.1),
+                ],
+              ),
+            ),
+            child: Icon(
+              Icons.reviews_outlined,
+              size: 64,
+              color: AppTheme.textMuted,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'No Reviews Found',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textWhite,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'There are no reviews matching your filters',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
   }
   
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-class _ParticlesPainter extends CustomPainter {
-  final double animation;
-  
-  _ParticlesPainter({required this.animation});
-  
-  @override
-  void paint(Canvas canvas, Size size) {
-    final random = math.Random(42);
-    
-    for (int i = 0; i < 50; i++) {
-      final x = random.nextDouble() * size.width;
-      final y = (random.nextDouble() * size.height + 
-                 animation * size.height) % size.height;
-      final radius = random.nextDouble() * 2 + 0.5;
-      final opacity = random.nextDouble() * 0.3 + 0.1;
-      
-      final paint = Paint()
-        ..color = AppTheme.primaryBlue.withOpacity(opacity)
-        ..style = PaintingStyle.fill
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
-      
-      canvas.drawCircle(Offset(x, y), radius, paint);
-    }
+  Widget _buildFloatingActionButton() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 300),
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: value,
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: AppTheme.primaryGradient,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.glowBlue.withOpacity(0.5),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _scrollController.animateTo(
+                    0,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOutCubic,
+                  );
+                },
+                borderRadius: BorderRadius.circular(28),
+                child: const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Icon(
+                    Icons.arrow_upward_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
   
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  void _navigateToDetails(BuildContext context, String reviewId) {
+    HapticFeedback.lightImpact();
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            ReviewDetailsPage(reviewId: reviewId),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(
+                begin: 0.95,
+                end: 1.0,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              )),
+              child: child,
+            ),
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
+  }
+  
+  void _showDeleteConfirmation(BuildContext context, String reviewId) {
+    HapticFeedback.mediumImpact();
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: AppTheme.error.withOpacity(0.3),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.error.withOpacity(0.2),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppTheme.error.withOpacity(0.1),
+                  ),
+                  child: Icon(
+                    Icons.delete_outline,
+                    color: AppTheme.error,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Delete Review?',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textWhite,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'This action cannot be undone.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: AppTheme.textLight,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          context.read<ReviewsListBloc>().add(
+                            DeleteReviewEvent(reviewId),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.error,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

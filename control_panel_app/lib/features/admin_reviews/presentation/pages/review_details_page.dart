@@ -4,26 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:ui';
-import 'dart:math' as math;
-import 'package:bookn_cp_app/core/theme/app_theme.dart';
-import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
-import 'package:bookn_cp_app/core/theme/app_dimensions.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/review.dart';
-import 'package:bookn_cp_app/injection_container.dart';
-import 'package:bookn_cp_app/services/local_storage_service.dart';
-import 'package:bookn_cp_app/core/constants/storage_constants.dart';
 import '../bloc/review_details/review_details_bloc.dart';
-import '../widgets/rating_breakdown_widget.dart';
 import '../widgets/review_images_gallery.dart';
-import '../widgets/add_response_dialog.dart';
 import '../widgets/review_response_card.dart';
+import '../widgets/add_response_dialog.dart';
+import '../widgets/rating_breakdown_widget.dart';
 
 class ReviewDetailsPage extends StatefulWidget {
-  final Review review;
+  final String reviewId;
   
   const ReviewDetailsPage({
     super.key,
-    required this.review,
+    required this.reviewId,
   });
   
   @override
@@ -32,446 +27,736 @@ class ReviewDetailsPage extends StatefulWidget {
 
 class _ReviewDetailsPageState extends State<ReviewDetailsPage>
     with TickerProviderStateMixin {
-  late AnimationController _backgroundAnimController;
-  late AnimationController _contentAnimController;
-  late Animation<double> _backgroundRotation;
-  late Animation<double> _contentFadeAnimation;
-  late Animation<Offset> _contentSlideAnimation;
+  late AnimationController _mainAnimationController;
+  late AnimationController _floatingAnimationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _scaleAnimation;
+  
+  final ScrollController _scrollController = ScrollController();
+  bool _showFloatingHeader = false;
   
   @override
   void initState() {
     super.initState();
-    _initializeAnimations();
-    _loadDetails();
-  }
-  
-  void _initializeAnimations() {
-    _backgroundAnimController = AnimationController(
-      duration: const Duration(seconds: 20),
-      vsync: this,
-    )..repeat();
     
-    _contentAnimController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+    _mainAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
     
-    _backgroundRotation = Tween<double>(
-      begin: 0,
-      end: 2 * math.pi,
-    ).animate(_backgroundAnimController);
+    _floatingAnimationController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..repeat(reverse: true);
     
-    _contentFadeAnimation = Tween<double>(
+    _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _contentAnimController,
-      curve: Curves.easeOut,
+      parent: _mainAnimationController,
+      curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
     ));
     
-    _contentSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.05),
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.2),
       end: Offset.zero,
     ).animate(CurvedAnimation(
-      parent: _contentAnimController,
-      curve: Curves.easeOutQuart,
+      parent: _mainAnimationController,
+      curve: const Interval(0.2, 0.7, curve: Curves.easeOutCubic),
     ));
     
-    _contentAnimController.forward();
-  }
-  
-  void _loadDetails() {
-    context.read<ReviewDetailsBloc>().add(
-      LoadReviewDetailsEvent(widget.review.id),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _mainAnimationController,
+      curve: const Interval(0.3, 0.8, curve: Curves.easeOutBack),
+    ));
+    
+    _mainAnimationController.forward();
+    
+    _scrollController.addListener(() {
+      final shouldShow = _scrollController.offset > 200;
+      if (shouldShow != _showFloatingHeader) {
+        setState(() {
+          _showFloatingHeader = shouldShow;
+        });
+      }
+    });
+    
+    context.read<ReviewDetailsBloc>().add(LoadReviewDetailsEvent(widget.reviewId));
   }
   
   @override
   void dispose() {
-    _backgroundAnimController.dispose();
-    _contentAnimController.dispose();
+    _mainAnimationController.dispose();
+    _floatingAnimationController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
   
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isDesktop = size.width > AppDimensions.desktopBreakpoint;
+    final isTablet = size.width > 600;
+    final isDesktop = size.width > 1200;
     
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
-      body: Stack(
-        children: [
-          // Animated Background
-          _buildAnimatedBackground(),
+      body: BlocBuilder<ReviewDetailsBloc, ReviewDetailsState>(
+        builder: (context, state) {
+          if (state is ReviewDetailsLoading) {
+            return _buildLoadingState();
+          }
           
-          // Main Content
-          SafeArea(
-            child: FadeTransition(
-              opacity: _contentFadeAnimation,
-              child: SlideTransition(
-                position: _contentSlideAnimation,
-                child: _buildContent(isDesktop),
-              ),
-            ),
-          ),
-        ],
+          if (state is ReviewDetailsError) {
+            return _buildErrorState(state.message);
+          }
+          
+          if (state is ReviewDetailsLoaded) {
+            return Stack(
+              children: [
+                // Animated Background
+                _buildAnimatedBackground(),
+                
+                // Main Content
+                CustomScrollView(
+                  controller: _scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    // Premium App Bar with Hero Image
+                    _buildHeroAppBar(context, state.review, isDesktop),
+                    
+                    // Review Content
+                    SliverToBoxAdapter(
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: _buildReviewContent(
+                            context,
+                            state.review,
+                            state.responses,
+                            isDesktop,
+                            isTablet,
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    // Bottom Padding
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: 100),
+                    ),
+                  ],
+                ),
+                
+                // Floating Header
+                if (_showFloatingHeader)
+                  _buildFloatingHeader(context, state.review),
+                
+                // Floating Action Buttons
+                _buildFloatingActions(context, state.review),
+              ],
+            );
+          }
+          
+          return const SizedBox();
+        },
       ),
     );
   }
   
   Widget _buildAnimatedBackground() {
-    return AnimatedBuilder(
-      animation: _backgroundRotation,
-      builder: (context, child) {
-        return Container(
+    return Stack(
+      children: [
+        // Gradient Background
+        Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
               colors: [
                 AppTheme.darkBackground,
-                AppTheme.darkBackground2.withOpacity(0.9),
-                AppTheme.darkBackground3.withOpacity(0.8),
+                AppTheme.darkBackground2,
               ],
             ),
           ),
-        );
-      },
-    );
-  }
-  
-  Widget _buildContent(bool isDesktop) {
-    return BlocBuilder<ReviewDetailsBloc, ReviewDetailsState>(
-      builder: (context, state) {
-        if (state is ReviewDetailsLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        
-        if (state is ReviewDetailsLoaded) {
-          return CustomScrollView(
-            slivers: [
-              // App Bar
-              _buildAppBar(),
-              
-              // Content
-              SliverPadding(
-                padding: EdgeInsets.all(isDesktop ? 32 : 16),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    // Review Info Card
-                    _buildReviewInfoCard(state.review),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Rating Breakdown
-                    RatingBreakdownWidget(
-                      cleanliness: state.review.cleanliness,
-                      service: state.review.service,
-                      location: state.review.location,
-                      value: state.review.value,
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Images Gallery
-                    if (state.review.images.isNotEmpty) ...[
-                      ReviewImagesGallery(images: state.review.images),
-                      const SizedBox(height: 24),
-                    ],
-                    
-                    // Responses Section
-                    _buildResponsesSection(state),
-                  ]),
-                ),
-              ),
-            ],
-          );
-        }
-        
-        if (state is ReviewDetailsError) {
-          return Center(
-            child: Text(
-              state.message,
-              style: AppTextStyles.bodyLarge.copyWith(
-                color: AppTheme.error,
-              ),
-            ),
-          );
-        }
-        
-        return const SizedBox.shrink();
-      },
-    );
-  }
-  
-  Widget _buildAppBar() {
-    return SliverAppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      pinned: true,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.darkCard.withOpacity(0.9),
-              AppTheme.darkCard.withOpacity(0.7),
-            ],
-          ),
         ),
-        child: ClipRRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: AppTheme.primaryBlue.withOpacity(0.2),
-                    width: 1,
+        
+        // Floating Orbs
+        Positioned(
+          top: 100,
+          left: -50,
+          child: AnimatedBuilder(
+            animation: _floatingAnimationController,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(
+                  0,
+                  20 * _floatingAnimationController.value,
+                ),
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        AppTheme.primaryBlue.withOpacity(0.15),
+                        AppTheme.primaryBlue.withOpacity(0.01),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ),
-      ),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_rounded),
-        onPressed: () => Navigator.pop(context),
-      ),
-      title: Text(
-        'تفاصيل التقييم',
-        style: AppTextStyles.heading3.copyWith(
-          color: AppTheme.textWhite,
-        ),
-      ),
-      actions: [
-        // Add Response Button
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: _buildAddResponseButton(),
+        
+        Positioned(
+          bottom: 200,
+          right: -100,
+          child: AnimatedBuilder(
+            animation: _floatingAnimationController,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(
+                  0,
+                  -15 * _floatingAnimationController.value,
+                ),
+                child: Container(
+                  width: 300,
+                  height: 300,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        AppTheme.primaryPurple.withOpacity(0.1),
+                        AppTheme.primaryPurple.withOpacity(0.01),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       ],
     );
   }
   
-  Widget _buildReviewInfoCard(Review review) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkCard.withOpacity(0.7),
-            AppTheme.darkCard.withOpacity(0.5),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.primaryBlue.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              // User Avatar
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    review.userName[0].toUpperCase(),
-                    style: AppTextStyles.heading3.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+  Widget _buildHeroAppBar(
+    BuildContext context,
+    Review review,
+    bool isDesktop,
+  ) {
+    return SliverAppBar(
+      expandedHeight: isDesktop ? 320 : 280,
+      pinned: true,
+      stretch: true,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: _buildBackButton(context),
+      flexibleSpace: FlexibleSpaceBar(
+        stretchModes: const [
+          StretchMode.zoomBackground,
+          StretchMode.blurBackground,
+        ],
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Background Image or Gradient
+            if (review.images.isNotEmpty)
+              Image.network(
+                review.images.first.url,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    _buildGradientBackground(),
+              )
+            else
+              _buildGradientBackground(),
+            
+            // Overlay Gradient
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    AppTheme.darkBackground.withOpacity(0.7),
+                    AppTheme.darkBackground,
+                  ],
+                  stops: const [0.3, 0.7, 1.0],
                 ),
               ),
-              
-              const SizedBox(width: 16),
-              
-              // User Info
-              Expanded(
+            ),
+            
+            // Review Info
+            Positioned(
+              bottom: 40,
+              left: isDesktop ? 32 : 20,
+              right: isDesktop ? 32 : 20,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      review.userName,
-                      style: AppTextStyles.heading3.copyWith(
-                        color: AppTheme.textWhite,
-                      ),
+                    // User Info
+                    Row(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: AppTheme.primaryGradient,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.glowBlue.withOpacity(0.5),
+                                blurRadius: 20,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              review.userName.substring(0, 2).toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                review.userName,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textWhite,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.home_work_outlined,
+                                    size: 16,
+                                    color: AppTheme.textLight.withOpacity(0.7),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      review.propertyName,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: AppTheme.textLight.withOpacity(0.7),
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        // Status Badge
+                        _buildStatusBadge(review),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      review.propertyName,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppTheme.textMuted,
-                      ),
-                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Rating
+                    _buildRatingStars(review.averageRating),
                   ],
                 ),
               ),
-              
-              // Overall Rating
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppTheme.warning.withOpacity(0.2),
-                      AppTheme.warning.withOpacity(0.1),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppTheme.warning.withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.star_rounded,
-                      color: AppTheme.warning,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      review.averageRating.toStringAsFixed(1),
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        color: AppTheme.warning,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildGradientBackground() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.primaryBlue.withOpacity(0.3),
+            AppTheme.primaryPurple.withOpacity(0.3),
+            AppTheme.primaryViolet.withOpacity(0.3),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildBackButton(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppTheme.glassDark.withOpacity(0.5),
+        border: Border.all(
+          color: AppTheme.glowBlue.withOpacity(0.3),
+          width: 0.5,
+        ),
+      ),
+      child: IconButton(
+        icon: Icon(
+          Icons.arrow_back_ios_new,
+          color: AppTheme.textWhite,
+          size: 20,
+        ),
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+  
+  Widget _buildStatusBadge(Review review) {
+    final color = review.isPending 
+        ? AppTheme.warning 
+        : review.isApproved 
+            ? AppTheme.success 
+            : AppTheme.error;
+    
+    final text = review.isPending 
+        ? 'Pending' 
+        : review.isApproved 
+            ? 'Approved' 
+            : 'Rejected';
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: color.withOpacity(0.2),
+        border: Border.all(
+          color: color.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color,
+            ),
           ),
-          
-          const SizedBox(height: 24),
-          
-          // Comment
+          const SizedBox(width: 6),
           Text(
-            'التعليق',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.primaryBlue,
+            text,
+            style: TextStyle(
+              fontSize: 12,
               fontWeight: FontWeight.w600,
+              color: color,
             ),
-          ),
-          
-          const SizedBox(height: 8),
-          
-          Text(
-            review.comment,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.textLight,
-              height: 1.6,
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Date
-          Row(
-            children: [
-              Icon(
-                Icons.access_time_rounded,
-                size: 16,
-                color: AppTheme.textMuted,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                _formatDate(review.createdAt),
-                style: AppTextStyles.caption.copyWith(
-                  color: AppTheme.textMuted,
-                ),
-              ),
-            ],
           ),
         ],
       ),
     );
   }
   
-  Widget _buildResponsesSection(ReviewDetailsLoaded state) {
+  Widget _buildRatingStars(double rating) {
+    return Row(
+      children: List.generate(5, (index) {
+        final filled = index < rating.floor();
+        final halfFilled = index == rating.floor() && rating % 1 != 0;
+        
+        return Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: Icon(
+            halfFilled 
+                ? Icons.star_half_rounded
+                : filled 
+                    ? Icons.star_rounded 
+                    : Icons.star_outline_rounded,
+            color: AppTheme.warning,
+            size: 28,
+          ),
+        );
+      }),
+    );
+  }
+  
+  Widget _buildReviewContent(
+    BuildContext context,
+    Review review,
+    List<dynamic> responses,
+    bool isDesktop,
+    bool isTablet,
+  ) {
+    final horizontalPadding = isDesktop ? 32.0 : 20.0;
+    
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 24),
+          
+          // Rating Breakdown
+          ScaleTransition(
+            scale: _scaleAnimation,
+            child: RatingBreakdownWidget(
+              cleanliness: review.cleanliness,
+              service: review.service,
+              location: review.location,
+              value: review.value,
+              isDesktop: isDesktop,
+            ),
+          ),
+          
+          const SizedBox(height: 32),
+          
+          // Review Comment Section
+          _buildCommentSection(review),
+          
+          const SizedBox(height: 32),
+          
+          // Images Gallery
+          if (review.images.isNotEmpty) ...[
+            _buildSectionTitle('Review Images'),
+            const SizedBox(height: 16),
+            ReviewImagesGallery(
+              images: review.images,
+              isDesktop: isDesktop,
+            ),
+            const SizedBox(height: 32),
+          ],
+          
+          // Review Info
+          _buildInfoSection(review),
+          
+          const SizedBox(height: 32),
+          
+          // Responses Section
+          _buildResponsesSection(context, review, responses),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildCommentSection(Review review) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.5),
+            AppTheme.darkCard.withOpacity(0.3),
+          ],
+        ),
+        border: Border.all(
+          color: AppTheme.glowBlue.withOpacity(0.1),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.format_quote,
+                color: AppTheme.primaryBlue,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Review Comment',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textWhite,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            review.comment,
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.6,
+              color: AppTheme.textLight,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildInfoSection(Review review) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: AppTheme.glassDark.withOpacity(0.3),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.5),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        children: [
+          _buildInfoRow(
+            icon: Icons.confirmation_number_outlined,
+            label: 'Booking ID',
+            value: review.bookingId,
+          ),
+          const SizedBox(height: 16),
+          _buildInfoRow(
+            icon: Icons.calendar_today_outlined,
+            label: 'Review Date',
+            value: _formatDate(review.createdAt),
+          ),
+          if (review.hasResponse) ...[
+            const SizedBox(height: 16),
+            _buildInfoRow(
+              icon: Icons.reply_outlined,
+              label: 'Response Date',
+              value: _formatDate(review.responseDate!),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: AppTheme.primaryBlue.withOpacity(0.1),
+          ),
+          child: Icon(
+            icon,
+            size: 16,
+            color: AppTheme.primaryBlue,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textMuted,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.textWhite,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildResponsesSection(
+    BuildContext context,
+    Review review,
+    List<dynamic> responses,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            ShaderMask(
-              shaderCallback: (bounds) {
-                return AppTheme.primaryGradient.createShader(bounds);
-              },
-              child: Text(
-                'الردود',
-                style: AppTextStyles.heading3.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+            _buildSectionTitle('Management Responses'),
+            IconButton(
+              onPressed: () => _showAddResponseDialog(context, review.id),
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: AppTheme.primaryGradient,
                 ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 2,
-              ),
-              decoration: BoxDecoration(
-                gradient: AppTheme.primaryGradient,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                state.responses.length.toString(),
-                style: AppTextStyles.caption.copyWith(
+                child: const Icon(
+                  Icons.add,
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                  size: 20,
                 ),
               ),
             ),
           ],
         ),
-        
         const SizedBox(height: 16),
         
-        // Responses List
-        if (state.responses.isEmpty)
+        if (responses.isEmpty)
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: AppTheme.darkCard.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
+              color: AppTheme.glassDark.withOpacity(0.3),
               border: Border.all(
-                color: AppTheme.darkBorder.withOpacity(0.2),
-                width: 1,
+                color: AppTheme.darkBorder.withOpacity(0.5),
+                width: 0.5,
               ),
             ),
             child: Center(
               child: Column(
                 children: [
                   Icon(
-                    Icons.chat_bubble_outline_rounded,
+                    Icons.chat_bubble_outline,
                     size: 48,
-                    color: AppTheme.textMuted.withOpacity(0.3),
+                    color: AppTheme.textMuted.withOpacity(0.5),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'لا توجد ردود بعد',
-                    style: AppTextStyles.bodyMedium.copyWith(
+                    'No responses yet',
+                    style: TextStyle(
+                      fontSize: 16,
                       color: AppTheme.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Add a response to this review',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.textMuted.withOpacity(0.7),
                     ),
                   ),
                 ],
@@ -479,74 +764,323 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
             ),
           )
         else
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: state.responses.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final response = state.responses[index];
-              return ReviewResponseCard(
-                responseText: response.responseText,
-                respondedBy: response.respondedByName,
-                responseDate: response.createdAt,
-                onDelete: () => _deleteResponse(response.id),
-              );
-            },
+          AnimationLimiter(
+            child: Column(
+              children: AnimationConfiguration.toStaggeredList(
+                duration: const Duration(milliseconds: 600),
+                childAnimationBuilder: (widget) => SlideAnimation(
+                  verticalOffset: 50.0,
+                  child: FadeInAnimation(child: widget),
+                ),
+                children: responses.map((response) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: ReviewResponseCard(
+                      response: response,
+                      onDelete: () {
+                        context.read<ReviewDetailsBloc>().add(
+                          DeleteResponseEvent(response.id),
+                        );
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
           ),
       ],
     );
   }
   
-  Widget _buildAddResponseButton() {
-    return GestureDetector(
-      onTap: _showAddResponseDialog,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryBlue.withOpacity(0.3),
-              blurRadius: 10,
-              spreadRadius: 1,
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: AppTheme.textWhite,
+      ),
+    );
+  }
+  
+  Widget _buildFloatingHeader(BuildContext context, Review review) {
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      top: _showFloatingHeader ? 0 : -100,
+      left: 0,
+      right: 0,
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            padding: const EdgeInsets.only(
+              top: 48,
+              bottom: 16,
+              left: 20,
+              right: 20,
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.reply_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'إضافة رد',
-              style: AppTextStyles.buttonMedium.copyWith(
-                color: Colors.white,
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard.withOpacity(0.8),
+              border: Border(
+                bottom: BorderSide(
+                  color: AppTheme.glowBlue.withOpacity(0.2),
+                  width: 0.5,
+                ),
               ),
             ),
-          ],
+            child: Row(
+              children: [
+                _buildBackButton(context),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        review.userName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textWhite,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          ...List.generate(5, (index) {
+                            return Icon(
+                              index < review.averageRating.floor()
+                                  ? Icons.star_rounded
+                                  : Icons.star_outline_rounded,
+                              color: AppTheme.warning,
+                              size: 14,
+                            );
+                          }),
+                          const SizedBox(width: 8),
+                          Text(
+                            review.averageRating.toStringAsFixed(1),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                _buildStatusBadge(review),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
   
-  void _showAddResponseDialog() {
-    showDialog(
+  Widget _buildFloatingActions(BuildContext context, Review review) {
+    return Positioned(
+      bottom: 32,
+      right: 20,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (review.isPending) ...[
+            _buildFloatingActionButton(
+              icon: Icons.check,
+              color: AppTheme.success,
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                context.read<ReviewDetailsBloc>().add(
+                  LoadReviewDetailsEvent(widget.reviewId),
+                );
+                // Approve action
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildFloatingActionButton(
+              icon: Icons.close,
+              color: AppTheme.error,
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                // Reject action
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+          _buildFloatingActionButton(
+            icon: Icons.reply,
+            color: AppTheme.primaryBlue,
+            onTap: () => _showAddResponseDialog(context, review.id),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildFloatingActionButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color,
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.5),
+              blurRadius: 20,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(28),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Icon(
+                icon,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              gradient: AppTheme.primaryGradient,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.glowBlue.withOpacity(0.5),
+                  blurRadius: 40,
+                  spreadRadius: 10,
+                ),
+              ],
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 3,
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          Text(
+            'Loading review details...',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textLight,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppTheme.error.withOpacity(0.1),
+              border: Border.all(
+                color: AppTheme.error.withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            child: Icon(
+              Icons.error_outline,
+              size: 64,
+              color: AppTheme.error,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Error Loading Review',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textWhite,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 48),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.textMuted,
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            onPressed: () {
+              context.read<ReviewDetailsBloc>().add(
+                LoadReviewDetailsEvent(widget.reviewId),
+              );
+            },
+            icon: const Icon(Icons.refresh),
+            label: const Text('Try Again'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryBlue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 12,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showAddResponseDialog(BuildContext context, String reviewId) {
+    HapticFeedback.lightImpact();
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => AddResponseDialog(
-        reviewId: widget.review.id,
+        reviewId: reviewId,
         onSubmit: (responseText) {
-          final String respondedBy =
-              (sl<LocalStorageService>().getData(StorageConstants.userId)?.toString() ?? '');
           context.read<ReviewDetailsBloc>().add(
             AddResponseEvent(
-              reviewId: widget.review.id,
+              reviewId: reviewId,
               responseText: responseText,
-              respondedBy: respondedBy,
+              respondedBy: 'admin_id', // Replace with actual admin ID
             ),
           );
         },
@@ -554,14 +1088,11 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
     );
   }
   
-  void _deleteResponse(String responseId) {
-    HapticFeedback.heavyImpact();
-    context.read<ReviewDetailsBloc>().add(
-      DeleteResponseEvent(responseId),
-    );
-  }
-  
   String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    final months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 }

@@ -1,25 +1,23 @@
 // lib/features/admin_reviews/presentation/widgets/futuristic_review_card.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:ui';
-import 'package:bookn_cp_app/core/theme/app_theme.dart';
-import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/review.dart';
 
 class FuturisticReviewCard extends StatefulWidget {
   final Review review;
   final VoidCallback onTap;
-  final VoidCallback? onApprove;
-  final VoidCallback? onDelete;
-  final Duration animationDelay;
+  final VoidCallback onApprove;
+  final VoidCallback onDelete;
   
   const FuturisticReviewCard({
     super.key,
     required this.review,
     required this.onTap,
-    this.onApprove,
-    this.onDelete,
-    this.animationDelay = Duration.zero,
+    required this.onApprove,
+    required this.onDelete,
   });
   
   @override
@@ -30,38 +28,23 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
   bool _isHovered = false;
   
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
     
     _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
+      begin: 1.0,
+      end: 0.98,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: Curves.easeOutBack,
+      curve: Curves.easeInOut,
     ));
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    ));
-    
-    Future.delayed(widget.animationDelay, () {
-      if (mounted) {
-        _animationController.forward();
-      }
-    });
   }
   
   @override
@@ -73,159 +56,314 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: _animationController,
+      animation: _scaleAnimation,
       builder: (context, child) {
         return Transform.scale(
           scale: _scaleAnimation.value,
-          child: FadeTransition(
-            opacity: _fadeAnimation,
+          child: GestureDetector(
+            onTapDown: (_) => _animationController.forward(),
+            onTapUp: (_) {
+              _animationController.reverse();
+              HapticFeedback.lightImpact();
+              widget.onTap();
+            },
+            onTapCancel: () => _animationController.reverse(),
             child: MouseRegion(
               onEnter: (_) => setState(() => _isHovered = true),
               onExit: (_) => setState(() => _isHovered = false),
-              child: GestureDetector(
-                onTap: widget.onTap,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  transform: Matrix4.identity()
-                    ..translate(0.0, _isHovered ? -5.0 : 0.0),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppTheme.darkCard.withOpacity(0.7),
-                        AppTheme.darkCard.withOpacity(0.5),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _isHovered
-                          ? AppTheme.primaryBlue.withOpacity(0.4)
-                          : AppTheme.primaryBlue.withOpacity(0.2),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryBlue.withOpacity(
-                          _isHovered ? 0.2 : 0.1,
-                        ),
-                        blurRadius: _isHovered ? 20 : 10,
-                        offset: const Offset(0, 4),
-                      ),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppTheme.darkCard.withOpacity(_isHovered ? 0.9 : 0.7),
+                      AppTheme.darkCard.withOpacity(_isHovered ? 0.7 : 0.5),
                     ],
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Header
-                            Row(
-                              children: [
-                                // Avatar
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    gradient: AppTheme.primaryGradient,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      widget.review.userName[0].toUpperCase(),
-                                      style: AppTextStyles.bodyMedium.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
+                  border: Border.all(
+                    color: _isHovered
+                        ? AppTheme.glowBlue.withOpacity(0.3)
+                        : AppTheme.darkBorder.withOpacity(0.3),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _isHovered
+                          ? AppTheme.glowBlue.withOpacity(0.2)
+                          : Colors.black.withOpacity(0.1),
+                      blurRadius: _isHovered ? 30 : 20,
+                      spreadRadius: _isHovered ? 5 : 0,
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Stack(
+                      children: [
+                        // Background Pattern
+                        if (_isHovered)
+                          Positioned(
+                            top: -50,
+                            right: -50,
+                            child: Container(
+                              width: 150,
+                              height: 150,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [
+                                    AppTheme.primaryBlue.withOpacity(0.1),
+                                    AppTheme.primaryBlue.withOpacity(0.01),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        
+                        // Content
+                        Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Header
+                              Row(
+                                children: [
+                                  // User Avatar
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: AppTheme.primaryGradient,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppTheme.glowBlue.withOpacity(0.3),
+                                          blurRadius: 15,
+                                          spreadRadius: 2,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        widget.review.userName.substring(0, 2).toUpperCase(),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                
-                                const SizedBox(width: 12),
-                                
-                                // User Info
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        widget.review.userName,
-                                        style: AppTextStyles.bodyMedium.copyWith(
-                                          color: AppTheme.textWhite,
-                                          fontWeight: FontWeight.w600,
+                                  const SizedBox(width: 12),
+                                  
+                                  // User Info
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          widget.review.userName,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppTheme.textWhite,
+                                          ),
                                         ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          widget.review.propertyName,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: AppTheme.textMuted,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  
+                                  // Status Badge
+                                  _buildStatusBadge(),
+                                ],
+                              ),
+                              
+                              const SizedBox(height: 16),
+                              
+                              // Rating
+                              Row(
+                                children: [
+                                  ...List.generate(5, (index) {
+                                    final filled = index < widget.review.averageRating.floor();
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 2),
+                                      child: Icon(
+                                        filled ? Icons.star_rounded : Icons.star_outline_rounded,
+                                        color: filled ? AppTheme.warning : AppTheme.textMuted,
+                                        size: 18,
                                       ),
+                                    );
+                                  }),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    widget.review.averageRating.toStringAsFixed(1),
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.warning,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              
+                              const SizedBox(height: 12),
+                              
+                              // Comment Preview
+                              Text(
+                                widget.review.comment,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  height: 1.5,
+                                  color: AppTheme.textLight,
+                                ),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              
+                              const SizedBox(height: 16),
+                              
+                              // Footer
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Date
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.access_time,
+                                        size: 14,
+                                        color: AppTheme.textMuted,
+                                      ),
+                                      const SizedBox(width: 4),
                                       Text(
-                                        widget.review.propertyName,
-                                        style: AppTextStyles.caption.copyWith(
+                                        _formatDate(widget.review.createdAt),
+                                        style: TextStyle(
+                                          fontSize: 12,
                                           color: AppTheme.textMuted,
                                         ),
                                       ),
                                     ],
                                   ),
-                                ),
-                                
-                                // Rating
-                                _buildRatingBadge(),
-                              ],
-                            ),
-                            
-                            const SizedBox(height: 12),
-                            
-                            // Comment
-                            Text(
-                              widget.review.comment,
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppTheme.textLight,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            
-                            const SizedBox(height: 12),
-                            
-                            // Footer
-                            Row(
-                              children: [
-                                // Date
-                                Icon(
-                                  Icons.access_time_rounded,
-                                  size: 14,
-                                  color: AppTheme.textMuted,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _formatDate(widget.review.createdAt),
-                                  style: AppTextStyles.caption.copyWith(
-                                    color: AppTheme.textMuted,
-                                  ),
-                                ),
-                                
-                                const Spacer(),
-                                
-                                // Actions
-                                if (widget.review.isPending && widget.onApprove != null)
-                                  _buildActionButton(
-                                    icon: Icons.check_circle_rounded,
-                                    color: AppTheme.success,
-                                    onTap: widget.onApprove!,
-                                  ),
-                                
-                                if (widget.onDelete != null) ...[
-                                  const SizedBox(width: 8),
-                                  _buildActionButton(
-                                    icon: Icons.delete_rounded,
-                                    color: AppTheme.error,
-                                    onTap: widget.onDelete!,
+                                  
+                                  // Actions
+                                  Row(
+                                    children: [
+                                      if (widget.review.isPending)
+                                        _buildActionButton(
+                                          icon: Icons.check,
+                                          color: AppTheme.success,
+                                          onTap: widget.onApprove,
+                                        ),
+                                      const SizedBox(width: 8),
+                                      _buildActionButton(
+                                        icon: Icons.delete_outline,
+                                        color: AppTheme.error,
+                                        onTap: widget.onDelete,
+                                      ),
+                                    ],
                                   ),
                                 ],
-                              ],
-                            ),
-                          ],
+                              ),
+                              
+                              // Indicators
+                              if (widget.review.images.isNotEmpty || widget.review.hasResponse)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 12),
+                                  child: Row(
+                                    children: [
+                                      if (widget.review.images.isNotEmpty) ...[
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(12),
+                                            color: AppTheme.primaryBlue.withOpacity(0.1),
+                                            border: Border.all(
+                                              color: AppTheme.primaryBlue.withOpacity(0.3),
+                                              width: 0.5,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.image,
+                                                size: 12,
+                                                color: AppTheme.primaryBlue,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '${widget.review.images.length}',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppTheme.primaryBlue,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                      ],
+                                      if (widget.review.hasResponse)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(12),
+                                            color: AppTheme.success.withOpacity(0.1),
+                                            border: Border.all(
+                                              color: AppTheme.success.withOpacity(0.3),
+                                              width: 0.5,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.reply,
+                                                size: 12,
+                                                color: AppTheme.success,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'Responded',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppTheme.success,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
@@ -237,37 +375,24 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
     );
   }
   
-  Widget _buildRatingBadge() {
+  Widget _buildStatusBadge() {
+    final color = widget.review.isPending
+        ? AppTheme.warning
+        : widget.review.isApproved
+            ? AppTheme.success
+            : AppTheme.error;
+    
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      width: 8,
+      height: 8,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.warning.withOpacity(0.2),
-            AppTheme.warning.withOpacity(0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppTheme.warning.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.star_rounded,
-            size: 14,
-            color: AppTheme.warning,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            widget.review.averageRating.toStringAsFixed(1),
-            style: AppTextStyles.caption.copyWith(
-              color: AppTheme.warning,
-              fontWeight: FontWeight.bold,
-            ),
+        shape: BoxShape.circle,
+        color: color,
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.5),
+            blurRadius: 8,
+            spreadRadius: 2,
           ),
         ],
       ),
@@ -280,21 +405,23 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
     required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
       child: Container(
-        width: 28,
-        height: 28,
+        padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
           color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: color.withOpacity(0.3),
-            width: 1,
+            width: 0.5,
           ),
         ),
         child: Icon(
           icon,
-          size: 14,
+          size: 16,
           color: color,
         ),
       ),
@@ -302,6 +429,18 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
   }
   
   String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+    final now = DateTime.now();
+    final difference = now.difference(date);
+    
+    if (difference.inDays == 0) {
+      if (difference.inHours == 0) {
+        return '${difference.inMinutes}m ago';
+      }
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
   }
 }

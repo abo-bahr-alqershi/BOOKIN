@@ -1,134 +1,520 @@
 // lib/features/admin_reviews/presentation/widgets/review_response_card.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:ui';
-import 'package:bookn_cp_app/core/theme/app_theme.dart';
-import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../domain/entities/review_response.dart';
 
-class ReviewResponseCard extends StatelessWidget {
-  final String responseText;
-  final String respondedBy;
-  final DateTime responseDate;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
+class ReviewResponseCard extends StatefulWidget {
+  final ReviewResponse response;
+  final VoidCallback onDelete;
   
   const ReviewResponseCard({
     super.key,
-    required this.responseText,
-    required this.respondedBy,
-    required this.responseDate,
-    this.onEdit,
-    this.onDelete,
+    required this.response,
+    required this.onDelete,
   });
   
   @override
+  State<ReviewResponseCard> createState() => _ReviewResponseCardState();
+}
+
+class _ReviewResponseCardState extends State<ReviewResponseCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _expandAnimation;
+  bool _isExpanded = false;
+  bool _isHovered = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    _expandAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    );
+  }
+  
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+  
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primaryBlue.withOpacity(0.1),
-            AppTheme.primaryPurple.withOpacity(0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppTheme.primaryBlue.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              Icon(
-                Icons.reply_rounded,
-                size: 16,
-                color: AppTheme.primaryBlue,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'رد من $respondedBy',
-                style: AppTextStyles.caption.copyWith(
-                  color: AppTheme.primaryBlue,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                _formatDate(responseDate),
-                style: AppTextStyles.caption.copyWith(
-                  color: AppTheme.textMuted,
-                ),
-              ),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppTheme.darkCard.withOpacity(_isHovered ? 0.9 : 0.7),
+              AppTheme.darkCard.withOpacity(_isHovered ? 0.7 : 0.5),
             ],
           ),
-          
-          const SizedBox(height: 8),
-          
-          // Response Text
-          Text(
-            responseText,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppTheme.textLight,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+          border: Border.all(
+            color: _isHovered
+                ? AppTheme.primaryBlue.withOpacity(0.3)
+                : AppTheme.darkBorder.withOpacity(0.2),
+            width: 0.5,
           ),
-          
-          // Actions
-          if (onEdit != null || onDelete != null) ...[
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if (onEdit != null)
-                  _buildActionButton(
-                    icon: Icons.edit_rounded,
-                    onTap: onEdit!,
-                  ),
-                if (onEdit != null && onDelete != null)
-                  const SizedBox(width: 8),
-                if (onDelete != null)
-                  _buildActionButton(
-                    icon: Icons.delete_rounded,
-                    onTap: onDelete!,
-                    color: AppTheme.error,
-                  ),
-              ],
+          boxShadow: [
+            BoxShadow(
+              color: _isHovered
+                  ? AppTheme.primaryBlue.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.1),
+              blurRadius: _isHovered ? 20 : 10,
+              spreadRadius: _isHovered ? 2 : 0,
             ),
           ],
-        ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Column(
+              children: [
+                // Main Content
+                InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() {
+                      _isExpanded = !_isExpanded;
+                      if (_isExpanded) {
+                        _animationController.forward();
+                      } else {
+                        _animationController.reverse();
+                      }
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        Row(
+                          children: [
+                            // Admin Avatar
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppTheme.primaryBlue,
+                                    AppTheme.primaryPurple,
+                                  ],
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.primaryBlue.withOpacity(0.3),
+                                    blurRadius: 12,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  Icons.support_agent,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            
+                            // Response Info
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        widget.response.respondedByName,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppTheme.textWhite,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(8),
+                                          color: AppTheme.success.withOpacity(0.1),
+                                          border: Border.all(
+                                            color: AppTheme.success.withOpacity(0.3),
+                                            width: 0.5,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'Admin Response',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppTheme.success,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.access_time,
+                                        size: 12,
+                                        color: AppTheme.textMuted,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _formatDate(widget.response.createdAt),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppTheme.textMuted,
+                                        ),
+                                      ),
+                                      if (widget.response.updatedAt != null) ...[
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          '(edited)',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontStyle: FontStyle.italic,
+                                            color: AppTheme.textMuted.withOpacity(0.7),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            
+                            // Actions
+                            Row(
+                              children: [
+                                AnimatedRotation(
+                                  turns: _isExpanded ? 0.5 : 0.0,
+                                  duration: const Duration(milliseconds: 300),
+                                  child: Icon(
+                                    Icons.keyboard_arrow_down,
+                                    color: AppTheme.textMuted,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                _buildActionButton(
+                                  icon: Icons.delete_outline,
+                                  color: AppTheme.error,
+                                  onTap: () => _showDeleteConfirmation(context),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: 12),
+                        
+                        // Response Text Preview
+                        Text(
+                          widget.response.responseText,
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.5,
+                            color: AppTheme.textLight,
+                          ),
+                          maxLines: _isExpanded ? null : 2,
+                          overflow: _isExpanded 
+                              ? TextOverflow.visible 
+                              : TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                // Expanded Details
+                SizeTransition(
+                  sizeFactor: _expandAnimation,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(
+                          color: AppTheme.darkBorder.withOpacity(0.1),
+                          width: 0.5,
+                        ),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Response ID
+                          _buildDetailRow(
+                            icon: Icons.tag,
+                            label: 'Response ID',
+                            value: widget.response.id,
+                          ),
+                          const SizedBox(height: 12),
+                          
+                          // Created Date
+                          _buildDetailRow(
+                            icon: Icons.calendar_today_outlined,
+                            label: 'Created',
+                            value: _formatFullDate(widget.response.createdAt),
+                          ),
+                          
+                          if (widget.response.updatedAt != null) ...[
+                            const SizedBox(height: 12),
+                            _buildDetailRow(
+                              icon: Icons.edit_calendar_outlined,
+                              label: 'Last Updated',
+                              value: _formatFullDate(widget.response.updatedAt!),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
   
   Widget _buildActionButton({
     required IconData icon,
+    required Color color,
     required VoidCallback onTap,
-    Color? color,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
       child: Container(
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: (color ?? AppTheme.primaryBlue).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(8),
+          color: color.withOpacity(0.1),
+          border: Border.all(
+            color: color.withOpacity(0.3),
+            width: 0.5,
+          ),
         ),
         child: Icon(
           icon,
-          size: 14,
-          color: color ?? AppTheme.primaryBlue,
+          size: 16,
+          color: color,
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(6),
+            color: AppTheme.primaryBlue.withOpacity(0.1),
+          ),
+          child: Icon(
+            icon,
+            size: 14,
+            color: AppTheme.primaryBlue,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.textMuted,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.textWhite,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  
+  void _showDeleteConfirmation(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    showDialog(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppTheme.error.withOpacity(0.3),
+                width: 0.5,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppTheme.error.withOpacity(0.1),
+                  ),
+                  child: Icon(
+                    Icons.delete_outline,
+                    color: AppTheme.error,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Delete Response?',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textWhite,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'This action cannot be undone.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: AppTheme.textLight,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          widget.onDelete();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.error,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
   
   String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+    final now = DateTime.now();
+    final difference = now.difference(date);
+    
+    if (difference.inDays == 0) {
+      if (difference.inHours == 0) {
+        if (difference.inMinutes == 0) {
+          return 'Just now';
+        }
+        return '${difference.inMinutes}m ago';
+      }
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+  
+  String _formatFullDate(DateTime date) {
+    final months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    
+    return '${months[date.month - 1]} ${date.day}, ${date.year} at $hour:$minute';
   }
 }
