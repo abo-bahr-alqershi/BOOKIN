@@ -18,7 +18,7 @@ namespace YemenBooking.Api.Controllers.Admin
         /// جلب سجلات التدقيق مع الفلاتر
         /// Get audit logs with optional filters (user, date range, search term, operation type)
         /// </summary>
-        [HttpGet("audit-logs")]
+        [HttpGet]
         public async Task<IActionResult> GetAuditLogs([FromQuery] GetAuditLogsQuery query)
         {
             var result = await _mediator.Send(query);
