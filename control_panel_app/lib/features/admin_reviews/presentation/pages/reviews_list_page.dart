@@ -1,11 +1,13 @@
 // lib/features/admin_reviews/presentation/pages/reviews_list_page.dart
 
+import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/review_details/review_details_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:ui';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../injection_container.dart' as di;
 import '../bloc/reviews_list/reviews_list_bloc.dart';
 import '../widgets/review_stats_card.dart';
 import '../widgets/review_filters_widget.dart';
@@ -304,8 +306,8 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppTheme.glassDark.withOpacity(0.8),
-                  AppTheme.glassDark.withOpacity(0.4),
+                  AppTheme.glassLight.withOpacity(0.8),
+                  AppTheme.glassLight.withOpacity(0.4),
                 ],
               ),
               border: Border(
@@ -742,7 +744,10 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       context,
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
-            ReviewDetailsPage(reviewId: reviewId),
+            BlocProvider<ReviewDetailsBloc>(
+              create: (_) => di.sl<ReviewDetailsBloc>(),
+              child: ReviewDetailsPage(reviewId: reviewId),
+            ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,

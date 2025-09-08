@@ -199,7 +199,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
         border: Border.all(
           color: _searchController.text.isNotEmpty
               ? AppTheme.primaryBlue.withOpacity(0.3)
-              : AppTheme.darkBorder.withOpacity(0.2),
+              : AppTheme.glowWhite.withOpacity(0.2),
           width: 0.5,
         ),
       ),
