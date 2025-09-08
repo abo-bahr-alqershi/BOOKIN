@@ -358,7 +358,6 @@ class _FuturisticCityCardState extends State<FuturisticCityCard>
                     color: AppTheme.success.withOpacity(0.3),
                     width: 0.5,
                   ),
-                  backdropFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -404,7 +403,6 @@ class _FuturisticCityCardState extends State<FuturisticCityCard>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                   color: Colors.black.withOpacity(0.6),
-                  backdropFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -561,7 +559,37 @@ class _FuturisticCityCardState extends State<FuturisticCityCard>
     );
   }
   
-  Widget _buildActionButton({
+  // Widget _buildActionButton({
+  //   required IconData icon,
+  //   required VoidCallback? onTap,
+  //   required Color color,
+  // }) {
+  //   return GestureDetector(
+  //     onTap: () {
+  //       HapticFeedback.lightImpact();
+  //       onTap?.call();
+  //     },
+  //     child: Container(
+  //       width: 40,
+  //       height: 40,
+  //       decoration: BoxDecoration(
+  //         shape: BoxShape.circle,
+  //         color: color.withOpacity(0.2),
+  //         border: Border.all(
+  //           color: color.withOpacity(0.3),
+  //           width: 0.5,
+  //         ),
+  //         backdropFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+  //       ),
+  //       child: Icon(
+  //         icon,
+  //         color: color,
+  //         size: 18,
+  //       ),
+  //     ),
+  //   );
+  // }
+    Widget _buildActionButton({
     required IconData icon,
     required VoidCallback? onTap,
     required Color color,
@@ -581,17 +609,26 @@ class _FuturisticCityCardState extends State<FuturisticCityCard>
             color: color.withOpacity(0.3),
             width: 0.5,
           ),
-          backdropFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         ),
-        child: Icon(
-          icon,
-          color: color,
-          size: 18,
+        child: ClipOval(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              color: Colors.transparent,
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 18,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
-  
+
   Widget _buildListImage() {
     return Container(
       width: 120,
