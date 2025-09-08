@@ -253,7 +253,7 @@ class _AddResponseDialogState extends State<AddResponseDialog>
                                       padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(16),
-                                        color: AppTheme.glassDark.withOpacity(0.3),
+                                        color: AppTheme.inputBackground.withOpacity(0.3),
                                         border: Border.all(
                                           color: _focusNode.hasFocus
                                               ? AppTheme.primaryBlue.withOpacity(0.5)
@@ -462,7 +462,7 @@ class _AddResponseDialogState extends State<AddResponseDialog>
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(6),
-          color: AppTheme.glassDark.withOpacity(0.3),
+          color: AppTheme.inputBackground.withOpacity(0.3),
         ),
         child: Icon(
           icon,

@@ -195,7 +195,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
       height: 44,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: AppTheme.glassDark.withOpacity(0.3),
+        color: AppTheme.inputBackground.withOpacity(0.3),
         border: Border.all(
           color: _searchController.text.isNotEmpty
               ? AppTheme.primaryBlue.withOpacity(0.3)
@@ -265,7 +265,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
               : null,
           color: isActive
               ? null
-              : AppTheme.glassDark.withOpacity(0.3),
+              : AppTheme.inputBackground.withOpacity(0.3),
           border: Border.all(
             color: isActive
                 ? Colors.transparent
@@ -450,7 +450,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
                     borderRadius: BorderRadius.circular(10),
                     color: isSelected
                         ? AppTheme.warning.withOpacity(0.2)
-                        : AppTheme.glassDark.withOpacity(0.3),
+                        : AppTheme.inputBackground.withOpacity(0.3),
                     border: Border.all(
                       color: isSelected
                           ? AppTheme.warning.withOpacity(0.5)
@@ -564,7 +564,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: AppTheme.glassDark.withOpacity(0.3),
+            color: AppTheme.inputBackground.withOpacity(0.3),
             border: Border.all(
               color: AppTheme.darkBorder.withOpacity(0.2),
               width: 0.5,
@@ -618,7 +618,7 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           gradient: isSelected ? AppTheme.primaryGradient : null,
-          color: isSelected ? null : AppTheme.glassDark.withOpacity(0.3),
+          color: isSelected ? null : AppTheme.inputBackground.withOpacity(0.3),
           border: Border.all(
             color: isSelected
                 ? Colors.transparent

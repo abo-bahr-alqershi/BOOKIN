@@ -307,8 +307,8 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppTheme.glassDark.withOpacity(0.8),
-                  AppTheme.glassDark.withOpacity(0.4),
+                  AppTheme.inputBackground.withOpacity(0.8),
+                  AppTheme.inputBackground.withOpacity(0.4),
                 ],
               ),
               border: Border(

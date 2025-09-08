@@ -177,7 +177,7 @@ class AppTheme {
   // 🎯 Component Specific Colors
   static Color get buttonPrimary => primaryBlue;
   static Color get buttonSecondary => primaryPurple;
-  static Color get inputBackground => isDark ? const Color(0x0D4FACFE) : const Color(0xFFF3F4F6);
+  static Color get inputBackground => isDark ? const Color(0x0D4FACFE) : const Color(0xFFD1D5DB);
   static Color get inputBorder => isDark ? const Color(0x334FACFE) : const Color(0xFFD1D5DB);
   static Color get inputFocusBorder => primaryBlue;
   

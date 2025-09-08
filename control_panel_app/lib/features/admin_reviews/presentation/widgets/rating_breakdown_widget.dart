@@ -348,7 +348,7 @@ class _RatingBreakdownWidgetState extends State<RatingBreakdownWidget>
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: AppTheme.glassDark.withOpacity(0.3),
+            color: AppTheme.inputBackground.withOpacity(0.3),
             border: Border.all(
               color: AppTheme.darkBorder.withOpacity(0.1),
               width: 0.5,

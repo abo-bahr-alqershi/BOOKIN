@@ -202,7 +202,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
                       ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        color: AppTheme.glassDark.withOpacity(0.8),
+                        color: AppTheme.inputBackground.withOpacity(0.8),
                         border: Border.all(
                           color: AppTheme.glowWhite.withOpacity(0.2),
                           width: 0.5,
@@ -229,7 +229,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
                       ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        color: AppTheme.glassDark.withOpacity(0.8),
+                        color: AppTheme.inputBackground.withOpacity(0.8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -275,7 +275,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: AppTheme.glassDark.withOpacity(0.3),
+        color: AppTheme.inputBackground.withOpacity(0.3),
         border: Border.all(
           color: AppTheme.darkBorder.withOpacity(0.2),
           width: 0.5,
@@ -533,7 +533,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: AppTheme.glassDark.withOpacity(0.5),
+                              color: AppTheme.inputBackground.withOpacity(0.5),
                             ),
                             child: Icon(
                               Icons.close,
@@ -696,7 +696,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppTheme.glassDark.withOpacity(0.8),
+          color: AppTheme.inputBackground.withOpacity(0.8),
           border: Border.all(
             color: AppTheme.glowWhite.withOpacity(0.2),
             width: 0.5,

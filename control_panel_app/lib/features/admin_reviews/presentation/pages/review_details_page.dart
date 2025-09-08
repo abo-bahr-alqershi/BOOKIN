@@ -408,7 +408,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       margin: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppTheme.glassDark.withOpacity(0.5),
+        color: AppTheme.inputBackground.withOpacity(0.5),
         border: Border.all(
           color: AppTheme.glowBlue.withOpacity(0.3),
           width: 0.5,
@@ -609,7 +609,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: AppTheme.glassDark.withOpacity(0.3),
+        color: AppTheme.inputBackground.withOpacity(0.3),
         border: Border.all(
           color: AppTheme.darkBorder.withOpacity(0.5),
           width: 0.5,
@@ -722,7 +722,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              color: AppTheme.glassDark.withOpacity(0.3),
+              color: AppTheme.inputBackground.withOpacity(0.3),
               border: Border.all(
                 color: AppTheme.darkBorder.withOpacity(0.5),
                 width: 0.5,

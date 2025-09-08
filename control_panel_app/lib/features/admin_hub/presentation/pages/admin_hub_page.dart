@@ -1166,7 +1166,7 @@ class _AdminHubPageState extends State<AdminHubPage>
                             ),
                             
                             // Count Badge (if available)
-                            if (feature.count != null) ...[
+                            // if (feature.count != null) ...[
                               const SizedBox(height: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -1181,7 +1181,13 @@ class _AdminHubPageState extends State<AdminHubPage>
                                     width: 0.5,
                                   ),
                                 ),
-                                child: Text(
+                                child: feature.count == null ? Text(
+                                  '...',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: feature.gradient[0],
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ) : Text(
                                   '${feature.count} عنصر',
                                   style: AppTextStyles.caption.copyWith(
                                     color: feature.gradient[0],
@@ -1189,7 +1195,7 @@ class _AdminHubPageState extends State<AdminHubPage>
                                   ),
                                 ),
                               ),
-                            ],
+                            // ],
                           ],
                         ),
                       ],
