@@ -920,34 +920,40 @@ class _AdminHubPageState extends State<AdminHubPage>
                 ],
               ),
               
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               
               // Value and Label
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: 1),
-                    duration: const Duration(milliseconds: 1000),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, value, child) {
-                      return Text(
-                        stat.value,
-                        style: AppTextStyles.heading2.copyWith(
-                          color: AppTheme.textWhite,
-                          fontSize: 22,
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    stat.label,
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppTheme.textMuted,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: 1),
+                        duration: const Duration(milliseconds: 1000),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, child) {
+                          return Text(
+                            stat.value,
+                            style: AppTextStyles.heading2.copyWith(
+                              color: AppTheme.textWhite,
+                              fontSize: 20,
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      stat.label,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -1386,6 +1392,7 @@ class _AdminHubPageState extends State<AdminHubPage>
                 ),
               ),
             ),
+              
           );
         },
       ),
