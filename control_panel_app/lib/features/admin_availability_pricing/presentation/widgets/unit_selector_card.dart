@@ -6,15 +6,18 @@ import 'dart:ui';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../../features/helpers/presentation/pages/unit_search_page.dart';
 
 class UnitSelectorCard extends StatefulWidget {
   final String? selectedUnitId;
+  final String? selectedPropertyId;
   final Function(String) onUnitSelected;
   final bool isCompact;
 
   const UnitSelectorCard({
     super.key,
     required this.selectedUnitId,
+    this.selectedPropertyId,
     required this.onUnitSelected,
     this.isCompact = false,
   });
@@ -177,58 +180,58 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
       (u) => u.id == widget.selectedUnitId,
       orElse: () => _units.first,
     );
-    
-    return DropdownButtonHideUnderline(
-      child: DropdownButton<String>(
-        value: selectedUnit.id,
-        isExpanded: true,
-        icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: AppTheme.primaryBlue,
+    return GestureDetector(
+      onTap: _openUnitSearch,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppTheme.darkSurface.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: AppTheme.darkBorder.withOpacity(0.3),
+            width: 1,
+          ),
         ),
-        dropdownColor: AppTheme.darkCard,
-        style: AppTextStyles.bodyMedium.copyWith(
-          color: AppTheme.textWhite,
-        ),
-        items: _units.map((unit) {
-          return DropdownMenuItem<String>(
-            value: unit.id,
-            child: Row(
-              children: [
-                Icon(
-                  _getUnitIcon(unit.type),
-                  size: 16,
-                  color: unit.isAvailable ? AppTheme.success : AppTheme.textMuted,
-                ),
-                const SizedBox(width: 8),
-                Text(unit.name),
-                if (!unit.isAvailable) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppTheme.error.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'غير متاح',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.error,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
+        child: Row(
+          children: [
+            Icon(
+              _getUnitIcon('suite'),
+              size: 16,
+              color: AppTheme.primaryBlue,
             ),
-          );
-        }).toList(),
-        onChanged: (value) {
-          if (value != null) {
-            HapticFeedback.lightImpact();
-            widget.onUnitSelected(value);
-          }
-        },
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                selectedUnit.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppTheme.textWhite,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.search_rounded,
+              color: AppTheme.primaryBlue,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openUnitSearch() async {
+    HapticFeedback.lightImpact();
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UnitSearchPage(
+          propertyId: widget.selectedPropertyId,
+          allowMultiSelect: false,
+          onUnitSelected: (unit) {
+            widget.onUnitSelected(unit.id);
+          },
+        ),
+        fullscreenDialog: true,
       ),
     );
   }
