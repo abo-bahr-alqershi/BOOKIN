@@ -60,7 +60,11 @@ class PricingRemoteDataSourceImpl implements PricingRemoteDataSource {
         '/api/admin/units/$unitId/pricing/$year/$month',
       );
       
-      return UnitPricingModel.fromJson(response.data['data']);
+      final dataEnvelope = response.data;
+      final data = dataEnvelope is Map && dataEnvelope['data'] != null
+          ? dataEnvelope['data']
+          : dataEnvelope;
+      return UnitPricingModel.fromJson(data);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

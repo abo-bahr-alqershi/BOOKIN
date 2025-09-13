@@ -192,8 +192,26 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
       (json) => UnitModel.fromJson(json),
     );
 
+    // Filter out experimental/test/demo units on client-side to prevent accidental selection
+    bool _isExperimental(UnitModel unit) {
+      final name = unit.name.toLowerCase();
+      final propertyName = unit.propertyName.toLowerCase();
+      final features = unit.customFeatures.toLowerCase();
+      const experimentalHints = [
+        'test', 'demo', 'dummy', 'sample',
+        'تجريبي', 'تجريب', 'اختبار', 'ديمو', 'عينه', 'عينة'
+      ];
+      final hasHint = experimentalHints.any((h) =>
+        name.contains(h) || propertyName.contains(h) || features.contains(h));
+      // Also treat obviously invalid GUID-like ids as experimental safeguards (length != 36)
+      final looksInvalidId = unit.id.length != 36;
+      return hasHint || looksInvalidId;
+    }
+
+    final filteredUnits = paginatedResult.items.where((u) => !_isExperimental(u)).toList();
+
     return PaginatedResult<SearchResult>(
-      items: paginatedResult.items.map((unit) {
+      items: filteredUnits.map((unit) {
         return SearchResultModel(
           item: unit,
           id: unit.id,
@@ -213,7 +231,7 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
       }).toList(),
       pageNumber: paginatedResult.pageNumber,
       pageSize: paginatedResult.pageSize,
-      totalCount: paginatedResult.totalCount,
+      totalCount: filteredUnits.length,
     );
   }
 
