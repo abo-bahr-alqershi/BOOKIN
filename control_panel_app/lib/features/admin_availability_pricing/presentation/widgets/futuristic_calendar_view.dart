@@ -1,5 +1,6 @@
 // lib/features/admin_availability_pricing/presentation/widgets/futuristic_calendar_view.dart
 
+import 'package:bookn_cp_app/features/admin_availability_pricing/domain/entities/availability.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,12 +9,13 @@ import 'dart:ui';
 import 'dart:math' as math;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
 import '../bloc/availability/availability_bloc.dart';
 import '../bloc/pricing/pricing_bloc.dart';
 import '../pages/availability_pricing_page.dart';
 import 'availability_calendar_grid.dart';
 import 'pricing_calendar_grid.dart';
+import 'date_options_sheet.dart';
+import 'date_range_options_sheet.dart';
 
 class FuturisticCalendarView extends StatefulWidget {
   final ViewMode viewMode;
@@ -39,9 +41,9 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
   late AnimationController _glowController;
   late Animation<double> _calendarFadeAnimation;
   late Animation<double> _glowAnimation;
-  
+
   late PageController _pageController;
-  int _currentPageIndex = 0;
+  final int _currentPageIndex = 0;
 
   @override
   void initState() {
@@ -55,12 +57,12 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     _glowController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _calendarFadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -68,7 +70,7 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
       parent: _calendarAnimationController,
       curve: Curves.easeInOut,
     ));
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.5,
       end: 1.0,
@@ -76,7 +78,7 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
       parent: _glowController,
       curve: Curves.easeInOut,
     ));
-    
+
     _calendarAnimationController.forward();
   }
 
@@ -103,12 +105,14 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
             ),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: AppTheme.primaryBlue.withOpacity(0.2 + 0.1 * _glowAnimation.value),
+              color: AppTheme.primaryBlue
+                  .withOpacity(0.2 + 0.1 * _glowAnimation.value),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryBlue.withOpacity(0.1 * _glowAnimation.value),
+                color: AppTheme.primaryBlue
+                    .withOpacity(0.1 * _glowAnimation.value),
                 blurRadius: 20,
                 spreadRadius: 2,
               ),
@@ -122,7 +126,7 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
                 children: [
                   // Calendar header
                   _buildCalendarHeader(),
-                  
+
                   // Calendar body
                   Expanded(
                     child: FadeTransition(
@@ -141,7 +145,7 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
 
   Widget _buildCalendarHeader() {
     final dateFormat = DateFormat('MMMM yyyy', 'ar');
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -165,14 +169,15 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
             icon: Icons.chevron_left_rounded,
             onTap: _previousMonth,
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Current month/year
           Expanded(
             child: Center(
               child: ShaderMask(
-                shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                shaderCallback: (bounds) =>
+                    AppTheme.primaryGradient.createShader(bounds),
                 child: Text(
                   dateFormat.format(widget.currentDate),
                   style: AppTextStyles.heading3.copyWith(
@@ -183,17 +188,17 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
               ),
             ),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Next month button
           _buildNavigationButton(
             icon: Icons.chevron_right_rounded,
             onTap: _nextMonth,
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Today button
           _buildTodayButton(),
         ],
@@ -288,14 +293,14 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
             ],
           ),
         ),
-        
+
         // Divider
         Container(
           width: 1,
           margin: const EdgeInsets.symmetric(vertical: 16),
           color: AppTheme.darkBorder.withOpacity(0.3),
         ),
-        
+
         // Pricing calendar
         Expanded(
           child: Column(
@@ -351,21 +356,23 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
         if (state is AvailabilityLoading) {
           return _buildLoadingState();
         }
-        
+
         if (state is AvailabilityLoaded) {
           return AvailabilityCalendarGrid(
             unitAvailability: state.unitAvailability,
             currentDate: widget.currentDate,
             isCompact: widget.isCompact,
-            onDateSelected: _onDateSelected,
-            onDateRangeSelected: _onDateRangeSelected,
+            onDateSelected: (date) =>
+                _onDateSelected(date, ViewMode.availability),
+            onDateRangeSelected: (start, end) =>
+                _onDateRangeSelected(start, end, ViewMode.availability),
           );
         }
-        
+
         if (state is AvailabilityError) {
           return _buildErrorState(state.message);
         }
-        
+
         return _buildEmptyState();
       },
     );
@@ -377,21 +384,22 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
         if (state is PricingLoading) {
           return _buildLoadingState();
         }
-        
+
         if (state is PricingLoaded) {
           return PricingCalendarGrid(
             unitPricing: state.unitPricing,
             currentDate: widget.currentDate,
             isCompact: widget.isCompact,
-            onDateSelected: _onDateSelected,
-            onDateRangeSelected: _onDateRangeSelected,
+            onDateSelected: (date) => _onDateSelected(date, ViewMode.pricing),
+            onDateRangeSelected: (start, end) =>
+                _onDateRangeSelected(start, end, ViewMode.pricing),
           );
         }
-        
+
         if (state is PricingError) {
           return _buildErrorState(state.message);
         }
-        
+
         return _buildEmptyState();
       },
     );
@@ -487,6 +495,13 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
               color: AppTheme.textMuted,
             ),
           ),
+          const SizedBox(height: 8),
+          Text(
+            'يرجى اختيار وحدة للبدء',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppTheme.textMuted.withOpacity(0.7),
+            ),
+          ),
         ],
       ),
     );
@@ -498,7 +513,7 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
       widget.currentDate.month - 1,
     );
     widget.onDateChanged(newDate);
-    
+
     _calendarAnimationController.reset();
     _calendarAnimationController.forward();
   }
@@ -509,7 +524,7 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
       widget.currentDate.month + 1,
     );
     widget.onDateChanged(newDate);
-    
+
     _calendarAnimationController.reset();
     _calendarAnimationController.forward();
   }
@@ -517,49 +532,144 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
   void _goToToday() {
     final today = DateTime.now();
     widget.onDateChanged(DateTime(today.year, today.month));
-    
+
     _calendarAnimationController.reset();
     _calendarAnimationController.forward();
   }
 
   void _retry() {
-    // Reload data for current month
-    if (widget.viewMode == ViewMode.availability || widget.viewMode == ViewMode.both) {
-      context.read<AvailabilityBloc>().add(
-        ChangeMonth(
-          year: widget.currentDate.year,
-          month: widget.currentDate.month,
-        ),
-      );
+    // Get current selected unit ID from bloc state
+    String? unitId;
+
+    final availabilityState = context.read<AvailabilityBloc>().state;
+    if (availabilityState is AvailabilityLoaded) {
+      unitId = availabilityState.selectedUnitId;
+    } else {
+      final pricingState = context.read<PricingBloc>().state;
+      if (pricingState is PricingLoaded) {
+        unitId = pricingState.selectedUnitId;
+      }
     }
-    
-    if (widget.viewMode == ViewMode.pricing || widget.viewMode == ViewMode.both) {
-      context.read<PricingBloc>().add(
-        ChangePricingMonth(
-          year: widget.currentDate.year,
-          month: widget.currentDate.month,
-        ),
-      );
+
+    if (unitId != null) {
+      // Reload data for current month
+      if (widget.viewMode == ViewMode.availability ||
+          widget.viewMode == ViewMode.both) {
+        context.read<AvailabilityBloc>().add(
+              LoadMonthlyAvailability(
+                unitId: unitId,
+                year: widget.currentDate.year,
+                month: widget.currentDate.month,
+              ),
+            );
+      }
+
+      if (widget.viewMode == ViewMode.pricing ||
+          widget.viewMode == ViewMode.both) {
+        context.read<PricingBloc>().add(
+              LoadMonthlyPricing(
+                unitId: unitId,
+                year: widget.currentDate.year,
+                month: widget.currentDate.month,
+              ),
+            );
+      }
     }
   }
 
-  void _onDateSelected(DateTime date) {
+  void _onDateSelected(DateTime date, ViewMode mode) {
     HapticFeedback.lightImpact();
-    // Handle single date selection
-    _showDateOptionsDialog(date);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DateOptionsSheet(
+        date: date,
+        viewMode: mode,
+        onUpdateAvailability: (status) {
+          _updateSingleDayAvailability(date, status);
+        },
+        onUpdatePricing: (price) {
+          _updateSingleDayPricing(date, price);
+        },
+      ),
+    );
   }
 
-  void _onDateRangeSelected(DateTime start, DateTime end) {
+  void _onDateRangeSelected(DateTime start, DateTime end, ViewMode mode) {
     HapticFeedback.mediumImpact();
-    // Handle date range selection
-    _showDateRangeOptionsDialog(start, end);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DateRangeOptionsSheet(
+        startDate: start,
+        endDate: end,
+        viewMode: mode,
+        onUpdateAvailability: (status) {
+          _updateDateRangeAvailability(start, end, status);
+        },
+        onUpdatePricing: (price) {
+          _updateDateRangePricing(start, end, price);
+        },
+      ),
+    );
   }
 
-  void _showDateOptionsDialog(DateTime date) {
-    // Show options dialog for selected date
+  void _updateSingleDayAvailability(DateTime date, AvailabilityStatus status) {
+    final state = context.read<AvailabilityBloc>().state;
+    if (state is AvailabilityLoaded) {
+      context.read<AvailabilityBloc>().add(
+            UpdateSingleDayAvailability(
+              unitId: state.selectedUnitId,
+              date: date,
+              status: status,
+            ),
+          );
+    }
   }
 
-  void _showDateRangeOptionsDialog(DateTime start, DateTime end) {
-    // Show options dialog for selected date range
+  void _updateSingleDayPricing(DateTime date, double price) {
+    final state = context.read<PricingBloc>().state;
+    if (state is PricingLoaded) {
+      context.read<PricingBloc>().add(
+            UpdateSingleDayPricing(
+              unitId: state.selectedUnitId,
+              date: date,
+              price: price,
+            ),
+          );
+    }
+  }
+
+  void _updateDateRangeAvailability(
+      DateTime start, DateTime end, AvailabilityStatus status) {
+    final state = context.read<AvailabilityBloc>().state;
+    if (state is AvailabilityLoaded) {
+      context.read<AvailabilityBloc>().add(
+            UpdateDateRangeAvailability(
+              unitId: state.selectedUnitId,
+              startDate: start,
+              endDate: end,
+              status: status,
+            ),
+          );
+    }
+  }
+
+  void _updateDateRangePricing(DateTime start, DateTime end, double price) {
+    final state = context.read<PricingBloc>().state;
+    if (state is PricingLoaded) {
+      context.read<PricingBloc>().add(
+            UpdateDateRangePricing(
+              unitId: state.selectedUnitId,
+              startDate: start,
+              endDate: end,
+              price: price,
+            ),
+          );
+    }
   }
 }

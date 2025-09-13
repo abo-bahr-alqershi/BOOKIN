@@ -18,7 +18,7 @@ class AvailabilityLoaded extends AvailabilityState {
   final String selectedUnitId;
   final int currentYear;
   final int currentMonth;
-  final availability_repo.CheckAvailabilityResponse? availabilityCheckResponse;
+  final CheckAvailabilityResponse? availabilityCheckResponse;
   final List<BookingConflict>? conflicts;
 
   const AvailabilityLoaded({
@@ -35,7 +35,7 @@ class AvailabilityLoaded extends AvailabilityState {
     String? selectedUnitId,
     int? currentYear,
     int? currentMonth,
-    availability_repo.CheckAvailabilityResponse? availabilityCheckResponse,
+    CheckAvailabilityResponse? availabilityCheckResponse,
     List<BookingConflict>? conflicts,
   }) {
     return AvailabilityLoaded(
@@ -43,7 +43,8 @@ class AvailabilityLoaded extends AvailabilityState {
       selectedUnitId: selectedUnitId ?? this.selectedUnitId,
       currentYear: currentYear ?? this.currentYear,
       currentMonth: currentMonth ?? this.currentMonth,
-      availabilityCheckResponse: availabilityCheckResponse ?? this.availabilityCheckResponse,
+      availabilityCheckResponse:
+          availabilityCheckResponse ?? this.availabilityCheckResponse,
       conflicts: conflicts ?? this.conflicts,
     );
   }
@@ -61,16 +62,11 @@ class AvailabilityLoaded extends AvailabilityState {
 
 class AvailabilityUpdating extends AvailabilityLoaded {
   const AvailabilityUpdating({
-    required UnitAvailability unitAvailability,
-    required String selectedUnitId,
-    required int currentYear,
-    required int currentMonth,
-  }) : super(
-          unitAvailability: unitAvailability,
-          selectedUnitId: selectedUnitId,
-          currentYear: currentYear,
-          currentMonth: currentMonth,
-        );
+    required super.unitAvailability,
+    required super.selectedUnitId,
+    required super.currentYear,
+    required super.currentMonth,
+  });
 }
 
 class AvailabilityError extends AvailabilityState {

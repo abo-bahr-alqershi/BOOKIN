@@ -33,19 +33,128 @@ class UpdateAvailability extends AvailabilityEvent {
   List<Object> get props => [availability];
 }
 
+class UpdateSingleDayAvailability extends AvailabilityEvent {
+  final String unitId;
+  final DateTime date;
+  final AvailabilityStatus status;
+  final String? reason;
+  final String? notes;
+
+  const UpdateSingleDayAvailability({
+    required this.unitId,
+    required this.date,
+    required this.status,
+    this.reason,
+    this.notes,
+  });
+
+  @override
+  List<Object?> get props => [unitId, date, status, reason, notes];
+}
+
+class UpdateDateRangeAvailability extends AvailabilityEvent {
+  final String unitId;
+  final DateTime startDate;
+  final DateTime endDate;
+  final AvailabilityStatus status;
+  final String? reason;
+  final String? notes;
+
+  const UpdateDateRangeAvailability({
+    required this.unitId,
+    required this.startDate,
+    required this.endDate,
+    required this.status,
+    this.reason,
+    this.notes,
+  });
+
+  @override
+  List<Object?> get props => [unitId, startDate, endDate, status, reason, notes];
+}
+
 class BulkUpdateAvailability extends AvailabilityEvent {
   final String unitId;
-  final List<AvailabilityPeriod> periods;
+  final DateTime startDate;
+  final DateTime endDate;
+  final AvailabilityStatus status;
+  final List<int>? weekdays;
+  final String? reason;
+  final String? notes;
   final bool overwriteExisting;
 
   const BulkUpdateAvailability({
     required this.unitId,
-    required this.periods,
-    required this.overwriteExisting,
+    required this.startDate,
+    required this.endDate,
+    required this.status,
+    this.weekdays,
+    this.reason,
+    this.notes,
+    this.overwriteExisting = false,
   });
 
   @override
-  List<Object> get props => [unitId, periods, overwriteExisting];
+  List<Object?> get props => [
+        unitId,
+        startDate,
+        endDate,
+        status,
+        weekdays,
+        reason,
+        notes,
+        overwriteExisting,
+      ];
+}
+
+class CloneAvailability extends AvailabilityEvent {
+  final String sourceUnitId;
+  final DateTime sourceStartDate;
+  final DateTime sourceEndDate;
+  final DateTime targetStartDate;
+  final int repeatCount;
+
+  const CloneAvailability({
+    required this.sourceUnitId,
+    required this.sourceStartDate,
+    required this.sourceEndDate,
+    required this.targetStartDate,
+    required this.repeatCount,
+  });
+
+  @override
+  List<Object> get props => [
+        sourceUnitId,
+        sourceStartDate,
+        sourceEndDate,
+        targetStartDate,
+        repeatCount,
+      ];
+}
+
+class DeleteAvailability extends AvailabilityEvent {
+  final String unitId;
+  final String? availabilityId;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final bool? forceDelete;
+
+  const DeleteAvailability({
+    required this.unitId,
+    this.availabilityId,
+    this.startDate,
+    this.endDate,
+    this.forceDelete,
+  });
+
+  @override
+  List<Object?> get props => [
+        unitId,
+        availabilityId,
+        startDate,
+        endDate,
+        forceDelete,
+      ];
 }
 
 class CheckAvailability extends AvailabilityEvent {
@@ -86,4 +195,32 @@ class ChangeMonth extends AvailabilityEvent {
 
   @override
   List<Object> get props => [year, month];
+}
+
+class ExportAvailabilityData extends AvailabilityEvent {
+  final String unitId;
+  final int year;
+  final int month;
+
+  const ExportAvailabilityData({
+    required this.unitId,
+    required this.year,
+    required this.month,
+  });
+
+  @override
+  List<Object> get props => [unitId, year, month];
+}
+
+class ImportAvailabilityData extends AvailabilityEvent {
+  final String unitId;
+  final Map<String, dynamic> data;
+
+  const ImportAvailabilityData({
+    required this.unitId,
+    required this.data,
+  });
+
+  @override
+  List<Object> get props => [unitId, data];
 }

@@ -56,16 +56,11 @@ class PricingLoaded extends PricingState {
 
 class PricingUpdating extends PricingLoaded {
   const PricingUpdating({
-    required UnitPricing unitPricing,
-    required String selectedUnitId,
-    required int currentYear,
-    required int currentMonth,
-  }) : super(
-          unitPricing: unitPricing,
-          selectedUnitId: selectedUnitId,
-          currentYear: currentYear,
-          currentMonth: currentMonth,
-        );
+    required super.unitPricing,
+    required super.selectedUnitId,
+    required super.currentYear,
+    required super.currentMonth,
+  });
 }
 
 class PricingError extends PricingState {
