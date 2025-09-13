@@ -42,6 +42,7 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
   // State
   ViewMode _viewMode = ViewMode.availability;
   String? _selectedUnitId;
+  String? _selectedUnitName;
   String? _selectedPropertyId;
   String? _selectedPropertyName;
   DateTime _currentDate = DateTime.now();
@@ -497,12 +498,14 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
                     _selectedPropertyName = name;
                     // Reset selected unit when property changes
                     _selectedUnitId = null;
+                    _selectedUnitName = null;
                   });
                 },
               ),
               const SizedBox(height: 12),
               UnitSelectorCard(
                 selectedUnitId: _selectedUnitId,
+                selectedUnitName: _selectedUnitName,
                 selectedPropertyId: _selectedPropertyId,
                 onUnitSelected: _onUnitSelected,
               ),
@@ -566,6 +569,7 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
               _selectedPropertyId = id;
               _selectedPropertyName = name;
               _selectedUnitId = null;
+              _selectedUnitName = null;
             });
           },
           isCompact: true,
@@ -573,6 +577,7 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
         const SizedBox(height: 8),
         UnitSelectorCard(
           selectedUnitId: _selectedUnitId,
+          selectedUnitName: _selectedUnitName,
           selectedPropertyId: _selectedPropertyId,
           onUnitSelected: _onUnitSelected,
           isCompact: true,
@@ -629,6 +634,8 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
   void _onUnitSelected(String unitId) {
     setState(() {
       _selectedUnitId = unitId;
+      // Reset name; the selector shows the real name after returning from picker
+      _selectedUnitName = null;
     });
     
     context.read<AvailabilityBloc>().add(

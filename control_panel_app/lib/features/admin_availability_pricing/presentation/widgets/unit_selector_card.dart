@@ -10,6 +10,7 @@ import '../../../../../features/helpers/presentation/pages/unit_search_page.dart
 
 class UnitSelectorCard extends StatefulWidget {
   final String? selectedUnitId;
+  final String? selectedUnitName;
   final String? selectedPropertyId;
   final Function(String) onUnitSelected;
   final bool isCompact;
@@ -17,6 +18,7 @@ class UnitSelectorCard extends StatefulWidget {
   const UnitSelectorCard({
     super.key,
     required this.selectedUnitId,
+    this.selectedUnitName,
     this.selectedPropertyId,
     required this.onUnitSelected,
     this.isCompact = false,
@@ -176,10 +178,8 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
   }
 
   Widget _buildDropdown() {
-    final selectedUnit = _units.firstWhere(
-      (u) => u.id == widget.selectedUnitId,
-      orElse: () => _units.first,
-    );
+    final displayName = widget.selectedUnitName ??
+        (widget.selectedUnitId != null ? 'وحدة ${widget.selectedUnitId}' : 'اختر وحدة');
     return GestureDetector(
       onTap: _openUnitSearch,
       child: Container(
@@ -202,7 +202,7 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                selectedUnit.name,
+                displayName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.bodyMedium.copyWith(
@@ -228,7 +228,16 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
           propertyId: widget.selectedPropertyId,
           allowMultiSelect: false,
           onUnitSelected: (unit) {
+            // Only accept non-experimental units
+            final lower = unit.name.toLowerCase();
+            const hints = ['test','demo','dummy','sample','تجريبي','تجريب','اختبار','ديمو','عينه','عينة'];
+            final isExperimental = hints.any(lower.contains) || unit.id.length != 36;
+            if (isExperimental) {
+              HapticFeedback.heavyImpact();
+              return;
+            }
             widget.onUnitSelected(unit.id);
+            setState(() {});
           },
         ),
         fullscreenDialog: true,

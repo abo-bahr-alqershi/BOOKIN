@@ -76,7 +76,12 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
         '/api/admin/units/$unitId/availability/$year/$month',
       );
       
-      return unit_avail_model.UnitAvailabilityModel.fromJson(response.data['data']);
+      // Backend returns ResultDto<UnitAvailabilityDto> with camelCase keys
+      final dataEnvelope = response.data;
+      final data = dataEnvelope is Map && dataEnvelope['data'] != null
+          ? dataEnvelope['data']
+          : dataEnvelope; // fallback if backend returns raw dto
+      return unit_avail_model.UnitAvailabilityModel.fromJson(data);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
