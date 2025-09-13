@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'dart:ui';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
 import '../bloc/availability/availability_bloc.dart';
 import '../bloc/pricing/pricing_bloc.dart';
 import '../pages/availability_pricing_page.dart';
@@ -56,18 +55,19 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
   final _formKey = GlobalKey<FormState>();
   DateTime? _startDate;
   DateTime? _endDate;
-  
+  final List<int> _selectedWeekdays = [];
+
   // Availability fields
-  AvailabilityStatus? _availabilityStatus;
+  AvailabilityStatus _availabilityStatus = AvailabilityStatus.available;
   String? _reason;
   String? _notes;
-  
+
   // Pricing fields
-  double? _price;
-  PricingTier? _pricingTier;
-  PriceType? _priceType;
+  double _price = 0;
+  PricingTier _pricingTier = PricingTier.normal;
+  PriceType _priceType = PriceType.base;
   double? _percentageChange;
-  
+
   bool _overwriteExisting = false;
   bool _isLoading = false;
 
@@ -82,12 +82,12 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    
+
     _glowController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.9,
       end: 1.0,
@@ -95,7 +95,7 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
       parent: _animationController,
       curve: Curves.easeOutBack,
     ));
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -103,7 +103,7 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
       parent: _animationController,
       curve: Curves.easeIn,
     ));
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.5,
       end: 1.0,
@@ -111,7 +111,7 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
       parent: _glowController,
       curve: Curves.easeInOut,
     ));
-    
+
     _animationController.forward();
   }
 
@@ -135,7 +135,7 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
             builder: (context, child) {
               return Container(
                 width: 500,
-                constraints: const BoxConstraints(maxHeight: 700),
+                constraints: const BoxConstraints(maxHeight: 750),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -145,12 +145,14 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
                   ),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: AppTheme.primaryBlue.withOpacity(0.2 + 0.1 * _glowAnimation.value),
+                    color: AppTheme.primaryBlue
+                        .withOpacity(0.2 + 0.1 * _glowAnimation.value),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primaryBlue.withOpacity(0.2 * _glowAnimation.value),
+                      color: AppTheme.primaryBlue
+                          .withOpacity(0.2 * _glowAnimation.value),
                       blurRadius: 30,
                       spreadRadius: 5,
                     ),
@@ -215,7 +217,9 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
             child: Icon(
               widget.viewMode == ViewMode.availability
                   ? Icons.event_available_rounded
-                  : Icons.attach_money_rounded,
+                  : widget.viewMode == ViewMode.pricing
+                      ? Icons.attach_money_rounded
+                      : Icons.dashboard_rounded,
               color: Colors.white,
               size: 20,
             ),
@@ -228,7 +232,9 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
                 Text(
                   widget.viewMode == ViewMode.availability
                       ? 'تحديث الإتاحة المجمع'
-                      : 'تحديث التسعير المجمع',
+                      : widget.viewMode == ViewMode.pricing
+                          ? 'تحديث التسعير المجمع'
+                          : 'تحديث الإتاحة والتسعير',
                   style: AppTextStyles.heading3.copyWith(
                     color: AppTheme.textWhite,
                     fontWeight: FontWeight.bold,
@@ -261,12 +267,17 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
       children: [
         _buildDateRangeSelector(),
         const SizedBox(height: 24),
-        
+        _buildWeekdaySelector(),
+        const SizedBox(height: 24),
         if (widget.viewMode == ViewMode.availability)
           _buildAvailabilityFields()
-        else
+        else if (widget.viewMode == ViewMode.pricing)
+          _buildPricingFields()
+        else ...[
+          _buildAvailabilityFields(),
+          const SizedBox(height: 24),
           _buildPricingFields(),
-        
+        ],
         const SizedBox(height: 24),
         _buildOverwriteOption(),
       ],
@@ -353,7 +364,9 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
                         ? DateFormat('dd/MM/yyyy').format(value)
                         : 'اختر التاريخ',
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: value != null ? AppTheme.textWhite : AppTheme.textMuted,
+                      color: value != null
+                          ? AppTheme.textWhite
+                          : AppTheme.textMuted,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -363,6 +376,90 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildWeekdaySelector() {
+    const weekdays = [
+      {'name': 'أحد', 'value': 0},
+      {'name': 'إثنين', 'value': 1},
+      {'name': 'ثلاثاء', 'value': 2},
+      {'name': 'أربعاء', 'value': 3},
+      {'name': 'خميس', 'value': 4},
+      {'name': 'جمعة', 'value': 5},
+      {'name': 'سبت', 'value': 6},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'أيام محددة (اختياري)',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textWhite,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Tooltip(
+              message: 'اترك الكل فارغ لتطبيق على جميع الأيام',
+              child: Icon(
+                Icons.info_outline_rounded,
+                size: 16,
+                color: AppTheme.textMuted,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: weekdays.map((day) {
+            final isSelected = _selectedWeekdays.contains(day['value']);
+
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                setState(() {
+                  if (isSelected) {
+                    _selectedWeekdays.remove(day['value']);
+                  } else {
+                    _selectedWeekdays.add(day['value'] as int);
+                  }
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: isSelected ? AppTheme.primaryGradient : null,
+                  color: !isSelected
+                      ? AppTheme.darkSurface.withOpacity(0.5)
+                      : null,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.white.withOpacity(0.3)
+                        : AppTheme.darkBorder.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  day['name'] as String,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: isSelected ? Colors.white : AppTheme.textMuted,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
@@ -379,13 +476,11 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
         ),
         const SizedBox(height: 12),
         _buildStatusSelector(),
-        
         if (_availabilityStatus == AvailabilityStatus.blocked ||
-            _availabilityStatus == AvailabilityStatus.blocked) ...[
+            _availabilityStatus == AvailabilityStatus.maintenance) ...[
           const SizedBox(height: 16),
           _buildReasonField(),
         ],
-        
         const SizedBox(height: 16),
         _buildNotesField(),
       ],
@@ -394,12 +489,17 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
 
   Widget _buildStatusSelector() {
     final statuses = [
-      (AvailabilityStatus.available, 'متاح', AppTheme.success),
-      (AvailabilityStatus.booked, 'محجوز', AppTheme.warning),
-      (AvailabilityStatus.blocked, 'محظور', AppTheme.error),
-      (AvailabilityStatus.maintenance, 'صيانة', AppTheme.info),
+      (
+        AvailabilityStatus.available,
+        'متاح',
+        AppTheme.success,
+        Icons.check_circle
+      ),
+      (AvailabilityStatus.booked, 'محجوز', AppTheme.warning, Icons.event_busy),
+      (AvailabilityStatus.blocked, 'محظور', AppTheme.error, Icons.block),
+      (AvailabilityStatus.maintenance, 'صيانة', AppTheme.info, Icons.build),
     ];
-    
+
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -427,16 +527,28 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
               color: !isSelected ? AppTheme.darkSurface.withOpacity(0.5) : null,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isSelected ? item.$3 : AppTheme.darkBorder.withOpacity(0.3),
+                color:
+                    isSelected ? item.$3 : AppTheme.darkBorder.withOpacity(0.3),
                 width: 1,
               ),
             ),
-            child: Text(
-              item.$2,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: isSelected ? item.$3 : AppTheme.textMuted,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  item.$4,
+                  size: 16,
+                  color: isSelected ? item.$3 : AppTheme.textMuted,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  item.$2,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: isSelected ? item.$3 : AppTheme.textMuted,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -511,14 +623,16 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
             ),
           ),
           onChanged: (value) {
-            _price = double.tryParse(value);
+            _price = double.tryParse(value) ?? 0;
           },
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'السعر مطلوب';
-            }
-            return null;
-          },
+          validator: widget.viewMode == ViewMode.pricing
+              ? (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'السعر مطلوب';
+                  }
+                  return null;
+                }
+              : null,
         ),
       ],
     );
@@ -531,7 +645,7 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
       (PricingTier.high, 'مرتفع', AppTheme.warning),
       (PricingTier.peak, 'ذروة', AppTheme.error),
     ];
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -557,7 +671,8 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? LinearGradient(
@@ -567,10 +682,14 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
                           ],
                         )
                       : null,
-                  color: !isSelected ? AppTheme.darkSurface.withOpacity(0.5) : null,
+                  color: !isSelected
+                      ? AppTheme.darkSurface.withOpacity(0.5)
+                      : null,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: isSelected ? item.$3 : AppTheme.darkBorder.withOpacity(0.3),
+                    color: isSelected
+                        ? item.$3
+                        : AppTheme.darkBorder.withOpacity(0.3),
                     width: 1,
                   ),
                 ),
@@ -595,8 +714,10 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
       (PriceType.weekend, 'نهاية الأسبوع'),
       (PriceType.seasonal, 'موسمي'),
       (PriceType.holiday, 'عطلة'),
+      (PriceType.specialEvent, 'مناسبة خاصة'),
+      (PriceType.custom, 'مخصص'),
     ];
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -609,7 +730,7 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<PriceType>(
-          value: _priceType,
+          initialValue: _priceType,
           dropdownColor: AppTheme.darkCard,
           style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
           decoration: InputDecoration(
@@ -642,7 +763,7 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
           }).toList(),
           onChanged: (value) {
             setState(() {
-              _priceType = value;
+              _priceType = value ?? PriceType.base;
             });
           },
         ),
@@ -663,7 +784,8 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
         ),
         const SizedBox(height: 8),
         TextFormField(
-          keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+          keyboardType: const TextInputType.numberWithOptions(
+              decimal: true, signed: true),
           style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
           decoration: InputDecoration(
             hintText: 'مثال: +20 أو -15',
@@ -829,7 +951,7 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
                 _overwriteExisting = value;
               });
             },
-            activeColor: AppTheme.warning,
+            activeThumbColor: AppTheme.warning,
           ),
         ],
       ),
@@ -908,7 +1030,7 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
                 ),
                 child: Center(
                   child: _isLoading
-                      ? SizedBox(
+                      ? const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
@@ -935,7 +1057,8 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
   Future<void> _selectDate(bool isStart) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: isStart ? _startDate ?? DateTime.now() : _endDate ?? DateTime.now(),
+      initialDate:
+          isStart ? _startDate ?? DateTime.now() : _endDate ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
@@ -952,7 +1075,7 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
         );
       },
     );
-    
+
     if (picked != null) {
       setState(() {
         if (isStart) {
@@ -967,27 +1090,74 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
   void _handleSubmit() {
     if (_formKey.currentState!.validate()) {
       if (_startDate == null || _endDate == null) {
-        // Show error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('يرجى تحديد الفترة الزمنية'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
         return;
       }
-      
+
       setState(() {
         _isLoading = true;
       });
-      
+
       // Submit based on view mode
-      if (widget.viewMode == ViewMode.availability) {
-        // Submit availability update
-        // context.read<AvailabilityBloc>().add(BulkUpdateAvailability(...));
-      } else {
-        // Submit pricing update
-        // context.read<PricingBloc>().add(BulkUpdatePricing(...));
+      if (widget.viewMode == ViewMode.availability ||
+          widget.viewMode == ViewMode.both) {
+        context.read<AvailabilityBloc>().add(
+              BulkUpdateAvailability(
+                unitId: widget.unitId,
+                startDate: _startDate!,
+                endDate: _endDate!,
+                status: _availabilityStatus,
+                weekdays: _selectedWeekdays.isEmpty ? null : _selectedWeekdays,
+                reason: _reason,
+                notes: _notes,
+                overwriteExisting: _overwriteExisting,
+              ),
+            );
       }
-      
-      // Simulate API call
-      Future.delayed(const Duration(seconds: 2), () {
+
+      if (widget.viewMode == ViewMode.pricing ||
+          widget.viewMode == ViewMode.both) {
+        if (_price > 0) {
+          context.read<PricingBloc>().add(
+                BulkUpdatePricing(
+                  unitId: widget.unitId,
+                  startDate: _startDate!,
+                  endDate: _endDate!,
+                  price: _price,
+                  priceType: _priceType,
+                  pricingTier: _pricingTier,
+                  percentageChange: _percentageChange,
+                  weekdays:
+                      _selectedWeekdays.isEmpty ? null : _selectedWeekdays,
+                  overwriteExisting: _overwriteExisting,
+                ),
+              );
+        }
+      }
+
+      // Listen for success/error states
+      Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
           Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('تم تطبيق التحديثات بنجاح'),
+              backgroundColor: AppTheme.success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
         }
       });
     }

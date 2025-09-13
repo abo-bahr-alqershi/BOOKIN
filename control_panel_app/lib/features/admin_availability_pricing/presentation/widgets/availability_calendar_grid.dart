@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'dart:ui' as ui;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/unit_availability.dart';
@@ -393,12 +394,18 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
     final cellWidth = (gridWidth - totalHSpacing) / columns;
     final cellHeight = (gridHeight - totalVSpacing) / rows;
 
-    final col =
+    final visualCol =
         (localPos.dx.clamp(0, gridWidth) / (cellWidth + _cellSpacing)).floor();
     final row = (localPos.dy.clamp(0, gridHeight) / (cellHeight + _cellSpacing))
         .floor();
 
-    if (col < 0 || col >= columns || row < 0 || row >= rows) return null;
+    if (visualCol < 0 || visualCol >= columns || row < 0 || row >= rows) {
+      return null;
+    }
+
+    // In RTL, GridView lays out columns from right to left; invert the column index
+    final isRtl = Directionality.of(context) == ui.TextDirection.rtl;
+    final col = isRtl ? (columns - 1 - visualCol) : visualCol;
 
     final index = row * columns + col;
 

@@ -2,39 +2,25 @@
 
 import '../../domain/entities/pricing_rule.dart';
 import '../../domain/entities/pricing.dart';
+import 'package:intl/intl.dart';
 
 class PricingRuleModel extends PricingRule {
   const PricingRuleModel({
-    required String id,
-    required String unitId,
-    required DateTime startDate,
-    required DateTime endDate,
-    String? startTime,
-    String? endTime,
-    required double priceAmount,
-    required String priceType,
-    required String pricingTier,
-    double? percentageChange,
-    double? minPrice,
-    double? maxPrice,
-    String? description,
-    required String currency,
-  }) : super(
-          id: id,
-          unitId: unitId,
-          startDate: startDate,
-          endDate: endDate,
-          startTime: startTime,
-          endTime: endTime,
-          priceAmount: priceAmount,
-          priceType: priceType,
-          pricingTier: pricingTier,
-          percentageChange: percentageChange,
-          minPrice: minPrice,
-          maxPrice: maxPrice,
-          description: description,
-          currency: currency,
-        );
+    required super.id,
+    required super.unitId,
+    required super.startDate,
+    required super.endDate,
+    super.startTime,
+    super.endTime,
+    required super.priceAmount,
+    required super.priceType,
+    required super.pricingTier,
+    super.percentageChange,
+    super.minPrice,
+    super.maxPrice,
+    super.description,
+    required super.currency,
+  });
 
   factory PricingRuleModel.fromJson(Map<String, dynamic> json) {
     return PricingRuleModel(
@@ -100,79 +86,32 @@ class PricingRuleModel extends PricingRule {
         return PriceType.custom;
     }
   }
-
-  static String _priceTypeToString(PriceType type) {
-    switch (type) {
-      case PriceType.base:
-        return 'base';
-      case PriceType.weekend:
-        return 'weekend';
-      case PriceType.seasonal:
-        return 'seasonal';
-      case PriceType.holiday:
-        return 'holiday';
-      case PriceType.specialEvent:
-        return 'special_event';
-      case PriceType.custom:
-        return 'custom';
-    }
-  }
-
-  static PricingTier _parsePricingTier(String tier) {
-    switch (tier.toLowerCase()) {
-      case 'normal':
-        return PricingTier.normal;
-      case 'high':
-        return PricingTier.high;
-      case 'peak':
-        return PricingTier.peak;
-      case 'discount':
-        return PricingTier.discount;
-      default:
-        return PricingTier.custom;
-    }
-  }
-
-  static String _pricingTierToString(PricingTier tier) {
-    switch (tier) {
-      case PricingTier.normal:
-        return 'normal';
-      case PricingTier.high:
-        return 'high';
-      case PricingTier.peak:
-        return 'peak';
-      case PricingTier.discount:
-        return 'discount';
-      case PricingTier.custom:
-        return 'custom';
-    }
-  }
 }
 
 class UnitPricingModel extends UnitPricing {
   const UnitPricingModel({
-    required String unitId,
-    required String unitName,
-    required double basePrice,
-    required String currency,
-    required Map<String, PricingDay> calendar,
-    required List<PricingRule> rules,
-    required PricingStats stats,
-  }) : super(
-          unitId: unitId,
-          unitName: unitName,
-          basePrice: basePrice,
-          currency: currency,
-          calendar: calendar,
-          rules: rules,
-          stats: stats,
-        );
+    required super.unitId,
+    required super.unitName,
+    required super.basePrice,
+    required super.currency,
+    required super.calendar,
+    required super.rules,
+    required super.stats,
+  });
 
   factory UnitPricingModel.fromJson(Map<String, dynamic> json) {
     final Map<String, PricingDay> calendar = {};
     if (json['calendar'] != null) {
+      final dateFmt = DateFormat('yyyy-MM-dd');
       (json['calendar'] as Map<String, dynamic>).forEach((key, value) {
-        calendar[key] = PricingDayModel.fromJson(value);
+        String normalizedKey = key;
+        try {
+          final dt = DateTime.parse(key);
+          normalizedKey = dateFmt.format(DateTime(dt.year, dt.month, dt.day));
+        } catch (_) {
+          if (key.length >= 10) normalizedKey = key.substring(0, 10);
+        }
+        calendar[normalizedKey] = PricingDayModel.fromJson(value);
       });
     }
 
@@ -181,23 +120,21 @@ class UnitPricingModel extends UnitPricing {
       final String unitCurrency = json['currency'] as String;
       final String unitId = json['unitId'] as String;
       rules.addAll(
-        (json['rules'] as List)
-            .map((e) {
-              final map = Map<String, dynamic>.from(e as Map);
-              // Ensure unitId and currency are present on each rule to satisfy domain entity
-              map.putIfAbsent('unitId', () => unitId);
-              map.putIfAbsent('currency', () => unitCurrency);
-              // Normalize possible backend alias for pricing tier
-              if (!map.containsKey('pricingTier') && map.containsKey('tier')) {
-                map['pricingTier'] = map['tier'];
-              }
-              // Normalize price key if backend used "price"
-              if (!map.containsKey('priceAmount') && map.containsKey('price')) {
-                map['priceAmount'] = map['price'];
-              }
-              return PricingRuleModel.fromJson(map);
-            })
-            .toList(),
+        (json['rules'] as List).map((e) {
+          final map = Map<String, dynamic>.from(e as Map);
+          // Ensure unitId and currency are present on each rule to satisfy domain entity
+          map.putIfAbsent('unitId', () => unitId);
+          map.putIfAbsent('currency', () => unitCurrency);
+          // Normalize possible backend alias for pricing tier
+          if (!map.containsKey('pricingTier') && map.containsKey('tier')) {
+            map['pricingTier'] = map['tier'];
+          }
+          // Normalize price key if backend used "price"
+          if (!map.containsKey('priceAmount') && map.containsKey('price')) {
+            map['priceAmount'] = map['price'];
+          }
+          return PricingRuleModel.fromJson(map);
+        }).toList(),
       );
     }
 
@@ -215,16 +152,11 @@ class UnitPricingModel extends UnitPricing {
 
 class PricingDayModel extends PricingDay {
   const PricingDayModel({
-    required double price,
-    required PriceType priceType,
-    required String colorCode,
-    double? percentageChange,
-  }) : super(
-          price: price,
-          priceType: priceType,
-          colorCode: colorCode,
-          percentageChange: percentageChange,
-        );
+    required super.price,
+    required super.priceType,
+    required super.colorCode,
+    super.percentageChange,
+  });
 
   factory PricingDayModel.fromJson(Map<String, dynamic> json) {
     return PricingDayModel(
@@ -240,18 +172,12 @@ class PricingDayModel extends PricingDay {
 
 class PricingStatsModel extends PricingStats {
   const PricingStatsModel({
-    required double averagePrice,
-    required double minPrice,
-    required double maxPrice,
-    required int daysWithSpecialPricing,
-    required double potentialRevenue,
-  }) : super(
-          averagePrice: averagePrice,
-          minPrice: minPrice,
-          maxPrice: maxPrice,
-          daysWithSpecialPricing: daysWithSpecialPricing,
-          potentialRevenue: potentialRevenue,
-        );
+    required super.averagePrice,
+    required super.minPrice,
+    required super.maxPrice,
+    required super.daysWithSpecialPricing,
+    required super.potentialRevenue,
+  });
 
   factory PricingStatsModel.fromJson(Map<String, dynamic> json) {
     return PricingStatsModel(

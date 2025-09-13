@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'dart:ui' as ui;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/pricing_rule.dart';
@@ -126,6 +127,11 @@ class _PricingCalendarGridState extends State<PricingCalendarGrid> {
     final isSelected = _isDateInSelection(date);
     final isToday = _isToday(date);
 
+    // Prefer backend colorCode if provided, otherwise derive from priceType
+    final Color baseColor = (dayPricing?.colorCode.isNotEmpty ?? false)
+        ? _colorFromHex(dayPricing!.colorCode)
+        : _getTierColor(dayPricing?.priceType);
+
     return GestureDetector(
       onTapDown: (_) => _startSelection(date),
       onTapUp: (_) => _endSelection(date),
@@ -134,16 +140,14 @@ class _PricingCalendarGridState extends State<PricingCalendarGrid> {
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           gradient: isSelected ? AppTheme.primaryGradient : null,
-          color: !isSelected
-              ? _getTierColor(dayPricing?.priceType).withOpacity(0.2)
-              : null,
+          color: !isSelected ? baseColor.withOpacity(0.2) : null,
           borderRadius: BorderRadius.circular(widget.isCompact ? 8 : 10),
           border: Border.all(
             color: isToday
                 ? AppTheme.primaryBlue
                 : isSelected
                     ? Colors.white.withOpacity(0.3)
-                    : _getTierColor(dayPricing?.priceType).withOpacity(0.3),
+                    : baseColor.withOpacity(0.3),
             width: isToday ? 2 : 1,
           ),
           boxShadow: isSelected
@@ -181,9 +185,7 @@ class _PricingCalendarGridState extends State<PricingCalendarGrid> {
                 child: Text(
                   _priceFormat.format(dayPricing.price),
                   style: AppTextStyles.caption.copyWith(
-                    color: isSelected
-                        ? Colors.white
-                        : _getTierColor(dayPricing.priceType),
+                    color: isSelected ? Colors.white : baseColor,
                     fontWeight: FontWeight.w600,
                     fontSize: widget.isCompact ? 8 : 10,
                   ),
@@ -221,6 +223,17 @@ class _PricingCalendarGridState extends State<PricingCalendarGrid> {
         ),
       ),
     );
+  }
+
+  // Parse hex color like '#AABBCC' or 'AABBCC' to Color
+  Color _colorFromHex(String hex) {
+    var sanitized = hex.replaceAll('#', '').toUpperCase();
+    if (sanitized.length == 6) {
+      sanitized = 'FF$sanitized';
+    }
+    final value = int.tryParse(sanitized, radix: 16);
+    if (value == null) return AppTheme.textMuted;
+    return Color(value);
   }
 
   Color _getTierColor(PriceType? priceType) {
@@ -374,12 +387,17 @@ class _PricingCalendarGridState extends State<PricingCalendarGrid> {
     final cellWidth = (gridWidth - totalHSpacing) / columns;
     final cellHeight = (gridHeight - totalVSpacing) / rows;
 
-    final col =
+    final visualCol =
         (localPos.dx.clamp(0, gridWidth) / (cellWidth + _cellSpacing)).floor();
     final row = (localPos.dy.clamp(0, gridHeight) / (cellHeight + _cellSpacing))
         .floor();
 
-    if (col < 0 || col >= columns || row < 0 || row >= rows) return null;
+    if (visualCol < 0 || visualCol >= columns || row < 0 || row >= rows)
+      return null;
+
+    // In RTL context, invert column to match visual right-to-left layout
+    final isRtl = Directionality.of(context) == ui.TextDirection.rtl;
+    final col = isRtl ? (columns - 1 - visualCol) : visualCol;
 
     final index = row * columns + col;
 
