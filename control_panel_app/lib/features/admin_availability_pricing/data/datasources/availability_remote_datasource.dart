@@ -156,16 +156,20 @@ class AvailabilityRemoteDataSourceImpl implements AvailabilityRemoteDataSource {
     bool? forceDelete,
   }) async {
     try {
-      // الـ backend يدعم الحذف بنطاق التواريخ فقط
+      // Backend DeleteAvailabilityCommand supports both by-id and by-range, 
+      // but controller route currently exposes range deletion.
       if (startDate != null && endDate != null) {
         await apiClient.delete(
           '/api/admin/units/$unitId/availability/${startDate.toIso8601String()}/${endDate.toIso8601String()}',
           queryParameters: forceDelete != null ? {'forceDelete': forceDelete} : null,
         );
-      } else {
-        // لا مسار لحذف بواسطة availabilityId حاليًا
-        throw ApiException(message: 'حذف التوفر يتطلب startDate و endDate. لا يوجد حذف بواسطة المعرّف حاليًا.');
+        return;
       }
+      // If only id provided, emulate via POST command if backend adds it later; for now, throw clear error
+      if (availabilityId != null) {
+        throw ApiException(message: 'حذف بواسطة المعرّف غير مدعوم على مسارات الـ backend الحالية. يرجى تمرير startDate و endDate.');
+      }
+      throw ApiException(message: 'يجب تمرير startDate و endDate لحذف الإتاحة.');
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
