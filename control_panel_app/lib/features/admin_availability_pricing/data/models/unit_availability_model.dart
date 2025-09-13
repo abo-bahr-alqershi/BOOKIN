@@ -169,6 +169,7 @@ class AvailabilityStatsModel extends AvailabilityStats {
     required super.availableDays,
     required super.bookedDays,
     required super.blockedDays,
+    required super.maintenanceDays,
     required super.occupancyRate,
   });
 
@@ -178,6 +179,7 @@ class AvailabilityStatsModel extends AvailabilityStats {
       availableDays: json['availableDays'] as int,
       bookedDays: json['bookedDays'] as int,
       blockedDays: json['blockedDays'] as int,
+      maintenanceDays: (json['maintenanceDays'] as int?) ?? 0,
       occupancyRate: (json['occupancyRate'] as num).toDouble(),
     );
   }
@@ -188,6 +190,7 @@ class AvailabilityStatsModel extends AvailabilityStats {
       'availableDays': availableDays,
       'bookedDays': bookedDays,
       'blockedDays': blockedDays,
+      'maintenanceDays': maintenanceDays,
       'occupancyRate': occupancyRate,
     };
   }

@@ -44,6 +44,7 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
 
   // State
   ViewMode _viewMode = ViewMode.availability;
+  bool _showStats = false;
   String? _selectedUnitId;
   String? _selectedUnitName;
   String? _selectedPropertyId;
@@ -137,28 +138,8 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
   }
 
   void _loadInitialData() {
-    // Load units and initial availability data
-    // This would typically come from a units bloc
-    // For now, we'll use mock data
-    _selectedUnitId = 'unit_1';
-
-    if (_selectedUnitId != null) {
-      context.read<AvailabilityBloc>().add(
-            LoadMonthlyAvailability(
-              unitId: _selectedUnitId!,
-              year: _currentDate.year,
-              month: _currentDate.month,
-            ),
-          );
-
-      context.read<PricingBloc>().add(
-            LoadMonthlyPricing(
-              unitId: _selectedUnitId!,
-              year: _currentDate.year,
-              month: _currentDate.month,
-            ),
-          );
-    }
+    // Do not preselect any unit or fetch data by default
+    _selectedUnitId = null;
   }
 
   @override
@@ -315,6 +296,10 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
 
               const Spacer(),
 
+              // Toggle stats visibility button
+              _buildStatsToggle(),
+              const SizedBox(width: 12),
+
               // Right-side controls wrapped to avoid overflow
               Flexible(
                 child: SingleChildScrollView(
@@ -322,9 +307,8 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
                   reverse: true,
                   child: Row(
                     children: [
-                      // Quick stats
-                      _buildQuickStats(),
-                      const SizedBox(width: 12),
+                      if (_showStats) _buildQuickStats(),
+                      if (_showStats) const SizedBox(width: 12),
                       // View mode toggle
                       _buildViewModeToggle(),
                     ],
@@ -333,6 +317,41 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsToggle() {
+    final isOn = _showStats;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        setState(() => _showStats = !_showStats);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isOn ? AppTheme.success.withOpacity(0.15) : AppTheme.darkSurface.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isOn ? AppTheme.success.withOpacity(0.4) : AppTheme.darkBorder.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(isOn ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                size: 18, color: isOn ? AppTheme.success : AppTheme.textMuted),
+            const SizedBox(width: 6),
+            Text(
+              isOn ? 'إخفاء الإحصائيات' : 'إظهار الإحصائيات',
+              style: AppTextStyles.caption.copyWith(
+                color: isOn ? AppTheme.success : AppTheme.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
