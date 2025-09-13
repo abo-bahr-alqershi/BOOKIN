@@ -88,15 +88,18 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
                     });
                   },
                   onLongPressMoveUpdate: (details) {
-                    if (!_isSelecting || !_longPressMode ||
+                    if (!_isSelecting ||
+                        !_longPressMode ||
                         _selectionStart == null) return;
                     final date = _dateFromLocalPosition(
                         details.localPosition, constraints);
                     if (date == null) return;
-                    if (_selectionEnd == null || !_isSameDay(_selectionEnd!, date)) {
+                    if (_selectionEnd == null ||
+                        !_isSameDay(_selectionEnd!, date)) {
                       setState(() {
-                        _selectionEnd =
-                            date.isBefore(_selectionStart!) ? _selectionStart : date;
+                        _selectionEnd = date.isBefore(_selectionStart!)
+                            ? _selectionStart
+                            : date;
                         if (date.isBefore(_selectionStart!)) {
                           _selectionEnd = _selectionStart;
                           _selectionStart = date;
@@ -105,7 +108,8 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
                     }
                   },
                   onLongPressEnd: (_) {
-                    if (!_isSelecting || !_longPressMode ||
+                    if (!_isSelecting ||
+                        !_longPressMode ||
                         _selectionStart == null) {
                       _longPressMode = false;
                       return;
