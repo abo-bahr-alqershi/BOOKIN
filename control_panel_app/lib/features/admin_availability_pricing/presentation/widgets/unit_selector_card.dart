@@ -9,14 +9,14 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../../../features/helpers/presentation/pages/unit_search_page.dart';
 
 class UnitSelectorCard extends StatefulWidget {
-  final String? selectedUnitId;
+  final Unit? selectedUnit;
   final String? selectedPropertyId;
-  final Function(String) onUnitSelected;
+  final Function(Unit) onUnitSelected;
   final bool isCompact;
 
   const UnitSelectorCard({
     super.key,
-    required this.selectedUnitId,
+    required this.selectedUnit,
     this.selectedPropertyId,
     required this.onUnitSelected,
     this.isCompact = false,
@@ -31,14 +31,6 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
   late AnimationController _animationController;
   late Animation<double> _glowAnimation;
   
-  // Mock data - replace with actual units from bloc
-  final List<Unit> _units = [
-    Unit(id: 'unit_1', name: 'جناح ديلوكس', type: 'suite', isAvailable: true),
-    Unit(id: 'unit_2', name: 'غرفة مزدوجة', type: 'double', isAvailable: true),
-    Unit(id: 'unit_3', name: 'فيلا خاصة', type: 'villa', isAvailable: false),
-    Unit(id: 'unit_4', name: 'استوديو', type: 'studio', isAvailable: true),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -126,7 +118,7 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
         children: [
           _buildHeader(),
           const SizedBox(height: 16),
-          _buildUnitsList(),
+          _buildSelectedUnitView(),
         ],
       ),
     );
@@ -141,14 +133,14 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'اختر الوحدة',
+              'الوحدة المحددة',
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppTheme.textWhite,
                 fontWeight: FontWeight.w600,
               ),
             ),
             Text(
-              '${_units.length} وحدة متاحة',
+              widget.selectedUnit != null ? 'وحدة محددة' : 'لم يتم تحديد وحدة',
               style: AppTextStyles.caption.copyWith(
                 color: AppTheme.textMuted,
               ),
@@ -176,10 +168,7 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
   }
 
   Widget _buildDropdown() {
-    final selectedUnit = _units.firstWhere(
-      (u) => u.id == widget.selectedUnitId,
-      orElse: () => _units.first,
-    );
+    final displayText = widget.selectedUnit?.name ?? 'اختر الوحدة';
     return GestureDetector(
       onTap: _openUnitSearch,
       child: Container(
@@ -195,14 +184,14 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
         child: Row(
           children: [
             Icon(
-              _getUnitIcon('suite'),
+              widget.selectedUnit != null ? _getUnitIcon(widget.selectedUnit!.type) : Icons.search_rounded,
               size: 16,
               color: AppTheme.primaryBlue,
             ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                selectedUnit.name,
+                displayText,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.bodyMedium.copyWith(
@@ -228,7 +217,7 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
           propertyId: widget.selectedPropertyId,
           allowMultiSelect: false,
           onUnitSelected: (unit) {
-            widget.onUnitSelected(unit.id);
+            widget.onUnitSelected(unit);
           },
         ),
         fullscreenDialog: true,
@@ -236,98 +225,93 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
     );
   }
 
-  Widget _buildUnitsList() {
-    return Column(
-      children: _units.map((unit) {
-        final isSelected = unit.id == widget.selectedUnitId;
-        
-        return GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            widget.onUnitSelected(unit.id);
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              gradient: isSelected ? AppTheme.primaryGradient : null,
-              color: !isSelected ? AppTheme.darkSurface.withOpacity(0.5) : null,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected 
-                    ? Colors.white.withOpacity(0.3)
-                    : AppTheme.darkBorder.withOpacity(0.3),
-                width: 1,
-              ),
+  Widget _buildSelectedUnitView() {
+    if (widget.selectedUnit == null) {
+      return GestureDetector(
+        onTap: _openUnitSearch,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppTheme.darkSurface.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.darkBorder.withOpacity(0.3),
+              width: 1,
             ),
-            child: Row(
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.add_circle_outline_rounded,
+                size: 48,
+                color: AppTheme.primaryBlue,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'اختر وحدة',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppTheme.textWhite,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'اضغط للبحث عن الوحدات المتاحة',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppTheme.textMuted,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final unit = widget.selectedUnit!;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: AppTheme.primaryGradient,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            _getUnitIcon(unit.type),
+            color: Colors.white,
+            size: 24,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  _getUnitIcon(unit.type),
-                  color: isSelected 
-                      ? Colors.white 
-                      : unit.isAvailable 
-                          ? AppTheme.success 
-                          : AppTheme.textMuted,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        unit.name,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: isSelected ? Colors.white : AppTheme.textWhite,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        _getUnitTypeLabel(unit.type),
-                        style: AppTextStyles.caption.copyWith(
-                          color: isSelected 
-                              ? Colors.white.withOpacity(0.8)
-                              : AppTheme.textMuted,
-                        ),
-                      ),
-                    ],
+                Text(
+                  unit.name,
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                if (!unit.isAvailable)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.error.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'غير متاح',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.error,
-                      ),
-                    ),
+                Text(
+                  _getUnitTypeLabel(unit.type),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: Colors.white.withOpacity(0.8),
                   ),
-                if (isSelected)
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                  ),
+                ),
               ],
             ),
           ),
-        );
-      }).toList(),
+          IconButton(
+            onPressed: _openUnitSearch,
+            icon: const Icon(
+              Icons.edit_rounded,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
