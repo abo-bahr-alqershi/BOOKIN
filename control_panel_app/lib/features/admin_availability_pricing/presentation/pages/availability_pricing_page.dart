@@ -15,8 +15,7 @@ import '../widgets/unit_selector_card.dart';
 import '../widgets/property_selector_card.dart';
 import '../widgets/stats_dashboard_card.dart';
 import '../widgets/quick_actions_panel.dart';
-import '../widgets/availability_status_legend.dart';
-import '../widgets/pricing_tier_legend.dart';
+// Removed legends as per request
 import '../widgets/bulk_update_dialog.dart';
 import '../widgets/copy_pricing_dialog.dart';
 
@@ -270,6 +269,7 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Title with gradient
@@ -296,26 +296,20 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
                 ),
               ),
 
-              const Spacer(),
+              const SizedBox(height: 16),
 
-              // Toggle stats visibility button
-              _buildStatsToggle(),
-              const SizedBox(width: 12),
-
-              // Right-side controls wrapped to avoid overflow
-              Flexible(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  reverse: true,
-                  child: Row(
-                    children: [
-                      if (_showStats) _buildQuickStats(),
-                      if (_showStats) const SizedBox(width: 12),
-                      // View mode toggle
-                      _buildViewModeToggle(),
-                    ],
+              // Options then stats below
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildViewModeToggle(),
+                  const SizedBox(height: 12),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: _buildQuickStats(),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -473,6 +467,13 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
                 label: 'محظور',
                 color: AppTheme.error,
               ),
+              const SizedBox(width: 12),
+              _buildStatChip(
+                icon: Icons.build_rounded,
+                value: '${stats.maintenanceDays}',
+                label: 'صيانة',
+                color: AppTheme.info,
+              ),
             ],
           );
         }
@@ -604,11 +605,6 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
                   },
                 ),
               ),
-
-              const SizedBox(height: 16),
-
-              // Legend
-              _buildLegend(),
             ],
           ),
         ),
@@ -673,11 +669,6 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
 
         const SizedBox(height: 12),
 
-        // Legend
-        _buildLegend(),
-
-        const SizedBox(height: 12),
-
         // Quick actions (horizontal scroll)
         SizedBox(
           height: 60,
@@ -689,22 +680,6 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
         ),
       ],
     );
-  }
-
-  Widget _buildLegend() {
-    if (_viewMode == ViewMode.availability) {
-      return const AvailabilityStatusLegend();
-    } else if (_viewMode == ViewMode.pricing) {
-      return const PricingTierLegend();
-    } else {
-      return const Row(
-        children: [
-          Expanded(child: AvailabilityStatusLegend()),
-          SizedBox(width: 16),
-          Expanded(child: PricingTierLegend()),
-        ],
-      );
-    }
   }
 
   void _onUnitSelectedWithName(String unitId, String unitName) {
