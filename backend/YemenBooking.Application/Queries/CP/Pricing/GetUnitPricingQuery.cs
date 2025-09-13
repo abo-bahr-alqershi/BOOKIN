@@ -68,7 +68,7 @@ public class GetUnitPricingQueryHandler : IRequestHandler<GetUnitPricingQuery, R
         if (unit == null)
             return ResultDto<UnitPricingDto>.Failure("الوحدة غير موجودة");
 
-        var calendar = await _pricingRepository.GetPricingCalendarAsync(
+        var calendarPrices = await _pricingRepository.GetPricingCalendarAsync(
             request.UnitId,
             request.Year,
             request.Month);
@@ -83,21 +83,37 @@ public class GetUnitPricingQueryHandler : IRequestHandler<GetUnitPricingQuery, R
 
         var basePrice = unit.BasePrice.Amount;
 
+        // Build calendar entries including rule-based priceType and tier color
+        var calendar = new Dictionary<DateTime, PricingDayDto>();
+        for (var date = startOfMonth; date <= endOfMonth; date = date.AddDays(1))
+        {
+            var price = calendarPrices.TryGetValue(date, out var p) ? p : basePrice;
+            var ruleForDay = rules
+                .Where(r => r.StartDate.Date <= date && r.EndDate.Date >= date)
+                .OrderBy(r => GetTierPriority(r.PricingTier))
+                .FirstOrDefault();
+
+            var priceType = ruleForDay != null ? NormalizePriceType(ruleForDay.PriceType) : "base";
+            var colorCode = ruleForDay != null
+                ? GetTierColor(ruleForDay.PricingTier)
+                : GetPriceColorCode(price, basePrice);
+
+            calendar[date] = new PricingDayDto
+            {
+                Price = price,
+                PriceType = priceType,
+                ColorCode = colorCode,
+                PercentageChange = CalculatePercentageChange(price, basePrice)
+            };
+        }
+
         var dto = new UnitPricingDto
         {
             UnitId = unit.Id,
             UnitName = unit.Name,
             BasePrice = basePrice,
             Currency = unit.BasePrice.Currency,
-            Calendar = calendar.ToDictionary(
-                kvp => kvp.Key,
-                kvp => new PricingDayDto
-                {
-                    Price = kvp.Value,
-                    PriceType = GetPriceType(kvp.Value, basePrice),
-                    ColorCode = GetPriceColorCode(kvp.Value, basePrice),
-                    PercentageChange = CalculatePercentageChange(kvp.Value, basePrice)
-                }),
+            Calendar = calendar,
             Rules = rules.Select(r => new PricingRuleDto
             {
                 Id = r.Id,
@@ -107,17 +123,26 @@ public class GetUnitPricingQueryHandler : IRequestHandler<GetUnitPricingQuery, R
                 PriceType = r.PriceType,
                 Description = r.Description
             }).ToList(),
-            Stats = CalculatePricingStats(calendar.Values.ToList(), basePrice)
+            Stats = CalculatePricingStats(calendarPrices.Values.ToList(), basePrice)
         };
 
         return ResultDto<UnitPricingDto>.Ok(dto);
     }
 
-    private string GetPriceType(decimal price, decimal basePrice)
+    private string NormalizePriceType(string? priceType)
     {
-        if (price == basePrice) return "Base";
-        if (price > basePrice) return "Peak";
-        return "Off-Peak";
+        if (string.IsNullOrWhiteSpace(priceType)) return "custom";
+        var t = priceType.Trim().ToLowerInvariant();
+        return t switch
+        {
+            "base" => "base",
+            "weekend" => "weekend",
+            "seasonal" => "seasonal",
+            "holiday" => "holiday",
+            "special_event" => "special_event",
+            "specialevent" => "special_event",
+            _ => "custom"
+        };
     }
 
     private string GetPriceColorCode(decimal price, decimal basePrice)
@@ -130,6 +155,32 @@ public class GetUnitPricingQueryHandler : IRequestHandler<GetUnitPricingQuery, R
         if (percentage == 0) return "#10B981";      // Green
         if (percentage > -10) return "#60A5FA";     // Light Blue
         return "#3B82F6";                           // Blue
+    }
+
+    private int GetTierPriority(string? tier)
+    {
+        var t = (tier ?? string.Empty).Trim().ToLowerInvariant();
+        return t switch
+        {
+            "peak" => 1,
+            "high" => 2,
+            "normal" => 3,
+            "discount" => 4,
+            _ => 5
+        };
+    }
+
+    private string GetTierColor(string? tier)
+    {
+        var t = (tier ?? string.Empty).Trim().ToLowerInvariant();
+        return t switch
+        {
+            "peak" => "#DC2626",      // red
+            "high" => "#F59E0B",      // orange
+            "discount" => "#10B981",  // green
+            "normal" => "#3B82F6",    // blue
+            _ => "#8B5CF6"              // purple for custom
+        };
     }
 
     private decimal? CalculatePercentageChange(decimal price, decimal basePrice)
