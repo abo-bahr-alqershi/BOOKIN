@@ -12,6 +12,7 @@ import '../bloc/availability/availability_bloc.dart';
 import '../bloc/pricing/pricing_bloc.dart';
 import '../widgets/futuristic_calendar_view.dart';
 import '../widgets/unit_selector_card.dart';
+import '../widgets/property_selector_card.dart';
 import '../widgets/stats_dashboard_card.dart';
 import '../widgets/quick_actions_panel.dart';
 import '../widgets/availability_status_legend.dart';
@@ -41,6 +42,8 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
   // State
   ViewMode _viewMode = ViewMode.availability;
   String? _selectedUnitId;
+  String? _selectedPropertyId;
+  String? _selectedPropertyName;
   DateTime _currentDate = DateTime.now();
   
   // Particles for background
@@ -484,8 +487,23 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
           child: Column(
             children: [
               // Unit selector
+              // Property then Unit selectors
+              PropertySelectorCard(
+                selectedPropertyId: _selectedPropertyId,
+                selectedPropertyName: _selectedPropertyName,
+                onPropertySelected: (id, name) {
+                  setState(() {
+                    _selectedPropertyId = id;
+                    _selectedPropertyName = name;
+                    // Reset selected unit when property changes
+                    _selectedUnitId = null;
+                  });
+                },
+              ),
+              const SizedBox(height: 12),
               UnitSelectorCard(
                 selectedUnitId: _selectedUnitId,
+                selectedPropertyId: _selectedPropertyId,
                 onUnitSelected: _onUnitSelected,
               ),
               
@@ -539,8 +557,23 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
     return Column(
       children: [
         // Unit selector (compact)
+        // Property then Unit selectors (compact)
+        PropertySelectorCard(
+          selectedPropertyId: _selectedPropertyId,
+          selectedPropertyName: _selectedPropertyName,
+          onPropertySelected: (id, name) {
+            setState(() {
+              _selectedPropertyId = id;
+              _selectedPropertyName = name;
+              _selectedUnitId = null;
+            });
+          },
+          isCompact: true,
+        ),
+        const SizedBox(height: 8),
         UnitSelectorCard(
           selectedUnitId: _selectedUnitId,
+          selectedPropertyId: _selectedPropertyId,
           onUnitSelected: _onUnitSelected,
           isCompact: true,
         ),
