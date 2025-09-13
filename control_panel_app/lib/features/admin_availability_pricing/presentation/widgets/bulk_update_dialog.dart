@@ -146,8 +146,12 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
             animation: _glowAnimation,
             builder: (context, child) {
               return Container(
-                width: 720,
-                constraints: const BoxConstraints(maxHeight: 750),
+                // Wider dialog with responsive constraints
+                width: MediaQuery.of(context).size.width.clamp(600.0, 1000.0),
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.9,
+                  maxWidth: MediaQuery.of(context).size.width * 0.95,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
