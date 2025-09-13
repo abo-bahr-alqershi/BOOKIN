@@ -285,30 +285,25 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
           child: Row(
             children: [
               // Title with gradient
-              Flexible(
-                child: ShaderMask(
-                  shaderCallback: (bounds) =>
-                      AppTheme.primaryGradient.createShader(bounds),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_today_rounded,
+              ShaderMask(
+                shaderCallback: (bounds) =>
+                    AppTheme.primaryGradient.createShader(bounds),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_today_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'إدارة الإتاحة والتسعير',
+                      style: AppTextStyles.heading2.copyWith(
                         color: Colors.white,
-                        size: 28,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'إدارة الإتاحة والتسعير',
-                          style: AppTextStyles.heading2.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
 
@@ -672,19 +667,19 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
       _selectedUnitName = unitName;
     });
     context.read<AvailabilityBloc>().add(
-      LoadMonthlyAvailability(
-        unitId: unitId,
-        year: _currentDate.year,
-        month: _currentDate.month,
-      ),
-    );
+          LoadMonthlyAvailability(
+            unitId: unitId,
+            year: _currentDate.year,
+            month: _currentDate.month,
+          ),
+        );
     context.read<PricingBloc>().add(
-      LoadMonthlyPricing(
-        unitId: unitId,
-        year: _currentDate.year,
-        month: _currentDate.month,
-      ),
-    );
+          LoadMonthlyPricing(
+            unitId: unitId,
+            year: _currentDate.year,
+            month: _currentDate.month,
+          ),
+        );
   }
 
   void _onDateChanged(DateTime date) {

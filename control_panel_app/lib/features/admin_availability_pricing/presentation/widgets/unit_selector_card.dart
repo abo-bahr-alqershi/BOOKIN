@@ -40,7 +40,7 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.5,
       end: 1.0,
@@ -72,12 +72,14 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppTheme.primaryBlue.withOpacity(0.2 + 0.1 * _glowAnimation.value),
+              color: AppTheme.primaryBlue
+                  .withOpacity(0.2 + 0.1 * _glowAnimation.value),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryBlue.withOpacity(0.1 * _glowAnimation.value),
+                color: AppTheme.primaryBlue
+                    .withOpacity(0.1 * _glowAnimation.value),
                 blurRadius: 15,
                 spreadRadius: 1,
               ),
@@ -87,9 +89,8 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
             borderRadius: BorderRadius.circular(16),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: widget.isCompact
-                  ? _buildCompactView()
-                  : _buildExpandedView(),
+              child:
+                  widget.isCompact ? _buildCompactView() : _buildExpandedView(),
             ),
           ),
         );
@@ -165,7 +166,9 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
 
   Widget _buildDropdown() {
     final displayName = widget.selectedUnitName ??
-        (widget.selectedUnitId != null ? 'وحدة ${widget.selectedUnitId}' : 'اختر وحدة');
+        (widget.selectedUnitId != null
+            ? 'وحدة ${widget.selectedUnitId}'
+            : 'اختر وحدة');
     return GestureDetector(
       onTap: _openUnitSearch,
       child: Container(
@@ -216,8 +219,20 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
           onUnitSelected: (unit) {
             // Only accept non-experimental units (additional guard; primary filtering is server/UI list)
             final lower = unit.name.toLowerCase();
-            const hints = ['test','demo','dummy','sample','تجريبي','تجريب','اختبار','ديمو','عينه','عينة'];
-            final isExperimental = hints.any(lower.contains) || unit.id.length != 36;
+            const hints = [
+              'test',
+              'demo',
+              'dummy',
+              'sample',
+              'تجريبي',
+              'تجريب',
+              'اختبار',
+              'ديمو',
+              'عينه',
+              'عينة'
+            ];
+            final isExperimental =
+                hints.any(lower.contains) || unit.id.length != 36;
             if (isExperimental) {
               HapticFeedback.heavyImpact();
               return;
