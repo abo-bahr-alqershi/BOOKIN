@@ -315,7 +315,7 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
                       _buildViewModeToggle(),
                     ],
                   ),
-                ],
+                ),
               ),
             ],
           ),
@@ -334,10 +334,14 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isOn ? AppTheme.success.withOpacity(0.15) : AppTheme.darkSurface.withOpacity(0.5),
+          color: isOn
+              ? AppTheme.success.withOpacity(0.15)
+              : AppTheme.darkSurface.withOpacity(0.5),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isOn ? AppTheme.success.withOpacity(0.4) : AppTheme.darkBorder.withOpacity(0.3),
+            color: isOn
+                ? AppTheme.success.withOpacity(0.4)
+                : AppTheme.darkBorder.withOpacity(0.3),
             width: 1,
           ),
         ),
