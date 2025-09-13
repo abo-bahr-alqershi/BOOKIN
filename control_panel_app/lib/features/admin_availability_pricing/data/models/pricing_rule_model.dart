@@ -44,9 +44,11 @@ class PricingRuleModel extends PricingRule {
       endDate: DateTime.parse(json['endDate'] as String),
       startTime: json['startTime'] as String?,
       endTime: json['endTime'] as String?,
-      priceAmount: (json['priceAmount'] as num).toDouble(),
+      // Backend may send either "priceAmount" or "price"
+      priceAmount: ((json['priceAmount'] ?? json['price']) as num).toDouble(),
       priceType: json['priceType'] as String,
-      pricingTier: json['pricingTier'] as String,
+      // Backend may send either "pricingTier" or compact "tier"; default to normal
+      pricingTier: (json['pricingTier'] ?? json['tier'] ?? 'normal') as String,
       percentageChange: json['percentageChange'] != null
           ? (json['percentageChange'] as num).toDouble()
           : null,
@@ -57,7 +59,8 @@ class PricingRuleModel extends PricingRule {
           ? (json['maxPrice'] as num).toDouble()
           : null,
       description: json['description'] as String?,
-      currency: json['currency'] as String,
+      // If rule currency is missing, expect caller to inject parent currency; else fallback to empty string
+      currency: (json['currency'] as String?) ?? '',
     );
   }
 
@@ -175,9 +178,25 @@ class UnitPricingModel extends UnitPricing {
 
     final List<PricingRule> rules = [];
     if (json['rules'] != null) {
+      final String unitCurrency = json['currency'] as String;
+      final String unitId = json['unitId'] as String;
       rules.addAll(
         (json['rules'] as List)
-            .map((e) => PricingRuleModel.fromJson(e))
+            .map((e) {
+              final map = Map<String, dynamic>.from(e as Map);
+              // Ensure unitId and currency are present on each rule to satisfy domain entity
+              map.putIfAbsent('unitId', () => unitId);
+              map.putIfAbsent('currency', () => unitCurrency);
+              // Normalize possible backend alias for pricing tier
+              if (!map.containsKey('pricingTier') && map.containsKey('tier')) {
+                map['pricingTier'] = map['tier'];
+              }
+              // Normalize price key if backend used "price"
+              if (!map.containsKey('priceAmount') && map.containsKey('price')) {
+                map['priceAmount'] = map['price'];
+              }
+              return PricingRuleModel.fromJson(map);
+            })
             .toList(),
       );
     }

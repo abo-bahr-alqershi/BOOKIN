@@ -91,8 +91,11 @@ class PricingRemoteDataSourceImpl implements PricingRemoteDataSource {
           'startDate': p.startDate.toIso8601String(),
           'endDate': p.endDate.toIso8601String(),
           'priceType': _priceTypeToString(p.priceType),
+          // Backend accepts "price"; UpdateUnitPricingCommand expects Price; PricingRuleDto uses PriceAmount
+          // Here we send the command payload (Price)
           'price': p.price,
           if (p.currency != null) 'currency': p.currency,
+          // Backend BulkUpdatePricingCommand uses "Tier" while UpdateUnitPricingCommand uses "PricingTier"
           'tier': _pricingTierToString(p.tier),
           if (p.percentageChange != null) 'percentageChange': p.percentageChange,
           if (p.minPrice != null) 'minPrice': p.minPrice,
