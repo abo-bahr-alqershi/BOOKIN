@@ -21,6 +21,12 @@ class FuturisticCalendarView extends StatefulWidget {
   final DateTime currentDate;
   final Function(DateTime) onDateChanged;
   final bool isCompact;
+  // New: external persistent selection (from parent/page)
+  final DateTime? selectionStart;
+  final DateTime? selectionEnd;
+  // New: notify parent when selection committed (via drag or long-press)
+  final void Function(DateTime start, DateTime end, bool fromLongPress)?
+      onSelectionChanged;
 
   const FuturisticCalendarView({
     super.key,
@@ -28,6 +34,9 @@ class FuturisticCalendarView extends StatefulWidget {
     required this.currentDate,
     required this.onDateChanged,
     this.isCompact = false,
+    this.selectionStart,
+    this.selectionEnd,
+    this.onSelectionChanged,
   });
 
   @override
@@ -356,6 +365,12 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
             unitAvailability: state.unitAvailability,
             currentDate: widget.currentDate,
             isCompact: widget.isCompact,
+            selectionStart: widget.selectionStart,
+            selectionEnd: widget.selectionEnd,
+            onSelectionCommitted: (start, end, fromLongPress) {
+              // Bubble to parent; parent will choose whether to open dialogs
+              widget.onSelectionChanged?.call(start, end, fromLongPress);
+            },
             onDateSelected: (date) =>
                 _onDateSelected(date, ViewMode.availability),
             onDateRangeSelected: (start, end) =>
@@ -384,6 +399,11 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
             unitPricing: state.unitPricing,
             currentDate: widget.currentDate,
             isCompact: widget.isCompact,
+            selectionStart: widget.selectionStart,
+            selectionEnd: widget.selectionEnd,
+            onSelectionCommitted: (start, end, fromLongPress) {
+              widget.onSelectionChanged?.call(start, end, fromLongPress);
+            },
             onDateSelected: (date) => _onDateSelected(date, ViewMode.pricing),
             onDateRangeSelected: (start, end) =>
                 _onDateRangeSelected(start, end, ViewMode.pricing),

@@ -15,6 +15,12 @@ class AvailabilityCalendarGrid extends StatefulWidget {
   final bool isCompact;
   final Function(DateTime) onDateSelected;
   final Function(DateTime, DateTime) onDateRangeSelected;
+  // New: external selection to persist highlight after dialogs
+  final DateTime? selectionStart;
+  final DateTime? selectionEnd;
+  // New: notify parent when a selection is committed (e.g., long-press)
+  final void Function(DateTime start, DateTime end, bool fromLongPress)?
+      onSelectionCommitted;
 
   const AvailabilityCalendarGrid({
     super.key,
@@ -23,6 +29,9 @@ class AvailabilityCalendarGrid extends StatefulWidget {
     required this.onDateSelected,
     required this.onDateRangeSelected,
     this.isCompact = false,
+    this.selectionStart,
+    this.selectionEnd,
+    this.onSelectionCommitted,
   });
 
   @override
@@ -34,6 +43,7 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
   DateTime? _selectionStart;
   DateTime? _selectionEnd;
   bool _isSelecting = false;
+  bool _longPressMode = false; // New: distinguish long-press selection
 
   // New: key to measure grid and map pointer to cells
   final GlobalKey _gridKey = GlobalKey();
@@ -64,6 +74,52 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
                   onPanUpdate: (details) =>
                       _handlePanUpdate(details, constraints),
                   onPanEnd: (_) => _handlePanEnd(),
+                  // Long-press selection without dialogs
+                  onLongPressStart: (details) {
+                    HapticFeedback.selectionClick();
+                    _longPressMode = true;
+                    final date = _dateFromLocalPosition(
+                        details.localPosition, constraints);
+                    if (date == null) return;
+                    setState(() {
+                      _isSelecting = true;
+                      _selectionStart = date;
+                      _selectionEnd = date;
+                    });
+                  },
+                  onLongPressMoveUpdate: (details) {
+                    if (!_isSelecting || !_longPressMode ||
+                        _selectionStart == null) return;
+                    final date = _dateFromLocalPosition(
+                        details.localPosition, constraints);
+                    if (date == null) return;
+                    if (_selectionEnd == null || !_isSameDay(_selectionEnd!, date)) {
+                      setState(() {
+                        _selectionEnd =
+                            date.isBefore(_selectionStart!) ? _selectionStart : date;
+                        if (date.isBefore(_selectionStart!)) {
+                          _selectionEnd = _selectionStart;
+                          _selectionStart = date;
+                        }
+                      });
+                    }
+                  },
+                  onLongPressEnd: (_) {
+                    if (!_isSelecting || !_longPressMode ||
+                        _selectionStart == null) {
+                      _longPressMode = false;
+                      return;
+                    }
+                    final start = _selectionStart!;
+                    final end = _selectionEnd ?? start;
+                    widget.onSelectionCommitted?.call(start, end, true);
+                    setState(() {
+                      _isSelecting = false;
+                      _selectionStart = null;
+                      _selectionEnd = null;
+                      _longPressMode = false;
+                    });
+                  },
                   child: GridView.builder(
                     key: _gridKey,
                     physics: const NeverScrollableScrollPhysics(),
@@ -281,11 +337,13 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
   }
 
   bool _isDateInSelection(DateTime date) {
-    if (_selectionStart == null) return false;
-    if (_selectionEnd == null) return date == _selectionStart;
+    // Prefer active drag selection
+    final s = _selectionStart ?? widget.selectionStart;
+    final e = _selectionEnd ?? widget.selectionEnd ?? s;
+    if (s == null) return false;
 
-    return date.isAfter(_selectionStart!.subtract(const Duration(days: 1))) &&
-        date.isBefore(_selectionEnd!.add(const Duration(days: 1)));
+    return date.isAfter(s.subtract(const Duration(days: 1))) &&
+        date.isBefore(e!.add(const Duration(days: 1)));
   }
 
   void _startSelection(DateTime date) {
@@ -294,6 +352,7 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
       _isSelecting = true;
       _selectionStart = date;
       _selectionEnd = null;
+      _longPressMode = false;
     });
   }
 
@@ -310,10 +369,15 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
           _selectionEnd = date;
         }
 
-        if (_selectionStart == _selectionEnd) {
-          widget.onDateSelected(_selectionStart!);
+        final start = _selectionStart!;
+        final end = _selectionEnd!;
+        // Persist selection to parent
+        widget.onSelectionCommitted?.call(start, end, false);
+
+        if (_isSameDay(start, end)) {
+          widget.onDateSelected(start);
         } else {
-          widget.onDateRangeSelected(_selectionStart!, _selectionEnd!);
+          widget.onDateRangeSelected(start, end);
         }
       }
       _selectionStart = null;
@@ -326,6 +390,7 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
       _isSelecting = false;
       _selectionStart = null;
       _selectionEnd = null;
+      _longPressMode = false;
     });
   }
 
@@ -362,6 +427,9 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
     if (!_isSelecting || _selectionStart == null) return;
     final start = _selectionStart!;
     final end = _selectionEnd ?? start;
+
+    // Notify parent about committed selection for persistence
+    widget.onSelectionCommitted?.call(start, end, false);
 
     // Trigger callbacks
     if (_isSameDay(start, end)) {

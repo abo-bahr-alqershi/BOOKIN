@@ -17,6 +17,7 @@ import '../widgets/stats_dashboard_card.dart';
 import '../widgets/quick_actions_panel.dart';
 import '../widgets/availability_status_legend.dart';
 import '../widgets/pricing_tier_legend.dart';
+import '../widgets/bulk_update_dialog.dart';
 
 class AvailabilityPricingPage extends StatefulWidget {
   const AvailabilityPricingPage({super.key});
@@ -47,6 +48,10 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
   String? _selectedPropertyId;
   String? _selectedPropertyName;
   DateTime _currentDate = DateTime.now();
+
+  // New: persist selection range across dialogs until context changes
+  DateTime? _selectionStart;
+  DateTime? _selectionEnd;
 
   // Particles for background
   final List<_Particle> _particles = [];
@@ -501,6 +506,9 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
                     // Reset selected unit when property changes
                     _selectedUnitId = null;
                     _selectedUnitName = null;
+                    // Clear selection when property changes
+                    _selectionStart = null;
+                    _selectionEnd = null;
                   });
                 },
               ),
@@ -511,6 +519,11 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
                 selectedPropertyId: _selectedPropertyId,
                 onUnitSelected: (id, name) {
                   _onUnitSelectedWithName(id, name);
+                  // Clear selection when unit changes
+                  setState(() {
+                    _selectionStart = null;
+                    _selectionEnd = null;
+                  });
                 },
               ),
 
@@ -546,6 +559,14 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
                   viewMode: _viewMode,
                   currentDate: _currentDate,
                   onDateChanged: _onDateChanged,
+                  selectionStart: _selectionStart,
+                  selectionEnd: _selectionEnd,
+                  onSelectionChanged: (start, end, fromLongPress) {
+                    setState(() {
+                      _selectionStart = start;
+                      _selectionEnd = end;
+                    });
+                  },
                 ),
               ),
 
@@ -574,6 +595,8 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
               _selectedPropertyName = name;
               _selectedUnitId = null;
               _selectedUnitName = null;
+              _selectionStart = null;
+              _selectionEnd = null;
             });
           },
           isCompact: true,
@@ -585,6 +608,10 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
           selectedPropertyId: _selectedPropertyId,
           onUnitSelected: (id, name) {
             _onUnitSelectedWithName(id, name);
+            setState(() {
+              _selectionStart = null;
+              _selectionEnd = null;
+            });
           },
           isCompact: true,
         ),
@@ -598,6 +625,14 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
             currentDate: _currentDate,
             onDateChanged: _onDateChanged,
             isCompact: !isTablet,
+            selectionStart: _selectionStart,
+            selectionEnd: _selectionEnd,
+            onSelectionChanged: (start, end, fromLongPress) {
+              setState(() {
+                _selectionStart = start;
+                _selectionEnd = end;
+              });
+            },
           ),
         ),
 
@@ -637,30 +672,6 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
     }
   }
 
-  void _onUnitSelected(String unitId) {
-    setState(() {
-      _selectedUnitId = unitId;
-      // Reset name; the selector shows the real name after returning from picker
-      _selectedUnitName = null;
-    });
-
-    context.read<AvailabilityBloc>().add(
-          LoadMonthlyAvailability(
-            unitId: unitId,
-            year: _currentDate.year,
-            month: _currentDate.month,
-          ),
-        );
-
-    context.read<PricingBloc>().add(
-          LoadMonthlyPricing(
-            unitId: unitId,
-            year: _currentDate.year,
-            month: _currentDate.month,
-          ),
-        );
-  }
-
   void _onUnitSelectedWithName(String unitId, String unitName) {
     setState(() {
       _selectedUnitId = unitId;
@@ -685,6 +696,9 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
   void _onDateChanged(DateTime date) {
     setState(() {
       _currentDate = date;
+      // Clear selection when month changes
+      _selectionStart = null;
+      _selectionEnd = null;
     });
 
     if (_selectedUnitId != null) {
@@ -721,7 +735,26 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
   }
 
   void _showBulkUpdateDialog() {
-    // Show bulk update dialog
+    if (_selectedUnitId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('يرجى اختيار وحدة أولاً'),
+          backgroundColor: AppTheme.error,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+      return;
+    }
+
+    BulkUpdateDialog.show(
+      context,
+      viewMode: _viewMode,
+      unitId: _selectedUnitId!,
+      initialStartDate: _selectionStart,
+      initialEndDate: _selectionEnd,
+    );
   }
 
   void _showSeasonalPricingDialog() {

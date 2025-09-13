@@ -16,17 +16,24 @@ import '../../domain/entities/pricing.dart';
 class BulkUpdateDialog extends StatefulWidget {
   final ViewMode viewMode;
   final String unitId;
+  // New: optional initial dates to prefill form
+  final DateTime? initialStartDate;
+  final DateTime? initialEndDate;
 
   const BulkUpdateDialog({
     super.key,
     required this.viewMode,
     required this.unitId,
+    this.initialStartDate,
+    this.initialEndDate,
   });
 
   static Future<void> show(
     BuildContext context, {
     required ViewMode viewMode,
     required String unitId,
+    DateTime? initialStartDate,
+    DateTime? initialEndDate,
   }) async {
     return showDialog(
       context: context,
@@ -35,6 +42,8 @@ class BulkUpdateDialog extends StatefulWidget {
       builder: (context) => BulkUpdateDialog(
         viewMode: viewMode,
         unitId: unitId,
+        initialStartDate: initialStartDate,
+        initialEndDate: initialEndDate,
       ),
     );
   }
@@ -75,6 +84,9 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
   void initState() {
     super.initState();
     _initializeAnimations();
+    // Prefill from initial dates if provided
+    _startDate = widget.initialStartDate;
+    _endDate = widget.initialEndDate ?? widget.initialStartDate;
   }
 
   void _initializeAnimations() {
@@ -134,7 +146,7 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
             animation: _glowAnimation,
             builder: (context, child) {
               return Container(
-                width: 500,
+                width: 720,
                 constraints: const BoxConstraints(maxHeight: 750),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -1055,12 +1067,16 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
   }
 
   Future<void> _selectDate(bool isStart) async {
+    final now = DateTime.now();
+    final initial = isStart
+        ? _startDate ?? widget.initialStartDate ?? now
+        : _endDate ?? widget.initialEndDate ?? _startDate ?? now;
+
     final picked = await showDatePicker(
       context: context,
-      initialDate:
-          isStart ? _startDate ?? DateTime.now() : _endDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDate: initial,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 5),
       builder: (context, child) {
         return Theme(
           data: ThemeData.dark().copyWith(
@@ -1080,8 +1096,14 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
       setState(() {
         if (isStart) {
           _startDate = picked;
+          if (_endDate != null && _endDate!.isBefore(_startDate!)) {
+            _endDate = _startDate;
+          }
         } else {
           _endDate = picked;
+          if (_startDate != null && _endDate!.isBefore(_startDate!)) {
+            _startDate = _endDate;
+          }
         }
       });
     }
