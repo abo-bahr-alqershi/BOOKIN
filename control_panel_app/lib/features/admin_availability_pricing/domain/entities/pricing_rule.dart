@@ -91,16 +91,18 @@ class PricingDay extends Equatable {
   final PriceType priceType;
   final String colorCode;
   final double? percentageChange;
+  final String? pricingTier;
 
   const PricingDay({
     required this.price,
     required this.priceType,
     required this.colorCode,
     this.percentageChange,
+    this.pricingTier,
   });
 
   @override
-  List<Object?> get props => [price, priceType, colorCode, percentageChange];
+  List<Object?> get props => [price, priceType, colorCode, percentageChange, pricingTier];
 }
 
 class PricingStats extends Equatable {

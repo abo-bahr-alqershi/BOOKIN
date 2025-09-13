@@ -28,6 +28,7 @@ public class PricingDayDto
     public string PriceType { get; set; }
     public string ColorCode { get; set; }
     public decimal? PercentageChange { get; set; }
+    public string PricingTier { get; set; }
 }
 
 public class PricingRuleDto
@@ -103,7 +104,8 @@ public class GetUnitPricingQueryHandler : IRequestHandler<GetUnitPricingQuery, R
                 Price = price,
                 PriceType = priceType,
                 ColorCode = colorCode,
-                PercentageChange = CalculatePercentageChange(price, basePrice)
+                PercentageChange = CalculatePercentageChange(price, basePrice),
+                PricingTier = NormalizeTier(ruleForDay?.PricingTier, price, basePrice)
             };
         }
 
@@ -181,6 +183,23 @@ public class GetUnitPricingQueryHandler : IRequestHandler<GetUnitPricingQuery, R
             "normal" => "#3B82F6",    // blue
             _ => "#8B5CF6"              // purple for custom
         };
+    }
+
+    private string NormalizeTier(string? tier, decimal price, decimal basePrice)
+    {
+        if (!string.IsNullOrWhiteSpace(tier))
+        {
+            var t = tier!.Trim().ToLowerInvariant();
+            if (t is "normal" or "high" or "peak" or "discount" or "custom")
+                return t;
+            // if tier is numeric/string code, derive from price delta
+        }
+
+        var pct = basePrice == 0 ? 0 : ((price - basePrice) / basePrice) * 100m;
+        if (pct > 20) return "peak";
+        if (pct > 5) return "high";
+        if (pct < 0) return "discount";
+        return "normal";
     }
 
     private decimal? CalculatePercentageChange(decimal price, decimal basePrice)

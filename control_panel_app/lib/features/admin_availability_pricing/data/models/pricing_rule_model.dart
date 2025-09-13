@@ -156,6 +156,7 @@ class PricingDayModel extends PricingDay {
     required super.priceType,
     required super.colorCode,
     super.percentageChange,
+    super.pricingTier,
   });
 
   factory PricingDayModel.fromJson(Map<String, dynamic> json) {
@@ -166,6 +167,7 @@ class PricingDayModel extends PricingDay {
       percentageChange: json['percentageChange'] != null
           ? (json['percentageChange'] as num).toDouble()
           : null,
+      pricingTier: json['pricingTier'] as String?,
     );
   }
 }
