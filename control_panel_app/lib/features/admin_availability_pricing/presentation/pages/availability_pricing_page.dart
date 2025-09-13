@@ -288,13 +288,15 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
         borderRadius: BorderRadius.circular(20),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Title with gradient
               ShaderMask(
                 shaderCallback: (bounds) =>
                     AppTheme.primaryGradient.createShader(bounds),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(
                       Icons.calendar_today_rounded,
@@ -313,23 +315,19 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
                 ),
               ),
 
-              const Spacer(),
+              const SizedBox(height: 16),
 
-              // Right-side controls wrapped to avoid overflow
-              Flexible(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  reverse: true,
-                  child: Row(
-                    children: [
-                      // Quick stats
-                      _buildQuickStats(),
-                      const SizedBox(width: 12),
-                      // View mode toggle
-                      _buildViewModeToggle(),
-                    ],
+              // Options then stats below
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildViewModeToggle(),
+                  const SizedBox(height: 12),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: _buildQuickStats(),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -778,7 +776,8 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
           content: const Text('يرجى اختيار وحدة أولاً'),
           backgroundColor: AppTheme.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
       return;
