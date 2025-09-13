@@ -53,7 +53,7 @@ class PropertySelectorCard extends StatelessWidget {
     return InkWell(
       onTap: () => _openPropertySearch(context),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
             Container(
@@ -73,6 +73,7 @@ class PropertySelectorCard extends StatelessWidget {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'العقار',
@@ -84,7 +85,7 @@ class PropertySelectorCard extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.bodyMedium.copyWith(
+                    style: AppTextStyles.caption.copyWith(
                       color: AppTheme.textWhite,
                       fontWeight: FontWeight.w600,
                     ),
