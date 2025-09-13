@@ -10,6 +10,7 @@ plugins {
 android {
     namespace = "com.yemenbooking.app.yemen_booking_app"
     compileSdk = 35
+    //ndkVersion = "25.1.8937393"
     ndkVersion = "29.0.13113456"
     
     compileOptions {
@@ -27,7 +28,7 @@ android {
         applicationId = "com.yemenbooking.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

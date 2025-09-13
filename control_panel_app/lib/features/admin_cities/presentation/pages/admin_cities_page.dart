@@ -31,19 +31,19 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
   late AnimationController _floatingAnimationController;
   late AnimationController _pulseAnimationController;
   late AnimationController _shimmerAnimationController;
-  
+
   // Animations
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<double> _rotationAnimation;
-  
+
   // UI State
   final ScrollController _scrollController = ScrollController();
   bool _showFloatingHeader = false;
   bool _isGridView = true;
-  String _selectedCountry = 'الكل';
-  
+  final String _selectedCountry = 'الكل';
+
   @override
   void initState() {
     super.initState();
@@ -58,25 +58,25 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     // Floating animation for background elements
     _floatingAnimationController = AnimationController(
       duration: const Duration(seconds: 6),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     // Pulse animation for interactive elements
     _pulseAnimationController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     // Shimmer animation
     _shimmerAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     )..repeat();
-    
+
     // Setup animations
     _fadeAnimation = Tween<double>(
       begin: 0.0,
@@ -85,7 +85,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
       parent: _mainAnimationController,
       curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
     ));
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.2),
       end: Offset.zero,
@@ -93,7 +93,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
       parent: _mainAnimationController,
       curve: const Interval(0.2, 0.7, curve: Curves.easeOutCubic),
     ));
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.8,
       end: 1.0,
@@ -101,7 +101,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
       parent: _mainAnimationController,
       curve: const Interval(0.3, 0.8, curve: Curves.easeOutBack),
     ));
-    
+
     _rotationAnimation = Tween<double>(
       begin: -0.05,
       end: 0.0,
@@ -109,11 +109,11 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
       parent: _mainAnimationController,
       curve: const Interval(0.4, 0.9, curve: Curves.elasticOut),
     ));
-    
+
     // Start animations
     _mainAnimationController.forward();
   }
-  
+
   void _setupScrollListener() {
     _scrollController.addListener(() {
       final shouldShow = _scrollController.offset > 100;
@@ -147,22 +147,22 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
     final isTablet = size.width > 600;
     final isDesktop = size.width > 1200;
     final isMobile = size.width < 600;
-    
+
     // حساب ارتفاع الـ AppBar الثابت
     final appBarHeight = isMobile ? 70.0 : (isDesktop ? 90.0 : 80.0);
     final statusBarHeight = MediaQuery.of(context).padding.top;
     final totalHeaderHeight = appBarHeight + statusBarHeight;
-    
+
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: Stack(
         children: [
           // Premium Animated Background
           _buildPremiumBackground(),
-          
+
           // Floating Orbs
           ..._buildFloatingOrbs(),
-          
+
           // Main Scrollable Content with padding for fixed header
           Positioned.fill(
             child: SingleChildScrollView(
@@ -172,7 +172,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
                 children: [
                   // مساحة فارغة بحجم الـ Header الثابت
                   SizedBox(height: totalHeaderHeight),
-                  
+
                   // Hero Section with Stats
                   FadeTransition(
                     opacity: _fadeAnimation,
@@ -181,7 +181,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
                       child: _buildHeroSection(isDesktop, isTablet),
                     ),
                   ),
-                  
+
                   // Search and Filters Section
                   FadeTransition(
                     opacity: _fadeAnimation,
@@ -190,23 +190,23 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
                       child: _buildSearchSection(isDesktop, isTablet),
                     ),
                   ),
-                  
+
                   // Cities Content
                   BlocBuilder<CitiesBloc, CitiesState>(
                     builder: (context, state) {
                       if (state is CitiesLoading) {
                         return _buildLoadingState();
                       }
-                      
+
                       if (state is CitiesError) {
                         return _buildErrorState(state.message);
                       }
-                      
+
                       if (state is CitiesLoaded) {
                         if (state.filteredCities.isEmpty) {
                           return _buildEmptyState();
                         }
-                        
+
                         return Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: isDesktop ? 32 : 20,
@@ -219,11 +219,11 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
                           ),
                         );
                       }
-                      
+
                       return const SizedBox();
                     },
                   ),
-                  
+
                   // Pagination
                   BlocBuilder<CitiesBloc, CitiesState>(
                     builder: (context, state) {
@@ -233,14 +233,14 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
                       return const SizedBox();
                     },
                   ),
-                  
+
                   // Bottom Padding
                   const SizedBox(height: 100),
                 ],
               ),
             ),
           ),
-          
+
           // Fixed Header - ثابت تماماً بدون أي تمدد
           Positioned(
             top: 0,
@@ -255,7 +255,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
               isMobile,
             ),
           ),
-          
+
           // Floating Header when scrolled
           if (_showFloatingHeader)
             AnimatedPositioned(
@@ -266,7 +266,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
               right: 0,
               child: _buildCompactFloatingHeader(context),
             ),
-          
+
           // Floating Action Button
           _buildFloatingActionButton(),
         ],
@@ -321,143 +321,118 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
                     horizontal: isMobile ? 16 : (isDesktop ? 32 : 24),
                   ),
                   child: Row(
-                  children: [
-                    // Back button if needed
-                    if (Navigator.of(context).canPop()) ...[
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 40,
-                          minHeight: 40,
-                        ),
-                        icon: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: AppTheme.inputBackground.withOpacity(0.2),
+                    children: [
+                      // Back button if needed
+                      if (Navigator.of(context).canPop()) ...[
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 40,
+                            minHeight: 40,
                           ),
-                          child: Icon(
-                            Icons.arrow_back_ios_rounded,
-                            color: AppTheme.textLight,
-                            size: isMobile ? 16 : 18,
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: AppTheme.inputBackground.withOpacity(0.2),
+                            ),
+                            child: Icon(
+                              Icons.arrow_back_ios_rounded,
+                              color: AppTheme.textLight,
+                              size: isMobile ? 16 : 18,
+                            ),
                           ),
                         ),
-                      ),
-                      SizedBox(width: isMobile ? 8 : 12),
-                    ],
-                    
-                    // Main Icon
-                    AnimatedBuilder(
-                      animation: _pulseAnimationController,
-                      builder: (context, child) {
-                        return Container(
-                          padding: EdgeInsets.all(isMobile ? 8 : 10),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                AppTheme.primaryBlue.withOpacity(0.2),
-                                AppTheme.primaryPurple.withOpacity(0.2),
+                        SizedBox(width: isMobile ? 8 : 12),
+                      ],
+
+                      // Main Icon
+                      AnimatedBuilder(
+                        animation: _pulseAnimationController,
+                        builder: (context, child) {
+                          return Container(
+                            padding: EdgeInsets.all(isMobile ? 8 : 10),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  AppTheme.primaryBlue.withOpacity(0.2),
+                                  AppTheme.primaryPurple.withOpacity(0.2),
+                                ],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.glowBlue.withOpacity(
+                                    0.2 +
+                                        (0.1 * _pulseAnimationController.value),
+                                  ),
+                                  blurRadius: 15,
+                                  spreadRadius: 1,
+                                ),
                               ],
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.glowBlue.withOpacity(
-                                  0.2 + (0.1 * _pulseAnimationController.value),
-                                ),
-                                blurRadius: 15,
-                                spreadRadius: 1,
+                            child: Icon(
+                              Icons.location_city_rounded,
+                              color: AppTheme.glowWhite,
+                              size: isMobile ? 20 : 24,
+                            ),
+                          );
+                        },
+                      ),
+
+                      SizedBox(width: isMobile ? 12 : 16),
+
+                      // Title and Subtitle
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'إدارة المدن',
+                              style: AppTextStyles.heading2.copyWith(
+                                color: AppTheme.textWhite,
+                                fontSize: isMobile ? 18 : (isDesktop ? 24 : 22),
+                                fontWeight: FontWeight.w400,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            if (!isMobile) ...[
+                              const SizedBox(height: 4),
+                              BlocBuilder<CitiesBloc, CitiesState>(
+                                builder: (context, state) {
+                                  if (state is CitiesLoaded) {
+                                    return Text(
+                                      '${state.cities.length} مدينة متاحة',
+                                      style: AppTextStyles.caption.copyWith(
+                                        color:
+                                            AppTheme.textMuted.withOpacity(0.7),
+                                        fontSize: 12,
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                },
                               ),
                             ],
-                          ),
-                          child: Icon(
-                            Icons.location_city_rounded,
-                            color: AppTheme.glowWhite,
-                            size: isMobile ? 20 : 24,
-                          ),
-                        );
-                      },
-                    ),
-                    
-                    SizedBox(width: isMobile ? 12 : 16),
-                    
-                    // Title and Subtitle
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'إدارة المدن',
-                            style: AppTextStyles.heading2.copyWith(
-                              color: AppTheme.textWhite,
-                              fontSize: isMobile ? 18 : (isDesktop ? 24 : 22),
-                              fontWeight: FontWeight.w400,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          if (!isMobile) ...[
-                            const SizedBox(height: 4),
-                            BlocBuilder<CitiesBloc, CitiesState>(
-                              builder: (context, state) {
-                                if (state is CitiesLoaded) {
-                                  return Text(
-                                    '${state.cities.length} مدينة متاحة',
-                                    style: AppTextStyles.caption.copyWith(
-                                      color: AppTheme.textMuted.withOpacity(0.7),
-                                      fontSize: 12,
-                                    ),
-                                  );
-                                }
-                                return const SizedBox.shrink();
-                              },
-                            ),
                           ],
-                        ],
-                      ),
-                    ),
-                    
-                    // Action buttons
-                    if (!isMobile) ...[
-                      _buildViewToggle(),
-                      const SizedBox(width: 12),
-                    ],
-                    
-                    // Refresh Button
-                    IconButton(
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        context.read<CitiesBloc>().add(RefreshCitiesEvent());
-                      },
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 40,
-                        minHeight: 40,
-                      ),
-                      icon: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: AppTheme.inputBackground.withOpacity(0.2),
-                        ),
-                        child: Icon(
-                          Icons.refresh_rounded,
-                          color: AppTheme.textLight,
-                          size: isMobile ? 18 : 20,
                         ),
                       ),
-                    ),
-                    
-                    // Menu button for mobile
-                    if (isMobile) ...[
-                      const SizedBox(width: 8),
+
+                      // Action buttons
+                      if (!isMobile) ...[
+                        _buildViewToggle(),
+                        const SizedBox(width: 12),
+                      ],
+
+                      // Refresh Button
                       IconButton(
                         onPressed: () {
                           HapticFeedback.lightImpact();
-                          _showMobileMenu();
+                          context.read<CitiesBloc>().add(RefreshCitiesEvent());
                         },
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(
@@ -471,14 +446,42 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
                             color: AppTheme.inputBackground.withOpacity(0.2),
                           ),
                           child: Icon(
-                            Icons.more_vert_rounded,
+                            Icons.refresh_rounded,
                             color: AppTheme.textLight,
-                            size: 18,
+                            size: isMobile ? 18 : 20,
                           ),
                         ),
                       ),
+
+                      // Menu button for mobile
+                      if (isMobile) ...[
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () {
+                            HapticFeedback.lightImpact();
+                            _showMobileMenu();
+                          },
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 40,
+                            minHeight: 40,
+                          ),
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: AppTheme.inputBackground.withOpacity(0.2),
+                            ),
+                            child: Icon(
+                              Icons.more_vert_rounded,
+                              color: AppTheme.textLight,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -583,7 +586,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
   ) {
     if (_isGridView) {
       final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 1);
-      
+
       return GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -849,7 +852,9 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
               ),
               ListTile(
                 leading: Icon(
-                  _isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
+                  _isGridView
+                      ? Icons.view_list_rounded
+                      : Icons.grid_view_rounded,
                   color: AppTheme.primaryBlue,
                 ),
                 title: Text(
@@ -904,7 +909,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
             ),
           ),
         ),
-        
+
         // Animated Mesh Pattern
         AnimatedBuilder(
           animation: _floatingAnimationController,
@@ -918,7 +923,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
             );
           },
         ),
-        
+
         // Noise Texture
         Container(
           decoration: BoxDecoration(
@@ -946,7 +951,8 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
         builder: (context, child) {
           return Positioned(
             top: -100 + (50 * _floatingAnimationController.value),
-            right: -100 + (30 * math.sin(_floatingAnimationController.value * math.pi)),
+            right: -100 +
+                (30 * math.sin(_floatingAnimationController.value * math.pi)),
             child: Container(
               width: 400,
               height: 400,
@@ -965,14 +971,15 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
           );
         },
       ),
-      
+
       // Bottom Left Orb
       AnimatedBuilder(
         animation: _floatingAnimationController,
         builder: (context, child) {
           return Positioned(
             bottom: -150 + (40 * _floatingAnimationController.value),
-            left: -150 + (40 * math.cos(_floatingAnimationController.value * math.pi)),
+            left: -150 +
+                (40 * math.cos(_floatingAnimationController.value * math.pi)),
             child: Container(
               width: 500,
               height: 500,
@@ -990,7 +997,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
           );
         },
       ),
-      
+
       // Center Floating Orb
       AnimatedBuilder(
         animation: _pulseAnimationController,
@@ -1068,14 +1075,14 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          color: isSelected 
+          color: isSelected
               ? AppTheme.primaryBlue.withOpacity(0.2)
               : Colors.transparent,
         ),
         child: Icon(
           icon,
           size: 18,
-          color: isSelected 
+          color: isSelected
               ? AppTheme.glowBlue
               : AppTheme.textMuted.withOpacity(0.5),
         ),
@@ -1090,7 +1097,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
         if (state is CitiesLoaded) {
           stats = state.statistics;
         }
-        
+
         return Container(
           margin: EdgeInsets.symmetric(
             horizontal: isDesktop ? 32 : 20,
@@ -1121,18 +1128,18 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
             child: CitySearchBar(
               onSearch: (query) {
                 context.read<CitiesBloc>().add(
-                  SearchCitiesEvent(query: query),
-                );
+                      SearchCitiesEvent(query: query),
+                    );
               },
             ),
           ),
           const SizedBox(width: 16),
-          
+
           // Country Filter
           _buildCountryFilter(),
-          
+
           const SizedBox(width: 16),
-          
+
           // Add Button
           _buildAddButton(),
         ],
@@ -1218,14 +1225,14 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
             onTap: () {
               if (state.currentPage > 1) {
                 context.read<CitiesBloc>().add(
-                  ChangeCitiesPageEvent(page: state.currentPage - 1),
-                );
+                      ChangeCitiesPageEvent(page: state.currentPage - 1),
+                    );
               }
             },
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Page Numbers
           ...List.generate(
             math.min(5, state.totalPages),
@@ -1235,7 +1242,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
                 state.currentPage,
                 state.totalPages,
               );
-              
+
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: _buildPageNumber(
@@ -1243,16 +1250,16 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
                   isActive: pageNumber == state.currentPage,
                   onTap: () {
                     context.read<CitiesBloc>().add(
-                      ChangeCitiesPageEvent(page: pageNumber),
-                    );
+                          ChangeCitiesPageEvent(page: pageNumber),
+                        );
                   },
                 ),
               );
             },
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Next Button
           _buildPaginationButton(
             icon: Icons.chevron_right,
@@ -1260,8 +1267,8 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
             onTap: () {
               if (state.currentPage < state.totalPages) {
                 context.read<CitiesBloc>().add(
-                  ChangeCitiesPageEvent(page: state.currentPage + 1),
-                );
+                      ChangeCitiesPageEvent(page: state.currentPage + 1),
+                    );
               }
             },
           ),
@@ -1274,15 +1281,15 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
     if (totalPages <= 5) {
       return index + 1;
     }
-    
+
     if (currentPage <= 3) {
       return index + 1;
     }
-    
+
     if (currentPage >= totalPages - 2) {
       return totalPages - 4 + index;
     }
-    
+
     return currentPage - 2 + index;
   }
 
@@ -1292,10 +1299,12 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
     required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: enabled ? () {
-        HapticFeedback.lightImpact();
-        onTap();
-      } : null,
+      onTap: enabled
+          ? () {
+              HapticFeedback.lightImpact();
+              onTap();
+            }
+          : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(8),
@@ -1322,10 +1331,8 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
     );
   }
 
-  Widget _buildPageNumber(
-    int number,
-    {required bool isActive, required VoidCallback onTap}
-  ) {
+  Widget _buildPageNumber(int number,
+      {required bool isActive, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: () {
         if (!isActive) {
@@ -1341,17 +1348,21 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
           borderRadius: BorderRadius.circular(10),
           gradient: isActive ? AppTheme.primaryGradient : null,
           color: isActive ? null : AppTheme.darkCard.withOpacity(0.3),
-          border: isActive ? null : Border.all(
-            color: AppTheme.darkBorder.withOpacity(0.2),
-            width: 0.5,
-          ),
-          boxShadow: isActive ? [
-            BoxShadow(
-              color: AppTheme.primaryBlue.withOpacity(0.3),
-              blurRadius: 12,
-              spreadRadius: 2,
-            ),
-          ] : null,
+          border: isActive
+              ? null
+              : Border.all(
+                  color: AppTheme.darkBorder.withOpacity(0.2),
+                  width: 0.5,
+                ),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: AppTheme.primaryBlue.withOpacity(0.3),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : null,
         ),
         child: Center(
           child: Text(
@@ -1402,8 +1413,10 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
                 return ShaderMask(
                   shaderCallback: (bounds) {
                     return LinearGradient(
-                      begin: Alignment(-1.0 + 2 * _shimmerAnimationController.value, 0),
-                      end: Alignment(1.0 + 2 * _shimmerAnimationController.value, 0),
+                      begin: Alignment(
+                          -1.0 + 2 * _shimmerAnimationController.value, 0),
+                      end: Alignment(
+                          1.0 + 2 * _shimmerAnimationController.value, 0),
                       colors: [
                         AppTheme.textMuted,
                         AppTheme.glowWhite,
@@ -1477,7 +1490,8 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
                 context.read<CitiesBloc>().add(const LoadCitiesEvent());
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   gradient: AppTheme.primaryGradient,
@@ -1560,7 +1574,8 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
                 _showCityModal();
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   gradient: AppTheme.primaryGradient,
@@ -1758,8 +1773,8 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
                         onTap: () {
                           Navigator.pop(context);
                           context.read<CitiesBloc>().add(
-                            DeleteCityEvent(name: city.name),
-                          );
+                                DeleteCityEvent(name: city.name),
+                              );
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 14),
