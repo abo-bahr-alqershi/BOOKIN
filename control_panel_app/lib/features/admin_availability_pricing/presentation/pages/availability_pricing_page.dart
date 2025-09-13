@@ -22,7 +22,8 @@ class AvailabilityPricingPage extends StatefulWidget {
   const AvailabilityPricingPage({super.key});
 
   @override
-  State<AvailabilityPricingPage> createState() => _AvailabilityPricingPageState();
+  State<AvailabilityPricingPage> createState() =>
+      _AvailabilityPricingPageState();
 }
 
 class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
@@ -32,13 +33,13 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
   late AnimationController _glowController;
   late AnimationController _particleController;
   late AnimationController _contentAnimationController;
-  
+
   // Animations
   late Animation<double> _backgroundRotation;
   late Animation<double> _glowAnimation;
   late Animation<double> _contentFadeAnimation;
   late Animation<Offset> _contentSlideAnimation;
-  
+
   // State
   ViewMode _viewMode = ViewMode.availability;
   String? _selectedUnitId;
@@ -46,7 +47,7 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
   String? _selectedPropertyId;
   String? _selectedPropertyName;
   DateTime _currentDate = DateTime.now();
-  
+
   // Particles for background
   final List<_Particle> _particles = [];
 
@@ -56,7 +57,7 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
     _initializeAnimations();
     _generateParticles();
     _startAnimations();
-    
+
     // Load initial data
     _loadInitialData();
   }
@@ -66,22 +67,22 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
       duration: const Duration(seconds: 30),
       vsync: this,
     )..repeat();
-    
+
     _glowController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _particleController = AnimationController(
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
-    
+
     _contentAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    
+
     _backgroundRotation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
@@ -89,7 +90,7 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
       parent: _backgroundAnimationController,
       curve: Curves.linear,
     ));
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.5,
       end: 1.0,
@@ -97,7 +98,7 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
       parent: _glowController,
       curve: Curves.easeInOut,
     ));
-    
+
     _contentFadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -105,7 +106,7 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
       parent: _contentAnimationController,
       curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
     ));
-    
+
     _contentSlideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
@@ -134,23 +135,23 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
     // This would typically come from a units bloc
     // For now, we'll use mock data
     _selectedUnitId = 'unit_1';
-    
+
     if (_selectedUnitId != null) {
       context.read<AvailabilityBloc>().add(
-        LoadMonthlyAvailability(
-          unitId: _selectedUnitId!,
-          year: _currentDate.year,
-          month: _currentDate.month,
-        ),
-      );
-      
+            LoadMonthlyAvailability(
+              unitId: _selectedUnitId!,
+              year: _currentDate.year,
+              month: _currentDate.month,
+            ),
+          );
+
       context.read<PricingBloc>().add(
-        LoadMonthlyPricing(
-          unitId: _selectedUnitId!,
-          year: _currentDate.year,
-          month: _currentDate.month,
-        ),
-      );
+            LoadMonthlyPricing(
+              unitId: _selectedUnitId!,
+              year: _currentDate.year,
+              month: _currentDate.month,
+            ),
+          );
     }
   }
 
@@ -168,17 +169,17 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width > AppDimensions.desktopBreakpoint;
     final isTablet = size.width > AppDimensions.tabletBreakpoint;
-    
+
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: Stack(
         children: [
           // Animated background
           _buildAnimatedBackground(),
-          
+
           // Particles
           _buildParticles(),
-          
+
           // Main content
           _buildMainContent(isDesktop, isTablet),
         ],
@@ -244,9 +245,9 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
               children: [
                 // Header
                 _buildHeader(),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Main content area
                 Expanded(
                   child: isDesktop
@@ -284,34 +285,40 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
           child: Row(
             children: [
               // Title with gradient
-              ShaderMask(
-                shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_today_rounded,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'إدارة الإتاحة والتسعير',
-                      style: AppTextStyles.heading2.copyWith(
+              Flexible(
+                child: ShaderMask(
+                  shaderCallback: (bounds) =>
+                      AppTheme.primaryGradient.createShader(bounds),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today_rounded,
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                        size: 28,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'إدارة الإتاحة والتسعير',
+                          style: AppTextStyles.heading2.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              
+
               const Spacer(),
-              
+
               // View mode toggle
               _buildViewModeToggle(),
-              
+
               const SizedBox(width: 20),
-              
+
               // Quick stats
               _buildQuickStats(),
             ],
@@ -511,18 +518,18 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
                   _onUnitSelectedWithName(id, name);
                 },
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Stats dashboard
               Expanded(
                 child: StatsDashboardCard(
                   viewMode: _viewMode,
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Quick actions
               QuickActionsPanel(
                 viewMode: _viewMode,
@@ -531,9 +538,9 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
             ],
           ),
         ),
-        
+
         const SizedBox(width: 20),
-        
+
         // Main calendar area
         Expanded(
           child: Column(
@@ -546,9 +553,9 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
                   onDateChanged: _onDateChanged,
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Legend
               _buildLegend(),
             ],
@@ -586,9 +593,9 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
           },
           isCompact: true,
         ),
-        
+
         const SizedBox(height: 12),
-        
+
         // Calendar view
         Expanded(
           child: FuturisticCalendarView(
@@ -598,14 +605,14 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
             isCompact: !isTablet,
           ),
         ),
-        
+
         const SizedBox(height: 12),
-        
+
         // Legend
         _buildLegend(),
-        
+
         const SizedBox(height: 12),
-        
+
         // Quick actions (horizontal scroll)
         SizedBox(
           height: 60,
@@ -625,8 +632,8 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
     } else if (_viewMode == ViewMode.pricing) {
       return const PricingTierLegend();
     } else {
-      return Row(
-        children: const [
+      return const Row(
+        children: [
           Expanded(child: AvailabilityStatusLegend()),
           SizedBox(width: 16),
           Expanded(child: PricingTierLegend()),
@@ -641,22 +648,22 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
       // Reset name; the selector shows the real name after returning from picker
       _selectedUnitName = null;
     });
-    
+
     context.read<AvailabilityBloc>().add(
-      LoadMonthlyAvailability(
-        unitId: unitId,
-        year: _currentDate.year,
-        month: _currentDate.month,
-      ),
-    );
-    
+          LoadMonthlyAvailability(
+            unitId: unitId,
+            year: _currentDate.year,
+            month: _currentDate.month,
+          ),
+        );
+
     context.read<PricingBloc>().add(
-      LoadMonthlyPricing(
-        unitId: unitId,
-        year: _currentDate.year,
-        month: _currentDate.month,
-      ),
-    );
+          LoadMonthlyPricing(
+            unitId: unitId,
+            year: _currentDate.year,
+            month: _currentDate.month,
+          ),
+        );
   }
 
   void _onUnitSelectedWithName(String unitId, String unitName) {
@@ -684,21 +691,21 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
     setState(() {
       _currentDate = date;
     });
-    
+
     if (_selectedUnitId != null) {
       context.read<AvailabilityBloc>().add(
-        ChangeMonth(year: date.year, month: date.month),
-      );
-      
+            ChangeMonth(year: date.year, month: date.month),
+          );
+
       context.read<PricingBloc>().add(
-        ChangePricingMonth(year: date.year, month: date.month),
-      );
+            ChangePricingMonth(year: date.year, month: date.month),
+          );
     }
   }
 
   void _handleQuickAction(QuickAction action) {
     HapticFeedback.mediumImpact();
-    
+
     switch (action) {
       case QuickAction.bulkUpdate:
         _showBulkUpdateDialog();
@@ -827,7 +834,7 @@ class _Particle {
     vx = (math.Random().nextDouble() - 0.5) * 0.001;
     vy = (math.Random().nextDouble() - 0.5) * 0.001;
     radius = math.Random().nextDouble() * 2 + 1;
-    
+
     final colors = [
       AppTheme.primaryBlue,
       AppTheme.primaryPurple,
@@ -839,7 +846,7 @@ class _Particle {
   void update() {
     x += vx;
     y += vy;
-    
+
     if (x < 0 || x > 1) vx = -vx;
     if (y < 0 || y > 1) vy = -vy;
   }
@@ -859,12 +866,12 @@ class _ParticlePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (var particle in particles) {
       particle.update();
-      
+
       final paint = Paint()
         ..color = particle.color.withOpacity(0.3)
         ..style = PaintingStyle.fill
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
-      
+
       canvas.drawCircle(
         Offset(particle.x * size.width, particle.y * size.height),
         particle.radius,
