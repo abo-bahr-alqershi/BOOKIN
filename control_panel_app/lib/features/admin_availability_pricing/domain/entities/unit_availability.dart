@@ -72,6 +72,7 @@ class AvailabilityStats extends Equatable {
   final int availableDays;
   final int bookedDays;
   final int blockedDays;
+  final int maintenanceDays;
   final double occupancyRate;
 
   const AvailabilityStats({
@@ -79,6 +80,7 @@ class AvailabilityStats extends Equatable {
     required this.availableDays,
     required this.bookedDays,
     required this.blockedDays,
+    required this.maintenanceDays,
     required this.occupancyRate,
   });
 
@@ -88,6 +90,7 @@ class AvailabilityStats extends Equatable {
         availableDays,
         bookedDays,
         blockedDays,
+        maintenanceDays,
         occupancyRate,
       ];
 }

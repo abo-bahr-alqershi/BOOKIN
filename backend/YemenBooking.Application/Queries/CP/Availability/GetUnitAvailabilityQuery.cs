@@ -35,5 +35,6 @@ public class AvailabilityStatsDto
     public int AvailableDays { get; set; }
     public int BookedDays { get; set; }
     public int BlockedDays { get; set; }
+    public int MaintenanceDays { get; set; }
     public decimal OccupancyRate { get; set; }
 }

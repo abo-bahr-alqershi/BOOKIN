@@ -78,18 +78,20 @@ public class GetUnitAvailabilityQueryHandler : IRequestHandler<GetUnitAvailabili
 
     private AvailabilityStatsDto CalculateStats(Dictionary<DateTime, string> calendar)
     {
-        var stats = new AvailabilityStatsDto
+        var total = calendar.Count;
+        var available = calendar.Count(c => c.Value == "Available");
+        var booked = calendar.Count(c => c.Value == "Booked");
+        var blocked = calendar.Count(c => c.Value == "Blocked");
+        var maintenance = calendar.Count(c => c.Value == "Maintenance");
+
+        return new AvailabilityStatsDto
         {
-            TotalDays = calendar.Count,
-            AvailableDays = calendar.Count(c => c.Value == "Available"),
-            BookedDays = calendar.Count(c => c.Value == "Booked"),
-            BlockedDays = calendar.Count(c => c.Value == "Blocked" || c.Value == "Maintenance")
+            TotalDays = total,
+            AvailableDays = available,
+            BookedDays = booked,
+            BlockedDays = blocked,
+            MaintenanceDays = maintenance,
+            OccupancyRate = total > 0 ? (decimal)booked / total * 100 : 0
         };
-
-        stats.OccupancyRate = stats.TotalDays > 0 
-            ? (decimal)stats.BookedDays / stats.TotalDays * 100 
-            : 0;
-
-        return stats;
     }
 }
