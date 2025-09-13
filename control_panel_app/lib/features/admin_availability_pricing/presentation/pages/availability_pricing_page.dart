@@ -18,6 +18,7 @@ import '../widgets/quick_actions_panel.dart';
 import '../widgets/availability_status_legend.dart';
 import '../widgets/pricing_tier_legend.dart';
 import '../widgets/bulk_update_dialog.dart';
+import '../widgets/copy_pricing_dialog.dart';
 
 class AvailabilityPricingPage extends StatefulWidget {
   const AvailabilityPricingPage({super.key});
@@ -314,13 +315,22 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
 
               const Spacer(),
 
-              // View mode toggle
-              _buildViewModeToggle(),
-
-              const SizedBox(width: 20),
-
-              // Quick stats
-              _buildQuickStats(),
+              // Right-side controls wrapped to avoid overflow
+              Flexible(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  reverse: true,
+                  child: Row(
+                    children: [
+                      // Quick stats
+                      _buildQuickStats(),
+                      const SizedBox(width: 12),
+                      // View mode toggle
+                      _buildViewModeToggle(),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -762,7 +772,24 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
   }
 
   void _showCloneSettingsDialog() {
-    // Show clone settings dialog
+    if (_selectedUnitId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('يرجى اختيار وحدة أولاً'),
+          backgroundColor: AppTheme.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+      return;
+    }
+    CopyPricingDialog.show(
+      context,
+      unitId: _selectedUnitId!,
+      initialSourceStart: _selectionStart,
+      initialSourceEnd: _selectionEnd,
+      initialTargetStart: _selectionEnd ?? _selectionStart,
+    );
   }
 
   void _exportData() {
