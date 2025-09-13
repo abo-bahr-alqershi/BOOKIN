@@ -75,7 +75,19 @@ class AvailabilityRepositoryImpl implements availability_repo.AvailabilityReposi
     if (await networkInfo.isConnected) {
       try {
         await remoteDataSource.updateAvailability(
-          availability as UnitAvailabilityEntryModel,
+          UnitAvailabilityEntryModel(
+            availabilityId: availability.availabilityId,
+            unitId: availability.unitId,
+            startDate: availability.startDate,
+            endDate: availability.endDate,
+            status: availability.status,
+            reason: availability.reason,
+            notes: availability.notes,
+            bookingId: availability.bookingId,
+            createdBy: availability.createdBy,
+            createdAt: availability.createdAt,
+            updatedAt: availability.updatedAt,
+          ),
         );
         
         // Clear related cache

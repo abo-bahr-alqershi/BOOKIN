@@ -2,28 +2,36 @@
 
 import '../../domain/entities/unit_availability.dart';
 import '../../domain/entities/availability.dart';
-import '../../domain/repositories/availability_repository.dart' as availability_repo;
+import '../../domain/repositories/availability_repository.dart'
+    as availability_repo;
+import 'package:intl/intl.dart';
 
 class UnitAvailabilityModel extends UnitAvailability {
   const UnitAvailabilityModel({
-    required String unitId,
-    required String unitName,
-    required Map<String, AvailabilityStatusDetail> calendar,
-    required List<AvailabilityPeriod> periods,
-    required AvailabilityStats stats,
-  }) : super(
-          unitId: unitId,
-          unitName: unitName,
-          calendar: calendar,
-          periods: periods,
-          stats: stats,
-        );
+    required super.unitId,
+    required super.unitName,
+    required super.calendar,
+    required super.periods,
+    required super.stats,
+  });
 
   factory UnitAvailabilityModel.fromJson(Map<String, dynamic> json) {
     final Map<String, AvailabilityStatusDetail> calendar = {};
     if (json['calendar'] != null) {
+      final dateFmt = DateFormat('yyyy-MM-dd');
       (json['calendar'] as Map<String, dynamic>).forEach((key, value) {
-        calendar[key] = AvailabilityStatusDetailModel.fromJson(value);
+        String normalizedKey = key;
+        try {
+          // Handle keys like '2025-09-14T00:00:00' or RFC strings
+          final dt = DateTime.parse(key);
+          normalizedKey = dateFmt.format(DateTime(dt.year, dt.month, dt.day));
+        } catch (_) {
+          // If parsing fails, attempt to trim to date portion if possible
+          if (key.length >= 10) {
+            normalizedKey = key.substring(0, 10);
+          }
+        }
+        calendar[normalizedKey] = AvailabilityStatusDetailModel.fromJson(value);
       });
     }
 
@@ -55,9 +63,8 @@ class UnitAvailabilityModel extends UnitAvailability {
       'unitId': unitId,
       'unitName': unitName,
       'calendar': calendarJson,
-      'periods': periods
-          .map((e) => (e as AvailabilityPeriodModel).toJson())
-          .toList(),
+      'periods':
+          periods.map((e) => (e as AvailabilityPeriodModel).toJson()).toList(),
       'stats': (stats as AvailabilityStatsModel).toJson(),
     };
   }
@@ -65,16 +72,11 @@ class UnitAvailabilityModel extends UnitAvailability {
 
 class AvailabilityStatusDetailModel extends AvailabilityStatusDetail {
   const AvailabilityStatusDetailModel({
-    required AvailabilityStatus status,
-    String? reason,
-    String? bookingId,
-    required String colorCode,
-  }) : super(
-          status: status,
-          reason: reason,
-          bookingId: bookingId,
-          colorCode: colorCode,
-        );
+    required super.status,
+    super.reason,
+    super.bookingId,
+    required super.colorCode,
+  });
 
   factory AvailabilityStatusDetailModel.fromJson(Map<String, dynamic> json) {
     return AvailabilityStatusDetailModel(
@@ -129,26 +131,20 @@ class AvailabilityStatusDetailModel extends AvailabilityStatusDetail {
 
 class AvailabilityPeriodModel extends AvailabilityPeriod {
   const AvailabilityPeriodModel({
-    required DateTime startDate,
-    required DateTime endDate,
-    required AvailabilityStatus status,
-    String? reason,
-    String? notes,
-    required bool overwriteExisting,
-  }) : super(
-          startDate: startDate,
-          endDate: endDate,
-          status: status,
-          reason: reason,
-          notes: notes,
-          overwriteExisting: overwriteExisting,
-        );
+    required super.startDate,
+    required super.endDate,
+    required super.status,
+    super.reason,
+    super.notes,
+    required super.overwriteExisting,
+  });
 
   factory AvailabilityPeriodModel.fromJson(Map<String, dynamic> json) {
     return AvailabilityPeriodModel(
       startDate: DateTime.parse(json['startDate'] as String),
       endDate: DateTime.parse(json['endDate'] as String),
-      status: AvailabilityStatusDetailModel._parseStatus(json['status'] as String),
+      status:
+          AvailabilityStatusDetailModel._parseStatus(json['status'] as String),
       reason: json['reason'] as String?,
       notes: json['notes'] as String?,
       overwriteExisting: json['overwriteExisting'] as bool? ?? false,
@@ -169,18 +165,12 @@ class AvailabilityPeriodModel extends AvailabilityPeriod {
 
 class AvailabilityStatsModel extends AvailabilityStats {
   const AvailabilityStatsModel({
-    required int totalDays,
-    required int availableDays,
-    required int bookedDays,
-    required int blockedDays,
-    required double occupancyRate,
-  }) : super(
-          totalDays: totalDays,
-          availableDays: availableDays,
-          bookedDays: bookedDays,
-          blockedDays: blockedDays,
-          occupancyRate: occupancyRate,
-        );
+    required super.totalDays,
+    required super.availableDays,
+    required super.bookedDays,
+    required super.blockedDays,
+    required super.occupancyRate,
+  });
 
   factory AvailabilityStatsModel.fromJson(Map<String, dynamic> json) {
     return AvailabilityStatsModel(
@@ -203,22 +193,16 @@ class AvailabilityStatsModel extends AvailabilityStats {
   }
 }
 
-class CheckAvailabilityResponseModel extends availability_repo.CheckAvailabilityResponse {
+class CheckAvailabilityResponseModel
+    extends availability_repo.CheckAvailabilityResponse {
   CheckAvailabilityResponseModel({
-    required bool isAvailable,
-    required String status,
-    required List<availability_repo.BlockedPeriod> blockedPeriods,
-    required List<availability_repo.AvailablePeriod> availablePeriods,
-    required availability_repo.AvailabilityDetails details,
-    required List<String> messages,
-  }) : super(
-          isAvailable: isAvailable,
-          status: status,
-          blockedPeriods: blockedPeriods,
-          availablePeriods: availablePeriods,
-          details: details,
-          messages: messages,
-        );
+    required super.isAvailable,
+    required super.status,
+    required super.blockedPeriods,
+    required super.availablePeriods,
+    required super.details,
+    required super.messages,
+  });
 
   factory CheckAvailabilityResponseModel.fromJson(Map<String, dynamic> json) {
     return CheckAvailabilityResponseModel(
@@ -238,18 +222,12 @@ class CheckAvailabilityResponseModel extends availability_repo.CheckAvailability
 
 class BlockedPeriodModel extends availability_repo.BlockedPeriod {
   BlockedPeriodModel({
-    required DateTime startDate,
-    required DateTime endDate,
-    required String status,
-    required String reason,
-    required String notes,
-  }) : super(
-          startDate: startDate,
-          endDate: endDate,
-          status: status,
-          reason: reason,
-          notes: notes,
-        );
+    required super.startDate,
+    required super.endDate,
+    required super.status,
+    required super.reason,
+    required super.notes,
+  });
 
   factory BlockedPeriodModel.fromJson(Map<String, dynamic> json) {
     return BlockedPeriodModel(
@@ -264,16 +242,11 @@ class BlockedPeriodModel extends availability_repo.BlockedPeriod {
 
 class AvailablePeriodModel extends availability_repo.AvailablePeriod {
   AvailablePeriodModel({
-    required DateTime startDate,
-    required DateTime endDate,
-    double? price,
-    String? currency,
-  }) : super(
-          startDate: startDate,
-          endDate: endDate,
-          price: price,
-          currency: currency,
-        );
+    required super.startDate,
+    required super.endDate,
+    super.price,
+    super.currency,
+  });
 
   factory AvailablePeriodModel.fromJson(Map<String, dynamic> json) {
     return AvailablePeriodModel(
@@ -287,24 +260,15 @@ class AvailablePeriodModel extends availability_repo.AvailablePeriod {
 
 class AvailabilityDetailsModel extends availability_repo.AvailabilityDetails {
   AvailabilityDetailsModel({
-    required String unitId,
-    required String unitName,
-    required String unitType,
-    required int maxAdults,
-    required int maxChildren,
-    required int totalNights,
-    required bool isMultiDays,
-    required bool isRequiredToDetermineTheHour,
-  }) : super(
-          unitId: unitId,
-          unitName: unitName,
-          unitType: unitType,
-          maxAdults: maxAdults,
-          maxChildren: maxChildren,
-          totalNights: totalNights,
-          isMultiDays: isMultiDays,
-          isRequiredToDetermineTheHour: isRequiredToDetermineTheHour,
-        );
+    required super.unitId,
+    required super.unitName,
+    required super.unitType,
+    required super.maxAdults,
+    required super.maxChildren,
+    required super.totalNights,
+    required super.isMultiDays,
+    required super.isRequiredToDetermineTheHour,
+  });
 
   factory AvailabilityDetailsModel.fromJson(Map<String, dynamic> json) {
     return AvailabilityDetailsModel(
@@ -315,7 +279,8 @@ class AvailabilityDetailsModel extends availability_repo.AvailabilityDetails {
       maxChildren: json['maxChildren'] as int,
       totalNights: json['totalNights'] as int,
       isMultiDays: json['isMultiDays'] as bool,
-      isRequiredToDetermineTheHour: json['isRequiredToDetermineTheHour'] as bool,
+      isRequiredToDetermineTheHour:
+          json['isRequiredToDetermineTheHour'] as bool,
     );
   }
 }

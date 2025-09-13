@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui';
-import 'dart:math' as math;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/availability/availability_bloc.dart';
@@ -42,14 +41,10 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
   late Animation<double> _calendarFadeAnimation;
   late Animation<double> _glowAnimation;
 
-  late PageController _pageController;
-  final int _currentPageIndex = 0;
-
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
-    _pageController = PageController(initialPage: 0);
   }
 
   void _initializeAnimations() {
@@ -86,7 +81,6 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
   void dispose() {
     _calendarAnimationController.dispose();
     _glowController.dispose();
-    _pageController.dispose();
     super.dispose();
   }
 

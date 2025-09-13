@@ -25,7 +25,8 @@ class AvailabilityCalendarGrid extends StatefulWidget {
   });
 
   @override
-  State<AvailabilityCalendarGrid> createState() => _AvailabilityCalendarGridState();
+  State<AvailabilityCalendarGrid> createState() =>
+      _AvailabilityCalendarGridState();
 }
 
 class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
@@ -33,33 +34,51 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
   DateTime? _selectionEnd;
   bool _isSelecting = false;
 
+  // New: key to measure grid and map pointer to cells
+  final GlobalKey _gridKey = GlobalKey();
+  static const double _cellSpacing = 4.0; // matches GridView spacing
+
   @override
   Widget build(BuildContext context) {
     final daysInMonth = _getDaysInMonth();
     final firstWeekday = _getFirstWeekday();
-    
+
     return Padding(
       padding: EdgeInsets.all(widget.isCompact ? 8 : 16),
       child: Column(
         children: [
           // Weekday headers
           _buildWeekdayHeaders(),
-          
+
           const SizedBox(height: 8),
-          
+
           // Calendar grid
           Expanded(
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                childAspectRatio: 1,
-                crossAxisSpacing: 4,
-                mainAxisSpacing: 4,
-              ),
-              itemCount: 42, // 6 weeks
-              itemBuilder: (context, index) {
-                return _buildDayCell(index, firstWeekday, daysInMonth);
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onPanStart: (details) =>
+                      _handlePanStart(details, constraints),
+                  onPanUpdate: (details) =>
+                      _handlePanUpdate(details, constraints),
+                  onPanEnd: (_) => _handlePanEnd(),
+                  child: GridView.builder(
+                    key: _gridKey,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 7,
+                      childAspectRatio: 1,
+                      crossAxisSpacing: _cellSpacing,
+                      mainAxisSpacing: _cellSpacing,
+                    ),
+                    itemCount: 42, // 6 weeks
+                    itemBuilder: (context, index) {
+                      return _buildDayCell(index, firstWeekday, daysInMonth);
+                    },
+                  ),
+                );
               },
             ),
           ),
@@ -69,8 +88,16 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
   }
 
   Widget _buildWeekdayHeaders() {
-    const weekdays = ['أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
-    
+    const weekdays = [
+      'أحد',
+      'إثنين',
+      'ثلاثاء',
+      'أربعاء',
+      'خميس',
+      'جمعة',
+      'سبت'
+    ];
+
     return Row(
       children: weekdays.map((day) {
         return Expanded(
@@ -90,18 +117,19 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
 
   Widget _buildDayCell(int index, int firstWeekday, int daysInMonth) {
     final dayNumber = index - firstWeekday + 1;
-    
+
     if (dayNumber < 1 || dayNumber > daysInMonth) {
       return Container(); // Empty cell
     }
-    
-    final date = DateTime(widget.currentDate.year, widget.currentDate.month, dayNumber);
+
+    final date =
+        DateTime(widget.currentDate.year, widget.currentDate.month, dayNumber);
     final dateKey = DateFormat('yyyy-MM-dd').format(date);
     final dayStatus = widget.unitAvailability.calendar[dateKey];
-    
+
     final isSelected = _isDateInSelection(date);
     final isToday = _isToday(date);
-    
+
     return GestureDetector(
       onTapDown: (_) => _startSelection(date),
       onTapUp: (_) => _endSelection(date),
@@ -110,12 +138,14 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           gradient: isSelected ? AppTheme.primaryGradient : null,
-          color: !isSelected ? _getStatusColor(dayStatus?.status).withOpacity(0.2) : null,
+          color: !isSelected
+              ? _getStatusColor(dayStatus?.status).withOpacity(0.2)
+              : null,
           borderRadius: BorderRadius.circular(widget.isCompact ? 8 : 10),
           border: Border.all(
-            color: isToday 
-                ? AppTheme.primaryBlue 
-                : isSelected 
+            color: isToday
+                ? AppTheme.primaryBlue
+                : isSelected
                     ? Colors.white.withOpacity(0.3)
                     : _getStatusColor(dayStatus?.status).withOpacity(0.3),
             width: isToday ? 2 : 1,
@@ -139,8 +169,8 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
               child: Text(
                 '$dayNumber',
                 style: AppTextStyles.caption.copyWith(
-                  color: isSelected 
-                      ? Colors.white 
+                  color: isSelected
+                      ? Colors.white
                       : dayStatus?.status == AvailabilityStatus.available
                           ? AppTheme.textWhite
                           : AppTheme.textMuted,
@@ -149,7 +179,7 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
                 ),
               ),
             ),
-            
+
             // Status icon
             if (dayStatus != null && !widget.isCompact)
               Positioned(
@@ -157,13 +187,14 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
                 right: 2,
                 child: _buildStatusIcon(dayStatus.status),
               ),
-            
+
             // Selection overlay
             if (isSelected)
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(widget.isCompact ? 8 : 10),
+                    borderRadius:
+                        BorderRadius.circular(widget.isCompact ? 8 : 10),
                     color: Colors.white.withOpacity(0.1),
                   ),
                 ),
@@ -177,7 +208,7 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
   Widget _buildStatusIcon(AvailabilityStatus status) {
     IconData icon;
     Color color;
-    
+
     switch (status) {
       case AvailabilityStatus.available:
         icon = Icons.check_circle;
@@ -199,7 +230,7 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
         icon = Icons.help_outline;
         color = AppTheme.textMuted;
     }
-    
+
     return Icon(
       icon,
       size: 14,
@@ -209,7 +240,7 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
 
   Color _getStatusColor(AvailabilityStatus? status) {
     if (status == null) return AppTheme.textMuted;
-    
+
     switch (status) {
       case AvailabilityStatus.available:
         return AppTheme.success;
@@ -234,25 +265,26 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
 
   int _getFirstWeekday() {
     return DateTime(
-      widget.currentDate.year,
-      widget.currentDate.month,
-      1,
-    ).weekday % 7;
+          widget.currentDate.year,
+          widget.currentDate.month,
+          1,
+        ).weekday %
+        7;
   }
 
   bool _isToday(DateTime date) {
     final now = DateTime.now();
     return date.year == now.year &&
-           date.month == now.month &&
-           date.day == now.day;
+        date.month == now.month &&
+        date.day == now.day;
   }
 
   bool _isDateInSelection(DateTime date) {
     if (_selectionStart == null) return false;
     if (_selectionEnd == null) return date == _selectionStart;
-    
+
     return date.isAfter(_selectionStart!.subtract(const Duration(days: 1))) &&
-           date.isBefore(_selectionEnd!.add(const Duration(days: 1)));
+        date.isBefore(_selectionEnd!.add(const Duration(days: 1)));
   }
 
   void _startSelection(DateTime date) {
@@ -266,7 +298,7 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
 
   void _endSelection(DateTime date) {
     if (!_isSelecting) return;
-    
+
     setState(() {
       _isSelecting = false;
       if (_selectionStart != null) {
@@ -276,7 +308,7 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
         } else {
           _selectionEnd = date;
         }
-        
+
         if (_selectionStart == _selectionEnd) {
           widget.onDateSelected(_selectionStart!);
         } else {
@@ -294,5 +326,94 @@ class _AvailabilityCalendarGridState extends State<AvailabilityCalendarGrid> {
       _selectionStart = null;
       _selectionEnd = null;
     });
+  }
+
+  // New: Drag selection handlers
+  void _handlePanStart(DragStartDetails details, BoxConstraints constraints) {
+    final date = _dateFromLocalPosition(details.localPosition, constraints);
+    if (date == null) return;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _isSelecting = true;
+      _selectionStart = date;
+      _selectionEnd = date;
+    });
+  }
+
+  void _handlePanUpdate(DragUpdateDetails details, BoxConstraints constraints) {
+    if (!_isSelecting || _selectionStart == null) return;
+    final date = _dateFromLocalPosition(details.localPosition, constraints);
+    if (date == null) return;
+    if (_selectionEnd == null || !_isSameDay(_selectionEnd!, date)) {
+      setState(() {
+        _selectionEnd =
+            date.isBefore(_selectionStart!) ? _selectionStart : date;
+        if (date.isBefore(_selectionStart!)) {
+          // swap to keep start <= end for highlighting
+          _selectionEnd = _selectionStart;
+          _selectionStart = date;
+        }
+      });
+    }
+  }
+
+  void _handlePanEnd() {
+    if (!_isSelecting || _selectionStart == null) return;
+    final start = _selectionStart!;
+    final end = _selectionEnd ?? start;
+
+    // Trigger callbacks
+    if (_isSameDay(start, end)) {
+      widget.onDateSelected(start);
+    } else {
+      widget.onDateRangeSelected(start, end);
+    }
+
+    // Reset selection
+    setState(() {
+      _isSelecting = false;
+      _selectionStart = null;
+      _selectionEnd = null;
+    });
+  }
+
+  DateTime? _dateFromLocalPosition(
+      Offset localPos, BoxConstraints constraints) {
+    // Grid occupies full constraints inside Expanded
+    final gridWidth = constraints.maxWidth;
+    final gridHeight = constraints.maxHeight;
+
+    // 7 columns, 6 rows
+    const columns = 7;
+    const rows = 6;
+
+    // Compute cell sizes considering spacing
+    const totalHSpacing = _cellSpacing * (columns - 1);
+    const totalVSpacing = _cellSpacing * (rows - 1);
+    final cellWidth = (gridWidth - totalHSpacing) / columns;
+    final cellHeight = (gridHeight - totalVSpacing) / rows;
+
+    final col =
+        (localPos.dx.clamp(0, gridWidth) / (cellWidth + _cellSpacing)).floor();
+    final row = (localPos.dy.clamp(0, gridHeight) / (cellHeight + _cellSpacing))
+        .floor();
+
+    if (col < 0 || col >= columns || row < 0 || row >= rows) return null;
+
+    final index = row * columns + col;
+
+    final firstWeekday = _getFirstWeekday();
+    final daysInMonth = _getDaysInMonth();
+    final dayNumber = index - firstWeekday + 1;
+
+    if (dayNumber < 1 || dayNumber > daysInMonth)
+      return null; // outside current month
+
+    return DateTime(
+        widget.currentDate.year, widget.currentDate.month, dayNumber);
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 }
