@@ -12,7 +12,7 @@ class UnitSelectorCard extends StatefulWidget {
   final String? selectedUnitId;
   final String? selectedUnitName;
   final String? selectedPropertyId;
-  final Function(String) onUnitSelected;
+  final Function(String id, String name) onUnitSelected;
   final bool isCompact;
 
   const UnitSelectorCard({
@@ -32,14 +32,6 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _glowAnimation;
-  
-  // Mock data - replace with actual units from bloc
-  final List<Unit> _units = [
-    Unit(id: 'unit_1', name: 'جناح ديلوكس', type: 'suite', isAvailable: true),
-    Unit(id: 'unit_2', name: 'غرفة مزدوجة', type: 'double', isAvailable: true),
-    Unit(id: 'unit_3', name: 'فيلا خاصة', type: 'villa', isAvailable: false),
-    Unit(id: 'unit_4', name: 'استوديو', type: 'studio', isAvailable: true),
-  ];
 
   @override
   void initState() {
@@ -128,7 +120,7 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
         children: [
           _buildHeader(),
           const SizedBox(height: 16),
-          _buildUnitsList(),
+          _buildDropdown(),
         ],
       ),
     );
@@ -147,12 +139,6 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppTheme.textWhite,
                 fontWeight: FontWeight.w600,
-              ),
-            ),
-            Text(
-              '${_units.length} وحدة متاحة',
-              style: AppTextStyles.caption.copyWith(
-                color: AppTheme.textMuted,
               ),
             ),
           ],
@@ -228,7 +214,7 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
           propertyId: widget.selectedPropertyId,
           allowMultiSelect: false,
           onUnitSelected: (unit) {
-            // Only accept non-experimental units
+            // Only accept non-experimental units (additional guard; primary filtering is server/UI list)
             final lower = unit.name.toLowerCase();
             const hints = ['test','demo','dummy','sample','تجريبي','تجريب','اختبار','ديمو','عينه','عينة'];
             final isExperimental = hints.any(lower.contains) || unit.id.length != 36;
@@ -236,7 +222,7 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
               HapticFeedback.heavyImpact();
               return;
             }
-            widget.onUnitSelected(unit.id);
+            widget.onUnitSelected(unit.id, unit.name);
             setState(() {});
           },
         ),
@@ -245,100 +231,7 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
     );
   }
 
-  Widget _buildUnitsList() {
-    return Column(
-      children: _units.map((unit) {
-        final isSelected = unit.id == widget.selectedUnitId;
-        
-        return GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            widget.onUnitSelected(unit.id);
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              gradient: isSelected ? AppTheme.primaryGradient : null,
-              color: !isSelected ? AppTheme.darkSurface.withOpacity(0.5) : null,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected 
-                    ? Colors.white.withOpacity(0.3)
-                    : AppTheme.darkBorder.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  _getUnitIcon(unit.type),
-                  color: isSelected 
-                      ? Colors.white 
-                      : unit.isAvailable 
-                          ? AppTheme.success 
-                          : AppTheme.textMuted,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        unit.name,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: isSelected ? Colors.white : AppTheme.textWhite,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        _getUnitTypeLabel(unit.type),
-                        style: AppTextStyles.caption.copyWith(
-                          color: isSelected 
-                              ? Colors.white.withOpacity(0.8)
-                              : AppTheme.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (!unit.isAvailable)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.error.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'غير متاح',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.error,
-                      ),
-                    ),
-                  ),
-                if (isSelected)
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
+  // Removed demo list rendering; unit selection is done via UnitSearchPage only
 
   IconData _getUnitIcon(String type) {
     switch (type) {
@@ -369,18 +262,4 @@ class _UnitSelectorCardState extends State<UnitSelectorCard>
         return 'وحدة';
     }
   }
-}
-
-class Unit {
-  final String id;
-  final String name;
-  final String type;
-  final bool isAvailable;
-
-  Unit({
-    required this.id,
-    required this.name,
-    required this.type,
-    required this.isAvailable,
-  });
 }

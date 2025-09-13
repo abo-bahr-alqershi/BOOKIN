@@ -507,7 +507,9 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
                 selectedUnitId: _selectedUnitId,
                 selectedUnitName: _selectedUnitName,
                 selectedPropertyId: _selectedPropertyId,
-                onUnitSelected: _onUnitSelected,
+                onUnitSelected: (id, name) {
+                  _onUnitSelectedWithName(id, name);
+                },
               ),
               
               const SizedBox(height: 16),
@@ -579,7 +581,9 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
           selectedUnitId: _selectedUnitId,
           selectedUnitName: _selectedUnitName,
           selectedPropertyId: _selectedPropertyId,
-          onUnitSelected: _onUnitSelected,
+          onUnitSelected: (id, name) {
+            _onUnitSelectedWithName(id, name);
+          },
           isCompact: true,
         ),
         
@@ -646,6 +650,27 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
       ),
     );
     
+    context.read<PricingBloc>().add(
+      LoadMonthlyPricing(
+        unitId: unitId,
+        year: _currentDate.year,
+        month: _currentDate.month,
+      ),
+    );
+  }
+
+  void _onUnitSelectedWithName(String unitId, String unitName) {
+    setState(() {
+      _selectedUnitId = unitId;
+      _selectedUnitName = unitName;
+    });
+    context.read<AvailabilityBloc>().add(
+      LoadMonthlyAvailability(
+        unitId: unitId,
+        year: _currentDate.year,
+        month: _currentDate.month,
+      ),
+    );
     context.read<PricingBloc>().add(
       LoadMonthlyPricing(
         unitId: unitId,
