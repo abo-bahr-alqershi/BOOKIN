@@ -186,10 +186,9 @@ class _PricingCalendarGridState extends State<PricingCalendarGrid> {
     final isSelected = _isDateInSelection(date);
     final isToday = _isToday(date);
 
-    // Prefer backend colorCode if provided, otherwise derive from priceType
-    final Color baseColor = (dayPricing?.colorCode.isNotEmpty ?? false)
-        ? _colorFromHex(dayPricing!.colorCode)
-        : _getTierColor(dayPricing?.priceType);
+    // Resolve base color: prefer backend colorCode (if valid), otherwise derive from priceType.
+    // If no calendar entry for the day, fall back to default base color.
+    final Color baseColor = _resolveBaseColor(dayPricing);
 
     return GestureDetector(
       onTapDown: (_) => _startSelection(date),
@@ -199,14 +198,14 @@ class _PricingCalendarGridState extends State<PricingCalendarGrid> {
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           gradient: isSelected ? AppTheme.primaryGradient : null,
-          color: !isSelected ? baseColor.withOpacity(0.2) : null,
+          color: !isSelected ? baseColor.withOpacity(0.32) : null,
           borderRadius: BorderRadius.circular(widget.isCompact ? 8 : 10),
           border: Border.all(
             color: isToday
                 ? AppTheme.primaryBlue
                 : isSelected
-                    ? Colors.white.withOpacity(0.3)
-                    : baseColor.withOpacity(0.3),
+                    ? Colors.white.withOpacity(0.35)
+                    : baseColor.withOpacity(0.55),
             width: isToday ? 2 : 1,
           ),
           boxShadow: isSelected
@@ -236,23 +235,23 @@ class _PricingCalendarGridState extends State<PricingCalendarGrid> {
             ),
 
             // Price
-            if (dayPricing != null)
-              Positioned(
-                bottom: widget.isCompact ? 2 : 4,
-                right: widget.isCompact ? 2 : 4,
-                left: widget.isCompact ? 2 : 4,
-                child: Text(
-                  _priceFormat.format(dayPricing.price),
-                  style: AppTextStyles.caption.copyWith(
-                    color: isSelected ? Colors.white : baseColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: widget.isCompact ? 8 : 10,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+            Positioned(
+              bottom: widget.isCompact ? 2 : 4,
+              right: widget.isCompact ? 2 : 4,
+              left: widget.isCompact ? 2 : 4,
+              child: Text(
+                _priceFormat
+                    .format((dayPricing?.price) ?? widget.unitPricing.basePrice),
+                style: AppTextStyles.caption.copyWith(
+                  color: isSelected ? Colors.white : baseColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: widget.isCompact ? 8 : 10,
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
+            ),
 
             // Percentage change indicator
             if (dayPricing?.percentageChange != null && !widget.isCompact)
@@ -284,16 +283,52 @@ class _PricingCalendarGridState extends State<PricingCalendarGrid> {
     );
   }
 
-  // Parse hex color like '#AABBCC' or 'AABBCC' to Color
-  Color _colorFromHex(String hex) {
-    var sanitized = hex.replaceAll('#', '').toUpperCase();
-    if (sanitized.length == 6) {
-      sanitized = 'FF$sanitized';
+  // Resolve final base color for a day with robust fallbacks.
+  Color _resolveBaseColor(PricingDay? dayPricing) {
+    if (dayPricing == null) return _getBaseColorFallback();
+    final code = dayPricing.colorCode.trim();
+    final parsed = _tryParseColor(code);
+    if (parsed != null) return parsed;
+    return _getTierColor(dayPricing.priceType);
+  }
+
+  // Try to parse various color notations; return null if invalid.
+  Color? _tryParseColor(String input) {
+    if (input.isEmpty) return null;
+    var s = input.trim();
+    // Remove # or 0x/0X prefixes
+    if (s.startsWith('#')) {
+      s = s.substring(1);
+    } else if (s.toLowerCase().startsWith('0x')) {
+      s = s.substring(2);
     }
-    final value = int.tryParse(sanitized, radix: 16);
-    if (value == null) return AppTheme.textMuted;
+
+    // Normalize supported lengths
+    if (s.length == 3) {
+      // RGB -> RRGGBB, assume opaque
+      s = s.split('').map((c) => '$c$c').join();
+      s = 'FF$s';
+    } else if (s.length == 4) {
+      // ARGB (4 nibbles) -> AARRGGBB
+      final a = s[0];
+      final r = s[1];
+      final g = s[2];
+      final b = s[3];
+      s = '$a$a$r$r$g$g$b$b';
+    } else if (s.length == 6) {
+      // RRGGBB -> AARRGGBB with opaque alpha
+      s = 'FF$s';
+    } else if (s.length != 8) {
+      return null;
+    }
+
+    final value = int.tryParse(s, radix: 16);
+    if (value == null) return null;
     return Color(value);
   }
+
+  // Fallback color when calendar doesn't provide an entry for a day
+  Color _getBaseColorFallback() => AppTheme.primaryBlue;
 
   Color _getTierColor(PriceType? priceType) {
     if (priceType == null) return AppTheme.textMuted;
