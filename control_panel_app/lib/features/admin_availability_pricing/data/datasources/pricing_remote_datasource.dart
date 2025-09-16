@@ -185,10 +185,11 @@ class PricingRemoteDataSourceImpl implements PricingRemoteDataSource {
   }) async {
     try {
       // لا يوجد مسار صريح للبريك داون على الـ backend controllers، سنعيد قيمة محسوبة مبسطة
+      // This fallback is not used in admin CP; set currency to default (YER)
       return PricingBreakdownModel.fromJson({
           'checkIn': checkIn.toIso8601String(),
           'checkOut': checkOut.toIso8601String(),
-        'currency': 'USD',
+        'currency': 'YER',
         'days': const <Map<String, dynamic>>[],
         'totalNights': checkOut.difference(checkIn).inDays,
         'subTotal': 0,

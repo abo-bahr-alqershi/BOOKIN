@@ -2,12 +2,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:ui';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../pages/availability_pricing_page.dart';
 import '../../domain/entities/availability.dart';
 import '../../domain/entities/pricing.dart';
+import '../bloc/pricing/pricing_bloc.dart';
 
 class DateOptionsSheet extends StatefulWidget {
   final DateTime date;
@@ -328,6 +330,7 @@ class _DateOptionsSheetState extends State<DateOptionsSheet>
   }
 
   Widget _buildPricingContent() {
+    final currencyCode = _resolveCurrencyCode();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -354,7 +357,7 @@ class _DateOptionsSheetState extends State<DateOptionsSheet>
               color: AppTheme.primaryBlue,
               size: 28,
             ),
-            suffixText: 'ريال',
+            suffixText: currencyCode,
             suffixStyle: AppTextStyles.bodyMedium.copyWith(
               color: AppTheme.textMuted,
             ),
@@ -494,5 +497,15 @@ class _DateOptionsSheetState extends State<DateOptionsSheet>
         Navigator.of(context).pop();
       }
     }
+  }
+
+  String _resolveCurrencyCode() {
+    try {
+      final pricingState = context.read<PricingBloc>().state;
+      if (pricingState is PricingLoaded) {
+        return pricingState.unitPricing.currency;
+      }
+    } catch (_) {}
+    return 'YER';
   }
 }

@@ -648,11 +648,13 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
   void _updateSingleDayPricing(DateTime date, double price) {
     final state = context.read<PricingBloc>().state;
     if (state is PricingLoaded) {
+      final currencyCode = state.unitPricing.currency;
       context.read<PricingBloc>().add(
             UpdateSingleDayPricing(
               unitId: state.selectedUnitId,
               date: date,
               price: price,
+              currency: currencyCode,
             ),
           );
     }
@@ -676,12 +678,14 @@ class _FuturisticCalendarViewState extends State<FuturisticCalendarView>
   void _updateDateRangePricing(DateTime start, DateTime end, double price) {
     final state = context.read<PricingBloc>().state;
     if (state is PricingLoaded) {
+      final currencyCode = state.unitPricing.currency;
       context.read<PricingBloc>().add(
             UpdateDateRangePricing(
               unitId: state.selectedUnitId,
               startDate: start,
               endDate: end,
               price: price,
+              currency: currencyCode,
             ),
           );
     }

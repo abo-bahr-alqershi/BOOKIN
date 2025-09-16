@@ -725,6 +725,15 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
 
     try {
       final days = _endDate!.difference(_startDate!).inDays + 1;
+      // Resolve currency from pricing state
+      String currencyCode = 'YER';
+      try {
+        final ps = context.read<PricingBloc>().state;
+        if (ps is PricingLoaded) {
+          currencyCode = ps.unitPricing.currency;
+        }
+      } catch (_) {}
+
       final season = SeasonalPricing(
         id: 'temp-${DateTime.now().millisecondsSinceEpoch}',
         name: _selectedTemplate!.name,
@@ -733,7 +742,7 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
         endDate: _endDate!,
         price: 0,
         percentageChange: _customPriceChange,
-        currency: 'SAR',
+        currency: currencyCode,
         pricingTier: _selectedTemplate!.tier,
         priority: 1,
         description: 'Seasonal pricing via dialog',
@@ -748,7 +757,7 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
               params: ApplySeasonalPricingParams(
                 unitId: widget.unitId,
                 seasons: [season],
-                currency: 'SAR',
+                currency: currencyCode,
               ),
             ),
           );
