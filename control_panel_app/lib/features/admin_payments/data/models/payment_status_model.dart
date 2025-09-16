@@ -1,4 +1,4 @@
-import '../../domain/entities/payment.dart';
+import '../../../../../core/enums/payment_method_enum.dart';
 
 /// Model لحالة الدفع مع الإحصائيات
 class PaymentStatusModel {

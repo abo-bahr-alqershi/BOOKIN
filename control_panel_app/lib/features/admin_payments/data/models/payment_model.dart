@@ -1,6 +1,6 @@
 import 'package:bookn_cp_app/features/admin_payments/data/models/money_model.dart';
 
-import '../../../../../core/enums/payment_method_enum.dart' hide PaymentStatus;
+import '../../../../../core/enums/payment_method_enum.dart';
 import '../../domain/entities/payment.dart';
 
 class PaymentModel extends Payment {

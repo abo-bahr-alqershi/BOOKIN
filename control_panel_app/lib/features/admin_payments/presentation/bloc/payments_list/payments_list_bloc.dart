@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../../core/models/paginated_result.dart';
-import '../../../../../../core/enums/payment_method_enum.dart'
-    hide PaymentStatus;
+import '../../../../../../core/enums/payment_method_enum.dart';
 import '../../../domain/entities/payment.dart';
 import '../../../domain/usecases/payments/refund_payment_usecase.dart';
 import '../../../domain/usecases/payments/void_payment_usecase.dart';

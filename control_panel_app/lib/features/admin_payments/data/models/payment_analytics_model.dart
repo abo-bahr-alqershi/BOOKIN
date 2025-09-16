@@ -1,5 +1,4 @@
-import 'package:bookn_cp_app/core/enums/payment_method_enum.dart'
-    hide PaymentStatus;
+import 'package:bookn_cp_app/core/enums/payment_method_enum.dart';
 
 import '../../domain/entities/payment.dart' hide PaymentStatusExtension;
 import '../../domain/entities/payment_analytics.dart';
@@ -64,8 +63,8 @@ class PaymentAnalyticsModel extends PaymentAnalytics {
             MapEntry(k.displayNameEn, (v as MethodAnalyticsModel).toJson()),
       ),
       'statusAnalytics': statusAnalytics.map(
-        (k, v) =>
-            MapEntry(k.displayNameEn, (v as StatusAnalyticsModel).toJson()),
+        (k, v) => MapEntry(k.displayNameEn,
+            (v as StatusAnalyticsModel).toJson()),
       ),
       'refundAnalytics': (refundAnalytics as RefundAnalyticsModel).toJson(),
       'startDate': startDate.toIso8601String(),

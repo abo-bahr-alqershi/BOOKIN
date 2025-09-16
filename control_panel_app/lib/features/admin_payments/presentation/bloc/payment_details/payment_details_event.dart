@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../../../../core/enums/payment_method_enum.dart';
 import '../../../domain/entities/payment.dart';
 
 abstract class PaymentDetailsEvent extends Equatable {
