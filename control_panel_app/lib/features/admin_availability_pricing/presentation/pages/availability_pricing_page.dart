@@ -719,12 +719,18 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
       return;
     }
 
+    // Pass current currency to dialog to avoid provider lookup inside dialog
+    String? currencyCode;
+    final ps = context.read<PricingBloc>().state;
+    if (ps is PricingLoaded) currencyCode = ps.unitPricing.currency;
+
     BulkUpdateDialog.show(
       context,
       viewMode: _viewMode,
       unitId: _selectedUnitId!,
       initialStartDate: _selectionStart,
       initialEndDate: _selectionEnd,
+      currencyCode: currencyCode,
     );
   }
 
