@@ -4,6 +4,7 @@ import 'package:bookn_cp_app/features/admin_bookings/domain/entities/booking.dar
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_dimensions.dart';
@@ -148,12 +149,7 @@ class _BookingsListPageState extends State<BookingsListPage>
         ),
         _buildActionButton(
           icon: CupertinoIcons.calendar,
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const BookingCalendarPage(),
-            ),
-          ),
+          onPressed: () => context.push('/admin/bookings/calendar'),
         ),
         _buildActionButton(
           icon: _showFilters
