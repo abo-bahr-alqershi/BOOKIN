@@ -50,34 +50,56 @@ import 'package:bookn_cp_app/features/admin_amenities/presentation/pages/edit_am
 import 'package:bookn_cp_app/features/admin_reviews/presentation/pages/reviews_list_page.dart';
 import 'package:bookn_cp_app/features/admin_reviews/presentation/pages/review_details_page.dart';
 import 'package:bookn_cp_app/features/admin_reviews/domain/entities/review.dart';
-import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/reviews_list/reviews_list_bloc.dart' as ar_list_bloc;
-import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/review_details/review_details_bloc.dart' as ar_details_bloc;
+import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/reviews_list/reviews_list_bloc.dart'
+    as ar_list_bloc;
+import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/review_details/review_details_bloc.dart'
+    as ar_details_bloc;
 import 'package:bookn_cp_app/features/admin_services/presentation/bloc/services_bloc.dart';
-import 'package:bookn_cp_app/features/admin_amenities/presentation/bloc/amenities_bloc.dart' as aa_bloc;
+import 'package:bookn_cp_app/features/admin_amenities/presentation/bloc/amenities_bloc.dart'
+    as aa_bloc;
 // Admin Currencies pages & bloc
-import 'package:bookn_cp_app/features/admin_currencies/presentation/pages/currencies_management_page.dart' as ac_pages;
-import 'package:bookn_cp_app/features/admin_currencies/presentation/bloc/currencies_bloc.dart' as ac_bloc;
-import 'package:bookn_cp_app/features/admin_currencies/presentation/bloc/currencies_event.dart' as ac_events;
+import 'package:bookn_cp_app/features/admin_currencies/presentation/pages/currencies_management_page.dart'
+    as ac_pages;
+import 'package:bookn_cp_app/features/admin_currencies/presentation/bloc/currencies_bloc.dart'
+    as ac_bloc;
+import 'package:bookn_cp_app/features/admin_currencies/presentation/bloc/currencies_event.dart'
+    as ac_events;
 // Admin Cities page & bloc
-import 'package:bookn_cp_app/features/admin_cities/presentation/pages/admin_cities_page.dart' as ci_pages;
-import 'package:bookn_cp_app/features/admin_cities/presentation/bloc/cities_bloc.dart' as ci_bloc;
-import 'package:bookn_cp_app/features/admin_cities/presentation/bloc/cities_event.dart' as ci_events;
+import 'package:bookn_cp_app/features/admin_cities/presentation/pages/admin_cities_page.dart'
+    as ci_pages;
+import 'package:bookn_cp_app/features/admin_cities/presentation/bloc/cities_bloc.dart'
+    as ci_bloc;
+import 'package:bookn_cp_app/features/admin_cities/presentation/bloc/cities_event.dart'
+    as ci_events;
 // Admin Audit Logs page & bloc
-import 'package:bookn_cp_app/features/admin_audit_logs/presentation/pages/audit_logs_page.dart' as al_pages;
-import 'package:bookn_cp_app/features/admin_audit_logs/presentation/bloc/audit_logs_bloc.dart' as al_bloc;
+import 'package:bookn_cp_app/features/admin_audit_logs/presentation/pages/audit_logs_page.dart'
+    as al_pages;
+import 'package:bookn_cp_app/features/admin_audit_logs/presentation/bloc/audit_logs_bloc.dart'
+    as al_bloc;
 // Admin Properties pages & blocs
-import 'package:bookn_cp_app/features/admin_properties/presentation/pages/properties_list_page.dart' as ap_pages;
-import 'package:bookn_cp_app/features/admin_properties/presentation/pages/create_property_page.dart' as ap_pages;
-import 'package:bookn_cp_app/features/admin_properties/presentation/pages/edit_property_page.dart' as ap_pages;
-import 'package:bookn_cp_app/features/admin_properties/presentation/pages/property_details_page.dart' as ap_pages;
-import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/properties/properties_bloc.dart' as ap_bloc;
-import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/property_types/property_types_bloc.dart' as ap_prop_pt_bloc;
+import 'package:bookn_cp_app/features/admin_properties/presentation/pages/properties_list_page.dart'
+    as ap_pages;
+import 'package:bookn_cp_app/features/admin_properties/presentation/pages/create_property_page.dart'
+    as ap_pages;
+import 'package:bookn_cp_app/features/admin_properties/presentation/pages/edit_property_page.dart'
+    as ap_pages;
+import 'package:bookn_cp_app/features/admin_properties/presentation/pages/property_details_page.dart'
+    as ap_pages;
+import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/properties/properties_bloc.dart'
+    as ap_bloc;
+import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/property_types/property_types_bloc.dart'
+    as ap_prop_pt_bloc;
 // Admin Users pages & blocs
-import 'package:bookn_cp_app/features/admin_users/presentation/pages/users_list_page.dart' as au_pages;
-import 'package:bookn_cp_app/features/admin_users/presentation/pages/create_user_page.dart' as au_pages;
-import 'package:bookn_cp_app/features/admin_users/presentation/pages/user_details_page.dart' as au_pages;
-import 'package:bookn_cp_app/features/admin_users/presentation/bloc/users_list/users_list_bloc.dart' as au_list_bloc;
-import 'package:bookn_cp_app/features/admin_users/presentation/bloc/user_details/user_details_bloc.dart' as au_details_bloc;
+import 'package:bookn_cp_app/features/admin_users/presentation/pages/users_list_page.dart'
+    as au_pages;
+import 'package:bookn_cp_app/features/admin_users/presentation/pages/create_user_page.dart'
+    as au_pages;
+import 'package:bookn_cp_app/features/admin_users/presentation/pages/user_details_page.dart'
+    as au_pages;
+import 'package:bookn_cp_app/features/admin_users/presentation/bloc/users_list/users_list_bloc.dart'
+    as au_list_bloc;
+import 'package:bookn_cp_app/features/admin_users/presentation/bloc/user_details/user_details_bloc.dart'
+    as au_details_bloc;
 // Admin Availability & Pricing
 import 'package:bookn_cp_app/features/admin_availability_pricing/presentation/pages/availability_pricing_page.dart';
 import 'package:bookn_cp_app/features/admin_availability_pricing/presentation/bloc/availability/availability_bloc.dart';
@@ -101,10 +123,22 @@ import 'package:bookn_cp_app/features/admin_bookings/presentation/pages/booking_
 import 'package:bookn_cp_app/features/admin_bookings/presentation/pages/booking_calendar_page.dart';
 import 'package:bookn_cp_app/features/admin_bookings/presentation/pages/booking_timeline_page.dart';
 import 'package:bookn_cp_app/features/admin_bookings/presentation/pages/booking_analytics_page.dart';
-import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/bookings_list/bookings_list_bloc.dart' as ab_list_bloc;
-import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/booking_details/booking_details_bloc.dart' as ab_details_bloc;
-import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/booking_calendar/booking_calendar_bloc.dart' as ab_cal_bloc;
-import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/booking_analytics/booking_analytics_bloc.dart' as ab_an_bloc;
+import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/bookings_list/bookings_list_bloc.dart'
+    as ab_list_bloc;
+import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/bookings_list/bookings_list_event.dart'
+    as ab_list_event;
+import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/booking_details/booking_details_bloc.dart'
+    as ab_details_bloc;
+import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/booking_details/booking_details_event.dart'
+    as ab_details_event;
+import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/booking_calendar/booking_calendar_bloc.dart'
+    as ab_cal_bloc;
+import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/booking_calendar/booking_calendar_event.dart'
+    as ab_cal_event;
+import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/booking_analytics/booking_analytics_bloc.dart'
+    as ab_an_bloc;
+import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/booking_analytics/booking_analytics_event.dart'
+    as ab_an_event;
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
@@ -123,11 +157,14 @@ class AppRouter {
 
         if (isSplash) return null;
 
-        if (authState is AuthUnauthenticated && isProtected && !(goingToLogin || goingToRegister || goingToForgot)) {
+        if (authState is AuthUnauthenticated &&
+            isProtected &&
+            !(goingToLogin || goingToRegister || goingToForgot)) {
           return '/login';
         }
 
-        if (authState is AuthAuthenticated && (goingToLogin || goingToRegister || goingToForgot)) {
+        if (authState is AuthAuthenticated &&
+            (goingToLogin || goingToRegister || goingToForgot)) {
           return '/main';
         }
 
@@ -148,11 +185,13 @@ class AppRouter {
         // Onboarding
         GoRoute(
           path: '/onboarding/select-city-currency',
-          pageBuilder: (context, state) => slideUpTransitionPage(child: const SelectCityCurrencyPage()),
+          pageBuilder: (context, state) =>
+              slideUpTransitionPage(child: const SelectCityCurrencyPage()),
         ),
         GoRoute(
           path: '/main',
-          pageBuilder: (context, state) => fadeTransitionPage(child: const MainScreen()),
+          pageBuilder: (context, state) =>
+              fadeTransitionPage(child: const MainScreen()),
         ),
         GoRoute(
           path: '/login',
@@ -212,7 +251,7 @@ class AppRouter {
           builder: (context, state) {
             return BlocProvider<ab_list_bloc.BookingsListBloc>(
               create: (_) => di.sl<ab_list_bloc.BookingsListBloc>()
-                ..add(ab_list_bloc.LoadBookingsEvent(
+                ..add(ab_list_event.LoadBookingsEvent(
                   startDate: DateTime.now().subtract(const Duration(days: 30)),
                   endDate: DateTime.now(),
                   pageNumber: 1,
@@ -228,7 +267,8 @@ class AppRouter {
             final bookingId = state.pathParameters['bookingId']!;
             return BlocProvider<ab_details_bloc.BookingDetailsBloc>(
               create: (_) => di.sl<ab_details_bloc.BookingDetailsBloc>()
-                ..add(ab_details_bloc.LoadBookingDetailsEvent(bookingId: bookingId)),
+                ..add(ab_details_event.LoadBookingDetailsEvent(
+                    bookingId: bookingId)),
               child: BookingDetailsPage(bookingId: bookingId),
             );
           },
@@ -238,9 +278,9 @@ class AppRouter {
           builder: (context, state) {
             return BlocProvider<ab_cal_bloc.BookingCalendarBloc>(
               create: (_) => di.sl<ab_cal_bloc.BookingCalendarBloc>()
-                ..add(ab_cal_bloc.LoadCalendarBookingsEvent(
+                ..add(ab_cal_event.LoadCalendarBookingsEvent(
                   month: DateTime.now(),
-                  view: ab_cal_bloc.CalendarView.month,
+                  view: ab_cal_event.CalendarView.month,
                 )),
               child: const BookingCalendarPage(),
             );
@@ -261,7 +301,7 @@ class AppRouter {
             final now = DateTime.now();
             return BlocProvider<ab_an_bloc.BookingAnalyticsBloc>(
               create: (_) => di.sl<ab_an_bloc.BookingAnalyticsBloc>()
-                ..add(ab_an_bloc.LoadBookingAnalyticsEvent(
+                ..add(ab_an_event.LoadBookingAnalyticsEvent(
                   startDate: DateTime(now.year, now.month - 1, now.day),
                   endDate: now,
                 )),
@@ -273,13 +313,15 @@ class AppRouter {
         // قائمة المحادثات
         GoRoute(
           path: '/conversations',
-          pageBuilder: (context, state) => fadeTransitionPage(child: const ConversationsPage()),
+          pageBuilder: (context, state) =>
+              fadeTransitionPage(child: const ConversationsPage()),
         ),
 
         // Admin Hub
         GoRoute(
           path: '/admin',
-          pageBuilder: (context, state) => scaleFadeTransitionPage(child: const AdminHubPage()),
+          pageBuilder: (context, state) =>
+              scaleFadeTransitionPage(child: const AdminHubPage()),
         ),
 
         // Admin Units - list
@@ -287,7 +329,8 @@ class AppRouter {
           path: '/admin/units',
           builder: (context, state) {
             return BlocProvider<UnitsListBloc>(
-              create: (_) => di.sl<UnitsListBloc>()..add(LoadUnitsEvent()),
+              create: (_) =>
+                  di.sl<UnitsListBloc>()..add(const LoadUnitsEvent()),
               child: const UnitsListPage(),
             );
           },
@@ -299,7 +342,8 @@ class AppRouter {
           builder: (context, state) {
             return MultiBlocProvider(
               providers: [
-                BlocProvider<AvailabilityBloc>(create: (_) => di.sl<AvailabilityBloc>()),
+                BlocProvider<AvailabilityBloc>(
+                    create: (_) => di.sl<AvailabilityBloc>()),
                 BlocProvider<PricingBloc>(create: (_) => di.sl<PricingBloc>()),
               ],
               child: const AvailabilityPricingPage(),
@@ -314,7 +358,8 @@ class AppRouter {
             return MultiBlocProvider(
               providers: [
                 BlocProvider<UnitFormBloc>(
-              create: (_) => di.sl<UnitFormBloc>()..add(const InitializeFormEvent()),
+                  create: (_) =>
+                      di.sl<UnitFormBloc>()..add(const InitializeFormEvent()),
                 ),
                 BlocProvider<UnitImagesBloc>(
                   create: (_) => di.sl<UnitImagesBloc>(),
@@ -333,10 +378,12 @@ class AppRouter {
             return MultiBlocProvider(
               providers: [
                 BlocProvider<UnitFormBloc>(
-                  create: (_) => di.sl<UnitFormBloc>()..add(InitializeFormEvent(unitId: unitId)),
+                  create: (_) => di.sl<UnitFormBloc>()
+                    ..add(InitializeFormEvent(unitId: unitId)),
                 ),
                 BlocProvider<UnitDetailsBloc>(
-                  create: (_) => di.sl<UnitDetailsBloc>()..add(LoadUnitDetailsEvent(unitId: unitId)),
+                  create: (_) => di.sl<UnitDetailsBloc>()
+                    ..add(LoadUnitDetailsEvent(unitId: unitId)),
                 ),
                 BlocProvider<UnitImagesBloc>(
                   create: (_) => di.sl<UnitImagesBloc>(),
@@ -359,7 +406,8 @@ class AppRouter {
             return MultiBlocProvider(
               providers: [
                 BlocProvider<UnitDetailsBloc>(
-                  create: (_) => di.sl<UnitDetailsBloc>()..add(LoadUnitDetailsEvent(unitId: unitId)),
+                  create: (_) => di.sl<UnitDetailsBloc>()
+                    ..add(LoadUnitDetailsEvent(unitId: unitId)),
                 ),
                 BlocProvider<UnitImagesBloc>(
                   create: (_) => di.sl<UnitImagesBloc>(),
@@ -367,7 +415,6 @@ class AppRouter {
               ],
               child: UnitDetailsPage(unitId: unitId),
             );
-
           },
         ),
 
@@ -379,10 +426,12 @@ class AppRouter {
             final unit = state.extra as Unit?;
             return CustomTransitionPage(
               child: BlocProvider<UnitImagesBloc>(
-                create: (_) => di.sl<UnitImagesBloc>()..add(LoadUnitImagesEvent(unitId: unitId)),
+                create: (_) => di.sl<UnitImagesBloc>()
+                  ..add(LoadUnitImagesEvent(unitId: unitId)),
                 child: UnitGalleryPage(unitId: unitId, unit: unit),
               ),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
                 return FadeTransition(
                   opacity: animation,
                   child: child,
@@ -398,7 +447,9 @@ class AppRouter {
           builder: (context, state) {
             return MultiBlocProvider(
               providers: [
-                BlocProvider(create: (_) => di.sl<PropertyTypesBloc>()..add(const LoadPropertyTypesEvent())),
+                BlocProvider(
+                    create: (_) => di.sl<PropertyTypesBloc>()
+                      ..add(const LoadPropertyTypesEvent())),
                 BlocProvider(create: (_) => di.sl<UnitTypesBloc>()),
                 BlocProvider(create: (_) => di.sl<UnitTypeFieldsBloc>()),
               ],
@@ -412,7 +463,8 @@ class AppRouter {
           path: '/admin/properties',
           builder: (context, state) {
             return BlocProvider<ap_bloc.PropertiesBloc>(
-              create: (_) => di.sl<ap_bloc.PropertiesBloc>()..add(const ap_bloc.LoadPropertiesEvent()),
+              create: (_) => di.sl<ap_bloc.PropertiesBloc>()
+                ..add(const ap_bloc.LoadPropertiesEvent()),
               child: const ap_pages.PropertiesListPage(),
             );
           },
@@ -422,8 +474,10 @@ class AppRouter {
           builder: (context, state) {
             return MultiBlocProvider(
               providers: [
-                BlocProvider<ap_bloc.PropertiesBloc>(create: (_) => di.sl<ap_bloc.PropertiesBloc>()),
-                BlocProvider<ap_prop_pt_bloc.PropertyTypesBloc>(create: (_) => di.sl<ap_prop_pt_bloc.PropertyTypesBloc>()),
+                BlocProvider<ap_bloc.PropertiesBloc>(
+                    create: (_) => di.sl<ap_bloc.PropertiesBloc>()),
+                BlocProvider<ap_prop_pt_bloc.PropertyTypesBloc>(
+                    create: (_) => di.sl<ap_prop_pt_bloc.PropertyTypesBloc>()),
               ],
               child: const ap_pages.CreatePropertyPage(),
             );
@@ -445,8 +499,10 @@ class AppRouter {
             final propertyId = state.pathParameters['propertyId']!;
             return MultiBlocProvider(
               providers: [
-                BlocProvider<ap_bloc.PropertiesBloc>(create: (_) => di.sl<ap_bloc.PropertiesBloc>()),
-                BlocProvider<ap_prop_pt_bloc.PropertyTypesBloc>(create: (_) => di.sl<ap_prop_pt_bloc.PropertyTypesBloc>()),
+                BlocProvider<ap_bloc.PropertiesBloc>(
+                    create: (_) => di.sl<ap_bloc.PropertiesBloc>()),
+                BlocProvider<ap_prop_pt_bloc.PropertyTypesBloc>(
+                    create: (_) => di.sl<ap_prop_pt_bloc.PropertyTypesBloc>()),
               ],
               child: ap_pages.EditPropertyPage(propertyId: propertyId),
             );
@@ -468,7 +524,8 @@ class AppRouter {
           path: '/admin/services/create',
           builder: (context, state) {
             final extra = state.extra as Map<String, dynamic>?;
-            final initialPropertyId = extra != null ? extra['propertyId'] as String? : null;
+            final initialPropertyId =
+                extra != null ? extra['propertyId'] as String? : null;
             return BlocProvider<ServicesBloc>(
               create: (_) => di.sl<ServicesBloc>(),
               child: CreateServicePage(initialPropertyId: initialPropertyId),
@@ -521,7 +578,8 @@ class AppRouter {
               create: (_) => di.sl<aa_bloc.AmenitiesBloc>(),
               child: EditAmenityPage(
                 amenityId: amenityId,
-                initialAmenity: initialAmenity is Object ? initialAmenity as dynamic : null,
+                initialAmenity:
+                    initialAmenity is Object ? initialAmenity as dynamic : null,
               ),
             );
           },
@@ -531,7 +589,9 @@ class AppRouter {
         GoRoute(
           path: '/helpers/search/users',
           builder: (context, state) {
-            final params = state.extra is Map<String, dynamic> ? state.extra as Map<String, dynamic> : const {};
+            final params = state.extra is Map<String, dynamic>
+                ? state.extra as Map<String, dynamic>
+                : const {};
             return UserSearchPage(
               initialSearchTerm: params['initialSearchTerm'],
               allowMultiSelect: params['allowMultiSelect'] ?? false,
@@ -545,7 +605,9 @@ class AppRouter {
         GoRoute(
           path: '/helpers/search/properties',
           builder: (context, state) {
-            final params = state.extra is Map<String, dynamic> ? state.extra as Map<String, dynamic> : const {};
+            final params = state.extra is Map<String, dynamic>
+                ? state.extra as Map<String, dynamic>
+                : const {};
             return PropertySearchPage(
               initialSearchTerm: params['initialSearchTerm'],
               allowMultiSelect: params['allowMultiSelect'] ?? false,
@@ -559,7 +621,9 @@ class AppRouter {
         GoRoute(
           path: '/helpers/search/units',
           builder: (context, state) {
-            final params = state.extra is Map<String, dynamic> ? state.extra as Map<String, dynamic> : const {};
+            final params = state.extra is Map<String, dynamic>
+                ? state.extra as Map<String, dynamic>
+                : const {};
             return UnitSearchPage(
               initialSearchTerm: params['initialSearchTerm'],
               propertyId: params['propertyId'],
@@ -574,7 +638,9 @@ class AppRouter {
         GoRoute(
           path: '/helpers/search/cities',
           builder: (context, state) {
-            final params = state.extra is Map<String, dynamic> ? state.extra as Map<String, dynamic> : const {};
+            final params = state.extra is Map<String, dynamic>
+                ? state.extra as Map<String, dynamic>
+                : const {};
             return CitySearchPage(
               initialSearchTerm: params['initialSearchTerm'],
               country: params['country'],
@@ -589,7 +655,9 @@ class AppRouter {
         GoRoute(
           path: '/helpers/search/bookings',
           builder: (context, state) {
-            final params = state.extra is Map<String, dynamic> ? state.extra as Map<String, dynamic> : const {};
+            final params = state.extra is Map<String, dynamic>
+                ? state.extra as Map<String, dynamic>
+                : const {};
             return BookingSearchPage(
               initialSearchTerm: params['initialSearchTerm'],
               userId: params['userId'],
@@ -617,7 +685,8 @@ class AppRouter {
           path: '/admin/currencies',
           builder: (context, state) {
             return BlocProvider<ac_bloc.CurrenciesBloc>(
-              create: (_) => di.sl<ac_bloc.CurrenciesBloc>()..add(ac_events.LoadCurrenciesEvent()),
+              create: (_) => di.sl<ac_bloc.CurrenciesBloc>()
+                ..add(ac_events.LoadCurrenciesEvent()),
               child: const ac_pages.CurrenciesManagementPage(),
             );
           },
@@ -626,11 +695,13 @@ class AppRouter {
         // Notifications
         GoRoute(
           path: '/notifications',
-          pageBuilder: (context, state) => fadeTransitionPage(child: const NotificationsPage()),
+          pageBuilder: (context, state) =>
+              fadeTransitionPage(child: const NotificationsPage()),
         ),
         GoRoute(
           path: '/notifications/settings',
-          pageBuilder: (context, state) => slideUpTransitionPage(child: const NotificationSettingsPage()),
+          pageBuilder: (context, state) =>
+              slideUpTransitionPage(child: const NotificationSettingsPage()),
         ),
 
         // Admin Cities
@@ -669,7 +740,8 @@ class AppRouter {
           path: '/admin/users',
           builder: (context, state) {
             return BlocProvider<au_list_bloc.UsersListBloc>(
-              create: (_) => di.sl<au_list_bloc.UsersListBloc>()..add(au_list_bloc.LoadUsersEvent()),
+              create: (_) => di.sl<au_list_bloc.UsersListBloc>()
+                ..add(au_list_bloc.LoadUsersEvent()),
               child: const au_pages.UsersListPage(),
             );
           },
@@ -712,7 +784,8 @@ class AppRouter {
           builder: (context, state) {
             final userId = state.pathParameters['userId']!;
             return BlocProvider<au_details_bloc.UserDetailsBloc>(
-              create: (_) => di.sl<au_details_bloc.UserDetailsBloc>()..add(au_details_bloc.LoadUserDetailsEvent(userId: userId)),
+              create: (_) => di.sl<au_details_bloc.UserDetailsBloc>()
+                ..add(au_details_bloc.LoadUserDetailsEvent(userId: userId)),
               child: au_pages.UserDetailsPage(userId: userId),
             );
           },
@@ -755,11 +828,11 @@ class AppRouter {
           builder: (context, state) {
             final conversationId = state.pathParameters['conversationId']!;
             final conversation = state.extra as Conversation?;
-            
+
             if (conversation != null) {
               return ChatPage(conversation: conversation);
             }
-            
+
             // إذا لم تمرر المحادثة كـ extra، قم بتحميلها
             return ConversationLoader(conversationId: conversationId);
           },
@@ -767,7 +840,6 @@ class AppRouter {
       ],
     );
   }
-
 
   static const List<String> _protectedPaths = <String>[
     '/profile',
