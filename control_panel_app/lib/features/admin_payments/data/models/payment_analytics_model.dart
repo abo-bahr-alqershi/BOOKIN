@@ -59,12 +59,12 @@ class PaymentAnalyticsModel extends PaymentAnalytics {
       'summary': (summary as PaymentSummaryModel).toJson(),
       'trends': trends.map((t) => (t as PaymentTrendModel).toJson()).toList(),
       'methodAnalytics': methodAnalytics.map(
-        (k, v) =>
-            MapEntry(k.displayNameEn, (v as MethodAnalyticsModel).toJson()),
+        (k, v) => MapEntry(k.backendValue.toString(),
+            (v as MethodAnalyticsModel).toJson()),
       ),
       'statusAnalytics': statusAnalytics.map(
-        (k, v) => MapEntry(k.displayNameEn,
-            (v as StatusAnalyticsModel).toJson()),
+        (k, v) => MapEntry(
+            k.backendKey, (v as StatusAnalyticsModel).toJson()),
       ),
       'refundAnalytics': (refundAnalytics as RefundAnalyticsModel).toJson(),
       'startDate': startDate.toIso8601String(),

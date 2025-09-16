@@ -193,6 +193,24 @@ enum PaymentStatus {
 
 /// Extension for PaymentStatus enum
 extension PaymentStatusExtension on PaymentStatus {
+  /// Backend key used in APIs
+  String get backendKey {
+    switch (this) {
+      case PaymentStatus.successful:
+        return 'successful';
+      case PaymentStatus.failed:
+        return 'failed';
+      case PaymentStatus.pending:
+        return 'pending';
+      case PaymentStatus.refunded:
+        return 'refunded';
+      case PaymentStatus.voided:
+        return 'voided';
+      case PaymentStatus.partiallyRefunded:
+        return 'partially_refunded';
+    }
+  }
+
   /// Get display name in Arabic
   String get displayNameAr {
     switch (this) {

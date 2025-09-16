@@ -80,7 +80,7 @@ class PaymentModel extends Payment {
       'amount': (amount as MoneyModel).toJson(),
       'transactionId': transactionId,
       'method': method.backendValue,
-      'status': status.displayNameEn,
+      'status': status.backendKey,
       'paymentDate': paymentDate.toIso8601String(),
       if (userId != null) 'userId': userId,
       if (userName != null) 'userName': userName,

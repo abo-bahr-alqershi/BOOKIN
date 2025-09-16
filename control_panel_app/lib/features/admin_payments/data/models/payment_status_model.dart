@@ -28,7 +28,7 @@ class PaymentStatusModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'status': status.displayNameEn,
+      'status': status.backendKey,
       'count': count,
       'percentage': percentage,
       'totalAmount': totalAmount,
