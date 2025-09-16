@@ -71,6 +71,8 @@ dependencies:
   smooth_page_indicator: ^1.0.0
   visibility_detector: ^0.4.0
   qr_flutter: ^4.1.0
+  table_calendar: ^3.1.2
+  timeline_tile: ^2.0.0
   
   # Navigation
   go_router: ^14.2.7

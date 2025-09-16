@@ -199,7 +199,7 @@ class _BookingActionsDialogState extends State<BookingActionsDialog>
             ),
           ),
           const SizedBox(height: 16),
-          ..._ cancellationReasons.map((reason) {
+          ..._cancellationReasons.map((reason) {
             return _buildReasonOption(reason);
           }).toList(),
           if (_selectedReason == 'سبب آخر') ...[

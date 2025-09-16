@@ -221,7 +221,7 @@ class _BookingAnalyticsChartsState extends State<BookingAnalyticsCharts>
   Widget _buildBookingTrendsChart() {
     return _ChartContainer(
       title: 'اتجاهات الحجوزات',
-      icon: CupertinoIcons.chart_line_up,
+      icon: Icons.show_chart,
       gradientColors: [AppTheme.primaryBlue, AppTheme.primaryPurple],
       child: SizedBox(
         height: 200,
