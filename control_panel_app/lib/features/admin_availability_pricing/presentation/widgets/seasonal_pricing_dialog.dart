@@ -9,24 +9,35 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/pricing.dart';
 import '../../domain/entities/seasonal_pricing.dart';
 import '../bloc/pricing/pricing_bloc.dart';
+import '../../domain/usecases/pricing/apply_seasonal_pricing_usecase.dart';
 
 class SeasonalPricingDialog extends StatefulWidget {
   final String unitId;
+  final DateTime? initialStartDate;
+  final DateTime? initialEndDate;
 
   const SeasonalPricingDialog({
     super.key,
     required this.unitId,
+    this.initialStartDate,
+    this.initialEndDate,
   });
 
   static Future<void> show(
     BuildContext context, {
     required String unitId,
+    DateTime? initialStartDate,
+    DateTime? initialEndDate,
   }) async {
     return showDialog(
       context: context,
       barrierDismissible: false,
       barrierColor: AppTheme.overlayDark,
-      builder: (context) => SeasonalPricingDialog(unitId: unitId),
+      builder: (context) => SeasonalPricingDialog(
+        unitId: unitId,
+        initialStartDate: initialStartDate,
+        initialEndDate: initialEndDate,
+      ),
     );
   }
 
@@ -98,6 +109,10 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
     ));
 
     _animationController.forward();
+
+    // Prefill dates if provided
+    _startDate = widget.initialStartDate;
+    _endDate = widget.initialEndDate ?? widget.initialStartDate;
   }
 
   @override
@@ -572,6 +587,10 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
   }
 
   Widget _buildActions() {
+    final canApply = _selectedTemplate != null &&
+        _startDate != null &&
+        _endDate != null &&
+        !_isSubmitting;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -592,22 +611,25 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppTheme.darkSurface.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppTheme.darkBorder.withOpacity(0.3),
-                    width: 1,
+              onTap: _isSubmitting ? null : () => Navigator.of(context).pop(),
+              child: Opacity(
+                opacity: _isSubmitting ? 0.6 : 1,
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppTheme.darkSurface.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.darkBorder.withOpacity(0.3),
+                      width: 1,
+                    ),
                   ),
-                ),
-                child: Center(
-                  child: Text(
-                    'إلغاء',
-                    style: AppTextStyles.buttonMedium.copyWith(
-                      color: AppTheme.textMuted,
+                  child: Center(
+                    child: Text(
+                      'إلغاء',
+                      style: AppTextStyles.buttonMedium.copyWith(
+                        color: AppTheme.textMuted,
+                      ),
                     ),
                   ),
                 ),
@@ -618,27 +640,41 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
           Expanded(
             flex: 2,
             child: GestureDetector(
-              onTap: _handleApply,
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryBlue.withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    'تطبيق التسعير',
-                    style: AppTextStyles.buttonMedium.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+              onTap: canApply ? _handleApply : null,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 150),
+                opacity: canApply ? 1 : 0.6,
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primaryBlue.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Text(
+                            'تطبيق التسعير',
+                            style: AppTextStyles.buttonMedium.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -650,11 +686,16 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
   }
 
   Future<void> _selectDate(bool isStart) async {
+    final initial = isStart
+        ? (_startDate ?? DateTime.now())
+        : (_endDate ?? _startDate ?? DateTime.now());
+    final first = DateTime.now().subtract(const Duration(days: 365));
+    final last = DateTime.now().add(const Duration(days: 365 * 3));
     final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDate: initial,
+      firstDate: first,
+      lastDate: last,
       builder: (context, child) {
         return Theme(
           data: ThemeData.dark().copyWith(
@@ -674,15 +715,22 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
       setState(() {
         if (isStart) {
           _startDate = picked;
+          if (_endDate != null && picked.isAfter(_endDate!)) {
+            _endDate = picked;
+          }
         } else {
           _endDate = picked;
+          if (_startDate != null && picked.isBefore(_startDate!)) {
+            _startDate = picked;
+          }
         }
       });
     }
   }
 
   Future<void> _handleApply() async {
-    if (_selectedTemplate == null || _startDate == null || _endDate == null) return;
+    if (_selectedTemplate == null || _startDate == null || _endDate == null)
+      return;
     if (_endDate!.isBefore(_startDate!)) return;
 
     HapticFeedback.selectionClick();
