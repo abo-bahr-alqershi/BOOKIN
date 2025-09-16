@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../../../core/enums/payment_method_enum.dart';
 import 'booking.dart';
 
 /// 📋 Entity لتفاصيل الحجز الكاملة
@@ -24,7 +25,7 @@ class BookingDetails extends Equatable {
   /// حساب إجمالي المدفوعات
   Money get totalPaid {
     final total = payments
-        .where((p) => p.status == 'Successful')
+        .where((p) => p.status == PaymentStatus.successful)
         .fold(0.0, (sum, payment) => sum + payment.amount.amount);
 
     return Money(
@@ -71,8 +72,8 @@ class Payment extends Equatable {
   final String bookingId;
   final Money amount;
   final String transactionId;
-  final String method;
-  final String status;
+  final PaymentMethod method;
+  final PaymentStatus status;
   final DateTime paymentDate;
   final String? refundReason;
   final DateTime? refundedAt;

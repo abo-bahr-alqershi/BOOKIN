@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../../../../../core/enums/payment_method_enum.dart'
-    hide PaymentStatus;
+import '../../../../../../core/enums/payment_method_enum.dart';
 import '../../../domain/entities/payment.dart';
 
 abstract class PaymentsListEvent extends Equatable {

@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../../../../../core/models/paginated_result.dart';
-import '../../../../../../core/enums/payment_method_enum.dart'
-    hide PaymentStatus;
+import '../../../../../../core/enums/payment_method_enum.dart';
 import '../../../domain/entities/payment.dart';
 import 'payments_list_event.dart';
 

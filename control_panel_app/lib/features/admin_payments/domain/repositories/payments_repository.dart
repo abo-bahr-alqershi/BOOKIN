@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 import '../../../../../core/error/failures.dart';
 import '../../../../../core/models/paginated_result.dart';
-import '../../../../../core/enums/payment_method_enum.dart' hide PaymentStatus;
+import '../../../../../core/enums/payment_method_enum.dart';
 import '../entities/payment.dart';
 import '../entities/payment_details.dart';
 import '../entities/payment_analytics.dart';

@@ -196,7 +196,7 @@ class BookingsRemoteDataSourceImpl implements BookingsRemoteDataSource {
   Future<bool> confirmBooking({required String bookingId}) async {
     try {
       final response = await apiClient.post(
-        '$_baseEndpoint/confirm',
+        '$_baseEndpoint/$bookingId/confirm',
         data: {'bookingId': bookingId},
       );
 

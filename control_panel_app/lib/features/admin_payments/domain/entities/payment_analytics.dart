@@ -1,5 +1,4 @@
-import 'package:bookn_cp_app/core/enums/payment_method_enum.dart'
-    hide PaymentStatus;
+import 'package:bookn_cp_app/core/enums/payment_method_enum.dart';
 import 'package:equatable/equatable.dart';
 import 'payment.dart';
 

@@ -3,7 +3,7 @@ import '../../../../../core/error/exceptions.dart';
 import '../../../../../core/error/failures.dart';
 import '../../../../../core/models/paginated_result.dart';
 import '../../../../../core/network/network_info.dart';
-import '../../../../../core/enums/payment_method_enum.dart' hide PaymentStatus;
+import '../../../../../core/enums/payment_method_enum.dart';
 import '../../domain/entities/payment.dart';
 import '../../domain/entities/payment_details.dart';
 import '../../domain/entities/payment_analytics.dart';

@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../../../core/error/failures.dart';
 import '../../../../../../core/usecases/usecase.dart';
+import '../../../../../../core/enums/payment_method_enum.dart';
 import '../../entities/payment.dart';
 import '../../repositories/payments_repository.dart';
 

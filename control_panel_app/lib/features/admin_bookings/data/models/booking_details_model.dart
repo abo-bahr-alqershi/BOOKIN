@@ -1,6 +1,7 @@
 import '../../domain/entities/booking.dart';
 import '../../domain/entities/booking_details.dart';
 import 'booking_model.dart';
+import '../../../../../core/enums/payment_method_enum.dart';
 
 class BookingDetailsModel extends BookingDetails {
   const BookingDetailsModel({
@@ -75,8 +76,8 @@ class PaymentModel extends Payment {
       bookingId: json['bookingId']?.toString() ?? '',
       amount: MoneyModel.fromJson(json['amount']),
       transactionId: json['transactionId'] ?? '',
-      method: json['method'] ?? 'Cash',
-      status: json['status'] ?? 'Pending',
+      method: _parsePaymentMethod(json['method']),
+      status: _parsePaymentStatus(json['status']),
       paymentDate: DateTime.parse(json['paymentDate']),
       refundReason: json['refundReason'],
       refundedAt: json['refundedAt'] != null
@@ -92,13 +93,29 @@ class PaymentModel extends Payment {
       'bookingId': bookingId,
       'amount': (amount as MoneyModel).toJson(),
       'transactionId': transactionId,
-      'method': method,
-      'status': status,
+      'method': method.backendValue,
+      'status': status.displayNameEn,
       'paymentDate': paymentDate.toIso8601String(),
       if (refundReason != null) 'refundReason': refundReason,
       if (refundedAt != null) 'refundedAt': refundedAt!.toIso8601String(),
       if (receiptUrl != null) 'receiptUrl': receiptUrl,
     };
+  }
+
+  static PaymentMethod _parsePaymentMethod(dynamic method) {
+    if (method == null) return PaymentMethod.cash;
+    if (method is int) {
+      return PaymentMethodExtension.fromBackendValue(method);
+    }
+    if (method is String) {
+      return PaymentMethodExtension.fromString(method);
+    }
+    return PaymentMethod.cash;
+  }
+
+  static PaymentStatus _parsePaymentStatus(dynamic status) {
+    if (status == null) return PaymentStatus.pending;
+    return PaymentStatusExtension.fromString(status.toString());
   }
 }
 
