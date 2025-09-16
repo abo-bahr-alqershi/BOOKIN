@@ -94,8 +94,8 @@ class BookingAnalyticsBloc
 
       if (report != null && trends != null) {
         emit(BookingAnalyticsLoaded(
-          report: report,
-          trends: trends,
+          report: report!,
+          trends: trends!,
           windowAnalysis: windowAnalysis,
           startDate: event.startDate,
           endDate: event.endDate,

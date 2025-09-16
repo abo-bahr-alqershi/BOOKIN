@@ -295,6 +295,37 @@ import 'features/admin_availability_pricing/domain/usecases/pricing/copy_pricing
 import 'features/admin_availability_pricing/domain/usecases/pricing/delete_pricing_usecase.dart' as aap_pr_uc_delete;
 import 'features/admin_availability_pricing/domain/usecases/pricing/apply_seasonal_pricing_usecase.dart' as aap_pr_uc_apply;
 
+// Features - Admin Bookings (DI for repository + upcoming bookings use case)
+import 'features/admin_bookings/domain/repositories/bookings_repository.dart' as ab_repo;
+import 'features/admin_bookings/data/repositories/bookings_repository_impl.dart' as ab_repo_impl;
+import 'features/admin_bookings/data/datasources/bookings_remote_datasource.dart' as ab_ds_remote;
+import 'features/admin_bookings/data/datasources/bookings_local_datasource.dart' as ab_ds_local;
+import 'features/admin_bookings/domain/usecases/bookings/get_upcoming_bookings_usecase.dart' as ab_uc_upcoming;
+// Admin Bookings - Bookings use cases
+import 'features/admin_bookings/domain/usecases/bookings/cancel_booking_usecase.dart' as ab_uc_cancel;
+import 'features/admin_bookings/domain/usecases/bookings/update_booking_usecase.dart' as ab_uc_update;
+import 'features/admin_bookings/domain/usecases/bookings/confirm_booking_usecase.dart' as ab_uc_confirm;
+import 'features/admin_bookings/domain/usecases/bookings/check_in_usecase.dart' as ab_uc_checkin;
+import 'features/admin_bookings/domain/usecases/bookings/check_out_usecase.dart' as ab_uc_checkout;
+import 'features/admin_bookings/domain/usecases/bookings/get_booking_by_id_usecase.dart' as ab_uc_get_by_id;
+import 'features/admin_bookings/domain/usecases/bookings/get_bookings_by_date_range_usecase.dart' as ab_uc_get_by_range;
+import 'features/admin_bookings/domain/usecases/bookings/get_bookings_by_property_usecase.dart' as ab_uc_get_by_property;
+import 'features/admin_bookings/domain/usecases/bookings/get_bookings_by_status_usecase.dart' as ab_uc_get_by_status;
+import 'features/admin_bookings/domain/usecases/bookings/get_bookings_by_user_usecase.dart' as ab_uc_get_by_user;
+import 'features/admin_bookings/domain/usecases/bookings/get_bookings_by_unit_usecase.dart' as ab_uc_get_by_unit;
+import 'features/admin_bookings/domain/usecases/bookings/complete_booking_usecase.dart' as ab_uc_complete;
+// Admin Bookings - Services use cases
+import 'features/admin_bookings/domain/usecases/services/add_service_to_booking_usecase.dart' as ab_uc_add_service;
+import 'features/admin_bookings/domain/usecases/services/remove_service_from_booking_usecase.dart' as ab_uc_remove_service;
+import 'features/admin_bookings/domain/usecases/services/get_booking_services_usecase.dart' as ab_uc_get_services;
+// Admin Bookings - Reports use cases
+import 'features/admin_bookings/domain/usecases/reports/get_booking_report_usecase.dart' as ab_uc_report;
+import 'features/admin_bookings/domain/usecases/reports/get_booking_trends_usecase.dart' as ab_uc_trends;
+import 'features/admin_bookings/domain/usecases/reports/get_booking_window_analysis_usecase.dart' as ab_uc_window;
+// Admin Bookings - Blocs
+import 'features/admin_bookings/presentation/bloc/bookings_list/bookings_list_bloc.dart' as ab_list_bloc;
+import 'features/admin_bookings/presentation/bloc/booking_details/booking_details_bloc.dart' as ab_details_bloc;
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
@@ -339,6 +370,9 @@ Future<void> init() async {
 
 	// Features - Helpers (search/filter facades)
 	_initHelpers();
+
+	// Features - Admin Bookings (repository + use cases)
+	_initAdminBookings();
 
 	// Theme
   _initTheme();
@@ -1027,6 +1061,72 @@ void _initAdminUsers() {
   // Data sources
   sl.registerLazySingleton<au_ds_remote.UsersRemoteDataSource>(() => au_ds_remote.UsersRemoteDataSourceImpl(sl()));
   sl.registerLazySingleton<au_ds_local.UsersLocalDataSource>(() => au_ds_local.UsersLocalDataSourceImpl(sharedPreferences: sl()));
+}
+
+void _initAdminBookings() {
+  // Blocs
+  sl.registerFactory(() => ab_list_bloc.BookingsListBloc(
+        cancelBookingUseCase: sl<ab_uc_cancel.CancelBookingUseCase>(),
+        updateBookingUseCase: sl<ab_uc_update.UpdateBookingUseCase>(),
+        confirmBookingUseCase: sl<ab_uc_confirm.ConfirmBookingUseCase>(),
+        getBookingsByDateRangeUseCase: sl<ab_uc_get_by_range.GetBookingsByDateRangeUseCase>(),
+        checkInUseCase: sl<ab_uc_checkin.CheckInUseCase>(),
+        checkOutUseCase: sl<ab_uc_checkout.CheckOutUseCase>(),
+      ));
+  sl.registerFactory(() => ab_details_bloc.BookingDetailsBloc(
+        getBookingByIdUseCase: sl<ab_uc_get_by_id.GetBookingByIdUseCase>(),
+        cancelBookingUseCase: sl<ab_uc_cancel.CancelBookingUseCase>(),
+        updateBookingUseCase: sl<ab_uc_update.UpdateBookingUseCase>(),
+        confirmBookingUseCase: sl<ab_uc_confirm.ConfirmBookingUseCase>(),
+        checkInUseCase: sl<ab_uc_checkin.CheckInUseCase>(),
+        checkOutUseCase: sl<ab_uc_checkout.CheckOutUseCase>(),
+        addServiceToBookingUseCase: sl<ab_uc_add_service.AddServiceToBookingUseCase>(),
+        removeServiceFromBookingUseCase: sl<ab_uc_remove_service.RemoveServiceFromBookingUseCase>(),
+        getBookingServicesUseCase: sl<ab_uc_get_services.GetBookingServicesUseCase>(),
+        repository: sl<ab_repo.BookingsRepository>(),
+      ));
+
+  // Use cases - bookings
+  sl.registerLazySingleton<ab_uc_cancel.CancelBookingUseCase>(() => ab_uc_cancel.CancelBookingUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_update.UpdateBookingUseCase>(() => ab_uc_update.UpdateBookingUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_confirm.ConfirmBookingUseCase>(() => ab_uc_confirm.ConfirmBookingUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_checkin.CheckInUseCase>(() => ab_uc_checkin.CheckInUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_checkout.CheckOutUseCase>(() => ab_uc_checkout.CheckOutUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_get_by_id.GetBookingByIdUseCase>(() => ab_uc_get_by_id.GetBookingByIdUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_get_by_range.GetBookingsByDateRangeUseCase>(() => ab_uc_get_by_range.GetBookingsByDateRangeUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_get_by_property.GetBookingsByPropertyUseCase>(() => ab_uc_get_by_property.GetBookingsByPropertyUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_get_by_status.GetBookingsByStatusUseCase>(() => ab_uc_get_by_status.GetBookingsByStatusUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_get_by_user.GetBookingsByUserUseCase>(() => ab_uc_get_by_user.GetBookingsByUserUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_get_by_unit.GetBookingsByUnitUseCase>(() => ab_uc_get_by_unit.GetBookingsByUnitUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_complete.CompleteBookingUseCase>(() => ab_uc_complete.CompleteBookingUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_upcoming.GetUpcomingBookingsUseCase>(() => ab_uc_upcoming.GetUpcomingBookingsUseCase(sl()));
+
+  // Use cases - services
+  sl.registerLazySingleton<ab_uc_add_service.AddServiceToBookingUseCase>(() => ab_uc_add_service.AddServiceToBookingUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_remove_service.RemoveServiceFromBookingUseCase>(() => ab_uc_remove_service.RemoveServiceFromBookingUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_get_services.GetBookingServicesUseCase>(() => ab_uc_get_services.GetBookingServicesUseCase(sl()));
+
+  // Use cases - reports
+  sl.registerLazySingleton<ab_uc_report.GetBookingReportUseCase>(() => ab_uc_report.GetBookingReportUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_trends.GetBookingTrendsUseCase>(() => ab_uc_trends.GetBookingTrendsUseCase(sl()));
+  sl.registerLazySingleton<ab_uc_window.GetBookingWindowAnalysisUseCase>(() => ab_uc_window.GetBookingWindowAnalysisUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<ab_repo.BookingsRepository>(
+    () => ab_repo_impl.BookingsRepositoryImpl(
+      remoteDataSource: sl(),
+      localDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<ab_ds_remote.BookingsRemoteDataSource>(
+    () => ab_ds_remote.BookingsRemoteDataSourceImpl(apiClient: sl()),
+  );
+  sl.registerLazySingleton<ab_ds_local.BookingsLocalDataSource>(
+    () => ab_ds_local.BookingsLocalDataSourceImpl(sharedPreferences: sl()),
+  );
 }
 
 void _initTheme() {
