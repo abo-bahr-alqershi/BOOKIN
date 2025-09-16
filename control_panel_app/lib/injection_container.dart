@@ -325,6 +325,32 @@ import 'features/admin_bookings/domain/usecases/reports/get_booking_window_analy
 // Admin Bookings - Blocs
 import 'features/admin_bookings/presentation/bloc/bookings_list/bookings_list_bloc.dart' as ab_list_bloc;
 import 'features/admin_bookings/presentation/bloc/booking_details/booking_details_bloc.dart' as ab_details_bloc;
+import 'features/admin_bookings/presentation/bloc/booking_calendar/booking_calendar_bloc.dart' as ab_cal_bloc;
+import 'features/admin_bookings/presentation/bloc/booking_analytics/booking_analytics_bloc.dart' as ab_an_bloc;
+
+// Payments feature imports
+import 'features/admin_payments/presentation/bloc/payments_list/payments_list_bloc.dart' as pay_list_bloc;
+import 'features/admin_payments/presentation/bloc/payment_details/payment_details_bloc.dart' as pay_details_bloc;
+import 'features/admin_payments/presentation/bloc/payment_refund/payment_refund_bloc.dart' as pay_refund_bloc;
+import 'features/admin_payments/domain/repositories/payments_repository.dart' as pay_repo;
+import 'features/admin_payments/data/repositories/payments_repository_impl.dart' as pay_repo_impl;
+import 'features/admin_payments/data/datasources/payments_remote_datasource.dart' as pay_ds_remote;
+import 'features/admin_payments/data/datasources/payments_local_datasource.dart' as pay_ds_local;
+import 'features/admin_payments/domain/usecases/payments/get_all_payments_usecase.dart' as pay_uc_get_all;
+import 'features/admin_payments/domain/usecases/payments/get_payment_by_id_usecase.dart' as pay_uc_get_by_id;
+import 'features/admin_payments/domain/usecases/payments/refund_payment_usecase.dart' as pay_uc_refund;
+import 'features/admin_payments/domain/usecases/payments/void_payment_usecase.dart' as pay_uc_void;
+import 'features/admin_payments/domain/usecases/payments/update_payment_status_usecase.dart' as pay_uc_update_status;
+import 'features/admin_payments/domain/usecases/payments/process_payment_usecase.dart' as pay_uc_process;
+import 'features/admin_payments/domain/usecases/queries/get_payments_by_booking_usecase.dart' as pay_uc_by_booking;
+import 'features/admin_payments/domain/usecases/queries/get_payments_by_status_usecase.dart' as pay_uc_by_status;
+import 'features/admin_payments/domain/usecases/queries/get_payments_by_user_usecase.dart' as pay_uc_by_user;
+import 'features/admin_payments/domain/usecases/queries/get_payments_by_property_usecase.dart' as pay_uc_by_property;
+import 'features/admin_payments/domain/usecases/queries/get_payments_by_method_usecase.dart' as pay_uc_by_method;
+import 'features/admin_payments/domain/usecases/analytics/get_payment_analytics_usecase.dart' as pay_uc_analytics;
+import 'features/admin_payments/domain/usecases/analytics/get_revenue_report_usecase.dart' as pay_uc_revenue;
+import 'features/admin_payments/domain/usecases/analytics/get_payment_trends_usecase.dart' as pay_uc_trends;
+import 'features/admin_payments/domain/usecases/analytics/get_refund_statistics_usecase.dart' as pay_uc_refund_stats;
 
 final sl = GetIt.instance;
 
@@ -373,6 +399,9 @@ Future<void> init() async {
 
 	// Features - Admin Bookings (repository + use cases)
 	_initAdminBookings();
+
+	// Features - Admin Payments
+	_initAdminPayments();
 
 	// Theme
   _initTheme();
@@ -1120,6 +1149,18 @@ void _initAdminBookings() {
     ),
   );
 
+  // Calendar & Analytics Blocs
+  sl.registerFactory(() => ab_cal_bloc.BookingCalendarBloc(
+        getBookingsByDateRangeUseCase: sl(),
+        getBookingsByUnitUseCase: sl(),
+        getBookingsByPropertyUseCase: sl(),
+      ));
+  sl.registerFactory(() => ab_an_bloc.BookingAnalyticsBloc(
+        getBookingReportUseCase: sl(),
+        getBookingTrendsUseCase: sl(),
+        getBookingWindowAnalysisUseCase: sl(),
+      ));
+
   // Data sources
   sl.registerLazySingleton<ab_ds_remote.BookingsRemoteDataSource>(
     () => ab_ds_remote.BookingsRemoteDataSourceImpl(apiClient: sl()),
@@ -1127,6 +1168,60 @@ void _initAdminBookings() {
   sl.registerLazySingleton<ab_ds_local.BookingsLocalDataSource>(
     () => ab_ds_local.BookingsLocalDataSourceImpl(sharedPreferences: sl()),
   );
+}
+
+void _initAdminPayments() {
+  // Blocs
+  sl.registerFactory(() => pay_list_bloc.PaymentsListBloc(
+        refundPaymentUseCase: sl(),
+        voidPaymentUseCase: sl(),
+        updatePaymentStatusUseCase: sl(),
+        getAllPaymentsUseCase: sl(),
+      ));
+  sl.registerFactory(() => pay_details_bloc.PaymentDetailsBloc(
+        getPaymentByIdUseCase: sl(),
+        refundPaymentUseCase: sl(),
+        voidPaymentUseCase: sl(),
+        updatePaymentStatusUseCase: sl(),
+        repository: sl(),
+      ));
+  sl.registerFactory(() => pay_refund_bloc.PaymentRefundBloc(
+        refundPaymentUseCase: sl(),
+        getPaymentByIdUseCase: sl(),
+        repository: sl(),
+      ));
+
+  // Use cases - payments commands
+  sl.registerLazySingleton<pay_uc_refund.RefundPaymentUseCase>(() => pay_uc_refund.RefundPaymentUseCase(sl()));
+  sl.registerLazySingleton<pay_uc_void.VoidPaymentUseCase>(() => pay_uc_void.VoidPaymentUseCase(sl()));
+  sl.registerLazySingleton<pay_uc_update_status.UpdatePaymentStatusUseCase>(() => pay_uc_update_status.UpdatePaymentStatusUseCase(sl()));
+  sl.registerLazySingleton<pay_uc_process.ProcessPaymentUseCase>(() => pay_uc_process.ProcessPaymentUseCase(sl()));
+  sl.registerLazySingleton<pay_uc_get_by_id.GetPaymentByIdUseCase>(() => pay_uc_get_by_id.GetPaymentByIdUseCase(sl()));
+
+  // Use cases - payments queries
+  sl.registerLazySingleton<pay_uc_get_all.GetAllPaymentsUseCase>(() => pay_uc_get_all.GetAllPaymentsUseCase(sl()));
+  sl.registerLazySingleton<pay_uc_by_booking.GetPaymentsByBookingUseCase>(() => pay_uc_by_booking.GetPaymentsByBookingUseCase(sl()));
+  sl.registerLazySingleton<pay_uc_by_status.GetPaymentsByStatusUseCase>(() => pay_uc_by_status.GetPaymentsByStatusUseCase(sl()));
+  sl.registerLazySingleton<pay_uc_by_user.GetPaymentsByUserUseCase>(() => pay_uc_by_user.GetPaymentsByUserUseCase(sl()));
+  sl.registerLazySingleton<pay_uc_by_property.GetPaymentsByPropertyUseCase>(() => pay_uc_by_property.GetPaymentsByPropertyUseCase(sl()));
+  sl.registerLazySingleton<pay_uc_by_method.GetPaymentsByMethodUseCase>(() => pay_uc_by_method.GetPaymentsByMethodUseCase(sl()));
+
+  // Use cases - analytics
+  sl.registerLazySingleton<pay_uc_analytics.GetPaymentAnalyticsUseCase>(() => pay_uc_analytics.GetPaymentAnalyticsUseCase(sl()));
+  sl.registerLazySingleton<pay_uc_revenue.GetRevenueReportUseCase>(() => pay_uc_revenue.GetRevenueReportUseCase(sl()));
+  sl.registerLazySingleton<pay_uc_trends.GetPaymentTrendsUseCase>(() => pay_uc_trends.GetPaymentTrendsUseCase(sl()));
+  sl.registerLazySingleton<pay_uc_refund_stats.GetRefundStatisticsUseCase>(() => pay_uc_refund_stats.GetRefundStatisticsUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<pay_repo.PaymentsRepository>(() => pay_repo_impl.PaymentsRepositoryImpl(
+        remoteDataSource: sl(),
+        localDataSource: sl(),
+        networkInfo: sl(),
+      ));
+
+  // Data sources
+  sl.registerLazySingleton<pay_ds_remote.PaymentsRemoteDataSource>(() => pay_ds_remote.PaymentsRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<pay_ds_local.PaymentsLocalDataSource>(() => pay_ds_local.PaymentsLocalDataSourceImpl(sharedPreferences: sl()));
 }
 
 void _initTheme() {

@@ -1427,6 +1427,14 @@ class _AdminHubPageState extends State<AdminHubPage>
   // Admin Features List
   List<_AdminFeature> get _adminFeatures => [
     _AdminFeature(
+      title: 'الحجوزات',
+      description: 'إدارة الحجوزات والتقويم والتحليلات',
+      icon: Icons.event_available_rounded,
+      gradient: [AppTheme.primaryBlue, AppTheme.neonBlue],
+      onTap: () => context.push('/admin/bookings'),
+      count: _stats['bookings'],
+    ),
+    _AdminFeature(
       title: 'العقارات',
       description: 'إدارة جميع العقارات',
       icon: Icons.apartment_rounded,
