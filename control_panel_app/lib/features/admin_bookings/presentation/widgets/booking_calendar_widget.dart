@@ -6,13 +6,13 @@ import 'package:table_calendar/table_calendar.dart';
 import 'dart:ui';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../bloc/booking_calendar/booking_calendar_state.dart';
-import '../bloc/booking_calendar/booking_calendar_event.dart';
+import '../bloc/booking_calendar/booking_calendar_state.dart' as ab_cal_state;
+import '../bloc/booking_calendar/booking_calendar_event.dart' as ab_cal_event;
 
 class BookingCalendarWidget extends StatefulWidget {
-  final Map<DateTime, List<CalendarEvent>> calendarData;
+  final Map<DateTime, List<ab_cal_state.CalendarEvent>> calendarData;
   final DateTime currentMonth;
-  final CalendarView currentView;
+  final ab_cal_event.CalendarView currentView;
   final DateTime? selectedDate;
   final Function(DateTime) onDateSelected;
   final Function(DateTime) onMonthChanged;
@@ -44,11 +44,11 @@ class _BookingCalendarWidgetState extends State<BookingCalendarWidget> {
 
   CalendarFormat _getCalendarFormat() {
     switch (widget.currentView) {
-      case CalendarView.month:
+      case ab_cal_event.CalendarView.month:
         return CalendarFormat.month;
-      case CalendarView.week:
+      case ab_cal_event.CalendarView.week:
         return CalendarFormat.week;
-      case CalendarView.day:
+      case ab_cal_event.CalendarView.day:
         return CalendarFormat.week;
       default:
         return CalendarFormat.month;
@@ -186,7 +186,7 @@ class _BookingCalendarWidgetState extends State<BookingCalendarWidget> {
   }
 
   Widget _buildCalendar() {
-    return TableCalendar<CalendarEvent>(
+    return TableCalendar<ab_cal_state.CalendarEvent>(
       firstDay: DateTime.utc(2020, 1, 1),
       lastDay: DateTime.utc(2030, 12, 31),
       focusedDay: _focusedDay,
@@ -375,13 +375,13 @@ class _BookingCalendarWidgetState extends State<BookingCalendarWidget> {
     );
   }
 
-  Color _getEventColor(EventType type) {
+  Color _getEventColor(ab_cal_state.EventType type) {
     switch (type) {
-      case EventType.checkIn:
+      case ab_cal_state.EventType.checkIn:
         return AppTheme.success;
-      case EventType.checkOut:
+      case ab_cal_state.EventType.checkOut:
         return AppTheme.error;
-      case EventType.stay:
+      case ab_cal_state.EventType.stay:
         return AppTheme.primaryBlue;
     }
   }
