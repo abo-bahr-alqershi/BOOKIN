@@ -76,6 +76,7 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
   PricingTier _pricingTier = PricingTier.normal;
   PriceType _priceType = PriceType.base;
   double? _percentageChange;
+  String? _currencyCode;
 
   bool _overwriteExisting = false;
   bool _isLoading = false;
@@ -87,6 +88,11 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
     // Prefill from initial dates if provided
     _startDate = widget.initialStartDate;
     _endDate = widget.initialEndDate ?? widget.initialStartDate;
+    // Resolve currency from pricing state if available
+    final ps = context.read<PricingBloc>().state;
+    if (ps is PricingLoaded) {
+      _currencyCode = ps.unitPricing.currency;
+    }
   }
 
   void _initializeAnimations() {
@@ -613,7 +619,7 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
               color: AppTheme.primaryBlue,
               size: 20,
             ),
-            suffixText: 'ريال',
+            suffixText: _currencyCode ?? 'YER',
             suffixStyle: AppTextStyles.caption.copyWith(
               color: AppTheme.textMuted,
             ),

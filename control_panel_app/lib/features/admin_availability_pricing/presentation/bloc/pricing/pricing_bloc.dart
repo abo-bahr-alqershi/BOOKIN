@@ -192,6 +192,7 @@ class PricingBloc extends Bloc<PricingEvent, PricingState> {
       // Create PricingPeriod objects
       List<PricingPeriod> periods = [];
 
+      final currencyCode = currentState.unitPricing.currency;
       if (event.weekdays != null && event.weekdays!.isNotEmpty) {
         // Filter dates by weekdays
         DateTime currentDate = event.startDate;
@@ -203,6 +204,7 @@ class PricingBloc extends Bloc<PricingEvent, PricingState> {
               endDate: currentDate,
               price: event.price,
               priceType: event.priceType,
+              currency: currencyCode,
               tier: event.pricingTier,
               percentageChange: event.percentageChange,
               overwriteExisting: true,
@@ -217,6 +219,7 @@ class PricingBloc extends Bloc<PricingEvent, PricingState> {
           endDate: event.endDate,
           price: event.price,
           priceType: event.priceType,
+          currency: currencyCode,
           tier: event.pricingTier,
           percentageChange: event.percentageChange,
           overwriteExisting: true,
