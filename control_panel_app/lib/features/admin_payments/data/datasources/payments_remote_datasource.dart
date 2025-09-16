@@ -184,7 +184,7 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
         '$_baseEndpoint/$paymentId/status',
         data: {
           'paymentId': paymentId,
-          'newStatus': newStatus.displayNameEn,
+          'newStatus': newStatus.backendKey,
         },
       );
 
@@ -302,8 +302,8 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
   }) async {
     try {
       final queryParams = <String, dynamic>{};
-      if (status != null) queryParams['status'] = status.displayNameEn;
-      if (method != null) queryParams['method'] = method.displayNameEn;
+      if (status != null) queryParams['status'] = status.backendKey;
+      if (method != null) queryParams['method'] = method.backendValue;
       if (bookingId != null) queryParams['bookingId'] = bookingId;
       if (userId != null) queryParams['userId'] = userId;
       if (propertyId != null) queryParams['propertyId'] = propertyId;
@@ -369,7 +369,7 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
   }) async {
     try {
       final queryParams = <String, dynamic>{
-        'status': status.displayNameEn,
+        'status': status.backendKey,
         if (pageNumber != null) 'pageNumber': pageNumber,
         if (pageSize != null) 'pageSize': pageSize,
       };
@@ -427,7 +427,7 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
   }) async {
     try {
       final queryParams = <String, dynamic>{
-        'paymentMethod': method.displayNameEn,
+        'paymentMethod': method.backendValue,
         if (pageNumber != null) 'pageNumber': pageNumber,
         if (pageSize != null) 'pageSize': pageSize,
       };
