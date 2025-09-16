@@ -19,6 +19,8 @@ class BulkUpdateDialog extends StatefulWidget {
   // New: optional initial dates to prefill form
   final DateTime? initialStartDate;
   final DateTime? initialEndDate;
+  // Optional: pass currency from caller to avoid provider dependency
+  final String? currencyCode;
 
   const BulkUpdateDialog({
     super.key,
@@ -26,6 +28,7 @@ class BulkUpdateDialog extends StatefulWidget {
     required this.unitId,
     this.initialStartDate,
     this.initialEndDate,
+    this.currencyCode,
   });
 
   static Future<void> show(
@@ -34,6 +37,7 @@ class BulkUpdateDialog extends StatefulWidget {
     required String unitId,
     DateTime? initialStartDate,
     DateTime? initialEndDate,
+    String? currencyCode,
   }) async {
     return showDialog(
       context: context,
@@ -44,6 +48,7 @@ class BulkUpdateDialog extends StatefulWidget {
         unitId: unitId,
         initialStartDate: initialStartDate,
         initialEndDate: initialEndDate,
+        currencyCode: currencyCode,
       ),
     );
   }
@@ -88,10 +93,16 @@ class _BulkUpdateDialogState extends State<BulkUpdateDialog>
     // Prefill from initial dates if provided
     _startDate = widget.initialStartDate;
     _endDate = widget.initialEndDate ?? widget.initialStartDate;
-    // Resolve currency from pricing state if available
-    final ps = context.read<PricingBloc>().state;
-    if (ps is PricingLoaded) {
-      _currencyCode = ps.unitPricing.currency;
+    // Resolve currency from prop or pricing state if available
+    if (widget.currencyCode != null) {
+      _currencyCode = widget.currencyCode;
+    } else {
+      try {
+        final ps = context.read<PricingBloc>().state;
+        if (ps is PricingLoaded) {
+          _currencyCode = ps.unitPricing.currency;
+        }
+      } catch (_) {}
     }
   }
 
