@@ -923,7 +923,8 @@ class _AdminHubPageState extends State<AdminHubPage>
               const SizedBox(height: 12),
               
               // Value and Label
-              Expanded(
+              Flexible(
+                fit: FlexFit.loose,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -941,6 +942,8 @@ class _AdminHubPageState extends State<AdminHubPage>
                               color: AppTheme.textWhite,
                               fontSize: 20,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           );
                         },
                       ),
@@ -951,6 +954,8 @@ class _AdminHubPageState extends State<AdminHubPage>
                       style: AppTextStyles.caption.copyWith(
                         color: AppTheme.textMuted,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
