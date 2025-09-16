@@ -3,10 +3,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/pricing.dart';
 import '../../domain/entities/seasonal_pricing.dart';
+import '../bloc/pricing/pricing_bloc.dart';
 
 class SeasonalPricingDialog extends StatefulWidget {
   final String unitId;
@@ -77,6 +79,7 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
   DateTime? _endDate;
   double _customPriceChange = 0;
   bool _isRecurring = false;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -678,10 +681,56 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
     }
   }
 
-  void _handleApply() {
-    if (_selectedTemplate != null && _startDate != null && _endDate != null) {
-      // Apply seasonal pricing
-      Navigator.of(context).pop();
+  Future<void> _handleApply() async {
+    if (_selectedTemplate == null || _startDate == null || _endDate == null) return;
+    if (_endDate!.isBefore(_startDate!)) return;
+
+    HapticFeedback.selectionClick();
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final days = _endDate!.difference(_startDate!).inDays + 1;
+      // Resolve currency from pricing state
+      String currencyCode = 'YER';
+      try {
+        final ps = context.read<PricingBloc>().state;
+        if (ps is PricingLoaded) {
+          currencyCode = ps.unitPricing.currency;
+        }
+      } catch (_) {}
+
+      final season = SeasonalPricing(
+        id: 'temp-${DateTime.now().millisecondsSinceEpoch}',
+        name: _selectedTemplate!.name,
+        type: _selectedTemplate!.name,
+        startDate: _startDate!,
+        endDate: _endDate!,
+        price: 0,
+        percentageChange: _customPriceChange,
+        currency: currencyCode,
+        pricingTier: _selectedTemplate!.tier,
+        priority: 1,
+        description: 'Seasonal pricing via dialog',
+        isActive: true,
+        isRecurring: _isRecurring,
+        daysCount: days,
+        totalRevenuePotential: 0,
+      );
+
+      context.read<PricingBloc>().add(
+            ApplySeasonalPricing(
+              params: ApplySeasonalPricingParams(
+                unitId: widget.unitId,
+                seasons: [season],
+                currency: currencyCode,
+              ),
+            ),
+          );
+
+      if (mounted) Navigator.of(context).pop();
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 }

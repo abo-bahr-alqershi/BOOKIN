@@ -121,7 +121,7 @@ class _PricingCalendarGridState extends State<PricingCalendarGrid> {
                   },
                   child: GridView.builder(
                     key: _gridKey,
-                    physics: const NeverScrollableScrollPhysics(),
+                    physics: const BouncingScrollPhysics(),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 7,
