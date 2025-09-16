@@ -3,41 +3,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/pricing.dart';
 import '../../domain/entities/seasonal_pricing.dart';
-import '../bloc/pricing/pricing_bloc.dart';
-import '../../domain/usecases/pricing/apply_seasonal_pricing_usecase.dart';
 
 class SeasonalPricingDialog extends StatefulWidget {
   final String unitId;
-  final DateTime? initialStartDate;
-  final DateTime? initialEndDate;
 
   const SeasonalPricingDialog({
     super.key,
     required this.unitId,
-    this.initialStartDate,
-    this.initialEndDate,
   });
 
   static Future<void> show(
     BuildContext context, {
     required String unitId,
-    DateTime? initialStartDate,
-    DateTime? initialEndDate,
   }) async {
     return showDialog(
       context: context,
       barrierDismissible: false,
       barrierColor: AppTheme.overlayDark,
-      builder: (context) => SeasonalPricingDialog(
-        unitId: unitId,
-        initialStartDate: initialStartDate,
-        initialEndDate: initialEndDate,
-      ),
+      builder: (context) => SeasonalPricingDialog(unitId: unitId),
     );
   }
 
@@ -49,7 +36,7 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  
+
   final List<SeasonTemplate> _templates = [
     SeasonTemplate(
       id: '1',
@@ -84,13 +71,12 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
       tier: PricingTier.high,
     ),
   ];
-  
+
   SeasonTemplate? _selectedTemplate;
   DateTime? _startDate;
   DateTime? _endDate;
   double _customPriceChange = 0;
   bool _isRecurring = false;
-  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -99,7 +85,7 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.9,
       end: 1.0,
@@ -107,12 +93,8 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
       parent: _animationController,
       curve: Curves.easeOutBack,
     ));
-    
-    _animationController.forward();
 
-    // Prefill dates if provided
-    _startDate = widget.initialStartDate;
-    _endDate = widget.initialEndDate ?? widget.initialStartDate;
+    _animationController.forward();
   }
 
   @override
@@ -268,7 +250,7 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
           itemBuilder: (context, index) {
             final template = _templates[index];
             final isSelected = _selectedTemplate?.id == template.id;
-            
+
             return GestureDetector(
               onTap: () {
                 HapticFeedback.lightImpact();
@@ -288,7 +270,9 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
                           ],
                         )
                       : null,
-                  color: !isSelected ? AppTheme.darkSurface.withOpacity(0.5) : null,
+                  color: !isSelected
+                      ? AppTheme.darkSurface.withOpacity(0.5)
+                      : null,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSelected
@@ -310,13 +294,15 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
                       template.name,
                       style: AppTextStyles.bodySmall.copyWith(
                         color: isSelected ? template.color : AppTheme.textWhite,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w400,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: template.color.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(6),
@@ -419,7 +405,9 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
                         ? '${value.day}/${value.month}/${value.year}'
                         : 'اختر التاريخ',
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: value != null ? AppTheme.textWhite : AppTheme.textMuted,
+                      color: value != null
+                          ? AppTheme.textWhite
+                          : AppTheme.textMuted,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -496,7 +484,8 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
                   ),
                   const SizedBox(width: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: _customPriceChange > 0
                           ? AppTheme.error.withOpacity(0.2)
@@ -572,7 +561,7 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
                 _isRecurring = value;
               });
             },
-            activeColor: AppTheme.info,
+            activeThumbColor: AppTheme.info,
           ),
         ],
       ),
@@ -580,7 +569,6 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
   }
 
   Widget _buildActions() {
-    final canApply = _selectedTemplate != null && _startDate != null && _endDate != null && !_isSubmitting;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -601,25 +589,22 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: _isSubmitting ? null : () => Navigator.of(context).pop(),
-              child: Opacity(
-                opacity: _isSubmitting ? 0.6 : 1,
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppTheme.darkSurface.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppTheme.darkBorder.withOpacity(0.3),
-                      width: 1,
-                    ),
+              onTap: () => Navigator.of(context).pop(),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppTheme.darkSurface.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppTheme.darkBorder.withOpacity(0.3),
+                    width: 1,
                   ),
-                  child: Center(
-                    child: Text(
-                      'إلغاء',
-                      style: AppTextStyles.buttonMedium.copyWith(
-                        color: AppTheme.textMuted,
-                      ),
+                ),
+                child: Center(
+                  child: Text(
+                    'إلغاء',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: AppTheme.textMuted,
                     ),
                   ),
                 ),
@@ -630,40 +615,27 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
           Expanded(
             flex: 2,
             child: GestureDetector(
-              onTap: canApply ? _handleApply : null,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 150),
-                opacity: canApply ? 1 : 0.6,
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.primaryGradient,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryBlue.withOpacity(0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: _isSubmitting
-                        ? SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : Text(
-                            'تطبيق التسعير',
-                            style: AppTextStyles.buttonMedium.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+              onTap: _handleApply,
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryBlue.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    'تطبيق التسعير',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -675,14 +647,11 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
   }
 
   Future<void> _selectDate(bool isStart) async {
-    final initial = isStart ? (_startDate ?? DateTime.now()) : (_endDate ?? _startDate ?? DateTime.now());
-    final first = DateTime.now().subtract(const Duration(days: 365));
-    final last = DateTime.now().add(const Duration(days: 365 * 3));
     final picked = await showDatePicker(
       context: context,
-      initialDate: initial,
-      firstDate: first,
-      lastDate: last,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
           data: ThemeData.dark().copyWith(
@@ -697,65 +666,22 @@ class _SeasonalPricingDialogState extends State<SeasonalPricingDialog>
         );
       },
     );
-    
+
     if (picked != null) {
       setState(() {
         if (isStart) {
           _startDate = picked;
-          if (_endDate != null && picked.isAfter(_endDate!)) {
-            _endDate = picked;
-          }
         } else {
           _endDate = picked;
-          if (_startDate != null && picked.isBefore(_startDate!)) {
-            _startDate = picked;
-          }
         }
       });
     }
   }
 
-  Future<void> _handleApply() async {
-    if (_selectedTemplate == null || _startDate == null || _endDate == null) return;
-    if (_endDate!.isBefore(_startDate!)) return;
-
-    HapticFeedback.selectionClick();
-
-    setState(() => _isSubmitting = true);
-
-    try {
-      final days = _endDate!.difference(_startDate!).inDays + 1;
-      final season = SeasonalPricing(
-        id: 'temp-${DateTime.now().millisecondsSinceEpoch}',
-        name: _selectedTemplate!.name,
-        type: _selectedTemplate!.name,
-        startDate: _startDate!,
-        endDate: _endDate!,
-        price: 0,
-        percentageChange: _customPriceChange,
-        currency: 'SAR',
-        pricingTier: _selectedTemplate!.tier,
-        priority: 1,
-        description: 'Seasonal pricing via dialog',
-        isActive: true,
-        isRecurring: _isRecurring,
-        daysCount: days,
-        totalRevenuePotential: 0,
-      );
-
-      context.read<PricingBloc>().add(
-            ApplySeasonalPricing(
-              params: ApplySeasonalPricingParams(
-                unitId: widget.unitId,
-                seasons: [season],
-                currency: 'SAR',
-              ),
-            ),
-          );
-
-      if (mounted) Navigator.of(context).pop();
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
+  void _handleApply() {
+    if (_selectedTemplate != null && _startDate != null && _endDate != null) {
+      // Apply seasonal pricing
+      Navigator.of(context).pop();
     }
   }
 }

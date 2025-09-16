@@ -675,6 +675,175 @@ lib/
 │   │
 │   │
 │   │
+│   ├── admin_bookings/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   │   ├── bookings_local_datasource.dart
+│   │   │   │   └── bookings_remote_datasource.dart
+│   │   │   ├── models/
+│   │   │   │   ├── booking_model.dart
+│   │   │   │   ├── booking_details_model.dart
+│   │   │   │   ├── booking_status_model.dart
+│   │   │   │   ├── booking_report_model.dart
+│   │   │   │   ├── booking_trends_model.dart
+│   │   │   │   └── booking_window_analysis_model.dart
+│   │   │   └── repositories/
+│   │   │       └── bookings_repository_impl.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   ├── booking.dart
+│   │   │   │   ├── booking_details.dart
+│   │   │   │   ├── booking_report.dart
+│   │   │   │   ├── booking_trends.dart
+│   │   │   │   └── booking_window_analysis.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── bookings_repository.dart
+│   │   │   └── usecases/
+│   │   │       ├── bookings/
+│   │   │       │   ├── cancel_booking_usecase.dart
+│   │   │       │   ├── update_booking_usecase.dart
+│   │   │       │   ├── confirm_booking_usecase.dart
+│   │   │       │   ├── get_booking_by_id_usecase.dart
+│   │   │       │   ├── get_bookings_by_date_range_usecase.dart
+│   │   │       │   ├── get_bookings_by_property_usecase.dart
+│   │   │       │   ├── get_bookings_by_status_usecase.dart
+│   │   │       │   ├── get_bookings_by_unit_usecase.dart
+│   │   │       │   ├── get_bookings_by_user_usecase.dart
+│   │   │       │   ├── check_in_usecase.dart
+│   │   │       │   ├── check_out_usecase.dart
+│   │   │       │   └── complete_booking_usecase.dart
+│   │   │       ├── services/
+│   │   │       │   ├── add_service_to_booking_usecase.dart
+│   │   │       │   ├── remove_service_from_booking_usecase.dart
+│   │   │       │   └── get_booking_services_usecase.dart
+│   │   │       └── reports/
+│   │   │           ├── get_booking_report_usecase.dart
+│   │   │           ├── get_booking_trends_usecase.dart
+│   │   │           └── get_booking_window_analysis_usecase.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── bookings_list/
+│   │       │   │   ├── bookings_list_bloc.dart
+│   │       │   │   ├── bookings_list_event.dart
+│   │       │   │   └── bookings_list_state.dart
+│   │       │   ├── booking_details/
+│   │       │   │   ├── booking_details_bloc.dart
+│   │       │   │   ├── booking_details_event.dart
+│   │       │   │   └── booking_details_state.dart
+│   │       │   ├── booking_calendar/
+│   │       │   │   ├── booking_calendar_bloc.dart
+│   │       │   │   ├── booking_calendar_event.dart
+│   │       │   │   └── booking_calendar_state.dart
+│   │       │   └── booking_analytics/
+│   │       │       ├── booking_analytics_bloc.dart
+│   │       │       ├── booking_analytics_event.dart
+│   │       │       └── booking_analytics_state.dart
+│   │       ├── pages/
+│   │       │   ├── bookings_list_page.dart
+│   │       │   ├── booking_details_page.dart
+│   │       │   ├── booking_calendar_page.dart
+│   │       │   ├── booking_analytics_page.dart
+│   │       │   └── booking_timeline_page.dart
+│   │       └── widgets/
+│   │           ├── futuristic_booking_card.dart
+│   │           ├── futuristic_bookings_table.dart
+│   │           ├── booking_status_badge.dart
+│   │           ├── booking_filters_widget.dart
+│   │           ├── booking_calendar_widget.dart
+│   │           ├── booking_timeline_widget.dart
+│   │           ├── booking_stats_cards.dart
+│   │           ├── booking_actions_dialog.dart
+│   │           ├── check_in_out_dialog.dart
+│   │           ├── booking_services_widget.dart
+│   │           ├── booking_payment_summary.dart
+│   │           └── booking_analytics_charts.dart
+│   │
+│   │
+│   ├── admin_payments/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   │   ├── payments_local_datasource.dart
+│   │   │   │   └── payments_remote_datasource.dart
+│   │   │   ├── models/
+│   │   │   │   ├── payment_model.dart
+│   │   │   │   ├── payment_details_model.dart
+│   │   │   │   ├── payment_method_model.dart
+│   │   │   │   ├── payment_status_model.dart
+│   │   │   │   ├── money_model.dart
+│   │   │   │   ├── refund_model.dart
+│   │   │   │   └── payment_analytics_model.dart
+│   │   │   └── repositories/
+│   │   │       └── payments_repository_impl.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   ├── payment.dart
+│   │   │   │   ├── payment_details.dart
+│   │   │   │   ├── money.dart
+│   │   │   │   ├── refund.dart
+│   │   │   │   └── payment_analytics.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── payments_repository.dart
+│   │   │   └── usecases/
+│   │   │       ├── payments/
+│   │   │       │   ├── refund_payment_usecase.dart
+│   │   │       │   ├── void_payment_usecase.dart
+│   │   │       │   ├── update_payment_status_usecase.dart
+│   │   │       │   ├── process_payment_usecase.dart
+│   │   │       │   ├── get_payment_by_id_usecase.dart
+│   │   │       │   └── get_all_payments_usecase.dart
+│   │   │       ├── queries/
+│   │   │       │   ├── get_payments_by_booking_usecase.dart
+│   │   │       │   ├── get_payments_by_status_usecase.dart
+│   │   │       │   ├── get_payments_by_user_usecase.dart
+│   │   │       │   ├── get_payments_by_method_usecase.dart
+│   │   │       │   └── get_payments_by_property_usecase.dart
+│   │   │       └── analytics/
+│   │   │           ├── get_payment_analytics_usecase.dart
+│   │   │           ├── get_revenue_report_usecase.dart
+│   │   │           ├── get_payment_trends_usecase.dart
+│   │   │           └── get_refund_statistics_usecase.dart
+│   │   │
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── payments_list/
+│   │       │   │   ├── payments_list_bloc.dart
+│   │       │   │   ├── payments_list_event.dart
+│   │       │   │   └── payments_list_state.dart
+│   │       │   ├── payment_details/
+│   │       │   │   ├── payment_details_bloc.dart
+│   │       │   │   ├── payment_details_event.dart
+│   │       │   │   └── payment_details_state.dart
+│   │       │   ├── payment_refund/
+│   │       │   │   ├── payment_refund_bloc.dart
+│   │       │   │   ├── payment_refund_event.dart
+│   │       │   │   └── payment_refund_state.dart
+│   │       │   └── payment_analytics/
+│   │       │       ├── payment_analytics_bloc.dart
+│   │       │       ├── payment_analytics_event.dart
+│   │       │       └── payment_analytics_state.dart
+│   │       ├── pages/
+│   │       │   ├── payments_list_page.dart
+│   │       │   ├── payment_details_page.dart
+│   │       │   ├── payment_analytics_page.dart
+│   │       │   ├── refunds_management_page.dart
+│   │       │   └── revenue_dashboard_page.dart
+│   │       └── widgets/
+│   │           ├── futuristic_payment_card.dart
+│   │           ├── futuristic_payments_table.dart
+│   │           ├── payment_status_indicator.dart
+│   │           ├── payment_method_icon.dart
+│   │           ├── payment_filters_widget.dart
+│   │           ├── refund_dialog.dart
+│   │           ├── void_payment_dialog.dart
+│   │           ├── payment_timeline_widget.dart
+│   │           ├── payment_stats_cards.dart
+│   │           ├── revenue_chart_widget.dart
+│   │           ├── payment_trends_graph.dart
+│   │           ├── payment_breakdown_pie_chart.dart
+│   │           └── transaction_details_card.dart
+│   │
+│   │
+│   │
 │   ├── notifications/
 │   │   ├── data/
 │   │   │   ├── datasources/

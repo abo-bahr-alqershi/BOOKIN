@@ -18,7 +18,6 @@ import '../widgets/quick_actions_panel.dart';
 // Removed legends as per request
 import '../widgets/bulk_update_dialog.dart';
 import '../widgets/copy_pricing_dialog.dart';
-import '../widgets/seasonal_pricing_dialog.dart';
 
 class AvailabilityPricingPage extends StatefulWidget {
   const AvailabilityPricingPage({super.key});
@@ -44,6 +43,7 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
 
   // State
   ViewMode _viewMode = ViewMode.availability;
+  bool _showStats = false;
   String? _selectedUnitId;
   String? _selectedUnitName;
   String? _selectedPropertyId;
@@ -313,6 +313,45 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsToggle() {
+    final isOn = _showStats;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        setState(() => _showStats = !_showStats);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isOn
+              ? AppTheme.success.withOpacity(0.15)
+              : AppTheme.darkSurface.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isOn
+                ? AppTheme.success.withOpacity(0.4)
+                : AppTheme.darkBorder.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(isOn ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                size: 18, color: isOn ? AppTheme.success : AppTheme.textMuted),
+            const SizedBox(width: 6),
+            Text(
+              isOn ? 'إخفاء الإحصائيات' : 'إظهار الإحصائيات',
+              style: AppTextStyles.caption.copyWith(
+                color: isOn ? AppTheme.success : AppTheme.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -729,24 +768,7 @@ class _AvailabilityPricingPageState extends State<AvailabilityPricingPage>
   }
 
   void _showSeasonalPricingDialog() {
-    if (_selectedUnitId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('يرجى اختيار وحدة أولاً'),
-          backgroundColor: AppTheme.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
-      return;
-    }
-
-    SeasonalPricingDialog.show(
-      context,
-      unitId: _selectedUnitId!,
-      initialStartDate: _selectionStart,
-      initialEndDate: _selectionEnd,
-    );
+    // Show seasonal pricing dialog
   }
 
   void _showCloneSettingsDialog() {

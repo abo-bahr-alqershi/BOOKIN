@@ -138,32 +138,6 @@ class UnitPricingModel extends UnitPricing {
       );
     }
 
-    // If backend didn't provide per-day calendar, synthesize entries from rules
-    // to ensure pricing colors and prices appear on the calendar.
-    if (calendar.isEmpty && rules.isNotEmpty) {
-      final dateFmt = DateFormat('yyyy-MM-dd');
-      for (final rule in rules) {
-        DateTime d = DateTime(rule.startDate.year, rule.startDate.month, rule.startDate.day);
-        final DateTime end = DateTime(rule.endDate.year, rule.endDate.month, rule.endDate.day);
-        while (!d.isAfter(end)) {
-          final key = dateFmt.format(d);
-          // Do not overwrite explicit backend calendar entries if any exist
-          if (!calendar.containsKey(key)) {
-            final priceType = PricingRuleModel._parsePriceType(rule.priceType);
-            final colorCode = _colorFromTier(rule.pricingTier);
-            calendar[key] = PricingDayModel(
-              price: rule.priceAmount,
-              priceType: priceType,
-              colorCode: colorCode,
-              percentageChange: rule.percentageChange,
-              pricingTier: rule.pricingTier,
-            );
-          }
-          d = d.add(const Duration(days: 1));
-        }
-      }
-    }
-
     return UnitPricingModel(
       unitId: json['unitId'] as String,
       unitName: json['unitName'] as String,
@@ -186,45 +160,15 @@ class PricingDayModel extends PricingDay {
   });
 
   factory PricingDayModel.fromJson(Map<String, dynamic> json) {
-    // Normalize keys from backend variants
-    final tier = (json['pricingTier'] ?? json['pricing_tier'] ?? json['tier'])
-        as String?;
-    final priceNum = (json['priceAmount'] ?? json['price']) as num?;
-    final price = (priceNum ?? 0).toDouble();
-    final priceTypeStr =
-        (json['priceType'] ?? json['type'] ?? 'custom') as String;
-    final rawColor = (json['colorCode'] ??
-        json['color_code'] ??
-        json['hexColor'] ??
-        json['hex'] ??
-        json['color']);
-    final colorCode = rawColor?.toString() ?? _colorFromTier(tier);
     return PricingDayModel(
-      price: price,
-      priceType: PricingRuleModel._parsePriceType(priceTypeStr),
-      colorCode: colorCode,
+      price: (json['price'] as num).toDouble(),
+      priceType: PricingRuleModel._parsePriceType(json['priceType'] as String),
+      colorCode: json['colorCode'] as String,
       percentageChange: json['percentageChange'] != null
           ? (json['percentageChange'] as num).toDouble()
           : null,
-      pricingTier: tier,
+      pricingTier: json['pricingTier'] as String?,
     );
-  }
-}
-
-// Derive a stable fallback color when backend does not send explicit color code
-String _colorFromTier(String? tier) {
-  switch ((tier ?? 'normal').toString().toLowerCase()) {
-    case 'peak':
-      return '#F44336'; // red
-    case 'high':
-      return '#FF9800'; // orange
-    case 'discount':
-      return '#2196F3'; // blue
-    case 'custom':
-      return '#9C27B0'; // purple
-    case 'normal':
-    default:
-      return '#4CAF50'; // green
   }
 }
 
