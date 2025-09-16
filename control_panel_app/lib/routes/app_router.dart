@@ -95,6 +95,16 @@ import 'package:bookn_cp_app/features/helpers/presentation/pages/booking_search_
 import 'package:bookn_cp_app/features/admin_units/presentation/pages/unit_gallery_page.dart';
 import 'route_animations.dart';
 import 'route_guards.dart' as guards;
+// Admin Bookings pages & blocs
+import 'package:bookn_cp_app/features/admin_bookings/presentation/pages/bookings_list_page.dart';
+import 'package:bookn_cp_app/features/admin_bookings/presentation/pages/booking_details_page.dart';
+import 'package:bookn_cp_app/features/admin_bookings/presentation/pages/booking_calendar_page.dart';
+import 'package:bookn_cp_app/features/admin_bookings/presentation/pages/booking_timeline_page.dart';
+import 'package:bookn_cp_app/features/admin_bookings/presentation/pages/booking_analytics_page.dart';
+import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/bookings_list/bookings_list_bloc.dart' as ab_list_bloc;
+import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/booking_details/booking_details_bloc.dart' as ab_details_bloc;
+import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/booking_calendar/booking_calendar_bloc.dart' as ab_cal_bloc;
+import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/booking_analytics/booking_analytics_bloc.dart' as ab_an_bloc;
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
@@ -196,7 +206,69 @@ class AppRouter {
         // Settings routes removed
         // Removed review and search routes
         // Removed property routes
-        // Removed booking routes
+        // Admin Bookings
+        GoRoute(
+          path: '/admin/bookings',
+          builder: (context, state) {
+            return BlocProvider<ab_list_bloc.BookingsListBloc>(
+              create: (_) => di.sl<ab_list_bloc.BookingsListBloc>()
+                ..add(ab_list_bloc.LoadBookingsEvent(
+                  startDate: DateTime.now().subtract(const Duration(days: 30)),
+                  endDate: DateTime.now(),
+                  pageNumber: 1,
+                  pageSize: 20,
+                )),
+              child: const BookingsListPage(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/admin/bookings/:bookingId',
+          builder: (context, state) {
+            final bookingId = state.pathParameters['bookingId']!;
+            return BlocProvider<ab_details_bloc.BookingDetailsBloc>(
+              create: (_) => di.sl<ab_details_bloc.BookingDetailsBloc>()
+                ..add(ab_details_bloc.LoadBookingDetailsEvent(bookingId: bookingId)),
+              child: BookingDetailsPage(bookingId: bookingId),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/admin/bookings/calendar',
+          builder: (context, state) {
+            return BlocProvider<ab_cal_bloc.BookingCalendarBloc>(
+              create: (_) => di.sl<ab_cal_bloc.BookingCalendarBloc>()
+                ..add(ab_cal_bloc.LoadCalendarBookingsEvent(
+                  month: DateTime.now(),
+                  view: ab_cal_bloc.CalendarView.month,
+                )),
+              child: const BookingCalendarPage(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/admin/bookings/timeline',
+          builder: (context, state) {
+            return BlocProvider<ab_list_bloc.BookingsListBloc>(
+              create: (_) => di.sl<ab_list_bloc.BookingsListBloc>(),
+              child: const BookingTimelinePage(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/admin/bookings/analytics',
+          builder: (context, state) {
+            final now = DateTime.now();
+            return BlocProvider<ab_an_bloc.BookingAnalyticsBloc>(
+              create: (_) => di.sl<ab_an_bloc.BookingAnalyticsBloc>()
+                ..add(ab_an_bloc.LoadBookingAnalyticsEvent(
+                  startDate: DateTime(now.year, now.month - 1, now.day),
+                  endDate: now,
+                )),
+              child: const BookingAnalyticsPage(),
+            );
+          },
+        ),
 
         // قائمة المحادثات
         GoRoute(
