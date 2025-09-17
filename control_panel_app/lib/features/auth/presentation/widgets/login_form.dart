@@ -11,7 +11,8 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/constants/route_constants.dart';
 
 class LoginForm extends StatefulWidget {
-  final Function(String emailOrPhone, String password, bool rememberMe) onSubmit;
+  final Function(String emailOrPhone, String password, bool rememberMe)
+      onSubmit;
   final bool isLoading;
 
   const LoginForm({
@@ -24,17 +25,16 @@ class LoginForm extends StatefulWidget {
   State<LoginForm> createState() => _LoginFormState();
 }
 
-class _LoginFormState extends State<LoginForm> 
-    with TickerProviderStateMixin {
+class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailOrPhoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _emailOrPhoneFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
-  
+
   bool _obscurePassword = true;
   bool _rememberMe = false;
-  
+
   late AnimationController _fieldAnimationController;
   late AnimationController _buttonAnimationController;
   late AnimationController _iconRotationController;
@@ -43,31 +43,31 @@ class _LoginFormState extends State<LoginForm>
   @override
   void initState() {
     super.initState();
-    
+
     _fieldAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _buttonAnimationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     _iconRotationController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     );
-    
+
     _shimmerController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat();
-    
+
     _emailOrPhoneFocusNode.addListener(_onFocusChange);
     _passwordFocusNode.addListener(_onFocusChange);
   }
-  
+
   void _onFocusChange() {
     if (_emailOrPhoneFocusNode.hasFocus || _passwordFocusNode.hasFocus) {
       _fieldAnimationController.forward();
@@ -76,6 +76,8 @@ class _LoginFormState extends State<LoginForm>
       _fieldAnimationController.reverse();
       _iconRotationController.reverse();
     }
+    _emailOrPhoneController.text = "admin@example.com";
+    _passwordController.text = "Admin@123";
   }
 
   @override
@@ -113,16 +115,14 @@ class _LoginFormState extends State<LoginForm>
               if (value == null || value.isEmpty) {
                 return 'هذا الحقل مطلوب';
               }
-              if (!Validators.isValidEmail(value) && 
+              if (!Validators.isValidEmail(value) &&
                   !Validators.isValidPhoneNumber(value)) {
                 return 'يرجى إدخال بريد إلكتروني أو رقم هاتف صحيح';
               }
               return null;
             },
           ),
-          
           const SizedBox(height: 16),
-          
           _buildUltraFuturisticField(
             controller: _passwordController,
             focusNode: _passwordFocusNode,
@@ -143,19 +143,15 @@ class _LoginFormState extends State<LoginForm>
               return null;
             },
           ),
-          
           const SizedBox(height: 20),
-          
           _buildMinimalOptions(),
-          
           const SizedBox(height: 28),
-          
           _buildPremiumButton(),
         ],
       ),
     );
   }
-  
+
   Widget _buildUltraFuturisticField({
     required TextEditingController controller,
     required FocusNode focusNode,
@@ -177,10 +173,10 @@ class _LoginFormState extends State<LoginForm>
       ]),
       builder: (context, child) {
         final isFocused = focusNode.hasFocus;
-        final hasError = validator != null && 
-                        controller.text.isNotEmpty && 
-                        validator(controller.text) != null;
-        
+        final hasError = validator != null &&
+            controller.text.isNotEmpty &&
+            validator(controller.text) != null;
+
         return TweenAnimationBuilder<double>(
           tween: Tween(begin: 0, end: isFocused ? 1 : 0),
           duration: const Duration(milliseconds: 200),
@@ -242,14 +238,15 @@ class _LoginFormState extends State<LoginForm>
                                 gradient: LinearGradient(
                                   colors: [
                                     Colors.transparent,
-                                    AppTheme.primaryBlue.withValues(alpha: 0.05),
+                                    AppTheme.primaryBlue
+                                        .withValues(alpha: 0.05),
                                     Colors.transparent,
                                   ],
                                 ),
                               ),
                             ),
                           ),
-                        
+
                         // Input Field
                         TextFormField(
                           controller: controller,
@@ -272,7 +269,8 @@ class _LoginFormState extends State<LoginForm>
                                   ? AppTheme.primaryBlue.withValues(alpha: 0.9)
                                   : AppTheme.textMuted.withValues(alpha: 0.7),
                               fontSize: 12,
-                              fontWeight: isFocused ? FontWeight.w500 : FontWeight.w400,
+                              fontWeight:
+                                  isFocused ? FontWeight.w500 : FontWeight.w400,
                             ),
                             hintStyle: AppTextStyles.bodySmall.copyWith(
                               color: AppTheme.textMuted.withValues(alpha: 0.3),
@@ -304,7 +302,7 @@ class _LoginFormState extends State<LoginForm>
       },
     );
   }
-  
+
   Widget _buildAnimatedIcon(IconData icon, bool isFocused) {
     return Transform.rotate(
       angle: _iconRotationController.value * 0.1,
@@ -333,7 +331,7 @@ class _LoginFormState extends State<LoginForm>
       ),
     );
   }
-  
+
   Widget _buildPasswordToggle() {
     return GestureDetector(
       onTap: () {
@@ -355,8 +353,8 @@ class _LoginFormState extends State<LoginForm>
           ),
         ),
         child: Icon(
-          _obscurePassword 
-              ? Icons.visibility_off_outlined 
+          _obscurePassword
+              ? Icons.visibility_off_outlined
               : Icons.visibility_outlined,
           size: 18,
           color: AppTheme.textMuted.withValues(alpha: 0.7),
@@ -364,15 +362,15 @@ class _LoginFormState extends State<LoginForm>
       ),
     );
   }
-  
+
   Widget _buildMinimalOptions() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // Remember Me - Minimal Design
         GestureDetector(
-          onTap: widget.isLoading 
-              ? null 
+          onTap: widget.isLoading
+              ? null
               : () {
                   HapticFeedback.selectionClick();
                   setState(() {
@@ -387,8 +385,8 @@ class _LoginFormState extends State<LoginForm>
                 height: 20,
                 decoration: BoxDecoration(
                   gradient: _rememberMe ? AppTheme.primaryGradient : null,
-                  color: !_rememberMe 
-                      ? AppTheme.darkCard.withValues(alpha: 0.2) 
+                  color: !_rememberMe
+                      ? AppTheme.darkCard.withValues(alpha: 0.2)
                       : null,
                   borderRadius: BorderRadius.circular(5),
                   border: Border.all(
@@ -419,11 +417,11 @@ class _LoginFormState extends State<LoginForm>
             ],
           ),
         ),
-        
+
         // Forgot Password - Minimal Link
         TextButton(
-          onPressed: widget.isLoading 
-              ? null 
+          onPressed: widget.isLoading
+              ? null
               : () {
                   HapticFeedback.lightImpact();
                   context.push(RouteConstants.forgotPassword);
@@ -445,7 +443,7 @@ class _LoginFormState extends State<LoginForm>
       ],
     );
   }
-  
+
   Widget _buildPremiumButton() {
     return GestureDetector(
       onTapDown: (_) {
@@ -509,7 +507,7 @@ class _LoginFormState extends State<LoginForm>
       ),
     );
   }
-  
+
   Widget _buildButtonContent() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -540,7 +538,7 @@ class _LoginFormState extends State<LoginForm>
       ],
     );
   }
-  
+
   Widget _buildMinimalLoadingIndicator() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -566,12 +564,12 @@ class _LoginFormState extends State<LoginForm>
       ],
     );
   }
-  
+
   void _onSubmit() {
     if (_formKey.currentState?.validate() ?? false) {
       FocusScope.of(context).unfocus();
       HapticFeedback.mediumImpact();
-      
+
       widget.onSubmit(
         _emailOrPhoneController.text.trim(),
         _passwordController.text,

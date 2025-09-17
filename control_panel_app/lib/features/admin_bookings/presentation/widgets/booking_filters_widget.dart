@@ -1,5 +1,3 @@
-// lib/features/admin_bookings/presentation/widgets/booking_filters_widget.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:ui';
@@ -25,6 +23,7 @@ class BookingFiltersWidget extends StatefulWidget {
 class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
   late BookingFilters _filters;
   final TextEditingController _searchController = TextEditingController();
+  bool _isExpanded = false;
 
   @override
   void initState() {
@@ -41,16 +40,127 @@ class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _buildDateRangeSelector(),
-          const SizedBox(height: 12),
-          _buildSearchAndStatusRow(),
-          const SizedBox(height: 12),
-          _buildQuickFilters(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 400;
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: EdgeInsets.all(isCompact ? 12 : 16),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isCompact) _buildCompactFilters() else _buildFullFilters(),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCompactFilters() {
+    return Column(
+      children: [
+        _buildSearchField(isCompact: true),
+        const SizedBox(height: 8),
+        _buildCompactDateSelector(),
+        const SizedBox(height: 8),
+        _buildQuickFilters(isCompact: true),
+        if (_isExpanded) ...[
+          const SizedBox(height: 8),
+          _buildStatusDropdown(isCompact: true),
         ],
+        const SizedBox(height: 8),
+        _buildExpandButton(),
+      ],
+    );
+  }
+
+  Widget _buildFullFilters() {
+    return Column(
+      children: [
+        _buildDateRangeSelector(),
+        const SizedBox(height: 12),
+        _buildSearchAndStatusRow(),
+        const SizedBox(height: 12),
+        _buildQuickFilters(isCompact: false),
+      ],
+    );
+  }
+
+  Widget _buildExpandButton() {
+    return GestureDetector(
+      onTap: () => setState(() => _isExpanded = !_isExpanded),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: AppTheme.darkCard.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.darkBorder.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _isExpanded ? 'إخفاء الفلاتر' : 'المزيد من الفلاتر',
+              style: AppTextStyles.caption.copyWith(
+                color: AppTheme.primaryBlue,
+              ),
+            ),
+            const SizedBox(width: 4),
+            AnimatedRotation(
+              turns: _isExpanded ? 0.5 : 0,
+              duration: const Duration(milliseconds: 300),
+              child: Icon(
+                CupertinoIcons.chevron_down,
+                size: 14,
+                color: AppTheme.primaryBlue,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactDateSelector() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.2),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              children: [
+                _buildDateButton(
+                  label: 'من',
+                  date: _filters.startDate,
+                  onTap: () => _selectDate(true),
+                  isFullWidth: true,
+                ),
+                const SizedBox(height: 8),
+                _buildDateButton(
+                  label: 'إلى',
+                  date: _filters.endDate,
+                  onTap: () => _selectDate(false),
+                  isFullWidth: true,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -58,10 +168,10 @@ class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
   Widget _buildDateRangeSelector() {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.darkCard.withOpacity(0.3),
+        color: AppTheme.darkCard.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.2),
+          color: AppTheme.darkBorder.withValues(alpha: 0.2),
         ),
       ),
       child: ClipRRect(
@@ -86,10 +196,10 @@ class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
                   ),
                 ),
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
                   width: 20,
                   height: 1,
-                  color: AppTheme.darkBorder.withOpacity(0.3),
+                  color: AppTheme.darkBorder.withValues(alpha: 0.3),
                 ),
                 Expanded(
                   child: _buildDateButton(
@@ -110,44 +220,52 @@ class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
     required String label,
     DateTime? date,
     required VoidCallback onTap,
+    bool isFullWidth = false,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        width: isFullWidth ? double.infinity : null,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: AppTheme.darkBackground.withOpacity(0.5),
+          color: AppTheme.darkBackground.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: date != null
-                ? AppTheme.primaryBlue.withOpacity(0.3)
-                : AppTheme.darkBorder.withOpacity(0.2),
+                ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+                : AppTheme.darkBorder.withValues(alpha: 0.2),
           ),
         ),
         child: Row(
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppTheme.textMuted,
-                    fontSize: 10,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppTheme.textMuted,
+                      fontSize: 10,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  date != null ? Formatters.formatDate(date) : 'اختر التاريخ',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color:
-                        date != null ? AppTheme.textWhite : AppTheme.textMuted,
-                    fontWeight: date != null ? FontWeight.w600 : null,
+                  const SizedBox(height: 2),
+                  Text(
+                    date != null ? Formatters.formatDate(date) : 'اختر التاريخ',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: date != null
+                          ? AppTheme.textWhite
+                          : AppTheme.textMuted,
+                      fontWeight: date != null ? FontWeight.w600 : null,
+                      fontSize: date != null ? 13 : 12,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const Spacer(),
             Icon(
               CupertinoIcons.chevron_down,
               size: 14,
@@ -174,34 +292,37 @@ class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
     );
   }
 
-  Widget _buildSearchField() {
+  Widget _buildSearchField({bool isCompact = false}) {
     return Container(
+      height: isCompact ? 40 : null,
       decoration: BoxDecoration(
-        color: AppTheme.darkCard.withOpacity(0.3),
+        color: AppTheme.darkCard.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.2),
+          color: AppTheme.darkBorder.withValues(alpha: 0.2),
         ),
       ),
       child: TextField(
         controller: _searchController,
         style: AppTextStyles.bodyMedium.copyWith(
           color: AppTheme.textWhite,
+          fontSize: isCompact ? 13 : 14,
         ),
         decoration: InputDecoration(
-          hintText: 'بحث بالاسم أو البريد الإلكتروني...',
+          hintText: isCompact ? 'بحث...' : 'بحث بالاسم أو البريد الإلكتروني...',
           hintStyle: AppTextStyles.bodyMedium.copyWith(
             color: AppTheme.textMuted,
+            fontSize: isCompact ? 13 : 14,
           ),
           prefixIcon: Icon(
             CupertinoIcons.search,
             color: AppTheme.textMuted,
-            size: 20,
+            size: isCompact ? 18 : 20,
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: isCompact ? 12 : 16,
+            vertical: isCompact ? 8 : 12,
           ),
         ),
         onChanged: (value) {
@@ -214,14 +335,15 @@ class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
     );
   }
 
-  Widget _buildStatusDropdown() {
+  Widget _buildStatusDropdown({bool isCompact = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: isCompact ? 40 : null,
+      padding: EdgeInsets.symmetric(horizontal: isCompact ? 8 : 12),
       decoration: BoxDecoration(
-        color: AppTheme.darkCard.withOpacity(0.3),
+        color: AppTheme.darkCard.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.2),
+          color: AppTheme.darkBorder.withValues(alpha: 0.2),
         ),
       ),
       child: DropdownButton<String?>(
@@ -233,15 +355,17 @@ class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
           'جميع الحالات',
           style: AppTextStyles.bodyMedium.copyWith(
             color: AppTheme.textMuted,
+            fontSize: isCompact ? 12 : 14,
           ),
         ),
         icon: Icon(
           CupertinoIcons.chevron_down,
-          size: 16,
+          size: isCompact ? 14 : 16,
           color: AppTheme.textMuted,
         ),
         style: AppTextStyles.bodyMedium.copyWith(
           color: AppTheme.textWhite,
+          fontSize: isCompact ? 12 : 14,
         ),
         items: const [
           DropdownMenuItem(value: null, child: Text('جميع الحالات')),
@@ -261,9 +385,9 @@ class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
     );
   }
 
-  Widget _buildQuickFilters() {
+  Widget _buildQuickFilters({bool isCompact = false}) {
     return SizedBox(
-      height: 36,
+      height: isCompact ? 32 : 36,
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
@@ -271,19 +395,22 @@ class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
             label: 'اليوم',
             isSelected: _isToday(),
             onTap: _selectToday,
+            isCompact: isCompact,
           ),
           _buildQuickFilterChip(
             label: 'هذا الأسبوع',
             isSelected: _isThisWeek(),
             onTap: _selectThisWeek,
+            isCompact: isCompact,
           ),
           _buildQuickFilterChip(
             label: 'هذا الشهر',
             isSelected: _isThisMonth(),
             onTap: _selectThisMonth,
+            isCompact: isCompact,
           ),
           _buildQuickFilterChip(
-            label: 'Walk-in فقط',
+            label: 'Walk-in',
             isSelected: _filters.isWalkIn == true,
             onTap: () {
               setState(() {
@@ -293,12 +420,14 @@ class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
               });
               _applyFilters();
             },
+            isCompact: isCompact,
           ),
           _buildQuickFilterChip(
-            label: 'مسح الفلاتر',
+            label: 'مسح',
             isSelected: false,
             onTap: _clearFilters,
             isAction: true,
+            isCompact: isCompact,
           ),
         ],
       ),
@@ -310,6 +439,7 @@ class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
     required bool isSelected,
     required VoidCallback onTap,
     bool isAction = false,
+    bool isCompact = false,
   }) {
     return Container(
       margin: const EdgeInsets.only(right: 8),
@@ -317,23 +447,25 @@ class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(isCompact ? 16 : 18),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(
+              horizontal: isCompact ? 12 : 16,
+            ),
             decoration: BoxDecoration(
               gradient: isSelected ? AppTheme.primaryGradient : null,
               color: isSelected
                   ? null
                   : isAction
-                      ? AppTheme.error.withOpacity(0.1)
-                      : AppTheme.darkCard.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(18),
+                      ? AppTheme.error.withValues(alpha: 0.1)
+                      : AppTheme.darkCard.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(isCompact ? 16 : 18),
               border: Border.all(
                 color: isSelected
                     ? Colors.transparent
                     : isAction
-                        ? AppTheme.error.withOpacity(0.3)
-                        : AppTheme.darkBorder.withOpacity(0.2),
+                        ? AppTheme.error.withValues(alpha: 0.3)
+                        : AppTheme.darkBorder.withValues(alpha: 0.2),
               ),
             ),
             child: Center(
@@ -346,6 +478,7 @@ class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
                           ? AppTheme.error
                           : AppTheme.textMuted,
                   fontWeight: isSelected ? FontWeight.w600 : null,
+                  fontSize: isCompact ? 11 : 12,
                 ),
               ),
             ),
@@ -355,6 +488,7 @@ class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
     );
   }
 
+  // باقي الدوال كما هي...
   void _selectDate(bool isStartDate) async {
     final picked = await showDatePicker(
       context: context,

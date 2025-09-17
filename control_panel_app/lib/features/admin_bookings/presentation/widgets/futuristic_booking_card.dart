@@ -1,5 +1,3 @@
-// lib/features/admin_bookings/presentation/widgets/futuristic_booking_card.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:ui';
@@ -71,8 +69,8 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
             boxShadow: [
               BoxShadow(
                 color: widget.isSelected
-                    ? AppTheme.primaryBlue.withOpacity(0.3)
-                    : AppTheme.shadowDark.withOpacity(0.1),
+                    ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+                    : AppTheme.shadowDark.withValues(alpha: 0.1),
                 blurRadius: widget.isSelected ? 20 : 15,
                 offset: const Offset(0, 8),
                 spreadRadius: widget.isSelected ? 2 : 0,
@@ -90,19 +88,19 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
                     end: Alignment.bottomRight,
                     colors: widget.isSelected
                         ? [
-                            AppTheme.primaryBlue.withOpacity(0.15),
-                            AppTheme.primaryPurple.withOpacity(0.1),
+                            AppTheme.primaryBlue.withValues(alpha: 0.15),
+                            AppTheme.primaryPurple.withValues(alpha: 0.1),
                           ]
                         : [
-                            AppTheme.darkCard.withOpacity(0.8),
-                            AppTheme.darkCard.withOpacity(0.6),
+                            AppTheme.darkCard.withValues(alpha: 0.8),
+                            AppTheme.darkCard.withValues(alpha: 0.6),
                           ],
                   ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: widget.isSelected
-                        ? AppTheme.primaryBlue.withOpacity(0.5)
-                        : AppTheme.darkBorder.withOpacity(0.2),
+                        ? AppTheme.primaryBlue.withValues(alpha: 0.5)
+                        : AppTheme.darkBorder.withValues(alpha: 0.2),
                     width: widget.isSelected ? 2 : 1,
                   ),
                 ),
@@ -117,14 +115,20 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
     );
   }
 
+  // إصلاح مشكلة overflow في Column (السطر 121)
   Widget _buildFullContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildHeader(),
-        _buildBody(),
-        _buildFooter(),
-      ],
+    return IntrinsicHeight(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHeader(),
+          Flexible(
+            child: _buildBody(),
+          ),
+          if (widget.showActions) _buildFooter(),
+        ],
+      ),
     );
   }
 
@@ -138,6 +142,7 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
@@ -177,11 +182,15 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
                       color: AppTheme.textMuted,
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      '${Formatters.formatDate(widget.booking.checkIn)} - ${Formatters.formatDate(widget.booking.checkOut)}',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.textMuted,
-                        fontSize: 10,
+                    Expanded(
+                      child: Text(
+                        '${Formatters.formatDate(widget.booking.checkIn)} - ${Formatters.formatDate(widget.booking.checkOut)}',
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppTheme.textMuted,
+                          fontSize: 10,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -210,7 +219,7 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  AppTheme.darkBackground.withOpacity(0.7),
+                  AppTheme.darkBackground.withValues(alpha: 0.7),
                 ],
                 stops: const [0.5, 1.0],
               ),
@@ -224,7 +233,7 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
                 child: Icon(
                   CupertinoIcons.photo,
                   size: 40,
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                 ),
               ),
             ),
@@ -247,7 +256,7 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primaryBlue.withOpacity(0.5),
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.5),
                       blurRadius: 10,
                     ),
                   ],
@@ -265,6 +274,7 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
             right: 12,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   widget.booking.unitName,
@@ -272,7 +282,7 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
                     color: Colors.white,
                     shadows: [
                       Shadow(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                         blurRadius: 10,
                       ),
                     ],
@@ -284,10 +294,10 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
                   Text(
                     widget.booking.propertyName!,
                     style: AppTextStyles.caption.copyWith(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       shadows: [
                         Shadow(
-                          color: Colors.black.withOpacity(0.5),
+                          color: Colors.black.withValues(alpha: 0.5),
                           blurRadius: 5,
                         ),
                       ],
@@ -308,6 +318,7 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           _buildInfoRow(
             icon: CupertinoIcons.person_fill,
@@ -315,85 +326,162 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
             color: AppTheme.textWhite,
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildDateChip(
-                  icon: CupertinoIcons.arrow_down_circle,
-                  label: 'وصول',
-                  date: widget.booking.checkIn,
-                  color: AppTheme.success,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildDateChip(
-                  icon: CupertinoIcons.arrow_up_circle,
-                  label: 'مغادرة',
-                  date: widget.booking.checkOut,
-                  color: AppTheme.error,
-                ),
-              ),
-            ],
-          ),
+          _buildDateSection(),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildStatChip(
-                icon: CupertinoIcons.moon_fill,
-                value: '${widget.booking.nights}',
-                label: 'ليلة',
-              ),
-              const SizedBox(width: 8),
-              _buildStatChip(
-                icon: CupertinoIcons.person_2_fill,
-                value: '${widget.booking.guestsCount}',
-                label: 'ضيف',
-              ),
-              const Spacer(),
-              _buildPriceTag(),
-            ],
-          ),
+          _buildStatsSection(),
         ],
       ),
     );
   }
 
-  Widget _buildFooter() {
-    if (!widget.showActions) return const SizedBox.shrink();
+  Widget _buildDateSection() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // للشاشات الصغيرة، عرض التواريخ بشكل عمودي
+        if (constraints.maxWidth < 300) {
+          return Column(
+            children: [
+              _buildDateChip(
+                icon: CupertinoIcons.arrow_down_circle,
+                label: 'وصول',
+                date: widget.booking.checkIn,
+                color: AppTheme.success,
+                isFullWidth: true,
+              ),
+              const SizedBox(height: 8),
+              _buildDateChip(
+                icon: CupertinoIcons.arrow_up_circle,
+                label: 'مغادرة',
+                date: widget.booking.checkOut,
+                color: AppTheme.error,
+                isFullWidth: true,
+              ),
+            ],
+          );
+        }
+        // للشاشات الكبيرة، عرض التواريخ بشكل أفقي
+        return Row(
+          children: [
+            Expanded(
+              child: _buildDateChip(
+                icon: CupertinoIcons.arrow_down_circle,
+                label: 'وصول',
+                date: widget.booking.checkIn,
+                color: AppTheme.success,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildDateChip(
+                icon: CupertinoIcons.arrow_up_circle,
+                label: 'مغادرة',
+                date: widget.booking.checkOut,
+                color: AppTheme.error,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
+  Widget _buildStatsSection() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildStatChip(
+              icon: CupertinoIcons.moon_fill,
+              value: '${widget.booking.nights}',
+              label: 'ليلة',
+              constraints: constraints,
+            ),
+            _buildStatChip(
+              icon: CupertinoIcons.person_2_fill,
+              value: '${widget.booking.guestsCount}',
+              label: 'ضيف',
+              constraints: constraints,
+            ),
+            _buildPriceTag(),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildFooter() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(
-            color: AppTheme.darkBorder.withOpacity(0.1),
+            color: AppTheme.darkBorder.withValues(alpha: 0.1),
           ),
         ),
       ),
-      child: Row(
-        children: [
-          _buildActionButton(
-            icon: CupertinoIcons.eye,
-            label: 'عرض',
-            onTap: widget.onTap,
-          ),
-          const SizedBox(width: 8),
-          if (widget.booking.canCheckIn)
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final buttons = <Widget>[];
+
+          buttons.add(
             _buildActionButton(
-              icon: CupertinoIcons.arrow_down_circle,
-              label: 'تسجيل وصول',
-              onTap: () {},
-              isPrimary: true,
+              icon: CupertinoIcons.eye,
+              label: 'عرض',
+              onTap: widget.onTap,
+              isCompact: constraints.maxWidth < 350,
             ),
-          if (widget.booking.canCheckOut)
-            _buildActionButton(
-              icon: CupertinoIcons.arrow_up_circle,
-              label: 'تسجيل مغادرة',
-              onTap: () {},
-              isPrimary: true,
-            ),
-        ],
+          );
+
+          if (widget.booking.canCheckIn) {
+            buttons.add(const SizedBox(width: 8));
+            buttons.add(
+              _buildActionButton(
+                icon: CupertinoIcons.arrow_down_circle,
+                label: 'تسجيل وصول',
+                onTap: () {},
+                isPrimary: true,
+                isCompact: constraints.maxWidth < 350,
+              ),
+            );
+          }
+
+          if (widget.booking.canCheckOut) {
+            buttons.add(const SizedBox(width: 8));
+            buttons.add(
+              _buildActionButton(
+                icon: CupertinoIcons.arrow_up_circle,
+                label: 'تسجيل مغادرة',
+                onTap: () {},
+                isPrimary: true,
+                isCompact: constraints.maxWidth < 350,
+              ),
+            );
+          }
+
+          // للشاشات الصغيرة جداً، عرض الأزرار بشكل عمودي
+          if (constraints.maxWidth < 250) {
+            return Column(
+              children: buttons.where((w) => w is! SizedBox).map((button) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: button,
+                  ),
+                );
+              }).toList(),
+            );
+          }
+
+          return Row(
+            children: buttons.map((button) {
+              if (button is SizedBox) return button;
+              return Expanded(child: button);
+            }).toList(),
+          );
+        },
       ),
     );
   }
@@ -407,9 +495,13 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
       children: [
         Icon(icon, size: 16, color: AppTheme.textMuted),
         const SizedBox(width: 8),
-        Text(
-          label,
-          style: AppTextStyles.bodyMedium.copyWith(color: color),
+        Expanded(
+          child: Text(
+            label,
+            style: AppTextStyles.bodyMedium.copyWith(color: color),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
@@ -420,21 +512,25 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
     required String label,
     required DateTime date,
     required Color color,
+    bool isFullWidth = false,
   }) {
     return Container(
+      width: isFullWidth ? double.infinity : null,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: color.withOpacity(0.3),
+          color: color.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: 12, color: color),
               const SizedBox(width: 4),
@@ -454,41 +550,64 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
               color: AppTheme.textWhite,
               fontWeight: FontWeight.w600,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
     );
   }
 
+  // إصلاح مشكلة overflow في Row (السطر 340)
   Widget _buildStatChip({
     required IconData icon,
     required String value,
     required String label,
+    required BoxConstraints constraints,
   }) {
+    // حساب العرض المناسب بناءً على حجم الشاشة
+    final isCompact = constraints.maxWidth < 300;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 8 : 10,
+        vertical: 6,
+      ),
       decoration: BoxDecoration(
-        color: AppTheme.darkBackground.withOpacity(0.5),
+        color: AppTheme.darkBackground.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppTheme.textMuted),
-          const SizedBox(width: 4),
-          Text(
-            value,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.textWhite,
-              fontWeight: FontWeight.bold,
+          Icon(
+            icon,
+            size: isCompact ? 12 : 14,
+            color: AppTheme.textMuted,
+          ),
+          SizedBox(width: isCompact ? 2 : 4),
+          Flexible(
+            child: Text(
+              value,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textWhite,
+                fontWeight: FontWeight.bold,
+                fontSize: isCompact ? 12 : null,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 2),
-          Text(
-            label,
-            style: AppTextStyles.caption.copyWith(
-              color: AppTheme.textMuted,
-              fontSize: 10,
+          SizedBox(width: isCompact ? 1 : 2),
+          Flexible(
+            child: Text(
+              label,
+              style: AppTextStyles.caption.copyWith(
+                color: AppTheme.textMuted,
+                fontSize: isCompact ? 9 : 10,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -504,7 +623,7 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryBlue.withOpacity(0.3),
+            color: AppTheme.primaryBlue.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -516,53 +635,73 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
           color: Colors.white,
           fontWeight: FontWeight.bold,
         ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
 
+  // إصلاح مشكلة overflow في Row (السطر 441)
   Widget _buildActionButton({
     required IconData icon,
     required String label,
     VoidCallback? onTap,
     bool isPrimary = false,
+    bool isCompact = false,
   }) {
-    return Expanded(
-      child: Container(
-        height: 36,
-        decoration: BoxDecoration(
-          gradient: isPrimary ? AppTheme.primaryGradient : null,
-          color: isPrimary ? null : AppTheme.darkBackground.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(10),
-          border: isPrimary
-              ? null
-              : Border.all(
-                  color: AppTheme.darkBorder.withOpacity(0.3),
-                ),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(10),
-            child: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    icon,
-                    size: 16,
-                    color: isPrimary ? Colors.white : AppTheme.textMuted,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    label,
-                    style: AppTextStyles.caption.copyWith(
-                      color: isPrimary ? Colors.white : AppTheme.textMuted,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+    return Container(
+      height: 36,
+      decoration: BoxDecoration(
+        gradient: isPrimary ? AppTheme.primaryGradient : null,
+        color:
+            isPrimary ? null : AppTheme.darkBackground.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(10),
+        border: isPrimary
+            ? null
+            : Border.all(
+                color: AppTheme.darkBorder.withValues(alpha: 0.3),
               ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isCompact ? 8 : 12,
+            ),
+            child: Center(
+              child: isCompact
+                  ? Icon(
+                      icon,
+                      size: 16,
+                      color: isPrimary ? Colors.white : AppTheme.textMuted,
+                    )
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          icon,
+                          size: 16,
+                          color: isPrimary ? Colors.white : AppTheme.textMuted,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            label,
+                            style: AppTextStyles.caption.copyWith(
+                              color:
+                                  isPrimary ? Colors.white : AppTheme.textMuted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ),
         ),
@@ -587,7 +726,9 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
               )
             : Center(
                 child: Text(
-                  widget.booking.unitName.substring(0, 2).toUpperCase(),
+                  widget.booking.unitName.length >= 2
+                      ? widget.booking.unitName.substring(0, 2).toUpperCase()
+                      : widget.booking.unitName.toUpperCase(),
                   style: AppTextStyles.heading3.copyWith(
                     color: Colors.white,
                   ),
@@ -600,12 +741,17 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
   Widget _buildCompactPrice() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          widget.booking.totalPrice.formattedAmount,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppTheme.primaryBlue,
-            fontWeight: FontWeight.bold,
+        Flexible(
+          child: Text(
+            widget.booking.totalPrice.formattedAmount,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.primaryBlue,
+              fontWeight: FontWeight.bold,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         Text(
@@ -614,6 +760,8 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
             color: AppTheme.textMuted,
             fontSize: 10,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );

@@ -1,5 +1,3 @@
-// lib/features/admin_bookings/presentation/widgets/booking_stats_cards.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:ui';
@@ -23,60 +21,67 @@ class BookingStatsCards extends StatelessWidget {
   Widget build(BuildContext context) {
     final calculatedStats = _calculateStats();
 
-    return ListView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      children: [
-        _buildStatCard(
-          title: 'إجمالي الحجوزات',
-          value: calculatedStats['total'].toString(),
-          icon: CupertinoIcons.doc_text_fill,
-          gradient: AppTheme.primaryGradient,
-          trend: stats['totalTrend'] as double? ?? 0,
-        ),
-        _buildStatCard(
-          title: 'حجوزات مؤكدة',
-          value: calculatedStats['confirmed'].toString(),
-          icon: CupertinoIcons.checkmark_circle_fill,
-          gradient: LinearGradient(
-            colors: [AppTheme.success, AppTheme.success.withOpacity(0.7)],
+    return SizedBox(
+      height: 130, // ارتفاع ثابت محسّن
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        children: [
+          _buildStatCard(
+            title: 'إجمالي الحجوزات',
+            value: calculatedStats['total'].toString(),
+            icon: CupertinoIcons.doc_text_fill,
+            gradient: AppTheme.primaryGradient,
+            trend: stats['totalTrend'] as double? ?? 0,
           ),
-          trend: stats['confirmedTrend'] as double? ?? 0,
-        ),
-        _buildStatCard(
-          title: 'حجوزات معلقة',
-          value: calculatedStats['pending'].toString(),
-          icon: CupertinoIcons.clock_fill,
-          gradient: LinearGradient(
-            colors: [AppTheme.warning, AppTheme.warning.withOpacity(0.7)],
+          _buildStatCard(
+            title: 'حجوزات مؤكدة',
+            value: calculatedStats['confirmed'].toString(),
+            icon: CupertinoIcons.checkmark_circle_fill,
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.success,
+                AppTheme.success.withValues(alpha: 0.7)
+              ],
+            ),
+            trend: stats['confirmedTrend'] as double? ?? 0,
           ),
-          trend: stats['pendingTrend'] as double? ?? 0,
-        ),
-        _buildStatCard(
-          title: 'الإيرادات',
-          value: Formatters.formatCurrency(
-            calculatedStats['revenue'] as double,
-            'YER',
+          _buildStatCard(
+            title: 'حجوزات معلقة',
+            value: calculatedStats['pending'].toString(),
+            icon: CupertinoIcons.clock_fill,
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.warning,
+                AppTheme.warning.withValues(alpha: 0.7)
+              ],
+            ),
+            trend: stats['pendingTrend'] as double? ?? 0,
           ),
-          icon: CupertinoIcons.money_dollar_circle_fill,
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.primaryPurple,
-              AppTheme.primaryPurple.withOpacity(0.7)
-            ],
+          _buildStatCard(
+            title: 'الإيرادات',
+            value: _formatRevenue(calculatedStats['revenue'] as double),
+            icon: CupertinoIcons.money_dollar_circle_fill,
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.primaryPurple,
+                AppTheme.primaryPurple.withValues(alpha: 0.7)
+              ],
+            ),
+            trend: stats['revenueTrend'] as double? ?? 0,
           ),
-          trend: stats['revenueTrend'] as double? ?? 0,
-        ),
-        _buildStatCard(
-          title: 'معدل الإشغال',
-          value: '${calculatedStats['occupancy'].toStringAsFixed(1)}%',
-          icon: CupertinoIcons.chart_pie_fill,
-          gradient: LinearGradient(
-            colors: [AppTheme.info, AppTheme.info.withOpacity(0.7)],
+          _buildStatCard(
+            title: 'معدل الإشغال',
+            value: '${calculatedStats['occupancy'].toStringAsFixed(1)}%',
+            icon: CupertinoIcons.chart_pie_fill,
+            gradient: LinearGradient(
+              colors: [AppTheme.info, AppTheme.info.withValues(alpha: 0.7)],
+            ),
+            trend: stats['occupancyTrend'] as double? ?? 0,
           ),
-          trend: stats['occupancyTrend'] as double? ?? 0,
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -96,7 +101,7 @@ class BookingStatsCards extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: gradient.colors.first.withOpacity(0.2),
+            color: gradient.colors.first.withValues(alpha: 0.2),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -112,107 +117,121 @@ class BookingStatsCards extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  gradient.colors.first.withOpacity(0.15),
-                  gradient.colors.last.withOpacity(0.08),
+                  gradient.colors.first.withValues(alpha: 0.15),
+                  gradient.colors.last.withValues(alpha: 0.08),
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: gradient.colors.first.withOpacity(0.3),
+                color: gradient.colors.first.withValues(alpha: 0.3),
                 width: 1,
               ),
             ),
             child: Stack(
               children: [
+                // Background Icon
                 Positioned(
                   right: -15,
                   top: -15,
                   child: Icon(
                     icon,
                     size: 80,
-                    color: gradient.colors.first.withOpacity(0.1),
+                    color: gradient.colors.first.withValues(alpha: 0.1),
                   ),
                 ),
+                // Content
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.min, // مهم لمنع overflow
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              gradient: gradient,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              icon,
-                              size: 18,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const Spacer(),
-                          if (trend != 0)
+                      // Header Row
+                      SizedBox(
+                        height: 32,
+                        child: Row(
+                          children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
+                              padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: (isPositive
-                                        ? AppTheme.success
-                                        : AppTheme.error)
-                                    .withOpacity(0.1),
+                                gradient: gradient,
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    isPositive
-                                        ? CupertinoIcons.arrow_up_right
-                                        : CupertinoIcons.arrow_down_right,
-                                    size: 10,
-                                    color: isPositive
-                                        ? AppTheme.success
-                                        : AppTheme.error,
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    '${trend.abs().toStringAsFixed(1)}%',
-                                    style: AppTextStyles.caption.copyWith(
+                              child: Icon(
+                                icon,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (trend != 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: (isPositive
+                                          ? AppTheme.success
+                                          : AppTheme.error)
+                                      .withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      isPositive
+                                          ? CupertinoIcons.arrow_up_right
+                                          : CupertinoIcons.arrow_down_right,
+                                      size: 8,
                                       color: isPositive
                                           ? AppTheme.success
                                           : AppTheme.error,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 10,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 1),
+                                    Text(
+                                      '${trend.abs().toStringAsFixed(1)}%',
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: isPositive
+                                            ? AppTheme.success
+                                            : AppTheme.error,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 9,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 8),
+                      const Spacer(),
+                      // Title
                       Text(
                         title,
                         style: AppTextStyles.caption.copyWith(
                           color: AppTheme.textMuted,
+                          fontSize: 11,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        value,
-                        style: AppTextStyles.heading2.copyWith(
-                          color: gradient.colors.first,
-                          fontWeight: FontWeight.bold,
+                      const SizedBox(height: 2),
+                      // Value
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            value,
+                            style: AppTextStyles.heading2.copyWith(
+                              color: gradient.colors.first,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -223,6 +242,15 @@ class BookingStatsCards extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatRevenue(double amount) {
+    if (amount >= 1000000) {
+      return '${(amount / 1000000).toStringAsFixed(1)}M';
+    } else if (amount >= 1000) {
+      return '${(amount / 1000).toStringAsFixed(1)}K';
+    }
+    return amount.toStringAsFixed(0);
   }
 
   Map<String, dynamic> _calculateStats() {
@@ -243,7 +271,6 @@ class BookingStatsCards extends StatelessWidget {
       }
     }
 
-    // Calculate occupancy (simplified)
     double occupancy = total > 0 ? (confirmed / total) * 100 : 0;
 
     return {

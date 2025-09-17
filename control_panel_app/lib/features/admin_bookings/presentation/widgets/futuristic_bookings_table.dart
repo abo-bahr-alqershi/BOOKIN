@@ -1,5 +1,3 @@
-// lib/features/admin_bookings/presentation/widgets/futuristic_bookings_table.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:ui';
@@ -38,77 +36,98 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.darkCard.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.2),
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Column(
-            children: [
-              _buildHeader(),
-              _buildTable(),
-            ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 800;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: AppTheme.darkCard.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppTheme.darkBorder.withValues(alpha: 0.2),
+            ),
           ),
-        ),
-      ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Column(
+                children: [
+                  _buildHeader(isCompact),
+                  Expanded(
+                    child: isCompact
+                        ? _buildCompactView()
+                        : _buildTableView(constraints),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isCompact) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isCompact ? 16 : 20),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.darkBorder.withOpacity(0.1),
+            color: AppTheme.darkBorder.withValues(alpha: 0.1),
           ),
         ),
       ),
       child: Row(
         children: [
-          Text(
-            'قائمة الحجوزات',
-            style: AppTextStyles.heading3.copyWith(
-              color: AppTheme.textWhite,
+          Expanded(
+            child: Row(
+              children: [
+                Text(
+                  'قائمة الحجوزات',
+                  style: AppTextStyles.heading3.copyWith(
+                    color: AppTheme.textWhite,
+                    fontSize: isCompact ? 16 : null,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${widget.bookings.length}',
+                    style: AppTextStyles.caption.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: isCompact ? 10 : 11,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '${widget.bookings.length}',
-              style: AppTextStyles.caption.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const Spacer(),
-          _buildSortDropdown(),
+          if (!isCompact) _buildSortDropdown(isCompact),
         ],
       ),
     );
   }
 
-  Widget _buildSortDropdown() {
+  Widget _buildSortDropdown(bool isCompact) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 8 : 12,
+        vertical: 6,
+      ),
       decoration: BoxDecoration(
-        color: AppTheme.darkBackground.withOpacity(0.5),
+        color: AppTheme.darkBackground.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.3),
+          color: AppTheme.darkBorder.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -116,28 +135,30 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
         children: [
           Icon(
             CupertinoIcons.sort_down,
-            size: 16,
+            size: isCompact ? 14 : 16,
             color: AppTheme.textMuted,
           ),
-          const SizedBox(width: 6),
+          SizedBox(width: isCompact ? 4 : 6),
           Text(
-            'ترتيب حسب',
+            'ترتيب',
             style: AppTextStyles.caption.copyWith(
               color: AppTheme.textMuted,
+              fontSize: isCompact ? 11 : 12,
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: isCompact ? 4 : 8),
           DropdownButton<String>(
             value: _sortColumn,
             dropdownColor: AppTheme.darkCard,
             underline: const SizedBox.shrink(),
             icon: Icon(
               CupertinoIcons.chevron_down,
-              size: 14,
+              size: isCompact ? 12 : 14,
               color: AppTheme.primaryBlue,
             ),
             style: AppTextStyles.caption.copyWith(
               color: AppTheme.primaryBlue,
+              fontSize: isCompact ? 11 : 12,
             ),
             items: const [
               DropdownMenuItem(value: 'date', child: Text('التاريخ')),
@@ -163,8 +184,13 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
               _sortAscending
                   ? CupertinoIcons.arrow_up
                   : CupertinoIcons.arrow_down,
-              size: 16,
+              size: isCompact ? 14 : 16,
               color: AppTheme.primaryBlue,
+            ),
+            padding: EdgeInsets.all(isCompact ? 4 : 8),
+            constraints: BoxConstraints(
+              minWidth: isCompact ? 24 : 32,
+              minHeight: isCompact ? 24 : 32,
             ),
           ),
         ],
@@ -172,19 +198,168 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
     );
   }
 
-  Widget _buildTable() {
+  Widget _buildCompactView() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: widget.bookings.length,
+      itemBuilder: (context, index) {
+        final booking = widget.bookings[index];
+        final isSelected = widget.selectedBookings.contains(booking);
+
+        return GestureDetector(
+          onTap: () => widget.onBookingTap(booking.id),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppTheme.primaryBlue.withValues(alpha: 0.1)
+                  : AppTheme.darkCard.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected
+                    ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+                    : AppTheme.darkBorder.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Checkbox(
+                      value: isSelected,
+                      onChanged: (value) {
+                        final updatedSelection = [...widget.selectedBookings];
+                        if (value!) {
+                          updatedSelection.add(booking);
+                        } else {
+                          updatedSelection.remove(booking);
+                        }
+                        widget.onSelectionChanged(updatedSelection);
+                      },
+                      activeColor: AppTheme.primaryBlue,
+                      checkColor: Colors.white,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  '#${booking.id.substring(0, 8)}',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: AppTheme.primaryBlue,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              BookingStatusBadge(
+                                status: booking.status,
+                                size: BadgeSize.small,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            booking.userName,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppTheme.textWhite,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      CupertinoIcons.bed_double,
+                      size: 12,
+                      color: AppTheme.textMuted,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        booking.unitName,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppTheme.textMuted,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      CupertinoIcons.calendar,
+                      size: 12,
+                      color: AppTheme.textMuted,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        '${Formatters.formatDate(booking.checkIn)} - ${Formatters.formatDate(booking.checkOut)}',
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppTheme.textMuted,
+                          fontSize: 10,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      booking.totalPrice.formattedAmount,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppTheme.success,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (widget.showActions) _buildCompactActions(booking),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTableView(BoxConstraints constraints) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SizedBox(
-        width: MediaQuery.of(context).size.width > 1200
-            ? MediaQuery.of(context).size.width - 32
-            : 1200,
+        width: constraints.maxWidth > 1200 ? constraints.maxWidth : 1200,
         child: Column(
           children: [
             _buildTableHeader(),
-            ...widget.bookings.asMap().entries.map((entry) {
-              return _buildTableRow(entry.key, entry.value);
-            }),
+            Expanded(
+              child: ListView.builder(
+                itemCount: widget.bookings.length,
+                itemBuilder: (context, index) {
+                  return _buildTableRow(index, widget.bookings[index]);
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -195,10 +370,10 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: AppTheme.darkBackground.withOpacity(0.3),
+        color: AppTheme.darkBackground.withValues(alpha: 0.3),
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.darkBorder.withOpacity(0.1),
+            color: AppTheme.darkBorder.withValues(alpha: 0.1),
           ),
         ),
       ),
@@ -263,13 +438,13 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           decoration: BoxDecoration(
             color: isHovered
-                ? AppTheme.primaryBlue.withOpacity(0.05)
+                ? AppTheme.primaryBlue.withValues(alpha: 0.05)
                 : isSelected
-                    ? AppTheme.primaryBlue.withOpacity(0.02)
+                    ? AppTheme.primaryBlue.withValues(alpha: 0.02)
                     : Colors.transparent,
             border: Border(
               bottom: BorderSide(
-                color: AppTheme.darkBorder.withOpacity(0.05),
+                color: AppTheme.darkBorder.withValues(alpha: 0.05),
               ),
               left: BorderSide(
                 color: isSelected ? AppTheme.primaryBlue : Colors.transparent,
@@ -297,7 +472,7 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
                 ),
               ),
               _buildCell(
-                '#${booking.id.substring(0, 8)}',
+                '#${booking.id.length > 8 ? booking.id.substring(0, 8) : booking.id}',
                 120,
                 style: AppTextStyles.caption.copyWith(
                   color: AppTheme.primaryBlue,
@@ -352,8 +527,9 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
   }
 
   Widget _buildActions(Booking booking) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
       children: [
         _buildActionIcon(
           icon: CupertinoIcons.eye,
@@ -385,18 +561,49 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
     );
   }
 
+  Widget _buildCompactActions(Booking booking) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (booking.canCheckIn)
+          _buildActionIcon(
+            icon: CupertinoIcons.arrow_down_circle,
+            onTap: () {},
+            tooltip: 'تسجيل وصول',
+            color: AppTheme.success,
+            size: 14,
+          ),
+        if (booking.canCheckOut)
+          _buildActionIcon(
+            icon: CupertinoIcons.arrow_up_circle,
+            onTap: () {},
+            tooltip: 'تسجيل مغادرة',
+            color: AppTheme.warning,
+            size: 14,
+          ),
+        _buildActionIcon(
+          icon: CupertinoIcons.ellipsis,
+          onTap: () => widget.onBookingTap(booking.id),
+          tooltip: 'المزيد',
+          size: 14,
+        ),
+      ],
+    );
+  }
+
   Widget _buildActionIcon({
     required IconData icon,
     required VoidCallback onTap,
     required String tooltip,
     Color? color,
+    double size = 16,
   }) {
     return Tooltip(
       message: tooltip,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 2),
         decoration: BoxDecoration(
-          color: (color ?? AppTheme.primaryBlue).withOpacity(0.1),
+          color: (color ?? AppTheme.primaryBlue).withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Material(
@@ -405,10 +612,10 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
             onTap: onTap,
             borderRadius: BorderRadius.circular(8),
             child: Container(
-              padding: const EdgeInsets.all(6),
+              padding: EdgeInsets.all(size == 14 ? 4 : 6),
               child: Icon(
                 icon,
-                size: 16,
+                size: size,
                 color: color ?? AppTheme.primaryBlue,
               ),
             ),
