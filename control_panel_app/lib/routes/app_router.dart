@@ -147,7 +147,8 @@ import 'package:bookn_cp_app/features/admin_payments/presentation/pages/refunds_
 import 'package:bookn_cp_app/features/admin_payments/presentation/pages/revenue_dashboard_page.dart';
 import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payments_list/payments_list_bloc.dart';
 import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_details/payment_details_bloc.dart';
-import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_analytics/payment_analytics_bloc.dart';
+import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_analytics/payment_analytics_bloc.dart'
+    as pay_an_bloc;
 import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_refund/payment_refund_bloc.dart';
 
 class AppRouter {
@@ -269,8 +270,8 @@ class AppRouter {
         GoRoute(
           path: '/admin/payments/analytics',
           builder: (context, state) {
-            return BlocProvider<PaymentAnalyticsBloc>(
-              create: (_) => di.sl<PaymentAnalyticsBloc>(),
+            return BlocProvider<pay_an_bloc.PaymentAnalyticsBloc>(
+              create: (_) => di.sl<pay_an_bloc.PaymentAnalyticsBloc>(),
               child: const PaymentAnalyticsPage(),
             );
           },
