@@ -139,6 +139,16 @@ import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/booking_a
     as ab_an_bloc;
 import 'package:bookn_cp_app/features/admin_bookings/presentation/bloc/booking_analytics/booking_analytics_event.dart'
     as ab_an_event;
+// Admin Payments pages & blocs
+import 'package:bookn_cp_app/features/admin_payments/presentation/pages/payments_list_page.dart';
+import 'package:bookn_cp_app/features/admin_payments/presentation/pages/payment_details_page.dart';
+import 'package:bookn_cp_app/features/admin_payments/presentation/pages/payment_analytics_page.dart';
+import 'package:bookn_cp_app/features/admin_payments/presentation/pages/refunds_management_page.dart';
+import 'package:bookn_cp_app/features/admin_payments/presentation/pages/revenue_dashboard_page.dart';
+import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payments_list/payments_list_bloc.dart';
+import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_details/payment_details_bloc.dart';
+import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_analytics/payment_analytics_bloc.dart';
+import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_refund/payment_refund_bloc.dart';
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
@@ -246,6 +256,55 @@ class AppRouter {
         // Removed review and search routes
         // Removed property routes
         // Admin Bookings
+        GoRoute(
+          path: '/admin/payments',
+          builder: (context, state) {
+            return BlocProvider<PaymentsListBloc>(
+              create: (_) => di.sl<PaymentsListBloc>(),
+              child: const PaymentsListPage(),
+            );
+          },
+        ),
+
+        GoRoute(
+          path: '/admin/payments/analytics',
+          builder: (context, state) {
+            return BlocProvider<PaymentAnalyticsBloc>(
+              create: (_) => di.sl<PaymentAnalyticsBloc>(),
+              child: const PaymentAnalyticsPage(),
+            );
+          },
+        ),
+
+        GoRoute(
+          path: '/admin/payments/revenue-dashboard',
+          builder: (context, state) {
+            return const RevenueDashboardPage();
+          },
+        ),
+
+        GoRoute(
+          path: '/admin/payments/:paymentId',
+          builder: (context, state) {
+            final paymentId = state.pathParameters['paymentId']!;
+            return BlocProvider<PaymentDetailsBloc>(
+              create: (_) => di.sl<PaymentDetailsBloc>(),
+              child: PaymentDetailsPage(paymentId: paymentId),
+            );
+          },
+        ),
+
+        GoRoute(
+          path: '/admin/payments/:paymentId/refunds',
+          builder: (context, state) {
+            final paymentId = state.pathParameters['paymentId']!;
+            return BlocProvider<PaymentRefundBloc>(
+              create: (_) => di.sl<PaymentRefundBloc>(),
+              child: RefundsManagementPage(paymentId: paymentId),
+            );
+          },
+        ),
+
         GoRoute(
           path: '/admin/bookings',
           builder: (context, state) {
