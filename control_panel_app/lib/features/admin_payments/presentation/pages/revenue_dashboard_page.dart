@@ -481,6 +481,7 @@ class _RevenueDashboardPageState extends State<RevenueDashboardPage>
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
@@ -625,53 +626,72 @@ class _RevenueDashboardPageState extends State<RevenueDashboardPage>
             ),
           ),
           const SizedBox(height: 16),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.5,
-            children: [
-              _buildStatCard(
-                'المعاملات',
-                _mockStats['transactionCount'].toString(),
-                CupertinoIcons.arrow_right_arrow_left,
-                AppTheme.primaryBlue,
-              ),
-              _buildStatCard(
-                'متوسط المعاملة',
-                '${(_mockStats['averageTransaction'] / 1000).toStringAsFixed(1)}K',
-                CupertinoIcons.chart_bar_fill,
-                AppTheme.primaryPurple,
-              ),
-              _buildStatCard(
-                'قيد الانتظار',
-                '${(_mockStats['pendingAmount'] / 1000).toStringAsFixed(0)}K',
-                CupertinoIcons.clock_fill,
-                AppTheme.warning,
-              ),
-              _buildStatCard(
-                'معدل النجاح',
-                '94.5%',
-                CupertinoIcons.checkmark_seal_fill,
-                AppTheme.success,
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // حساب العرض المتاح وتحديد عدد الأعمدة
+              final crossAxisCount = constraints.maxWidth > 600 ? 4 : 2;
+              // تحديد aspect ratio بناءً على حجم الشاشة
+              final aspectRatio = constraints.maxWidth > 600
+                  ? 1.8
+                  : constraints.maxWidth > 400
+                      ? 1.6
+                      : 1.3;
+
+              return GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: aspectRatio,
+                children: [
+                  _buildStatCard(
+                    'المعاملات',
+                    _mockStats['transactionCount'].toString(),
+                    CupertinoIcons.arrow_right_arrow_left,
+                    AppTheme.primaryBlue,
+                    isCompact: constraints.maxWidth < 400,
+                  ),
+                  _buildStatCard(
+                    'متوسط المعاملة',
+                    '${(_mockStats['averageTransaction'] / 1000).toStringAsFixed(1)}K',
+                    CupertinoIcons.chart_bar_fill,
+                    AppTheme.primaryPurple,
+                    isCompact: constraints.maxWidth < 400,
+                  ),
+                  _buildStatCard(
+                    'قيد الانتظار',
+                    '${(_mockStats['pendingAmount'] / 1000).toStringAsFixed(0)}K',
+                    CupertinoIcons.clock_fill,
+                    AppTheme.warning,
+                    isCompact: constraints.maxWidth < 400,
+                  ),
+                  _buildStatCard(
+                    'معدل النجاح',
+                    '94.5%',
+                    CupertinoIcons.checkmark_seal_fill,
+                    AppTheme.success,
+                    isCompact: constraints.maxWidth < 400,
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
     );
   }
 
+  // إصلاح مشكلة overflow في _buildStatCard
   Widget _buildStatCard(
     String title,
     String value,
     IconData icon,
-    Color color,
-  ) {
+    Color color, {
+    bool isCompact = false,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isCompact ? 12 : 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -687,42 +707,63 @@ class _RevenueDashboardPageState extends State<RevenueDashboardPage>
           width: 1,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 20,
-                ),
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(isCompact ? 6 : 8),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: color,
+                      size: isCompact ? 16 : 20,
+                    ),
+                  ),
+                  const Spacer(),
+                ],
               ),
               const Spacer(),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppTheme.textMuted,
+                        fontSize: isCompact ? 10 : null,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      value,
+                      style: AppTextStyles.heading2.copyWith(
+                        color: AppTheme.textWhite,
+                        fontWeight: FontWeight.bold,
+                        fontSize: isCompact ? 18 : null,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
             ],
-          ),
-          const Spacer(),
-          Text(
-            title,
-            style: AppTextStyles.caption.copyWith(
-              color: AppTheme.textMuted,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: AppTextStyles.heading2.copyWith(
-              color: AppTheme.textWhite,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

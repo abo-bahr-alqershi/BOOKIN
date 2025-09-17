@@ -77,6 +77,7 @@ class _PaymentBreakdownPieChartState extends State<PaymentBreakdownPieChart>
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             'توزيع طرق الدفع',
@@ -86,78 +87,15 @@ class _PaymentBreakdownPieChartState extends State<PaymentBreakdownPieChart>
           ),
           const SizedBox(height: 20),
           Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: AnimatedBuilder(
-                    animation: _animation,
-                    builder: (context, child) {
-                      return Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          PieChart(
-                            PieChartData(
-                              pieTouchData: PieTouchData(
-                                touchCallback:
-                                    (FlTouchEvent event, pieTouchResponse) {
-                                  setState(() {
-                                    if (!event.isInterestedForInteractions ||
-                                        pieTouchResponse == null ||
-                                        pieTouchResponse.touchedSection ==
-                                            null) {
-                                      _touchedIndex = -1;
-                                      return;
-                                    }
-                                    _touchedIndex = pieTouchResponse
-                                        .touchedSection!.touchedSectionIndex;
-                                  });
-                                },
-                              ),
-                              borderData: FlBorderData(show: false),
-                              sectionsSpace: 2,
-                              centerSpaceRadius: 50,
-                              sections: _buildSections(),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppTheme.darkBackground
-                                  .withValues(alpha: 0.8),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'الإجمالي',
-                                  style: AppTextStyles.caption.copyWith(
-                                    color: AppTheme.textMuted,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _calculateTotal(),
-                                  style: AppTextStyles.bodyLarge.copyWith(
-                                    color: AppTheme.textWhite,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  flex: 2,
-                  child: _buildLegend(),
-                ),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // للشاشات الصغيرة، عرض التخطيط بشكل عمودي
+                if (constraints.maxWidth < 350) {
+                  return _buildVerticalLayout();
+                }
+                // للشاشات الكبيرة، عرض التخطيط بشكل أفقي
+                return _buildHorizontalLayout();
+              },
             ),
           ),
         ],
@@ -165,7 +103,137 @@ class _PaymentBreakdownPieChartState extends State<PaymentBreakdownPieChart>
     );
   }
 
-  List<PieChartSectionData> _buildSections() {
+  Widget _buildHorizontalLayout() {
+    return Row(
+      children: [
+        Expanded(
+          flex: 3,
+          child: AnimatedBuilder(
+            animation: _animation,
+            builder: (context, child) {
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  PieChart(
+                    PieChartData(
+                      pieTouchData: PieTouchData(
+                        touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                          setState(() {
+                            if (!event.isInterestedForInteractions ||
+                                pieTouchResponse == null ||
+                                pieTouchResponse.touchedSection == null) {
+                              _touchedIndex = -1;
+                              return;
+                            }
+                            _touchedIndex = pieTouchResponse
+                                .touchedSection!.touchedSectionIndex;
+                          });
+                        },
+                      ),
+                      borderData: FlBorderData(show: false),
+                      sectionsSpace: 2,
+                      centerSpaceRadius: 40,
+                      sections: _buildSections(),
+                    ),
+                  ),
+                  _buildCenterInfo(),
+                ],
+              );
+            },
+          ),
+        ),
+        const SizedBox(width: 20),
+        Expanded(
+          flex: 2,
+          child: _buildLegend(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVerticalLayout() {
+    return Column(
+      children: [
+        Expanded(
+          flex: 2,
+          child: AnimatedBuilder(
+            animation: _animation,
+            builder: (context, child) {
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  PieChart(
+                    PieChartData(
+                      pieTouchData: PieTouchData(
+                        touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                          setState(() {
+                            if (!event.isInterestedForInteractions ||
+                                pieTouchResponse == null ||
+                                pieTouchResponse.touchedSection == null) {
+                              _touchedIndex = -1;
+                              return;
+                            }
+                            _touchedIndex = pieTouchResponse
+                                .touchedSection!.touchedSectionIndex;
+                          });
+                        },
+                      ),
+                      borderData: FlBorderData(show: false),
+                      sectionsSpace: 2,
+                      centerSpaceRadius: 30,
+                      sections: _buildSections(isCompact: true),
+                    ),
+                  ),
+                  _buildCenterInfo(isCompact: true),
+                ],
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 100,
+          child: _buildCompactLegend(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCenterInfo({bool isCompact = false}) {
+    return Container(
+      padding: EdgeInsets.all(isCompact ? 8 : 16),
+      decoration: BoxDecoration(
+        color: AppTheme.darkBackground.withValues(alpha: 0.8),
+        shape: BoxShape.circle,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'الإجمالي',
+            style: AppTextStyles.caption.copyWith(
+              color: AppTheme.textMuted,
+              fontSize: isCompact ? 10 : null,
+            ),
+          ),
+          SizedBox(height: isCompact ? 2 : 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              _calculateTotal(),
+              style: AppTextStyles.bodyLarge.copyWith(
+                color: AppTheme.textWhite,
+                fontWeight: FontWeight.bold,
+                fontSize: isCompact ? 14 : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<PieChartSectionData> _buildSections({bool isCompact = false}) {
     // Create dummy data if empty
     final data = widget.methodAnalytics.isEmpty
         ? _createDummyData()
@@ -176,8 +244,10 @@ class _PaymentBreakdownPieChartState extends State<PaymentBreakdownPieChart>
 
     data.forEach((method, analytics) {
       final isTouched = index == _touchedIndex;
-      final fontSize = isTouched ? 16.0 : 12.0;
-      final radius = isTouched ? 70.0 : 60.0;
+      final fontSize =
+          isCompact ? (isTouched ? 12.0 : 10.0) : (isTouched ? 16.0 : 12.0);
+      final radius =
+          isCompact ? (isTouched ? 50.0 : 45.0) : (isTouched ? 70.0 : 60.0);
 
       sections.add(
         PieChartSectionData(
@@ -200,47 +270,123 @@ class _PaymentBreakdownPieChartState extends State<PaymentBreakdownPieChart>
     return sections;
   }
 
+  // إصلاح مشكلة overflow في _buildLegend
   Widget _buildLegend() {
     final data = widget.methodAnalytics.isEmpty
         ? _createDummyData()
         : widget.methodAnalytics;
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: data.entries.map((entry) {
+          final index = data.keys.toList().indexOf(entry.key);
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: _getMethodColor(index),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _getMethodName(entry.key),
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppTheme.textWhite,
+                          fontSize: 11,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        '${entry.value.transactionCount} معاملة',
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppTheme.textMuted,
+                          fontSize: 9,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCompactLegend() {
+    final data = widget.methodAnalytics.isEmpty
+        ? _createDummyData()
+        : widget.methodAnalytics;
+
+    return ListView(
+      scrollDirection: Axis.horizontal,
       children: data.entries.map((entry) {
         final index = data.keys.toList().indexOf(entry.key);
         return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: Row(
+          margin: const EdgeInsets.only(right: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppTheme.darkCard.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _getMethodColor(index).withValues(alpha: 0.3),
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: _getMethodColor(index),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _getMethodName(entry.key),
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppTheme.textWhite,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${entry.value.percentage.toStringAsFixed(1)}%',
+                style: AppTextStyles.bodyMedium.copyWith(
                   color: _getMethodColor(index),
-                  borderRadius: BorderRadius.circular(3),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _getMethodName(entry.key),
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.textWhite,
-                      ),
-                    ),
-                    Text(
-                      '${entry.value.transactionCount} معاملة',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.textMuted,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
+              Text(
+                '${entry.value.transactionCount} معاملة',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppTheme.textMuted,
+                  fontSize: 9,
                 ),
               ),
             ],
