@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../../core/network/api_client.dart';
+import '../../../../../core/network/api_exceptions.dart';
 import '../../../../../core/error/exceptions.dart';
 import '../../../../../core/models/paginated_result.dart';
 import '../../../../../core/models/result_dto.dart';
@@ -494,10 +495,23 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
       if (endDate != null) queryParams['endDate'] = endDate.toIso8601String();
       if (propertyId != null) queryParams['propertyId'] = propertyId;
 
-      final response = await apiClient.get(
-        '$_baseEndpoint/analytics',
-        queryParameters: queryParams,
-      );
+      Response response;
+      try {
+        response = await apiClient.get(
+          '$_baseEndpoint/analytics',
+          queryParameters: queryParams,
+        );
+      } on ApiException catch (e) {
+        // Fallback: try lowercase endpoint if not found
+        if (e.statusCode == 404) {
+          response = await apiClient.get(
+            '$_baseEndpoint/Analytics',
+            queryParameters: queryParams,
+          );
+        } else {
+          rethrow;
+        }
+      }
 
       final result = ResultDto<Map<String, dynamic>>.fromJson(
         response.data,
@@ -510,6 +524,35 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
         throw ServerException(result.message ?? 'Failed to get analytics');
       }
     } on DioException catch (e) {
+      // Return empty analytics for 404 to avoid hard-failing the UI
+      if (e.response?.statusCode == 404) {
+        return PaymentAnalyticsModel.fromJson({
+          'summary': const PaymentSummaryModel(
+            totalTransactions: 0,
+            totalAmount: MoneyModel(amount: 0, currency: 'USD', formattedAmount: 'USD 0.00'),
+            averageTransactionValue: MoneyModel(amount: 0, currency: 'USD', formattedAmount: 'USD 0.00'),
+            successRate: 0,
+            successfulTransactions: 0,
+            failedTransactions: 0,
+            pendingTransactions: 0,
+            totalRefunded: MoneyModel(amount: 0, currency: 'USD', formattedAmount: 'USD 0.00'),
+            refundCount: 0,
+          ).toJson(),
+          'trends': <dynamic>[],
+          'methodAnalytics': {},
+          'statusAnalytics': {},
+          'refundAnalytics': const RefundAnalyticsModel(
+            totalRefunds: 0,
+            totalRefundedAmount: MoneyModel(amount: 0, currency: 'USD', formattedAmount: 'USD 0.00'),
+            refundRate: 0,
+            averageRefundTime: 0,
+            refundReasons: {},
+            trends: [],
+          ).toJson(),
+          'startDate': (startDate ?? DateTime.now().subtract(const Duration(days: 30))).toIso8601String(),
+          'endDate': (endDate ?? DateTime.now()).toIso8601String(),
+        });
+      }
       throw ServerException(
         e.response?.data['message'] ?? 'Network error occurred',
       );
@@ -529,10 +572,22 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
         if (propertyId != null) 'propertyId': propertyId,
       };
 
-      final response = await apiClient.get(
-        '$_baseEndpoint/revenue-report',
-        queryParameters: queryParams,
-      );
+      Response response;
+      try {
+        response = await apiClient.get(
+          '$_baseEndpoint/revenue-report',
+          queryParameters: queryParams,
+        );
+      } on ApiException catch (e) {
+        if (e.statusCode == 404) {
+          response = await apiClient.get(
+            '$_baseEndpoint/RevenueReport',
+            queryParameters: queryParams,
+          );
+        } else {
+          rethrow;
+        }
+      }
 
       final result = ResultDto<Map<String, dynamic>>.fromJson(
         response.data,
@@ -564,10 +619,22 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
         if (propertyId != null) 'propertyId': propertyId,
       };
 
-      final response = await apiClient.get(
-        '$_baseEndpoint/trends',
-        queryParameters: queryParams,
-      );
+      Response response;
+      try {
+        response = await apiClient.get(
+          '$_baseEndpoint/trends',
+          queryParameters: queryParams,
+        );
+      } on ApiException catch (e) {
+        if (e.statusCode == 404) {
+          response = await apiClient.get(
+            '$_baseEndpoint/Trends',
+            queryParameters: queryParams,
+          );
+        } else {
+          rethrow;
+        }
+      }
 
       final result = ResultDto<List<dynamic>>.fromJson(
         response.data,
@@ -582,6 +649,9 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
         throw ServerException(result.message ?? 'Failed to get trends');
       }
     } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return <PaymentTrendModel>[];
+      }
       throw ServerException(
         e.response?.data['message'] ?? 'Network error occurred',
       );
@@ -601,10 +671,22 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
       if (endDate != null) queryParams['endDate'] = endDate.toIso8601String();
       if (propertyId != null) queryParams['propertyId'] = propertyId;
 
-      final response = await apiClient.get(
-        '$_baseEndpoint/refund-statistics',
-        queryParameters: queryParams,
-      );
+      Response response;
+      try {
+        response = await apiClient.get(
+          '$_baseEndpoint/refund-statistics',
+          queryParameters: queryParams,
+        );
+      } on ApiException catch (e) {
+        if (e.statusCode == 404) {
+          response = await apiClient.get(
+            '$_baseEndpoint/RefundStatistics',
+            queryParameters: queryParams,
+          );
+        } else {
+          rethrow;
+        }
+      }
 
       final result = ResultDto<Map<String, dynamic>>.fromJson(
         response.data,
@@ -618,6 +700,16 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
             result.message ?? 'Failed to get refund statistics');
       }
     } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return const RefundAnalyticsModel(
+          totalRefunds: 0,
+          totalRefundedAmount: MoneyModel(amount: 0, currency: 'USD', formattedAmount: 'USD 0.00'),
+          refundRate: 0,
+          averageRefundTime: 0,
+          refundReasons: {},
+          trends: [],
+        );
+      }
       throw ServerException(
         e.response?.data['message'] ?? 'Network error occurred',
       );
