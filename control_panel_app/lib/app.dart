@@ -5,13 +5,13 @@ import 'package:provider/provider.dart';
 import 'package:bookn_cp_app/core/bloc/theme/theme_bloc.dart';
 import 'package:bookn_cp_app/core/bloc/theme/theme_state.dart';
 import 'package:bookn_cp_app/features/chat/presentation/providers/typing_indicator_provider.dart';
-import 'core/localization/app_localizations.dart';
-import 'core/localization/locale_manager.dart';
-import 'routes/app_router.dart';
-import 'injection_container.dart' as di;
-import 'core/bloc/app_bloc.dart';
+import 'package:bookn_cp_app/core/localization/app_localizations.dart';
+import 'package:bookn_cp_app/core/localization/locale_manager.dart';
+import 'package:bookn_cp_app/routes/app_router.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
+import 'package:bookn_cp_app/core/bloc/app_bloc.dart';
 // Removed settings bloc dependency
-import 'core/theme/app_theme.dart';
+import 'package:bookn_cp_app/core/theme/app_theme.dart';
 
 class YemenBookingApp extends StatelessWidget {
   const YemenBookingApp({super.key});
