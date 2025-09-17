@@ -10,8 +10,9 @@ class ConnectivityService {
   ConnectivityService._internal();
 
   final Connectivity _connectivity = Connectivity();
-  final StreamController<bool> _connectionStatusController = StreamController<bool>.broadcast();
-  
+  final StreamController<bool> _connectionStatusController =
+      StreamController<bool>.broadcast();
+
   bool _isConnected = false;
   Timer? _connectionCheckTimer;
 
@@ -25,7 +26,7 @@ class ConnectivityService {
   Future<void> initialize() async {
     // التحقق من الحالة الأولية
     await _checkConnectionStatus();
-    
+
     // الاستماع لتغييرات الاتصال
     _connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
       _handleConnectivityChange(result);
@@ -39,15 +40,16 @@ class ConnectivityService {
   Future<bool> checkConnection() async {
     try {
       // تفضيل IPv4 لتجنّب مشاكل IPv6 DNS
-      final socket = await Socket.connect('1.1.1.1', 53, timeout: const Duration(seconds: 3));
+      final socket = await Socket.connect('1.1.1.1', 53,
+          timeout: const Duration(seconds: 3));
       await socket.close();
-      final isConnected = true;
-      
+      const isConnected = true;
+
       if (_isConnected != isConnected) {
         _isConnected = isConnected;
         _connectionStatusController.add(isConnected);
       }
-      
+
       return isConnected;
     } on SocketException catch (_) {
       if (_isConnected) {
@@ -75,14 +77,15 @@ class ConnectivityService {
   Future<ConnectionQuality> checkConnectionQuality() async {
     try {
       final stopwatch = Stopwatch()..start();
-      
+
       // قياس الجودة باستخدام IPv4 socket
-      final socket = await Socket.connect('8.8.8.8', 53, timeout: const Duration(seconds: 3));
+      final socket = await Socket.connect('8.8.8.8', 53,
+          timeout: const Duration(seconds: 3));
       await socket.close();
       stopwatch.stop();
-      
+
       final responseTime = stopwatch.elapsedMilliseconds;
-      
+
       if (responseTime > 0) {
         if (responseTime < 100) {
           return ConnectionQuality.excellent;
@@ -102,7 +105,8 @@ class ConnectivityService {
   }
 
   /// اختبار الاتصال بخادم معين
-  Future<bool> testConnectionToServer(String host, {int port = 80, Duration timeout = const Duration(seconds: 5)}) async {
+  Future<bool> testConnectionToServer(String host,
+      {int port = 80, Duration timeout = const Duration(seconds: 5)}) async {
     try {
       final socket = await Socket.connect(host, port, timeout: timeout);
       await socket.close();
@@ -122,7 +126,8 @@ class ConnectivityService {
 
     for (final server in servers) {
       try {
-        final addresses = await InternetAddress.lookup(server, type: InternetAddressType.IPv4);
+        final addresses = await InternetAddress.lookup(server,
+            type: InternetAddressType.IPv4);
         if (addresses.isNotEmpty && addresses[0].rawAddress.isNotEmpty) {
           return true;
         }
@@ -130,14 +135,15 @@ class ConnectivityService {
         continue;
       }
     }
-    
+
     return false;
   }
 
   /// بدء الفحص الدوري للاتصال
   void _startPeriodicConnectionCheck() {
     _connectionCheckTimer?.cancel();
-    _connectionCheckTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+    _connectionCheckTimer =
+        Timer.periodic(const Duration(seconds: 30), (timer) {
       _checkConnectionStatus();
     });
   }
@@ -152,7 +158,7 @@ class ConnectivityService {
   void _handleConnectivityChange(ConnectivityResult result) {
     final wasConnected = _isConnected;
     _isConnected = result != ConnectivityResult.none;
-    
+
     if (wasConnected != _isConnected) {
       _connectionStatusController.add(_isConnected);
     }

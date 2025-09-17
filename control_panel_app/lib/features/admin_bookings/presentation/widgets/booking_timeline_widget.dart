@@ -49,7 +49,7 @@ class BookingTimelineWidget extends StatelessWidget {
         thickness: 2,
       ),
       startChild: _buildTimeLabel(),
-      endChild: _buildBookingsList(),
+      endChild: _buildBookingsList(context),
     );
   }
 
@@ -93,12 +93,16 @@ class BookingTimelineWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            timeSlot,
-            style: AppTextStyles.heading3.copyWith(
-              color:
-                  _isCurrentTime() ? AppTheme.primaryBlue : AppTheme.textWhite,
-              fontWeight: FontWeight.bold,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              timeSlot,
+              style: AppTextStyles.heading3.copyWith(
+                color: _isCurrentTime()
+                    ? AppTheme.primaryBlue
+                    : AppTheme.textWhite,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(height: 4),
@@ -121,18 +125,18 @@ class BookingTimelineWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildBookingsList() {
+  Widget _buildBookingsList(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         children: bookings.map((booking) {
-          return _buildBookingCard(booking);
+          return _buildBookingCard(context, booking);
         }).toList(),
       ),
     );
   }
 
-  Widget _buildBookingCard(Booking booking) {
+  Widget _buildBookingCard(BuildContext context, Booking booking) {
     final isCheckIn = booking.checkIn.hour == int.parse(timeSlot.split(':')[0]);
     final isCheckOut =
         booking.checkOut.hour == int.parse(timeSlot.split(':')[0]);
@@ -197,6 +201,8 @@ class BookingTimelineWidget extends StatelessWidget {
                                     color: AppTheme.textWhite,
                                     fontWeight: FontWeight.w600,
                                   ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
@@ -204,18 +210,24 @@ class BookingTimelineWidget extends StatelessWidget {
                                   style: AppTextStyles.caption.copyWith(
                                     color: AppTheme.textMuted,
                                   ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
                               ],
                             ),
                           ),
-                          BookingStatusBadge(
-                            status: booking.status,
-                            size: BadgeSize.small,
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: BookingStatusBadge(
+                              status: booking.status,
+                              size: BadgeSize.small,
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      _buildBookingDetails(booking, isCheckIn, isCheckOut),
+                      _buildBookingDetails(
+                          context, booking, isCheckIn, isCheckOut),
                     ],
                   ),
                 ),
@@ -258,50 +270,109 @@ class BookingTimelineWidget extends StatelessWidget {
   }
 
   Widget _buildBookingDetails(
-      Booking booking, bool isCheckIn, bool isCheckOut) {
+      BuildContext context, Booking booking, bool isCheckIn, bool isCheckOut) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 380;
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
       decoration: BoxDecoration(
         color: AppTheme.darkBackground.withOpacity(0.3),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
-        children: [
-          _buildDetailItem(
-            icon: CupertinoIcons.calendar,
-            label: isCheckIn
-                ? 'وصول'
-                : isCheckOut
-                    ? 'مغادرة'
-                    : 'إقامة',
-            value: isCheckIn
-                ? Formatters.formatDate(booking.checkIn)
-                : isCheckOut
-                    ? Formatters.formatDate(booking.checkOut)
-                    : '${booking.nights} ليلة',
-          ),
-          const SizedBox(width: 16),
-          _buildDetailItem(
-            icon: CupertinoIcons.person_2,
-            label: 'الضيوف',
-            value: '${booking.guestsCount}',
-          ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              booking.totalPrice.formattedAmount,
-              style: AppTextStyles.caption.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+      child: isSmallScreen
+          ? _buildCompactLayout(booking, isCheckIn, isCheckOut)
+          : _buildNormalLayout(booking, isCheckIn, isCheckOut),
+    );
+  }
+
+  Widget _buildNormalLayout(Booking booking, bool isCheckIn, bool isCheckOut) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      alignment: WrapAlignment.spaceBetween,
+      children: [
+        _buildDetailItem(
+          icon: CupertinoIcons.calendar,
+          label: isCheckIn
+              ? 'وصول'
+              : isCheckOut
+                  ? 'مغادرة'
+                  : 'إقامة',
+          value: isCheckIn
+              ? Formatters.formatDate(booking.checkIn)
+              : isCheckOut
+                  ? Formatters.formatDate(booking.checkOut)
+                  : '${booking.nights} ليلة',
+        ),
+        _buildDetailItem(
+          icon: CupertinoIcons.person_2,
+          label: 'الضيوف',
+          value: '${booking.guestsCount}',
+        ),
+        _buildPriceTag(booking.totalPrice.formattedAmount),
+      ],
+    );
+  }
+
+  Widget _buildCompactLayout(Booking booking, bool isCheckIn, bool isCheckOut) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildDetailItem(
+                icon: CupertinoIcons.calendar,
+                label: isCheckIn
+                    ? 'وصول'
+                    : isCheckOut
+                        ? 'مغادرة'
+                        : 'إقامة',
+                value: isCheckIn
+                    ? Formatters.formatDate(booking.checkIn)
+                    : isCheckOut
+                        ? Formatters.formatDate(booking.checkOut)
+                        : '${booking.nights} ليلة',
+                compact: true,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildDetailItem(
+              icon: CupertinoIcons.person_2,
+              label: 'الضيوف',
+              value: '${booking.guestsCount}',
+              compact: true,
+            ),
+            _buildPriceTag(booking.totalPrice.formattedAmount, compact: true),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPriceTag(String price, {bool compact = false}) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 10,
+        vertical: compact ? 4 : 6,
+      ),
+      decoration: BoxDecoration(
+        gradient: AppTheme.primaryGradient,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        price,
+        style: AppTextStyles.caption.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: compact ? 11 : null,
+        ),
       ),
     );
   }
@@ -310,13 +381,14 @@ class BookingTimelineWidget extends StatelessWidget {
     required IconData icon,
     required String label,
     required String value,
+    bool compact = false,
   }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
           icon,
-          size: 14,
+          size: compact ? 12 : 14,
           color: AppTheme.textMuted,
         ),
         const SizedBox(width: 4),
@@ -327,7 +399,7 @@ class BookingTimelineWidget extends StatelessWidget {
               label,
               style: AppTextStyles.caption.copyWith(
                 color: AppTheme.textMuted,
-                fontSize: 10,
+                fontSize: compact ? 9 : 10,
               ),
             ),
             Text(
@@ -335,7 +407,9 @@ class BookingTimelineWidget extends StatelessWidget {
               style: AppTextStyles.caption.copyWith(
                 color: AppTheme.textWhite,
                 fontWeight: FontWeight.w600,
+                fontSize: compact ? 11 : null,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

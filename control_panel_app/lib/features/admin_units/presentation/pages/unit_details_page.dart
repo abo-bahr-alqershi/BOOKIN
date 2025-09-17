@@ -20,7 +20,7 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 class UnitDetailsPage extends StatefulWidget {
   final String unitId;
-  
+
   const UnitDetailsPage({
     super.key,
     required this.unitId,
@@ -38,23 +38,23 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
   late AnimationController _contentAnimationController;
   late AnimationController _floatingButtonController;
   late AnimationController _parallaxController;
-  
+
   // Animations
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<double> _glowAnimation;
   late Animation<double> _parallaxAnimation;
-  
+
   // Scroll Controller
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0.0;
   bool _showFloatingHeader = false;
-  
+
   // Tab Controller
   late TabController _tabController;
   int _currentTabIndex = 0;
-  
+
   @override
   void initState() {
     super.initState();
@@ -62,20 +62,20 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
     _loadUnitDetails();
     _setupScrollListener();
   }
-  
+
   void _initializeAnimations() {
     // Background Animation
     _backgroundAnimationController = AnimationController(
       duration: const Duration(seconds: 30),
       vsync: this,
     )..repeat();
-    
+
     // Glow Animation
     _glowController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.3,
       end: 1.0,
@@ -83,13 +83,13 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       parent: _glowController,
       curve: Curves.easeInOut,
     ));
-    
+
     // Content Animation
     _contentAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -97,7 +97,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       parent: _contentAnimationController,
       curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
     ));
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
@@ -105,7 +105,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       parent: _contentAnimationController,
       curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
     ));
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.95,
       end: 1.0,
@@ -113,19 +113,19 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       parent: _contentAnimationController,
       curve: const Interval(0.4, 1.0, curve: Curves.easeOutBack),
     ));
-    
+
     // Floating Button Animation
     _floatingButtonController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     // Parallax Animation
     _parallaxController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _parallaxAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -133,19 +133,19 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       parent: _parallaxController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     // Tab Controller
     _tabController = TabController(
       length: 4,
       vsync: this,
     );
-    
+
     _tabController.addListener(() {
       setState(() {
         _currentTabIndex = _tabController.index;
       });
     });
-    
+
     // Start animations
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
@@ -154,25 +154,27 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       }
     });
   }
-  
+
   void _setupScrollListener() {
     _scrollController.addListener(() {
       setState(() {
         _scrollOffset = _scrollController.offset;
         _showFloatingHeader = _scrollOffset > 200;
       });
-      
+
       // Update parallax
       if (_scrollOffset > 0 && _scrollOffset < 300) {
         _parallaxController.value = _scrollOffset / 300;
       }
     });
   }
-  
+
   void _loadUnitDetails() {
-    context.read<UnitDetailsBloc>().add(LoadUnitDetailsEvent(unitId: widget.unitId));
+    context
+        .read<UnitDetailsBloc>()
+        .add(LoadUnitDetailsEvent(unitId: widget.unitId));
   }
-  
+
   @override
   void dispose() {
     _backgroundAnimationController.dispose();
@@ -184,7 +186,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
     _tabController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<UnitDetailsBloc, UnitDetailsState>(
@@ -203,7 +205,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
             children: [
               // Animated Background
               _buildAnimatedBackground(),
-              
+
               // Main Content
               if (state is UnitDetailsLoaded)
                 _buildLoadedContent(state.unit)
@@ -211,11 +213,11 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
                 _buildLoadingState()
               else if (state is UnitDetailsError)
                 _buildErrorState(state.message),
-              
+
               // Floating Header (appears on scroll)
               if (_showFloatingHeader && state is UnitDetailsLoaded)
                 _buildFloatingHeader(state.unit),
-              
+
               // Floating Action Buttons
               if (state is UnitDetailsLoaded)
                 _buildFloatingActionButtons(state.unit),
@@ -225,10 +227,11 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       },
     );
   }
-  
+
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
-      animation: Listenable.merge([_backgroundAnimationController, _glowAnimation]),
+      animation:
+          Listenable.merge([_backgroundAnimationController, _glowAnimation]),
       builder: (context, child) {
         return Container(
           decoration: BoxDecoration(
@@ -253,7 +256,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       },
     );
   }
-  
+
   Widget _buildLoadedContent(Unit unit) {
     return CustomScrollView(
       controller: _scrollController,
@@ -261,7 +264,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       slivers: [
         // Hero Image Header
         _buildSliverHeader(unit),
-        
+
         // Unit Info Card
         SliverToBoxAdapter(
           child: FadeTransition(
@@ -275,7 +278,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
             ),
           ),
         ),
-        
+
         // Tabs Section
         SliverPersistentHeader(
           pinned: true,
@@ -284,7 +287,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
             currentIndex: _currentTabIndex,
           ),
         ),
-        
+
         // Tab Content
         SliverToBoxAdapter(
           child: AnimatedSwitcher(
@@ -295,10 +298,10 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ],
     );
   }
-  
+
   Widget _buildSliverHeader(Unit unit) {
     final hasImages = unit.images?.isNotEmpty ?? false;
-    
+
     return SliverAppBar(
       expandedHeight: 400,
       pinned: false,
@@ -321,10 +324,10 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
               )
             else
               _buildGradientPlaceholder(),
-            
+
             // Gradient Overlay
             _buildGradientOverlay(),
-            
+
             // Unit Basic Info
             Positioned(
               bottom: 20,
@@ -337,7 +340,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildHeaderImage(String imageUrl) {
     return Stack(
       fit: StackFit.expand,
@@ -358,7 +361,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
           ),
           errorWidget: (context, url, error) => _buildGradientPlaceholder(),
         ),
-        
+
         // Parallax Effect
         AnimatedBuilder(
           animation: _parallaxAnimation,
@@ -369,9 +372,11 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.1 + (0.2 * _parallaxAnimation.value)),
+                    Colors.black
+                        .withOpacity(0.1 + (0.2 * _parallaxAnimation.value)),
                     Colors.transparent,
-                    Colors.black.withOpacity(0.3 + (0.3 * _parallaxAnimation.value)),
+                    Colors.black
+                        .withOpacity(0.3 + (0.3 * _parallaxAnimation.value)),
                   ],
                 ),
               ),
@@ -381,7 +386,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ],
     );
   }
-  
+
   Widget _buildGradientPlaceholder() {
     return Container(
       decoration: BoxDecoration(
@@ -404,7 +409,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildGradientOverlay() {
     return Container(
       decoration: BoxDecoration(
@@ -422,7 +427,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildHeaderInfo(Unit unit) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -462,7 +467,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
                 ),
               ),
               const SizedBox(height: 8),
-              
+
               // Property & Type
               Row(
                 children: [
@@ -485,14 +490,14 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
                 ],
               ),
               const SizedBox(height: 12),
-              
+
               // Price & Status Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Price
                   _buildPriceTag(unit.basePrice, unit.pricingMethod),
-                  
+
                   // Status
                   _buildStatusBadge(unit.isAvailable),
                 ],
@@ -503,7 +508,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildPriceTag(Money price, PricingMethod method) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -539,7 +544,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildStatusBadge(bool isAvailable) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -578,7 +583,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildUnitInfoCard(Unit unit) {
     return Container(
       margin: const EdgeInsets.all(16),
@@ -607,18 +612,18 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
         children: [
           // Stats Row
           _buildStatsRow(unit),
-          
+
           const SizedBox(height: 20),
           const Divider(height: 1),
           const SizedBox(height: 20),
-          
+
           // Quick Info Grid
           _buildQuickInfoGrid(unit),
         ],
       ),
     );
   }
-  
+
   Widget _buildStatsRow(Unit unit) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -650,7 +655,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ],
     );
   }
-  
+
   Widget _buildStatItem({
     required IconData icon,
     required String value,
@@ -689,7 +694,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ],
     );
   }
-  
+
   Widget _buildQuickInfoGrid(Unit unit) {
     return Column(
       children: [
@@ -699,8 +704,8 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
               child: _buildInfoTile(
                 icon: Icons.people_rounded,
                 title: 'السعة',
-                value: unit.capacityDisplay.isNotEmpty 
-                    ? unit.capacityDisplay 
+                value: unit.capacityDisplay.isNotEmpty
+                    ? unit.capacityDisplay
                     : '${unit.maxCapacity} أشخاص',
               ),
             ),
@@ -726,7 +731,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ],
     );
   }
-  
+
   Widget _buildInfoTile({
     required IconData icon,
     required String title,
@@ -774,7 +779,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildTabContent(Unit unit) {
     switch (_currentTabIndex) {
       case 0:
@@ -789,7 +794,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
         return _buildDetailsTab(unit);
     }
   }
-  
+
   Widget _buildDetailsTab(Unit unit) {
     return AnimationLimiter(
       child: Padding(
@@ -807,9 +812,9 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
               _buildSectionTitle('الوصف', Icons.description_rounded),
               const SizedBox(height: 12),
               _buildDescriptionCard(unit.customFeatures),
-              
+
               const SizedBox(height: 24),
-              
+
               // Dynamic Fields Section
               if (unit.dynamicFields.isNotEmpty) ...[
                 _buildSectionTitle('معلومات إضافية', Icons.info_rounded),
@@ -822,7 +827,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildGalleryTab(Unit unit) {
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -831,14 +836,14 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
         children: [
           _buildSectionTitle('معرض الصور', Icons.photo_library_rounded),
           const SizedBox(height: 16),
-          
+
           // Gallery Widget
           UnitImageGallery(
             unitId: widget.unitId,
             isReadOnly: true,
             maxImages: 20,
           ),
-          
+
           // View All Button
           if (unit.images?.isNotEmpty ?? false)
             Padding(
@@ -851,10 +856,10 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildFeaturesTab(Unit unit) {
     final features = unit.featuresList;
-    
+
     return AnimationLimiter(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -863,7 +868,6 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
           children: [
             _buildSectionTitle('المميزات', Icons.stars_rounded),
             const SizedBox(height: 16),
-            
             if (features.isEmpty)
               _buildEmptyFeatures()
             else
@@ -873,7 +877,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildReviewsTab(Unit unit) {
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -882,14 +886,14 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
         children: [
           _buildSectionTitle('التقييمات', Icons.rate_review_rounded),
           const SizedBox(height: 16),
-          
+
           // Reviews placeholder
           _buildNoReviewsPlaceholder(),
         ],
       ),
     );
   }
-  
+
   Widget _buildSectionTitle(String title, IconData icon) {
     return Row(
       children: [
@@ -917,7 +921,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ],
     );
   }
-  
+
   Widget _buildDescriptionCard(String description) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -943,7 +947,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildDynamicFieldsCard(List<FieldGroupWithValues> fieldGroups) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1006,7 +1010,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildFeaturesGrid(List<String> features) {
     return Wrap(
       spacing: 12,
@@ -1024,10 +1028,10 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       }).toList(),
     );
   }
-  
+
   Widget _buildFeatureChip(String feature) {
     final icon = _getFeatureIcon(feature);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
@@ -1062,7 +1066,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildEmptyFeatures() {
     return Container(
       height: 200,
@@ -1095,7 +1099,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildNoReviewsPlaceholder() {
     return Container(
       height: 200,
@@ -1133,7 +1137,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildViewAllButton() {
     return GestureDetector(
       onTap: () => _navigateToGallery(),
@@ -1171,7 +1175,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildFloatingHeader(Unit unit) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -1238,7 +1242,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildFloatingActionButtons(Unit unit) {
     return Positioned(
       bottom: 24,
@@ -1267,7 +1271,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildFloatingButton({
     required IconData icon,
     required Color color,
@@ -1305,7 +1309,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildBackButton() {
     return GestureDetector(
       onTap: () {
@@ -1331,7 +1335,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildShareButton() {
     return GestureDetector(
       onTap: () {
@@ -1357,7 +1361,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildGalleryButton() {
     return GestureDetector(
       onTap: () {
@@ -1383,7 +1387,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildLoadingState() {
     return Center(
       child: Column(
@@ -1414,7 +1418,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildErrorState(String message) {
     return Center(
       child: Column(
@@ -1454,7 +1458,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   // Helper Methods
   IconData _getFeatureIcon(String feature) {
     final featureLower = feature.toLowerCase();
@@ -1464,7 +1468,8 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       return Icons.ac_unit_rounded;
     } else if (featureLower.contains('مطبخ')) {
       return Icons.kitchen_rounded;
-    } else if (featureLower.contains('موقف') || featureLower.contains('parking')) {
+    } else if (featureLower.contains('موقف') ||
+        featureLower.contains('parking')) {
       return Icons.local_parking_rounded;
     } else if (featureLower.contains('مسبح') || featureLower.contains('pool')) {
       return Icons.pool_rounded;
@@ -1474,11 +1479,11 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       return Icons.check_circle_rounded;
     }
   }
-  
+
   void _navigateToEdit(String unitId) {
     context.push('/admin/units/$unitId/edit');
   }
-  
+
   void _navigateToGallery() {
     final state = context.read<UnitDetailsBloc>().state;
     if (state is UnitDetailsLoaded) {
@@ -1488,7 +1493,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       );
     }
   }
-  
+
   void _showDeleteConfirmation(Unit unit) {
     showDialog(
       context: context,
@@ -1497,13 +1502,13 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
         onConfirm: () {
           Navigator.pop(context);
           context.read<UnitDetailsBloc>().add(
-            DeleteUnitDetailsEvent(unitId: unit.id),
-          );
+                DeleteUnitDetailsEvent(unitId: unit.id),
+              );
         },
       ),
     );
   }
-  
+
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1527,7 +1532,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
     );
   }
-  
+
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1557,14 +1562,15 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
 class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   final TabController tabController;
   final int currentIndex;
-  
+
   _TabBarDelegate({
     required this.tabController,
     required this.currentIndex,
   });
-  
+
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       height: 60,
       decoration: BoxDecoration(
@@ -1587,7 +1593,8 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
               borderRadius: BorderRadius.circular(20),
               gradient: AppTheme.primaryGradient,
             ),
-            indicatorPadding: const EdgeInsets.symmetric(horizontal: -20, vertical: 8),
+            indicatorPadding:
+                const EdgeInsets.symmetric(horizontal: -20, vertical: 8),
             labelColor: Colors.white,
             unselectedLabelColor: AppTheme.textMuted,
             labelStyle: AppTextStyles.bodyMedium.copyWith(
@@ -1595,16 +1602,18 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
             ),
             tabs: [
               _buildTab('التفاصيل', Icons.info_rounded, currentIndex == 0),
-              _buildTab('الصور', Icons.photo_library_rounded, currentIndex == 1),
+              _buildTab(
+                  'الصور', Icons.photo_library_rounded, currentIndex == 1),
               _buildTab('المميزات', Icons.stars_rounded, currentIndex == 2),
-              _buildTab('التقييمات', Icons.rate_review_rounded, currentIndex == 3),
+              _buildTab(
+                  'التقييمات', Icons.rate_review_rounded, currentIndex == 3),
             ],
           ),
         ),
       ),
     );
   }
-  
+
   Widget _buildTab(String label, IconData icon, bool isSelected) {
     return Tab(
       child: AnimatedContainer(
@@ -1634,27 +1643,28 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
       ),
     );
   }
-  
+
   @override
   double get maxExtent => 60;
-  
+
   @override
   double get minExtent => 60;
-  
+
   @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) => true;
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
+      true;
 }
 
 // Delete Confirmation Dialog
 class _DeleteConfirmationDialog extends StatelessWidget {
   final String unitName;
   final VoidCallback onConfirm;
-  
+
   const _DeleteConfirmationDialog({
     required this.unitName,
     required this.onConfirm,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -1795,22 +1805,22 @@ class _DeleteConfirmationDialog extends StatelessWidget {
 class _AdvancedBackgroundPainter extends CustomPainter {
   final double animation;
   final double glowIntensity;
-  
+
   _AdvancedBackgroundPainter({
     required this.animation,
     required this.glowIntensity,
   });
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..style = PaintingStyle.fill;
-    
+
     // Draw animated gradient circles
     for (int i = 0; i < 3; i++) {
       final progress = (animation + i * 0.33) % 1.0;
       final radius = 200 + (100 * math.sin(progress * math.pi * 2));
       final opacity = 0.03 + (0.02 * glowIntensity);
-      
+
       paint.shader = RadialGradient(
         colors: [
           AppTheme.primaryBlue.withOpacity(opacity),
@@ -1824,7 +1834,7 @@ class _AdvancedBackgroundPainter extends CustomPainter {
         ),
         radius: radius,
       ));
-      
+
       canvas.drawCircle(
         Offset(
           size.width * (0.3 + 0.4 * math.cos(progress * math.pi * 2)),
@@ -1834,13 +1844,13 @@ class _AdvancedBackgroundPainter extends CustomPainter {
         paint,
       );
     }
-    
+
     // Draw grid pattern
     paint.shader = null;
     paint.color = AppTheme.primaryBlue.withOpacity(0.02);
     paint.strokeWidth = 0.5;
     paint.style = PaintingStyle.stroke;
-    
+
     const spacing = 50.0;
     for (double x = 0; x < size.width; x += spacing) {
       canvas.drawLine(
@@ -1849,7 +1859,7 @@ class _AdvancedBackgroundPainter extends CustomPainter {
         paint,
       );
     }
-    
+
     for (double y = 0; y < size.height; y += spacing) {
       canvas.drawLine(
         Offset(0, y),
@@ -1858,7 +1868,7 @@ class _AdvancedBackgroundPainter extends CustomPainter {
       );
     }
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
