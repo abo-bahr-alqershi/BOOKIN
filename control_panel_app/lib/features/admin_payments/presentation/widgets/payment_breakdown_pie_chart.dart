@@ -268,8 +268,8 @@ class _PaymentBreakdownPieChartState extends State<PaymentBreakdownPieChart>
           formattedAmount: '1,724 YER',
         ),
       ),
-      PaymentMethod.bankTransfer: MethodAnalytics(
-        method: PaymentMethod.bankTransfer,
+      PaymentMethod.jwaliWallet: MethodAnalytics(
+        method: PaymentMethod.jwaliWallet,
         transactionCount: 98,
         totalAmount: const Money(
           amount: 180000,
@@ -284,8 +284,8 @@ class _PaymentBreakdownPieChartState extends State<PaymentBreakdownPieChart>
           formattedAmount: '1,837 YER',
         ),
       ),
-      PaymentMethod.wallet: MethodAnalytics(
-        method: PaymentMethod.wallet,
+      PaymentMethod.cashWallet: MethodAnalytics(
+        method: PaymentMethod.cashWallet,
         transactionCount: 87,
         totalAmount: const Money(
           amount: 120000,
@@ -316,8 +316,8 @@ class _PaymentBreakdownPieChartState extends State<PaymentBreakdownPieChart>
           formattedAmount: '1,462 YER',
         ),
       ),
-      PaymentMethod.other: MethodAnalytics(
-        method: PaymentMethod.other,
+      PaymentMethod.oneCashWallet: MethodAnalytics(
+        method: PaymentMethod.oneCashWallet,
         transactionCount: 25,
         totalAmount: const Money(
           amount: 35000,
@@ -353,14 +353,18 @@ class _PaymentBreakdownPieChartState extends State<PaymentBreakdownPieChart>
       switch (method) {
         case PaymentMethod.creditCard:
           return 'بطاقة ائتمان';
-        case PaymentMethod.debitCard:
-          return 'بطاقة خصم';
-        case PaymentMethod.bankTransfer:
-          return 'تحويل بنكي';
+        case PaymentMethod.jwaliWallet:
+          return 'محفظة جوالي';
         case PaymentMethod.cash:
           return 'نقدي';
-        case PaymentMethod.wallet:
-          return 'محفظة';
+        case PaymentMethod.cashWallet:
+          return 'كاش محفظة';
+        case PaymentMethod.oneCashWallet:
+          return 'ون كاش';
+        case PaymentMethod.floskWallet:
+          return 'فلوسك';
+        case PaymentMethod.jaibWallet:
+          return 'جيب';
         default:
           return 'أخرى';
       }

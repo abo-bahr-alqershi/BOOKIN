@@ -61,8 +61,7 @@ class _PaymentStatusIndicatorState extends State<PaymentStatusIndicator>
   }
 
   bool _shouldAnimate() {
-    return widget.status == PaymentStatus.pending ||
-        widget.status == PaymentStatus.processing;
+    return widget.status == PaymentStatus.pending;
   }
 
   @override
@@ -115,14 +114,8 @@ class _PaymentStatusIndicatorState extends State<PaymentStatusIndicator>
       case PaymentStatus.pending:
         icon = CupertinoIcons.clock_fill;
         break;
-      case PaymentStatus.processing:
-        icon = CupertinoIcons.arrow_2_circlepath;
-        break;
       case PaymentStatus.failed:
         icon = CupertinoIcons.xmark_circle_fill;
-        break;
-      case PaymentStatus.cancelled:
-        icon = CupertinoIcons.minus_circle_fill;
         break;
       case PaymentStatus.refunded:
         icon = CupertinoIcons.arrow_counterclockwise_circle_fill;
@@ -130,8 +123,8 @@ class _PaymentStatusIndicatorState extends State<PaymentStatusIndicator>
       case PaymentStatus.partiallyRefunded:
         icon = CupertinoIcons.arrow_counterclockwise_circle;
         break;
-      case PaymentStatus.voided:
-        icon = CupertinoIcons.slash_circle_fill;
+      default:
+        icon = CupertinoIcons.info_circle_fill;
         break;
     }
 
@@ -147,14 +140,13 @@ class _PaymentStatusIndicatorState extends State<PaymentStatusIndicator>
       case PaymentStatus.successful:
         return AppTheme.success;
       case PaymentStatus.pending:
-      case PaymentStatus.processing:
         return AppTheme.warning;
       case PaymentStatus.failed:
-      case PaymentStatus.cancelled:
-      case PaymentStatus.voided:
         return AppTheme.error;
       case PaymentStatus.refunded:
       case PaymentStatus.partiallyRefunded:
+        return AppTheme.info;
+      default:
         return AppTheme.info;
     }
   }
@@ -165,18 +157,14 @@ class _PaymentStatusIndicatorState extends State<PaymentStatusIndicator>
         return 'مكتمل';
       case PaymentStatus.pending:
         return 'معلق';
-      case PaymentStatus.processing:
-        return 'قيد المعالجة';
       case PaymentStatus.failed:
         return 'فاشل';
-      case PaymentStatus.cancelled:
-        return 'ملغي';
       case PaymentStatus.refunded:
         return 'مسترد';
       case PaymentStatus.partiallyRefunded:
         return 'مسترد جزئياً';
-      case PaymentStatus.voided:
-        return 'ملغى';
+      default:
+        return 'غير معروف';
     }
   }
 

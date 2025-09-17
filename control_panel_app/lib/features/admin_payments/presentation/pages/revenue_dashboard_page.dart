@@ -187,7 +187,6 @@ class _RevenueDashboardPageState extends State<RevenueDashboardPage>
                   decoration: BoxDecoration(
                     color: AppTheme.darkCard.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
-                    backdropFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   ),
                   child: Icon(
                     CupertinoIcons.arrow_left,
@@ -554,7 +553,7 @@ class _RevenueDashboardPageState extends State<RevenueDashboardPage>
               ),
               Row(
                 children: [
-                  _buildChartToggle(0, CupertinoIcons.chart_line),
+                  _buildChartToggle(0, CupertinoIcons.chart_bar),
                   const SizedBox(width: 8),
                   _buildChartToggle(1, CupertinoIcons.chart_pie_fill),
                 ],

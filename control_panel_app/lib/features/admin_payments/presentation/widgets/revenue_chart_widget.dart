@@ -252,7 +252,7 @@ class _RevenueChartWidgetState extends State<RevenueChartWidget>
       lineTouchData: LineTouchData(
         touchTooltipData: LineTouchTooltipData(
           getTooltipColor: (touchedSpot) => AppTheme.darkCard,
-          tooltipRoundedRadius: 12,
+          // fl_chart 0.69 removed tooltipRoundedRadius
           getTooltipItems: (touchedSpots) {
             return touchedSpots.map((touchedSpot) {
               return LineTooltipItem(
