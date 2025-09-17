@@ -262,18 +262,6 @@ class AppRouter {
           },
         ),
         GoRoute(
-          path: '/admin/bookings/:bookingId',
-          builder: (context, state) {
-            final bookingId = state.pathParameters['bookingId']!;
-            return BlocProvider<ab_details_bloc.BookingDetailsBloc>(
-              create: (_) => di.sl<ab_details_bloc.BookingDetailsBloc>()
-                ..add(ab_details_event.LoadBookingDetailsEvent(
-                    bookingId: bookingId)),
-              child: BookingDetailsPage(bookingId: bookingId),
-            );
-          },
-        ),
-        GoRoute(
           path: '/admin/bookings/calendar',
           builder: (context, state) {
             return BlocProvider<ab_cal_bloc.BookingCalendarBloc>(
@@ -306,6 +294,18 @@ class AppRouter {
                   endDate: now,
                 )),
               child: const BookingAnalyticsPage(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/admin/bookings/:bookingId',
+          builder: (context, state) {
+            final bookingId = state.pathParameters['bookingId']!;
+            return BlocProvider<ab_details_bloc.BookingDetailsBloc>(
+              create: (_) => di.sl<ab_details_bloc.BookingDetailsBloc>()
+                ..add(ab_details_event.LoadBookingDetailsEvent(
+                    bookingId: bookingId)),
+              child: BookingDetailsPage(bookingId: bookingId),
             );
           },
         ),
