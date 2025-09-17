@@ -1646,6 +1646,9 @@ Future<void> _initExternal() async {
   // Dio
   sl.registerLazySingleton(() => Dio());
 
-  // Internet Connection Checker
-  sl.registerLazySingleton(() => InternetConnectionChecker());
+  // Internet Connection Checker (force IPv4 addresses to avoid IPv6 DNS issues)
+  sl.registerLazySingleton(() => InternetConnectionChecker.createInstance(addresses: [
+        AddressCheckOptions(InternetAddress('1.1.1.1', type: InternetAddressType.IPv4), port: 53),
+        AddressCheckOptions(InternetAddress('8.8.8.8', type: InternetAddressType.IPv4), port: 53),
+      ]));
 }
