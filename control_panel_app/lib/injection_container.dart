@@ -513,11 +513,11 @@ import 'features/admin_bookings/presentation/bloc/booking_analytics/booking_anal
     as ab_an_bloc;
 
 // Payments feature imports
-import 'features/admin_payments/presentation/bloc/payments_list/payments_list_bloc.dart'
+import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payments_list/payments_list_bloc.dart'
     as pay_list_bloc;
-import 'features/admin_payments/presentation/bloc/payment_details/payment_details_bloc.dart'
+import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_details/payment_details_bloc.dart'
     as pay_details_bloc;
-import 'features/admin_payments/presentation/bloc/payment_refund/payment_refund_bloc.dart'
+import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_refund/payment_refund_bloc.dart'
     as pay_refund_bloc;
 import 'features/admin_payments/domain/repositories/payments_repository.dart'
     as pay_repo;
@@ -557,7 +557,7 @@ import 'features/admin_payments/domain/usecases/analytics/get_payment_trends_use
     as pay_uc_trends;
 import 'features/admin_payments/domain/usecases/analytics/get_refund_statistics_usecase.dart'
     as pay_uc_refund_stats;
-import 'features/admin_payments/presentation/bloc/payment_analytics/payment_analytics_bloc.dart'
+import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_analytics/payment_analytics_bloc.dart'
     as pay_an_bloc;
 
 final sl = GetIt.instance;
