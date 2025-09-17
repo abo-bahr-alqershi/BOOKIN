@@ -8,6 +8,7 @@ import '../../../../../../core/theme/app_dimensions.dart';
 import '../../../../../../core/widgets/price_widget.dart';
 import 'payment_status_indicator.dart';
 import 'payment_method_icon.dart';
+import 'futuristic_payment_card.dart';
 
 class FuturisticPaymentsTable extends StatefulWidget {
   final List<Payment> payments;
@@ -16,6 +17,8 @@ class FuturisticPaymentsTable extends StatefulWidget {
   final Function(Payment)? onVoidTap;
   final bool showActions;
   final bool isLoading;
+  final double? height;
+  final bool forceCardView; // خيار لفرض عرض الكروت
 
   const FuturisticPaymentsTable({
     super.key,
@@ -25,6 +28,8 @@ class FuturisticPaymentsTable extends StatefulWidget {
     this.onVoidTap,
     this.showActions = true,
     this.isLoading = false,
+    this.height,
+    this.forceCardView = false,
   });
 
   @override
@@ -40,7 +45,9 @@ class _FuturisticPaymentsTableState extends State<FuturisticPaymentsTable>
   late List<Animation<double>> _fadeAnimations;
   late List<Animation<Offset>> _slideAnimations;
   int? _hoveredRowIndex;
-  int? _selectedRowIndex;
+  int? _selectedPaymentIndex;
+  bool _isGridView = false;
+  final Set<String> _selectedPayments = {};
 
   @override
   void initState() {
@@ -85,6 +92,18 @@ class _FuturisticPaymentsTableState extends State<FuturisticPaymentsTable>
   }
 
   @override
+  void didUpdateWidget(FuturisticPaymentsTable oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.payments.length != oldWidget.payments.length) {
+      // إعادة تهيئة الأنيميشن عند تغيير عدد المدفوعات
+      for (var controller in _rowAnimationControllers) {
+        controller.dispose();
+      }
+      _initializeAnimations();
+    }
+  }
+
+  @override
   void dispose() {
     for (var controller in _rowAnimationControllers) {
       controller.dispose();
@@ -96,7 +115,307 @@ class _FuturisticPaymentsTableState extends State<FuturisticPaymentsTable>
 
   @override
   Widget build(BuildContext context) {
+    // التحقق من حجم الشاشة للريسبونسيف
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 600;
+    final isMediumScreen = screenSize.width >= 600 && screenSize.width < 1200;
+    final isLargeScreen = screenSize.width >= 1200;
+
+    // تحديد عدد الأعمدة للـ Grid
+    int crossAxisCount = 1;
+    if (isMediumScreen) crossAxisCount = 2;
+    if (isLargeScreen) crossAxisCount = 3;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // استخدام الكروت للشاشات الصغيرة أو إذا تم فرض عرض الكروت
+        if (isSmallScreen || widget.forceCardView || _isGridView) {
+          return _buildResponsiveCardView(
+            constraints: constraints,
+            crossAxisCount: crossAxisCount,
+            isSmallScreen: isSmallScreen,
+          );
+        }
+
+        // للشاشات الكبيرة، عرض الجدول مع خيار التبديل
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildViewToggle(),
+            const SizedBox(height: 16),
+            Expanded(
+              child: _buildTableView(constraints),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // زر التبديل بين العرض الجدولي والكروت
+  Widget _buildViewToggle() {
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                width: 1,
+              ),
+            ),
+            padding: const EdgeInsets.all(4),
+            child: Row(
+              children: [
+                _buildToggleButton(
+                  icon: CupertinoIcons.list_bullet,
+                  isActive: !_isGridView,
+                  onTap: () => setState(() => _isGridView = false),
+                ),
+                const SizedBox(width: 4),
+                _buildToggleButton(
+                  icon: CupertinoIcons.square_grid_2x2,
+                  isActive: _isGridView,
+                  onTap: () => setState(() => _isGridView = true),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleButton({
+    required IconData icon,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          gradient: isActive ? AppTheme.primaryGradient : null,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: isActive ? Colors.white : AppTheme.textMuted,
+        ),
+      ),
+    );
+  }
+
+  // عرض الكروت الريسبونسيف
+  Widget _buildResponsiveCardView({
+    required BoxConstraints constraints,
+    required int crossAxisCount,
+    required bool isSmallScreen,
+  }) {
+    if (widget.isLoading) {
+      return _buildLoadingState();
+    }
+
+    if (widget.payments.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    // حساب الـ aspect ratio المناسب
+    double aspectRatio = isSmallScreen ? 1.4 : 1.6;
+
+    return Container(
+      height: widget.height,
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Column(
+            children: [
+              // Header مع إحصائيات
+              if (!isSmallScreen) _buildCardsHeader(),
+
+              // قائمة الكروت
+              Expanded(
+                child: GridView.builder(
+                  controller: _verticalScrollController,
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: aspectRatio,
+                  ),
+                  itemCount: widget.payments.length,
+                  itemBuilder: (context, index) {
+                    final payment = widget.payments[index];
+                    final isSelected = _selectedPayments.contains(payment.id);
+
+                    return AnimatedBuilder(
+                      animation: _fadeAnimations[index],
+                      builder: (context, child) {
+                        return FadeTransition(
+                          opacity: _fadeAnimations[index],
+                          child: SlideTransition(
+                            position: _slideAnimations[index],
+                            child: ResponsivePaymentCard(
+                              payment: payment,
+                              isSelected: isSelected,
+                              onTap: () {
+                                setState(() {
+                                  _selectedPaymentIndex = index;
+                                });
+                                widget.onPaymentTap(payment);
+                              },
+                              onLongPress: () {
+                                setState(() {
+                                  if (_selectedPayments.contains(payment.id)) {
+                                    _selectedPayments.remove(payment.id);
+                                  } else {
+                                    _selectedPayments.add(payment.id);
+                                  }
+                                });
+                              },
+                              onRefundTap: widget.onRefundTap != null
+                                  ? () => widget.onRefundTap!(payment)
+                                  : null,
+                              onVoidTap: widget.onVoidTap != null
+                                  ? () => widget.onVoidTap!(payment)
+                                  : null,
+                              showActions: widget.showActions,
+                              isCompact: isSmallScreen,
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+
+              // Footer مع عدد المحدد
+              if (_selectedPayments.isNotEmpty) _buildSelectionFooter(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Header للكروت
+  Widget _buildCardsHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primaryBlue.withValues(alpha: 0.1),
+            AppTheme.primaryPurple.withValues(alpha: 0.05),
+          ],
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.darkBorder.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            CupertinoIcons.creditcard,
+            color: AppTheme.primaryBlue,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Text(
+            'إجمالي المدفوعات: ${widget.payments.length}',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const Spacer(),
+          if (_selectedPayments.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: AppTheme.primaryGradient,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '${_selectedPayments.length} محدد',
+                style: AppTextStyles.caption.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // Footer للعناصر المحددة
+  Widget _buildSelectionFooter() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withValues(alpha: 0.8),
+        border: Border(
+          top: BorderSide(
+            color: AppTheme.darkBorder.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Text(
+            '${_selectedPayments.length} عنصر محدد',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textWhite,
+            ),
+          ),
+          const Spacer(),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _selectedPayments.clear();
+              });
+            },
+            child: Text(
+              'إلغاء التحديد',
+              style: AppTextStyles.caption.copyWith(
+                color: AppTheme.error,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // عرض الجدول (الكود الأصلي محسّن)
+  Widget _buildTableView(BoxConstraints constraints) {
+    final containerHeight = widget.height ?? constraints.maxHeight * 0.8;
+
+    return Container(
+      height: containerHeight,
       decoration: BoxDecoration(
         color: AppTheme.darkCard.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(24),
@@ -110,9 +429,10 @@ class _FuturisticPaymentsTableState extends State<FuturisticPaymentsTable>
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               _buildHeader(),
-              Expanded(
+              Flexible(
                 child: _buildTableContent(),
               ),
             ],
@@ -200,14 +520,14 @@ class _FuturisticPaymentsTableState extends State<FuturisticPaymentsTable>
 
   Widget _buildTableRow(Payment payment, int index) {
     final isHovered = _hoveredRowIndex == index;
-    final isSelected = _selectedRowIndex == index;
+    final isSelected = _selectedPaymentIndex == index;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredRowIndex = index),
       onExit: (_) => setState(() => _hoveredRowIndex = null),
       child: GestureDetector(
         onTap: () {
-          setState(() => _selectedRowIndex = index);
+          setState(() => _selectedPaymentIndex = index);
           widget.onPaymentTap(payment);
         },
         child: AnimatedContainer(
@@ -257,24 +577,28 @@ class _FuturisticPaymentsTableState extends State<FuturisticPaymentsTable>
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '#${payment.transactionId}',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppTheme.textWhite,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (payment.invoiceNumber != null)
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            'فاتورة: ${payment.invoiceNumber}',
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppTheme.textMuted,
+                            '#${payment.transactionId}',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppTheme.textWhite,
+                              fontWeight: FontWeight.bold,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                      ],
+                          if (payment.invoiceNumber != null)
+                            Text(
+                              'فاتورة: ${payment.invoiceNumber}',
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppTheme.textMuted,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -420,68 +744,111 @@ class _FuturisticPaymentsTableState extends State<FuturisticPaymentsTable>
 
   Widget _buildLoadingState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppTheme.darkCard,
-              shape: BoxShape.circle,
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.darkCard,
+                shape: BoxShape.circle,
+              ),
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
+              ),
             ),
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
+            const SizedBox(height: 16),
+            Text(
+              'جاري تحميل المدفوعات...',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textMuted,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'جاري تحميل المدفوعات...',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.textMuted,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppTheme.darkCard.withValues(alpha: 0.5),
-              shape: BoxShape.circle,
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppTheme.darkCard.withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                CupertinoIcons.creditcard,
+                color: AppTheme.textMuted,
+                size: 48,
+              ),
             ),
-            child: Icon(
-              CupertinoIcons.creditcard,
-              color: AppTheme.textMuted,
-              size: 48,
+            const SizedBox(height: 16),
+            Text(
+              'لا توجد مدفوعات',
+              style: AppTextStyles.heading3.copyWith(
+                color: AppTheme.textWhite,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'لا توجد مدفوعات',
-            style: AppTextStyles.heading3.copyWith(
-              color: AppTheme.textWhite,
+            const SizedBox(height: 8),
+            Text(
+              'لم يتم العثور على أي مدفوعات',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textMuted,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'لم يتم العثور على أي مدفوعات',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.textMuted,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+}
+
+// كارت المدفوعات الريسبونسيف المحسّن
+class ResponsivePaymentCard extends StatelessWidget {
+  final Payment payment;
+  final bool isSelected;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onRefundTap;
+  final VoidCallback? onVoidTap;
+  final bool showActions;
+  final bool isCompact;
+
+  const ResponsivePaymentCard({
+    super.key,
+    required this.payment,
+    this.isSelected = false,
+    this.onTap,
+    this.onLongPress,
+    this.onRefundTap,
+    this.onVoidTap,
+    this.showActions = true,
+    this.isCompact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FuturisticPaymentCard(
+      payment: payment,
+      isSelected: isSelected,
+      onTap: onTap,
+      onLongPress: onLongPress,
+      showActions: showActions,
+    );
   }
 }

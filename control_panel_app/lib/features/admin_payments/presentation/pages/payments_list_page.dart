@@ -204,88 +204,267 @@ class _PaymentsListPageState extends State<PaymentsListPage>
   }
 
   Widget _buildLoadedContent(PaymentsListLoaded state) {
+    // الحصول على أبعاد الشاشة
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 600;
+    final isMediumScreen = screenSize.width >= 600 && screenSize.width < 900;
+
+    // حساب الارتفاع المناسب للجدول
+    final tableHeight = isSmallScreen
+        ? null // للموبايل، نترك الارتفاع مرن
+        : isMediumScreen
+            ? screenSize.height * 0.6
+            : screenSize.height * 0.7;
+
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: CustomScrollView(
-        controller: _scrollController,
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Stats Cards
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.paddingLarge,
-              ),
-              child: PaymentStatsCards(
-                statistics: state.statistics,
-              ),
-            ),
-          ),
-
-          // Payments Table
-          SliverPadding(
-            padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-            sliver: SliverToBoxAdapter(
-              child: FuturisticPaymentsTable(
-                payments: state.payments.items,
-                onPaymentTap: (payment) {
-                  Navigator.push(
-                    context,
-                    CupertinoPageRoute(
-                      builder: (_) => PaymentDetailsPage(
-                        paymentId: payment.id,
-                      ),
-                    ),
-                  );
-                },
-                onRefundTap: (payment) {
-                  context.read<PaymentsListBloc>().add(
-                        RefundPaymentEvent(
-                          paymentId: payment.id,
-                          refundAmount: payment.amount,
-                          refundReason: 'طلب العميل',
-                        ),
-                      );
-                },
-                onVoidTap: (payment) {
-                  context.read<PaymentsListBloc>().add(
-                        VoidPaymentEvent(paymentId: payment.id),
-                      );
-                },
-              ),
-            ),
-          ),
-
-          // Pagination
-          if (state.payments.hasNextPage)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-                child: Center(
-                  child: CupertinoButton(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // للشاشات الصغيرة، نستخدم SingleChildScrollView
+          if (isSmallScreen) {
+            return SingleChildScrollView(
+              controller: _scrollController,
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  // Stats Cards
+                  Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
+                      horizontal: AppDimensions.paddingLarge,
                     ),
-                    color: AppTheme.darkCard,
-                    borderRadius: BorderRadius.circular(12),
-                    onPressed: () {
-                      context.read<PaymentsListBloc>().add(
-                            ChangePageEvent(
-                              pageNumber: state.payments.currentPage + 1,
+                    child: PaymentStatsCards(
+                      statistics: state.statistics,
+                    ),
+                  ),
+                  const SizedBox(height: AppDimensions.spaceMedium),
+
+                  // Payments Table
+                  Padding(
+                    padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+                    child: FuturisticPaymentsTable(
+                      payments: state.payments.items,
+                      onPaymentTap: (payment) {
+                        Navigator.push(
+                          context,
+                          CupertinoPageRoute(
+                            builder: (_) => PaymentDetailsPage(
+                              paymentId: payment.id,
                             ),
-                          );
-                    },
-                    child: Text(
-                      'تحميل المزيد',
-                      style: AppTextStyles.buttonMedium.copyWith(
-                        color: AppTheme.primaryBlue,
-                      ),
+                          ),
+                        );
+                      },
+                      onRefundTap: (payment) {
+                        _showRefundDialog(payment);
+                      },
+                      onVoidTap: (payment) {
+                        _showVoidConfirmation(payment);
+                      },
+                      // لا نحدد الارتفاع للموبايل
                     ),
+                  ),
+
+                  // Pagination
+                  if (state.payments.hasNextPage)
+                    Padding(
+                      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+                      child: _buildLoadMoreButton(),
+                    ),
+                ],
+              ),
+            );
+          }
+
+          // للشاشات الأكبر، نستخدم CustomScrollView
+          return CustomScrollView(
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // Stats Cards
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingLarge,
+                  ),
+                  child: PaymentStatsCards(
+                    statistics: state.statistics,
                   ),
                 ),
               ),
+
+              const SliverToBoxAdapter(
+                child: SizedBox(height: AppDimensions.spaceMedium),
+              ),
+
+              // Payments Table - استخدام SliverFillRemaining
+              SliverFillRemaining(
+                hasScrollBody: false,
+                fillOverscroll: false,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+                  child: FuturisticPaymentsTable(
+                    payments: state.payments.items,
+                    height: tableHeight, // تحديد الارتفاع
+                    onPaymentTap: (payment) {
+                      Navigator.push(
+                        context,
+                        CupertinoPageRoute(
+                          builder: (_) => PaymentDetailsPage(
+                            paymentId: payment.id,
+                          ),
+                        ),
+                      );
+                    },
+                    onRefundTap: (payment) {
+                      _showRefundDialog(payment);
+                    },
+                    onVoidTap: (payment) {
+                      _showVoidConfirmation(payment);
+                    },
+                  ),
+                ),
+              ),
+
+              // Pagination
+              if (state.payments.hasNextPage)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+                    child: Center(
+                      child: _buildLoadMoreButton(),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreButton() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: CupertinoButton(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 32,
+          vertical: 14,
+        ),
+        color: AppTheme.darkCard,
+        borderRadius: BorderRadius.circular(12),
+        onPressed: () {
+          final state = context.read<PaymentsListBloc>().state;
+          if (state is PaymentsListLoaded) {
+            context.read<PaymentsListBloc>().add(
+                  ChangePageEvent(
+                    pageNumber: state.payments.currentPage + 1,
+                  ),
+                );
+          }
+        },
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              CupertinoIcons.arrow_down_circle,
+              color: AppTheme.primaryBlue,
+              size: 20,
             ),
+            const SizedBox(width: 8),
+            Text(
+              'تحميل المزيد',
+              style: AppTextStyles.buttonMedium.copyWith(
+                color: AppTheme.primaryBlue,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // إضافة دالة لإظهار نافذة تأكيد الاسترداد
+  void _showRefundDialog(payment) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text(
+          'تأكيد الاسترداد',
+          style: AppTextStyles.heading3,
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Text(
+            'هل تريد استرداد المبلغ ${payment.amount.amount} ${payment.amount.currency}؟',
+            style: AppTextStyles.bodyMedium,
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<PaymentsListBloc>().add(
+                    RefundPaymentEvent(
+                      paymentId: payment.id,
+                      refundAmount: payment.amount,
+                      refundReason: 'طلب العميل',
+                    ),
+                  );
+            },
+            child: const Text('استرداد'),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // إضافة دالة لإظهار نافذة تأكيد الإلغاء
+  void _showVoidConfirmation(payment) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text(
+          'تأكيد إلغاء المعاملة',
+          style: AppTextStyles.heading3,
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Text(
+            'هل تريد إلغاء المعاملة #${payment.transactionId}؟\nهذا الإجراء لا يمكن التراجع عنه.',
+            style: AppTextStyles.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<PaymentsListBloc>().add(
+                    VoidPaymentEvent(paymentId: payment.id),
+                  );
+            },
+            child: const Text('إلغاء المعاملة'),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(context),
+            child: const Text('رجوع'),
+          ),
         ],
       ),
     );

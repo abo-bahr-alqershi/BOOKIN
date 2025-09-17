@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app.dart';
-import 'injection_container.dart' as di;
+import 'package:bookn_cp_app/injection_container.dart' as di;
 import 'core/bloc/app_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'services/connectivity_service.dart';

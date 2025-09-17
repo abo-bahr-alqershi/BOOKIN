@@ -819,151 +819,158 @@ class _AdminHubPageState extends State<AdminHubPage>
   }
 
   Widget _buildStatCard(_StatItem stat) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.darkCard.withOpacity(0.7),
-            AppTheme.darkCard.withOpacity(0.5),
-          ],
-        ),
-        border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.2),
-          width: 0.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: stat.gradient[0].withOpacity(0.1),
-            blurRadius: 20,
-            spreadRadius: 2,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxHeight < 80 || constraints.maxWidth < 120;
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.darkCard.withOpacity(0.7),
+                AppTheme.darkCard.withOpacity(0.5),
+              ],
+            ),
+            border: Border.all(
+              color: AppTheme.darkBorder.withOpacity(0.2),
+              width: 0.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: stat.gradient[0].withOpacity(0.1),
+                blurRadius: 20,
+                spreadRadius: 2,
+              ),
+            ],
           ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Icon and Trend
-              Row(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: stat.gradient),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: stat.gradient[0].withOpacity(0.3),
-                          blurRadius: 12,
-                          spreadRadius: 2,
+                  // Icon and Trend
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        width: isCompact ? 36 : 40,
+                        height: isCompact ? 36 : 40,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: stat.gradient),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: stat.gradient[0].withOpacity(0.3),
+                              blurRadius: 12,
+                              spreadRadius: 2,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Icon(
-                      stat.icon,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: stat.isPositive
-                          ? AppTheme.success.withOpacity(0.1)
-                          : AppTheme.error.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: stat.isPositive
-                            ? AppTheme.success.withOpacity(0.3)
-                            : AppTheme.error.withOpacity(0.3),
-                        width: 0.5,
+                        child: Icon(
+                          stat.icon,
+                          color: Colors.white,
+                          size: isCompact ? 18 : 20,
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          stat.isPositive
-                              ? Icons.trending_up_rounded
-                              : Icons.trending_down_rounded,
-                          color: stat.isPositive
-                              ? AppTheme.success
-                              : AppTheme.error,
-                          size: 12,
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isCompact ? 6 : 8,
+                          vertical: isCompact ? 3 : 4,
                         ),
-                        const SizedBox(width: 2),
-                        Text(
-                          stat.trend,
-                          style: AppTextStyles.caption.copyWith(
+                        decoration: BoxDecoration(
+                          color: stat.isPositive
+                              ? AppTheme.success.withOpacity(0.1)
+                              : AppTheme.error.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
                             color: stat.isPositive
-                                ? AppTheme.success
-                                : AppTheme.error,
-                            fontWeight: FontWeight.w600,
+                                ? AppTheme.success.withOpacity(0.3)
+                                : AppTheme.error.withOpacity(0.3),
+                            width: 0.5,
                           ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              stat.isPositive
+                                  ? Icons.trending_up_rounded
+                                  : Icons.trending_down_rounded,
+                              color: stat.isPositive
+                                  ? AppTheme.success
+                                  : AppTheme.error,
+                              size: isCompact ? 10 : 12,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              stat.trend,
+                              style: AppTextStyles.caption.copyWith(
+                                color: stat.isPositive
+                                    ? AppTheme.success
+                                    : AppTheme.error,
+                                fontWeight: FontWeight.w600,
+                                fontSize: isCompact ? 10 : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  SizedBox(height: isCompact ? 8 : 12),
+                  
+                  // Value and Label
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0, end: 1),
+                            duration: const Duration(milliseconds: 1000),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, value, child) {
+                              return Text(
+                                stat.value,
+                                style: AppTextStyles.heading2.copyWith(
+                                  color: AppTheme.textWhite,
+                                  fontSize: isCompact ? 16 : 20,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              );
+                            },
+                          ),
+                        ),
+                        SizedBox(height: isCompact ? 0 : 2),
+                        Text(
+                          stat.label,
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppTheme.textMuted,
+                            fontSize: isCompact ? 10 : null,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
                 ],
               ),
-              
-              const SizedBox(height: 12),
-              
-              // Value and Label
-              Flexible(
-                fit: FlexFit.loose,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0, end: 1),
-                        duration: const Duration(milliseconds: 1000),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, value, child) {
-                          return Text(
-                            stat.value,
-                            style: AppTextStyles.heading2.copyWith(
-                              color: AppTheme.textWhite,
-                              fontSize: 20,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      stat.label,
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.textMuted,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
