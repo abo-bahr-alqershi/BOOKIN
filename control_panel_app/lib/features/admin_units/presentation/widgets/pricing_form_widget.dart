@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
+import 'package:bookn_cp_app/injection_container.dart';
+import 'package:bookn_cp_app/services/local_storage_service.dart';
+import 'package:bookn_cp_app/features/admin_currencies/domain/usecases/get_currencies_usecase.dart' as ac_uc1;
+import 'package:bookn_cp_app/features/admin_currencies/domain/entities/currency.dart' as ac_entity;
 import '../../domain/entities/money.dart';
 import '../../domain/entities/pricing_method.dart';
 
@@ -29,6 +33,9 @@ class _PricingFormWidgetState extends State<PricingFormWidget>
   late TextEditingController _amountController;
   late String _selectedCurrency;
   late PricingMethod _selectedMethod;
+  bool _isAdmin = false;
+  List<String> _currencyOptions = const ['YER'];
+  bool _isLoadingCurrencies = false;
   
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
@@ -39,7 +46,19 @@ class _PricingFormWidgetState extends State<PricingFormWidget>
     _amountController = TextEditingController(
       text: widget.initialBasePrice?.amount.toString() ?? '',
     );
-    _selectedCurrency = widget.initialBasePrice?.currency ?? 'YER';
+    final localStorage = sl<LocalStorageService>();
+    final accountRole = localStorage.getAccountRole().toLowerCase();
+    _isAdmin = accountRole == 'admin';
+    // Default currency resolution order: initial -> property -> app selected -> YER
+    final propertyCurrency = localStorage.getPropertyCurrency();
+    final appSelectedCurrency = localStorage.getSelectedCurrency();
+    _selectedCurrency = widget.initialBasePrice?.currency ??
+        (propertyCurrency.isNotEmpty ? propertyCurrency : (appSelectedCurrency.isNotEmpty ? appSelectedCurrency : 'YER'));
+    if (_isAdmin) {
+      _loadCurrencies();
+    } else {
+      _currencyOptions = [_selectedCurrency];
+    }
     _selectedMethod = widget.initialPricingMethod ?? PricingMethod.daily;
     
     _animationController = AnimationController(
@@ -72,6 +91,32 @@ class _PricingFormWidgetState extends State<PricingFormWidget>
       currency: _selectedCurrency,
     );
     widget.onPricingChanged(money, _selectedMethod);
+  }
+
+  Future<void> _loadCurrencies() async {
+    try {
+      setState(() => _isLoadingCurrencies = true);
+      final result = await sl<ac_uc1.GetCurrenciesUseCase>()(const ac_uc1.NoParams());
+      result.fold((_) {
+        setState(() {
+          _currencyOptions = [_selectedCurrency];
+          _isLoadingCurrencies = false;
+        });
+      }, (list) {
+        setState(() {
+          _currencyOptions = (list as List<ac_entity.Currency>).map((c) => c.code).toList();
+          if (!_currencyOptions.contains(_selectedCurrency) && _currencyOptions.isNotEmpty) {
+            _selectedCurrency = _currencyOptions.first;
+          }
+          _isLoadingCurrencies = false;
+        });
+      });
+    } catch (_) {
+      setState(() {
+        _currencyOptions = [_selectedCurrency];
+        _isLoadingCurrencies = false;
+      });
+    }
   }
 
   @override
@@ -228,40 +273,83 @@ class _PricingFormWidgetState extends State<PricingFormWidget>
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: AppTheme.darkSurface.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppTheme.darkBorder.withOpacity(0.3),
-              width: 1,
-            ),
-          ),
-          child: DropdownButtonFormField<String>(
-            value: _selectedCurrency,
-            dropdownColor: AppTheme.darkCard,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.textWhite,
-            ),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
+        if (_isAdmin)
+          Container(
+            decoration: BoxDecoration(
+              color: AppTheme.darkSurface.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppTheme.darkBorder.withOpacity(0.3),
+                width: 1,
               ),
             ),
-            items: ['YER', 'USD', 'EUR', 'SAR'].map((currency) {
-              return DropdownMenuItem(
-                value: currency,
-                child: Text(currency),
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() => _selectedCurrency = value!);
-              _updatePricing();
-            },
+            child: DropdownButtonFormField<String>(
+              value: _selectedCurrency,
+              dropdownColor: AppTheme.darkCard,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textWhite,
+              ),
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                suffixIcon: _isLoadingCurrencies
+                    ? Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppTheme.primaryBlue,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+              items: _currencyOptions.map((currency) {
+                return DropdownMenuItem(
+                  value: currency,
+                  child: Text(currency),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() => _selectedCurrency = value);
+                _updatePricing();
+              },
+            ),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppTheme.darkSurface.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppTheme.darkBorder.withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.lock, size: 16, color: AppTheme.textMuted),
+                const SizedBox(width: 8),
+                Text(
+                  _selectedCurrency,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textWhite,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  'عملة المالك',
+                  style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted),
+                ),
+              ],
+            ),
           ),
-        ),
       ],
     );
   }

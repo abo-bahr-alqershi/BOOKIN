@@ -151,7 +151,7 @@ class _UnitPricingCardsState extends State<UnitPricingCards>
                         textBaseline: TextBaseline.alphabetic,
                         children: [
                           Text(
-                            widget.basePrice.amount.toStringAsFixed(0),
+                            (widget.basePrice.amount).toStringAsFixed(0),
                             style: AppTextStyles.displaySmall.copyWith(
                               color: AppTheme.textWhite,
                               fontWeight: FontWeight.bold,

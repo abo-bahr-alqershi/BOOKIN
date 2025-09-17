@@ -12,6 +12,8 @@ import '../../../domain/usecases/pricing/apply_seasonal_pricing_usecase.dart';
 import '../../../domain/usecases/pricing/copy_pricing_usecase.dart';
 import '../../../domain/usecases/pricing/delete_pricing_usecase.dart';
 import '../../../domain/repositories/pricing_repository.dart';
+import '../../../../../injection_container.dart';
+import '../../../../../services/local_storage_service.dart';
 
 part 'pricing_event.dart';
 part 'pricing_state.dart';
@@ -118,7 +120,7 @@ class PricingBloc extends Bloc<PricingEvent, PricingState> {
           endDate: event.date,
           price: event.price,
           priceType: event.priceType ?? PriceType.custom,
-          currency: event.currency ?? 'SAR',
+          currency: event.currency ?? _resolveContextCurrency(),
           pricingTier: event.pricingTier ?? PricingTier.normal,
         ),
       );
@@ -157,7 +159,7 @@ class PricingBloc extends Bloc<PricingEvent, PricingState> {
           endDate: event.endDate,
           price: event.price,
           priceType: event.priceType ?? PriceType.custom,
-          currency: event.currency ?? 'SAR',
+          currency: event.currency ?? _resolveContextCurrency(),
           pricingTier: event.pricingTier ?? PricingTier.normal,
           overwriteExisting: event.overwriteExisting,
         ),
@@ -372,6 +374,21 @@ class PricingBloc extends Bloc<PricingEvent, PricingState> {
         year: event.year,
         month: event.month,
       ));
+    }
+  }
+
+  String _resolveContextCurrency() {
+    try {
+      final storage = sl<LocalStorageService>();
+      final role = storage.getAccountRole().toLowerCase();
+      final propertyCurrency = storage.getPropertyCurrency();
+      if (role == 'owner' || role == 'staff') {
+        if (propertyCurrency.isNotEmpty) return propertyCurrency;
+      }
+      final selected = storage.getSelectedCurrency();
+      return selected.isNotEmpty ? selected : 'YER';
+    } catch (_) {
+      return 'YER';
     }
   }
 }

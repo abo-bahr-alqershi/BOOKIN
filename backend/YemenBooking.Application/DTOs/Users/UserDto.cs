@@ -61,5 +61,29 @@ namespace YemenBooking.Application.DTOs.Users
         /// User favorites JSON
         /// </summary>
         public string FavoritesJson { get; set; } = "[]";
+
+        /// <summary>
+        /// نوع الحساب الموحّد (Admin, Owner, Staff, Customer)
+        /// Unified account role
+        /// </summary>
+        public string AccountRole { get; set; } = string.Empty;
+
+        /// <summary>
+        /// معرف العقار إن كان مالكاً أو موظفاً
+        /// Property identifier if owner/staff
+        /// </summary>
+        public Guid? PropertyId { get; set; }
+
+        /// <summary>
+        /// اسم العقار إن كان مالكاً أو موظفاً
+        /// Property name if owner/staff
+        /// </summary>
+        public string? PropertyName { get; set; }
+
+        /// <summary>
+        /// عملة العقار
+        /// Property currency code
+        /// </summary>
+        public string? PropertyCurrency { get; set; }
     }
 } 

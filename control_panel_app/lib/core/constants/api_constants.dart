@@ -38,6 +38,9 @@ class ApiConstants {
   static const String authorization = 'Authorization';
   static const String bearer = 'Bearer';
   static const String acceptLanguage = 'Accept-Language';
+  static const String xAccountRole = 'X-Account-Role';
+  static const String xPropertyId = 'X-Property-Id';
+  static const String xPropertyCurrency = 'X-Property-Currency';
 
   // API Versions
   static const String apiVersion = 'v1';

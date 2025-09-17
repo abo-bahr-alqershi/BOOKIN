@@ -30,6 +30,7 @@ namespace YemenBooking.Infrastructure.Services
         private readonly IPropertyRepository _propertyRepository;
         private readonly IStaffRepository _staffRepository;
         private readonly JwtSettings _jwtSettings;
+        private readonly ICurrencyEnsureService _currencyEnsureService;
         private readonly ILogger<AuthenticationService> _logger;
 
         /// <summary>
@@ -44,6 +45,7 @@ namespace YemenBooking.Infrastructure.Services
             IPropertyRepository propertyRepository,
             IStaffRepository staffRepository,
             IOptions<JwtSettings> jwtOptions,
+            ICurrencyEnsureService currencyEnsureService,
             ILogger<AuthenticationService> logger)
         {
             _passwordHashingService = passwordHashingService;
@@ -53,6 +55,7 @@ namespace YemenBooking.Infrastructure.Services
             _propertyRepository = propertyRepository;
             _staffRepository = staffRepository;
             _jwtSettings = jwtOptions.Value;
+            _currencyEnsureService = currencyEnsureService;
             _logger = logger;
         }
 
@@ -119,11 +122,20 @@ namespace YemenBooking.Infrastructure.Services
                     claims.Add(new Claim("propertyId", staff.PropertyId.ToString()));
                     var prop = await _propertyRepository.GetPropertyByIdAsync(staff.PropertyId, cancellationToken);
                     if (prop != null)
+                    {
                         claims.Add(new Claim("propertyName", prop.Name));
+                        var currencyCode = (prop.Currency ?? string.Empty).ToUpperInvariant();
+                        if (!string.IsNullOrWhiteSpace(currencyCode))
+                        {
+                            await _currencyEnsureService.EnsureCurrencyExistsAsync(currencyCode, cancellationToken);
+                            claims.Add(new Claim("propertyCurrency", currencyCode));
+                        }
+                    }
+                    claims.Add(new Claim("staffId", staff.Id.ToString()));
                 }
             }
             // إضافة معلومات الكيان لمالكي الكيان
-            if (roleNames.Contains("Owner"))
+            if (roleNames.Contains("Owner") || roleNames.Contains("HOTEL_OWNER") || roleNames.Contains("HOTEL_MANAGER"))
             {
                 var props = await _propertyRepository.GetPropertiesByOwnerAsync(user.Id, cancellationToken);
                 var firstProp = props.FirstOrDefault();
@@ -131,8 +143,19 @@ namespace YemenBooking.Infrastructure.Services
                 {
                     claims.Add(new Claim("propertyId", firstProp.Id.ToString()));
                     claims.Add(new Claim("propertyName", firstProp.Name));
+                    var currencyCode = (firstProp.Currency ?? string.Empty).ToUpperInvariant();
+                    if (!string.IsNullOrWhiteSpace(currencyCode))
+                    {
+                        await _currencyEnsureService.EnsureCurrencyExistsAsync(currencyCode, cancellationToken);
+                        claims.Add(new Claim("propertyCurrency", currencyCode));
+                    }
                 }
             }
+
+            // إضافة نوع حساب موحّد
+            var accountRole = NormalizeAccountRole(roleNames);
+            if (!string.IsNullOrWhiteSpace(accountRole))
+                claims.Add(new Claim("accountRole", accountRole));
 
             var tokens = GenerateTokens(claims);
 
@@ -145,10 +168,12 @@ namespace YemenBooking.Infrastructure.Services
                 UserName = user.Name,
                 Email = user.Email,
                 Role = roleNames.FirstOrDefault() ?? string.Empty,
+                AccountRole = accountRole,
                 ProfileImage = user.ProfileImage,
                 PropertyName = claims.FirstOrDefault(c => c.Type == "propertyName")?.Value,
                 PropertyId = claims.FirstOrDefault(c => c.Type == "propertyId")?.Value,
-                StaffId = claims.FirstOrDefault(c => c.Type == "staffId")?.Value
+                StaffId = claims.FirstOrDefault(c => c.Type == "staffId")?.Value,
+                PropertyCurrency = claims.FirstOrDefault(c => c.Type == "propertyCurrency")?.Value
             };
         }
 
@@ -228,10 +253,19 @@ namespace YemenBooking.Infrastructure.Services
                     claims.Add(new Claim("propertyId", staff.PropertyId.ToString()));
                     var prop = await _propertyRepository.GetPropertyByIdAsync(staff.PropertyId, cancellationToken);
                     if (prop != null)
+                    {
                         claims.Add(new Claim("propertyName", prop.Name));
+                        var currencyCode = (prop.Currency ?? string.Empty).ToUpperInvariant();
+                        if (!string.IsNullOrWhiteSpace(currencyCode))
+                        {
+                            await _currencyEnsureService.EnsureCurrencyExistsAsync(currencyCode, cancellationToken);
+                            claims.Add(new Claim("propertyCurrency", currencyCode));
+                        }
+                    }
+                    claims.Add(new Claim("staffId", staff.Id.ToString()));
                 }
             }
-            if (roleNames.Contains("Owner"))
+            if (roleNames.Contains("Owner") || roleNames.Contains("HOTEL_OWNER") || roleNames.Contains("HOTEL_MANAGER"))
             {
                 var props = await _propertyRepository.GetPropertiesByOwnerAsync(user.Id, cancellationToken);
                 var firstProp = props.FirstOrDefault();
@@ -239,8 +273,18 @@ namespace YemenBooking.Infrastructure.Services
                 {
                     claims.Add(new Claim("propertyId", firstProp.Id.ToString()));
                     claims.Add(new Claim("propertyName", firstProp.Name));
+                    var currencyCode = (firstProp.Currency ?? string.Empty).ToUpperInvariant();
+                    if (!string.IsNullOrWhiteSpace(currencyCode))
+                    {
+                        await _currencyEnsureService.EnsureCurrencyExistsAsync(currencyCode, cancellationToken);
+                        claims.Add(new Claim("propertyCurrency", currencyCode));
+                    }
                 }
             }
+
+            var accountRole = NormalizeAccountRole(roleNames);
+            if (!string.IsNullOrWhiteSpace(accountRole))
+                claims.Add(new Claim("accountRole", accountRole));
 
             var tokens = GenerateTokens(claims);
 
@@ -253,10 +297,12 @@ namespace YemenBooking.Infrastructure.Services
                 UserName = user.Name,
                 Email = user.Email,
                 Role = roleNames.FirstOrDefault() ?? string.Empty,
+                AccountRole = accountRole,
                 ProfileImage = user.ProfileImage,
                 PropertyName = claims.FirstOrDefault(c => c.Type == "propertyName")?.Value,
                 PropertyId = claims.FirstOrDefault(c => c.Type == "propertyId")?.Value,
-                StaffId = claims.FirstOrDefault(c => c.Type == "staffId")?.Value
+                StaffId = claims.FirstOrDefault(c => c.Type == "staffId")?.Value,
+                PropertyCurrency = claims.FirstOrDefault(c => c.Type == "propertyCurrency")?.Value
             };
         }
 
@@ -378,6 +424,15 @@ namespace YemenBooking.Infrastructure.Services
             var refreshToken = tokenHandler.WriteToken(tokenHandler.CreateToken(refreshDescriptor));
 
             return (accessToken, refreshToken, accessTokenExpires, refreshTokenExpires);
+        }
+
+        private static string NormalizeAccountRole(IEnumerable<string> roleNames)
+        {
+            var normalized = roleNames.Select(r => r?.Trim().Replace(" ", "").Replace("-", "").ToLowerInvariant() ?? string.Empty).ToList();
+            if (normalized.Any(r => r.Contains("admin"))) return "Admin";
+            if (normalized.Any(r => r.Contains("owner"))) return "Owner";
+            if (normalized.Any(r => r.Contains("receptionist") || r.Contains("manager") || r.Contains("staff"))) return "Staff";
+            return "Customer";
         }
     }
 }

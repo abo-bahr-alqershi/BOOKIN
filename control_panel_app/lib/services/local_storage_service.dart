@@ -18,6 +18,10 @@ class LocalStorageService {
   static const String _draftBookingKey = 'draft_booking';
   static const String _selectedCityKey = 'selected_city';
   static const String _selectedCurrencyKey = 'selected_currency';
+  static const String _accountRoleKey = 'account_role';
+  static const String _propertyIdKey = 'property_id';
+  static const String _propertyNameKey = 'property_name';
+  static const String _propertyCurrencyKey = 'property_currency';
 
   // Theme
   Future<bool> saveTheme(String theme) async {
@@ -63,6 +67,22 @@ class LocalStorageService {
   String getSelectedCurrency() {
     return _prefs.getString(_selectedCurrencyKey) ?? 'YER';
   }
+
+  // Auth context helpers
+  Future<bool> saveAccountRole(String role) async => _prefs.setString(_accountRoleKey, role);
+  String getAccountRole() => _prefs.getString(_accountRoleKey) ?? '';
+
+  Future<bool> savePropertyContext({String? id, String? name, String? currency}) async {
+    final results = await Future.wait([
+      _prefs.setString(_propertyIdKey, id ?? ''),
+      _prefs.setString(_propertyNameKey, name ?? ''),
+      _prefs.setString(_propertyCurrencyKey, currency ?? ''),
+    ]);
+    return results.every((r) => r);
+  }
+  String getPropertyId() => _prefs.getString(_propertyIdKey) ?? '';
+  String getPropertyName() => _prefs.getString(_propertyNameKey) ?? '';
+  String getPropertyCurrency() => _prefs.getString(_propertyCurrencyKey) ?? '';
   
   // FCM Token
   Future<bool> saveFcmToken(String token) async {
