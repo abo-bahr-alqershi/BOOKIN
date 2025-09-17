@@ -58,6 +58,11 @@ namespace YemenBooking.Infrastructure.Services
         public string Role => User?.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
 
         /// <summary>
+        /// نوع الحساب الموحّد (Admin, Owner, Staff, Customer)
+        /// </summary>
+        public string AccountRole => User?.FindFirst("accountRole")?.Value ?? string.Empty;
+
+        /// <summary>
         /// هل المستخدم الحالي مدير
         /// Is the current user an admin
         /// </summary>
@@ -101,6 +106,11 @@ namespace YemenBooking.Infrastructure.Services
         /// Property name related to the user (if owner or staff)
         /// </summary>
         public string? PropertyName => User?.FindFirst("propertyName")?.Value;
+
+        /// <summary>
+        /// عملة العقار المرتبط بالمستخدم (إن وجدت)
+        /// </summary>
+        public string? PropertyCurrency => User?.FindFirst("propertyCurrency")?.Value;
 
         /// <summary>
         /// معرف موظف الكيان المرتبط بالمستخدم (إن وجد)

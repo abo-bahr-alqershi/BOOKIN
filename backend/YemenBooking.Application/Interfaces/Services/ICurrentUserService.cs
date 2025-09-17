@@ -29,6 +29,12 @@ namespace YemenBooking.Application.Interfaces.Services
         string Role { get; }
 
         /// <summary>
+        /// نوع الحساب الموحّد (Admin, Owner, Staff, Customer)
+        /// Unified account role
+        /// </summary>
+        string AccountRole { get; }
+
+        /// <summary>
         /// قائمة الأذونات الخاصة بالمستخدم الحالي
         /// Permissions of the current user
         /// </summary>
@@ -57,6 +63,12 @@ namespace YemenBooking.Application.Interfaces.Services
         /// Property name related to the user (if owner or staff)
         /// </summary>
         string? PropertyName { get; }
+
+        /// <summary>
+        /// عملة العقار المرتبط بالمستخدم (إن وجدت)
+        /// Property currency code (if any)
+        /// </summary>
+        string? PropertyCurrency { get; }
 
         /// <summary>
         /// معرف موظف الكيان المرتبط بالمستخدم (إن وجد)

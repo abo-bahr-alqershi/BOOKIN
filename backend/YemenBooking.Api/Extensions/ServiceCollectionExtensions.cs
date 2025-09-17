@@ -38,6 +38,8 @@ namespace YemenBooking.Api.Extensions
             
             // Register media metadata service explicitly (not following *Service naming convention)
             services.AddScoped<IMediaMetadataService, MediaMetadataService>();
+            // Register currency ensure service
+            services.AddScoped<ICurrencyEnsureService, CurrencyEnsureService>();
 
             // Explicitly map interfaces that don't follow the "I" + ImplementationName convention
             // IEventPublisher is implemented by EventPublisherService (not IEventPublisherService)

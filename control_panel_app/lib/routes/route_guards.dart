@@ -4,11 +4,10 @@ bool isAuthenticated(AuthState state) => state is AuthAuthenticated;
 
 bool isAdmin(AuthState state) {
   if (state is! AuthAuthenticated) return false;
+  final accountRole = (state.user.accountRole ?? '').toLowerCase();
+  if (accountRole == 'admin' || accountRole == 'owner') return true;
   final roles = state.user.roles.map((e) => e.toLowerCase()).toList();
-  return roles.contains('admin') ||
-      roles.contains('superadmin') ||
-      roles.contains('super_admin') ||
-      roles.contains('owner');
+  return roles.contains('admin') || roles.contains('superadmin') || roles.contains('super_admin') || roles.contains('owner');
 }
 
 bool isAdminPath(String path) => path.startsWith('/admin');

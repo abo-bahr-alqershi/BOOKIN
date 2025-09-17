@@ -24,6 +24,19 @@ class AuthInterceptor extends Interceptor {
       // Always overwrite Authorization with the latest token
       options.headers[ApiConstants.authorization] = '${ApiConstants.bearer} $token';
     }
+    // propagate role/property context for backend if needed
+    final accountRole = localStorage.getData(StorageConstants.accountRole)?.toString();
+    final propertyId = localStorage.getData(StorageConstants.propertyId)?.toString();
+    final propertyCurrency = localStorage.getData(StorageConstants.propertyCurrency)?.toString();
+    if (accountRole != null && accountRole.isNotEmpty) {
+      options.headers['X-Account-Role'] = accountRole;
+    }
+    if (propertyId != null && propertyId.isNotEmpty) {
+      options.headers['X-Property-Id'] = propertyId;
+    }
+    if (propertyCurrency != null && propertyCurrency.isNotEmpty) {
+      options.headers['X-Property-Currency'] = propertyCurrency;
+    }
     
     // Add current language to headers
     final locale = LocaleManager.getCurrentLocale();

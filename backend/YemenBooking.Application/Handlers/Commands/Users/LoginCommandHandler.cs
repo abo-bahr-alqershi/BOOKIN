@@ -74,10 +74,12 @@ namespace YemenBooking.Application.Handlers.Commands.Users
                 UserName = coreResult.UserName,
                 Email = coreResult.Email,
                 Role = coreResult.Role,
+                AccountRole = coreResult.AccountRole,
                 ProfileImage = coreResult.ProfileImage,
                 PropertyId = coreResult.PropertyId,
                 PropertyName = coreResult.PropertyName,
-                StaffId = coreResult.StaffId
+                StaffId = coreResult.StaffId,
+                PropertyCurrency = coreResult.PropertyCurrency
             };
 
             // تحديث آخر تسجيل دخول

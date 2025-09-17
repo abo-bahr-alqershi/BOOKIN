@@ -76,9 +76,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     });
     try {
       final response = await apiClient.post(
-        '/api/client/auth/login',
+        '/api/common/auth/login',
         data: {
-          'emailOrPhone': emailOrPhone,
+          // backend common login uses Email/Password
+          'email': emailOrPhone,
           'password': password,
           'rememberMe': rememberMe,
         },
@@ -249,7 +250,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     logRequestStart(requestName);
     try {
       final response = await apiClient.post(
-        '/api/client/auth/refresh-token',
+        '/api/common/auth/refresh-token',
         data: {
           'accessToken': accessToken,
           'refreshToken': refreshToken,

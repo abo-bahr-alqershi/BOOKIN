@@ -6,6 +6,10 @@ class User extends Equatable {
   final String email;
   final String phone;
   final List<String> roles;
+  final String? accountRole; // Admin, Owner, Staff, Customer
+  final String? propertyId;
+  final String? propertyName;
+  final String? propertyCurrency;
   final String? profileImage;
   final DateTime? emailVerifiedAt;
   final DateTime? phoneVerifiedAt;
@@ -18,6 +22,10 @@ class User extends Equatable {
     required this.email,
     required this.phone,
     required this.roles,
+    this.accountRole,
+    this.propertyId,
+    this.propertyName,
+    this.propertyCurrency,
     this.profileImage,
     this.emailVerifiedAt,
     this.phoneVerifiedAt,
@@ -28,6 +36,9 @@ class User extends Equatable {
   bool get isEmailVerified => emailVerifiedAt != null;
   bool get isPhoneVerified => phoneVerifiedAt != null;
   bool get isVerified => isEmailVerified || isPhoneVerified;
+  bool get isAdmin => (accountRole ?? '').toLowerCase() == 'admin' || roles.map((e)=>e.toLowerCase()).contains('admin');
+  bool get isOwner => (accountRole ?? '').toLowerCase() == 'owner' || roles.map((e)=>e.toLowerCase()).contains('owner');
+  bool get isStaff => (accountRole ?? '').toLowerCase() == 'staff' || roles.map((e)=>e.toLowerCase()).contains('staff');
 
   @override
   List<Object?> get props => [
@@ -36,6 +47,10 @@ class User extends Equatable {
         email,
         phone,
         roles,
+        accountRole,
+        propertyId,
+        propertyName,
+        propertyCurrency,
         profileImage,
         emailVerifiedAt,
         phoneVerifiedAt,

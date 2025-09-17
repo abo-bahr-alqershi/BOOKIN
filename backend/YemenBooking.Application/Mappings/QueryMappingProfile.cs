@@ -77,7 +77,11 @@ namespace YemenBooking.Application.Mappings
             // User mapping
             CreateMap<User, UserDto>()
                 .ForMember(dest => dest.SettingsJson, opt => opt.MapFrom(src => src.SettingsJson))
-                .ForMember(dest => dest.FavoritesJson, opt => opt.MapFrom(src => src.FavoritesJson));
+                .ForMember(dest => dest.FavoritesJson, opt => opt.MapFrom(src => src.FavoritesJson))
+                .ForMember(dest => dest.AccountRole, opt => opt.Ignore())
+                .ForMember(dest => dest.PropertyId, opt => opt.MapFrom(src => src.Properties.Select(p => p.Id).FirstOrDefault()))
+                .ForMember(dest => dest.PropertyName, opt => opt.MapFrom(src => src.Properties.Select(p => p.Name).FirstOrDefault()))
+                .ForMember(dest => dest.PropertyCurrency, opt => opt.MapFrom(src => src.Properties.Select(p => p.Currency).FirstOrDefault()));
 
             // Role mapping
             CreateMap<Role, RoleDto>();

@@ -6,6 +6,10 @@ class StorageConstants {
   static const String refreshToken = 'refresh_token';
   static const String userId = 'user_id';
   static const String userEmail = 'user_email';
+  static const String accountRole = 'account_role';
+  static const String propertyId = 'property_id';
+  static const String propertyName = 'property_name';
+  static const String propertyCurrency = 'property_currency';
   
   // Shared Preferences Keys
   static const String firstLaunch = 'first_launch';

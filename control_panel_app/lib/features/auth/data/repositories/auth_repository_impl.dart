@@ -43,6 +43,10 @@ class AuthRepositoryImpl implements AuthRepository {
         await localStorage.saveData(StorageConstants.refreshToken, authResponse.refreshToken);
         await localStorage.saveData(StorageConstants.userId, authResponse.user.userId);
         await localStorage.saveData(StorageConstants.userEmail, authResponse.user.email);
+        await localStorage.saveData(StorageConstants.accountRole, (authResponse.user as UserModel).accountRole ?? '');
+        await localStorage.saveData(StorageConstants.propertyId, (authResponse.user as UserModel).propertyId ?? '');
+        await localStorage.saveData(StorageConstants.propertyName, (authResponse.user as UserModel).propertyName ?? '');
+        await localStorage.saveData(StorageConstants.propertyCurrency, (authResponse.user as UserModel).propertyCurrency ?? '');
         
         if (rememberMe) {
           await localDataSource.cacheAuthResponse(authResponse);
@@ -84,6 +88,10 @@ class AuthRepositoryImpl implements AuthRepository {
         await localStorage.saveData(StorageConstants.refreshToken, authResponse.refreshToken);
         await localStorage.saveData(StorageConstants.userId, authResponse.user.userId);
         await localStorage.saveData(StorageConstants.userEmail, authResponse.user.email);
+        await localStorage.saveData(StorageConstants.accountRole, (authResponse.user as UserModel).accountRole ?? '');
+        await localStorage.saveData(StorageConstants.propertyId, (authResponse.user as UserModel).propertyId ?? '');
+        await localStorage.saveData(StorageConstants.propertyName, (authResponse.user as UserModel).propertyName ?? '');
+        await localStorage.saveData(StorageConstants.propertyCurrency, (authResponse.user as UserModel).propertyCurrency ?? '');
         
         await localDataSource.cacheAuthResponse(authResponse);
         
@@ -115,6 +123,10 @@ class AuthRepositoryImpl implements AuthRepository {
       await localStorage.removeData(StorageConstants.refreshToken);
       await localStorage.removeData(StorageConstants.userId);
       await localStorage.removeData(StorageConstants.userEmail);
+      await localStorage.removeData(StorageConstants.accountRole);
+      await localStorage.removeData(StorageConstants.propertyId);
+      await localStorage.removeData(StorageConstants.propertyName);
+      await localStorage.removeData(StorageConstants.propertyCurrency);
       return const Right(null);
     } catch (e) {
       // Clear local data even if remote logout fails
@@ -124,6 +136,10 @@ class AuthRepositoryImpl implements AuthRepository {
       await localStorage.removeData(StorageConstants.refreshToken);
       await localStorage.removeData(StorageConstants.userId);
       await localStorage.removeData(StorageConstants.userEmail);
+      await localStorage.removeData(StorageConstants.accountRole);
+      await localStorage.removeData(StorageConstants.propertyId);
+      await localStorage.removeData(StorageConstants.propertyName);
+      await localStorage.removeData(StorageConstants.propertyCurrency);
       return const Right(null);
     }
   }
@@ -303,6 +319,10 @@ class AuthRepositoryImpl implements AuthRepository {
               await localDataSource.cacheAuthResponse(newAuth);
               await localStorage.saveData(StorageConstants.accessToken, newAuth.accessToken);
               await localStorage.saveData(StorageConstants.refreshToken, newAuth.refreshToken);
+        await localStorage.saveData(StorageConstants.accountRole, newAuth.user.accountRole ?? '');
+        await localStorage.saveData(StorageConstants.propertyId, (newAuth.user as UserModel).propertyId ?? '');
+        await localStorage.saveData(StorageConstants.propertyName, (newAuth.user as UserModel).propertyName ?? '');
+        await localStorage.saveData(StorageConstants.propertyCurrency, (newAuth.user as UserModel).propertyCurrency ?? '');
               return const Right(true);
             } catch (e) {
               // Refresh failed, user needs to login again
@@ -312,6 +332,10 @@ class AuthRepositoryImpl implements AuthRepository {
               await localStorage.removeData(StorageConstants.refreshToken);
               await localStorage.removeData(StorageConstants.userId);
               await localStorage.removeData(StorageConstants.userEmail);
+      await localStorage.removeData(StorageConstants.accountRole);
+      await localStorage.removeData(StorageConstants.propertyId);
+      await localStorage.removeData(StorageConstants.propertyName);
+      await localStorage.removeData(StorageConstants.propertyCurrency);
               return const Right(false);
             }
           }

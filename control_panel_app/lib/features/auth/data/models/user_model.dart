@@ -7,6 +7,10 @@ class UserModel extends User {
     required super.email,
     required super.phone,
     required super.roles,
+    super.accountRole,
+    super.propertyId,
+    super.propertyName,
+    super.propertyCurrency,
     super.profileImage,
     super.emailVerifiedAt,
     super.phoneVerifiedAt,
@@ -23,6 +27,10 @@ class UserModel extends User {
       roles: json['roles'] != null 
           ? List<String>.from(json['roles']) 
           : json['role'] != null ? [json['role'].toString()] : <String>[],
+      accountRole: (json['accountRole'] ?? json['account_role'] ?? json['role'] ?? '').toString(),
+      propertyId: (json['propertyId'] ?? json['property_id'])?.toString(),
+      propertyName: (json['propertyName'] ?? json['property_name'])?.toString(),
+      propertyCurrency: (json['propertyCurrency'] ?? json['property_currency'] ?? json['currency'])?.toString(),
       profileImage: json['profileImage'] ?? json['profile_image'] ?? json['profileImageUrl'],
       emailVerifiedAt: json['emailVerifiedAt'] != null
           ? DateTime.tryParse(json['emailVerifiedAt'])
@@ -54,6 +62,10 @@ class UserModel extends User {
       'email': email,
       'phone': phone,
       'roles': roles,
+      'accountRole': accountRole,
+      'propertyId': propertyId,
+      'propertyName': propertyName,
+      'propertyCurrency': propertyCurrency,
       'profileImage': profileImage,
       'emailVerifiedAt': emailVerifiedAt?.toIso8601String(),
       'phoneVerifiedAt': phoneVerifiedAt?.toIso8601String(),

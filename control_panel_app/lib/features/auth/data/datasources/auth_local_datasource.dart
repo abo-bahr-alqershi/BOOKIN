@@ -66,6 +66,10 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       await localStorage.saveData(StorageConstants.refreshToken, authResponse.refreshToken);
       await localStorage.saveData(StorageConstants.userId, authResponse.user.userId);
       await localStorage.saveData(StorageConstants.userEmail, authResponse.user.email);
+      await localStorage.saveData(StorageConstants.accountRole, (authResponse.user as UserModel).accountRole ?? '');
+      await localStorage.saveData(StorageConstants.propertyId, (authResponse.user as UserModel).propertyId ?? '');
+      await localStorage.saveData(StorageConstants.propertyName, (authResponse.user as UserModel).propertyName ?? '');
+      await localStorage.saveData(StorageConstants.propertyCurrency, (authResponse.user as UserModel).propertyCurrency ?? '');
     } catch (e) {
       throw const CacheException('فشل حفظ بيانات المصادقة');
     }
@@ -136,6 +140,10 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       final localStorage = sl<LocalStorageService>();
       await localStorage.saveData(StorageConstants.userId, user.userId);
       await localStorage.saveData(StorageConstants.userEmail, user.email);
+      await localStorage.saveData(StorageConstants.accountRole, user.accountRole ?? '');
+      await localStorage.saveData(StorageConstants.propertyId, user.propertyId ?? '');
+      await localStorage.saveData(StorageConstants.propertyName, user.propertyName ?? '');
+      await localStorage.saveData(StorageConstants.propertyCurrency, user.propertyCurrency ?? '');
     } catch (e) {
       throw const CacheException('فشل حفظ بيانات المستخدم');
     }
@@ -170,6 +178,10 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       await localStorage.removeData(StorageConstants.refreshToken);
       await localStorage.removeData(StorageConstants.userId);
       await localStorage.removeData(StorageConstants.userEmail);
+      await localStorage.removeData(StorageConstants.accountRole);
+      await localStorage.removeData(StorageConstants.propertyId);
+      await localStorage.removeData(StorageConstants.propertyName);
+      await localStorage.removeData(StorageConstants.propertyCurrency);
     } catch (e) {
       throw const CacheException('فشل مسح بيانات المصادقة');
     }

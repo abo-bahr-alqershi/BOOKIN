@@ -98,7 +98,7 @@ public class ClientLoginUserCommandHandler : IRequestHandler<ClientLoginUserComm
                 Phone = "", // سيتم تحديثه من قاعدة البيانات إذا لزم الأمر
                 AccessToken = authResult.AccessToken,
                 RefreshToken = authResult.RefreshToken,
-                Roles = new List<string> { authResult.Role }
+                Roles = new List<string> { string.IsNullOrWhiteSpace(authResult.AccountRole) ? authResult.Role : authResult.AccountRole }
             };
 
             _logger.LogInformation("تم تسجيل دخول المستخدم بنجاح {UserId}", authResult.UserId);

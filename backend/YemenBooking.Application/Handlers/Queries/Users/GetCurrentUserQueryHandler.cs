@@ -51,6 +51,14 @@ namespace YemenBooking.Application.Handlers.Queries.Users
                 }
 
                 var userDto = _mapper.Map<UserDto>(user);
+                // enrich with claims-based context
+                userDto.AccountRole = _currentUserService.AccountRole;
+                if (_currentUserService.PropertyId.HasValue)
+                {
+                    userDto.PropertyId = _currentUserService.PropertyId;
+                    userDto.PropertyName = _currentUserService.PropertyName;
+                    userDto.PropertyCurrency = _currentUserService.PropertyCurrency;
+                }
 
                 _logger.LogInformation("تم جلب بيانات المستخدم الحالي بنجاح: {UserId}", userDto.Id);
                 return ResultDto<UserDto>.Ok(userDto, "تم جلب بيانات المستخدم بنجاح");

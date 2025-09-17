@@ -51,6 +51,12 @@ namespace YemenBooking.Core.DTOs.Common
         public string Role { get; set; } = string.Empty;
 
         /// <summary>
+        /// نوع الحساب الموحّد (Admin, Owner, Staff, Customer)
+        /// Unified account role (Admin, Owner, Staff, Customer)
+        /// </summary>
+        public string AccountRole { get; set; } = string.Empty;
+
+        /// <summary>
         /// رابط صورة الملف الشخصي للمستخدم
         /// User profile image URL
         /// </summary>
@@ -72,5 +78,12 @@ namespace YemenBooking.Core.DTOs.Common
         /// معرف الموظف إذا كان موظفًا
         /// Staff ID if user is staff
         /// </summary>
-        public string? StaffId { get; set; }    }
+        public string? StaffId { get; set; }
+
+        /// <summary>
+        /// عملة العقار (رمز)
+        /// Property currency code (e.g., YER, USD)
+        /// </summary>
+        public string? PropertyCurrency { get; set; }
+    }
 } 
