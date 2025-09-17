@@ -16,6 +16,7 @@ import '../bloc/bookings_list/bookings_list_event.dart';
 import '../bloc/bookings_list/bookings_list_state.dart';
 import '../widgets/booking_timeline_widget.dart';
 import '../widgets/booking_status_badge.dart';
+import 'package:go_router/go_router.dart';
 import 'booking_details_page.dart';
 
 class BookingTimelinePage extends StatefulWidget {
@@ -275,13 +276,7 @@ class _BookingTimelinePageState extends State<BookingTimelinePage>
                     isFirst: index == 0,
                     isLast: index == bookings.length - 1,
                     onBookingTap: (bookingId) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              BookingDetailsPage(bookingId: bookingId),
-                        ),
-                      );
+                      context.push('/admin/bookings/$bookingId');
                     },
                   );
                 },
