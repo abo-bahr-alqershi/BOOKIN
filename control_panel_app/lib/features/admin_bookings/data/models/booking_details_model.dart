@@ -15,25 +15,46 @@ class BookingDetailsModel extends BookingDetails {
   });
 
   factory BookingDetailsModel.fromJson(Map<String, dynamic> json) {
+    // Support both shapes: { booking: {...}, payments: [...] } and flat booking object
+    final Object? bookingNode = json['booking'] ?? json;
+    final Map<String, dynamic> bookingMap = bookingNode is Map
+        ? Map<String, dynamic>.from(bookingNode as Map)
+        : <String, dynamic>{};
+
+    List paymentsRaw = const [];
+    if (json['payments'] is List) paymentsRaw = json['payments'] as List;
+    List servicesRaw = const [];
+    if (json['services'] is List) servicesRaw = json['services'] as List;
+    List activitiesRaw = const [];
+    if (json['activities'] is List) activitiesRaw = json['activities'] as List;
+
+    final guestInfoRaw = json['guestInfo'];
+    final unitDetailsRaw = json['unitDetails'];
+    final propertyDetailsRaw = json['propertyDetails'];
+
     return BookingDetailsModel(
-      booking: BookingModel.fromJson(json['booking'] ?? json),
-      payments: (json['payments'] as List? ?? [])
-          .map((p) => PaymentModel.fromJson(p))
+      booking: BookingModel.fromJson(bookingMap),
+      payments: paymentsRaw
+          .whereType<Map>()
+          .map((p) => PaymentModel.fromJson(Map<String, dynamic>.from(p)))
           .toList(),
-      services: (json['services'] as List? ?? [])
-          .map((s) => ServiceModel.fromJson(s))
+      services: servicesRaw
+          .whereType<Map>()
+          .map((s) => ServiceModel.fromJson(Map<String, dynamic>.from(s)))
           .toList(),
-      activities: (json['activities'] as List? ?? [])
-          .map((a) => BookingActivityModel.fromJson(a))
+      activities: activitiesRaw
+          .whereType<Map>()
+          .map((a) => BookingActivityModel.fromJson(Map<String, dynamic>.from(a)))
           .toList(),
-      guestInfo: json['guestInfo'] != null
-          ? GuestInfoModel.fromJson(json['guestInfo'])
+      guestInfo: guestInfoRaw is Map
+          ? GuestInfoModel.fromJson(Map<String, dynamic>.from(guestInfoRaw))
           : null,
-      unitDetails: json['unitDetails'] != null
-          ? UnitDetailsModel.fromJson(json['unitDetails'])
+      unitDetails: unitDetailsRaw is Map
+          ? UnitDetailsModel.fromJson(Map<String, dynamic>.from(unitDetailsRaw))
           : null,
-      propertyDetails: json['propertyDetails'] != null
-          ? PropertyDetailsModel.fromJson(json['propertyDetails'])
+      propertyDetails: propertyDetailsRaw is Map
+          ? PropertyDetailsModel.fromJson(
+              Map<String, dynamic>.from(propertyDetailsRaw))
           : null,
     );
   }
@@ -74,7 +95,7 @@ class PaymentModel extends Payment {
     return PaymentModel(
       id: json['id']?.toString() ?? '',
       bookingId: json['bookingId']?.toString() ?? '',
-      amount: MoneyModel.fromJson(json['amount']),
+      amount: MoneyModel.fromJson(Map<String, dynamic>.from(json['amount'] ?? {})),
       transactionId: json['transactionId'] ?? '',
       method: _parsePaymentMethod(json['method']),
       status: _parsePaymentStatus(json['status']),
@@ -136,7 +157,7 @@ class ServiceModel extends Service {
       id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       description: json['description'] ?? '',
-      price: MoneyModel.fromJson(json['price']),
+      price: MoneyModel.fromJson(Map<String, dynamic>.from(json['price'] ?? {})),
       quantity: json['quantity'] ?? 1,
       icon: json['icon'],
       category: json['category'],
