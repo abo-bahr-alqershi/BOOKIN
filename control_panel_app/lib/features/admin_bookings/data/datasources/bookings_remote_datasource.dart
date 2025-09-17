@@ -455,8 +455,18 @@ class BookingsRemoteDataSourceImpl implements BookingsRemoteDataSource {
         queryParameters: queryParams,
       );
 
+      final raw = response.data;
+      final Map<String, dynamic> normalized = raw is List
+          ? {
+              'items': raw,
+              'pageNumber': 1,
+              'pageSize': raw.length,
+              'totalCount': raw.length,
+            }
+          : Map<String, dynamic>.from(raw as Map);
+
       return PaginatedResult<BookingModel>.fromJson(
-        response.data,
+        normalized,
         (json) => BookingModel.fromJson(json),
       );
     } on DioException catch (e) {
@@ -504,8 +514,18 @@ class BookingsRemoteDataSourceImpl implements BookingsRemoteDataSource {
         queryParameters: queryParams,
       );
 
+      final raw = response.data;
+      final Map<String, dynamic> normalized = raw is List
+          ? {
+              'items': raw,
+              'pageNumber': 1,
+              'pageSize': raw.length,
+              'totalCount': raw.length,
+            }
+          : Map<String, dynamic>.from(raw as Map);
+
       return PaginatedResult<BookingModel>.fromJson(
-        response.data,
+        normalized,
         (json) => BookingModel.fromJson(json),
       );
     } on DioException catch (e) {
@@ -533,8 +553,18 @@ class BookingsRemoteDataSourceImpl implements BookingsRemoteDataSource {
         queryParameters: queryParams,
       );
 
+      final raw = response.data;
+      final Map<String, dynamic> normalized = raw is List
+          ? {
+              'items': raw,
+              'pageNumber': 1,
+              'pageSize': raw.length,
+              'totalCount': raw.length,
+            }
+          : Map<String, dynamic>.from(raw as Map);
+
       return PaginatedResult<BookingModel>.fromJson(
-        response.data,
+        normalized,
         (json) => BookingModel.fromJson(json),
       );
     } on DioException catch (e) {
@@ -566,8 +596,18 @@ class BookingsRemoteDataSourceImpl implements BookingsRemoteDataSource {
         queryParameters: queryParams,
       );
 
+      final raw = response.data;
+      final Map<String, dynamic> normalized = raw is List
+          ? {
+              'items': raw,
+              'pageNumber': 1,
+              'pageSize': raw.length,
+              'totalCount': raw.length,
+            }
+          : Map<String, dynamic>.from(raw as Map);
+
       return PaginatedResult<BookingModel>.fromJson(
-        response.data,
+        normalized,
         (json) => BookingModel.fromJson(json),
       );
     } on DioException catch (e) {
@@ -611,8 +651,18 @@ class BookingsRemoteDataSourceImpl implements BookingsRemoteDataSource {
         queryParameters: queryParams,
       );
 
+      final raw = response.data;
+      final Map<String, dynamic> normalized = raw is List
+          ? {
+              'items': raw,
+              'pageNumber': 1,
+              'pageSize': raw.length,
+              'totalCount': raw.length,
+            }
+          : Map<String, dynamic>.from(raw as Map);
+
       return PaginatedResult<BookingModel>.fromJson(
-        response.data,
+        normalized,
         (json) => BookingModel.fromJson(json),
       );
     } on DioException catch (e) {

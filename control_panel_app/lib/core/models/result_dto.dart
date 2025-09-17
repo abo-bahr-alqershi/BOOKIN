@@ -37,13 +37,25 @@ class ResultDto<T> extends Equatable {
       );
     }
 
+    // If backend returned the payload directly without wrapping, treat it as data
+    final bool hasEnvelope = json.containsKey('success') || json.containsKey('data');
+
     T? parsedData;
-    if (json.containsKey('data')) {
-      final raw = json['data'];
-      if (raw != null && fromJsonT != null) {
-        parsedData = fromJsonT(raw);
+    if (hasEnvelope) {
+      if (json.containsKey('data')) {
+        final raw = json['data'];
+        if (raw != null && fromJsonT != null) {
+          parsedData = fromJsonT(raw);
+        } else {
+          parsedData = raw as T?;
+        }
+      }
+    } else {
+      // No envelope -> parse whole object as data
+      if (fromJsonT != null) {
+        parsedData = fromJsonT(json);
       } else {
-        parsedData = raw as T?;
+        parsedData = json as T?;
       }
     }
 
@@ -67,7 +79,9 @@ class ResultDto<T> extends Equatable {
     }
 
     return ResultDto<T>(
-      success: (json['success'] is bool) ? json['success'] as bool : false,
+      success: hasEnvelope
+          ? ((json['success'] is bool) ? json['success'] as bool : false)
+          : true,
       data: parsedData,
       message: json['message']?.toString(),
       errors: parsedErrors,

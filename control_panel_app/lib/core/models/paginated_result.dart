@@ -52,11 +52,21 @@ class PaginatedResult<T> extends Equatable {
     Map<String, dynamic> json,
     T Function(Map<String, dynamic>) fromJsonT,
   ) {
-    // Support both { items, pageNumber, ... } and ResultDto-wrapped shapes { success, data: { items: [...] } }
-    final Object? root = json['items'] == null && json['data'] is Map<String, dynamic>
-        ? json['data']
-        : json;
-    final Map<String, dynamic> payload = (root as Map<String, dynamic>);
+    // Accept both bare payload and ResultDto-wrapped
+    final Object? root;
+    if (json['items'] != null) {
+      root = json;
+    } else if (json['data'] is Map<String, dynamic>) {
+      root = json['data'];
+    } else {
+      // Some backends might return list directly
+      if (json is Map<String, dynamic> && json.isEmpty) {
+        return PaginatedResult<T>.empty();
+      }
+      root = json;
+    }
+
+    final Map<String, dynamic> payload = Map<String, dynamic>.from(root as Map);
 
     final rawItems = (payload['items'] as List?) ?? const [];
     final parsedItems = rawItems
