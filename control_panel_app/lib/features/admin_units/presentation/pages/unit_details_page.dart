@@ -273,37 +273,40 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
 
   Widget _buildStatsSection(Unit unit) {
     return Container(
-      height: 100,
       margin: const EdgeInsets.all(20),
-      child: ListView(
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        children: [
-          _buildStatCard(
-            icon: CupertinoIcons.eye,
-            label: 'المشاهدات',
-            value: unit.viewCount.toString(),
-            color: AppTheme.primaryBlue,
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              _buildStatCard(
+                icon: CupertinoIcons.eye,
+                label: 'المشاهدات',
+                value: unit.viewCount.toString(),
+                color: AppTheme.primaryBlue,
+              ),
+              _buildStatCard(
+                icon: CupertinoIcons.calendar,
+                label: 'الحجوزات',
+                value: unit.bookingCount.toString(),
+                color: AppTheme.primaryPurple,
+              ),
+              _buildStatCard(
+                icon: CupertinoIcons.star_fill,
+                label: 'التقييم',
+                value: '4.8',
+                color: AppTheme.warning,
+              ),
+              _buildStatCard(
+                icon: CupertinoIcons.person_2,
+                label: 'السعة',
+                value: unit.maxCapacity.toString(),
+                color: AppTheme.success,
+              ),
+            ],
           ),
-          _buildStatCard(
-            icon: CupertinoIcons.calendar,
-            label: 'الحجوزات',
-            value: unit.bookingCount.toString(),
-            color: AppTheme.primaryPurple,
-          ),
-          _buildStatCard(
-            icon: CupertinoIcons.star_fill,
-            label: 'التقييم',
-            value: '4.8',
-            color: AppTheme.warning,
-          ),
-          _buildStatCard(
-            icon: CupertinoIcons.person_2,
-            label: 'السعة',
-            value: unit.maxCapacity.toString(),
-            color: AppTheme.success,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -317,7 +320,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
     return Container(
       width: 120,
       margin: const EdgeInsets.only(left: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppTheme.darkCard.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
@@ -327,26 +330,22 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // مهم: لجعل Column تأخذ أقل مساحة ممكنة
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  icon,
-                  size: 14,
-                  color: color,
-                ),
-              ),
-            ],
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              size: 14,
+              color: color,
+            ),
           ),
-          const Spacer(),
+          const SizedBox(height: 8),
           Text(
             value,
             style: AppTextStyles.heading3.copyWith(
@@ -354,11 +353,14 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
               fontWeight: FontWeight.w600,
             ),
           ),
+          const SizedBox(height: 2),
           Text(
             label,
             style: AppTextStyles.caption.copyWith(
               color: AppTheme.textMuted,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
