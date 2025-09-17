@@ -1,80 +1,75 @@
+// lib/features/admin_currencies/presentation/pages/currencies_management_page.dart
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'dart:ui';
-import 'dart:math' as math;
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/error_widget.dart';
 import '../../../../core/widgets/empty_widget.dart';
-import '../../domain/entities/currency.dart';
 import '../bloc/currencies_bloc.dart';
 import '../bloc/currencies_event.dart';
 import '../bloc/currencies_state.dart';
 import '../widgets/futuristic_currency_card.dart';
 import '../widgets/futuristic_currency_form_modal.dart';
 import '../widgets/currency_stats_card.dart';
+import '../widgets/exchange_rate_indicator.dart';
+import '../../domain/entities/currency.dart';
 
 class CurrenciesManagementPage extends StatefulWidget {
   const CurrenciesManagementPage({super.key});
 
   @override
-  State<CurrenciesManagementPage> createState() => 
+  State<CurrenciesManagementPage> createState() =>
       _CurrenciesManagementPageState();
 }
 
 class _CurrenciesManagementPageState extends State<CurrenciesManagementPage>
     with TickerProviderStateMixin {
-  late AnimationController _backgroundController;
-  late AnimationController _particleController;
-  late Animation<double> _backgroundAnimation;
+  late AnimationController _animationController;
+  late AnimationController _fabAnimationController;
+  late AnimationController _refreshAnimationController;
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
-  
-  final List<_Particle> _particles = [];
-  Currency? _editingCurrency;
-  bool _showFormModal = false;
+
+  bool _isGridView = true;
+  final String _searchQuery = '';
+  Currency? _selectedCurrency;
 
   @override
   void initState() {
     super.initState();
-    _initializeAnimations();
-    _generateParticles();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..forward();
+
+    _fabAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    _refreshAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    );
+
+    _loadCurrencies();
+  }
+
+  void _loadCurrencies() {
     context.read<CurrenciesBloc>().add(LoadCurrenciesEvent());
-  }
-
-  void _initializeAnimations() {
-    _backgroundController = AnimationController(
-      duration: const Duration(seconds: 20),
-      vsync: this,
-    )..repeat();
-
-    _particleController = AnimationController(
-      duration: const Duration(seconds: 15),
-      vsync: this,
-    )..repeat();
-
-    _backgroundAnimation = Tween<double>(
-      begin: 0,
-      end: 2 * math.pi,
-    ).animate(CurvedAnimation(
-      parent: _backgroundController,
-      curve: Curves.linear,
-    ));
-  }
-
-  void _generateParticles() {
-    for (int i = 0; i < 20; i++) {
-      _particles.add(_Particle());
-    }
   }
 
   @override
   void dispose() {
-    _backgroundController.dispose();
-    _particleController.dispose();
+    _animationController.dispose();
+    _fabAnimationController.dispose();
+    _refreshAnimationController.dispose();
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -84,278 +79,320 @@ class _CurrenciesManagementPageState extends State<CurrenciesManagementPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
-      body: Stack(
-        children: [
-          // Animated background
-          _buildAnimatedBackground(),
-          
-          // Floating particles
-          _buildParticles(),
-          
-          // Main content
-          _buildMainContent(),
-          
-          // Floating action button
-          _buildFloatingActionButton(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnimatedBackground() {
-    return AnimatedBuilder(
-      animation: _backgroundAnimation,
-      builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.darkBackground,
-                AppTheme.darkBackground2,
-                AppTheme.darkBackground3,
-              ],
-            ),
+      body: BlocListener<CurrenciesBloc, CurrenciesState>(
+        listener: _handleStateChanges,
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
           ),
-          child: CustomPaint(
-            painter: _GridPainter(
-              rotation: _backgroundAnimation.value * 0.1,
-              opacity: 0.03,
-            ),
-            size: Size.infinite,
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildParticles() {
-    return AnimatedBuilder(
-      animation: _particleController,
-      builder: (context, child) {
-        return CustomPaint(
-          painter: _ParticlePainter(
-            particles: _particles,
-            animationValue: _particleController.value,
-          ),
-          size: Size.infinite,
-        );
-      },
-    );
-  }
-
-  Widget _buildMainContent() {
-    return SafeArea(
-      child: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: _buildBody(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          _buildTopBar(),
-          const SizedBox(height: 20),
-          _buildStatsSection(),
-          const SizedBox(height: 20),
-          _buildSearchBar(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTopBar() {
-    return Row(
-      children: [
-        _buildBackButton(),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ShaderMask(
-                shaderCallback: (bounds) => AppTheme.primaryGradient
-                    .createShader(bounds),
-                child: Text(
-                  'إدارة العملات',
-                  style: AppTextStyles.heading2.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'إدارة العملات وأسعار الصرف',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppTheme.textMuted,
-                ),
-              ),
-            ],
-          ),
+          slivers: [
+            _buildSliverAppBar(),
+            _buildExchangeRateIndicator(),
+            _buildStatsSection(),
+            _buildSearchBar(),
+            _buildCurrenciesContent(),
+          ],
         ),
-        _buildRefreshButton(),
+      ),
+      floatingActionButton: _buildFloatingActionButton(),
+    );
+  }
+
+  Widget _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 160,
+      floating: true,
+      pinned: true,
+      backgroundColor: AppTheme.darkBackground,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Animated gradient background
+            AnimatedBuilder(
+              animation: _animationController,
+              builder: (context, child) {
+                return Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppTheme.primaryCyan.withValues(
+                          alpha: 0.15 * _animationController.value,
+                        ),
+                        AppTheme.primaryBlue.withValues(
+                          alpha: 0.1 * _animationController.value,
+                        ),
+                        AppTheme.primaryPurple.withValues(
+                          alpha: 0.05 * _animationController.value,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            // Floating currency symbols animation
+            ...List.generate(4, (index) {
+              final symbols = ['﷼', '\$', '€', '£'];
+              return AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, child) {
+                  return Positioned(
+                    top: 20 + (index * 35) * _animationController.value,
+                    right: 30 + (index * 50) * _animationController.value,
+                    child: Transform.rotate(
+                      angle: _animationController.value * 0.3 * (index + 1),
+                      child: Opacity(
+                        opacity: 0.1 * _animationController.value,
+                        child: Text(
+                          symbols[index],
+                          style: TextStyle(
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryBlue,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            }),
+          ],
+        ),
+        titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+        title: Row(
+          children: [
+            // Animated icon
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 800),
+              builder: (context, value, child) {
+                return Transform.scale(
+                  scale: value,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.primaryCyan,
+                          AppTheme.primaryBlue,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryCyan.withValues(alpha: 0.3),
+                          blurRadius: 10 * value,
+                          offset: Offset(0, 5 * value),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.money_dollar_circle_fill,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'إدارة العملات',
+              style: AppTextStyles.heading1.copyWith(
+                color: AppTheme.textWhite,
+                shadows: [
+                  Shadow(
+                    color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        _buildActionButton(
+          icon: _isGridView
+              ? CupertinoIcons.list_bullet
+              : CupertinoIcons.square_grid_2x2,
+          onPressed: () => setState(() => _isGridView = !_isGridView),
+        ),
+        _buildActionButton(
+          icon: CupertinoIcons.arrow_2_circlepath,
+          onPressed: _handleRefresh,
+          isAnimated: true,
+        ),
+        const SizedBox(width: 8),
       ],
     );
   }
 
-  Widget _buildBackButton() {
-    return InkWell(
-      onTap: () => Navigator.of(context).pop(),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.darkCard.withOpacity(0.5),
-              AppTheme.darkCard.withOpacity(0.3),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppTheme.darkBorder.withOpacity(0.3),
-            width: 0.5,
-          ),
+  Widget _buildActionButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    bool isAnimated = false,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.3),
+          width: 1,
         ),
-        child: Icon(
-          Icons.arrow_back_rounded,
-          color: AppTheme.textWhite,
-          size: 20,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            child: isAnimated
+                ? AnimatedBuilder(
+                    animation: _refreshAnimationController,
+                    builder: (context, child) {
+                      return Transform.rotate(
+                        angle: _refreshAnimationController.value * 2 * 3.14159,
+                        child: Icon(
+                          icon,
+                          color: AppTheme.textWhite,
+                          size: 20,
+                        ),
+                      );
+                    },
+                  )
+                : Icon(
+                    icon,
+                    color: AppTheme.textWhite,
+                    size: 20,
+                  ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildRefreshButton() {
-    return InkWell(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        context.read<CurrenciesBloc>().add(RefreshCurrenciesEvent());
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.primaryBlue.withOpacity(0.2),
-              AppTheme.primaryPurple.withOpacity(0.1),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppTheme.primaryBlue.withOpacity(0.3),
-            width: 0.5,
-          ),
-        ),
-        child: Icon(
-          Icons.refresh_rounded,
-          color: AppTheme.primaryBlue,
-          size: 20,
-        ),
+  Widget _buildExchangeRateIndicator() {
+    return SliverToBoxAdapter(
+      child: BlocBuilder<CurrenciesBloc, CurrenciesState>(
+        builder: (context, state) {
+          if (state is! CurrenciesLoaded) return const SizedBox.shrink();
+
+          final defaultCurrency = state.currencies.firstWhere(
+            (c) => c.isDefault,
+            orElse: () => state.currencies.first,
+          );
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ExchangeRateIndicator(
+              baseCurrency: defaultCurrency,
+              currencies: state.currencies.where((c) => !c.isDefault).toList(),
+            ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildStatsSection() {
-    return BlocBuilder<CurrenciesBloc, CurrenciesState>(
-      builder: (context, state) {
-        if (state is CurrenciesLoaded) {
-          final defaultCurrency = state.currencies
-              .firstWhere(
-                (c) => c.isDefault,
-                orElse: () => const Currency(
-                  code: 'N/A',
-                  arabicCode: 'غ/م',
-                  name: 'Not Set',
-                  arabicName: 'غير محدد',
-                  isDefault: false,
-                ),
-              );
+    return SliverToBoxAdapter(
+      child: BlocBuilder<CurrenciesBloc, CurrenciesState>(
+        builder: (context, state) {
+          if (state is! CurrenciesLoaded) return const SizedBox.shrink();
 
-          return CurrencyStatsCard(
-            totalCurrencies: state.currencies.length,
-            activeCurrencies: state.currencies
-                .where((c) => c.exchangeRate != null || c.isDefault)
-                .length,
-            defaultCurrency: defaultCurrency.code,
-            lastUpdate: defaultCurrency.lastUpdated,
+          return AnimationLimiter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: CurrencyStatsCard(
+                currencies: state.currencies,
+              ),
+            ),
           );
-        }
-        return const SizedBox.shrink();
-      },
+        },
+      ),
     );
   }
 
   Widget _buildSearchBar() {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkCard.withOpacity(0.7),
-            AppTheme.darkCard.withOpacity(0.5),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.3),
-          width: 0.5,
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: TextField(
-            controller: _searchController,
-            onChanged: (query) {
-              context.read<CurrenciesBloc>().add(
-                SearchCurrenciesEvent(query: query),
-              );
-            },
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.textWhite,
-            ),
-            decoration: InputDecoration(
-              hintText: 'ابحث عن عملة...',
-              hintStyle: AppTextStyles.bodyMedium.copyWith(
-                color: AppTheme.textMuted.withOpacity(0.5),
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.shadowDark.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-              prefixIcon: Icon(
-                Icons.search_rounded,
-                color: AppTheme.primaryBlue,
-              ),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: Icon(
-                        Icons.clear_rounded,
-                        color: AppTheme.textMuted,
-                      ),
-                      onPressed: () {
-                        _searchController.clear();
-                        context.read<CurrenciesBloc>().add(
-                          const SearchCurrenciesEvent(query: ''),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.darkCard.withValues(alpha: 0.5),
+                      AppTheme.darkCard.withValues(alpha: 0.3),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppTheme.darkBorder.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textWhite,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'ابحث عن عملة...',
+                    hintStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppTheme.textMuted.withValues(alpha: 0.5),
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.all(16),
+                    prefixIcon: Icon(
+                      CupertinoIcons.search,
+                      color: AppTheme.textMuted,
+                    ),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(
+                              CupertinoIcons.xmark_circle_fill,
+                              color: AppTheme.textMuted,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              context.read<CurrenciesBloc>().add(
+                                    const SearchCurrenciesEvent(query: ''),
+                                  );
+                            },
+                          )
+                        : null,
+                  ),
+                  onChanged: (value) {
+                    context.read<CurrenciesBloc>().add(
+                          SearchCurrenciesEvent(query: value),
                         );
-                      },
-                    )
-                  : null,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 16,
+                  },
+                ),
               ),
             ),
           ),
@@ -364,492 +401,360 @@ class _CurrenciesManagementPageState extends State<CurrenciesManagementPage>
     );
   }
 
-  Widget _buildBody() {
-    return BlocConsumer<CurrenciesBloc, CurrenciesState>(
-      listener: (context, state) {
-        if (state is CurrencyOperationSuccess) {
-          _showSuccessSnackBar(state.message);
-          if (_showFormModal) {
-            Navigator.of(context).pop();
-            setState(() {
-              _showFormModal = false;
-              _editingCurrency = null;
-            });
-          }
-        } else if (state is CurrenciesError) {
-          _showErrorSnackBar(state.message);
-        }
-      },
+  Widget _buildCurrenciesContent() {
+    return BlocBuilder<CurrenciesBloc, CurrenciesState>(
       builder: (context, state) {
         if (state is CurrenciesLoading) {
-          return const LoadingWidget(type: LoadingType.pulse);
+          return const SliverFillRemaining(
+            child: LoadingWidget(
+              type: LoadingType.futuristic,
+              message: 'جاري تحميل العملات...',
+            ),
+          );
         }
 
         if (state is CurrenciesError) {
-          return Center(
+          return SliverFillRemaining(
             child: CustomErrorWidget(
               message: state.message,
-              onRetry: () {
-                context.read<CurrenciesBloc>().add(LoadCurrenciesEvent());
-              },
+              onRetry: _loadCurrencies,
             ),
           );
         }
 
         if (state is CurrenciesLoaded) {
           if (state.filteredCurrencies.isEmpty) {
-            return Center(
+            return SliverFillRemaining(
               child: EmptyWidget(
                 message: state.searchQuery.isNotEmpty
-                    ? 'لا توجد نتائج'
-                    : 'لا توجد عملات',
+                    ? 'لا توجد نتائج للبحث "${state.searchQuery}"'
+                    : 'لا توجد عملات مضافة حالياً',
                 actionWidget: state.searchQuery.isEmpty
-                    ? ElevatedButton(
-                        onPressed: _openFormModal,
-                        child: const Text('إضافة عملة'),
-                      )
+                    ? _buildAddCurrencyButton()
                     : null,
               ),
             );
           }
 
-          return _buildCurrenciesList(state.filteredCurrencies);
+          if (_isGridView) {
+            return _buildGridView(state.filteredCurrencies);
+          } else {
+            return _buildListView(state.filteredCurrencies);
+          }
         }
 
-        return const SizedBox.shrink();
+        return const SliverFillRemaining(child: SizedBox.shrink());
       },
     );
   }
 
-  Widget _buildCurrenciesList(List<Currency> currencies) {
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      itemCount: currencies.length,
-      itemBuilder: (context, index) {
-        final currency = currencies[index];
-        return FuturisticCurrencyCard(
-          currency: currency,
-          onEdit: () => _openFormModal(currency: currency),
-          onDelete: () => _confirmDelete(currency),
-          onSetDefault: () => _setDefaultCurrency(currency),
-          onExchangeRateChanged: (rate) => _updateExchangeRate(currency, rate),
+  Widget _buildGridView(List<Currency> currencies) {
+    return SliverPadding(
+      padding: const EdgeInsets.all(16),
+      sliver: SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: _getGridCrossAxisCount(context),
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: _getGridAspectRatio(context),
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final currency = currencies[index];
+            return AnimationConfiguration.staggeredGrid(
+              position: index,
+              duration: const Duration(milliseconds: 375),
+              columnCount: _getGridCrossAxisCount(context),
+              child: ScaleAnimation(
+                scale: 0.95,
+                child: FadeInAnimation(
+                  child: FuturisticCurrencyCard(
+                    currency: currency,
+                    isSelected: _selectedCurrency == currency,
+                    onTap: () => _handleCurrencyTap(currency),
+                    onEdit: () => _showCurrencyForm(currency: currency),
+                    onDelete: () => _confirmDeleteCurrency(currency),
+                    onSetDefault: () => _setDefaultCurrency(currency),
+                  ),
+                ),
+              ),
+            );
+          },
+          childCount: currencies.length,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListView(List<Currency> currencies) {
+    return SliverPadding(
+      padding: const EdgeInsets.all(16),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final currency = currencies[index];
+            return AnimationConfiguration.staggeredList(
+              position: index,
+              duration: const Duration(milliseconds: 375),
+              child: SlideAnimation(
+                verticalOffset: 50.0,
+                child: FadeInAnimation(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: FuturisticCurrencyCard(
+                      currency: currency,
+                      isCompact: true,
+                      isSelected: _selectedCurrency == currency,
+                      onTap: () => _handleCurrencyTap(currency),
+                      onEdit: () => _showCurrencyForm(currency: currency),
+                      onDelete: () => _confirmDeleteCurrency(currency),
+                      onSetDefault: () => _setDefaultCurrency(currency),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+          childCount: currencies.length,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFloatingActionButton() {
+    return AnimatedBuilder(
+      animation: _fabAnimationController,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: 1.0 + (_fabAnimationController.value * 0.05),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.primaryCyan,
+                  AppTheme.primaryBlue,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryCyan.withValues(
+                    alpha: 0.3 + (_fabAnimationController.value * 0.1),
+                  ),
+                  blurRadius: 20 + (_fabAnimationController.value * 5),
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: FloatingActionButton.extended(
+              onPressed: () => _showCurrencyForm(),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              label: Row(
+                children: [
+                  const Icon(
+                    CupertinoIcons.plus_circle_fill,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'إضافة عملة',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
   }
 
-  Widget _buildFloatingActionButton() {
-    return Positioned(
-      bottom: 20,
-      right: 20,
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0, end: 1),
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.elasticOut,
-        builder: (context, value, child) {
-          return Transform.scale(
-            scale: value,
-            child: InkWell(
-              onTap: () => _openFormModal(),
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryBlue.withOpacity(0.4),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.add_rounded,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
+  Widget _buildAddCurrencyButton() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppTheme.primaryCyan, AppTheme.primaryBlue],
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showCurrencyForm(),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 12,
             ),
-          );
-        },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  CupertinoIcons.plus_circle,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'إضافة أول عملة',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  void _openFormModal({Currency? currency}) {
+  int _getGridCrossAxisCount(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width < 400) return 1;
+    if (width < 600) return 2;
+    if (width < 900) return 3;
+    return 4;
+  }
+
+  double _getGridAspectRatio(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width < 400) return 1.3;
+    if (width < 600) return 1.1;
+    return 0.9;
+  }
+
+  void _handleStateChanges(BuildContext context, CurrenciesState state) {
+    if (state is CurrencyOperationSuccess) {
+      _showSuccessMessage(state.message);
+    } else if (state is CurrenciesError) {
+      _showErrorMessage(state.message);
+    }
+  }
+
+  void _handleCurrencyTap(Currency currency) {
+    HapticFeedback.lightImpact();
     setState(() {
-      _editingCurrency = currency;
-      _showFormModal = true;
+      _selectedCurrency = _selectedCurrency == currency ? null : currency;
     });
+  }
 
-    final state = context.read<CurrenciesBloc>().state;
-    final hasDefaultCurrency = state is CurrenciesLoaded &&
-        state.currencies.any((c) => c.isDefault);
+  void _handleRefresh() {
+    HapticFeedback.mediumImpact();
+    _refreshAnimationController.forward().then((_) {
+      _refreshAnimationController.reset();
+    });
+    context.read<CurrenciesBloc>().add(RefreshCurrenciesEvent());
+  }
 
-    showDialog(
+  void _showCurrencyForm({Currency? currency}) {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: false,
-      barrierColor: Colors.black87,
-      builder: (dialogContext) => FuturisticCurrencyFormModal(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => FuturisticCurrencyFormModal(
         currency: currency,
-        hasDefaultCurrency: hasDefaultCurrency,
         onSave: (updatedCurrency) {
-          if (currency != null) {
-            dialogContext.read<CurrenciesBloc>().add(
-              UpdateCurrencyEvent(
-                currency: updatedCurrency,
-                oldCode: currency.code,
-              ),
-            );
+          if (currency == null) {
+            context.read<CurrenciesBloc>().add(
+                  AddCurrencyEvent(currency: updatedCurrency),
+                );
           } else {
-            dialogContext.read<CurrenciesBloc>().add(
-              AddCurrencyEvent(currency: updatedCurrency),
-            );
+            context.read<CurrenciesBloc>().add(
+                  UpdateCurrencyEvent(
+                    currency: updatedCurrency,
+                    oldCode: currency.code,
+                  ),
+                );
           }
-        },
-        onCancel: () {
-          Navigator.of(context).pop();
-          setState(() {
-            _showFormModal = false;
-            _editingCurrency = null;
-          });
+          Navigator.pop(context);
         },
       ),
     );
   }
 
-  void _confirmDelete(Currency currency) {
-    HapticFeedback.mediumImpact();
-    
-    showDialog(
+  void _confirmDeleteCurrency(Currency currency) {
+    HapticFeedback.heavyImpact();
+    showCupertinoDialog(
       context: context,
-      barrierColor: Colors.black87,
-      builder: (context) => _buildConfirmDialog(
-        title: 'تأكيد الحذف',
-        message: 'هل أنت متأكد من حذف العملة ${currency.arabicName}؟',
-        confirmLabel: 'حذف',
-        confirmColor: AppTheme.error,
-        onConfirm: () {
-          Navigator.of(context).pop();
-          context.read<CurrenciesBloc>().add(
-            DeleteCurrencyEvent(code: currency.code),
-          );
-        },
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: CupertinoAlertDialog(
+          title: Text('حذف ${currency.arabicName}'),
+          content: const Text(
+              'هل أنت متأكد من حذف هذه العملة؟ لا يمكن التراجع عن هذا الإجراء.'),
+          actions: [
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () {
+                context.read<CurrenciesBloc>().add(
+                      DeleteCurrencyEvent(code: currency.code),
+                    );
+                Navigator.pop(context);
+              },
+              child: const Text('حذف'),
+            ),
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   void _setDefaultCurrency(Currency currency) {
     HapticFeedback.mediumImpact();
-    
     context.read<CurrenciesBloc>().add(
-      SetDefaultCurrencyEvent(code: currency.code),
-    );
+          SetDefaultCurrencyEvent(code: currency.code),
+        );
   }
 
-  void _updateExchangeRate(Currency currency, double rate) {
-    context.read<CurrenciesBloc>().add(
-      UpdateExchangeRateEvent(code: currency.code, rate: rate),
-    );
-  }
-
-  Widget _buildConfirmDialog({
-    required String title,
-    required String message,
-    required String confirmLabel,
-    required Color confirmColor,
-    required VoidCallback onConfirm,
-  }) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.darkCard.withOpacity(0.9),
-                  AppTheme.darkCard.withOpacity(0.7),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: confirmColor.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.warning_rounded,
-                  color: confirmColor,
-                  size: 48,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  title,
-                  style: AppTextStyles.heading3.copyWith(
-                    color: AppTheme.textWhite,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  message,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppTheme.textMuted,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          'إلغاء',
-                          style: AppTextStyles.buttonMedium.copyWith(
-                            color: AppTheme.textMuted,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: onConfirm,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: confirmColor,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          confirmLabel,
-                          style: AppTextStyles.buttonMedium.copyWith(
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showSuccessSnackBar(String message) {
+  void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTheme.success.withOpacity(0.9),
-                AppTheme.success.withOpacity(0.7),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.check_circle_rounded,
-                color: Colors.white,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        content: Row(
+          children: [
+            const Icon(CupertinoIcons.checkmark_circle_fill,
+                color: Colors.white),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        backgroundColor: AppTheme.success,
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
 
-  void _showErrorSnackBar(String message) {
+  void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTheme.error.withOpacity(0.9),
-                AppTheme.error.withOpacity(0.7),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.error_rounded,
-                color: Colors.white,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        content: Row(
+          children: [
+            const Icon(CupertinoIcons.xmark_circle_fill, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(child: Text(message)),
+          ],
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        backgroundColor: AppTheme.error,
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
-}
-
-// Particle class for animation
-class _Particle {
-  late double x, y, z;
-  late double vx, vy;
-  late double radius;
-  late double opacity;
-  late Color color;
-
-  _Particle() {
-    reset();
-  }
-
-  void reset() {
-    x = math.Random().nextDouble();
-    y = math.Random().nextDouble();
-    z = math.Random().nextDouble();
-    vx = (math.Random().nextDouble() - 0.5) * 0.001;
-    vy = (math.Random().nextDouble() - 0.5) * 0.001;
-    radius = math.Random().nextDouble() * 2 + 0.5;
-    opacity = math.Random().nextDouble() * 0.3 + 0.1;
-    
-    final colors = [
-      AppTheme.primaryBlue,
-      AppTheme.primaryPurple,
-      AppTheme.primaryCyan,
-    ];
-    color = colors[math.Random().nextInt(colors.length)];
-  }
-
-  void update() {
-    x += vx;
-    y += vy;
-    
-    if (x < 0 || x > 1) vx = -vx;
-    if (y < 0 || y > 1) vy = -vy;
-  }
-}
-
-// Particle painter
-class _ParticlePainter extends CustomPainter {
-  final List<_Particle> particles;
-  final double animationValue;
-
-  _ParticlePainter({
-    required this.particles,
-    required this.animationValue,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (var particle in particles) {
-      particle.update();
-      
-      final paint = Paint()
-        ..color = particle.color.withOpacity(particle.opacity)
-        ..style = PaintingStyle.fill
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
-      
-      canvas.drawCircle(
-        Offset(particle.x * size.width, particle.y * size.height),
-        particle.radius,
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-// Grid painter for background
-class _GridPainter extends CustomPainter {
-  final double rotation;
-  final double opacity;
-
-  _GridPainter({
-    required this.rotation,
-    required this.opacity,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppTheme.primaryBlue.withOpacity(opacity)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.3;
-
-    canvas.save();
-    canvas.translate(size.width / 2, size.height / 2);
-    canvas.rotate(rotation);
-    canvas.translate(-size.width / 2, -size.height / 2);
-
-    const spacing = 30.0;
-    
-    for (double x = -spacing; x < size.width + spacing; x += spacing) {
-      canvas.drawLine(
-        Offset(x, -size.height),
-        Offset(x, size.height * 2),
-        paint,
-      );
-    }
-    
-    for (double y = -spacing; y < size.height + spacing; y += spacing) {
-      canvas.drawLine(
-        Offset(-size.width, y),
-        Offset(size.width * 2, y),
-        paint,
-      );
-    }
-
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

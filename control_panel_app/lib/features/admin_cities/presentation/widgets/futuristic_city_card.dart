@@ -1,12 +1,12 @@
 // lib/features/admin_cities/presentation/widgets/futuristic_city_card.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
 import 'dart:ui';
-import 'dart:math' as math;
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/cached_image_widget.dart';
 import '../../domain/entities/city.dart';
 
 class FuturisticCityCard extends StatefulWidget {
@@ -14,19 +14,17 @@ class FuturisticCityCard extends StatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
-  final VoidCallback? onImageTap;
-  final bool isGridView;
-  
+  final bool isCompact;
+
   const FuturisticCityCard({
     super.key,
     required this.city,
     this.onTap,
     this.onEdit,
     this.onDelete,
-    this.onImageTap,
-    this.isGridView = true,
+    this.isCompact = false,
   });
-  
+
   @override
   State<FuturisticCityCard> createState() => _FuturisticCityCardState();
 }
@@ -34,888 +32,518 @@ class FuturisticCityCard extends StatefulWidget {
 class _FuturisticCityCardState extends State<FuturisticCityCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _glowAnimation;
-  
   bool _isHovered = false;
-  bool _isPressed = false;
-  
+  bool _showActions = false;
+
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
       vsync: this,
+      duration: const Duration(milliseconds: 200),
     );
-    
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.95,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _glowAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
-    if (widget.isGridView) {
-      return _buildGridCard();
-    } else {
-      return _buildListCard();
-    }
-  }
-  
-  Widget _buildGridCard() {
-    return MouseRegion(
-      onEnter: (_) => _onHoverChange(true),
-      onExit: (_) => _onHoverChange(false),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      transform: Matrix4.identity()
+        ..scale(_isHovered ? 0.98 : 1.0)
+        ..rotateZ(_isHovered ? 0.005 : 0),
       child: GestureDetector(
-        onTapDown: (_) => _onPressChange(true),
-        onTapUp: (_) => _onPressChange(false),
-        onTapCancel: () => _onPressChange(false),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          widget.onTap?.call();
+        onTap: widget.onTap,
+        onLongPress: () {
+          HapticFeedback.mediumImpact();
+          setState(() => _showActions = !_showActions);
         },
-        child: AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _isPressed ? _scaleAnimation.value : 1.0,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.shadowDark.withOpacity(0.2),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                    if (_isHovered)
-                      BoxShadow(
-                        color: AppTheme.primaryBlue.withOpacity(
-                          0.3 * _glowAnimation.value,
-                        ),
-                        blurRadius: 30,
-                        spreadRadius: 5,
-                      ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppTheme.darkCard.withOpacity(0.9),
-                            AppTheme.darkCard.withOpacity(0.7),
-                          ],
-                        ),
-                        border: Border.all(
-                          color: _isHovered
-                              ? AppTheme.primaryBlue.withOpacity(0.3)
-                              : AppTheme.darkBorder.withOpacity(0.2),
-                          width: 1,
-                        ),
-                      ),
-                      child: Stack(
-                        children: [
-                          // Background Pattern
-                          if (_isHovered)
-                            Positioned.fill(
-                              child: CustomPaint(
-                                painter: _GridPatternPainter(
-                                  color: AppTheme.primaryBlue.withOpacity(0.03),
-                                ),
-                              ),
-                            ),
-                          
-                          // Content
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Image Section
-                              _buildImageSection(),
-                              
-                              // Info Section
-                              Expanded(
-                                child: _buildInfoSection(),
-                              ),
-                            ],
-                          ),
-                          
-                          // Actions Overlay
-                          if (_isHovered)
-                            _buildActionsOverlay(),
+        onTapDown: (_) => _setHovered(true),
+        onTapUp: (_) => _setHovered(false),
+        onTapCancel: () => _setHovered(false),
+        child: Stack(
+          children: [
+            Container(
+              height: widget.isCompact ? 120 : 200,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.shadowDark.withValues(alpha: 0.2),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppTheme.darkCard.withValues(alpha: 0.9),
+                          AppTheme.darkCard.withValues(alpha: 0.7),
                         ],
                       ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: widget.city.isActive == true
+                            ? AppTheme.success.withValues(alpha: 0.3)
+                            : AppTheme.darkBorder.withValues(alpha: 0.2),
+                        width: 1,
+                      ),
                     ),
+                    child: widget.isCompact
+                        ? _buildCompactContent()
+                        : _buildFullContent(),
                   ),
                 ),
               ),
-            );
-          },
+            ),
+            if (_showActions) _buildActionsOverlay(),
+          ],
         ),
       ),
     );
   }
-  
-  Widget _buildListCard() {
-    return MouseRegion(
-      onEnter: (_) => _onHoverChange(true),
-      onExit: (_) => _onHoverChange(false),
-      child: GestureDetector(
-        onTapDown: (_) => _onPressChange(true),
-        onTapUp: (_) => _onPressChange(false),
-        onTapCancel: () => _onPressChange(false),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          widget.onTap?.call();
-        },
-        child: AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _isPressed ? _scaleAnimation.value : 1.0,
-              child: Container(
-                height: 120,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.shadowDark.withOpacity(0.1),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    ),
-                    if (_isHovered)
-                      BoxShadow(
-                        color: AppTheme.primaryBlue.withOpacity(
-                          0.2 * _glowAnimation.value,
-                        ),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                      ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppTheme.darkCard.withOpacity(0.8),
-                            AppTheme.darkCard.withOpacity(0.6),
-                          ],
-                        ),
-                        border: Border.all(
-                          color: _isHovered
-                              ? AppTheme.primaryBlue.withOpacity(0.3)
-                              : AppTheme.darkBorder.withOpacity(0.1),
-                          width: 0.5,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          // Image
-                          _buildListImage(),
-                          
-                          // Content
-                          Expanded(
-                            child: _buildListContent(),
-                          ),
-                          
-                          // Actions
-                          _buildListActions(),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildImageSection() {
-    return Container(
-      height: 160,
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(24),
-        ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Main Image
-          widget.city.images.isNotEmpty
-              ? GestureDetector(
-                  onTap: widget.onImageTap,
-                  child: Hero(
-                    tag: 'city-${widget.city.name}',
-                    child: CachedNetworkImage(
-                      imageUrl: widget.city.images.first,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: AppTheme.darkCard,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppTheme.primaryBlue.withOpacity(0.5),
-                            ),
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: AppTheme.darkCard,
-                        child: Icon(
-                          Icons.image_not_supported_outlined,
-                          color: AppTheme.textMuted.withOpacity(0.3),
-                          size: 40,
-                        ),
-                      ),
-                    ),
+
+  Widget _buildFullContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Image section with gradient overlay
+        Expanded(
+          flex: 3,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (widget.city.images.isNotEmpty)
+                CachedImageWidget(
+                  imageUrl: widget.city.images.first,
+                  fit: BoxFit.cover,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      AppTheme.darkBackground.withValues(alpha: 0.8),
+                    ],
+                    stops: const [0.5, 1.0],
                   ),
                 )
-              : Container(
+              else
+                Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        AppTheme.primaryBlue.withOpacity(0.1),
-                        AppTheme.primaryPurple.withOpacity(0.1),
+                        AppTheme.primaryBlue.withValues(alpha: 0.3),
+                        AppTheme.primaryPurple.withValues(alpha: 0.2),
                       ],
                     ),
                   ),
-                  child: Icon(
-                    Icons.location_city_rounded,
-                    color: AppTheme.textMuted.withOpacity(0.3),
-                    size: 48,
+                  child: Center(
+                    child: Icon(
+                      CupertinoIcons.photo,
+                      size: 40,
+                      color: AppTheme.textMuted.withValues(alpha: 0.5),
+                    ),
                   ),
                 ),
-          
-          // Gradient Overlay
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.7),
+
+              // Status badge
+              Positioned(
+                top: 12,
+                right: 12,
+                child: _buildStatusBadge(),
+              ),
+
+              // Image count badge
+              if (widget.city.images.length > 1)
+                Positioned(
+                  bottom: 12,
+                  right: 12,
+                  child: _buildImageCountBadge(),
+                ),
+            ],
+          ),
+        ),
+
+        // Content section
+        Expanded(
+          flex: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.city.name,
+                      style: AppTextStyles.heading3.copyWith(
+                        color: AppTheme.textWhite,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.location_solid,
+                          size: 12,
+                          color: AppTheme.textMuted,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.city.country,
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-              ),
+                if (widget.city.propertiesCount != null)
+                  _buildPropertiesCount(),
+              ],
             ),
           ),
-          
-          // Status Badge
-          if (widget.city.isActive ?? true)
-            Positioned(
-              top: 12,
-              right: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: AppTheme.success.withOpacity(0.2),
-                  border: Border.all(
-                    color: AppTheme.success.withOpacity(0.3),
-                    width: 0.5,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompactContent() {
+    return Row(
+      children: [
+        // Compact image
+        Container(
+          width: 100,
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.only(
+              topRight: Radius.circular(20),
+              bottomRight: Radius.circular(20),
+            ),
+            gradient: widget.city.images.isEmpty
+                ? LinearGradient(
+                    colors: [
+                      AppTheme.primaryBlue.withValues(alpha: 0.3),
+                      AppTheme.primaryPurple.withValues(alpha: 0.2),
+                    ],
+                  )
+                : null,
+          ),
+          child: widget.city.images.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
+                  ),
+                  child: CachedImageWidget(
+                    imageUrl: widget.city.images.first,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              : Center(
+                  child: Icon(
+                    CupertinoIcons.building_2_fill,
+                    size: 30,
+                    color: AppTheme.textMuted.withValues(alpha: 0.5),
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+        ),
+
+        // Content
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
                   children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppTheme.success,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.success.withOpacity(0.5),
-                            blurRadius: 4,
-                            spreadRadius: 1,
-                          ),
-                        ],
+                    Expanded(
+                      child: Text(
+                        widget.city.name,
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppTheme.textWhite,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'نشط',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.success,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    const SizedBox(width: 8),
+                    _buildStatusBadge(isSmall: true),
                   ],
                 ),
-              ),
-            ),
-          
-          // Image Count
-          if (widget.city.images.length > 1)
-            Positioned(
-              bottom: 12,
-              right: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.black.withOpacity(0.6),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                const SizedBox(height: 8),
+                Row(
                   children: [
-                    const Icon(
-                      Icons.photo_library_outlined,
-                      color: Colors.white,
+                    Icon(
+                      CupertinoIcons.location,
                       size: 14,
+                      color: AppTheme.textMuted,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${widget.city.images.length}',
+                      widget.city.country,
                       style: AppTextStyles.caption.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textMuted,
                       ),
                     ),
+                    const Spacer(),
+                    if (widget.city.propertiesCount != null)
+                      _buildPropertiesCount(isCompact: true),
                   ],
                 ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildInfoSection() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // City Name
-          Text(
-            widget.city.name,
-            style: AppTextStyles.bodyLarge.copyWith(
-              color: AppTheme.textWhite,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          
-          const SizedBox(height: 8),
-          
-          // Country
-          Row(
-            children: [
-              Icon(
-                Icons.flag_outlined,
-                color: AppTheme.textMuted.withOpacity(0.7),
-                size: 14,
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  widget.city.country,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppTheme.textMuted,
-                    fontWeight: FontWeight.w300,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          
-          const Spacer(),
-          
-          // Properties Count
-          if (widget.city.propertiesCount != null)
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 6,
-              ),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: AppTheme.primaryBlue.withOpacity(0.1),
-                border: Border.all(
-                  color: AppTheme.primaryBlue.withOpacity(0.2),
-                  width: 0.5,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.apartment_rounded,
-                    color: AppTheme.primaryBlue,
-                    size: 14,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${widget.city.propertiesCount} عقار',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppTheme.primaryBlue,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildActionsOverlay() {
-    return AnimatedOpacity(
-      duration: const Duration(milliseconds: 200),
-      opacity: _isHovered ? 1.0 : 0.0,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              Colors.black.withOpacity(0.5),
-            ],
-          ),
-        ),
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildActionButton(
-                  icon: Icons.edit_outlined,
-                  onTap: widget.onEdit,
-                  color: AppTheme.primaryBlue,
-                ),
-                _buildActionButton(
-                  icon: Icons.photo_library_outlined,
-                  onTap: widget.onImageTap,
-                  color: AppTheme.neonGreen,
-                ),
-                _buildActionButton(
-                  icon: Icons.delete_outline,
-                  onTap: widget.onDelete,
-                  color: AppTheme.error,
-                ),
               ],
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildStatusBadge({bool isSmall = false}) {
+    final isActive = widget.city.isActive == true;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isSmall ? 8 : 12,
+        vertical: isSmall ? 4 : 6,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isActive
+              ? [
+                  AppTheme.success.withValues(alpha: 0.8),
+                  AppTheme.success.withValues(alpha: 0.6),
+                ]
+              : [
+                  AppTheme.textMuted.withValues(alpha: 0.6),
+                  AppTheme.textMuted.withValues(alpha: 0.4),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(isSmall ? 8 : 12),
+        boxShadow: [
+          BoxShadow(
+            color: isActive
+                ? AppTheme.success.withValues(alpha: 0.3)
+                : Colors.transparent,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: isSmall ? 6 : 8,
+            height: isSmall ? 6 : 8,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: isSmall ? 4 : 6),
+          Text(
+            isActive ? 'نشط' : 'غير نشط',
+            style: (isSmall ? AppTextStyles.caption : AppTextStyles.bodySmall)
+                .copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: isSmall ? 10 : null,
+            ),
+          ),
+        ],
       ),
     );
   }
-  
-  // Widget _buildActionButton({
-  //   required IconData icon,
-  //   required VoidCallback? onTap,
-  //   required Color color,
-  // }) {
-  //   return GestureDetector(
-  //     onTap: () {
-  //       HapticFeedback.lightImpact();
-  //       onTap?.call();
-  //     },
-  //     child: Container(
-  //       width: 40,
-  //       height: 40,
-  //       decoration: BoxDecoration(
-  //         shape: BoxShape.circle,
-  //         color: color.withOpacity(0.2),
-  //         border: Border.all(
-  //           color: color.withOpacity(0.3),
-  //           width: 0.5,
-  //         ),
-  //         backdropFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-  //       ),
-  //       child: Icon(
-  //         icon,
-  //         color: color,
-  //         size: 18,
-  //       ),
-  //     ),
-  //   );
-  // }
-    Widget _buildActionButton({
+
+  Widget _buildImageCountBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppTheme.darkBackground.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.3),
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            CupertinoIcons.photo_fill,
+            size: 12,
+            color: AppTheme.textLight,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '${widget.city.images.length}',
+            style: AppTextStyles.caption.copyWith(
+              color: AppTheme.textLight,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPropertiesCount({bool isCompact = false}) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 8 : 10,
+        vertical: isCompact ? 4 : 6,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primaryBlue.withValues(alpha: 0.1),
+            AppTheme.primaryPurple.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(isCompact ? 8 : 10),
+        border: Border.all(
+          color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            CupertinoIcons.house_fill,
+            size: isCompact ? 10 : 12,
+            color: AppTheme.primaryBlue,
+          ),
+          SizedBox(width: isCompact ? 3 : 4),
+          Text(
+            '${widget.city.propertiesCount ?? 0}',
+            style: (isCompact ? AppTextStyles.caption : AppTextStyles.bodySmall)
+                .copyWith(
+              color: AppTheme.primaryBlue,
+              fontWeight: FontWeight.bold,
+              fontSize: isCompact ? 10 : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionsOverlay() {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: AppTheme.darkBackground.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildActionButton(
+              icon: CupertinoIcons.pencil,
+              label: 'تعديل',
+              onTap: () {
+                setState(() => _showActions = false);
+                widget.onEdit?.call();
+              },
+              color: AppTheme.primaryBlue,
+            ),
+            const SizedBox(width: 16),
+            _buildActionButton(
+              icon: CupertinoIcons.trash,
+              label: 'حذف',
+              onTap: () {
+                setState(() => _showActions = false);
+                widget.onDelete?.call();
+              },
+              color: AppTheme.error,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
     required IconData icon,
-    required VoidCallback? onTap,
+    required String label,
+    required VoidCallback onTap,
     required Color color,
   }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap?.call();
-      },
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color.withOpacity(0.2),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-            width: 0.5,
-          ),
-        ),
-        child: ClipOval(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              color: Colors.transparent,
-              child: Center(
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 18,
-                ),
-              ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: color.withValues(alpha: 0.3),
+              width: 1,
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildListImage() {
-    return Container(
-      width: 120,
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.horizontal(
-          left: Radius.circular(20),
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.horizontal(
-          left: Radius.circular(20),
-        ),
-        child: widget.city.images.isNotEmpty
-            ? CachedNetworkImage(
-                imageUrl: widget.city.images.first,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: AppTheme.darkCard,
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppTheme.primaryBlue.withOpacity(0.5),
-                      ),
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: AppTheme.darkCard,
-                  child: Icon(
-                    Icons.image_not_supported_outlined,
-                    color: AppTheme.textMuted.withOpacity(0.3),
-                    size: 32,
-                  ),
-                ),
-              )
-            : Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppTheme.primaryBlue.withOpacity(0.1),
-                      AppTheme.primaryPurple.withOpacity(0.1),
-                    ],
-                  ),
-                ),
-                child: Icon(
-                  Icons.location_city_rounded,
-                  color: AppTheme.textMuted.withOpacity(0.3),
-                  size: 40,
-                ),
-              ),
-      ),
-    );
-  }
-  
-  Widget _buildListContent() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // City Name
-          Text(
-            widget.city.name,
-            style: AppTextStyles.bodyLarge.copyWith(
-              color: AppTheme.textWhite,
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          
-          const SizedBox(height: 6),
-          
-          // Country
-          Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.flag_outlined,
-                color: AppTheme.textMuted.withOpacity(0.7),
-                size: 14,
-              ),
-              const SizedBox(width: 6),
+              Icon(icon, color: color, size: 24),
+              const SizedBox(height: 4),
               Text(
-                widget.city.country,
+                label,
                 style: AppTextStyles.caption.copyWith(
-                  color: AppTheme.textMuted,
+                  color: color,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          
-          const SizedBox(height: 12),
-          
-          // Stats Row
-          Row(
-            children: [
-              if (widget.city.propertiesCount != null) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: AppTheme.primaryBlue.withOpacity(0.1),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.apartment_rounded,
-                        color: AppTheme.primaryBlue,
-                        size: 12,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${widget.city.propertiesCount}',
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppTheme.primaryBlue,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-              
-              if (widget.city.images.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: AppTheme.neonGreen.withOpacity(0.1),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.photo_library_outlined,
-                        color: AppTheme.neonGreen,
-                        size: 12,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${widget.city.images.length}',
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppTheme.neonGreen,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              
-              const Spacer(),
-              
-              if (widget.city.isActive ?? true)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: AppTheme.success.withOpacity(0.1),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppTheme.success,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'نشط',
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppTheme.success,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
-  
-  Widget _buildListActions() {
-    return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: widget.onEdit,
-            icon: Icon(
-              Icons.edit_outlined,
-              color: AppTheme.primaryBlue,
-              size: 20,
-            ),
-          ),
-          IconButton(
-            onPressed: widget.onDelete,
-            icon: Icon(
-              Icons.delete_outline,
-              color: AppTheme.error,
-              size: 20,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  void _onHoverChange(bool isHovered) {
-    setState(() {
-      _isHovered = isHovered;
-    });
-    
-    if (isHovered) {
-      _animationController.forward();
-    } else {
-      _animationController.reverse();
-    }
-  }
-  
-  void _onPressChange(bool isPressed) {
-    setState(() {
-      _isPressed = isPressed;
-    });
-    
-    if (isPressed) {
-      _animationController.forward();
-    } else {
-      _animationController.reverse();
-    }
-  }
-}
 
-class _GridPatternPainter extends CustomPainter {
-  final Color color;
-  
-  _GridPatternPainter({required this.color});
-  
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5;
-    
-    const spacing = 20.0;
-    
-    // Draw vertical lines
-    for (double x = 0; x < size.width; x += spacing) {
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x, size.height),
-        paint,
-      );
-    }
-    
-    // Draw horizontal lines
-    for (double y = 0; y < size.height; y += spacing) {
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(size.width, y),
-        paint,
-      );
+  void _setHovered(bool value) {
+    setState(() => _isHovered = value);
+    if (value) {
+      _animationController.forward();
+    } else {
+      _animationController.reverse();
     }
   }
-  
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

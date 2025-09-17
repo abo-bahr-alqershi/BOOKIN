@@ -8,51 +8,44 @@ import 'futuristic_city_card.dart';
 class FuturisticCitiesGrid extends StatelessWidget {
   final List<City> cities;
   final bool isGridView;
-  final bool isDesktop;
-  final bool isTablet;
-  final Function(City)? onEdit;
-  final Function(City)? onDelete;
-  final Function(City)? onImageTap;
-  
+  final Function(City) onCityTap;
+  final Function(City) onCityEdit;
+  final Function(City) onCityDelete;
+
   const FuturisticCitiesGrid({
     super.key,
     required this.cities,
     required this.isGridView,
-    required this.isDesktop,
-    required this.isTablet,
-    this.onEdit,
-    this.onDelete,
-    this.onImageTap,
+    required this.onCityTap,
+    required this.onCityEdit,
+    required this.onCityDelete,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     if (isGridView) {
       return SliverGrid(
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: isDesktop ? 4 : (isTablet ? 3 : 2),
-          childAspectRatio: isDesktop ? 0.85 : (isTablet ? 0.8 : 0.75),
-          crossAxisSpacing: 20,
-          mainAxisSpacing: 20,
+          crossAxisCount: _getCrossAxisCount(context),
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: _getAspectRatio(context),
         ),
         delegate: SliverChildBuilderDelegate(
           (context, index) {
+            final city = cities[index];
             return AnimationConfiguration.staggeredGrid(
               position: index,
-              duration: const Duration(milliseconds: 600),
-              columnCount: isDesktop ? 4 : (isTablet ? 3 : 2),
+              duration: const Duration(milliseconds: 375),
+              columnCount: _getCrossAxisCount(context),
               child: ScaleAnimation(
                 scale: 0.95,
                 child: FadeInAnimation(
                   child: FuturisticCityCard(
-                    city: cities[index],
-                    isGridView: true,
-                    onEdit: onEdit != null ? () => onEdit!(cities[index]) : null,
-                    onDelete: onDelete != null ? () => onDelete!(cities[index]) : null,
-                    onImageTap: onImageTap != null ? () => onImageTap!(cities[index]) : null,
-                    onTap: () {
-                      // Navigate to city details
-                    },
+                    city: city,
+                    onTap: () => onCityTap(city),
+                    onEdit: () => onCityEdit(city),
+                    onDelete: () => onCityDelete(city),
                   ),
                 ),
               ),
@@ -65,21 +58,22 @@ class FuturisticCitiesGrid extends StatelessWidget {
       return SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, index) {
+            final city = cities[index];
             return AnimationConfiguration.staggeredList(
               position: index,
-              duration: const Duration(milliseconds: 600),
+              duration: const Duration(milliseconds: 375),
               child: SlideAnimation(
                 verticalOffset: 50.0,
                 child: FadeInAnimation(
-                  child: FuturisticCityCard(
-                    city: cities[index],
-                    isGridView: false,
-                    onEdit: onEdit != null ? () => onEdit!(cities[index]) : null,
-                    onDelete: onDelete != null ? () => onDelete!(cities[index]) : null,
-                    onImageTap: onImageTap != null ? () => onImageTap!(cities[index]) : null,
-                    onTap: () {
-                      // Navigate to city details
-                    },
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: FuturisticCityCard(
+                      city: city,
+                      isCompact: true,
+                      onTap: () => onCityTap(city),
+                      onEdit: () => onCityEdit(city),
+                      onDelete: () => onCityDelete(city),
+                    ),
                   ),
                 ),
               ),
@@ -89,5 +83,20 @@ class FuturisticCitiesGrid extends StatelessWidget {
         ),
       );
     }
+  }
+
+  int _getCrossAxisCount(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width < 400) return 1;
+    if (width < 600) return 2;
+    if (width < 900) return 3;
+    return 4;
+  }
+
+  double _getAspectRatio(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width < 400) return 1.5;
+    if (width < 600) return 1.2;
+    return 1.0;
   }
 }

@@ -1,23 +1,28 @@
 // lib/features/admin_cities/presentation/pages/city_form_page.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter/cupertino.dart';
 import 'dart:ui';
-import 'dart:math' as math;
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/city.dart';
 import '../widgets/city_image_gallery.dart';
+import '../bloc/cities_bloc.dart';
+import '../bloc/cities_event.dart';
+import '../bloc/cities_state.dart';
 
 class CityFormPage extends StatefulWidget {
   final City? city;
-  
+
   const CityFormPage({
     super.key,
     this.city,
   });
-  
+
   @override
   State<CityFormPage> createState() => _CityFormPageState();
 }
@@ -25,477 +30,380 @@ class CityFormPage extends StatefulWidget {
 class _CityFormPageState extends State<CityFormPage>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
-  late AnimationController _floatingAnimationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-  
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _countryController = TextEditingController();
-  
+  late AnimationController _formAnimationController;
+  late AnimationController _saveButtonAnimationController;
+
+  late TextEditingController _nameController;
+  late TextEditingController _countryController;
+
   List<String> _images = [];
   bool _isActive = true;
-  bool _isSaving = false;
-  
-  // Focus nodes
-  final _nameFocusNode = FocusNode();
-  final _countryFocusNode = FocusNode();
-  
-  bool get isEditing => widget.city != null;
-  
+  bool _isLoading = false;
+  bool _hasChanges = false;
+
+  final _formKey = GlobalKey<FormState>();
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
-    _initializeAnimations();
-    _initializeForm();
-  }
-  
-  void _initializeAnimations() {
+
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
       vsync: this,
-    );
-    
-    _floatingAnimationController = AnimationController(
-      duration: const Duration(seconds: 4),
+      duration: const Duration(milliseconds: 600),
+    )..forward();
+
+    _formAnimationController = AnimationController(
       vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..forward();
+
+    _saveButtonAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    ));
-    
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
-    ));
-    
-    _animationController.forward();
+
+    _nameController = TextEditingController(text: widget.city?.name ?? '');
+    _countryController =
+        TextEditingController(text: widget.city?.country ?? '');
+    _images = List.from(widget.city?.images ?? []);
+    _isActive = widget.city?.isActive ?? true;
+
+    // Listen for changes
+    _nameController.addListener(_onFormChanged);
+    _countryController.addListener(_onFormChanged);
   }
-  
-  void _initializeForm() {
-    if (isEditing) {
-      _nameController.text = widget.city!.name;
-      _countryController.text = widget.city!.country;
-      _images = List.from(widget.city!.images);
-      _isActive = widget.city!.isActive ?? true;
+
+  void _onFormChanged() {
+    if (!_hasChanges) {
+      setState(() => _hasChanges = true);
     }
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
-    _floatingAnimationController.dispose();
+    _formAnimationController.dispose();
+    _saveButtonAnimationController.dispose();
     _nameController.dispose();
     _countryController.dispose();
-    _nameFocusNode.dispose();
-    _countryFocusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isDesktop = size.width > 1200;
-    
-    return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      body: Stack(
-        children: [
-          // Premium Background
-          _buildPremiumBackground(),
-          
-          // Floating Orbs
-          ..._buildFloatingOrbs(),
-          
-          // Main Content
-          CustomScrollView(
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: AppTheme.darkBackground,
+        body: BlocListener<CitiesBloc, CitiesState>(
+          listener: (context, state) {
+            if (state is CityOperationSuccess) {
+              _showSuccessAnimation();
+            } else if (state is CityOperationFailure) {
+              _showErrorMessage(state.message);
+            }
+          },
+          child: CustomScrollView(
+            controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // App Bar
-              _buildAppBar(context),
-              
-              // Form Content
-              SliverToBoxAdapter(
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: _buildFormContent(isDesktop),
+              _buildSliverAppBar(),
+              _buildFormContent(),
+            ],
+          ),
+        ),
+        bottomNavigationBar: _buildBottomBar(),
+      ),
+    );
+  }
+
+  Widget _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 200,
+      floating: false,
+      pinned: true,
+      backgroundColor: AppTheme.darkBackground,
+      leading: _buildBackButton(),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Animated gradient background
+            AnimatedBuilder(
+              animation: _animationController,
+              builder: (context, child) {
+                return Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppTheme.primaryBlue.withValues(
+                          alpha: 0.2 * _animationController.value,
+                        ),
+                        AppTheme.primaryPurple.withValues(
+                          alpha: 0.15 * _animationController.value,
+                        ),
+                        AppTheme.primaryViolet.withValues(
+                          alpha: 0.1 * _animationController.value,
+                        ),
+                      ],
+                    ),
                   ),
+                );
+              },
+            ),
+
+            // Floating elements animation
+            ...List.generate(3, (index) {
+              return AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, child) {
+                  return Positioned(
+                    top: 50 + (index * 40) * _animationController.value,
+                    right: -50 + (index * 60) * _animationController.value,
+                    child: Transform.rotate(
+                      angle: _animationController.value * 0.5,
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              AppTheme.primaryBlue.withValues(
+                                alpha: 0.1 * _animationController.value,
+                              ),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            }),
+
+            // Content
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Animated icon
+                    SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(-1, 0),
+                        end: Offset.zero,
+                      ).animate(CurvedAnimation(
+                        parent: _animationController,
+                        curve: Curves.easeOutBack,
+                      )),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.primaryGradient,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  AppTheme.primaryBlue.withValues(alpha: 0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          widget.city == null
+                              ? CupertinoIcons.plus_circle_fill
+                              : CupertinoIcons.pencil_circle_fill,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Title with animation
+                    FadeTransition(
+                      opacity: _animationController,
+                      child: Text(
+                        widget.city == null ? 'مدينة جديدة' : 'تعديل المدينة',
+                        style: AppTextStyles.displaySmall.copyWith(
+                          color: AppTheme.textWhite,
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              color:
+                                  AppTheme.primaryBlue.withValues(alpha: 0.3),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Subtitle
+                    FadeTransition(
+                      opacity: _animationController,
+                      child: Text(
+                        widget.city == null
+                            ? 'أضف معلومات المدينة الجديدة'
+                            : 'قم بتحديث معلومات ${widget.city!.name}',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        if (_hasChanges)
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: _buildSaveIndicator(),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildBackButton() {
+    return Container(
+      margin: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            if (await _onWillPop()) {
+              context.pop();
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Center(
+            child: Icon(
+              CupertinoIcons.arrow_right,
+              color: AppTheme.textWhite,
+              size: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSaveIndicator() {
+    return AnimatedBuilder(
+      animation: _saveButtonAnimationController,
+      builder: (context, child) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.warning.withValues(
+                  alpha: 0.2 + (0.1 * _saveButtonAnimationController.value),
+                ),
+                AppTheme.warning.withValues(
+                  alpha: 0.1 + (0.05 * _saveButtonAnimationController.value),
+                ),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppTheme.warning.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: AppTheme.warning,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.warning.withValues(
+                        alpha: 0.5 * _saveButtonAnimationController.value,
+                      ),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'لم يتم الحفظ',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppTheme.warning,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
-  
-  Widget _buildPremiumBackground() {
-    return Stack(
-      children: [
-        // Gradient Background
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.darkBackground,
-                AppTheme.darkBackground2,
-                AppTheme.darkBackground3.withOpacity(0.5),
-              ],
-            ),
-          ),
-        ),
-        
-        // Animated Pattern
-        AnimatedBuilder(
-          animation: _floatingAnimationController,
-          builder: (context, child) {
-            return CustomPaint(
-              size: MediaQuery.of(context).size,
-              painter: _DiamondPatternPainter(
-                color: AppTheme.primaryBlue.withOpacity(0.02),
-                animation: _floatingAnimationController.value,
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-  
-  List<Widget> _buildFloatingOrbs() {
-    return [
-      AnimatedBuilder(
-        animation: _floatingAnimationController,
-        builder: (context, child) {
-          return Positioned(
-            top: 100 + (30 * _floatingAnimationController.value),
-            right: -50,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppTheme.primaryPurple.withOpacity(0.2),
-                    AppTheme.primaryPurple.withOpacity(0.05),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-      AnimatedBuilder(
-        animation: _floatingAnimationController,
-        builder: (context, child) {
-          return Positioned(
-            bottom: 100 + (20 * _floatingAnimationController.value),
-            left: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppTheme.neonGreen.withOpacity(0.15),
-                    AppTheme.neonGreen.withOpacity(0.03),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    ];
-  }
-  
-  Widget _buildAppBar(BuildContext context) {
-    return SliverAppBar(
-      expandedHeight: 120,
-      floating: true,
-      pinned: true,
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      leading: IconButton(
-        onPressed: () => context.pop(),
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: AppTheme.darkCard.withOpacity(0.5),
-            border: Border.all(
-              color: AppTheme.darkBorder.withOpacity(0.2),
-              width: 0.5,
-            ),
-          ),
-          child: Icon(
-            Icons.arrow_back_ios_new,
-            color: AppTheme.textLight,
-            size: 18,
-          ),
-        ),
-      ),
-      flexibleSpace: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppTheme.darkCard.withOpacity(0.8),
-                  AppTheme.darkCard.withOpacity(0.4),
-                ],
-              ),
-              border: Border(
-                bottom: BorderSide(
-                  color: AppTheme.glowBlue.withOpacity(0.1),
-                  width: 0.5,
-                ),
-              ),
-            ),
-            child: FlexibleSpaceBar(
-              centerTitle: false,
-              titlePadding: const EdgeInsets.only(
-                left: 60,
-                bottom: 16,
-                right: 20,
-              ),
-              title: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      gradient: LinearGradient(
-                        colors: [
-                          AppTheme.primaryBlue.withOpacity(0.2),
-                          AppTheme.primaryPurple.withOpacity(0.2),
-                        ],
-                      ),
-                    ),
-                    child: Icon(
-                      isEditing ? Icons.edit_location : Icons.add_location,
-                      color: AppTheme.glowWhite,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    isEditing ? 'تعديل المدينة' : 'إضافة مدينة جديدة',
-                    style: AppTextStyles.heading3.copyWith(
-                      color: AppTheme.textWhite,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-      actions: [
-        // Save Button
-        Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: Center(
-            child: GestureDetector(
-              onTap: _isSaving ? null : _saveCity,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: _isSaving
-                      ? LinearGradient(
-                          colors: [
-                            AppTheme.textMuted.withOpacity(0.3),
-                            AppTheme.textMuted.withOpacity(0.2),
-                          ],
-                        )
-                      : AppTheme.primaryGradient,
-                  boxShadow: _isSaving
-                      ? []
-                      : [
-                          BoxShadow(
-                            color: AppTheme.primaryBlue.withOpacity(0.3),
-                            blurRadius: 12,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_isSaving) ...[
-                      SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            AppTheme.textLight,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ] else ...[
-                      Icon(
-                        Icons.save_rounded,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    Text(
-                      _isSaving ? 'جاري الحفظ...' : 'حفظ',
-                      style: AppTextStyles.buttonMedium.copyWith(
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildFormContent(bool isDesktop) {
-    return Container(
-      constraints: BoxConstraints(
-        maxWidth: isDesktop ? 1200 : double.infinity,
-      ),
-      margin: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 40 : 20,
-        vertical: 24,
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Form Fields Section
-            Row(
+
+  Widget _buildFormContent() {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: AnimationLimiter(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: isDesktop ? 2 : 1,
-                  child: Column(
-                    children: [
-                      _buildInputCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildSectionTitle('معلومات المدينة'),
-                            const SizedBox(height: 24),
-                            _buildTextField(
-                              controller: _nameController,
-                              focusNode: _nameFocusNode,
-                              label: 'اسم المدينة',
-                              hint: 'مثال: دبي',
-                              icon: Icons.location_city,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'الرجاء إدخال اسم المدينة';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 20),
-                            _buildTextField(
-                              controller: _countryController,
-                              focusNode: _countryFocusNode,
-                              label: 'الدولة',
-                              hint: 'مثال: الإمارات العربية المتحدة',
-                              icon: Icons.flag,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'الرجاء إدخال اسم الدولة';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 24),
-                            _buildActiveSwitch(),
-                          ],
-                        ),
-                      ),
-                      
-                      if (!isDesktop) ...[
-                        const SizedBox(height: 24),
-                        _buildImageGallerySection(),
-                      ],
-                    ],
-                  ),
+              children: AnimationConfiguration.toStaggeredList(
+                duration: const Duration(milliseconds: 600),
+                childAnimationBuilder: (widget) => SlideAnimation(
+                  verticalOffset: 50.0,
+                  child: FadeInAnimation(child: widget),
                 ),
-                
-                if (isDesktop) ...[
-                  const SizedBox(width: 32),
-                  Expanded(
-                    flex: 3,
-                    child: _buildImageGallerySection(),
-                  ),
+                children: [
+                  _buildSectionTitle('معلومات أساسية'),
+                  const SizedBox(height: 20),
+                  _buildNameField(),
+                  const SizedBox(height: 20),
+                  _buildCountryField(),
+                  const SizedBox(height: 24),
+                  _buildActiveSwitch(),
+                  const SizedBox(height: 32),
+                  _buildSectionTitle('معرض الصور'),
+                  const SizedBox(height: 20),
+                  _buildImagesSection(),
+                  const SizedBox(height: 100), // Space for bottom bar
                 ],
-              ],
+              ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildInputCard({required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.darkCard.withOpacity(0.5),
-            AppTheme.darkCard.withOpacity(0.3),
-          ],
-        ),
-        border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.1),
-          width: 0.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.shadowDark.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
           ),
-        ],
+        ),
       ),
-      child: child,
     );
   }
-  
+
   Widget _buildSectionTitle(String title) {
     return Row(
       children: [
@@ -510,255 +418,731 @@ class _CityFormPageState extends State<CityFormPage>
         const SizedBox(width: 12),
         Text(
           title,
-          style: AppTextStyles.heading3.copyWith(
+          style: AppTextStyles.heading2.copyWith(
             color: AppTheme.textWhite,
-            fontWeight: FontWeight.w300,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
     );
   }
-  
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required FocusNode focusNode,
-    required String label,
-    required String hint,
-    required IconData icon,
-    String? Function(String?)? validator,
-  }) {
+
+  Widget _buildNameField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: AppTextStyles.caption.copyWith(
-            color: AppTheme.textMuted,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.5,
-          ),
+        Row(
+          children: [
+            Icon(
+              CupertinoIcons.building_2_fill,
+              size: 18,
+              color: AppTheme.primaryBlue,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'اسم المدينة',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textLight,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '*',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.error,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          focusNode: focusNode,
-          validator: validator,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppTheme.textWhite,
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.shadowDark.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.textMuted.withOpacity(0.5),
+          child: TextFormField(
+            controller: _nameController,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textWhite,
             ),
-            prefixIcon: Container(
-              margin: const EdgeInsets.all(12),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: AppTheme.primaryBlue.withOpacity(0.1),
+            decoration: InputDecoration(
+              hintText: 'مثال: الرياض',
+              hintStyle: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textMuted.withValues(alpha: 0.5),
               ),
-              child: Icon(
-                icon,
-                color: AppTheme.primaryBlue,
-                size: 18,
+              filled: true,
+              fillColor: AppTheme.darkCard.withValues(alpha: 0.5),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: AppTheme.darkBorder.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: AppTheme.primaryBlue,
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: AppTheme.error,
+                  width: 1,
+                ),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: AppTheme.error,
+                  width: 2,
+                ),
+              ),
+              contentPadding: const EdgeInsets.all(16),
+              prefixIcon: Container(
+                margin: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryBlue.withValues(alpha: 0.1),
+                      AppTheme.primaryPurple.withValues(alpha: 0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  CupertinoIcons.building_2_fill,
+                  color: AppTheme.primaryBlue,
+                  size: 16,
+                ),
               ),
             ),
-            filled: true,
-            fillColor: AppTheme.inputBackground.withOpacity(0.3),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: AppTheme.darkBorder.withOpacity(0.1),
-                width: 0.5,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: AppTheme.darkBorder.withOpacity(0.1),
-                width: 0.5,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: AppTheme.primaryBlue.withOpacity(0.5),
-                width: 1,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: AppTheme.error.withOpacity(0.5),
-                width: 1,
-              ),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: AppTheme.error.withOpacity(0.5),
-                width: 1,
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 16,
-            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'الرجاء إدخال اسم المدينة';
+              }
+              if (value.trim().length < 2) {
+                return 'اسم المدينة قصير جداً';
+              }
+              return null;
+            },
           ),
         ),
       ],
     );
   }
-  
+
+  Widget _buildCountryField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              CupertinoIcons.globe,
+              size: 18,
+              color: AppTheme.primaryPurple,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'الدولة',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textLight,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '*',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.error,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.shadowDark.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: _countryController,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textWhite,
+            ),
+            decoration: InputDecoration(
+              hintText: 'مثال: المملكة العربية السعودية',
+              hintStyle: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textMuted.withValues(alpha: 0.5),
+              ),
+              filled: true,
+              fillColor: AppTheme.darkCard.withValues(alpha: 0.5),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: AppTheme.darkBorder.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: AppTheme.primaryPurple,
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: AppTheme.error,
+                  width: 1,
+                ),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: AppTheme.error,
+                  width: 2,
+                ),
+              ),
+              contentPadding: const EdgeInsets.all(16),
+              prefixIcon: Container(
+                margin: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryPurple.withValues(alpha: 0.1),
+                      AppTheme.primaryViolet.withValues(alpha: 0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  CupertinoIcons.globe,
+                  color: AppTheme.primaryPurple,
+                  size: 16,
+                ),
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'الرجاء إدخال اسم الدولة';
+              }
+              if (value.trim().length < 2) {
+                return 'اسم الدولة قصير جداً';
+              }
+              return null;
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildActiveSwitch() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: AppTheme.inputBackground.withOpacity(0.3),
+        gradient: LinearGradient(
+          colors: [
+            (_isActive ? AppTheme.success : AppTheme.textMuted)
+                .withValues(alpha: 0.05),
+            (_isActive ? AppTheme.success : AppTheme.textMuted)
+                .withValues(alpha: 0.02),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.1),
-          width: 0.5,
+          color: (_isActive ? AppTheme.success : AppTheme.textMuted)
+              .withValues(alpha: 0.2),
+          width: 1,
         ),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: _isActive
-                  ? AppTheme.success.withOpacity(0.1)
-                  : AppTheme.textMuted.withOpacity(0.1),
-            ),
-            child: Icon(
-              _isActive ? Icons.check_circle : Icons.cancel,
-              color: _isActive ? AppTheme.success : AppTheme.textMuted,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'حالة المدينة',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppTheme.textWhite,
-                    fontWeight: FontWeight.w500,
+          Row(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: _isActive
+                      ? LinearGradient(
+                          colors: [AppTheme.success, AppTheme.neonGreen],
+                        )
+                      : null,
+                  color: _isActive ? null : AppTheme.textMuted,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: _isActive
+                      ? [
+                          BoxShadow(
+                            color: AppTheme.success.withValues(alpha: 0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Icon(
+                    _isActive
+                        ? CupertinoIcons.checkmark_circle_fill
+                        : CupertinoIcons.xmark_circle_fill,
+                    key: ValueKey(_isActive),
+                    color: Colors.white,
+                    size: 20,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  _isActive ? 'نشطة' : 'غير نشطة',
-                  style: AppTextStyles.caption.copyWith(
-                    color: _isActive ? AppTheme.success : AppTheme.textMuted,
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'حالة المدينة',
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: AppTheme.textWhite,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(height: 4),
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 300),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: _isActive ? AppTheme.success : AppTheme.textMuted,
+                    ),
+                    child: Text(
+                      _isActive
+                          ? 'المدينة نشطة ومتاحة للحجز'
+                          : 'المدينة غير نشطة ولن تظهر للعملاء',
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          Switch(
-            value: _isActive,
-            onChanged: (value) {
-              setState(() {
-                _isActive = value;
-              });
-            },
-            activeColor: AppTheme.success,
-            activeTrackColor: AppTheme.success.withOpacity(0.3),
-            inactiveThumbColor: AppTheme.textMuted,
-            inactiveTrackColor: AppTheme.textMuted.withOpacity(0.3),
+          Transform.scale(
+            scale: 1.2,
+            child: CupertinoSwitch(
+              value: _isActive,
+              onChanged: (value) {
+                HapticFeedback.lightImpact();
+                setState(() {
+                  _isActive = value;
+                  _hasChanges = true;
+                });
+              },
+              activeColor: AppTheme.success,
+              trackColor: AppTheme.textMuted.withValues(alpha: 0.3),
+            ),
           ),
         ],
       ),
     );
   }
-  
-  Widget _buildImageGallerySection() {
-    return _buildInputCard(
+
+  Widget _buildImagesSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withValues(alpha: 0.3),
+            AppTheme.darkCard.withValues(alpha: 0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle('معرض الصور'),
-          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.primaryGradient,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      CupertinoIcons.photo_fill_on_rectangle_fill,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'صور المدينة',
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: AppTheme.textWhite,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryBlue.withValues(alpha: 0.1),
+                      AppTheme.primaryPurple.withValues(alpha: 0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${_images.length}',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppTheme.primaryBlue,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '/10',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
           CityImageGallery(
             images: _images,
             onImagesChanged: (images) {
               setState(() {
                 _images = images;
+                _hasChanges = true;
               });
             },
+            maxImages: 10,
           ),
         ],
       ),
     );
   }
-  
-  void _saveCity() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-    
-    setState(() {
-      _isSaving = true;
-    });
-    
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
-    
-    final newCity = City(
-      name: _nameController.text,
-      country: _countryController.text,
-      images: _images,
-      isActive: _isActive,
-      createdAt: isEditing ? widget.city!.createdAt : DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-    
-    // Return the city data
-    if (mounted) {
-      context.pop(newCity);
-    }
-  }
-}
 
-// Custom Painter for diamond pattern
-class _DiamondPatternPainter extends CustomPainter {
-  final Color color;
-  final double animation;
-  
-  _DiamondPatternPainter({
-    required this.color,
-    required this.animation,
-  });
-  
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5;
-    
-    const spacing = 60.0;
-    final offset = animation * spacing;
-    
-    for (double x = -spacing; x < size.width + spacing; x += spacing) {
-      for (double y = -spacing; y < size.height + spacing; y += spacing) {
-        final path = Path()
-          ..moveTo(x + offset, y)
-          ..lineTo(x + spacing / 2 + offset, y - spacing / 2)
-          ..lineTo(x + spacing + offset, y)
-          ..lineTo(x + spacing / 2 + offset, y + spacing / 2)
-          ..close();
-        
-        canvas.drawPath(path, paint);
+  Widget _buildBottomBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withValues(alpha: 0.95),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.shadowDark.withValues(alpha: 0.2),
+            blurRadius: 20,
+            offset: const Offset(0, -10),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  // Cancel button
+                  Expanded(
+                    child: Container(
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: AppTheme.darkCard.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () async {
+                            if (await _onWillPop()) {
+                              context.pop();
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Center(
+                            child: Text(
+                              'إلغاء',
+                              style: AppTextStyles.buttonMedium.copyWith(
+                                color: AppTheme.textMuted,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Save button
+                  Expanded(
+                    flex: 2,
+                    child: AnimatedBuilder(
+                      animation: _saveButtonAnimationController,
+                      builder: (context, child) {
+                        return Container(
+                          height: 54,
+                          decoration: BoxDecoration(
+                            gradient: AppTheme.primaryGradient,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primaryBlue.withValues(
+                                  alpha: 0.3 +
+                                      (0.1 *
+                                          _saveButtonAnimationController.value),
+                                ),
+                                blurRadius: 20 +
+                                    (5 * _saveButtonAnimationController.value),
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _isLoading ? null : _handleSave,
+                              borderRadius: BorderRadius.circular(16),
+                              child: Center(
+                                child: _isLoading
+                                    ? SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            Colors.white,
+                                          ),
+                                        ),
+                                      )
+                                    : Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            widget.city == null
+                                                ? CupertinoIcons
+                                                    .plus_circle_fill
+                                                : CupertinoIcons
+                                                    .checkmark_circle_fill,
+                                            color: Colors.white,
+                                            size: 22,
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Text(
+                                            widget.city == null
+                                                ? 'إضافة المدينة'
+                                                : 'حفظ التغييرات',
+                                            style: AppTextStyles.buttonLarge
+                                                .copyWith(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _onWillPop() async {
+    if (_hasChanges) {
+      return await showCupertinoDialog<bool>(
+            context: context,
+            builder: (context) => BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: CupertinoAlertDialog(
+                title: const Text('هناك تغييرات غير محفوظة'),
+                content: const Text('هل تريد الخروج بدون حفظ التغييرات؟'),
+                actions: [
+                  CupertinoDialogAction(
+                    isDestructiveAction: true,
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('خروج بدون حفظ'),
+                  ),
+                  CupertinoDialogAction(
+                    isDefaultAction: true,
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('البقاء'),
+                  ),
+                ],
+              ),
+            ),
+          ) ??
+          false;
+    }
+    return true;
+  }
+
+  void _handleSave() {
+    if (_formKey.currentState!.validate()) {
+      HapticFeedback.mediumImpact();
+
+      setState(() => _isLoading = true);
+
+      final city = City(
+        name: _nameController.text.trim(),
+        country: _countryController.text.trim(),
+        images: _images,
+        isActive: _isActive,
+        propertiesCount: widget.city?.propertiesCount,
+        createdAt: widget.city?.createdAt ?? DateTime.now(),
+        updatedAt: DateTime.now(),
+        metadata: widget.city?.metadata,
+      );
+
+      if (widget.city == null) {
+        context.read<CitiesBloc>().add(CreateCityEvent(city: city));
+      } else {
+        context.read<CitiesBloc>().add(UpdateCityEvent(
+              oldName: widget.city!.name,
+              city: city,
+            ));
       }
     }
   }
-  
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+
+  void _showSuccessAnimation() {
+    setState(() => _isLoading = false);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Center(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 600),
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: value,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.success.withValues(alpha: 0.9),
+                        AppTheme.neonGreen.withValues(alpha: 0.9),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.success.withValues(alpha: 0.5),
+                        blurRadius: 30,
+                        spreadRadius: 10,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    CupertinoIcons.checkmark_alt,
+                    color: Colors.white,
+                    size: 60,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 1), () {
+      Navigator.pop(context); // Close dialog
+      context.pop(); // Return to previous page
+    });
+  }
+
+  void _showErrorMessage(String message) {
+    setState(() => _isLoading = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(CupertinoIcons.xmark_circle_fill, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppTheme.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.all(20),
+      ),
+    );
+  }
 }

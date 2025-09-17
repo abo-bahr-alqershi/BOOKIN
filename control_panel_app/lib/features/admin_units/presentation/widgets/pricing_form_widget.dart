@@ -1,14 +1,17 @@
 // lib/features/admin_units/presentation/widgets/pricing_form_widget.dart
 
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
+import 'package:bookn_cp_app/core/usecases/usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import 'package:bookn_cp_app/injection_container.dart';
 import 'package:bookn_cp_app/services/local_storage_service.dart';
-import 'package:bookn_cp_app/features/admin_currencies/domain/usecases/get_currencies_usecase.dart' as ac_uc1;
-import 'package:bookn_cp_app/features/admin_currencies/domain/entities/currency.dart' as ac_entity;
+import 'package:bookn_cp_app/features/admin_currencies/domain/usecases/get_currencies_usecase.dart'
+    as ac_uc1;
+import 'package:bookn_cp_app/features/admin_currencies/domain/entities/currency.dart'
+    as ac_entity;
 import '../../domain/entities/money.dart';
 import '../../domain/entities/pricing_method.dart';
 
@@ -36,7 +39,7 @@ class _PricingFormWidgetState extends State<PricingFormWidget>
   bool _isAdmin = false;
   List<String> _currencyOptions = const ['YER'];
   bool _isLoadingCurrencies = false;
-  
+
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
 
@@ -53,19 +56,21 @@ class _PricingFormWidgetState extends State<PricingFormWidget>
     final propertyCurrency = localStorage.getPropertyCurrency();
     final appSelectedCurrency = localStorage.getSelectedCurrency();
     _selectedCurrency = widget.initialBasePrice?.currency ??
-        (propertyCurrency.isNotEmpty ? propertyCurrency : (appSelectedCurrency.isNotEmpty ? appSelectedCurrency : 'YER'));
+        (propertyCurrency.isNotEmpty
+            ? propertyCurrency
+            : (appSelectedCurrency.isNotEmpty ? appSelectedCurrency : 'YER'));
     if (_isAdmin) {
       _loadCurrencies();
     } else {
       _currencyOptions = [_selectedCurrency];
     }
     _selectedMethod = widget.initialPricingMethod ?? PricingMethod.daily;
-    
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.9,
       end: 1.0,
@@ -73,7 +78,7 @@ class _PricingFormWidgetState extends State<PricingFormWidget>
       parent: _animationController,
       curve: Curves.elasticOut,
     ));
-    
+
     _animationController.forward();
   }
 
@@ -96,7 +101,7 @@ class _PricingFormWidgetState extends State<PricingFormWidget>
   Future<void> _loadCurrencies() async {
     try {
       setState(() => _isLoadingCurrencies = true);
-      final result = await sl<ac_uc1.GetCurrenciesUseCase>()(const ac_uc1.NoParams());
+      final result = await sl<ac_uc1.GetCurrenciesUseCase>()(NoParams());
       result.fold((_) {
         setState(() {
           _currencyOptions = [_selectedCurrency];
@@ -104,8 +109,9 @@ class _PricingFormWidgetState extends State<PricingFormWidget>
         });
       }, (list) {
         setState(() {
-          _currencyOptions = (list as List<ac_entity.Currency>).map((c) => c.code).toList();
-          if (!_currencyOptions.contains(_selectedCurrency) && _currencyOptions.isNotEmpty) {
+          _currencyOptions = (list).map((c) => c.code).toList();
+          if (!_currencyOptions.contains(_selectedCurrency) &&
+              _currencyOptions.isNotEmpty) {
             _selectedCurrency = _currencyOptions.first;
           }
           _isLoadingCurrencies = false;
@@ -186,9 +192,9 @@ class _PricingFormWidgetState extends State<PricingFormWidget>
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   Row(
                     children: [
                       Expanded(
@@ -201,9 +207,9 @@ class _PricingFormWidgetState extends State<PricingFormWidget>
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   _buildPricingMethodSelector(),
                 ],
               ),
@@ -284,7 +290,7 @@ class _PricingFormWidgetState extends State<PricingFormWidget>
               ),
             ),
             child: DropdownButtonFormField<String>(
-              value: _selectedCurrency,
+              initialValue: _selectedCurrency,
               dropdownColor: AppTheme.darkCard,
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppTheme.textWhite,
@@ -345,7 +351,8 @@ class _PricingFormWidgetState extends State<PricingFormWidget>
                 const Spacer(),
                 Text(
                   'عملة المالك',
-                  style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted),
+                  style:
+                      AppTextStyles.caption.copyWith(color: AppTheme.textMuted),
                 ),
               ],
             ),
@@ -385,7 +392,8 @@ class _PricingFormWidgetState extends State<PricingFormWidget>
                 ),
                 decoration: BoxDecoration(
                   gradient: isSelected ? AppTheme.primaryGradient : null,
-                  color: isSelected ? null : AppTheme.darkSurface.withOpacity(0.5),
+                  color:
+                      isSelected ? null : AppTheme.darkSurface.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected
@@ -415,7 +423,8 @@ class _PricingFormWidgetState extends State<PricingFormWidget>
                       method.arabicLabel,
                       style: AppTextStyles.bodySmall.copyWith(
                         color: isSelected ? Colors.white : AppTheme.textMuted,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.normal,
                       ),
                     ),
                   ],

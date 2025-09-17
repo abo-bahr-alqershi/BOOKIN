@@ -1,121 +1,66 @@
+// lib/features/admin_currencies/presentation/widgets/futuristic_currency_form_modal.dart
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
 import 'dart:ui';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
 import '../../domain/entities/currency.dart';
 
 class FuturisticCurrencyFormModal extends StatefulWidget {
   final Currency? currency;
-  final bool hasDefaultCurrency;
   final Function(Currency) onSave;
-  final VoidCallback onCancel;
 
   const FuturisticCurrencyFormModal({
     super.key,
     this.currency,
-    required this.hasDefaultCurrency,
     required this.onSave,
-    required this.onCancel,
   });
 
   @override
-  State<FuturisticCurrencyFormModal> createState() => 
+  State<FuturisticCurrencyFormModal> createState() =>
       _FuturisticCurrencyFormModalState();
 }
 
-class _FuturisticCurrencyFormModalState 
+class _FuturisticCurrencyFormModalState
     extends State<FuturisticCurrencyFormModal>
-    with TickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late AnimationController _scaleController;
-  late AnimationController _slideController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
-  late Animation<Offset> _slideAnimation;
-
-  final _formKey = GlobalKey<FormState>();
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
   late TextEditingController _codeController;
   late TextEditingController _arabicCodeController;
   late TextEditingController _nameController;
   late TextEditingController _arabicNameController;
   late TextEditingController _exchangeRateController;
+
   bool _isDefault = false;
+  final bool _isLoading = false;
+
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-    _initializeControllers();
-    _initializeAnimations();
-  }
-
-  void _initializeControllers() {
-    final currency = widget.currency;
-    _codeController = TextEditingController(text: currency?.code ?? '');
-    _arabicCodeController = TextEditingController(
-      text: currency?.arabicCode ?? '',
-    );
-    _nameController = TextEditingController(text: currency?.name ?? '');
-    _arabicNameController = TextEditingController(
-      text: currency?.arabicName ?? '',
-    );
-    _exchangeRateController = TextEditingController(
-      text: currency?.exchangeRate?.toString() ?? '',
-    );
-    _isDefault = currency?.isDefault ?? false;
-  }
-
-  void _initializeAnimations() {
-    _fadeController = AnimationController(
+    _animationController = AnimationController(
+      vsync: this,
       duration: const Duration(milliseconds: 300),
-      vsync: this,
+    )..forward();
+
+    _codeController = TextEditingController(text: widget.currency?.code ?? '');
+    _arabicCodeController =
+        TextEditingController(text: widget.currency?.arabicCode ?? '');
+    _nameController = TextEditingController(text: widget.currency?.name ?? '');
+    _arabicNameController =
+        TextEditingController(text: widget.currency?.arabicName ?? '');
+    _exchangeRateController = TextEditingController(
+      text: widget.currency?.exchangeRate?.toString() ?? '',
     );
-
-    _scaleController = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    ));
-
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1,
-    ).animate(CurvedAnimation(
-      parent: _scaleController,
-      curve: Curves.elasticOut,
-    ));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutQuart,
-    ));
-
-    _fadeController.forward();
-    _scaleController.forward();
-    _slideController.forward();
+    _isDefault = widget.currency?.isDefault ?? false;
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
-    _scaleController.dispose();
-    _slideController.dispose();
+    _animationController.dispose();
     _codeController.dispose();
     _arabicCodeController.dispose();
     _nameController.dispose();
@@ -126,265 +71,291 @@ class _FuturisticCurrencyFormModalState
 
   @override
   Widget build(BuildContext context) {
-    final isEditing = widget.currency != null;
-    final canSetDefault = !widget.hasDefaultCurrency || 
-                          (isEditing && widget.currency!.isDefault);
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: Dialog(
-            backgroundColor: Colors.transparent,
-            insetPadding: const EdgeInsets.all(20),
-            child: _buildModalContent(isEditing, canSetDefault),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildModalContent(bool isEditing, bool canSetDefault) {
-    return Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 500),
-      child: Stack(
-        children: [
-          // Background with glass effect
-          ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppTheme.darkCard.withOpacity(0.9),
-                      AppTheme.darkCard.withOpacity(0.7),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(
-                    color: AppTheme.primaryBlue.withOpacity(0.2),
-                    width: 1,
-                  ),
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutBack,
+          )),
+          child: Container(
+            height: MediaQuery.of(context).size.height * 0.85,
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard.withValues(alpha: 0.95),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
+              border: Border(
+                top: BorderSide(
+                  color: AppTheme.darkBorder.withValues(alpha: 0.2),
                 ),
-                child: _buildForm(isEditing, canSetDefault),
               ),
             ),
-          ),
-
-          // Decorative elements
-          Positioned(
-            top: -50,
-            right: -50,
-            child: Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  colors: [
-                    AppTheme.primaryBlue.withOpacity(0.1),
-                    Colors.transparent,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Column(
+                  children: [
+                    _buildHeader(),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.only(
+                          left: 20,
+                          right: 20,
+                          bottom: bottomPadding + 100,
+                        ),
+                        physics: const BouncingScrollPhysics(),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 24),
+                              _buildSectionTitle(
+                                  'معلومات العملة', CupertinoIcons.info_circle),
+                              const SizedBox(height: 20),
+                              _buildCodeFields(),
+                              const SizedBox(height: 20),
+                              _buildNameFields(),
+                              const SizedBox(height: 24),
+                              _buildSectionTitle('سعر الصرف',
+                                  CupertinoIcons.arrow_2_circlepath),
+                              const SizedBox(height: 20),
+                              _buildExchangeRateField(),
+                              const SizedBox(height: 24),
+                              _buildDefaultSwitch(),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    _buildBottomActions(),
                   ],
                 ),
-                shape: BoxShape.circle,
               ),
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildForm(bool isEditing, bool canSetDefault) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildHeader(isEditing),
-          const SizedBox(height: 24),
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  _buildFormFields(),
-                  const SizedBox(height: 20),
-                  _buildDefaultSwitch(canSetDefault),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-          ),
-          _buildActions(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(bool isEditing) {
+  Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primaryBlue.withOpacity(0.1),
-            AppTheme.primaryPurple.withOpacity(0.05),
-          ],
-        ),
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(28),
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.darkBorder.withValues(alpha: 0.1),
+          ),
         ),
       ),
-      child: Row(
+      child: Column(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 40,
+            height: 4,
             decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryBlue.withOpacity(0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Icon(
-              isEditing ? Icons.edit_rounded : Icons.add_rounded,
-              color: Colors.white,
-              size: 24,
+              gradient: LinearGradient(
+                colors: [AppTheme.primaryCyan, AppTheme.primaryBlue],
+              ),
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isEditing ? 'تعديل العملة' : 'إضافة عملة جديدة',
-                  style: AppTextStyles.heading3.copyWith(
-                    color: AppTheme.textWhite,
-                    fontWeight: FontWeight.bold,
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppTheme.primaryCyan, AppTheme.primaryBlue],
                   ),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  isEditing
-                      ? 'قم بتحديث بيانات العملة'
-                      : 'أدخل بيانات العملة الجديدة',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppTheme.textMuted,
-                  ),
+                child: Icon(
+                  widget.currency == null
+                      ? CupertinoIcons.plus_circle_fill
+                      : CupertinoIcons.pencil_circle_fill,
+                  color: Colors.white,
+                  size: 24,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.currency == null
+                          ? 'إضافة عملة جديدة'
+                          : 'تعديل العملة',
+                      style: AppTextStyles.heading2.copyWith(
+                        color: AppTheme.textWhite,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.currency == null
+                          ? 'أدخل معلومات العملة الجديدة'
+                          : 'قم بتحديث معلومات العملة',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: Icon(
+                  CupertinoIcons.xmark_circle_fill,
+                  color: AppTheme.textMuted,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFormFields() {
+  Widget _buildSectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.primaryCyan.withValues(alpha: 0.2),
+                AppTheme.primaryBlue.withValues(alpha: 0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            size: 16,
+            color: AppTheme.primaryCyan,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: AppTextStyles.bodyLarge.copyWith(
+            color: AppTheme.textWhite,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCodeFields() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildTextField(
+            controller: _codeController,
+            label: 'الرمز (لاتيني)',
+            hint: 'USD',
+            icon: CupertinoIcons.textformat,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'الرجاء إدخال رمز العملة';
+              }
+              if (value.length != 3) {
+                return 'الرمز يجب أن يكون 3 أحرف';
+              }
+              return null;
+            },
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[A-Z]')),
+              LengthLimitingTextInputFormatter(3),
+            ],
+            textCapitalization: TextCapitalization.characters,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildTextField(
+            controller: _arabicCodeController,
+            label: 'الرمز (عربي)',
+            hint: 'دولار',
+            icon: CupertinoIcons.text_alignright,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'الرجاء إدخال الرمز العربي';
+              }
+              return null;
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNameFields() {
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildTextField(
-                controller: _codeController,
-                label: 'كود العملة',
-                hint: 'USD',
-                icon: Icons.code_rounded,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'هذا الحقل مطلوب';
-                  }
-                  if (value.length > 3) {
-                    return 'الكود يجب أن يكون 3 أحرف فقط';
-                  }
-                  return null;
-                },
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[A-Z]')),
-                  LengthLimitingTextInputFormatter(3),
-                ],
-                textCapitalization: TextCapitalization.characters,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildTextField(
-                controller: _arabicCodeController,
-                label: 'الكود العربي',
-                hint: 'دولار',
-                icon: Icons.translate_rounded,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'هذا الحقل مطلوب';
-                  }
-                  return null;
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
         _buildTextField(
           controller: _nameController,
-          label: 'اسم العملة (English)',
+          label: 'الاسم (انجليزي)',
           hint: 'US Dollar',
-          icon: Icons.label_outline_rounded,
+          icon: CupertinoIcons.textformat_abc,
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'هذا الحقل مطلوب';
+              return 'الرجاء إدخال اسم العملة بالإنجليزية';
             }
             return null;
           },
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         _buildTextField(
           controller: _arabicNameController,
-          label: 'اسم العملة (عربي)',
+          label: 'الاسم (عربي)',
           hint: 'الدولار الأمريكي',
-          icon: Icons.label_rounded,
+          icon: CupertinoIcons.text_alignright,
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'هذا الحقل مطلوب';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _exchangeRateController,
-          label: 'سعر الصرف',
-          hint: '1.00',
-          icon: Icons.currency_exchange_rounded,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          enabled: !_isDefault,
-          validator: (value) {
-            if (!_isDefault && (value == null || value.isEmpty)) {
-              return 'هذا الحقل مطلوب للعملات غير الافتراضية';
-            }
-            if (value != null && value.isNotEmpty) {
-              final rate = double.tryParse(value);
-              if (rate == null || rate <= 0) {
-                return 'أدخل قيمة صحيحة';
-              }
+              return 'الرجاء إدخال اسم العملة بالعربية';
             }
             return null;
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildExchangeRateField() {
+    return _buildTextField(
+      controller: _exchangeRateController,
+      label: 'سعر الصرف',
+      hint: '1.0000',
+      icon: CupertinoIcons.arrow_2_circlepath,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,4}')),
+      ],
+      validator: (value) {
+        if (value != null && value.isNotEmpty) {
+          final rate = double.tryParse(value);
+          if (rate == null || rate <= 0) {
+            return 'الرجاء إدخال سعر صرف صحيح';
+          }
+        }
+        return null;
+      },
     );
   }
 
@@ -397,210 +368,244 @@ class _FuturisticCurrencyFormModalState
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
     TextCapitalization textCapitalization = TextCapitalization.none,
-    bool enabled = true,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkSurface.withOpacity(0.3),
-            AppTheme.darkSurface.withOpacity(0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.2),
-          width: 0.5,
-        ),
-      ),
-      child: TextFormField(
-        controller: controller,
-        validator: validator,
-        keyboardType: keyboardType,
-        inputFormatters: inputFormatters,
-        textCapitalization: textCapitalization,
-        enabled: enabled,
-        style: AppTextStyles.bodyMedium.copyWith(
-          color: enabled ? AppTheme.textWhite : AppTheme.textMuted,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: AppTextStyles.bodySmall.copyWith(
-            color: AppTheme.textMuted,
-          ),
-          hintText: hint,
-          hintStyle: AppTextStyles.bodySmall.copyWith(
-            color: AppTheme.textMuted.withOpacity(0.3),
-          ),
-          prefixIcon: Icon(
-            icon,
-            size: 20,
-            color: AppTheme.primaryBlue,
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(16),
-          errorStyle: AppTextStyles.caption.copyWith(
-            color: AppTheme.error,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textLight,
+            fontWeight: FontWeight.w500,
           ),
         ),
-      ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textWhite,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textMuted.withValues(alpha: 0.5),
+            ),
+            filled: true,
+            fillColor: AppTheme.inputBackground.withValues(alpha: 0.05),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppTheme.inputBorder.withValues(alpha: 0.3),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppTheme.inputBorder.withValues(alpha: 0.3),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppTheme.primaryCyan,
+                width: 1.5,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppTheme.error,
+              ),
+            ),
+            prefixIcon: Icon(
+              icon,
+              color: AppTheme.textMuted,
+              size: 20,
+            ),
+          ),
+          validator: validator,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          textCapitalization: textCapitalization,
+        ),
+      ],
     );
   }
 
-  Widget _buildDefaultSwitch(bool canSetDefault) {
+  Widget _buildDefaultSwitch() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.primaryBlue.withOpacity(0.05),
-            AppTheme.primaryPurple.withOpacity(0.03),
+            AppTheme.success.withValues(alpha: 0.05),
+            AppTheme.neonGreen.withValues(alpha: 0.02),
           ],
         ),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppTheme.primaryBlue.withOpacity(0.2),
-          width: 0.5,
+          color: AppTheme.success.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(
-            Icons.star_rounded,
-            color: _isDefault ? AppTheme.warning : AppTheme.textMuted,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'عملة افتراضية',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppTheme.textWhite,
-                    fontWeight: FontWeight.w600,
-                  ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _isDefault
+                      ? AppTheme.success.withValues(alpha: 0.1)
+                      : AppTheme.textMuted.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'تعيين هذه العملة كعملة النظام الافتراضية',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppTheme.textMuted,
-                  ),
+                child: Icon(
+                  _isDefault ? CupertinoIcons.star_fill : CupertinoIcons.star,
+                  color: _isDefault ? AppTheme.success : AppTheme.textMuted,
+                  size: 20,
                 ),
-              ],
-            ),
-          ),
-          Switch(
-            value: _isDefault,
-            onChanged: canSetDefault
-                ? (value) {
-                    setState(() {
-                      _isDefault = value;
-                      if (value) {
-                        _exchangeRateController.clear();
-                      }
-                    });
-                  }
-                : null,
-            activeColor: AppTheme.primaryBlue,
-            activeTrackColor: AppTheme.primaryBlue.withOpacity(0.3),
-            inactiveThumbColor: AppTheme.textMuted,
-            inactiveTrackColor: AppTheme.darkBorder.withOpacity(0.3),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActions() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkSurface.withOpacity(0.5),
-            AppTheme.darkSurface.withOpacity(0.3),
-          ],
-        ),
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(28),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildCancelButton(),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _buildSaveButton(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCancelButton() {
-    return InkWell(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        widget.onCancel();
-      },
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.darkCard.withOpacity(0.5),
-              AppTheme.darkCard.withOpacity(0.3),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'عملة افتراضية',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppTheme.textWhite,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _isDefault
+                        ? 'هذه هي العملة الأساسية'
+                        : 'تعيين كعملة أساسية',
+                    style: AppTextStyles.caption.copyWith(
+                      color: _isDefault ? AppTheme.success : AppTheme.textMuted,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: AppTheme.darkBorder.withOpacity(0.3),
-            width: 1,
+          CupertinoSwitch(
+            value: _isDefault,
+            onChanged: (value) {
+              HapticFeedback.lightImpact();
+              setState(() => _isDefault = value);
+            },
+            activeTrackColor: AppTheme.success,
           ),
-        ),
-        child: Center(
-          child: Text(
-            'إلغاء',
-            style: AppTextStyles.buttonMedium.copyWith(
-              color: AppTheme.textMuted,
-            ),
-          ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildSaveButton() {
-    return InkWell(
-      onTap: _handleSave,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryBlue.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+  Widget _buildBottomActions() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withValues(alpha: 0.5),
+        border: Border(
+          top: BorderSide(
+            color: AppTheme.darkBorder.withValues(alpha: 0.1),
+          ),
+        ),
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppTheme.darkCard.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => Navigator.pop(context),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Center(
+                      child: Text(
+                        'إلغاء',
+                        style: AppTextStyles.buttonMedium.copyWith(
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppTheme.primaryCyan, AppTheme.primaryBlue],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryCyan.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _isLoading ? null : _handleSave,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Center(
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  widget.currency == null
+                                      ? CupertinoIcons.plus_circle_fill
+                                      : CupertinoIcons.checkmark_circle_fill,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  widget.currency == null
+                                      ? 'إضافة'
+                                      : 'حفظ التغييرات',
+                                  style: AppTextStyles.buttonMedium.copyWith(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ],
-        ),
-        child: Center(
-          child: Text(
-            widget.currency != null ? 'تحديث' : 'إضافة',
-            style: AppTextStyles.buttonMedium.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
         ),
       ),
     );
@@ -609,19 +614,19 @@ class _FuturisticCurrencyFormModalState
   void _handleSave() {
     if (_formKey.currentState!.validate()) {
       HapticFeedback.mediumImpact();
-      
+
       final currency = Currency(
-        code: _codeController.text.toUpperCase(),
-        arabicCode: _arabicCodeController.text,
-        name: _nameController.text,
-        arabicName: _arabicNameController.text,
+        code: _codeController.text.trim(),
+        arabicCode: _arabicCodeController.text.trim(),
+        name: _nameController.text.trim(),
+        arabicName: _arabicNameController.text.trim(),
         isDefault: _isDefault,
-        exchangeRate: _isDefault
-            ? null
-            : double.tryParse(_exchangeRateController.text),
+        exchangeRate: _exchangeRateController.text.isNotEmpty
+            ? double.tryParse(_exchangeRateController.text)
+            : null,
         lastUpdated: DateTime.now(),
       );
-      
+
       widget.onSave(currency);
     }
   }

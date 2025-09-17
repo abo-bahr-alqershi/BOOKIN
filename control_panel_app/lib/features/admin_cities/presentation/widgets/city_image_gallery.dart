@@ -1,6 +1,8 @@
 // lib/features/admin_cities/presentation/widgets/city_image_gallery.dart
+// نسخة محسّنة
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'dart:io';
@@ -16,7 +18,7 @@ class CityImageGallery extends StatefulWidget {
   final Function(List<String>) onImagesChanged;
   final bool isReadOnly;
   final int maxImages;
-  
+
   const CityImageGallery({
     super.key,
     required this.images,
@@ -24,7 +26,7 @@ class CityImageGallery extends StatefulWidget {
     this.isReadOnly = false,
     this.maxImages = 10,
   });
-  
+
   @override
   State<CityImageGallery> createState() => _CityImageGalleryState();
 }
@@ -34,97 +36,159 @@ class _CityImageGalleryState extends State<CityImageGallery>
   final ImagePicker _picker = ImagePicker();
   late AnimationController _animationController;
   late AnimationController _uploadAnimationController;
-  
+  late AnimationController _pulseController;
+
   List<String> _localImages = [];
-  Map<String, double> _uploadProgress = {};
+  final Map<String, double> _uploadProgress = {};
   int? _primaryImageIndex = 0;
   bool _isSelectionMode = false;
   final Set<int> _selectedIndices = {};
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     _uploadAnimationController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     )..repeat();
-    
+
+    _pulseController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+
     _localImages = List.from(widget.images);
     _animationController.forward();
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
     _uploadAnimationController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header with controls
-        _buildHeader(),
-        
+        // Header with enhanced design
+        _buildEnhancedHeader(),
+
         const SizedBox(height: 20),
-        
-        // Upload area
+
+        // Upload area with glass morphism
         if (!widget.isReadOnly && _localImages.length < widget.maxImages)
-          _buildUploadArea(),
-        
-        // Images grid
+          _buildEnhancedUploadArea(),
+
+        // Images grid with animations
         if (_localImages.isNotEmpty) ...[
           if (!widget.isReadOnly && _localImages.length < widget.maxImages)
             const SizedBox(height: 20),
-          _buildImagesGrid(),
+          _buildEnhancedImagesGrid(),
         ],
-        
-        // Empty state
+
+        // Empty state with better design
         if (_localImages.isEmpty && widget.isReadOnly)
-          _buildEmptyState(),
+          _buildEnhancedEmptyState(),
       ],
     );
   }
-  
-  Widget _buildHeader() {
+
+  Widget _buildEnhancedHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              _isSelectionMode
-                  ? 'تم تحديد ${_selectedIndices.length}'
-                  : 'الصور (${_localImages.length}/${widget.maxImages})',
-              style: AppTextStyles.bodyLarge.copyWith(
-                color: AppTheme.textWhite,
-                fontWeight: FontWeight.w400,
-              ),
+            Row(
+              children: [
+                // Animated icon
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: 1),
+                  duration: const Duration(milliseconds: 600),
+                  builder: (context, value, child) {
+                    return Transform.scale(
+                      scale: value,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.primaryGradient,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.photo_fill_on_rectangle_fill,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  _isSelectionMode
+                      ? 'تم تحديد ${_selectedIndices.length}'
+                      : 'معرض الصور',
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    color: AppTheme.textWhite,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 4),
-            Text(
-              'يمكنك إضافة حتى ${widget.maxImages} صور',
-              style: AppTextStyles.caption.copyWith(
-                color: AppTheme.textMuted.withOpacity(0.7),
-              ),
+            Row(
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.primaryBlue.withValues(alpha: 0.1),
+                        AppTheme.primaryPurple.withValues(alpha: 0.05),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Text(
+                    '${_localImages.length}/${widget.maxImages}',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppTheme.primaryBlue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'صورة',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-        
         if (!widget.isReadOnly && _localImages.isNotEmpty)
           Row(
             children: [
-              // Selection mode toggle
-              _buildActionButton(
+              // Enhanced selection mode toggle
+              _buildEnhancedActionButton(
                 icon: _isSelectionMode
                     ? Icons.close_rounded
                     : Icons.check_circle_outline_rounded,
@@ -137,15 +201,24 @@ class _CityImageGalleryState extends State<CityImageGallery>
                 },
                 isActive: _isSelectionMode,
               ),
-              
-              // Delete selected
+
+              // Delete selected with animation
               if (_isSelectionMode && _selectedIndices.isNotEmpty) ...[
                 const SizedBox(width: 8),
-                _buildActionButton(
-                  icon: Icons.delete_outline_rounded,
-                  label: 'حذف',
-                  onTap: _deleteSelectedImages,
-                  isDestructive: true,
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: 1),
+                  duration: const Duration(milliseconds: 300),
+                  builder: (context, value, child) {
+                    return Transform.scale(
+                      scale: value,
+                      child: _buildEnhancedActionButton(
+                        icon: Icons.delete_outline_rounded,
+                        label: 'حذف',
+                        onTap: _deleteSelectedImages,
+                        isDestructive: true,
+                      ),
+                    );
+                  },
                 ),
               ],
             ],
@@ -153,8 +226,8 @@ class _CityImageGalleryState extends State<CityImageGallery>
       ],
     );
   }
-  
-  Widget _buildActionButton({
+
+  Widget _buildEnhancedActionButton({
     required IconData icon,
     required String label,
     required VoidCallback onTap,
@@ -166,23 +239,43 @@ class _CityImageGalleryState extends State<CityImageGallery>
         HapticFeedback.lightImpact();
         onTap();
       },
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: isDestructive
-              ? AppTheme.error.withOpacity(0.1)
+          gradient: isDestructive
+              ? LinearGradient(
+                  colors: [
+                    AppTheme.error.withValues(alpha: 0.15),
+                    AppTheme.error.withValues(alpha: 0.08),
+                  ],
+                )
               : isActive
-                  ? AppTheme.primaryBlue.withOpacity(0.1)
-                  : AppTheme.darkCard.withOpacity(0.5),
+                  ? AppTheme.primaryGradient.scale(0.1)
+                  : null,
+          color: !isDestructive && !isActive
+              ? AppTheme.darkCard.withValues(alpha: 0.5)
+              : null,
           border: Border.all(
             color: isDestructive
-                ? AppTheme.error.withOpacity(0.3)
+                ? AppTheme.error.withValues(alpha: 0.3)
                 : isActive
-                    ? AppTheme.primaryBlue.withOpacity(0.3)
-                    : AppTheme.darkBorder.withOpacity(0.2),
-            width: 0.5,
+                    ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+                    : AppTheme.darkBorder.withValues(alpha: 0.2),
+            width: 1,
           ),
+          boxShadow: isActive || isDestructive
+              ? [
+                  BoxShadow(
+                    color:
+                        (isDestructive ? AppTheme.error : AppTheme.primaryBlue)
+                            .withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -205,7 +298,7 @@ class _CityImageGalleryState extends State<CityImageGallery>
                     : isActive
                         ? AppTheme.primaryBlue
                         : AppTheme.textMuted,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -213,73 +306,107 @@ class _CityImageGalleryState extends State<CityImageGallery>
       ),
     );
   }
-  
-  Widget _buildUploadArea() {
-    return GestureDetector(
-      onTap: _showImagePickerOptions,
-      child: Container(
-        height: 120,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: AppTheme.darkCard.withOpacity(0.3),
-        ),
-        child: DottedBorder(
-          borderType: BorderType.RRect,
-          radius: const Radius.circular(20),
-          color: AppTheme.primaryBlue.withOpacity(0.3),
-          strokeWidth: 1.5,
-          dashPattern: const [8, 4],
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        AppTheme.primaryBlue.withOpacity(0.2),
-                        AppTheme.primaryPurple.withOpacity(0.2),
-                      ],
-                    ),
+
+  Widget _buildEnhancedUploadArea() {
+    return AnimatedBuilder(
+      animation: _pulseController,
+      builder: (context, child) {
+        return GestureDetector(
+          onTap: _showImagePickerOptions,
+          child: Container(
+            height: 120,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryBlue.withValues(
+                    alpha: 0.1 * _pulseController.value,
                   ),
-                  child: Icon(
-                    Icons.add_photo_alternate_outlined,
-                    color: AppTheme.primaryBlue,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'إضافة صور',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppTheme.textLight,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'PNG, JPG • Max 10MB',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppTheme.textMuted.withOpacity(0.5),
-                  ),
+                  blurRadius: 20,
+                  spreadRadius: 2,
                 ),
               ],
             ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: DottedBorder(
+                  borderType: BorderType.RRect,
+                  radius: const Radius.circular(20),
+                  color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                  strokeWidth: 1.5,
+                  dashPattern: const [8, 4],
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppTheme.primaryBlue.withValues(alpha: 0.05),
+                          AppTheme.primaryPurple.withValues(alpha: 0.03),
+                        ],
+                      ),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              gradient: AppTheme.primaryGradient,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primaryBlue
+                                      .withValues(alpha: 0.3),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.add_photo_alternate_outlined,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'إضافة صور',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppTheme.textWhite,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'PNG, JPG • Max 10MB',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppTheme.textMuted.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
-  
-  Widget _buildImagesGrid() {
+
+  Widget _buildEnhancedImagesGrid() {
     return AnimationLimiter(
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: _getGridCrossAxisCount(context),
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
           childAspectRatio: 1,
@@ -289,11 +416,11 @@ class _CityImageGalleryState extends State<CityImageGallery>
           return AnimationConfiguration.staggeredGrid(
             position: index,
             duration: const Duration(milliseconds: 375),
-            columnCount: 4,
+            columnCount: _getGridCrossAxisCount(context),
             child: ScaleAnimation(
               scale: 0.95,
               child: FadeInAnimation(
-                child: _buildImageItem(index),
+                child: _buildEnhancedImageItem(index),
               ),
             ),
           );
@@ -301,15 +428,23 @@ class _CityImageGalleryState extends State<CityImageGallery>
       ),
     );
   }
-  
-  Widget _buildImageItem(int index) {
+
+  int _getGridCrossAxisCount(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width < 350) return 3;
+    if (width < 500) return 4;
+    return 5;
+  }
+
+  Widget _buildEnhancedImageItem(int index) {
     final isSelected = _selectedIndices.contains(index);
     final isPrimary = index == _primaryImageIndex;
     final imagePath = _localImages[index];
     final isNetworkImage = imagePath.startsWith('http');
-    
+
     return GestureDetector(
       onTap: () {
+        HapticFeedback.lightImpact();
         if (_isSelectionMode) {
           setState(() {
             if (isSelected) {
@@ -330,23 +465,24 @@ class _CityImageGalleryState extends State<CityImageGallery>
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
+        transform: Matrix4.identity()..scale(isSelected ? 0.95 : 1.0),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? AppTheme.primaryBlue.withOpacity(0.6)
+                ? AppTheme.primaryBlue
                 : isPrimary
-                    ? AppTheme.warning.withOpacity(0.5)
-                    : AppTheme.darkBorder.withOpacity(0.2),
-            width: isSelected || isPrimary ? 2 : 0.5,
+                    ? AppTheme.warning.withValues(alpha: 0.6)
+                    : AppTheme.darkBorder.withValues(alpha: 0.2),
+            width: isSelected || isPrimary ? 2 : 1,
           ),
           boxShadow: [
             if (isSelected || isPrimary)
               BoxShadow(
                 color: isSelected
-                    ? AppTheme.primaryBlue.withOpacity(0.3)
-                    : AppTheme.warning.withOpacity(0.3),
-                blurRadius: 10,
+                    ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+                    : AppTheme.warning.withValues(alpha: 0.2),
+                blurRadius: 15,
                 spreadRadius: 1,
               ),
           ],
@@ -356,18 +492,25 @@ class _CityImageGalleryState extends State<CityImageGallery>
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Image
+              // Enhanced image display
               isNetworkImage
                   ? CachedNetworkImage(
                       imageUrl: imagePath,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
-                        color: AppTheme.darkCard,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppTheme.darkCard,
+                              AppTheme.darkCard.withValues(alpha: 0.8),
+                            ],
+                          ),
+                        ),
                         child: Center(
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              AppTheme.primaryBlue.withOpacity(0.5),
+                              AppTheme.primaryBlue.withValues(alpha: 0.5),
                             ),
                           ),
                         ),
@@ -376,7 +519,7 @@ class _CityImageGalleryState extends State<CityImageGallery>
                         color: AppTheme.darkCard,
                         child: Icon(
                           Icons.error_outline,
-                          color: AppTheme.error.withOpacity(0.5),
+                          color: AppTheme.error.withValues(alpha: 0.5),
                         ),
                       ),
                     )
@@ -388,13 +531,13 @@ class _CityImageGalleryState extends State<CityImageGallery>
                           color: AppTheme.darkCard,
                           child: Icon(
                             Icons.error_outline,
-                            color: AppTheme.error.withOpacity(0.5),
+                            color: AppTheme.error.withValues(alpha: 0.5),
                           ),
                         );
                       },
                     ),
-              
-              // Overlay gradient
+
+              // Enhanced overlay gradient
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -402,13 +545,14 @@ class _CityImageGalleryState extends State<CityImageGallery>
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.5),
+                      Colors.black.withValues(alpha: 0.6),
                     ],
+                    stops: const [0.6, 1.0],
                   ),
                 ),
               ),
-              
-              // Primary badge
+
+              // Enhanced primary badge
               if (isPrimary)
                 Positioned(
                   top: 8,
@@ -419,13 +563,25 @@ class _CityImageGalleryState extends State<CityImageGallery>
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.warning,
+                          AppTheme.warning.withValues(alpha: 0.8),
+                        ],
+                      ),
                       borderRadius: BorderRadius.circular(8),
-                      color: AppTheme.warning.withOpacity(0.9),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.warning.withValues(alpha: 0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.star_rounded,
                           color: Colors.white,
                           size: 12,
@@ -443,27 +599,38 @@ class _CityImageGalleryState extends State<CityImageGallery>
                     ),
                   ),
                 ),
-              
-              // Selection checkbox
+
+              // Enhanced selection checkbox
               if (_isSelectionMode)
                 Positioned(
                   top: 8,
                   right: 8,
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
+                      gradient: isSelected ? AppTheme.primaryGradient : null,
                       color: isSelected
-                          ? AppTheme.primaryBlue
-                          : AppTheme.darkCard.withOpacity(0.8),
+                          ? null
+                          : AppTheme.darkCard.withValues(alpha: 0.8),
+                      shape: BoxShape.circle,
                       border: Border.all(
                         color: Colors.white,
                         width: 2,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isSelected
+                              ? AppTheme.primaryBlue.withValues(alpha: 0.4)
+                              : Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: isSelected
-                        ? Icon(
+                        ? const Icon(
                             Icons.check_rounded,
                             color: Colors.white,
                             size: 14,
@@ -471,18 +638,34 @@ class _CityImageGalleryState extends State<CityImageGallery>
                         : null,
                   ),
                 ),
-              
-              // Upload progress
+
+              // Upload progress with better design
               if (_uploadProgress.containsKey(imagePath))
                 Positioned.fill(
                   child: Container(
-                    color: Colors.black.withOpacity(0.7),
+                    decoration: BoxDecoration(
+                      color: AppTheme.darkBackground.withValues(alpha: 0.8),
+                    ),
                     child: Center(
-                      child: CircularProgressIndicator(
-                        value: _uploadProgress[imagePath],
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppTheme.primaryBlue,
-                        ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            value: _uploadProgress[imagePath],
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppTheme.primaryBlue,
+                            ),
+                            strokeWidth: 3,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${(_uploadProgress[imagePath]! * 100).toInt()}%',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppTheme.primaryBlue,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -493,13 +676,22 @@ class _CityImageGalleryState extends State<CityImageGallery>
       ),
     );
   }
-  
-  Widget _buildEmptyState() {
+
+  Widget _buildEnhancedEmptyState() {
     return Container(
       height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: AppTheme.darkCard.withOpacity(0.2),
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withValues(alpha: 0.3),
+            AppTheme.darkCard.withValues(alpha: 0.1),
+          ],
+        ),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.1),
+          width: 1,
+        ),
       ),
       child: Center(
         child: Column(
@@ -507,15 +699,22 @@ class _CityImageGalleryState extends State<CityImageGallery>
           children: [
             Icon(
               Icons.image_not_supported_outlined,
-              color: AppTheme.textMuted.withOpacity(0.3),
+              color: AppTheme.textMuted.withValues(alpha: 0.3),
               size: 48,
             ),
             const SizedBox(height: 16),
             Text(
               'لا توجد صور',
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppTheme.textMuted.withOpacity(0.5),
-                fontWeight: FontWeight.w300,
+                color: AppTheme.textMuted.withValues(alpha: 0.5),
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'لم يتم إضافة أي صور بعد',
+              style: AppTextStyles.caption.copyWith(
+                color: AppTheme.textMuted.withValues(alpha: 0.3),
               ),
             ),
           ],
@@ -523,12 +722,13 @@ class _CityImageGalleryState extends State<CityImageGallery>
       ),
     );
   }
-  
+
+  // باقي الدوال كما هي مع تحسينات طفيفة...
   void _showImagePickerOptions() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => _ImagePickerSheet(
+      builder: (context) => _EnhancedImagePickerSheet(
         onCameraSelected: () {
           Navigator.pop(context);
           _pickImage(ImageSource.camera);
@@ -544,14 +744,14 @@ class _CityImageGalleryState extends State<CityImageGallery>
       ),
     );
   }
-  
+
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
         imageQuality: 85,
       );
-      
+
       if (image != null) {
         setState(() {
           _localImages.add(image.path);
@@ -565,17 +765,17 @@ class _CityImageGalleryState extends State<CityImageGallery>
       // Handle error
     }
   }
-  
+
   Future<void> _pickMultipleImages() async {
     try {
       final List<XFile> images = await _picker.pickMultiImage(
         imageQuality: 85,
       );
-      
+
       if (images.isNotEmpty) {
         final remainingSlots = widget.maxImages - _localImages.length;
         final imagesToAdd = images.take(remainingSlots).toList();
-        
+
         if (imagesToAdd.isNotEmpty) {
           setState(() {
             _localImages.addAll(imagesToAdd.map((img) => img.path));
@@ -590,12 +790,12 @@ class _CityImageGalleryState extends State<CityImageGallery>
       // Handle error
     }
   }
-  
+
   void _showImageOptions(int index) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => _ImageOptionsSheet(
+      builder: (context) => _EnhancedImageOptionsSheet(
         isPrimary: index == _primaryImageIndex,
         onSetPrimary: () {
           Navigator.pop(context);
@@ -614,7 +814,7 @@ class _CityImageGalleryState extends State<CityImageGallery>
       ),
     );
   }
-  
+
   void _deleteImage(int index) {
     setState(() {
       _localImages.removeAt(index);
@@ -626,24 +826,26 @@ class _CityImageGalleryState extends State<CityImageGallery>
     });
     widget.onImagesChanged(_localImages);
   }
-  
+
   void _deleteSelectedImages() {
-    final sortedIndices = _selectedIndices.toList()..sort((a, b) => b.compareTo(a));
+    final sortedIndices = _selectedIndices.toList()
+      ..sort((a, b) => b.compareTo(a));
     for (var index in sortedIndices) {
       _localImages.removeAt(index);
     }
-    
+
     setState(() {
       _selectedIndices.clear();
       _isSelectionMode = false;
-      if (_primaryImageIndex != null && _primaryImageIndex! >= _localImages.length) {
+      if (_primaryImageIndex != null &&
+          _primaryImageIndex! >= _localImages.length) {
         _primaryImageIndex = _localImages.isEmpty ? null : 0;
       }
     });
-    
+
     widget.onImagesChanged(_localImages);
   }
-  
+
   void _previewImage(String imagePath) {
     Navigator.of(context).push(
       PageRouteBuilder(
@@ -651,7 +853,7 @@ class _CityImageGalleryState extends State<CityImageGallery>
         pageBuilder: (context, animation, secondaryAnimation) {
           return FadeTransition(
             opacity: animation,
-            child: _ImagePreview(imagePath: imagePath),
+            child: _EnhancedImagePreview(imagePath: imagePath),
           );
         },
       ),
@@ -659,235 +861,354 @@ class _CityImageGalleryState extends State<CityImageGallery>
   }
 }
 
-// Supporting Widgets
+// Enhanced Supporting Widgets
 
-class _ImagePickerSheet extends StatelessWidget {
+class _EnhancedImagePickerSheet extends StatelessWidget {
   final VoidCallback onCameraSelected;
   final VoidCallback onGallerySelected;
   final VoidCallback onMultipleSelected;
-  
-  const _ImagePickerSheet({
+
+  const _EnhancedImagePickerSheet({
     required this.onCameraSelected,
     required this.onGallerySelected,
     required this.onMultipleSelected,
   });
-  
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppTheme.darkCard,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppTheme.darkBorder.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(2),
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppTheme.darkCard.withValues(alpha: 0.95),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border(
+              top: BorderSide(
+                color: AppTheme.darkBorder.withValues(alpha: 0.2),
+              ),
             ),
           ),
-          const SizedBox(height: 24),
-          _buildOption(
-            icon: Icons.camera_alt_outlined,
-            title: 'الكاميرا',
-            onTap: onCameraSelected,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildEnhancedOption(
+                icon: Icons.camera_alt_outlined,
+                title: 'الكاميرا',
+                subtitle: 'التقط صورة جديدة',
+                gradient: [AppTheme.primaryBlue, AppTheme.primaryCyan],
+                onTap: onCameraSelected,
+              ),
+              const SizedBox(height: 12),
+              _buildEnhancedOption(
+                icon: Icons.photo_outlined,
+                title: 'صورة واحدة',
+                subtitle: 'اختر صورة من المعرض',
+                gradient: [AppTheme.primaryPurple, AppTheme.primaryViolet],
+                onTap: onGallerySelected,
+              ),
+              const SizedBox(height: 12),
+              _buildEnhancedOption(
+                icon: Icons.collections_outlined,
+                title: 'عدة صور',
+                subtitle: 'اختر عدة صور دفعة واحدة',
+                gradient: [AppTheme.success, AppTheme.neonGreen],
+                onTap: onMultipleSelected,
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          _buildOption(
-            icon: Icons.photo_outlined,
-            title: 'صورة واحدة',
-            onTap: onGallerySelected,
-          ),
-          const SizedBox(height: 12),
-          _buildOption(
-            icon: Icons.collections_outlined,
-            title: 'عدة صور',
-            onTap: onMultipleSelected,
-          ),
-        ],
+        ),
       ),
     );
   }
-  
-  Widget _buildOption({
+
+  Widget _buildEnhancedOption({
     required IconData icon,
     required String title,
+    required String subtitle,
+    required List<Color> gradient,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: AppTheme.inputBackground.withOpacity(0.3),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: AppTheme.primaryBlue,
-              size: 24,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              colors: gradient.map((c) => c.withValues(alpha: 0.05)).toList(),
             ),
-            const SizedBox(width: 16),
-            Text(
-              title,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppTheme.textWhite,
+            border: Border.all(
+              color: gradient.first.withValues(alpha: 0.2),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: gradient),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: gradient.first.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
-            ),
-            const Spacer(),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: AppTheme.textMuted.withOpacity(0.5),
-              size: 16,
-            ),
-          ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppTheme.textWhite,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: AppTheme.textMuted.withValues(alpha: 0.5),
+                size: 16,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _ImageOptionsSheet extends StatelessWidget {
+class _EnhancedImageOptionsSheet extends StatelessWidget {
   final bool isPrimary;
   final VoidCallback onSetPrimary;
   final VoidCallback onDelete;
   final VoidCallback onView;
-  
-  const _ImageOptionsSheet({
+
+  const _EnhancedImageOptionsSheet({
     required this.isPrimary,
     required this.onSetPrimary,
     required this.onDelete,
     required this.onView,
   });
-  
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppTheme.darkCard,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppTheme.darkBorder.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(2),
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppTheme.darkCard.withValues(alpha: 0.95),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border(
+              top: BorderSide(
+                color: AppTheme.darkBorder.withValues(alpha: 0.2),
+              ),
             ),
           ),
-          const SizedBox(height: 24),
-          _buildOption(
-            icon: Icons.visibility_outlined,
-            title: 'عرض الصورة',
-            onTap: onView,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildOption(
+                icon: Icons.visibility_outlined,
+                title: 'عرض الصورة',
+                onTap: onView,
+              ),
+              if (!isPrimary) ...[
+                const SizedBox(height: 12),
+                _buildOption(
+                  icon: Icons.star_outline_rounded,
+                  title: 'تعيين كصورة رئيسية',
+                  onTap: onSetPrimary,
+                  color: AppTheme.warning,
+                ),
+              ],
+              const SizedBox(height: 12),
+              _buildOption(
+                icon: Icons.delete_outline_rounded,
+                title: 'حذف الصورة',
+                onTap: onDelete,
+                color: AppTheme.error,
+              ),
+            ],
           ),
-          if (!isPrimary) ...[
-            const SizedBox(height: 12),
-            _buildOption(
-              icon: Icons.star_outline_rounded,
-              title: 'تعيين كصورة رئيسية',
-              onTap: onSetPrimary,
-              color: AppTheme.warning,
-            ),
-          ],
-          const SizedBox(height: 12),
-          _buildOption(
-            icon: Icons.delete_outline_rounded,
-            title: 'حذف الصورة',
-            onTap: onDelete,
-            color: AppTheme.error,
-          ),
-        ],
+        ),
       ),
     );
   }
-  
+
   Widget _buildOption({
     required IconData icon,
     required String title,
     required VoidCallback onTap,
     Color? color,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: color?.withOpacity(0.1) ?? AppTheme.inputBackground.withOpacity(0.3),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: color ?? AppTheme.primaryBlue,
-              size: 24,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              colors: [
+                (color ?? AppTheme.primaryBlue).withValues(alpha: 0.1),
+                (color ?? AppTheme.primaryBlue).withValues(alpha: 0.05),
+              ],
             ),
-            const SizedBox(width: 16),
-            Text(
-              title,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: color ?? AppTheme.textWhite,
+            border: Border.all(
+              color: (color ?? AppTheme.primaryBlue).withValues(alpha: 0.2),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: color ?? AppTheme.primaryBlue,
+                size: 24,
               ),
-            ),
-          ],
+              const SizedBox(width: 16),
+              Text(
+                title,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: color ?? AppTheme.textWhite,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _ImagePreview extends StatelessWidget {
+class _EnhancedImagePreview extends StatelessWidget {
   final String imagePath;
-  
-  const _ImagePreview({required this.imagePath});
-  
+
+  const _EnhancedImagePreview({required this.imagePath});
+
   @override
   Widget build(BuildContext context) {
     final isNetworkImage = imagePath.startsWith('http');
-    
+
     return Scaffold(
       backgroundColor: Colors.black87,
       body: Stack(
         children: [
-          Center(
-            child: isNetworkImage
-                ? CachedNetworkImage(
-                    imageUrl: imagePath,
-                    fit: BoxFit.contain,
-                  )
-                : Image.file(
-                    File(imagePath),
-                    fit: BoxFit.contain,
-                  ),
+          // Blurred background
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.5),
+            ),
           ),
+
+          // Image
+          Center(
+            child: Hero(
+              tag: imagePath,
+              child: isNetworkImage
+                  ? CachedNetworkImage(
+                      imageUrl: imagePath,
+                      fit: BoxFit.contain,
+                    )
+                  : Image.file(
+                      File(imagePath),
+                      fit: BoxFit.contain,
+                    ),
+            ),
+          ),
+
+          // Close button with glassmorphism
           Positioned(
             top: 50,
             right: 20,
             child: GestureDetector(
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                HapticFeedback.lightImpact();
+                Navigator.pop(context);
+              },
               child: Container(
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: AppTheme.darkCard.withOpacity(0.7),
+                  color: AppTheme.darkCard.withValues(alpha: 0.7),
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 24,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
               ),
             ),
