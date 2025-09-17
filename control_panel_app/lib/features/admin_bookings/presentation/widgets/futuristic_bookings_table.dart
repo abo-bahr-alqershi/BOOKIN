@@ -55,11 +55,9 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
               child: Column(
                 children: [
                   _buildHeader(isCompact),
-                  Expanded(
-                    child: isCompact
-                        ? _buildCompactView()
-                        : _buildTableView(constraints),
-                  ),
+                  isCompact
+                      ? _buildCompactView()
+                      : _buildTableView(constraints),
                 ],
               ),
             ),
@@ -201,6 +199,8 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
   Widget _buildCompactView() {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: widget.bookings.length,
       itemBuilder: (context, index) {
         final booking = widget.bookings[index];
@@ -352,13 +352,13 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
         child: Column(
           children: [
             _buildTableHeader(),
-            Expanded(
-              child: ListView.builder(
-                itemCount: widget.bookings.length,
-                itemBuilder: (context, index) {
-                  return _buildTableRow(index, widget.bookings[index]);
-                },
-              ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: widget.bookings.length,
+              itemBuilder: (context, index) {
+                return _buildTableRow(index, widget.bookings[index]);
+              },
             ),
           ],
         ),
