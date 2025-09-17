@@ -21,17 +21,17 @@ class _AdminHubPageState extends State<AdminHubPage>
   late AnimationController _mainAnimationController;
   late AnimationController _floatingAnimationController;
   late AnimationController _pulseAnimationController;
-  
+
   // Animations
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
-  
+
   // UI State
   final ScrollController _scrollController = ScrollController();
   bool _showFloatingHeader = false;
   int? _hoveredCardIndex;
-  
+
   // Stats Data (Should be fetched from backend)
   final Map<String, dynamic> _stats = {
     'properties': 156,
@@ -55,19 +55,19 @@ class _AdminHubPageState extends State<AdminHubPage>
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     // Floating animation for background elements
     _floatingAnimationController = AnimationController(
       duration: const Duration(seconds: 4),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     // Pulse animation for interactive elements
     _pulseAnimationController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     // Setup animations
     _fadeAnimation = Tween<double>(
       begin: 0.0,
@@ -76,7 +76,7 @@ class _AdminHubPageState extends State<AdminHubPage>
       parent: _mainAnimationController,
       curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
     ));
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.2),
       end: Offset.zero,
@@ -84,7 +84,7 @@ class _AdminHubPageState extends State<AdminHubPage>
       parent: _mainAnimationController,
       curve: const Interval(0.2, 0.7, curve: Curves.easeOutCubic),
     ));
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.8,
       end: 1.0,
@@ -92,11 +92,11 @@ class _AdminHubPageState extends State<AdminHubPage>
       parent: _mainAnimationController,
       curve: const Interval(0.3, 0.8, curve: Curves.easeOutBack),
     ));
-    
+
     // Start animations
     _mainAnimationController.forward();
   }
-  
+
   void _setupScrollListener() {
     _scrollController.addListener(() {
       final shouldShow = _scrollController.offset > 200;
@@ -122,14 +122,14 @@ class _AdminHubPageState extends State<AdminHubPage>
     final size = MediaQuery.of(context).size;
     final isTablet = size.width > 600;
     final isDesktop = size.width > 1200;
-    
+
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: Stack(
         children: [
           // Animated Background
           _buildAnimatedBackground(),
-          
+
           // Main Content
           CustomScrollView(
             controller: _scrollController,
@@ -137,7 +137,7 @@ class _AdminHubPageState extends State<AdminHubPage>
             slivers: [
               // Premium App Bar
               _buildPremiumAppBar(context, isDesktop),
-              
+
               // Hero Section
               SliverToBoxAdapter(
                 child: FadeTransition(
@@ -148,7 +148,7 @@ class _AdminHubPageState extends State<AdminHubPage>
                   ),
                 ),
               ),
-              
+
               // Quick Stats
               SliverToBoxAdapter(
                 child: FadeTransition(
@@ -159,7 +159,7 @@ class _AdminHubPageState extends State<AdminHubPage>
                   ),
                 ),
               ),
-              
+
               // Admin Features Grid
               SliverPadding(
                 padding: EdgeInsets.symmetric(
@@ -170,17 +170,17 @@ class _AdminHubPageState extends State<AdminHubPage>
                   child: _buildAdminFeaturesSection(isDesktop, isTablet),
                 ),
               ),
-              
+
               // Bottom Padding
               const SliverToBoxAdapter(
                 child: SizedBox(height: 100),
               ),
             ],
           ),
-          
+
           // Floating Header
           if (_showFloatingHeader) _buildFloatingHeader(context),
-          
+
           // Floating Action Button
           if (_showFloatingHeader) _buildFloatingActionButton(),
         ],
@@ -205,7 +205,7 @@ class _AdminHubPageState extends State<AdminHubPage>
             ),
           ),
         ),
-        
+
         // Animated Orbs
         AnimatedBuilder(
           animation: _floatingAnimationController,
@@ -231,7 +231,7 @@ class _AdminHubPageState extends State<AdminHubPage>
                     ),
                   ),
                 ),
-                
+
                 // Bottom Left Orb
                 Positioned(
                   bottom: -200 + (20 * _floatingAnimationController.value),
@@ -251,7 +251,7 @@ class _AdminHubPageState extends State<AdminHubPage>
                     ),
                   ),
                 ),
-                
+
                 // Center Orb
                 Positioned(
                   top: MediaQuery.of(context).size.height * 0.5,
@@ -278,7 +278,7 @@ class _AdminHubPageState extends State<AdminHubPage>
             );
           },
         ),
-        
+
         // Subtle Grid Pattern
         CustomPaint(
           size: MediaQuery.of(context).size,
@@ -344,9 +344,10 @@ class _AdminHubPageState extends State<AdminHubPage>
             ),
           ),
           const SizedBox(width: 16),
-          
+
           // Title
-          Expanded( // Fix overflow issue
+          Expanded(
+            // Fix overflow issue
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -375,17 +376,17 @@ class _AdminHubPageState extends State<AdminHubPage>
           icon: Icons.search_rounded,
           onTap: () => _showSearchDialog(context),
         ),
-        
+
         // Notifications
         _buildAppBarAction(
           icon: Icons.notifications_none_rounded,
           onTap: () => context.push('/notifications'),
           badge: '3',
         ),
-        
+
         // Profile
         Padding(
-          padding: const EdgeInsets.only(right: 8,left: 8),
+          padding: const EdgeInsets.only(right: 8, left: 8),
           child: GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
@@ -491,7 +492,7 @@ class _AdminHubPageState extends State<AdminHubPage>
     final hour = DateTime.now().hour;
     String greeting;
     IconData greetingIcon;
-    
+
     if (hour < 12) {
       greeting = 'صباح الخير';
       greetingIcon = Icons.wb_sunny_outlined;
@@ -502,7 +503,7 @@ class _AdminHubPageState extends State<AdminHubPage>
       greeting = 'مساء الخير';
       greetingIcon = Icons.nights_stay_outlined;
     }
-    
+
     return Container(
       margin: EdgeInsets.symmetric(
         horizontal: isDesktop ? 32 : 20,
@@ -585,9 +586,9 @@ class _AdminHubPageState extends State<AdminHubPage>
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 12),
-                    
+
                     // Welcome Message
                     Text(
                       'مرحباً بك في لوحة التحكم الخاصة بك',
@@ -595,9 +596,9 @@ class _AdminHubPageState extends State<AdminHubPage>
                         color: AppTheme.textLight,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 6),
-                    
+
                     // Last Login
                     Row(
                       children: [
@@ -615,9 +616,9 @@ class _AdminHubPageState extends State<AdminHubPage>
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 20),
-                    
+
                     // Quick Actions
                     Row(
                       children: [
@@ -638,8 +639,8 @@ class _AdminHubPageState extends State<AdminHubPage>
                   ],
                 ),
               ),
-              
-              if (!isTablet) const SizedBox.shrink()
+              if (!isTablet)
+                const SizedBox.shrink()
               else ...[
                 const SizedBox(width: 32),
                 // Decorative Element
@@ -647,7 +648,8 @@ class _AdminHubPageState extends State<AdminHubPage>
                   animation: _floatingAnimationController,
                   builder: (context, child) {
                     return Transform.translate(
-                      offset: Offset(0, 10 * _floatingAnimationController.value),
+                      offset:
+                          Offset(0, 10 * _floatingAnimationController.value),
                       child: Container(
                         width: isDesktop ? 120 : 100,
                         height: isDesktop ? 120 : 100,
@@ -784,7 +786,7 @@ class _AdminHubPageState extends State<AdminHubPage>
         isPositive: true,
       ),
     ];
-    
+
     return Container(
       margin: EdgeInsets.symmetric(
         horizontal: isDesktop ? 32 : 20,
@@ -795,7 +797,7 @@ class _AdminHubPageState extends State<AdminHubPage>
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: isDesktop ? 6 : (isTablet ? 3 : 2),
-            childAspectRatio: isDesktop ? 1.3 : 1.2,
+            childAspectRatio: isDesktop ? 1.4 : 1.3,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),
@@ -820,9 +822,12 @@ class _AdminHubPageState extends State<AdminHubPage>
   Widget _buildStatCard(_StatItem stat) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isCompact = constraints.maxHeight < 80 || constraints.maxWidth < 120;
+        final isCompact =
+            constraints.maxHeight < 100 || constraints.maxWidth < 120;
+        final isVeryCompact = constraints.maxHeight < 80;
+
         return Container(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(isVeryCompact ? 12 : 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             gradient: LinearGradient(
@@ -853,110 +858,123 @@ class _AdminHubPageState extends State<AdminHubPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Icon and Trend
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        width: isCompact ? 36 : 40,
-                        height: isCompact ? 36 : 40,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: stat.gradient),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: stat.gradient[0].withOpacity(0.3),
-                              blurRadius: 12,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          stat.icon,
-                          color: Colors.white,
-                          size: isCompact ? 18 : 20,
-                        ),
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isCompact ? 6 : 8,
-                          vertical: isCompact ? 3 : 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: stat.isPositive
-                              ? AppTheme.success.withOpacity(0.1)
-                              : AppTheme.error.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: stat.isPositive
-                                ? AppTheme.success.withOpacity(0.3)
-                                : AppTheme.error.withOpacity(0.3),
-                            width: 0.5,
+                  // Icon and Trend - جعله flexible
+                  Flexible(
+                    flex: isVeryCompact ? 2 : 1,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          width: isVeryCompact ? 28 : (isCompact ? 32 : 36),
+                          height: isVeryCompact ? 28 : (isCompact ? 32 : 36),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(colors: stat.gradient),
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: stat.gradient[0].withOpacity(0.3),
+                                blurRadius: 12,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            stat.icon,
+                            color: Colors.white,
+                            size: isVeryCompact ? 14 : (isCompact ? 16 : 18),
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              stat.isPositive
-                                  ? Icons.trending_up_rounded
-                                  : Icons.trending_down_rounded,
-                              color: stat.isPositive
-                                  ? AppTheme.success
-                                  : AppTheme.error,
-                              size: isCompact ? 10 : 12,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              stat.trend,
-                              style: AppTextStyles.caption.copyWith(
+                        if (!isVeryCompact) // إخفاء الترند في المساحات الصغيرة جداً
+                          Flexible(
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isCompact ? 4 : 6,
+                                vertical: isCompact ? 2 : 3,
+                              ),
+                              decoration: BoxDecoration(
                                 color: stat.isPositive
-                                    ? AppTheme.success
-                                    : AppTheme.error,
-                                fontWeight: FontWeight.w600,
-                                fontSize: isCompact ? 10 : null,
+                                    ? AppTheme.success.withOpacity(0.1)
+                                    : AppTheme.error.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: stat.isPositive
+                                      ? AppTheme.success.withOpacity(0.3)
+                                      : AppTheme.error.withOpacity(0.3),
+                                  width: 0.5,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    stat.isPositive
+                                        ? Icons.trending_up_rounded
+                                        : Icons.trending_down_rounded,
+                                    color: stat.isPositive
+                                        ? AppTheme.success
+                                        : AppTheme.error,
+                                    size: isCompact ? 8 : 10,
+                                  ),
+                                  const SizedBox(width: 1),
+                                  Flexible(
+                                    child: Text(
+                                      stat.trend,
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: stat.isPositive
+                                            ? AppTheme.success
+                                            : AppTheme.error,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: isCompact ? 8 : 9,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
+                          ),
+                      ],
+                    ),
                   ),
-                  
-                  SizedBox(height: isCompact ? 8 : 12),
-                  
-                  // Value and Label
-                  Flexible(
-                    fit: FlexFit.loose,
+
+                  // Value and Label - استخدام Expanded
+                  Expanded(
+                    flex: 2,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: TweenAnimationBuilder<double>(
-                            tween: Tween(begin: 0, end: 1),
-                            duration: const Duration(milliseconds: 1000),
-                            curve: Curves.easeOutCubic,
-                            builder: (context, value, child) {
-                              return Text(
-                                stat.value,
-                                style: AppTextStyles.heading2.copyWith(
-                                  color: AppTheme.textWhite,
-                                  fontSize: isCompact ? 16 : 20,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              );
-                            },
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0, end: 1),
+                              duration: const Duration(milliseconds: 1000),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, value, child) {
+                                return Text(
+                                  stat.value,
+                                  style: AppTextStyles.heading2.copyWith(
+                                    color: AppTheme.textWhite,
+                                    fontSize: isVeryCompact
+                                        ? 14
+                                        : (isCompact ? 16 : 18),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                );
+                              },
+                            ),
                           ),
                         ),
-                        SizedBox(height: isCompact ? 0 : 2),
+                        const SizedBox(height: 2),
                         Text(
                           stat.label,
                           style: AppTextStyles.caption.copyWith(
                             color: AppTheme.textMuted,
-                            fontSize: isCompact ? 10 : null,
+                            fontSize: isVeryCompact ? 9 : (isCompact ? 10 : 11),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1009,9 +1027,9 @@ class _AdminHubPageState extends State<AdminHubPage>
             ),
           ],
         ),
-        
+
         const SizedBox(height: 32),
-        
+
         // Features Grid
         AnimationLimiter(
           child: GridView.builder(
@@ -1019,7 +1037,11 @@ class _AdminHubPageState extends State<AdminHubPage>
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: isDesktop ? 4 : (isTablet ? 3 : 2),
-              childAspectRatio: isDesktop ? 1.15 : (isTablet ? 1.05 : 0.95), // Slightly taller on smaller screens
+              childAspectRatio: isDesktop
+                  ? 1.2
+                  : (isTablet
+                      ? 1.1
+                      : 1.0), // Slightly taller on smaller screens
               crossAxisSpacing: 20,
               mainAxisSpacing: 20,
             ),
@@ -1047,7 +1069,7 @@ class _AdminHubPageState extends State<AdminHubPage>
 
   Widget _buildFeatureCard(_AdminFeature feature, int index) {
     final isHovered = _hoveredCardIndex == index;
-    
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredCardIndex = index),
       onExit: (_) => setState(() => _hoveredCardIndex = null),
@@ -1058,8 +1080,7 @@ class _AdminHubPageState extends State<AdminHubPage>
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          transform: Matrix4.identity()
-            ..translate(0.0, isHovered ? -8.0 : 0.0),
+          transform: Matrix4.identity()..translate(0.0, isHovered ? -8.0 : 0.0),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             gradient: LinearGradient(
@@ -1121,124 +1142,147 @@ class _AdminHubPageState extends State<AdminHubPage>
                         ),
                       ),
                     ),
-                  
-                  // Content
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Icon
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: isHovered ? 52 : 48,
-                          height: isHovered ? 52 : 48,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: feature.gradient),
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [
-                              BoxShadow(
-                                color: feature.gradient[0].withOpacity(0.4),
-                                blurRadius: 16,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            feature.icon,
-                            color: Colors.white,
-                            size: isHovered ? 26 : 24,
-                          ),
-                        ),
-                        
-                        const Spacer(), // Use Spacer instead of fixed spacing
-                        
-                        // Text Content
-                        Column(
+
+                  // Content - محسّن لمنع overflow
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isCompact = constraints.maxHeight < 180;
+                      return Padding(
+                        padding: EdgeInsets.all(isCompact ? 12 : 16),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min, // Fix overflow
                           children: [
-                            Text(
-                              feature.title,
-                              style: AppTextStyles.bodyLarge.copyWith(
-                                color: AppTheme.textWhite,
-                                fontWeight: FontWeight.w600,
+                            // Icon - جزء ثابت
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: isHovered ? 48 : 44,
+                              height: isHovered ? 48 : 44,
+                              decoration: BoxDecoration(
+                                gradient:
+                                    LinearGradient(colors: feature.gradient),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: feature.gradient[0].withOpacity(0.4),
+                                    blurRadius: 16,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                feature.icon,
+                                color: Colors.white,
+                                size: isHovered ? 24 : 22,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              feature.description,
-                              style: AppTextStyles.caption.copyWith(
-                                color: AppTheme.textMuted,
-                                height: 1.2,
+
+                            // Spacer مرن
+                            const SizedBox(height: 8),
+
+                            // Text Content - مرن ومحمي من overflow
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  // Title
+                                  Flexible(
+                                    child: Text(
+                                      feature.title,
+                                      style: AppTextStyles.bodyLarge.copyWith(
+                                        color: AppTheme.textWhite,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: isCompact ? 14 : 15,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 2),
+
+                                  // Description
+                                  Flexible(
+                                    child: Text(
+                                      feature.description,
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: AppTheme.textMuted,
+                                        height: 1.2,
+                                        fontSize: isCompact ? 10 : 11,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+
+                                  // Count Badge - مخفي في المساحات الصغيرة
+                                  if (!isCompact) ...[
+                                    const SizedBox(height: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: feature.gradient[0]
+                                            .withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: feature.gradient[0]
+                                              .withOpacity(0.3),
+                                          width: 0.5,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        feature.count == null
+                                            ? '...'
+                                            : '${feature.count} عنصر',
+                                        style: AppTextStyles.caption.copyWith(
+                                          color: feature.gradient[0],
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                            
-                            // Count Badge (if available)
-                            // if (feature.count != null) ...[
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: feature.gradient[0].withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: feature.gradient[0].withOpacity(0.3),
-                                    width: 0.5,
-                                  ),
-                                ),
-                                child: feature.count == null ? Text(
-                                  '...',
-                                  style: AppTextStyles.caption.copyWith(
-                                    color: feature.gradient[0],
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ) : Text(
-                                  '${feature.count} عنصر',
-                                  style: AppTextStyles.caption.copyWith(
-                                    color: feature.gradient[0],
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            // ],
                           ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                  
+
                   // Arrow Indicator
-                  Positioned(
-                    bottom: 16,
-                    left: 16,
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity: isHovered ? 1.0 : 0.0,
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppTheme.glassLight.withOpacity(0.2),
-                          border: Border.all(
-                            color: AppTheme.glowWhite.withOpacity(0.2),
-                            width: 0.5,
+                  if (!isHovered)
+                    const SizedBox.shrink()
+                  else
+                    Positioned(
+                      bottom: 12,
+                      left: 12,
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 200),
+                        opacity: isHovered ? 1.0 : 0.0,
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppTheme.glassLight.withOpacity(0.2),
+                            border: Border.all(
+                              color: AppTheme.glowWhite.withOpacity(0.2),
+                              width: 0.5,
+                            ),
                           ),
-                        ),
-                        child: Icon(
-                          Icons.arrow_forward_rounded,
-                          color: AppTheme.textWhite,
-                          size: 16,
+                          child: const Icon(
+                            Icons.arrow_forward_rounded,
+                            color: Colors.white,
+                            size: 14,
+                          ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -1409,7 +1453,6 @@ class _AdminHubPageState extends State<AdminHubPage>
                 ),
               ),
             ),
-              
           );
         },
       ),
@@ -1425,7 +1468,7 @@ class _AdminHubPageState extends State<AdminHubPage>
     final now = DateTime.now();
     final lastLogin = now.subtract(const Duration(hours: 2));
     final difference = now.difference(lastLogin);
-    
+
     if (difference.inMinutes < 60) {
       return 'منذ ${difference.inMinutes} دقيقة';
     } else if (difference.inHours < 24) {
@@ -1437,122 +1480,122 @@ class _AdminHubPageState extends State<AdminHubPage>
 
   // Admin Features List
   List<_AdminFeature> get _adminFeatures => [
-    _AdminFeature(
-      title: 'الحجوزات',
-      description: 'إدارة الحجوزات والتقويم والتحليلات',
-      icon: Icons.event_available_rounded,
-      gradient: [AppTheme.primaryBlue, AppTheme.neonBlue],
-      onTap: () => context.push('/admin/bookings'),
-      count: _stats['bookings'],
-    ),
-    _AdminFeature(
-      title: 'العقارات',
-      description: 'إدارة جميع العقارات',
-      icon: Icons.apartment_rounded,
-      gradient: [AppTheme.primaryBlue, AppTheme.primaryCyan],
-      onTap: () => context.push('/admin/properties'),
-      count: _stats['properties'],
-    ),
-    _AdminFeature(
-      title: 'أنواع العقارات',
-      description: 'الفئات والأنواع',
-      icon: Icons.category_rounded,
-      gradient: [AppTheme.primaryViolet, AppTheme.neonPurple],
-      onTap: () => context.push('/admin/property-types'),
-    ),
-    _AdminFeature(
-      title: 'الوحدات',
-      description: 'الوحدات السكنية',
-      icon: Icons.home_work_rounded,
-      gradient: [AppTheme.neonPurple, AppTheme.neonBlue],
-      onTap: () => context.push('/admin/units'),
-    ),
-    _AdminFeature(
-      title: 'الخدمات',
-      description: 'الخدمات الإضافية',
-      icon: Icons.room_service_rounded,
-      gradient: [AppTheme.primaryCyan, AppTheme.primaryBlue],
-      onTap: () => context.push('/admin/services'),
-    ),
-    _AdminFeature(
-      title: 'المرافق',
-      description: 'مرافق العقارات',
-      icon: Icons.pool_rounded,
-      gradient: [AppTheme.primaryBlue, AppTheme.primaryPurple],
-      onTap: () => context.push('/admin/amenities'),
-    ),
-    _AdminFeature(
-      title: 'المراجعات',
-      description: 'آراء العملاء',
-      icon: Icons.reviews_rounded,
-      gradient: [AppTheme.primaryPurple, AppTheme.primaryViolet],
-      onTap: () => context.push('/admin/reviews'),
-    ),
-    _AdminFeature(
-      title: 'المدن',
-      description: 'المواقع المتاحة',
-      icon: Icons.location_city_rounded,
-      gradient: [AppTheme.primaryViolet, AppTheme.neonGreen],
-      onTap: () => context.push('/admin/cities'),
-    ),
-    _AdminFeature(
-      title: 'المستخدمون',
-      description: 'إدارة المستخدمين',
-      icon: Icons.people_alt_rounded,
-      gradient: [AppTheme.neonGreen, AppTheme.neonBlue],
-      onTap: () => context.push('/admin/users'),
-      count: _stats['users'].toInt(),
-    ),
-    _AdminFeature(
-      title: 'سجلات التدقيق',
-      description: 'أنشطة النظام',
-      icon: Icons.receipt_long_rounded,
-      gradient: [AppTheme.neonBlue, AppTheme.primaryBlue],
-      onTap: () => context.push('/admin/audit-logs'),
-    ),
-    _AdminFeature(
-      title: 'الأسعار',
-      description: 'التوفر والأسعار',
-      icon: Icons.calendar_month_rounded,
-      gradient: [AppTheme.primaryBlue, AppTheme.neonPurple],
-      onTap: () => context.push('/admin/availability-pricing'),
-    ),
-    _AdminFeature(
-      title: 'العملات',
-      description: 'إعدادات العملة',
-      icon: Icons.payments_rounded,
-      gradient: [AppTheme.warning, AppTheme.neonPurple],
-      onTap: () => context.push('/admin/currencies'),
-    ),
-    _AdminFeature(
-      title: 'المدفوعات',
-      description: 'إدارة المعاملات المالية والاستردادات',
-      icon: Icons.account_balance_wallet_rounded,
-      gradient: [AppTheme.primaryBlue, AppTheme.primaryPurple],
-      onTap: () => context.push('/admin/payments'),
-    ),
-    _AdminFeature(
-      title: 'تحليلات المدفوعات',
-      description: 'رؤى مفصلة واتجاهات الإيرادات',
-      icon: Icons.analytics_rounded,
-      gradient: [AppTheme.neonPurple, AppTheme.warning],
-      onTap: () => context.push('/admin/payments/analytics'),
-    ),
-    _AdminFeature(
-      title: 'لوحة الإيرادات',
-      description: 'نظرة شاملة على الأداء المالي',
-      icon: Icons.stacked_line_chart_rounded,
-      gradient: [AppTheme.success, AppTheme.primaryBlue],
-      onTap: () => context.push('/admin/payments/revenue-dashboard'),
-    ),
-    _AdminFeature(
-      title: 'الإعدادات',
-      description: 'إعدادات النظام',
-      icon: Icons.settings_rounded,
-      gradient: [AppTheme.primaryPurple, AppTheme.primaryCyan],
-      onTap: () => context.push('/admin/settings'),
-    ),
-  ];
+        _AdminFeature(
+          title: 'الحجوزات',
+          description: 'إدارة الحجوزات والتقويم والتحليلات',
+          icon: Icons.event_available_rounded,
+          gradient: [AppTheme.primaryBlue, AppTheme.neonBlue],
+          onTap: () => context.push('/admin/bookings'),
+          count: _stats['bookings'],
+        ),
+        _AdminFeature(
+          title: 'العقارات',
+          description: 'إدارة جميع العقارات',
+          icon: Icons.apartment_rounded,
+          gradient: [AppTheme.primaryBlue, AppTheme.primaryCyan],
+          onTap: () => context.push('/admin/properties'),
+          count: _stats['properties'],
+        ),
+        _AdminFeature(
+          title: 'أنواع العقارات',
+          description: 'الفئات والأنواع',
+          icon: Icons.category_rounded,
+          gradient: [AppTheme.primaryViolet, AppTheme.neonPurple],
+          onTap: () => context.push('/admin/property-types'),
+        ),
+        _AdminFeature(
+          title: 'الوحدات',
+          description: 'الوحدات السكنية',
+          icon: Icons.home_work_rounded,
+          gradient: [AppTheme.neonPurple, AppTheme.neonBlue],
+          onTap: () => context.push('/admin/units'),
+        ),
+        _AdminFeature(
+          title: 'الخدمات',
+          description: 'الخدمات الإضافية',
+          icon: Icons.room_service_rounded,
+          gradient: [AppTheme.primaryCyan, AppTheme.primaryBlue],
+          onTap: () => context.push('/admin/services'),
+        ),
+        _AdminFeature(
+          title: 'المرافق',
+          description: 'مرافق العقارات',
+          icon: Icons.pool_rounded,
+          gradient: [AppTheme.primaryBlue, AppTheme.primaryPurple],
+          onTap: () => context.push('/admin/amenities'),
+        ),
+        _AdminFeature(
+          title: 'المراجعات',
+          description: 'آراء العملاء',
+          icon: Icons.reviews_rounded,
+          gradient: [AppTheme.primaryPurple, AppTheme.primaryViolet],
+          onTap: () => context.push('/admin/reviews'),
+        ),
+        _AdminFeature(
+          title: 'المدن',
+          description: 'المواقع المتاحة',
+          icon: Icons.location_city_rounded,
+          gradient: [AppTheme.primaryViolet, AppTheme.neonGreen],
+          onTap: () => context.push('/admin/cities'),
+        ),
+        _AdminFeature(
+          title: 'المستخدمون',
+          description: 'إدارة المستخدمين',
+          icon: Icons.people_alt_rounded,
+          gradient: [AppTheme.neonGreen, AppTheme.neonBlue],
+          onTap: () => context.push('/admin/users'),
+          count: _stats['users'].toInt(),
+        ),
+        _AdminFeature(
+          title: 'سجلات التدقيق',
+          description: 'أنشطة النظام',
+          icon: Icons.receipt_long_rounded,
+          gradient: [AppTheme.neonBlue, AppTheme.primaryBlue],
+          onTap: () => context.push('/admin/audit-logs'),
+        ),
+        _AdminFeature(
+          title: 'الأسعار',
+          description: 'التوفر والأسعار',
+          icon: Icons.calendar_month_rounded,
+          gradient: [AppTheme.primaryBlue, AppTheme.neonPurple],
+          onTap: () => context.push('/admin/availability-pricing'),
+        ),
+        _AdminFeature(
+          title: 'العملات',
+          description: 'إعدادات العملة',
+          icon: Icons.payments_rounded,
+          gradient: [AppTheme.warning, AppTheme.neonPurple],
+          onTap: () => context.push('/admin/currencies'),
+        ),
+        _AdminFeature(
+          title: 'المدفوعات',
+          description: 'إدارة المعاملات المالية والاستردادات',
+          icon: Icons.account_balance_wallet_rounded,
+          gradient: [AppTheme.primaryBlue, AppTheme.primaryPurple],
+          onTap: () => context.push('/admin/payments'),
+        ),
+        _AdminFeature(
+          title: 'تحليلات المدفوعات',
+          description: 'رؤى مفصلة واتجاهات الإيرادات',
+          icon: Icons.analytics_rounded,
+          gradient: [AppTheme.neonPurple, AppTheme.warning],
+          onTap: () => context.push('/admin/payments/analytics'),
+        ),
+        _AdminFeature(
+          title: 'لوحة الإيرادات',
+          description: 'نظرة شاملة على الأداء المالي',
+          icon: Icons.stacked_line_chart_rounded,
+          gradient: [AppTheme.success, AppTheme.primaryBlue],
+          onTap: () => context.push('/admin/payments/revenue-dashboard'),
+        ),
+        _AdminFeature(
+          title: 'الإعدادات',
+          description: 'إعدادات النظام',
+          icon: Icons.settings_rounded,
+          gradient: [AppTheme.primaryPurple, AppTheme.primaryCyan],
+          onTap: () => context.push('/admin/settings'),
+        ),
+      ];
 }
 
 // Data Models
@@ -1617,7 +1660,7 @@ class _GridPatternPainter extends CustomPainter {
         paint,
       );
     }
-    
+
     // Draw horizontal lines
     for (double y = 0; y < size.height; y += spacing) {
       canvas.drawLine(
