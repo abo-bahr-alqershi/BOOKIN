@@ -38,9 +38,10 @@ class ConnectivityService {
   /// التحقق من حالة الاتصال
   Future<bool> checkConnection() async {
     try {
-      // التحقق من الاتصال بالإنترنت
-      final result = await InternetAddress.lookup('google.com');
-      final isConnected = result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+      // تفضيل IPv4 لتجنّب مشاكل IPv6 DNS
+      final socket = await Socket.connect('1.1.1.1', 53, timeout: const Duration(seconds: 3));
+      await socket.close();
+      final isConnected = true;
       
       if (_isConnected != isConnected) {
         _isConnected = isConnected;
@@ -75,13 +76,14 @@ class ConnectivityService {
     try {
       final stopwatch = Stopwatch()..start();
       
-      // محاولة الاتصال بخادم سريع
-      final result = await InternetAddress.lookup('8.8.8.8');
+      // قياس الجودة باستخدام IPv4 socket
+      final socket = await Socket.connect('8.8.8.8', 53, timeout: const Duration(seconds: 3));
+      await socket.close();
       stopwatch.stop();
       
       final responseTime = stopwatch.elapsedMilliseconds;
       
-      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+      if (responseTime > 0) {
         if (responseTime < 100) {
           return ConnectionQuality.excellent;
         } else if (responseTime < 300) {
@@ -120,8 +122,8 @@ class ConnectivityService {
 
     for (final server in servers) {
       try {
-        final result = await InternetAddress.lookup(server);
-        if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        final addresses = await InternetAddress.lookup(server, type: InternetAddressType.IPv4);
+        if (addresses.isNotEmpty && addresses[0].rawAddress.isNotEmpty) {
           return true;
         }
       } catch (e) {
