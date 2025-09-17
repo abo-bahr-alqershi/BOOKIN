@@ -29,7 +29,11 @@ class LoadingWidget extends StatelessWidget {
 
     switch (type) {
       case LoadingType.circular:
-        loadingIndicator = _buildCircularLoader(effectiveColor, effectiveSize);
+        loadingIndicator = _FuturisticLoading(
+          color: effectiveColor,
+          height: (effectiveSize * 5).clamp(120.0, 260.0),
+          innerSize: (effectiveSize * 2.5).clamp(80.0, 120.0),
+        );
         break;
       case LoadingType.linear:
         loadingIndicator = _buildLinearLoader(effectiveColor);
@@ -42,6 +46,13 @@ class LoadingWidget extends StatelessWidget {
         break;
       case LoadingType.dots:
         loadingIndicator = _buildDotsLoader(effectiveColor);
+        break;
+      case LoadingType.futuristic:
+        loadingIndicator = _FuturisticLoading(
+          color: effectiveColor,
+          height: (effectiveSize * 5).clamp(120.0, 260.0),
+          innerSize: (effectiveSize * 2.5).clamp(80.0, 120.0),
+        );
         break;
     }
 
@@ -165,4 +176,105 @@ enum LoadingType {
   shimmer,
   pulse,
   dots,
+  futuristic,
+}
+
+class _FuturisticLoading extends StatefulWidget {
+  final Color color;
+  final double height;
+  final double innerSize;
+
+  const _FuturisticLoading({
+    required this.color,
+    required this.height,
+    required this.innerSize,
+  });
+
+  @override
+  State<_FuturisticLoading> createState() => _FuturisticLoadingState();
+}
+
+class _FuturisticLoadingState extends State<_FuturisticLoading>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: widget.height,
+      width: double.infinity,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return CustomPaint(
+            painter: _RipplePainter(animationValue: _controller.value, color: widget.color),
+            child: Center(
+              child: Container(
+                width: widget.innerSize,
+                height: widget.innerSize,
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    colors: [
+                      widget.color.withValues(alpha: 0.3),
+                      widget.color.withValues(alpha: 0.1),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(widget.color),
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _RipplePainter extends CustomPainter {
+  final double animationValue;
+  final Color color;
+
+  _RipplePainter({required this.animationValue, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+
+    for (int i = 0; i < 3; i++) {
+      final radius = 50.0 + (i * 30) + (animationValue * 20);
+      final opacity = (1.0 - animationValue) * 0.3;
+
+      paint.color = color.withValues(alpha: opacity);
+
+      canvas.drawCircle(
+        Offset(size.width / 2, size.height / 2),
+        radius,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
