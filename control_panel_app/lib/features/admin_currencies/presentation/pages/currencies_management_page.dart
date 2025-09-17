@@ -287,10 +287,16 @@ class _CurrenciesManagementPageState extends State<CurrenciesManagementPage>
         builder: (context, state) {
           if (state is! CurrenciesLoaded) return const SizedBox.shrink();
 
-          final defaultCurrency = state.currencies.firstWhere(
-            (c) => c.isDefault,
-            orElse: () => state.currencies.first,
-          );
+          final defaultCurrency = state.currencies.isNotEmpty
+              ? state.currencies.firstWhere(
+                  (c) => c.isDefault,
+                  orElse: () => state.currencies.first,
+                )
+              : null;
+
+          if (defaultCurrency == null) {
+            return const SizedBox.shrink();
+          }
 
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

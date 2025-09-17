@@ -786,7 +786,10 @@ class AppRouter {
         GoRoute(
           path: '/admin/cities/create',
           builder: (context, state) {
-            return const CityFormPage();
+            return BlocProvider<ci_bloc.CitiesBloc>(
+              create: (_) => di.sl<ci_bloc.CitiesBloc>(),
+              child: const CityFormPage(),
+            );
           },
         ),
 
@@ -796,7 +799,10 @@ class AppRouter {
           builder: (context, state) {
             final cityId = state.pathParameters['cityId']!;
             final city = state.extra as City?;
-            return CityFormPage(city: city);
+            return BlocProvider<ci_bloc.CitiesBloc>(
+              create: (_) => di.sl<ci_bloc.CitiesBloc>(),
+              child: CityFormPage(city: city),
+            );
           },
         ),
 
