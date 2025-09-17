@@ -268,33 +268,33 @@ class _PaymentBreakdownPieChartState extends State<PaymentBreakdownPieChart>
           formattedAmount: '1,724 YER',
         ),
       ),
-      PaymentMethod.jwaliWallet: MethodAnalytics(
+      PaymentMethod.jwaliWallet: const MethodAnalytics(
         method: PaymentMethod.jwaliWallet,
         transactionCount: 98,
-        totalAmount: const Money(
+        totalAmount: Money(
           amount: 180000,
           currency: 'YER',
           formattedAmount: '180,000 YER',
         ),
         percentage: 25,
         successRate: 98,
-        averageAmount: const Money(
+        averageAmount: Money(
           amount: 1837,
           currency: 'YER',
           formattedAmount: '1,837 YER',
         ),
       ),
-      PaymentMethod.cashWallet: MethodAnalytics(
+      PaymentMethod.cashWallet: const MethodAnalytics(
         method: PaymentMethod.cashWallet,
         transactionCount: 87,
-        totalAmount: const Money(
+        totalAmount: Money(
           amount: 120000,
           currency: 'YER',
           formattedAmount: '120,000 YER',
         ),
         percentage: 20,
         successRate: 92,
-        averageAmount: const Money(
+        averageAmount: Money(
           amount: 1379,
           currency: 'YER',
           formattedAmount: '1,379 YER',
@@ -316,17 +316,17 @@ class _PaymentBreakdownPieChartState extends State<PaymentBreakdownPieChart>
           formattedAmount: '1,462 YER',
         ),
       ),
-      PaymentMethod.oneCashWallet: MethodAnalytics(
+      PaymentMethod.oneCashWallet: const MethodAnalytics(
         method: PaymentMethod.oneCashWallet,
         transactionCount: 25,
-        totalAmount: const Money(
+        totalAmount: Money(
           amount: 35000,
           currency: 'YER',
           formattedAmount: '35,000 YER',
         ),
         percentage: 5,
         successRate: 88,
-        averageAmount: const Money(
+        averageAmount: Money(
           amount: 1400,
           currency: 'YER',
           formattedAmount: '1,400 YER',
