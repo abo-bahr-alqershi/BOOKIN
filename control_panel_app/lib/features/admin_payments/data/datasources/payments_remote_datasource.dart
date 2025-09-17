@@ -145,38 +145,8 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
       }
     } on ApiException catch (e) {
       if (e.statusCode == 404) {
-        return PaymentAnalyticsModel.fromJson({
-          'summary': const PaymentSummaryModel(
-            totalTransactions: 0,
-            totalAmount: MoneyModel(
-                amount: 0, currency: 'USD', formattedAmount: 'USD 0.00'),
-            averageTransactionValue: MoneyModel(
-                amount: 0, currency: 'USD', formattedAmount: 'USD 0.00'),
-            successRate: 0,
-            successfulTransactions: 0,
-            failedTransactions: 0,
-            pendingTransactions: 0,
-            totalRefunded: MoneyModel(
-                amount: 0, currency: 'USD', formattedAmount: 'USD 0.00'),
-            refundCount: 0,
-          ).toJson(),
-          'trends': const <dynamic>[],
-          'methodAnalytics': const {},
-          'statusAnalytics': const {},
-          'refundAnalytics': const RefundAnalyticsModel(
-            totalRefunds: 0,
-            totalRefundedAmount: MoneyModel(
-                amount: 0, currency: 'USD', formattedAmount: 'USD 0.00'),
-            refundRate: 0,
-            averageRefundTime: 0,
-            refundReasons: {},
-            trends: [],
-          ).toJson(),
-          'startDate':
-              (startDate ?? DateTime.now().subtract(const Duration(days: 30)))
-                  .toIso8601String(),
-          'endDate': (endDate ?? DateTime.now()).toIso8601String(),
-        });
+        // If refund endpoint not found or payment missing, treat as failed refund
+        return false;
       }
       throw ServerException(e.message);
     } on DioException catch (e) {

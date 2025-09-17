@@ -14,6 +14,7 @@ import '../bloc/amenities/amenities_bloc.dart';
 import '../bloc/property_images/property_images_bloc.dart'; // إضافة استيراد
 import '../widgets/property_image_gallery.dart';
 import '../widgets/amenity_selector_widget.dart';
+import '../widgets/property_map_view.dart';
 import 'package:bookn_cp_app/injection_container.dart' as di;
 import '../../domain/entities/property.dart';
 import '../../domain/entities/property_type.dart';
@@ -71,6 +72,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   late AnimationController _shimmerController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late AnimationController _glowController;
   
   // Form Controllers
   final _formKey = GlobalKey<FormState>();
@@ -93,6 +95,8 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   Property? _currentProperty;
   bool _isDataLoaded = false;
   bool _isNavigating = false;
+  int _currentStep = 0;
+  final GlobalKey<PropertyImageGalleryState> _galleryKey = GlobalKey();
   
   @override
   void initState() {
@@ -110,6 +114,10 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       duration: const Duration(seconds: 1),
       vsync: this,
     )..repeat();
+    _glowController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
     
     _fadeAnimation = Tween<double>(
       begin: 0.0,
@@ -157,6 +165,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   void dispose() {
     _animationController.dispose();
     _shimmerController.dispose();
+    _glowController.dispose();
     _nameController.dispose();
     _addressController.dispose();
     _cityController.dispose();
@@ -215,6 +224,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
               child: Column(
                 children: [
                   _buildHeader(),
+                  _buildProgressIndicator(),
                   
                   Expanded(
                     child: BlocConsumer<PropertiesBloc, PropertiesState>(
@@ -276,18 +286,23 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   }
   
   Widget _buildAnimatedBackground() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.darkBackground,
-            AppTheme.darkBackground2.withOpacity(0.8),
-            AppTheme.primaryPurple.withOpacity(0.05),
-          ],
-        ),
-      ),
+    return AnimatedBuilder(
+      animation: _glowController,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.darkBackground,
+                AppTheme.darkBackground2.withOpacity(0.8),
+                AppTheme.darkBackground3.withOpacity(0.6),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
   
@@ -404,181 +419,353 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   }
   
   Widget _buildFormContent() {
+    return Form(
+      key: _formKey,
+      child: IndexedStack(
+        index: _currentStep,
+        children: [
+          _buildBasicInfoStep(),
+          _buildLocationStep(),
+          _buildImagesAmenitiesStep(),
+          _buildReviewStep(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBasicInfoStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Basic Information Section
-            _buildSectionTitle('المعلومات الأساسية'),
-            const SizedBox(height: 16),
-            
-            _buildInputField(
-              controller: _nameController,
-              label: 'اسم العقار',
-              icon: Icons.business_rounded,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى إدخال اسم العقار';
-                }
-                return null;
-              },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildInputField(
+            controller: _nameController,
+            label: 'اسم العقار',
+            icon: Icons.business_rounded,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'يرجى إدخال اسم العقار';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          _buildPropertyTypeDropdown(),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: _buildInputField(
+                  controller: _basePriceController,
+                  label: 'السعر الأساسي',
+                  icon: Icons.attach_money_rounded,
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'يرجى إدخال السعر';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'يرجى إدخال رقم صحيح';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(child: _buildCurrencyDropdown()),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _buildStarRatingSelector(),
+          const SizedBox(height: 20),
+          _buildFeaturedSwitch(),
+          const SizedBox(height: 20),
+          _buildInputField(
+            controller: _shortDescriptionController,
+            label: 'وصف مختصر',
+            icon: Icons.short_text_rounded,
+          ),
+          const SizedBox(height: 20),
+          _buildInputField(
+            controller: _descriptionController,
+            label: 'الوصف التفصيلي',
+            icon: Icons.description_rounded,
+            maxLines: 5,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'يرجى إدخال الوصف';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationStep() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 300,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.darkCard.withOpacity(0.7),
+                  AppTheme.darkCard.withOpacity(0.5),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppTheme.darkBorder.withOpacity(0.3),
+                width: 1,
+              ),
             ),
-            const SizedBox(height: 16),
-            
-            _buildInputField(
-              controller: _shortDescriptionController,
-              label: 'وصف مختصر',
-              icon: Icons.short_text_rounded,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: PropertyMapView(
+                onLocationSelected: (latLng) {
+                  setState(() {
+                    _latitudeController.text = latLng.latitude.toString();
+                    _longitudeController.text = latLng.longitude.toString();
+                  });
+                },
+              ),
             ),
-            const SizedBox(height: 16),
-            
-            Row(
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: _buildInputField(
+                  controller: _latitudeController,
+                  label: 'خط العرض',
+                  icon: Icons.my_location_rounded,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'يرجى إدخال خط العرض';
+                    }
+                    final v = double.tryParse(value);
+                    if (v == null || v < -90 || v > 90) {
+                      return 'خط العرض غير صحيح';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildInputField(
+                  controller: _longitudeController,
+                  label: 'خط الطول',
+                  icon: Icons.my_location_rounded,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'يرجى إدخال خط الطول';
+                    }
+                    final v = double.tryParse(value);
+                    if (v == null || v < -180 || v > 180) {
+                      return 'خط الطول غير صحيح';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _buildInputField(
+            controller: _addressController,
+            label: 'العنوان',
+            icon: Icons.location_on_rounded,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'يرجى إدخال العنوان';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          _buildInputField(
+            controller: _cityController,
+            label: 'المدينة',
+            icon: Icons.location_city_rounded,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'يرجى إدخال المدينة';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImagesAmenitiesStep() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'صور العقار',
+            style: AppTextStyles.heading3.copyWith(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          PropertyImageGallery(
+            key: _galleryKey,
+            propertyId: widget.propertyId,
+            initialImages: _selectedImages,
+            onImagesChanged: (images) {
+              setState(() {
+                _selectedImages = images;
+              });
+            },
+            maxImages: 10,
+          ),
+          const SizedBox(height: 30),
+          Text(
+            'المرافق المتاحة',
+            style: AppTextStyles.heading3.copyWith(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          AmenitySelectorWidget(
+            selectedAmenities: _selectedAmenities,
+            onAmenitiesChanged: (amenities) {
+              setState(() {
+                _selectedAmenities = amenities;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewStep() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'مراجعة البيانات',
+            style: AppTextStyles.heading2.copyWith(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildReviewCard(
+            title: 'المعلومات الأساسية',
+            items: [
+              {'label': 'الاسم', 'value': _nameController.text},
+              {'label': 'النوع', 'value': _currentProperty?.typeName ?? ''},
+              {'label': 'التقييم', 'value': '$_starRating نجوم'},
+              {'label': 'السعر', 'value': _basePriceController.text},
+              {'label': 'العملة', 'value': _currency},
+              {'label': 'مميز', 'value': _isFeatured ? 'نعم' : 'لا'},
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildReviewCard(
+            title: 'الموقع',
+            items: [
+              {'label': 'العنوان', 'value': _addressController.text},
+              {'label': 'المدينة', 'value': _cityController.text},
+              {'label': 'خط العرض', 'value': _latitudeController.text},
+              {'label': 'خط الطول', 'value': _longitudeController.text},
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildReviewCard(
+            title: 'الصور والمرافق',
+            items: [
+              {'label': 'عدد الصور', 'value': '${_selectedImages.length}'},
+              {'label': 'عدد المرافق', 'value': '${_selectedAmenities.length}'},
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressIndicator() {
+    final steps = ['المعلومات الأساسية', 'الموقع', 'الصور والمرافق', 'المراجعة'];
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
+        children: List.generate(steps.length, (index) {
+          final isActive = index <= _currentStep;
+          final isCompleted = index < _currentStep;
+          return Expanded(
+            child: Row(
               children: [
-                Expanded(
-                  child: _buildInputField(
-                    controller: _basePriceController,
-                    label: 'السعر الأساسي',
-                    icon: Icons.attach_money_rounded,
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'يرجى إدخال السعر';
-                      }
-                      if (double.tryParse(value) == null) {
-                        return 'يرجى إدخال رقم صحيح';
-                      }
-                      return null;
-                    },
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    gradient: isActive ? AppTheme.primaryGradient : null,
+                    color: !isActive ? AppTheme.darkSurface.withOpacity(0.5) : null,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isActive
+                          ? AppTheme.primaryBlue.withOpacity(0.5)
+                          : AppTheme.darkBorder.withOpacity(0.3),
+                      width: 1,
+                    ),
+                    boxShadow: isActive
+                        ? [
+                            BoxShadow(
+                              color: AppTheme.primaryBlue.withOpacity(0.3),
+                              blurRadius: 10,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Center(
+                    child: isCompleted
+                        ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                        : Text(
+                            '${index + 1}',
+                            style: AppTextStyles.caption.copyWith(
+                              color: isActive ? Colors.white : AppTheme.textMuted,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildCurrencyDropdown(),
-                ),
+                if (index < steps.length - 1)
+                  Expanded(
+                    child: Container(
+                      height: 2,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      decoration: BoxDecoration(
+                        gradient: isCompleted ? AppTheme.primaryGradient : null,
+                        color: !isCompleted ? AppTheme.darkBorder.withOpacity(0.2) : null,
+                        borderRadius: BorderRadius.circular(1),
+                      ),
+                    ),
+                  ),
               ],
             ),
-            const SizedBox(height: 16),
-            
-            _buildPropertyTypeDropdown(),
-            const SizedBox(height: 16),
-            
-            _buildStarRatingSelector(),
-            const SizedBox(height: 16),
-            
-            _buildFeaturedSwitch(),
-            
-            const SizedBox(height: 30),
-            
-            // Address Information Section
-            _buildSectionTitle('معلومات العنوان'),
-            const SizedBox(height: 16),
-            
-            _buildInputField(
-              controller: _addressController,
-              label: 'العنوان',
-              icon: Icons.location_on_rounded,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى إدخال العنوان';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            
-            _buildInputField(
-              controller: _cityController,
-              label: 'المدينة',
-              icon: Icons.location_city_rounded,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى إدخال المدينة';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            
-            _buildInputField(
-              controller: _descriptionController,
-              label: 'الوصف التفصيلي',
-              icon: Icons.description_rounded,
-              maxLines: 4,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى إدخال الوصف';
-                }
-                return null;
-              },
-            ),
-            
-            const SizedBox(height: 30),
-            
-            // Location Section
-            _buildSectionTitle('الموقع الجغرافي'),
-            const SizedBox(height: 16),
-            
-            Row(
-              children: [
-                Expanded(
-                  child: _buildInputField(
-                    controller: _latitudeController,
-                    label: 'خط العرض',
-                    icon: Icons.my_location_rounded,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildInputField(
-                    controller: _longitudeController,
-                    label: 'خط الطول',
-                    icon: Icons.my_location_rounded,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  ),
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 16),
-            _buildMapButton(),
-            
-            const SizedBox(height: 30),
-            
-            // Images Section - استخدام المكون الجديد
-            _buildSectionTitle('صور العقار'),
-            const SizedBox(height: 16),
-            PropertyImageGallery(
-              propertyId: widget.propertyId, // تمرير propertyId
-              initialImages: _selectedImages, // تمرير الصور الحالية
-              onImagesChanged: (images) {
-                setState(() {
-                  _selectedImages = images; // تحديث قائمة الصور
-                });
-              },
-              maxImages: 10,
-            ),
-            
-            const SizedBox(height: 30),
-            
-            // Amenities Section
-            _buildSectionTitle('المرافق'),
-            const SizedBox(height: 16),
-            AmenitySelectorWidget(
-              selectedAmenities: _selectedAmenities,
-              onAmenitiesChanged: (amenities) {
-                setState(() {
-                  _selectedAmenities = amenities;
-                });
-              },
-            ),
-            
-            const SizedBox(height: 100),
-          ],
-        ),
+          );
+        }),
       ),
     );
   }
@@ -1130,7 +1317,6 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   }
   
   Widget _buildActionButtons(bool isUpdating) {
-    // نفس الكود السابق
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1149,52 +1335,65 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ),
       child: Row(
         children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: (isUpdating || _isNavigating) ? null : () => _navigateBack(),
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppTheme.darkSurface.withOpacity(isUpdating ? 0.3 : 0.5),
-                      AppTheme.darkSurface.withOpacity(isUpdating ? 0.2 : 0.3),
-                    ],
+          if (_currentStep > 0)
+            Expanded(
+              child: GestureDetector(
+                onTap: (isUpdating || _isNavigating)
+                    ? null
+                    : () {
+                        setState(() {
+                          _currentStep = (_currentStep - 1).clamp(0, 3);
+                        });
+                      },
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.darkSurface.withOpacity(isUpdating ? 0.3 : 0.5),
+                        AppTheme.darkSurface.withOpacity(isUpdating ? 0.2 : 0.3),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.darkBorder.withOpacity(0.3),
+                      width: 1,
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppTheme.darkBorder.withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    'إلغاء',
-                    style: AppTextStyles.buttonMedium.copyWith(
-                      color: isUpdating ? AppTheme.textMuted : AppTheme.textWhite,
+                  child: Center(
+                    child: Text(
+                      'السابق',
+                      style: AppTextStyles.buttonMedium.copyWith(
+                        color: isUpdating ? AppTheme.textMuted : AppTheme.textWhite,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-          
-          const SizedBox(width: 12),
-          
+          if (_currentStep > 0) const SizedBox(width: 12),
           Expanded(
             child: GestureDetector(
-              onTap: (isUpdating || _isNavigating) ? null : _saveChanges,
+              onTap: (isUpdating || _isNavigating)
+                  ? null
+                  : () {
+                      if (_currentStep < 3) {
+                        if (_validateCurrentStep()) {
+                          setState(() {
+                            _currentStep = (_currentStep + 1).clamp(0, 3);
+                          });
+                        }
+                      } else {
+                        _saveChanges();
+                      }
+                    },
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  gradient: isUpdating 
-                      ? LinearGradient(
-                          colors: [
-                            AppTheme.primaryBlue.withOpacity(0.3),
-                            AppTheme.primaryPurple.withOpacity(0.3),
-                          ],
-                        )
-                      : AppTheme.primaryGradient,
+                  gradient: isUpdating ? LinearGradient(colors: [
+                    AppTheme.primaryBlue.withOpacity(0.3),
+                    AppTheme.primaryPurple.withOpacity(0.3),
+                  ]) : AppTheme.primaryGradient,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: isUpdating ? [] : [
                     BoxShadow(
@@ -1215,7 +1414,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                           ),
                         )
                       : Text(
-                          'حفظ التغييرات',
+                          _currentStep < 3 ? 'التالي' : 'حفظ التغييرات',
                           style: AppTextStyles.buttonMedium.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -1249,6 +1448,89 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
         ),
       );
     }
+  }
+
+  bool _validateCurrentStep() {
+    switch (_currentStep) {
+      case 0:
+        return _nameController.text.isNotEmpty &&
+            _selectedPropertyTypeId != null &&
+            _descriptionController.text.isNotEmpty &&
+            _basePriceController.text.isNotEmpty &&
+            double.tryParse(_basePriceController.text) != null;
+      case 1:
+        final lat = double.tryParse(_latitudeController.text);
+        final lng = double.tryParse(_longitudeController.text);
+        if (_addressController.text.isEmpty || _cityController.text.isEmpty) return false;
+        if (lat == null || lat < -90 || lat > 90) return false;
+        if (lng == null || lng < -180 || lng > 180) return false;
+        return true;
+      case 2:
+        return true;
+      default:
+        return true;
+    }
+  }
+
+  Widget _buildReviewCard({
+    required String title,
+    required List<Map<String, String>> items,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.5),
+            AppTheme.darkCard.withOpacity(0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.primaryBlue,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...items.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      item['label'] ?? '',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        item['value'] ?? '',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppTheme.textWhite,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.end,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
   }
   
   void _showDeleteConfirmation() {

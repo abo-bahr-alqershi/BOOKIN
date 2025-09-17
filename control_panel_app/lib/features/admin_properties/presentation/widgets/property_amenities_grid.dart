@@ -7,10 +7,10 @@ import 'package:flutter/cupertino.dart';
 import 'dart:ui';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../domain/entities/amenity.dart';
+import '../../domain/entities/amenity.dart' as domain;
 
 class PropertyAmenitiesGrid extends StatefulWidget {
-  final List<Amenity> amenities;
+  final List<domain.Amenity> amenities;
   final bool isCompact;
 
   const PropertyAmenitiesGrid({
@@ -150,10 +150,10 @@ class _PropertyAmenitiesGridState extends State<PropertyAmenitiesGrid>
     );
   }
 
-  Widget _buildAmenityCard(Amenity amenity, int index) {
+  Widget _buildAmenityCard(domain.Amenity amenity, int index) {
     final isHovered = _hoveredIndex == index;
-    final iconData = _getAmenityIcon(amenity.icon ?? 'default');
-    final gradient = _getAmenityGradient(amenity.category ?? 'general');
+    final iconData = _getAmenityIcon(amenity.icon);
+    final gradient = _getAmenityGradient('general');
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredIndex = index),
@@ -261,20 +261,7 @@ class _PropertyAmenitiesGridState extends State<PropertyAmenitiesGrid>
                       ),
                     ),
 
-                    // Premium Badge (if premium amenity)
-                    if (amenity.isPremium ?? false)
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          gradient: AppTheme.primaryGradient,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Icon(
-                          CupertinoIcons.star_fill,
-                          size: 10,
-                          color: Colors.white,
-                        ),
-                      ),
+                    // Premium Badge removed (domain model has no premium flag)
                   ],
                 ),
               ),

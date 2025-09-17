@@ -5,10 +5,10 @@ import 'package:flutter/cupertino.dart';
 import 'dart:ui';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../domain/entities/policy.dart';
+import '../../domain/entities/policy.dart' as domain;
 
 class PropertyPoliciesList extends StatefulWidget {
-  final List<Policy> policies;
+  final List<domain.Policy> policies;
   final bool isReadOnly;
 
   const PropertyPoliciesList({
@@ -136,7 +136,7 @@ class _PropertyPoliciesListState extends State<PropertyPoliciesList>
     );
   }
 
-  Widget _buildPolicyCard(Policy policy, int index) {
+  Widget _buildPolicyCard(domain.Policy policy, int index) {
     final isExpanded = _expandedIndex == index;
     final isHovered = _hoveredIndex == index;
     final policyConfig = _getPolicyConfig(policy.policyType);
@@ -236,7 +236,7 @@ class _PropertyPoliciesListState extends State<PropertyPoliciesList>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  policy.title,
+                                  policy.policyTypeLabel,
                                   style: AppTextStyles.bodyLarge.copyWith(
                                     color: AppTheme.textWhite,
                                     fontWeight: FontWeight.w600,
@@ -244,7 +244,7 @@ class _PropertyPoliciesListState extends State<PropertyPoliciesList>
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  policy.summary ?? '',
+                                  policy.policyType.name,
                                   style: AppTextStyles.caption.copyWith(
                                     color: AppTheme.textMuted,
                                   ),
@@ -300,45 +300,14 @@ class _PropertyPoliciesListState extends State<PropertyPoliciesList>
                             ),
 
                             // Policy Rules (if any)
-                            if (policy.rules != null &&
-                                policy.rules!.isNotEmpty) ...[
+                            if (policy.rules.isNotEmpty) ...[
                               const SizedBox(height: 12),
-                              ...policy.rules!
+                              ...policy.rules
+                                  .split('\n')
                                   .map((rule) => _buildRuleItem(rule)),
                             ],
 
-                            // Additional Info
-                            if (policy.additionalInfo != null) ...[
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.info.withValues(alpha: 0.05),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: AppTheme.info.withValues(alpha: 0.2),
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      CupertinoIcons.info_circle_fill,
-                                      size: 16,
-                                      color: AppTheme.info,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        policy.additionalInfo!,
-                                        style: AppTextStyles.caption.copyWith(
-                                          color: AppTheme.info,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                            // No additional info in domain model
                           ],
                         ),
                         crossFadeState: isExpanded
@@ -386,7 +355,7 @@ class _PropertyPoliciesListState extends State<PropertyPoliciesList>
     );
   }
 
-  _PolicyConfig _getPolicyConfig(PolicyType type) {
+  _PolicyConfig _getPolicyConfig(domain.PolicyType type) {
     switch (type) {
       case PolicyType.cancellation:
         return _PolicyConfig(
