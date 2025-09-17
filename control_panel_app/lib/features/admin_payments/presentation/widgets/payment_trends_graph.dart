@@ -232,7 +232,7 @@ class _PaymentTrendsGraphState extends State<PaymentTrendsGraph>
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
             getTooltipColor: (group) => AppTheme.darkCard,
-            tooltipRoundedRadius: 12,
+            // fl_chart 0.69 removed tooltipRoundedRadius, borderRadius is used in decoration
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final metric = widget.selectedMetrics[rodIndex];
               return BarTooltipItem(
