@@ -58,6 +58,15 @@ class PaginatedResult<T> extends Equatable {
       root = json;
     } else if (json['data'] is Map<String, dynamic>) {
       root = json['data'];
+    } else if (json['data'] is List) {
+      // Envelope with list as data
+      root = {
+        'items': json['data'],
+        'pageNumber': json['pageNumber'] ?? 1,
+        'pageSize': (json['data'] as List).length,
+        'totalCount': (json['data'] as List).length,
+        'metadata': json['metadata'],
+      };
     } else {
       // Some backends might return list directly
       if (json is Map<String, dynamic> && json.isEmpty) {
@@ -68,7 +77,14 @@ class PaginatedResult<T> extends Equatable {
 
     final Map<String, dynamic> payload = Map<String, dynamic>.from(root as Map);
 
-    final rawItems = (payload['items'] as List?) ?? const [];
+    final List rawItems;
+    if (payload['items'] is List) {
+      rawItems = payload['items'] as List;
+    } else if (payload['data'] is List) {
+      rawItems = payload['data'] as List;
+    } else {
+      rawItems = const [];
+    }
     final parsedItems = rawItems
         .whereType<Map>()
         .map((item) => fromJsonT(Map<String, dynamic>.from(item as Map)))
