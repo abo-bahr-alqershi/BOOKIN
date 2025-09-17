@@ -160,10 +160,12 @@ class CurrencyStatsCard extends StatelessWidget {
   }
 
   Map<String, dynamic> _calculateStats() {
-    final defaultCurrency = currencies.firstWhere(
-      (c) => c.isDefault,
-      orElse: () => currencies.first,
-    );
+    final defaultCurrency = currencies.isNotEmpty
+        ? currencies.firstWhere(
+            (c) => c.isDefault,
+            orElse: () => currencies.first,
+          )
+        : null;
 
     final ratesCount = currencies.where((c) => c.exchangeRate != null).length;
     final avgRate = ratesCount > 0
@@ -184,7 +186,7 @@ class CurrencyStatsCard extends StatelessWidget {
 
     return {
       'total': currencies.length,
-      'default': defaultCurrency.arabicCode,
+      'default': defaultCurrency?.arabicCode ?? 'غير محدد',
       'avgRate': avgRate.toStringAsFixed(2),
       'lastUpdate': lastUpdated != null
           ? '${lastUpdated.day}/${lastUpdated.month}'
