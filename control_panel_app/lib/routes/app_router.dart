@@ -271,7 +271,12 @@ class AppRouter {
           path: '/admin/payments/analytics',
           builder: (context, state) {
             return BlocProvider<pay_an_bloc.PaymentAnalyticsBloc>(
-              create: (_) => di.sl<pay_an_bloc.PaymentAnalyticsBloc>(),
+              create: (_) => pay_an_bloc.PaymentAnalyticsBloc(
+                getPaymentAnalyticsUseCase: di.sl(),
+                getRevenueReportUseCase: di.sl(),
+                getPaymentTrendsUseCase: di.sl(),
+                getRefundStatisticsUseCase: di.sl(),
+              ),
               child: const PaymentAnalyticsPage(),
             );
           },
