@@ -557,6 +557,8 @@ import 'features/admin_payments/domain/usecases/analytics/get_payment_trends_use
     as pay_uc_trends;
 import 'features/admin_payments/domain/usecases/analytics/get_refund_statistics_usecase.dart'
     as pay_uc_refund_stats;
+import 'features/admin_payments/presentation/bloc/payment_analytics/payment_analytics_bloc.dart'
+    as pay_an_bloc;
 
 final sl = GetIt.instance;
 
@@ -1552,6 +1554,12 @@ void _initAdminPayments() {
         refundPaymentUseCase: sl(),
         getPaymentByIdUseCase: sl(),
         repository: sl(),
+      ));
+  sl.registerFactory(() => pay_an_bloc.PaymentAnalyticsBloc(
+        getPaymentAnalyticsUseCase: sl(),
+        getRevenueReportUseCase: sl(),
+        getPaymentTrendsUseCase: sl(),
+        getRefundStatisticsUseCase: sl(),
       ));
 
   // Use cases - payments commands

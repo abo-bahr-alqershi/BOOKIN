@@ -112,9 +112,7 @@ class _FuturisticPaymentsTableState extends State<FuturisticPaymentsTable>
           child: Column(
             children: [
               _buildHeader(),
-              Expanded(
-                child: _buildTableContent(),
-              ),
+              _buildTableContent(),
             ],
           ),
         ),
@@ -179,22 +177,21 @@ class _FuturisticPaymentsTableState extends State<FuturisticPaymentsTable>
       return _buildEmptyState();
     }
 
-    return Scrollbar(
-      controller: _verticalScrollController,
-      child: ListView.builder(
-        controller: _verticalScrollController,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: widget.payments.length,
-        itemBuilder: (context, index) {
-          return FadeTransition(
-            opacity: _fadeAnimations[index],
-            child: SlideTransition(
-              position: _slideAnimations[index],
-              child: _buildTableRow(widget.payments[index], index),
-            ),
-          );
-        },
-      ),
+    return ListView.builder(
+      shrinkWrap: true,
+      primary: false,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: widget.payments.length,
+      itemBuilder: (context, index) {
+        return FadeTransition(
+          opacity: _fadeAnimations[index],
+          child: SlideTransition(
+            position: _slideAnimations[index],
+            child: _buildTableRow(widget.payments[index], index),
+          ),
+        );
+      },
     );
   }
 
