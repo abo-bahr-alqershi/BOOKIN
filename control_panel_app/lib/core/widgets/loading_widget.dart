@@ -22,7 +22,7 @@ class LoadingWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveColor = color ?? theme.primaryColor;
+    final effectiveColor = color ?? AppTheme.primaryBlue;
     final effectiveSize = size ?? 40.0;
 
     Widget loadingIndicator;
@@ -222,7 +222,8 @@ class _FuturisticLoadingState extends State<_FuturisticLoading>
         animation: _controller,
         builder: (context, child) {
           return CustomPaint(
-            painter: _RipplePainter(animationValue: _controller.value, color: widget.color),
+            painter: _RipplePainter(
+                animationValue: _controller.value, color: widget.color),
             child: Center(
               child: Container(
                 width: widget.innerSize,

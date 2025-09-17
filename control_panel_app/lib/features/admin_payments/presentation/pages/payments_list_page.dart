@@ -72,7 +72,7 @@ class _PaymentsListPageState extends State<PaymentsListPage>
                   builder: (context, state) {
                     if (state is PaymentsListLoading) {
                       return const LoadingWidget(
-                        type: LoadingType.shimmer,
+                        type: LoadingType.futuristic,
                         message: 'جاري تحميل المدفوعات...',
                       );
                     }

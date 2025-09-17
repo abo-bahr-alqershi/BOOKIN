@@ -1,3 +1,4 @@
+import 'package:bookn_cp_app/features/admin_amenities/presentation/utils/amenity_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
@@ -11,7 +12,7 @@ class FuturisticAmenityCard extends StatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
-  
+
   const FuturisticAmenityCard({
     super.key,
     required this.amenity,
@@ -19,7 +20,7 @@ class FuturisticAmenityCard extends StatefulWidget {
     this.onEdit,
     this.onDelete,
   });
-  
+
   @override
   State<FuturisticAmenityCard> createState() => _FuturisticAmenityCardState();
 }
@@ -30,36 +31,36 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
   late AnimationController _hoverController;
   late AnimationController _shimmerController;
   late AnimationController _pulseController;
-  
+
   late Animation<double> _hoverAnimation;
   late Animation<double> _shimmerAnimation;
   late Animation<double> _pulseAnimation;
-  
+
   bool _isHovered = false;
   bool _isPressed = false;
-  
+
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
   }
-  
+
   void _initializeAnimations() {
     _hoverController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    
+
     _shimmerController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat();
-    
+
     _pulseController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _hoverAnimation = Tween<double>(
       begin: 1.0,
       end: 1.05,
@@ -67,7 +68,7 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
       parent: _hoverController,
       curve: Curves.easeOut,
     ));
-    
+
     _shimmerAnimation = Tween<double>(
       begin: 0,
       end: 1,
@@ -75,7 +76,7 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
       parent: _shimmerController,
       curve: Curves.linear,
     ));
-    
+
     _pulseAnimation = Tween<double>(
       begin: 0.95,
       end: 1.05,
@@ -84,7 +85,7 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
       curve: Curves.easeInOut,
     ));
   }
-  
+
   @override
   void dispose() {
     _hoverController.dispose();
@@ -92,7 +93,7 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
     _pulseController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -170,7 +171,7 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
                       children: [
                         // Background Pattern
                         if (_isHovered) _buildBackgroundPattern(),
-                        
+
                         // Main Content
                         Padding(
                           padding: const EdgeInsets.all(16),
@@ -179,25 +180,25 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
                             children: [
                               // Header Section
                               _buildHeader(),
-                              
+
                               const SizedBox(height: 16),
-                              
+
                               // Description
                               _buildDescription(),
-                              
+
                               const Spacer(),
-                              
+
                               // Stats Grid
                               _buildStatsGrid(),
-                              
+
                               const SizedBox(height: 12),
-                              
+
                               // Footer with Actions
                               _buildFooter(),
                             ],
                           ),
                         ),
-                        
+
                         // Shimmer Effect
                         if (_isHovered) _buildShimmerOverlay(),
                       ],
@@ -211,7 +212,7 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
       ),
     );
   }
-  
+
   Widget _buildBackgroundPattern() {
     return Positioned.fill(
       child: CustomPaint(
@@ -222,7 +223,7 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
       ),
     );
   }
-  
+
   Widget _buildShimmerOverlay() {
     return Positioned.fill(
       child: AnimatedBuilder(
@@ -252,7 +253,7 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
       ),
     );
   }
-  
+
   Widget _buildHeader() {
     return Row(
       children: [
@@ -261,7 +262,8 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
           animation: _pulseAnimation,
           builder: (context, child) {
             return Transform.scale(
-              scale: widget.amenity.isActive == true ? _pulseAnimation.value : 1.0,
+              scale:
+                  widget.amenity.isActive == true ? _pulseAnimation.value : 1.0,
               child: Container(
                 width: 52,
                 height: 52,
@@ -296,9 +298,9 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
             );
           },
         ),
-        
+
         const SizedBox(width: 12),
-        
+
         // Title and ID
         Expanded(
           child: Column(
@@ -337,16 +339,16 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
             ],
           ),
         ),
-        
+
         // Status Badge
         _buildStatusBadge(),
       ],
     );
   }
-  
+
   Widget _buildStatusBadge() {
     final isActive = widget.amenity.isActive == true;
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -412,7 +414,7 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
       ),
     );
   }
-  
+
   Widget _buildDescription() {
     return Container(
       padding: const EdgeInsets.all(10),
@@ -435,7 +437,7 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
       ),
     );
   }
-  
+
   Widget _buildStatsGrid() {
     return Row(
       children: [
@@ -452,7 +454,8 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
           child: _buildStatItem(
             icon: Icons.attach_money_rounded,
             label: 'التكلفة',
-            value: widget.amenity.averageExtraCost != null && widget.amenity.averageExtraCost! > 0
+            value: widget.amenity.averageExtraCost != null &&
+                    widget.amenity.averageExtraCost! > 0
                 ? '\$${widget.amenity.averageExtraCost!.toStringAsFixed(0)}'
                 : 'مجاني',
             color: AppTheme.success,
@@ -461,7 +464,7 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
       ],
     );
   }
-  
+
   Widget _buildStatItem({
     required IconData icon,
     required String label,
@@ -509,7 +512,7 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
       ),
     );
   }
-  
+
   Widget _buildFooter() {
     return Row(
       children: [
@@ -535,7 +538,7 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
             ],
           ),
         ),
-        
+
         // Action Buttons
         if (_isHovered && (widget.onEdit != null || widget.onDelete != null))
           Row(
@@ -558,7 +561,7 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
       ],
     );
   }
-  
+
   Widget _buildActionButton({
     required IconData icon,
     required Color color,
@@ -588,29 +591,14 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
       ),
     );
   }
-  
+
   String _formatDate(DateTime? date) {
     if (date == null) return '--';
     return '${date.day}/${date.month}/${date.year}';
   }
-  
+
   IconData _getAmenityIcon(String iconName) {
-    final iconMap = {
-      'wifi': Icons.wifi_rounded,
-      'parking': Icons.local_parking_rounded,
-      'pool': Icons.pool_rounded,
-      'gym': Icons.fitness_center_rounded,
-      'restaurant': Icons.restaurant_rounded,
-      'spa': Icons.spa_rounded,
-      'laundry': Icons.local_laundry_service_rounded,
-      'ac': Icons.ac_unit_rounded,
-      'tv': Icons.tv_rounded,
-      'kitchen': Icons.kitchen_rounded,
-      'elevator': Icons.elevator_rounded,
-      'safe': Icons.lock_rounded,
-    };
-    
-    return iconMap[iconName] ?? Icons.star_rounded;
+    return AmenityIcons.getIconByName(iconName)?.icon ?? Icons.star_rounded;
   }
 }
 
@@ -618,19 +606,19 @@ class _FuturisticAmenityCardState extends State<FuturisticAmenityCard>
 class _PatternPainter extends CustomPainter {
   final double animation;
   final Color color;
-  
+
   _PatternPainter({
     required this.animation,
     required this.color,
   });
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
-    
+
     // Draw hexagon pattern
     const spacing = 30.0;
     for (double x = -spacing; x < size.width + spacing; x += spacing) {
@@ -645,14 +633,14 @@ class _PatternPainter extends CustomPainter {
       }
     }
   }
-  
+
   void _drawHexagon(Canvas canvas, Offset center, double radius, Paint paint) {
     final path = Path();
     for (int i = 0; i < 6; i++) {
       final angle = (i * 60 - 30) * math.pi / 180;
       final x = center.dx + radius * math.cos(angle);
       final y = center.dy + radius * math.sin(angle);
-      
+
       if (i == 0) {
         path.moveTo(x, y);
       } else {
@@ -662,7 +650,7 @@ class _PatternPainter extends CustomPainter {
     path.close();
     canvas.drawPath(path, paint);
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

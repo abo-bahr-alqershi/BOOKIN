@@ -17,12 +17,12 @@ import '../widgets/property_map_view.dart';
 
 class PropertyDetailsPage extends StatefulWidget {
   final String propertyId;
-  
+
   const PropertyDetailsPage({
     super.key,
     required this.propertyId,
   });
-  
+
   @override
   State<PropertyDetailsPage> createState() => _PropertyDetailsPageState();
 }
@@ -35,46 +35,46 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
   late AnimationController _glowController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  
+
   // Scroll Controller
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
-  
+
   // Tab Controller
   late TabController _tabController;
-  
+
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _setupScrollListener();
     _tabController = TabController(length: 4, vsync: this);
-    
+
     // جلب تفاصيل العقار من الـ Backend
     context.read<PropertiesBloc>().add(
-      LoadPropertyDetailsEvent(
-        propertyId: widget.propertyId,
-        includeUnits: true,
-      ),
-    );
+          LoadPropertyDetailsEvent(
+            propertyId: widget.propertyId,
+            includeUnits: true,
+          ),
+        );
   }
-  
+
   void _initializeAnimations() {
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
+
     _parallaxController = AnimationController(
       duration: const Duration(seconds: 10),
       vsync: this,
     )..repeat();
-    
+
     _glowController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -82,7 +82,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       parent: _animationController,
       curve: Curves.easeOut,
     ));
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
@@ -90,10 +90,10 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       parent: _animationController,
       curve: Curves.easeOutQuart,
     ));
-    
+
     _animationController.forward();
   }
-  
+
   void _setupScrollListener() {
     _scrollController.addListener(() {
       setState(() {
@@ -101,7 +101,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       });
     });
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -111,7 +111,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
     _tabController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,21 +121,21 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
           if (state is PropertyDetailsLoading) {
             return _buildLoadingState();
           }
-          
+
           if (state is PropertyDetailsError) {
             return _buildErrorState(state.message);
           }
-          
+
           if (state is PropertyDetailsLoaded) {
             return _buildLoadedState(state.property);
           }
-          
+
           return _buildInitialState();
         },
       ),
     );
   }
-  
+
   Widget _buildLoadingState() {
     return Center(
       child: Column(
@@ -167,7 +167,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildErrorState(String message) {
     return Center(
       child: Column(
@@ -209,11 +209,11 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
           ElevatedButton.icon(
             onPressed: () {
               context.read<PropertiesBloc>().add(
-                LoadPropertyDetailsEvent(
-                  propertyId: widget.propertyId,
-                  includeUnits: true,
-                ),
-              );
+                    LoadPropertyDetailsEvent(
+                      propertyId: widget.propertyId,
+                      includeUnits: true,
+                    ),
+                  );
             },
             icon: const Icon(Icons.refresh_rounded),
             label: const Text('إعادة المحاولة'),
@@ -230,7 +230,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildInitialState() {
     return Center(
       child: Column(
@@ -266,20 +266,20 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildLoadedState(Property property) {
     return Stack(
       children: [
         // Animated Background
         _buildAnimatedBackground(),
-        
+
         // Main Content
         CustomScrollView(
           controller: _scrollController,
           slivers: [
             // Parallax Header
             _buildParallaxHeader(property),
-            
+
             // Property Info
             SliverToBoxAdapter(
               child: FadeTransition(
@@ -290,26 +290,26 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                 ),
               ),
             ),
-            
+
             // Stats Cards
             if (property.stats != null)
               SliverToBoxAdapter(
                 child: _buildStatsSection(property),
               ),
-            
+
             // Tabs Content
             SliverToBoxAdapter(
               child: _buildTabsContent(property),
             ),
           ],
         ),
-        
+
         // Floating Action Buttons
         _buildFloatingActions(property),
       ],
     );
   }
-  
+
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
       animation: _parallaxController,
@@ -330,7 +330,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       },
     );
   }
-  
+
   Widget _buildParallaxHeader(Property property) {
     return SliverAppBar(
       expandedHeight: 300,
@@ -364,7 +364,8 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
           ),
           child: IconButton(
             icon: Icon(Icons.edit_rounded, size: 20, color: AppTheme.glowWhite),
-            onPressed: () => context.push('/admin/properties/${widget.propertyId}/edit'),
+            onPressed: () =>
+                context.push('/admin/properties/${widget.propertyId}/edit'),
           ),
         ),
       ],
@@ -409,7 +410,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                       ),
               ),
             ),
-            
+
             // Gradient Overlay
             Container(
               decoration: BoxDecoration(
@@ -425,7 +426,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                 ),
               ),
             ),
-            
+
             // Property Name
             Positioned(
               bottom: 20,
@@ -435,7 +436,8 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ShaderMask(
-                    shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                    shaderCallback: (bounds) =>
+                        AppTheme.primaryGradient.createShader(bounds),
                     child: Text(
                       property.name,
                       style: AppTextStyles.heading1.copyWith(
@@ -469,7 +471,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildPropertyInfo(Property property) {
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -481,7 +483,8 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   gradient: property.isApproved
                       ? LinearGradient(
@@ -528,7 +531,6 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                   ],
                 ),
               ),
-              
               Row(
                 children: List.generate(5, (index) {
                   return Icon(
@@ -542,9 +544,9 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
               ),
             ],
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Description
           Text(
             'الوصف',
@@ -561,9 +563,9 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
               height: 1.5,
             ),
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Owner Info
           Container(
             padding: const EdgeInsets.all(16),
@@ -591,7 +593,9 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                   ),
                   child: Center(
                     child: Text(
-                      property.ownerName.isNotEmpty ? property.ownerName[0] : 'U',
+                      property.ownerName.isNotEmpty
+                          ? property.ownerName[0]
+                          : 'U',
                       style: AppTextStyles.heading3.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -621,7 +625,8 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryBlue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -641,11 +646,11 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildStatsSection(Property property) {
     final stats = property.stats;
     if (stats == null) return const SizedBox.shrink();
-    
+
     return Container(
       height: 120,
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -680,7 +685,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildStatCard({
     required IconData icon,
     required String label,
@@ -738,7 +743,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       },
     );
   }
-  
+
   Widget _buildTabsContent(Property property) {
     return Container(
       height: 500,
@@ -775,14 +780,20 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
               indicatorColor: AppTheme.primaryBlue,
               indicatorWeight: 3,
               tabs: const [
-                Tab(text: 'الصور', icon: Icon(Icons.photo_library_rounded, size: 18)),
+                Tab(
+                    text: 'الصور',
+                    icon: Icon(Icons.photo_library_rounded, size: 18)),
                 Tab(text: 'الموقع', icon: Icon(Icons.map_rounded, size: 18)),
-                Tab(text: 'المرافق', icon: Icon(Icons.apartment_rounded, size: 18)),
-                Tab(text: 'السياسات', icon: Icon(Icons.policy_rounded, size: 18)),
+                Tab(
+                    text: 'المرافق',
+                    icon: Icon(Icons.apartment_rounded, size: 18)),
+                Tab(
+                    text: 'السياسات',
+                    icon: Icon(Icons.policy_rounded, size: 18)),
               ],
             ),
           ),
-          
+
           // Tab Views
           Expanded(
             child: TabBarView(
@@ -795,16 +806,19 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                   onImagesChanged: (_) {},
                   isReadOnly: true,
                 ),
-                
+
                 // Map Tab
                 PropertyMapView(
-                  initialLocation: (property.latitude ?? 0, property.longitude ?? 0),
+                  initialLocation: (
+                    property.latitude ?? 0,
+                    property.longitude ?? 0
+                  ),
                   isReadOnly: true,
                 ),
-                
+
                 // Amenities Tab
                 _buildAmenitiesTab(property),
-                
+
                 // Policies Tab
                 _buildPoliciesTab(property),
               ],
@@ -814,7 +828,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildAmenitiesTab(Property property) {
     if (property.amenities.isEmpty) {
       return Center(
@@ -837,7 +851,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
         ),
       );
     }
-    
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -849,7 +863,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       itemCount: property.amenities.length,
       itemBuilder: (context, index) {
         final amenity = property.amenities[index];
-        
+
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
@@ -888,22 +902,11 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       },
     );
   }
-  
+
   IconData _getAmenityIcon(String iconName) {
-    final iconMap = {
-      'wifi': Icons.wifi_rounded,
-      'pool': Icons.pool_rounded,
-      'parking': Icons.local_parking_rounded,
-      'restaurant': Icons.restaurant_rounded,
-      'gym': Icons.fitness_center_rounded,
-      'spa': Icons.spa_rounded,
-      'beach': Icons.beach_access_rounded,
-      'room_service': Icons.room_service_rounded,
-    };
-    
-    return iconMap[iconName] ?? Icons.check_circle_rounded;
+    return AmenityIcons.getIconByName(iconName)?.icon ?? Icons.star_rounded;
   }
-  
+
   Widget _buildPoliciesTab(Property property) {
     if (property.policies.isEmpty) {
       return Center(
@@ -926,13 +929,13 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
         ),
       );
     }
-    
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: property.policies.length,
       itemBuilder: (context, index) {
         final policy = property.policies[index];
-        
+
         return _buildPolicyCard(
           icon: _getPolicyIcon(policy.policyType.name),
           title: policy.policyTypeLabel,
@@ -942,7 +945,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       },
     );
   }
-  
+
   IconData _getPolicyIcon(String type) {
     final iconMap = {
       'cancellation': Icons.cancel_rounded,
@@ -952,10 +955,10 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       'smoking': Icons.smoke_free_rounded,
       'payment': Icons.payment_rounded,
     };
-    
+
     return iconMap[type] ?? Icons.info_rounded;
   }
-  
+
   Color _getPolicyColor(String type) {
     final colorMap = {
       'cancellation': AppTheme.warning,
@@ -965,10 +968,10 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       'smoking': AppTheme.error,
       'payment': AppTheme.primaryBlue,
     };
-    
+
     return colorMap[type] ?? AppTheme.primaryBlue;
   }
-  
+
   Widget _buildPolicyCard({
     required IconData icon,
     required String title,
@@ -1027,12 +1030,12 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildFloatingActions(Property property) {
     if (property.isApproved) {
       return const SizedBox.shrink();
     }
-    
+
     return Positioned(
       bottom: 20,
       right: 20,
@@ -1044,8 +1047,8 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
             onTap: () {
               HapticFeedback.mediumImpact();
               context.read<PropertiesBloc>().add(
-                ApprovePropertyEvent(widget.propertyId),
-              );
+                    ApprovePropertyEvent(widget.propertyId),
+                  );
             },
           ),
           const SizedBox(height: 12),
@@ -1055,15 +1058,15 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
             onTap: () {
               HapticFeedback.mediumImpact();
               context.read<PropertiesBloc>().add(
-                RejectPropertyEvent(widget.propertyId),
-              );
+                    RejectPropertyEvent(widget.propertyId),
+                  );
             },
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildFloatingButton({
     required IconData icon,
     required Color color,

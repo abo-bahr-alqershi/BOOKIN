@@ -247,7 +247,7 @@ class _BookingsListPageState extends State<BookingsListPage>
         if (state is BookingsListLoading) {
           return const SliverFillRemaining(
             child: LoadingWidget(
-              type: LoadingType.shimmer,
+              type: LoadingType.futuristic,
               message: 'جاري تحميل الحجوزات...',
             ),
           );

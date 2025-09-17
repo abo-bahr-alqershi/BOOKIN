@@ -1,6 +1,7 @@
 // lib/features/admin_properties/presentation/widgets/amenity_selector_widget.dart
 
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
+import 'package:bookn_cp_app/features/admin_amenities/presentation/utils/amenity_icons.dart';
 import 'package:bookn_cp_app/features/admin_properties/domain/entities/amenity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,21 +14,21 @@ class AmenitySelectorWidget extends StatefulWidget {
   final List<String> selectedAmenities;
   final Function(List<String>) onAmenitiesChanged;
   final bool isReadOnly;
-  
+
   const AmenitySelectorWidget({
     super.key,
     required this.selectedAmenities,
     required this.onAmenitiesChanged,
     this.isReadOnly = false,
   });
-  
+
   @override
   State<AmenitySelectorWidget> createState() => _AmenitySelectorWidgetState();
 }
 
 class _AmenitySelectorWidgetState extends State<AmenitySelectorWidget> {
   // لا نحتاج لتحميل المرافق هنا لأنها محملة بالفعل في الصفحة الرئيسية
-  
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AmenitiesBloc, AmenitiesState>(
@@ -35,36 +36,36 @@ class _AmenitySelectorWidgetState extends State<AmenitySelectorWidget> {
         if (state is AmenitiesLoading) {
           return _buildLoadingState();
         }
-        
+
         if (state is AmenitiesError) {
           return _buildErrorState(state.message);
         }
-        
+
         if (state is AmenitiesLoaded) {
           if (state.amenities.isEmpty) {
             return _buildEmptyState();
           }
-          
+
           return _buildAmenitiesGrid(state.amenities);
         }
-        
+
         // Initial state - request load only if not already loading
         if (state is AmenitiesInitial) {
           // سنطلب التحميل مرة واحدة فقط
           WidgetsBinding.instance.addPostFrameCallback((_) {
             context.read<AmenitiesBloc>().add(
-              const LoadAmenitiesEvent(pageSize: 100), // جلب كل المرافق
-            );
+                  const LoadAmenitiesEvent(pageSize: 100), // جلب كل المرافق
+                );
           });
         }
-        
+
         return _buildLoadingState();
       },
     );
   }
-  
+
   Widget _buildLoadingState() {
-    return Container(
+    return SizedBox(
       height: 100,
       child: Center(
         child: Column(
@@ -92,7 +93,7 @@ class _AmenitySelectorWidgetState extends State<AmenitySelectorWidget> {
       ),
     );
   }
-  
+
   Widget _buildErrorState(String message) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -130,8 +131,8 @@ class _AmenitySelectorWidgetState extends State<AmenitySelectorWidget> {
           ElevatedButton.icon(
             onPressed: () {
               context.read<AmenitiesBloc>().add(
-                const LoadAmenitiesEvent(pageSize: 100),
-              );
+                    const LoadAmenitiesEvent(pageSize: 100),
+                  );
             },
             icon: const Icon(Icons.refresh_rounded, size: 16),
             label: const Text('إعادة المحاولة'),
@@ -148,7 +149,7 @@ class _AmenitySelectorWidgetState extends State<AmenitySelectorWidget> {
       ),
     );
   }
-  
+
   Widget _buildEmptyState() {
     return Container(
       padding: const EdgeInsets.all(32),
@@ -180,7 +181,7 @@ class _AmenitySelectorWidgetState extends State<AmenitySelectorWidget> {
       ),
     );
   }
-  
+
   Widget _buildAmenitiesGrid(List<Amenity> amenities) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,14 +216,14 @@ class _AmenitySelectorWidgetState extends State<AmenitySelectorWidget> {
             ],
           ),
         ),
-        
+
         // Amenities grid
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: amenities.map((amenity) {
             final isSelected = widget.selectedAmenities.contains(amenity.id);
-            
+
             return GestureDetector(
               onTap: widget.isReadOnly
                   ? null
@@ -238,7 +239,8 @@ class _AmenitySelectorWidgetState extends State<AmenitySelectorWidget> {
                     },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? AppTheme.primaryGradient
@@ -272,26 +274,29 @@ class _AmenitySelectorWidgetState extends State<AmenitySelectorWidget> {
                     Icon(
                       _getAmenityIcon(amenity.icon),
                       size: 18,
-                      color: isSelected 
-                          ? Colors.white 
+                      color: isSelected
+                          ? Colors.white
                           : AppTheme.textMuted.withOpacity(0.7),
                     ),
                     const SizedBox(width: 8),
-                    
+
                     // Name
                     Text(
                       amenity.name,
                       style: AppTextStyles.bodySmall.copyWith(
                         color: isSelected ? Colors.white : AppTheme.textLight,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.normal,
                       ),
                     ),
-                    
+
                     // Free/Paid badge
-                    if (amenity.extraCost != null && amenity.extraCost! > 0) ...[
+                    if (amenity.extraCost != null &&
+                        amenity.extraCost! > 0) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: AppTheme.warning.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(4),
@@ -306,11 +311,11 @@ class _AmenitySelectorWidgetState extends State<AmenitySelectorWidget> {
                         ),
                       ),
                     ],
-                    
+
                     // Check icon
                     if (isSelected) ...[
                       const SizedBox(width: 6),
-                      Icon(
+                      const Icon(
                         Icons.check_circle_rounded,
                         size: 16,
                         color: Colors.white,
@@ -322,7 +327,7 @@ class _AmenitySelectorWidgetState extends State<AmenitySelectorWidget> {
             );
           }).toList(),
         ),
-        
+
         // Clear all button (if items selected)
         if (widget.selectedAmenities.isNotEmpty && !widget.isReadOnly) ...[
           const SizedBox(height: 16),
@@ -336,7 +341,8 @@ class _AmenitySelectorWidgetState extends State<AmenitySelectorWidget> {
               label: const Text('إلغاء تحديد الكل'),
               style: TextButton.styleFrom(
                 foregroundColor: AppTheme.textMuted,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
             ),
           ),
@@ -344,31 +350,8 @@ class _AmenitySelectorWidgetState extends State<AmenitySelectorWidget> {
       ],
     );
   }
-  
+
   IconData _getAmenityIcon(String iconName) {
-    final iconMap = {
-      'wifi': Icons.wifi_rounded,
-      'pool': Icons.pool_rounded,
-      'parking': Icons.local_parking_rounded,
-      'restaurant': Icons.restaurant_rounded,
-      'gym': Icons.fitness_center_rounded,
-      'spa': Icons.spa_rounded,
-      'beach': Icons.beach_access_rounded,
-      'room_service': Icons.room_service_rounded,
-      'air_conditioning': Icons.ac_unit_rounded,
-      'tv': Icons.tv_rounded,
-      'kitchen': Icons.kitchen_rounded,
-      'laundry': Icons.local_laundry_service_rounded,
-      'bar': Icons.local_bar_rounded,
-      'elevator': Icons.elevator_rounded,
-      'security': Icons.security_rounded,
-      'pets': Icons.pets_rounded,
-      'smoking': Icons.smoking_rooms_rounded,
-      'wheelchair': Icons.wheelchair_pickup_rounded,
-      'conference': Icons.business_center_rounded,
-      'airport_shuttle': Icons.airport_shuttle_rounded,
-    };
-    
-    return iconMap[iconName] ?? Icons.check_circle_outline_rounded;
+    return AmenityIcons.getIconByName(iconName)?.icon ?? Icons.star_rounded;
   }
 }

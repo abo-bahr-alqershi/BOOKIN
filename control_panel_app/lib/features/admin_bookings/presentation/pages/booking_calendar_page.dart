@@ -179,7 +179,7 @@ class _BookingCalendarPageState extends State<BookingCalendarPage>
             return const SizedBox(
               height: 400,
               child: LoadingWidget(
-                type: LoadingType.shimmer,
+                type: LoadingType.futuristic,
                 message: 'جاري تحميل التقويم...',
               ),
             );

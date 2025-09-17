@@ -70,7 +70,7 @@ class _PaymentAnalyticsPageState extends State<PaymentAnalyticsPage>
                   builder: (context, state) {
                     if (state is PaymentAnalyticsLoading) {
                       return const LoadingWidget(
-                        type: LoadingType.shimmer,
+                        type: LoadingType.futuristic,
                         message: 'جاري تحميل التحليلات...',
                       );
                     }
