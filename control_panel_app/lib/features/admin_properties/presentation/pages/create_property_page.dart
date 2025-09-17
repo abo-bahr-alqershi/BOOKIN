@@ -547,10 +547,10 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: PropertyMapView(
-                onLocationSelected: (lat, lng) {
+                onLocationSelected: (latLng) {
                   _safeSetState(() {
-                    _latitudeController.text = lat.toString();
-                    _longitudeController.text = lng.toString();
+                    _latitudeController.text = latLng.latitude.toString();
+                    _longitudeController.text = latLng.longitude.toString();
                   });
                 },
               ),

@@ -29,6 +29,7 @@ import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'dart:io' as io;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bookn_cp_app/core/bloc/theme/theme_bloc.dart';
 
@@ -1648,7 +1649,7 @@ Future<void> _initExternal() async {
 
   // Internet Connection Checker (force IPv4 addresses to avoid IPv6 DNS issues)
   sl.registerLazySingleton(() => InternetConnectionChecker.createInstance(addresses: [
-        AddressCheckOptions(InternetAddress('1.1.1.1', type: InternetAddressType.IPv4), port: 53),
-        AddressCheckOptions(InternetAddress('8.8.8.8', type: InternetAddressType.IPv4), port: 53),
+        AddressCheckOptions(address: io.InternetAddress.tryParse('1.1.1.1')!, port: 53),
+        AddressCheckOptions(address: io.InternetAddress.tryParse('8.8.8.8')!, port: 53),
       ]));
 }
