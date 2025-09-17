@@ -104,7 +104,7 @@ class _PaymentAnalyticsPageState extends State<PaymentAnalyticsPage>
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+      // padding: const EdgeInsets.all(AppDimensions.paddingLarge),
       child: Row(
         children: [
           IconButton(
@@ -120,7 +120,7 @@ class _PaymentAnalyticsPageState extends State<PaymentAnalyticsPage>
                 ),
               ),
               child: Icon(
-                CupertinoIcons.arrow_left,
+                CupertinoIcons.arrow_right,
                 color: AppTheme.textWhite,
                 size: 20,
               ),
@@ -175,7 +175,8 @@ class _PaymentAnalyticsPageState extends State<PaymentAnalyticsPage>
     return Container(
       height: 40,
       margin: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLarge,
+        vertical: 16,
+        // horizontal: AppDimensions.paddingLarge,
       ),
       child: ListView(
         scrollDirection: Axis.horizontal,
@@ -223,7 +224,7 @@ class _PaymentAnalyticsPageState extends State<PaymentAnalyticsPage>
 
   Widget _buildTabs() {
     return Container(
-      margin: const EdgeInsets.all(AppDimensions.paddingLarge),
+      // margin: const EdgeInsets.all(AppDimensions.paddingLarge),
       decoration: BoxDecoration(
         color: AppTheme.darkCard.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
@@ -261,7 +262,7 @@ class _PaymentAnalyticsPageState extends State<PaymentAnalyticsPage>
 
   Widget _buildOverviewTab(PaymentAnalyticsLoaded state) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+      // padding: const EdgeInsets.all(AppDimensions.paddingLarge),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -285,7 +286,7 @@ class _PaymentAnalyticsPageState extends State<PaymentAnalyticsPage>
 
   Widget _buildTrendsTab(PaymentAnalyticsLoaded state) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+      // padding: const EdgeInsets.all(AppDimensions.paddingLarge),
       child: Column(
         children: [
           PaymentTrendsGraph(
@@ -305,7 +306,7 @@ class _PaymentAnalyticsPageState extends State<PaymentAnalyticsPage>
 
   Widget _buildDetailsTab(PaymentAnalyticsLoaded state) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+      // padding: const EdgeInsets.all(AppDimensions.paddingLarge),
       child: Column(
         children: [
           _buildDetailCard(

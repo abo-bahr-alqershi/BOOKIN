@@ -117,7 +117,7 @@ class _BookingCalendarWidgetState extends State<BookingCalendarWidget> {
     return Row(
       children: [
         _buildNavButton(
-          icon: CupertinoIcons.chevron_left,
+          icon: CupertinoIcons.chevron_right,
           onTap: () {
             setState(() {
               _focusedDay = DateTime(
@@ -140,7 +140,7 @@ class _BookingCalendarWidgetState extends State<BookingCalendarWidget> {
         ),
         const SizedBox(width: 8),
         _buildNavButton(
-          icon: CupertinoIcons.chevron_right,
+          icon: CupertinoIcons.chevron_left,
           onTap: () {
             setState(() {
               _focusedDay = DateTime(
