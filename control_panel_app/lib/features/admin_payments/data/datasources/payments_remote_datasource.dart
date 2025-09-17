@@ -143,6 +143,36 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
       } else {
         throw ServerException(result.message ?? 'Failed to refund payment');
       }
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) {
+        return PaymentAnalyticsModel.fromJson({
+          'summary': const PaymentSummaryModel(
+            totalTransactions: 0,
+            totalAmount: MoneyModel(amount: 0, currency: 'USD', formattedAmount: 'USD 0.00'),
+            averageTransactionValue: MoneyModel(amount: 0, currency: 'USD', formattedAmount: 'USD 0.00'),
+            successRate: 0,
+            successfulTransactions: 0,
+            failedTransactions: 0,
+            pendingTransactions: 0,
+            totalRefunded: MoneyModel(amount: 0, currency: 'USD', formattedAmount: 'USD 0.00'),
+            refundCount: 0,
+          ).toJson(),
+          'trends': <dynamic>[],
+          'methodAnalytics': {},
+          'statusAnalytics': {},
+          'refundAnalytics': const RefundAnalyticsModel(
+            totalRefunds: 0,
+            totalRefundedAmount: MoneyModel(amount: 0, currency: 'USD', formattedAmount: 'USD 0.00'),
+            refundRate: 0,
+            averageRefundTime: 0,
+            refundReasons: {},
+            trends: [],
+          ).toJson(),
+          'startDate': (startDate ?? DateTime.now().subtract(const Duration(days: 30))).toIso8601String(),
+          'endDate': (endDate ?? DateTime.now()).toIso8601String(),
+        });
+      }
+      throw ServerException(e.message);
     } on DioException catch (e) {
       throw ServerException(
         e.response?.data['message'] ?? 'Network error occurred',
@@ -599,6 +629,11 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
       } else {
         throw ServerException(result.message ?? 'Failed to get revenue report');
       }
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) {
+        return <String, dynamic>{};
+      }
+      throw ServerException(e.message);
     } on DioException catch (e) {
       throw ServerException(
         e.response?.data['message'] ?? 'Network error occurred',
@@ -648,6 +683,11 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
       } else {
         throw ServerException(result.message ?? 'Failed to get trends');
       }
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) {
+        return <PaymentTrendModel>[];
+      }
+      throw ServerException(e.message);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         return <PaymentTrendModel>[];
@@ -699,6 +739,18 @@ class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
         throw ServerException(
             result.message ?? 'Failed to get refund statistics');
       }
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) {
+        return const RefundAnalyticsModel(
+          totalRefunds: 0,
+          totalRefundedAmount: MoneyModel(amount: 0, currency: 'USD', formattedAmount: 'USD 0.00'),
+          refundRate: 0,
+          averageRefundTime: 0,
+          refundReasons: {},
+          trends: [],
+        );
+      }
+      throw ServerException(e.message);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         return const RefundAnalyticsModel(
