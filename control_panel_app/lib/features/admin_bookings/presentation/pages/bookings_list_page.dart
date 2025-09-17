@@ -375,12 +375,7 @@ class _BookingsListPageState extends State<BookingsListPage>
   }
 
   void _navigateToDetails(String bookingId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => BookingDetailsPage(bookingId: bookingId),
-      ),
-    );
+    context.push('/admin/bookings/$bookingId');
   }
 
   void _toggleSelection(Booking booking) {

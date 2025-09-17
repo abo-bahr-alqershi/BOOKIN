@@ -15,6 +15,7 @@ import '../bloc/booking_calendar/booking_calendar_event.dart';
 import '../bloc/booking_calendar/booking_calendar_state.dart';
 import '../widgets/booking_calendar_widget.dart';
 import '../widgets/booking_status_badge.dart';
+import 'package:go_router/go_router.dart';
 import 'booking_details_page.dart';
 
 class BookingCalendarPage extends StatefulWidget {
@@ -364,12 +365,7 @@ class _BookingCalendarPageState extends State<BookingCalendarPage>
   }
 
   void _navigateToDetails(String bookingId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => BookingDetailsPage(bookingId: bookingId),
-      ),
-    );
+    context.push('/admin/bookings/$bookingId');
   }
 
   String _formatDate(DateTime date) {
