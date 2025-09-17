@@ -792,68 +792,71 @@ class _PaymentFiltersWidgetState extends State<PaymentFiltersWidget>
   void _showStatusFilter() {
     showCupertinoModalPopup(
       context: context,
-      builder: (context) => Container(
-        height: 300,
-        decoration: BoxDecoration(
-          color: AppTheme.darkCard,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: AppTheme.darkBorder.withValues(alpha: 0.2),
+      builder: (context) => Material(
+        color: Colors.transparent,
+        child: Container(
+          height: 300,
+          decoration: BoxDecoration(
+            color: AppTheme.darkCard,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppTheme.darkBorder.withValues(alpha: 0.2),
+                    ),
                   ),
                 ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'اختر حالة الدفعة',
-                    style: AppTextStyles.heading3.copyWith(
-                      color: AppTheme.textWhite,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Icon(
-                      CupertinoIcons.xmark_circle_fill,
-                      color: AppTheme.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                children: PaymentStatus.values.map((status) {
-                  return ListTile(
-                    title: Text(
-                      _getStatusText(status),
-                      style: AppTextStyles.bodyMedium.copyWith(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'اختر حالة الدفعة',
+                      style: AppTextStyles.heading3.copyWith(
                         color: AppTheme.textWhite,
                       ),
                     ),
-                    trailing: _selectedStatus == status
-                        ? Icon(
-                            CupertinoIcons.checkmark_circle_fill,
-                            color: AppTheme.primaryBlue,
-                          )
-                        : null,
-                    onTap: () {
-                      setState(() => _selectedStatus = status);
-                      Navigator.pop(context);
-                      _applyFilters();
-                    },
-                  );
-                }).toList(),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Icon(
+                        CupertinoIcons.xmark_circle_fill,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              Expanded(
+                child: ListView(
+                  children: PaymentStatus.values.map((status) {
+                    return ListTile(
+                      title: Text(
+                        _getStatusText(status),
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppTheme.textWhite,
+                        ),
+                      ),
+                      trailing: _selectedStatus == status
+                          ? Icon(
+                              CupertinoIcons.checkmark_circle_fill,
+                              color: AppTheme.primaryBlue,
+                            )
+                          : null,
+                      onTap: () {
+                        setState(() => _selectedStatus = status);
+                        Navigator.pop(context);
+                        _applyFilters();
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -862,68 +865,71 @@ class _PaymentFiltersWidgetState extends State<PaymentFiltersWidget>
   void _showMethodFilter() {
     showCupertinoModalPopup(
       context: context,
-      builder: (context) => Container(
-        height: 350,
-        decoration: BoxDecoration(
-          color: AppTheme.darkCard,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: AppTheme.darkBorder.withValues(alpha: 0.2),
+      builder: (context) => Material(
+        color: Colors.transparent,
+        child: Container(
+          height: 350,
+          decoration: BoxDecoration(
+            color: AppTheme.darkCard,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppTheme.darkBorder.withValues(alpha: 0.2),
+                    ),
                   ),
                 ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'اختر طريقة الدفع',
-                    style: AppTextStyles.heading3.copyWith(
-                      color: AppTheme.textWhite,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Icon(
-                      CupertinoIcons.xmark_circle_fill,
-                      color: AppTheme.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                children: PaymentMethod.values.map((method) {
-                  return ListTile(
-                    title: Text(
-                      _getMethodText(method),
-                      style: AppTextStyles.bodyMedium.copyWith(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'اختر طريقة الدفع',
+                      style: AppTextStyles.heading3.copyWith(
                         color: AppTheme.textWhite,
                       ),
                     ),
-                    trailing: _selectedMethod == method
-                        ? Icon(
-                            CupertinoIcons.checkmark_circle_fill,
-                            color: AppTheme.primaryBlue,
-                          )
-                        : null,
-                    onTap: () {
-                      setState(() => _selectedMethod = method);
-                      Navigator.pop(context);
-                      _applyFilters();
-                    },
-                  );
-                }).toList(),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Icon(
+                        CupertinoIcons.xmark_circle_fill,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              Expanded(
+                child: ListView(
+                  children: PaymentMethod.values.map((method) {
+                    return ListTile(
+                      title: Text(
+                        _getMethodText(method),
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppTheme.textWhite,
+                        ),
+                      ),
+                      trailing: _selectedMethod == method
+                          ? Icon(
+                              CupertinoIcons.checkmark_circle_fill,
+                              color: AppTheme.primaryBlue,
+                            )
+                          : null,
+                      onTap: () {
+                        setState(() => _selectedMethod = method);
+                        Navigator.pop(context);
+                        _applyFilters();
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
