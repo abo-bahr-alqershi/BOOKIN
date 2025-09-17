@@ -1519,6 +1519,27 @@ class _AdminHubPageState extends State<AdminHubPage>
       onTap: () => context.push('/admin/currencies'),
     ),
     _AdminFeature(
+      title: 'المدفوعات',
+      description: 'إدارة المعاملات المالية والاستردادات',
+      icon: Icons.account_balance_wallet_rounded,
+      gradient: [AppTheme.primaryBlue, AppTheme.primaryPurple],
+      onTap: () => context.push('/admin/payments'),
+    ),
+    _AdminFeature(
+      title: 'تحليلات المدفوعات',
+      description: 'رؤى مفصلة واتجاهات الإيرادات',
+      icon: Icons.analytics_rounded,
+      gradient: [AppTheme.neonPurple, AppTheme.warning],
+      onTap: () => context.push('/admin/payments/analytics'),
+    ),
+    _AdminFeature(
+      title: 'لوحة الإيرادات',
+      description: 'نظرة شاملة على الأداء المالي',
+      icon: Icons.stacked_line_chart_rounded,
+      gradient: [AppTheme.success, AppTheme.primaryBlue],
+      onTap: () => context.push('/admin/payments/revenue-dashboard'),
+    ),
+    _AdminFeature(
       title: 'الإعدادات',
       description: 'إعدادات النظام',
       icon: Icons.settings_rounded,
