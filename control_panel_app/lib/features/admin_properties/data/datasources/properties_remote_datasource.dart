@@ -136,6 +136,16 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
           }
         }
       }
+      // Ensure currency is sent via header for context if provided
+      try {
+        final currency = propertyData['currency'];
+        if (currency != null && currency is String && currency.isNotEmpty) {
+          apiClient.addRequestInterceptor((options) {
+            options.headers[ApiConstants.xPropertyCurrency] = currency;
+            return options;
+          });
+        }
+      } catch (_) {}
       final response = await apiClient.post(
         _baseEndpoint,
         data: propertyData,
@@ -163,6 +173,16 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
           }
         }
       }
+      // Ensure currency header if provided
+      try {
+        final currency = propertyData['currency'];
+        if (currency != null && currency is String && currency.isNotEmpty) {
+          apiClient.addRequestInterceptor((options) {
+            options.headers[ApiConstants.xPropertyCurrency] = currency;
+            return options;
+          });
+        }
+      } catch (_) {}
       final response = await apiClient.put(
         '$_baseEndpoint/$propertyId',
         data: propertyData,

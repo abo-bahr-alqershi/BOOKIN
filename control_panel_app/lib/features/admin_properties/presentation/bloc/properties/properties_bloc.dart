@@ -113,6 +113,10 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
         images: event.images,
         amenityIds: event.amenityIds,
         tempKey: event.tempKey,
+        shortDescription: event.shortDescription,
+        basePricePerNight: event.basePricePerNight,
+        currency: event.currency,
+        isFeatured: event.isFeatured,
       ),
     );
     
@@ -142,6 +146,10 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
         city: event.city,
         starRating: event.starRating,
         images: event.images,
+        shortDescription: event.shortDescription,
+        basePricePerNight: event.basePricePerNight,
+        currency: event.currency,
+        isFeatured: event.isFeatured,
       ),
     );
     

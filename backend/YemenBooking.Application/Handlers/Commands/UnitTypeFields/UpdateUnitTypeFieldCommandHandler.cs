@@ -161,6 +161,10 @@ public class UpdateUnitTypeFieldCommandHandler : IRequestHandler<UpdateUnitTypeF
             existingField.ShowInCards = request.ShowInCards ?? existingField.ShowInCards;
             existingField.IsPrimaryFilter = request.IsPrimaryFilter ?? existingField.IsPrimaryFilter;
             existingField.Priority = request.Priority ?? existingField.Priority;
+            if (!string.IsNullOrWhiteSpace(request.FieldTypeId) && !string.Equals(existingField.FieldTypeId, request.FieldTypeId, StringComparison.OrdinalIgnoreCase))
+            {
+                existingField.FieldTypeId = request.FieldTypeId!;
+            }
             existingField.UpdatedAt = DateTime.UtcNow;
 
             var updatedField = await _unitTypeFieldRepository.UpdateUnitTypeFieldAsync(existingField, cancellationToken);

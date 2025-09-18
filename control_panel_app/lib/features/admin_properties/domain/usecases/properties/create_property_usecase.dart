@@ -18,6 +18,10 @@ class CreatePropertyParams {
   final List<String>? images;
   final List<String>? amenityIds; // أضف هذا السطر
   final String? tempKey;
+  final String shortDescription;
+  final double basePricePerNight;
+  final String currency;
+  final bool isFeatured;
   
   CreatePropertyParams({
     required this.name,
@@ -32,6 +36,10 @@ class CreatePropertyParams {
     this.images,
     this.amenityIds, // أضف هذا السطر
     this.tempKey,
+    required this.shortDescription,
+    required this.basePricePerNight,
+    required this.currency,
+    required this.isFeatured,
   });
   
   Map<String, dynamic> toJson() {
@@ -45,6 +53,10 @@ class CreatePropertyParams {
     'longitude': longitude,
     'city': city,
     'starRating': starRating,
+      'shortDescription': shortDescription,
+      'basePricePerNight': basePricePerNight,
+      'currency': currency,
+      'isFeatured': isFeatured,
       if (images != null && images!.isNotEmpty) 'images': images,
       if (amenityIds != null && amenityIds!.isNotEmpty) 'amenityIds': amenityIds,
       if (tempKey != null && tempKey!.isNotEmpty) 'tempKey': tempKey,
