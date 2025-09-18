@@ -159,6 +159,35 @@ public class PropertyImageRepository : BaseRepository<PropertyImage>, IPropertyI
         image.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Also persist the main image reference into parent tables if columns exist
+        try
+        {
+            if (image.PropertyId.HasValue)
+            {
+                // Try set FK column if present
+                await _context.Database.ExecuteSqlRawAsync(
+                    "UPDATE Properties SET ImageId = {0} WHERE PropertyId = {1}",
+                    image.Id, image.PropertyId.Value);
+                // Try set URL column if present (ignore if it doesn't exist)
+                await _context.Database.ExecuteSqlRawAsync(
+                    "BEGIN TRY UPDATE Properties SET MainImageUrl = {0} WHERE PropertyId = {1} END TRY BEGIN CATCH END",
+                    image.Url, image.PropertyId.Value);
+            }
+            if (image.UnitId.HasValue)
+            {
+                await _context.Database.ExecuteSqlRawAsync(
+                    "BEGIN TRY UPDATE Units SET ImageId = {0} WHERE UnitId = {1} END TRY BEGIN CATCH END",
+                    image.Id, image.UnitId.Value);
+                await _context.Database.ExecuteSqlRawAsync(
+                    "BEGIN TRY UPDATE Units SET MainImageUrl = {0} WHERE UnitId = {1} END TRY BEGIN CATCH END",
+                    image.Url, image.UnitId.Value);
+            }
+        }
+        catch
+        {
+            // Best-effort: if columns don't exist, ignore
+        }
         return true;
     }
 
