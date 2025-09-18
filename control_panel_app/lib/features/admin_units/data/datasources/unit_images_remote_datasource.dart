@@ -88,7 +88,11 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
   @override
   Future<List<UnitImageModel>> getUnitImages(String? unitId, {String? tempKey}) async {
     try {
-      final qp = <String, dynamic>{'unitId': unitId};
+      final qp = <String, dynamic>{
+        'unitId': unitId,
+        'sortBy': 'order',
+        'sortOrder': 'asc',
+      };
       if (tempKey != null) qp['tempKey'] = tempKey;
       final response = await apiClient.get('$_imagesEndpoint', queryParameters: qp);
       

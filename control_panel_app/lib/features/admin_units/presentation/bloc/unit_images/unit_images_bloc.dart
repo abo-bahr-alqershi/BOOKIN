@@ -343,8 +343,8 @@ class UnitImagesBloc extends Bloc<UnitImagesEvent, UnitImagesState> {
             }
           }
 
-          // إعادة تحميل الصور للحصول على البيانات المحدثة
-          add(LoadUnitImagesEvent(unitId: event.unitId));
+          // إعادة تحميل الصور للحصول على البيانات المحدثة (الحفاظ على tempKey)
+          add(LoadUnitImagesEvent(unitId: event.unitId, tempKey: event.tempKey));
         }
       },
     );

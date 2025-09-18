@@ -638,6 +638,11 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
               propertyId: null, // لا يوجد معرف بعد
               tempKey: _tempKey,
               maxImages: 10,
+              onImagesChanged: (images) {
+                setState(() {
+                  _selectedImages = images;
+                });
+              },
               onLocalImagesChanged: (paths) {
                 setState(() {
                   _selectedLocalImages = paths;

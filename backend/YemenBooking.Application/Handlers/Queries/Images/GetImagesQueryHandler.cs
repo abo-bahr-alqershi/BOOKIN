@@ -52,13 +52,23 @@ namespace YemenBooking.Application.Handlers.Queries.Images
             // 2. تطبيق الفرز
             var sortBy = request.SortBy?.Trim().ToLower();
             var ascending = string.Equals(request.SortOrder, "asc", StringComparison.OrdinalIgnoreCase);
-            query = sortBy switch
+            if (string.IsNullOrWhiteSpace(sortBy))
             {
-                "uploadedat" => ascending ? query.OrderBy(i => i.UploadedAt) : query.OrderByDescending(i => i.UploadedAt),
-                "order" => ascending ? query.OrderBy(i => i.DisplayOrder) : query.OrderByDescending(i => i.DisplayOrder),
-                "filename" => ascending ? query.OrderBy(i => i.Name) : query.OrderByDescending(i => i.Name),
-                _ => query.OrderByDescending(i => i.UploadedAt),
-            };
+                // Default: order by DisplayOrder then UploadedAt (ascending)
+                query = query
+                    .OrderBy(i => i.DisplayOrder)
+                    .ThenBy(i => i.UploadedAt);
+            }
+            else
+            {
+                query = sortBy switch
+                {
+                    "uploadedat" => ascending ? query.OrderBy(i => i.UploadedAt) : query.OrderByDescending(i => i.UploadedAt),
+                    "order" => ascending ? query.OrderBy(i => i.DisplayOrder) : query.OrderByDescending(i => i.DisplayOrder),
+                    "filename" => ascending ? query.OrderBy(i => i.Name) : query.OrderByDescending(i => i.Name),
+                    _ => query.OrderBy(i => i.DisplayOrder).ThenBy(i => i.UploadedAt),
+                };
+            }
 
             // 3. تطبيق الترقيم
             var page = request.Page.GetValueOrDefault(1);
@@ -80,7 +90,7 @@ namespace YemenBooking.Application.Handlers.Queries.Images
                 UploadedAt = i.UploadedAt,
                 UploadedBy = i.CreatedBy ?? Guid.Empty,
                 Order = i.DisplayOrder,
-                IsPrimary = i.IsMain,
+                IsPrimary = i.IsMainImage,
                 PropertyId = i.PropertyId,
                 UnitId = i.UnitId,
                 Category = i.Category,

@@ -88,7 +88,12 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   @override
   Future<List<PropertyImageModel>> getPropertyImages(String? propertyId, {String? tempKey}) async {
     try {
-      final qp = <String, dynamic>{'propertyId': propertyId};
+      final qp = <String, dynamic>{
+        'propertyId': propertyId,
+        // ensure backend returns in display order by default
+        'sortBy': 'order',
+        'sortOrder': 'asc',
+      };
       if (tempKey != null) qp['tempKey'] = tempKey;
       final response = await apiClient.get('$_imagesEndpoint', queryParameters: qp);
       
