@@ -473,7 +473,7 @@ class _CityFormPageState extends State<CityFormPage>
               color: AppTheme.textWhite,
             ),
             decoration: InputDecoration(
-              hintText: 'مثال: الرياض',
+              hintText: 'مثال: صنعاء',
               hintStyle: AppTextStyles.bodyMedium.copyWith(
                 color: AppTheme.textMuted.withValues(alpha: 0.5),
               ),
@@ -592,7 +592,7 @@ class _CityFormPageState extends State<CityFormPage>
               color: AppTheme.textWhite,
             ),
             decoration: InputDecoration(
-              hintText: 'مثال: المملكة العربية السعودية',
+              hintText: 'مثال: اليمن',
               hintStyle: AppTextStyles.bodyMedium.copyWith(
                 color: AppTheme.textMuted.withValues(alpha: 0.5),
               ),
@@ -760,8 +760,8 @@ class _CityFormPageState extends State<CityFormPage>
                   _hasChanges = true;
                 });
               },
-              activeColor: AppTheme.success,
-              trackColor: AppTheme.textMuted.withValues(alpha: 0.3),
+              activeTrackColor: AppTheme.success,
+              inactiveTrackColor: AppTheme.textMuted.withValues(alpha: 0.3),
             ),
           ),
         ],
@@ -799,7 +799,7 @@ class _CityFormPageState extends State<CityFormPage>
                       gradient: AppTheme.primaryGradient,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       CupertinoIcons.photo_fill_on_rectangle_fill,
                       color: Colors.white,
                       size: 18,
@@ -956,7 +956,7 @@ class _CityFormPageState extends State<CityFormPage>
                               borderRadius: BorderRadius.circular(16),
                               child: Center(
                                 child: _isLoading
-                                    ? SizedBox(
+                                    ? const SizedBox(
                                         width: 24,
                                         height: 24,
                                         child: CircularProgressIndicator(
@@ -1100,7 +1100,7 @@ class _CityFormPageState extends State<CityFormPage>
                       ),
                     ],
                   ),
-                  child: Icon(
+                  child: const Icon(
                     CupertinoIcons.checkmark_alt,
                     color: Colors.white,
                     size: 60,
@@ -1126,7 +1126,7 @@ class _CityFormPageState extends State<CityFormPage>
       SnackBar(
         content: Row(
           children: [
-            Icon(CupertinoIcons.xmark_circle_fill, color: Colors.white),
+            const Icon(CupertinoIcons.xmark_circle_fill, color: Colors.white),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
