@@ -29,46 +29,46 @@ class _PropertiesListPageState extends State<PropertiesListPage>
   late AnimationController _glowController;
   late AnimationController _particleController;
   late AnimationController _contentAnimationController;
-  
+
   // Animations
   late Animation<double> _backgroundRotation;
   late Animation<double> _glowAnimation;
   late Animation<double> _contentFadeAnimation;
   late Animation<Offset> _contentSlideAnimation;
-  
+
   // State
   final ScrollController _scrollController = ScrollController();
   bool _showFilters = false;
   String _selectedView = 'grid'; // grid, table, map
-  
+
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _loadProperties();
   }
-  
+
   void _initializeAnimations() {
     _backgroundAnimationController = AnimationController(
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
-    
+
     _glowController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _particleController = AnimationController(
       duration: const Duration(seconds: 15),
       vsync: this,
     )..repeat();
-    
+
     _contentAnimationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _backgroundRotation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
@@ -76,7 +76,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       parent: _backgroundAnimationController,
       curve: Curves.linear,
     ));
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.3,
       end: 1.0,
@@ -84,7 +84,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       parent: _glowController,
       curve: Curves.easeInOut,
     ));
-    
+
     _contentFadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -92,7 +92,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       parent: _contentAnimationController,
       curve: Curves.easeOut,
     ));
-    
+
     _contentSlideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.05),
       end: Offset.zero,
@@ -100,7 +100,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       parent: _contentAnimationController,
       curve: Curves.easeOutQuart,
     ));
-    
+
     // Start animations
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
@@ -108,11 +108,11 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       }
     });
   }
-  
+
   void _loadProperties() {
     context.read<PropertiesBloc>().add(const LoadPropertiesEvent());
   }
-  
+
   @override
   void dispose() {
     _backgroundAnimationController.dispose();
@@ -122,7 +122,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
     _scrollController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -131,41 +131,57 @@ class _PropertiesListPageState extends State<PropertiesListPage>
         children: [
           // Animated Background
           _buildAnimatedBackground(),
-          
-          // Main Content
-          SafeArea(
-            child: Column(
-              children: [
-                // Futuristic Header
-                _buildHeader(),
-                
-                // Stats Cards
-                _buildStatsSection(),
-                
-                // Filters Section
-                if (_showFilters) _buildFiltersSection(),
-                
-                // Content Area
-                Expanded(
-                  child: FadeTransition(
-                    opacity: _contentFadeAnimation,
-                    child: SlideTransition(
-                      position: _contentSlideAnimation,
-                      child: _buildContent(),
-                    ),
+
+          // Main Content with CustomScrollView for scrolling
+          CustomScrollView(
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // Header as SliverToBoxAdapter
+              SliverToBoxAdapter(
+                child: _buildHeader(),
+              ),
+
+              // Stats Cards as SliverToBoxAdapter
+              SliverToBoxAdapter(
+                child: _buildStatsSection(),
+              ),
+
+              // Filters Section as SliverToBoxAdapter
+              if (_showFilters)
+                SliverToBoxAdapter(
+                  child: _buildFiltersSection(),
+                ),
+
+              // Content Area - المحتوى الرئيسي
+              SliverToBoxAdapter(
+                child: FadeTransition(
+                  opacity: _contentFadeAnimation,
+                  child: SlideTransition(
+                    position: _contentSlideAnimation,
+                    child: _buildContent(),
                   ),
                 ),
-              ],
-            ),
+              ),
+
+              // Bottom padding
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 100),
+              ),
+            ],
           ),
-          
+
           // Floating Action Button
-          _buildFloatingActionButton(),
+          Positioned(
+            bottom: 24,
+            right: 24,
+            child: _buildFloatingActionButton(),
+          ),
         ],
       ),
     );
   }
-  
+
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
       animation: Listenable.merge([_backgroundRotation, _glowAnimation]),
@@ -193,7 +209,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       },
     );
   }
-  
+
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -214,75 +230,80 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       child: ClipRRect(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Row(
+          child: Column(
             children: [
-              // Title with gradient
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ShaderMask(
-                      shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
-                      child: Text(
-                        'إدارة العقارات',
-                        style: AppTextStyles.heading1.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+              // Title Section
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (bounds) =>
+                              AppTheme.primaryGradient.createShader(bounds),
+                          child: Text(
+                            'إدارة العقارات',
+                            style: AppTextStyles.heading1.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'إدارة جميع العقارات والوحدات المسجلة',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'إدارة جميع العقارات والوحدات المسجلة',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppTheme.textMuted,
-                      ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // Action Buttons - مع scroll أفقي
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildActionButton(
+                      icon: Icons.filter_list_rounded,
+                      label: 'فلتر',
+                      onTap: () => setState(() => _showFilters = !_showFilters),
+                      isActive: _showFilters,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      icon: Icons.grid_view_rounded,
+                      label: 'شبكة',
+                      onTap: () => setState(() => _selectedView = 'grid'),
+                      isActive: _selectedView == 'grid',
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      icon: Icons.table_chart_rounded,
+                      label: 'جدول',
+                      onTap: () => setState(() => _selectedView = 'table'),
+                      isActive: _selectedView == 'table',
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      icon: Icons.map_rounded,
+                      label: 'خريطة',
+                      onTap: () => setState(() => _selectedView = 'map'),
+                      isActive: _selectedView == 'map',
+                    ),
+                    const SizedBox(width: 16),
+                    _buildPrimaryActionButton(
+                      icon: Icons.add_rounded,
+                      label: 'إضافة عقار',
+                      onTap: () => context.push('/admin/properties/create'),
                     ),
                   ],
-                ),
-              ),
-              
-              // Action Buttons
-              Flexible(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildActionButton(
-                        icon: Icons.filter_list_rounded,
-                        label: 'فلتر',
-                        onTap: () => setState(() => _showFilters = !_showFilters),
-                        isActive: _showFilters,
-                      ),
-                      const SizedBox(width: 8),
-                      _buildActionButton(
-                        icon: Icons.grid_view_rounded,
-                        label: 'شبكة',
-                        onTap: () => setState(() => _selectedView = 'grid'),
-                        isActive: _selectedView == 'grid',
-                      ),
-                      const SizedBox(width: 8),
-                      _buildActionButton(
-                        icon: Icons.table_chart_rounded,
-                        label: 'جدول',
-                        onTap: () => setState(() => _selectedView = 'table'),
-                        isActive: _selectedView == 'table',
-                      ),
-                      const SizedBox(width: 8),
-                      _buildActionButton(
-                        icon: Icons.map_rounded,
-                        label: 'خريطة',
-                        onTap: () => setState(() => _selectedView = 'map'),
-                        isActive: _selectedView == 'map',
-                      ),
-                      const SizedBox(width: 16),
-                      _buildPrimaryActionButton(
-                        icon: Icons.add_rounded,
-                        label: 'إضافة عقار',
-                        onTap: () => context.push('/admin/properties/create'),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ],
@@ -291,7 +312,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       ),
     );
   }
-  
+
   Widget _buildActionButton({
     required IconData icon,
     required String label,
@@ -352,7 +373,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       ),
     );
   }
-  
+
   Widget _buildPrimaryActionButton({
     required IconData icon,
     required String label,
@@ -391,121 +412,136 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       ),
     );
   }
-  
+
   Widget _buildStatsSection() {
     return Container(
       height: 120,
       padding: const EdgeInsets.all(16),
       child: BlocBuilder<PropertiesBloc, PropertiesState>(
         builder: (context, state) {
-          final totalProperties = state is PropertiesLoaded ? state.totalCount : 0;
-          final pendingCount = 0; // TODO: Get from state
-          final activeCount = 0; // TODO: Get from state
-          
-          return Row(
-            children: [
-              Expanded(
-                child: PropertyStatsCard(
-                  title: 'إجمالي العقارات',
-                  value: totalProperties.toString(),
-                  icon: Icons.business_rounded,
-                  color: AppTheme.primaryBlue,
-                  trend: '+12%',
-                  isPositive: true,
+          final totalProperties =
+              state is PropertiesLoaded ? state.totalCount : 0;
+          const pendingCount = 0; // TODO: Get from state
+          const activeCount = 0; // TODO: Get from state
+
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 200,
+                  child: PropertyStatsCard(
+                    title: 'إجمالي العقارات',
+                    value: totalProperties.toString(),
+                    icon: Icons.business_rounded,
+                    color: AppTheme.primaryBlue,
+                    trend: '+12%',
+                    isPositive: true,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: PropertyStatsCard(
-                  title: 'في انتظار الموافقة',
-                  value: pendingCount.toString(),
-                  icon: Icons.pending_rounded,
-                  color: AppTheme.warning,
-                  trend: '5',
-                  isPositive: false,
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 200,
+                  child: PropertyStatsCard(
+                    title: 'في انتظار الموافقة',
+                    value: pendingCount.toString(),
+                    icon: Icons.pending_rounded,
+                    color: AppTheme.warning,
+                    trend: '5',
+                    isPositive: false,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: PropertyStatsCard(
-                  title: 'عقارات نشطة',
-                  value: activeCount.toString(),
-                  icon: Icons.check_circle_rounded,
-                  color: AppTheme.success,
-                  trend: '+8%',
-                  isPositive: true,
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 200,
+                  child: PropertyStatsCard(
+                    title: 'عقارات نشطة',
+                    value: activeCount.toString(),
+                    icon: Icons.check_circle_rounded,
+                    color: AppTheme.success,
+                    trend: '+8%',
+                    isPositive: true,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: PropertyStatsCard(
-                  title: 'معدل الإشغال',
-                  value: '78%',
-                  icon: Icons.analytics_rounded,
-                  color: AppTheme.primaryPurple,
-                  trend: '+3%',
-                  isPositive: true,
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 200,
+                  child: PropertyStatsCard(
+                    title: 'معدل الإشغال',
+                    value: '78%',
+                    icon: Icons.analytics_rounded,
+                    color: AppTheme.primaryPurple,
+                    trend: '+3%',
+                    isPositive: true,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),
     );
   }
-  
+
   Widget _buildFiltersSection() {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      height: _showFilters ? 80 : 0,
+      height: 80,
       child: SingleChildScrollView(
         child: PropertyFiltersWidget(
           onFilterChanged: (filters) {
             context.read<PropertiesBloc>().add(
-              FilterPropertiesEvent(
-                propertyTypeId: filters['propertyTypeId'],
-                minPrice: filters['minPrice'],
-                maxPrice: filters['maxPrice'],
-                amenityIds: filters['amenityIds'],
-                starRatings: filters['starRatings'],
-                minAverageRating: filters['minAverageRating'],
-                isApproved: filters['isApproved'],
-              ),
-            );
+                  FilterPropertiesEvent(
+                    propertyTypeId: filters['propertyTypeId'],
+                    minPrice: filters['minPrice'],
+                    maxPrice: filters['maxPrice'],
+                    amenityIds: filters['amenityIds'],
+                    starRatings: filters['starRatings'],
+                    minAverageRating: filters['minAverageRating'],
+                    isApproved: filters['isApproved'],
+                  ),
+                );
           },
         ),
       ),
     );
   }
-  
+
   Widget _buildContent() {
     return BlocBuilder<PropertiesBloc, PropertiesState>(
       builder: (context, state) {
         if (state is PropertiesLoading) {
           return _buildLoadingState();
         }
-        
+
         if (state is PropertiesError) {
           return _buildErrorState(state.message);
         }
-        
+
         if (state is PropertiesLoaded) {
           switch (_selectedView) {
             case 'grid':
               return _buildGridView(state);
             case 'table':
-              return FuturisticPropertyTable(
-                properties: state.properties,
-                onPropertyTap: (property) => _navigateToProperty(property.id),
-                onApprove: (propertyId) {
-                  context.read<PropertiesBloc>().add(ApprovePropertyEvent(propertyId));
-                },
-                onReject: (propertyId) {
-                  context.read<PropertiesBloc>().add(RejectPropertyEvent(propertyId));
-                },
-                onDelete: (propertyId) {
-                  _showDeleteConfirmation(propertyId);
-                },
+              return Padding(
+                padding: const EdgeInsets.all(16),
+                child: FuturisticPropertyTable(
+                  properties: state.properties,
+                  onPropertyTap: (property) => _navigateToProperty(property.id),
+                  onApprove: (propertyId) {
+                    context
+                        .read<PropertiesBloc>()
+                        .add(ApprovePropertyEvent(propertyId));
+                  },
+                  onReject: (propertyId) {
+                    context
+                        .read<PropertiesBloc>()
+                        .add(RejectPropertyEvent(propertyId));
+                  },
+                  onDelete: (propertyId) {
+                    _showDeleteConfirmation(propertyId);
+                  },
+                ),
               );
             case 'map':
               return _buildMapView(state);
@@ -513,57 +549,72 @@ class _PropertiesListPageState extends State<PropertiesListPage>
               return _buildGridView(state);
           }
         }
-        
+
         return const SizedBox.shrink();
       },
     );
   }
-  
+
   Widget _buildGridView(PropertiesLoaded state) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // حساب عدد الأعمدة بناءً على عرض الشاشة
-        int crossAxisCount = 3;
-        if (constraints.maxWidth < 900) {
-          crossAxisCount = 2;
-        }
-        if (constraints.maxWidth < 600) {
-          crossAxisCount = 1;
-        }
-        
-        return GridView.builder(
-          controller: _scrollController,
-          padding: const EdgeInsets.all(16),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.3, // تعديل النسبة لإعطاء مساحة أكبر
-          ),
-          itemCount: state.properties.length,
-          itemBuilder: (context, index) {
-            final property = state.properties[index];
-            return _PropertyGridCard(
-              property: property,
-              onTap: () => _navigateToProperty(property.id),
-              onEdit: () => _navigateToEditProperty(property.id),
-              onDelete: () => _showDeleteConfirmation(property.id),
-            );
-          },
-        );
-      },
+    // حساب عدد الأعمدة بناءً على عرض الشاشة
+    final width = MediaQuery.of(context).size.width;
+    int crossAxisCount = 3;
+    if (width < 900) {
+      crossAxisCount = 2;
+    }
+    if (width < 600) {
+      crossAxisCount = 1;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 1.3,
+        ),
+        itemCount: state.properties.length,
+        itemBuilder: (context, index) {
+          final property = state.properties[index];
+          return _PropertyGridCard(
+            property: property,
+            onTap: () => _navigateToProperty(property.id),
+            onEdit: () => _navigateToEditProperty(property.id),
+            onDelete: () => _showDeleteConfirmation(property.id),
+          );
+        },
+      ),
     );
   }
-  
+
   Widget _buildMapView(PropertiesLoaded state) {
-    // TODO: Implement map view
-    return const Center(
-      child: Text('Map View - Coming Soon'),
+    return Container(
+      height: 500,
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.3),
+        ),
+      ),
+      child: Center(
+        child: Text(
+          'Map View - Coming Soon',
+          style: TextStyle(color: AppTheme.textMuted),
+        ),
+      ),
     );
   }
-  
+
   Widget _buildLoadingState() {
-    return Center(
+    return Container(
+      height: 400,
+      alignment: Alignment.center,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -590,9 +641,12 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       ),
     );
   }
-  
+
   Widget _buildErrorState(String message) {
-    return Center(
+    return Container(
+      height: 400,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -630,48 +684,45 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       ),
     );
   }
-  
+
   Widget _buildFloatingActionButton() {
-    return Positioned(
-      bottom: 24,
-      right: 24,
-      child: AnimatedBuilder(
-        animation: _glowAnimation,
-        builder: (context, child) {
-          return Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryBlue.withOpacity(0.4 * _glowAnimation.value),
-                  blurRadius: 20 + 10 * _glowAnimation.value,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: FloatingActionButton(
-              onPressed: () => context.push('/admin/properties/create'),
-              backgroundColor: AppTheme.primaryBlue,
-              child: const Icon(
-                Icons.add_rounded,
-                color: Colors.white,
-                size: 28,
+    return AnimatedBuilder(
+      animation: _glowAnimation,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryBlue
+                    .withOpacity(0.4 * _glowAnimation.value),
+                blurRadius: 20 + 10 * _glowAnimation.value,
+                spreadRadius: 2,
               ),
+            ],
+          ),
+          child: FloatingActionButton(
+            onPressed: () => context.push('/admin/properties/create'),
+            backgroundColor: AppTheme.primaryBlue,
+            child: const Icon(
+              Icons.add_rounded,
+              color: Colors.white,
+              size: 28,
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
-  
+
   void _navigateToProperty(String propertyId) {
     context.push('/admin/properties/$propertyId');
   }
-  
+
   void _navigateToEditProperty(String propertyId) {
     context.push('/admin/properties/$propertyId/edit');
   }
-  
+
   void _showDeleteConfirmation(String propertyId) {
     showDialog(
       context: context,
@@ -685,20 +736,20 @@ class _PropertiesListPageState extends State<PropertiesListPage>
   }
 }
 
-// Property Grid Card Widget - محسّن لمنع overflow
+// Property Grid Card Widget - تبقى كما هي
 class _PropertyGridCard extends StatefulWidget {
   final Property property;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  
+
   const _PropertyGridCard({
     required this.property,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
   });
-  
+
   @override
   State<_PropertyGridCard> createState() => _PropertyGridCardState();
 }
@@ -708,7 +759,7 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
   late AnimationController _hoverController;
   late Animation<double> _hoverAnimation;
   bool _isHovered = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -724,13 +775,13 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
       curve: Curves.easeOut,
     ));
   }
-  
+
   @override
   void dispose() {
     _hoverController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -787,91 +838,83 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                     child: Stack(
                       children: [
-                        // Content - محسّن لمنع overflow
+                        // Content
                         Padding(
                           padding: const EdgeInsets.all(12),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Header
-                              Flexible(
-                                flex: 2,
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 36,
-                                      height: 36,
-                                      decoration: BoxDecoration(
-                                        gradient: AppTheme.primaryGradient,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: const Icon(
-                                        Icons.business_rounded,
-                                        color: Colors.white,
-                                        size: 18,
-                                      ),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      gradient: AppTheme.primaryGradient,
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            widget.property.name,
-                                            style: TextStyle(
-                                              color: AppTheme.textWhite,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 13,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          Text(
-                                            widget.property.city,
-                                            style: TextStyle(
-                                              color: AppTheme.textMuted,
-                                              fontSize: 11,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
+                                    child: const Icon(
+                                      Icons.business_rounded,
+                                      color: Colors.white,
+                                      size: 18,
                                     ),
-                                  ],
-                                ),
-                              ),
-                              
-                              const Spacer(),
-                              
-                              // Stats - محسّن لمنع overflow
-                              Flexible(
-                                flex: 1,
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Row(
-                                    children: [
-                                      _buildStat(
-                                        icon: Icons.star_rounded,
-                                        value: widget.property.starRating.toString(),
-                                        color: AppTheme.warning,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      _buildStat(
-                                        icon: Icons.location_on_rounded,
-                                        value: widget.property.city.length > 8 
-                                            ? '${widget.property.city.substring(0, 8)}...'
-                                            : widget.property.city,
-                                        color: AppTheme.primaryBlue,
-                                      ),
-                                    ],
                                   ),
-                                ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          widget.property.name,
+                                          style: TextStyle(
+                                            color: AppTheme.textWhite,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          widget.property.city,
+                                          style: TextStyle(
+                                            color: AppTheme.textMuted,
+                                            fontSize: 11,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
-                              
+
+                              const Spacer(),
+
+                              // Stats
+                              Row(
+                                children: [
+                                  _buildStat(
+                                    icon: Icons.star_rounded,
+                                    value:
+                                        widget.property.starRating.toString(),
+                                    color: AppTheme.warning,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildStat(
+                                      icon: Icons.location_on_rounded,
+                                      value: widget.property.city,
+                                      color: AppTheme.primaryBlue,
+                                    ),
+                                  ),
+                                ],
+                              ),
+
                               const SizedBox(height: 8),
-                              
+
                               // Status Badge
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -891,7 +934,9 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
                                   ),
                                 ),
                                 child: Text(
-                                  widget.property.isApproved ? 'معتمد' : 'قيد المراجعة',
+                                  widget.property.isApproved
+                                      ? 'معتمد'
+                                      : 'قيد المراجعة',
                                   style: TextStyle(
                                     color: widget.property.isApproved
                                         ? AppTheme.success
@@ -904,7 +949,7 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
                             ],
                           ),
                         ),
-                        
+
                         // Action Buttons (on hover)
                         if (_isHovered)
                           Positioned(
@@ -936,7 +981,7 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
       ),
     );
   }
-  
+
   Widget _buildStat({
     required IconData icon,
     required String value,
@@ -961,7 +1006,7 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
       ],
     );
   }
-  
+
   Widget _buildActionIcon(
     IconData icon,
     VoidCallback onTap, {
@@ -993,12 +1038,12 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
   }
 }
 
-// Delete Confirmation Dialog
+// Delete Confirmation Dialog - تبقى كما هي
 class _DeleteConfirmationDialog extends StatelessWidget {
   final VoidCallback onConfirm;
-  
+
   const _DeleteConfirmationDialog({required this.onConfirm});
-  
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -1136,26 +1181,26 @@ class _DeleteConfirmationDialog extends StatelessWidget {
   }
 }
 
-// Background Painter
+// Background Painter - تبقى كما هي
 class _FuturisticBackgroundPainter extends CustomPainter {
   final double rotation;
   final double glowIntensity;
-  
+
   _FuturisticBackgroundPainter({
     required this.rotation,
     required this.glowIntensity,
   });
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
-    
+
     // Draw grid
     paint.color = AppTheme.primaryBlue.withOpacity(0.05);
     const spacing = 50.0;
-    
+
     for (double x = 0; x < size.width; x += spacing) {
       canvas.drawLine(
         Offset(x, 0),
@@ -1163,7 +1208,7 @@ class _FuturisticBackgroundPainter extends CustomPainter {
         paint,
       );
     }
-    
+
     for (double y = 0; y < size.height; y += spacing) {
       canvas.drawLine(
         Offset(0, y),
@@ -1171,11 +1216,11 @@ class _FuturisticBackgroundPainter extends CustomPainter {
         paint,
       );
     }
-    
+
     // Draw rotating circles
     final center = Offset(size.width / 2, size.height / 2);
     paint.color = AppTheme.primaryBlue.withOpacity(0.03 * glowIntensity);
-    
+
     for (int i = 0; i < 3; i++) {
       final radius = 200.0 + i * 100;
       canvas.save();
@@ -1186,7 +1231,7 @@ class _FuturisticBackgroundPainter extends CustomPainter {
       canvas.restore();
     }
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

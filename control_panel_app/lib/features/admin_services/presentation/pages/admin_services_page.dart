@@ -1,3 +1,5 @@
+// lib/features/admin_services/presentation/pages/admin_services_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -39,21 +41,21 @@ class _AdminServicesPageState extends State<AdminServicesPage>
   late AnimationController _backgroundAnimationController;
   late AnimationController _particlesAnimationController;
   late AnimationController _glowAnimationController;
-  
+
   // Animations
   late Animation<double> _backgroundRotationAnimation;
   late Animation<double> _glowAnimation;
-  
+
   // Particles
   final List<_Particle> _particles = [];
-  
+
   // View Mode
   bool _isGridView = true;
-  
+
   // Selected Property
   String? _selectedPropertyId;
   String? _selectedPropertyName;
-  
+
   // Search
   String _searchQuery = '';
 
@@ -74,17 +76,17 @@ class _AdminServicesPageState extends State<AdminServicesPage>
       duration: const Duration(seconds: 30),
       vsync: this,
     )..repeat();
-    
+
     _particlesAnimationController = AnimationController(
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
-    
+
     _glowAnimationController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _backgroundRotationAnimation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
@@ -92,7 +94,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
       parent: _backgroundAnimationController,
       curve: Curves.linear,
     ));
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.3,
       end: 1.0,
@@ -110,7 +112,8 @@ class _AdminServicesPageState extends State<AdminServicesPage>
 
   void _loadInitialData() {
     // Load all services by default so the page is not empty on first open
-    context.read<ServicesBloc>().add(const LoadServicesEvent(serviceType: 'all', pageNumber: 1, pageSize: 20));
+    context.read<ServicesBloc>().add(const LoadServicesEvent(
+        serviceType: 'all', pageNumber: 1, pageSize: 20));
   }
 
   @override
@@ -144,12 +147,41 @@ class _AdminServicesPageState extends State<AdminServicesPage>
         children: [
           // Animated Background
           _buildAnimatedBackground(),
-          
+
           // Floating Particles
           _buildFloatingParticles(),
-          
-          // Main Content
-          _buildMainContent(),
+
+          // Main Content with CustomScrollView for better scrolling
+          CustomScrollView(
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // Header as SliverToBoxAdapter
+              SliverToBoxAdapter(
+                child: _buildHeader(),
+              ),
+
+              // Stats Cards as SliverToBoxAdapter
+              SliverToBoxAdapter(
+                child: _buildStatsCards(),
+              ),
+
+              // Filters as SliverToBoxAdapter
+              SliverToBoxAdapter(
+                child: _buildFilters(),
+              ),
+
+              // Content as SliverToBoxAdapter - تصحيح المشكلة
+              SliverToBoxAdapter(
+                child: _buildContent(),
+              ),
+
+              // Bottom padding
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 100),
+              ),
+            ],
+          ),
         ],
       ),
       floatingActionButton: _buildFloatingActionButton(),
@@ -199,28 +231,6 @@ class _AdminServicesPageState extends State<AdminServicesPage>
     );
   }
 
-  Widget _buildMainContent() {
-    return SafeArea(
-      child: Column(
-        children: [
-          // Header
-          _buildHeader(),
-          
-          // Stats Cards
-          _buildStatsCards(),
-          
-          // Filters
-          _buildFilters(),
-          
-          // Content
-          Expanded(
-            child: _buildContent(),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -238,90 +248,96 @@ class _AdminServicesPageState extends State<AdminServicesPage>
           ),
         ),
       ),
-      child: Row(
+      child: Column(
         children: [
           // Title Section
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AnimatedBuilder(
-                      animation: _glowAnimation,
-                      builder: (context, child) {
-                        return Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            gradient: AppTheme.primaryGradient,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.primaryBlue.withOpacity(
-                                  0.3 + 0.2 * _glowAnimation.value,
+                    Row(
+                      children: [
+                        AnimatedBuilder(
+                          animation: _glowAnimation,
+                          builder: (context, child) {
+                            return Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                gradient: AppTheme.primaryGradient,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.primaryBlue.withOpacity(
+                                      0.3 + 0.2 * _glowAnimation.value,
+                                    ),
+                                    blurRadius: 20,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.room_service_rounded,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'إدارة الخدمات',
+                                style: AppTextStyles.heading1.copyWith(
+                                  color: AppTheme.textWhite,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                blurRadius: 20,
-                                spreadRadius: 2,
+                              ),
+                              Text(
+                                'إدارة خدمات العقارات والتحكم في الأسعار',
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppTheme.textMuted,
+                                ),
                               ),
                             ],
-                          ),
-                          child: const Icon(
-                            Icons.room_service_rounded,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'إدارة الخدمات',
-                          style: AppTextStyles.heading1.copyWith(
-                            color: AppTheme.textWhite,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'إدارة خدمات العقارات والتحكم في الأسعار',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppTheme.textMuted,
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          
-          // View Toggle
-          Container(
-            decoration: BoxDecoration(
-              color: AppTheme.darkCard.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppTheme.darkBorder.withOpacity(0.3),
-                width: 0.5,
               ),
-            ),
-            child: Row(
-              children: [
-                _buildViewToggleButton(
-                  icon: Icons.grid_view_rounded,
-                  isSelected: _isGridView,
-                  onTap: () => setState(() => _isGridView = true),
+
+              // View Toggle
+              Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.darkCard.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppTheme.darkBorder.withOpacity(0.3),
+                    width: 0.5,
+                  ),
                 ),
-                _buildViewToggleButton(
-                  icon: Icons.view_list_rounded,
-                  isSelected: !_isGridView,
-                  onTap: () => setState(() => _isGridView = false),
+                child: Row(
+                  children: [
+                    _buildViewToggleButton(
+                      icon: Icons.grid_view_rounded,
+                      isSelected: _isGridView,
+                      onTap: () => setState(() => _isGridView = true),
+                    ),
+                    _buildViewToggleButton(
+                      icon: Icons.view_list_rounded,
+                      isSelected: !_isGridView,
+                      onTap: () => setState(() => _isGridView = false),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -358,37 +374,44 @@ class _AdminServicesPageState extends State<AdminServicesPage>
     return BlocBuilder<ServicesBloc, ServicesState>(
       builder: (context, state) {
         if (state is ServicesLoaded) {
-          return Padding(
+          return Container(
+            height: 120,
             padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ServiceStatsCard(
-                    title: 'إجمالي الخدمات',
-                    value: state.totalServices.toString(),
-                    icon: Icons.room_service_rounded,
-                    color: AppTheme.primaryBlue,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 200,
+                    child: ServiceStatsCard(
+                      title: 'إجمالي الخدمات',
+                      value: state.totalServices.toString(),
+                      icon: Icons.room_service_rounded,
+                      color: AppTheme.primaryBlue,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ServiceStatsCard(
-                    title: 'خدمات مدفوعة',
-                    value: state.paidServices.toString(),
-                    icon: Icons.attach_money_rounded,
-                    color: AppTheme.success,
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 200,
+                    child: ServiceStatsCard(
+                      title: 'خدمات مدفوعة',
+                      value: state.paidServices.toString(),
+                      icon: Icons.attach_money_rounded,
+                      color: AppTheme.success,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ServiceStatsCard(
-                    title: 'أيقونات متاحة',
-                    value: ServiceIcons.icons.length.toString(),
-                    icon: Icons.palette_rounded,
-                    color: AppTheme.warning,
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 200,
+                    child: ServiceStatsCard(
+                      title: 'أيقونات متاحة',
+                      value: ServiceIcons.icons.length.toString(),
+                      icon: Icons.palette_rounded,
+                      color: AppTheme.warning,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }
@@ -432,38 +455,40 @@ class _AdminServicesPageState extends State<AdminServicesPage>
     return BlocBuilder<ServicesBloc, ServicesState>(
       builder: (context, state) {
         if (state is ServicesLoading) {
-          return const Center(child: LoadingWidget());
+          return Container(
+            height: 400,
+            alignment: Alignment.center,
+            child: const LoadingWidget(),
+          );
         }
-        
+
         if (state is ServicesError) {
-          return Center(
+          return Container(
+            height: 400,
+            alignment: Alignment.center,
             child: CustomErrorWidget(
               message: state.message,
               onRetry: _loadInitialData,
             ),
           );
         }
-        
+
         if (state is ServicesLoaded) {
           if (state.services.isEmpty) {
-            return const Center(
-              child: EmptyWidget(
+            return Container(
+              height: 400,
+              alignment: Alignment.center,
+              child: const EmptyWidget(
                 message: 'لا توجد خدمات حالياً',
               ),
             );
           }
-          
-          return Column(
-            children: [
-              Expanded(
-                child: _isGridView
-                    ? _buildGridView(state.services, state)
-                    : _buildListView(state.services, state),
-              ),
-            ],
-          );
+
+          return _isGridView
+              ? _buildGridView(state.services, state)
+              : _buildListView(state.services, state);
         }
-        
+
         return const SizedBox.shrink();
       },
     );
@@ -472,41 +497,33 @@ class _AdminServicesPageState extends State<AdminServicesPage>
   Widget _buildGridView(List<Service> services, ServicesLoaded state) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: Stack(
+      child: Column(
         children: [
           GridView.builder(
-        controller: _scrollController,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.8,
-        ),
-        itemCount: services.length,
-        itemBuilder: (context, index) {
-          final service = services[index];
-          return FuturisticServiceCard(
-            service: service,
-            onTap: () => _showServiceDetails(service),
-            onEdit: () => _showEditDialog(service),
-            onDelete: () => _confirmDelete(service),
-          );
-        },
-      ),
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.8,
+            ),
+            itemCount: services.length,
+            itemBuilder: (context, index) {
+              final service = services[index];
+              return FuturisticServiceCard(
+                service: service,
+                onTap: () => _showServiceDetails(service),
+                onEdit: () => _showEditDialog(service),
+                onDelete: () => _confirmDelete(service),
+              );
+            },
+          ),
           if (state.isLoadingMore)
-            Positioned(
-              bottom: 8,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  SizedBox(
-                    height: 22,
-                    width: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ],
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
               ),
             ),
         ],
@@ -517,17 +534,30 @@ class _AdminServicesPageState extends State<AdminServicesPage>
   Widget _buildListView(List<Service> services, ServicesLoaded state) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: FuturisticServicesTable(
-        services: services,
-        onServiceTap: _showServiceDetails,
-        onEdit: _showEditDialog,
-        onDelete: _confirmDelete,
-        controller: _scrollController,
-        onLoadMore: state.paginatedServices?.hasNextPage == true
-            ? () => context.read<ServicesBloc>().add(const LoadMoreServicesEvent())
-            : null,
-        hasReachedMax: !(state.paginatedServices?.hasNextPage == true),
-        isLoadingMore: state.isLoadingMore,
+      child: Column(
+        children: [
+          FuturisticServicesTable(
+            services: services,
+            onServiceTap: _showServiceDetails,
+            onEdit: _showEditDialog,
+            onDelete: _confirmDelete,
+            controller: ScrollController(),
+            onLoadMore: state.paginatedServices?.hasNextPage == true
+                ? () => context
+                    .read<ServicesBloc>()
+                    .add(const LoadMoreServicesEvent())
+                : null,
+            hasReachedMax: !(state.paginatedServices?.hasNextPage == true),
+            isLoadingMore: state.isLoadingMore,
+          ),
+          if (state.isLoadingMore)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -570,14 +600,16 @@ class _AdminServicesPageState extends State<AdminServicesPage>
 
   Future<void> _navigateToCreatePage() async {
     HapticFeedback.mediumImpact();
-    final result = await context.push('/admin/services/create', extra: {'propertyId': _selectedPropertyId});
+    final result = await context.push('/admin/services/create',
+        extra: {'propertyId': _selectedPropertyId});
     if (result is Map && result['refresh'] == true) {
       final pid = (result['propertyId'] as String?) ?? _selectedPropertyId;
       setState(() => _selectedPropertyId = pid);
       if (pid != null) {
         context.read<ServicesBloc>().add(LoadServicesEvent(propertyId: pid));
       } else {
-        context.read<ServicesBloc>().add(const LoadServicesEvent(serviceType: 'all', pageNumber: 1, pageSize: 20));
+        context.read<ServicesBloc>().add(const LoadServicesEvent(
+            serviceType: 'all', pageNumber: 1, pageSize: 20));
       }
     }
   }
@@ -592,19 +624,25 @@ class _AdminServicesPageState extends State<AdminServicesPage>
           _selectedPropertyId = property.id as String?;
           _selectedPropertyName = property.name as String?;
         });
-        context.read<ServicesBloc>().add(SelectPropertyEvent(_selectedPropertyId));
+        context
+            .read<ServicesBloc>()
+            .add(SelectPropertyEvent(_selectedPropertyId));
       },
     });
   }
 
   Future<void> _showEditDialog(Service service) async {
     HapticFeedback.lightImpact();
-    final result = await context.push('/admin/services/${service.id}/edit', extra: service);
+    final result = await context.push('/admin/services/${service.id}/edit',
+        extra: service);
     if (result is Map && result['refresh'] == true) {
       if (_selectedPropertyId != null) {
-        context.read<ServicesBloc>().add(LoadServicesEvent(propertyId: _selectedPropertyId));
+        context
+            .read<ServicesBloc>()
+            .add(LoadServicesEvent(propertyId: _selectedPropertyId));
       } else {
-        context.read<ServicesBloc>().add(const LoadServicesEvent(serviceType: 'all', pageNumber: 1, pageSize: 20));
+        context.read<ServicesBloc>().add(const LoadServicesEvent(
+            serviceType: 'all', pageNumber: 1, pageSize: 20));
       }
     }
   }
@@ -673,7 +711,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
           ElevatedButton(
             onPressed: () {
               // استخدم سياق الصفحة الذي يحتوي على مزود البلوك، وليس سياق الديالوج
-              this.context.read<ServicesBloc>().add(
+              context.read<ServicesBloc>().add(
                     DeleteServiceEvent(service.id),
                   );
               Navigator.of(dialogCtx).pop();
@@ -697,7 +735,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
   }
 }
 
-// Particle Model
+// Particle Model - كلاس مفقود
 class _Particle {
   late double x, y, z;
   late double vx, vy;
@@ -717,7 +755,7 @@ class _Particle {
     vy = (math.Random().nextDouble() - 0.5) * 0.001;
     radius = math.Random().nextDouble() * 2 + 0.5;
     opacity = math.Random().nextDouble() * 0.3 + 0.1;
-    
+
     final colors = [
       AppTheme.primaryBlue,
       AppTheme.primaryPurple,
@@ -729,13 +767,13 @@ class _Particle {
   void update() {
     x += vx;
     y += vy;
-    
+
     if (x < 0 || x > 1) vx = -vx;
     if (y < 0 || y > 1) vy = -vy;
   }
 }
 
-// Particle Painter
+// Particle Painter - كلاس مفقود
 class _ParticlePainter extends CustomPainter {
   final List<_Particle> particles;
   final double animationValue;
@@ -749,7 +787,7 @@ class _ParticlePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (var particle in particles) {
       particle.update();
-      
+
       final paint = Paint()
         ..color = particle.color.withOpacity(particle.opacity)
         ..style = PaintingStyle.fill
@@ -757,7 +795,7 @@ class _ParticlePainter extends CustomPainter {
           BlurStyle.normal,
           2,
         );
-      
+
       canvas.drawCircle(
         Offset(particle.x * size.width, particle.y * size.height),
         particle.radius,
@@ -770,7 +808,7 @@ class _ParticlePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-// Grid Pattern Painter
+// Grid Pattern Painter - كلاس مفقود
 class _GridPatternPainter extends CustomPainter {
   final double rotation;
   final double opacity;
@@ -793,7 +831,7 @@ class _GridPatternPainter extends CustomPainter {
     canvas.translate(-size.width / 2, -size.height / 2);
 
     const spacing = 30.0;
-    
+
     for (double x = -spacing; x < size.width + spacing; x += spacing) {
       canvas.drawLine(
         Offset(x, -size.height),
@@ -801,7 +839,7 @@ class _GridPatternPainter extends CustomPainter {
         paint,
       );
     }
-    
+
     for (double y = -spacing; y < size.height + spacing; y += spacing) {
       canvas.drawLine(
         Offset(-size.width, y),
@@ -809,7 +847,7 @@ class _GridPatternPainter extends CustomPainter {
         paint,
       );
     }
-    
+
     canvas.restore();
   }
 
