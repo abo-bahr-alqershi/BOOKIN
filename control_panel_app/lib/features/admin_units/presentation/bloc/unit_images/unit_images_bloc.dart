@@ -113,6 +113,16 @@ class UnitImagesBloc extends Bloc<UnitImagesEvent, UnitImagesState> {
       isPrimary: event.isPrimary,
       order: event.order,
       tags: event.tags,
+      onSendProgress: (sent, total) {
+        if (total > 0) {
+          final progress = sent / total;
+          emit(UnitImageUploading(
+            currentImages: _currentImages,
+            uploadingFileName: event.filePath.split('/').last,
+            uploadProgress: progress,
+          ));
+        }
+      },
     );
 
     final Either<Failure, UnitImage> result = await uploadUnitImage(params);

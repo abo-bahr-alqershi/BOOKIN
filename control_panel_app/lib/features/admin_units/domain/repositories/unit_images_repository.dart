@@ -14,6 +14,7 @@ abstract class UnitImagesRepository {
     bool isPrimary = false,
     int? order,
     List<String>? tags,
+    ProgressCallback? onSendProgress,
   });
   
   Future<Either<Failure, List<UnitImage>>> getUnitImages(String? unitId, {String? tempKey});
@@ -45,5 +46,6 @@ abstract class UnitImagesRepository {
     required List<String> filePaths,
     String? category,
     List<String>? tags,
+    void Function(String filePath, int sent, int total)? onProgress,
   });
 }

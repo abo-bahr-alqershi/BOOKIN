@@ -15,6 +15,7 @@ abstract class PropertyImagesRemoteDataSource {
     bool isPrimary = false,
     int? order,
     List<String>? tags,
+    ProgressCallback? onSendProgress,
   });
   
   Future<List<PropertyImageModel>> getPropertyImages(String? propertyId, {String? tempKey});
@@ -40,6 +41,7 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
     bool isPrimary = false,
     int? order,
     List<String>? tags,
+    ProgressCallback? onSendProgress,
   }) async {
     try {
       final formData = FormData.fromMap({
@@ -61,6 +63,7 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
             'Content-Type': 'multipart/form-data',
           },
         ),
+        onSendProgress: onSendProgress,
       );
       
       if (response.data is Map<String, dynamic>) {
@@ -127,17 +130,13 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   @override
   Future<bool> reorderImages(String? propertyId,String? tempKey, List<String> imageIds) async {
     try {
-      // لا يوجد مسار لإعادة الترتيب دفعة واحدة في الـ backend الحالي.
-      // نقوم بتطبيق الترتيب عبر تحديث كل صورة على حدة.
-      int order = 0;
-      for (final id in imageIds) {
-        await apiClient.put(
-          '$_imagesEndpoint/$id',
-          data: {'order': order, 'propertyId': propertyId, 'tempKey': tempKey},
-        );
-        order++;
-      }
-      return true;
+      final payload = {
+        'imageIds': imageIds,
+        if (propertyId != null) 'propertyId': propertyId,
+        if (tempKey != null) 'tempKey': tempKey,
+      };
+      final response = await apiClient.post('$_imagesEndpoint/reorder', data: payload);
+      return response.statusCode == 204 || (response.data is Map && response.data['success'] == true);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to reorder images');
     }
@@ -146,12 +145,12 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   @override
   Future<bool> setAsPrimaryImage(String? propertyId,String? tempKey, String imageId) async {
     try {
-      // لا يوجد مسار صريح لتعيين الرئيسية؛ سنقوم بالتحديث المباشر للصورة
-      final response = await apiClient.put(
-        '$_imagesEndpoint/$imageId',
-        data: {'isPrimary': true, 'propertyId': propertyId, 'tempKey': tempKey},
-      );
-      return response.data['success'] == true;
+      final body = {
+        if (propertyId != null) 'propertyId': propertyId,
+        if (tempKey != null) 'tempKey': tempKey,
+      };
+      final response = await apiClient.post('$_imagesEndpoint/$imageId/set-primary', data: body);
+      return response.statusCode == 204 || (response.data is Map && response.data['success'] == true);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to set primary image');
     }

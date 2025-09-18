@@ -22,6 +22,7 @@ class UploadUnitImageUseCase implements UseCase<UnitImage, UploadImageParams> {
       isPrimary: params.isPrimary,
       order: params.order,
       tags: params.tags,
+      onSendProgress: params.onSendProgress,
     );
   }
 }
@@ -35,6 +36,7 @@ class UploadImageParams {
   final bool isPrimary;
   final int? order;
   final List<String>? tags;
+  final void Function(int sent, int total)? onSendProgress;
 
   UploadImageParams({
     this.unitId,
@@ -45,5 +47,6 @@ class UploadImageParams {
     this.isPrimary = false,
     this.order,
     this.tags,
+    this.onSendProgress,
   });
 }

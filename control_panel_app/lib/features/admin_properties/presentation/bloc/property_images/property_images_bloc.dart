@@ -112,6 +112,16 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
       isPrimary: event.isPrimary,
       order: event.order,
       tags: event.tags,
+      onSendProgress: (sent, total) {
+        if (total > 0) {
+          final progress = sent / total;
+          emit(PropertyImageUploading(
+            currentImages: _currentImages,
+            uploadingFileName: event.filePath.split('/').last,
+            uploadProgress: progress,
+          ));
+        }
+      },
     );
     
     final Either<Failure, PropertyImage> result = await uploadPropertyImage(params);
