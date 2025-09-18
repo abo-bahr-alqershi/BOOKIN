@@ -15,6 +15,7 @@ abstract class UnitImagesRemoteDataSource {
     bool isPrimary = false,
     int? order,
     List<String>? tags,
+    ProgressCallback? onSendProgress,
   });
   
   Future<List<UnitImageModel>> getUnitImages(String? unitId, {String? tempKey});
@@ -40,6 +41,7 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
     bool isPrimary = false,
     int? order,
     List<String>? tags,
+    ProgressCallback? onSendProgress,
   }) async {
     try {
       final formData = FormData.fromMap({
@@ -61,6 +63,7 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
             'Content-Type': 'multipart/form-data',
           },
         ),
+        onSendProgress: onSendProgress,
       );
       
       if (response.data is Map<String, dynamic>) {
@@ -127,17 +130,13 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
   @override
   Future<bool> reorderImages(String? unitId, String? tempKey, List<String> imageIds) async {
     try {
-      // لا يوجد مسار لإعادة الترتيب دفعة واحدة في الـ backend الحالي.
-      // نقوم بتطبيق الترتيب عبر تحديث كل صورة على حدة.
-      int order = 0;
-      for (final id in imageIds) {
-        await apiClient.put(
-          '$_imagesEndpoint/$id',
-          data: {'order': order, 'unitId': unitId, 'tempKey': tempKey},
-        );
-        order++;
-      }
-      return true;
+      final payload = {
+        'imageIds': imageIds,
+        if (unitId != null) 'unitId': unitId,
+        if (tempKey != null) 'tempKey': tempKey,
+      };
+      final response = await apiClient.post('$_imagesEndpoint/reorder', data: payload);
+      return response.statusCode == 204 || (response.data is Map && response.data['success'] == true);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to reorder images');
     }
@@ -146,12 +145,12 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
   @override
   Future<bool> setAsPrimaryImage(String? unitId, String? tempKey, String imageId) async {
     try {
-      // لا يوجد مسار صريح لتعيين الرئيسية؛ سنقوم بالتحديث المباشر للصورة
-      final response = await apiClient.put(
-        '$_imagesEndpoint/$imageId',
-        data: {'isPrimary': true, 'unitId': unitId, 'tempKey': tempKey},
-      );
-      return response.data['success'] == true;
+      final body = {
+        if (unitId != null) 'unitId': unitId,
+        if (tempKey != null) 'tempKey': tempKey,
+      };
+      final response = await apiClient.post('$_imagesEndpoint/$imageId/set-primary', data: body);
+      return response.statusCode == 204 || (response.data is Map && response.data['success'] == true);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to set primary image');
     }

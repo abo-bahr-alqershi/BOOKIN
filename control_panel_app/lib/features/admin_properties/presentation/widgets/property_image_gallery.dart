@@ -955,8 +955,7 @@ class PropertyImageGalleryState extends State<PropertyImageGallery>
             isPrimary: _displayImages.isEmpty,
           ));
           
-          // بدء تحديث التقدم
-          _simulateUploadProgress(fileKey);
+          // سيتم تحديث مؤشر التقدم من خلال onSendProgress عبر Bloc
         }
       }
     } catch (e) {
@@ -995,7 +994,6 @@ class PropertyImageGalleryState extends State<PropertyImageGallery>
                 _uploadingFiles[fileKey] = true;
                 _uploadingFileObjects[fileKey] = File(img.path);
                 _uploadProgress[fileKey] = 0.0;
-                _simulateUploadProgress(fileKey);
               }
             });
             

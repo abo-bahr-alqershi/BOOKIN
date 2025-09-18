@@ -28,6 +28,7 @@ class UnitImagesRepositoryImpl implements UnitImagesRepository {
     bool isPrimary = false,
     int? order,
     List<String>? tags,
+    ProgressCallback? onSendProgress,
   }) async {
     if (await networkInfo.isConnected) {
       try {
@@ -40,6 +41,7 @@ class UnitImagesRepositoryImpl implements UnitImagesRepository {
           isPrimary: isPrimary,
           order: order,
           tags: tags,
+          onSendProgress: onSendProgress,
         );
         return Right(result);
       } on ServerException catch (e) {
@@ -173,6 +175,7 @@ class UnitImagesRepositoryImpl implements UnitImagesRepository {
     required List<String> filePaths,
     String? category,
     List<String>? tags,
+    void Function(String filePath, int sent, int total)? onProgress,
   }) async {
     if (await networkInfo.isConnected) {
       try {
@@ -189,6 +192,7 @@ class UnitImagesRepositoryImpl implements UnitImagesRepository {
               isPrimary: order == 0, // الصورة الأولى تكون رئيسية
               order: order,
               tags: tags,
+              onSendProgress: onProgress != null ? (sent, total) => onProgress(filePath, sent, total) : null,
             );
             uploadedImages.add(result);
             order++;

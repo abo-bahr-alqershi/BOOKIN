@@ -14,6 +14,7 @@ abstract class PropertyImagesRepository {
     bool isPrimary = false,
     int? order,
     List<String>? tags,
+    ProgressCallback? onSendProgress,
   });
   
   Future<Either<Failure, List<PropertyImage>>> getPropertyImages(String? propertyId, {String? tempKey});
@@ -45,5 +46,6 @@ abstract class PropertyImagesRepository {
     required List<String> filePaths,
     String? category,
     List<String>? tags,
+    void Function(String filePath, int sent, int total)? onProgress,
   });
 }

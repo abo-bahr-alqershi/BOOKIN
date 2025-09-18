@@ -19,6 +19,7 @@ class UploadMultipleUnitImagesUseCase implements UseCase<List<UnitImage>, Upload
       filePaths: params.filePaths,
       category: params.category,
       tags: params.tags,
+      onProgress: params.onProgress,
     );
   }
 }
@@ -29,6 +30,7 @@ class UploadMultipleImagesParams {
   final List<String> filePaths;
   final String? category;
   final List<String>? tags;
+  final void Function(String filePath, int sent, int total)? onProgress;
 
   UploadMultipleImagesParams({
     this.unitId,
@@ -36,5 +38,6 @@ class UploadMultipleImagesParams {
     required this.filePaths,
     this.category,
     this.tags,
+    this.onProgress,
   });
 }
