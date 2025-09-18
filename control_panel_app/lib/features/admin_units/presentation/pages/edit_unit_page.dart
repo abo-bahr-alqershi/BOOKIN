@@ -166,6 +166,12 @@ class _EditUnitPageState extends State<EditUnitPage>
     context.read<UnitFormBloc>().add(
       InitializeFormEvent(unitId: widget.unitId),
     );
+    // Ensure dynamic fields are loaded based on the unit's type in edit mode
+    if (unit.unitTypeId.isNotEmpty) {
+      context.read<UnitFormBloc>().add(
+        UnitTypeSelectedEvent(unitTypeId: unit.unitTypeId),
+      );
+    }
     
     // Start animation after data is loaded
     Future.delayed(const Duration(milliseconds: 100), () {
