@@ -116,23 +116,26 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
   Widget _buildMobileView() {
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: Column(
-        children: [
-          // Filter Bar - نفس التصميم القديم بالضبط
-          _buildMobileFilterBar(),
-          
-          // Units List
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: _filteredUnits.length,
-              itemBuilder: (context, index) {
-                final unit = _filteredUnits[index];
-                return _buildMobileUnitCard(unit, index);
-              },
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height - 200, // Provide explicit height
+        child: Column(
+          children: [
+            // Filter Bar - نفس التصميم القديم بالضبط
+            _buildMobileFilterBar(),
+            
+            // Units List
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: _filteredUnits.length,
+                itemBuilder: (context, index) {
+                  final unit = _filteredUnits[index];
+                  return _buildMobileUnitCard(unit, index);
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -154,35 +157,38 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
           width: 1,
         ),
       ),
-      child: Stack(
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildFilterChip('الكل', null),
-                const SizedBox(width: 8),
-                ..._unitTypes.map((type) => Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: _buildFilterChip(type, type),
-                )),
-              ],
-            ),
-          ),
-          if (_isLoadingTypes)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: LinearProgressIndicator(
-                backgroundColor: Colors.transparent,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  AppTheme.primaryBlue.withOpacity(0.3),
-                ),
-                minHeight: 2,
+      child: SizedBox(
+        height: 50, // Provide explicit height for Stack
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildFilterChip('الكل', null),
+                  const SizedBox(width: 8),
+                  ..._unitTypes.map((type) => Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: _buildFilterChip(type, type),
+                  )),
+                ],
               ),
             ),
-        ],
+            if (_isLoadingTypes)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: LinearProgressIndicator(
+                  backgroundColor: Colors.transparent,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppTheme.primaryBlue.withOpacity(0.3),
+                  ),
+                  minHeight: 2,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -598,6 +604,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       opacity: _fadeAnimation,
       child: Container(
         margin: const EdgeInsets.all(16),
+        height: MediaQuery.of(context).size.height - 200, // Provide explicit height
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -643,39 +650,43 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
   
   Widget _buildTabletHeader() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         // Filter Bar for tablet
         Container(
           padding: const EdgeInsets.all(12),
-          child: Stack(
-            children: [
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildFilterChip('الكل', null),
-                    const SizedBox(width: 8),
-                    ..._unitTypes.map((type) => Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: _buildFilterChip(type, type),
-                    )),
-                  ],
-                ),
-              ),
-              if (_isLoadingTypes)
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: LinearProgressIndicator(
-                    backgroundColor: Colors.transparent,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      AppTheme.primaryBlue.withOpacity(0.3),
-                    ),
-                    minHeight: 2,
+          child: SizedBox(
+            height: 50, // Provide explicit height for Stack
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildFilterChip('الكل', null),
+                      const SizedBox(width: 8),
+                      ..._unitTypes.map((type) => Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: _buildFilterChip(type, type),
+                      )),
+                    ],
                   ),
                 ),
-            ],
+                if (_isLoadingTypes)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: LinearProgressIndicator(
+                      backgroundColor: Colors.transparent,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppTheme.primaryBlue.withOpacity(0.3),
+                      ),
+                      minHeight: 2,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
         
@@ -860,6 +871,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       opacity: _fadeAnimation,
       child: Container(
         margin: const EdgeInsets.all(AppDimensions.paddingLarge),
+        height: MediaQuery.of(context).size.height - 200, // Provide explicit height
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -903,39 +915,43 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
   
   Widget _buildDesktopHeader() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         // Filter Bar for desktop
         Container(
           padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-          child: Stack(
-            children: [
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildFilterChip('الكل', null),
-                    const SizedBox(width: 8),
-                    ..._unitTypes.map((type) => Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: _buildFilterChip(type, type),
-                    )),
-                  ],
-                ),
-              ),
-              if (_isLoadingTypes)
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: LinearProgressIndicator(
-                    backgroundColor: Colors.transparent,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      AppTheme.primaryBlue.withOpacity(0.3),
-                    ),
-                    minHeight: 2,
+          child: SizedBox(
+            height: 50, // Provide explicit height for Stack
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildFilterChip('الكل', null),
+                      const SizedBox(width: 8),
+                      ..._unitTypes.map((type) => Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: _buildFilterChip(type, type),
+                      )),
+                    ],
                   ),
                 ),
-            ],
+                if (_isLoadingTypes)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: LinearProgressIndicator(
+                      backgroundColor: Colors.transparent,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppTheme.primaryBlue.withOpacity(0.3),
+                      ),
+                      minHeight: 2,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
         

@@ -129,7 +129,7 @@ class _UnitStatsCardState extends State<UnitStatsCard>
                             padding: EdgeInsets.all(padding),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
+                              mainAxisSize: MainAxisSize.max,
                               children: [
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -158,9 +158,6 @@ class _UnitStatsCardState extends State<UnitStatsCard>
                                       Flexible(
                                         child: Container(
                                           margin: const EdgeInsets.only(left: 4),
-                                          constraints: BoxConstraints(
-                                            maxWidth: constraints.maxWidth * 0.5,
-                                          ),
                                           child: Container(
                                             padding: EdgeInsets.symmetric(
                                               horizontal: isSmall ? 4 : 6,
@@ -217,18 +214,16 @@ class _UnitStatsCardState extends State<UnitStatsCard>
                                       constraints: BoxConstraints(
                                         maxWidth: constraints.maxWidth,
                                       ),
-                                      child: FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(
-                                          widget.value,
-                                          style: TextStyle(
-                                            fontSize: valueFontSize,
-                                            color: AppTheme.textWhite,
-                                            fontWeight: FontWeight.bold,
-                                            height: 1,
-                                          ),
+                                      child: Text(
+                                        widget.value,
+                                        style: TextStyle(
+                                          fontSize: valueFontSize,
+                                          color: AppTheme.textWhite,
+                                          fontWeight: FontWeight.bold,
+                                          height: 1,
                                         ),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
                                       ),
                                     ),
                                     

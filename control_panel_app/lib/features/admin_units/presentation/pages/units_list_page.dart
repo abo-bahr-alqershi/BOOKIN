@@ -614,7 +614,7 @@ class _UnitsListPageState extends State<UnitsListPage>
         backgroundColor: Colors.transparent,
         elevation: 0,
         label: Text(
-          '${state.selectedUnits.length} محدد',
+          '${(state.selectedUnits ?? <Unit>[]).length} محدد',
           style: AppTextStyles.bodyMedium.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -647,8 +647,9 @@ class _UnitsListPageState extends State<UnitsListPage>
   }
 
   Widget _buildStatsCards(UnitsListLoaded state) {
-    final totalUnits = state.units.length;
-    final availableUnits = state.units.where((u) => u.isAvailable).length;
+    final units = state.units ?? <Unit>[];
+    final totalUnits = units.length;
+    final availableUnits = units.where((u) => u.isAvailable).length;
     final occupiedUnits = totalUnits - availableUnits;
     final occupancyRate = totalUnits > 0
         ? ((occupiedUnits / totalUnits) * 100).toStringAsFixed(0)
@@ -720,10 +721,19 @@ class _UnitsListPageState extends State<UnitsListPage>
         child: _showFilters
             ? UnitFiltersWidget(
                 onFiltersChanged: (filters) {
-                  setState(() => _activeFilters = filters);
+                  // Convert Map to UnitFilters object
+                  final unitFilters = UnitFilters(
+                    propertyId: filters['propertyId'],
+                    unitTypeId: filters['unitTypeId'],
+                    isAvailable: filters['isAvailable'],
+                    minPrice: filters['minPrice'],
+                    maxPrice: filters['maxPrice'],
+                    pricingMethod: filters['pricingMethod'],
+                  );
+                  setState(() => _activeFilters = unitFilters);
                   context.read<UnitsListBloc>().add(
                         FilterUnitsEvent(
-                          filters: filters.toMap(),
+                          filters: filters,
                         ),
                       );
                 },
@@ -755,7 +765,8 @@ class _UnitsListPageState extends State<UnitsListPage>
         }
 
         if (state is UnitsListLoaded) {
-          if (state.units.isEmpty) {
+          final units = state.units ?? <Unit>[];
+          if (units.isEmpty) {
             return SliverFillRemaining(
               child: EmptyWidget(
                 message: 'لا توجد وحدات حالياً',
@@ -788,6 +799,9 @@ class _UnitsListPageState extends State<UnitsListPage>
   }
 
   Widget _buildGridView(UnitsListLoaded state) {
+    final units = state.units ?? <Unit>[];
+    final selectedUnits = state.selectedUnits ?? <Unit>[];
+    
     return SliverPadding(
       padding: const EdgeInsets.all(16),
       sliver: SliverGrid(
@@ -799,7 +813,7 @@ class _UnitsListPageState extends State<UnitsListPage>
         ),
         delegate: SliverChildBuilderDelegate(
           (context, index) {
-            final unit = state.units[index];
+            final unit = units[index];
             return AnimationConfiguration.staggeredGrid(
               position: index,
               duration: const Duration(milliseconds: 375),
@@ -808,7 +822,7 @@ class _UnitsListPageState extends State<UnitsListPage>
                 child: FadeInAnimation(
                   child: FuturisticUnitCard(
                     unit: unit,
-                    isSelected: state.selectedUnits.contains(unit),
+                    isSelected: selectedUnits.contains(unit),
                     onTap: () => _navigateToDetails(unit.id),
                     onEdit: () => _navigateToEditUnit(unit.id),
                     onDelete: () => _showDeleteConfirmation(unit),
@@ -818,18 +832,20 @@ class _UnitsListPageState extends State<UnitsListPage>
               ),
             );
           },
-          childCount: state.units.length,
+          childCount: units.length,
         ),
       ),
     );
   }
 
   Widget _buildTableView(UnitsListLoaded state) {
+    final units = state.units ?? <Unit>[];
+    
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: FuturisticUnitsTable(
-          units: state.units,
+          units: units,
           onUnitSelected: (unit) => _navigateToDetails(unit.id),
           onEditUnit: (unit) => _navigateToEditUnit(unit.id),
           onDeleteUnit: (unit) => _showDeleteConfirmation(unit),
@@ -892,7 +908,7 @@ class _UnitsListPageState extends State<UnitsListPage>
                   context.read<UnitsListBloc>().add(
                         BulkActivateUnitsEvent(
                           unitIds:
-                              state.selectedUnits.map((u) => u.id).toList(),
+                              (state.selectedUnits ?? <Unit>[]).map((u) => u.id).toList(),
                         ),
                       );
                 }
@@ -908,7 +924,7 @@ class _UnitsListPageState extends State<UnitsListPage>
                   context.read<UnitsListBloc>().add(
                         BulkDeactivateUnitsEvent(
                           unitIds:
-                              state.selectedUnits.map((u) => u.id).toList(),
+                              (state.selectedUnits ?? <Unit>[]).map((u) => u.id).toList(),
                         ),
                       );
                 }
@@ -1045,7 +1061,7 @@ class _UnitsListPageState extends State<UnitsListPage>
                     context.read<UnitsListBloc>().add(
                           BulkDeleteUnitsEvent(
                             unitIds:
-                                state.selectedUnits.map((u) => u.id).toList(),
+                                (state.selectedUnits ?? <Unit>[]).map((u) => u.id).toList(),
                           ),
                         );
                   }
