@@ -292,99 +292,50 @@ class _AdminHubPageState extends State<AdminHubPage>
   }
 
   Widget _buildPremiumAppBar(BuildContext context, bool isDesktop) {
-    return SliverAppBar(
-      expandedHeight: 0,
+    // محاذاة التصميم مع شريط تطبيق صفحة الحجوزات
+    return SliverAppBar
+      (
+      expandedHeight: 120,
       floating: true,
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      flexibleSpace: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppTheme.darkCard.withOpacity(0.8),
-                  AppTheme.darkCard.withOpacity(0.4),
-                ],
+      pinned: true,
+      backgroundColor: AppTheme.darkBackground,
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+        title: Text(
+          'لوحة التحكم',
+          style: AppTextStyles.heading1.copyWith(
+            color: AppTheme.textWhite,
+            shadows: [
+              Shadow(
+                color: AppTheme.primaryBlue.withOpacity(0.3),
+                blurRadius: 10,
               ),
-              border: Border(
-                bottom: BorderSide(
-                  color: AppTheme.glowBlue.withOpacity(0.1),
-                  width: 0.5,
-                ),
-              ),
+            ],
+          ),
+        ),
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppTheme.primaryBlue.withOpacity(0.1),
+                AppTheme.darkBackground,
+              ],
             ),
           ),
         ),
       ),
-      title: Row(
-        children: [
-          // Logo with Glow
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.glowBlue.withOpacity(0.5),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.dashboard_rounded,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-
-          // Title
-          Expanded(
-            // Fix overflow issue
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'لوحة التحكم',
-                  style: AppTextStyles.heading2.copyWith(
-                    color: AppTheme.textWhite,
-                    fontSize: isDesktop ? 20 : 18,
-                  ),
-                ),
-                Text(
-                  'نظام الإدارة',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppTheme.textMuted.withOpacity(0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
       actions: [
-        // Search Button
         _buildAppBarAction(
           icon: Icons.search_rounded,
           onTap: () => _showSearchDialog(context),
         ),
-
-        // Notifications
         _buildAppBarAction(
           icon: Icons.notifications_none_rounded,
           onTap: () => context.push('/notifications'),
           badge: '3',
         ),
-
-        // Profile
         Padding(
           padding: const EdgeInsets.only(right: 8, left: 8),
           child: GestureDetector(
@@ -736,90 +687,212 @@ class _AdminHubPageState extends State<AdminHubPage>
   }
 
   Widget _buildQuickStats(bool isDesktop, bool isTablet) {
-    final stats = [
-      _StatItem(
-        label: 'العقارات',
-        value: _stats['properties'].toString(),
-        icon: Icons.apartment_rounded,
-        gradient: [AppTheme.primaryBlue, AppTheme.primaryCyan],
-        trend: '+12%',
-        isPositive: true,
-      ),
-      _StatItem(
-        label: 'المستخدمون',
-        value: '${(_stats['users'] / 1000).toStringAsFixed(1)}ك',
-        icon: Icons.people_rounded,
-        gradient: [AppTheme.primaryPurple, AppTheme.primaryViolet],
-        trend: '+8%',
-        isPositive: true,
-      ),
-      _StatItem(
-        label: 'الحجوزات',
-        value: _stats['bookings'].toString(),
-        icon: Icons.calendar_month_rounded,
-        gradient: [AppTheme.neonGreen, AppTheme.primaryCyan],
-        trend: '-3%',
-        isPositive: false,
-      ),
-      _StatItem(
-        label: 'الإيرادات',
-        value: '\$${_stats['revenue']}ك',
-        icon: Icons.attach_money_rounded,
-        gradient: [AppTheme.warning, AppTheme.neonPurple],
-        trend: '+24%',
-        isPositive: true,
-      ),
-      _StatItem(
-        label: 'النمو',
-        value: '${_stats['growth']}%',
-        icon: Icons.trending_up_rounded,
-        gradient: [AppTheme.success, AppTheme.neonGreen],
-        trend: '+5%',
-        isPositive: true,
-      ),
-      _StatItem(
-        label: 'الإشغال',
-        value: '${_stats['occupancy']}%',
-        icon: Icons.hotel_rounded,
-        gradient: [AppTheme.info, AppTheme.neonBlue],
-        trend: '+10%',
-        isPositive: true,
-      ),
-    ];
-
+    // نفس تصميم بطاقات الإحصائيات الأفقية في صفحة الحجوزات
     return Container(
       margin: EdgeInsets.symmetric(
         horizontal: isDesktop ? 32 : 20,
       ),
-      child: AnimationLimiter(
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: isDesktop ? 6 : (isTablet ? 3 : 2),
-            childAspectRatio: isDesktop ? 1.4 : 1.3,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-          ),
-          itemCount: stats.length,
-          itemBuilder: (context, index) {
-            return AnimationConfiguration.staggeredGrid(
-              position: index,
-              duration: const Duration(milliseconds: 600),
-              columnCount: isDesktop ? 6 : (isTablet ? 3 : 2),
-              child: ScaleAnimation(
-                child: FadeInAnimation(
-                  child: _buildStatCard(stats[index]),
-                ),
-              ),
-            );
-          },
+      child: SizedBox(
+        height: 130,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          children: [
+            _buildHomeStatCard(
+              title: 'العقارات',
+              value: _stats['properties'].toString(),
+              icon: Icons.apartment_rounded,
+              gradient: LinearGradient(colors: [AppTheme.primaryBlue, AppTheme.primaryCyan]),
+            ),
+            _buildHomeStatCard(
+              title: 'المستخدمون',
+              value: '${(_stats['users'] / 1000).toStringAsFixed(1)}ك',
+              icon: Icons.people_rounded,
+              gradient: LinearGradient(colors: [AppTheme.primaryPurple, AppTheme.primaryViolet]),
+            ),
+            _buildHomeStatCard(
+              title: 'الحجوزات',
+              value: _stats['bookings'].toString(),
+              icon: Icons.calendar_month_rounded,
+              gradient: LinearGradient(colors: [AppTheme.neonGreen, AppTheme.primaryCyan]),
+            ),
+            _buildHomeStatCard(
+              title: 'الإيرادات',
+              value: '\$${_stats['revenue']}ك',
+              icon: Icons.attach_money_rounded,
+              gradient: LinearGradient(colors: [AppTheme.warning, AppTheme.neonPurple]),
+            ),
+            _buildHomeStatCard(
+              title: 'النمو',
+              value: '${_stats['growth']}%',
+              icon: Icons.trending_up_rounded,
+              gradient: LinearGradient(colors: [AppTheme.success, AppTheme.neonGreen]),
+            ),
+            _buildHomeStatCard(
+              title: 'الإشغال',
+              value: '${_stats['occupancy']}%',
+              icon: Icons.hotel_rounded,
+              gradient: LinearGradient(colors: [AppTheme.info, AppTheme.neonBlue]),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildStatCard(_StatItem stat) {
+  Widget _buildHomeStatCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Gradient gradient,
+    double trend = 0,
+  }) {
+    final isPositive = trend >= 0;
+    return Container(
+      width: 160,
+      margin: const EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: gradient.colors.first.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  gradient.colors.first.withOpacity(0.15),
+                  gradient.colors.last.withOpacity(0.08),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: gradient.colors.first.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: -15,
+                  top: -15,
+                  child: Icon(
+                    icon,
+                    size: 80,
+                    color: gradient.colors.first.withOpacity(0.1),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        height: 32,
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                gradient: gradient,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                icon,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (trend != 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: (isPositive
+                                          ? AppTheme.success
+                                          : AppTheme.error)
+                                      .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      isPositive
+                                          ? Icons.arrow_upward_rounded
+                                          : Icons.arrow_downward_rounded,
+                                      size: 8,
+                                      color: isPositive
+                                          ? AppTheme.success
+                                          : AppTheme.error,
+                                    ),
+                                    const SizedBox(width: 1),
+                                    Text(
+                                      '${trend.abs().toStringAsFixed(1)}%',
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: isPositive
+                                            ? AppTheme.success
+                                            : AppTheme.error,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 9,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        title,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppTheme.textMuted,
+                          fontSize: 11,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            value,
+                            style: AppTextStyles.heading2.copyWith(
+                              color: gradient.colors.first,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact =

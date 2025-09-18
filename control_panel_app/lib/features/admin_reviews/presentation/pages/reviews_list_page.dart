@@ -292,116 +292,52 @@ class _ReviewsListPageState extends State<ReviewsListPage>
   }
   
   Widget _buildPremiumAppBar(BuildContext context, bool isDesktop) {
+    // محاذاة التصميم مع شريط تطبيق صفحة الحجوزات
     return SliverAppBar(
-      expandedHeight: isDesktop ? 140 : 120,
+      expandedHeight: 120,
       floating: true,
       pinned: true,
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      flexibleSpace: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppTheme.inputBackground.withOpacity(0.8),
-                  AppTheme.inputBackground.withOpacity(0.4),
-                ],
+      backgroundColor: AppTheme.darkBackground,
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+        title: Text(
+          'التقييمات',
+          style: AppTextStyles.heading1.copyWith(
+            color: AppTheme.textWhite,
+            shadows: [
+              Shadow(
+                color: AppTheme.primaryBlue.withOpacity(0.3),
+                blurRadius: 10,
               ),
-              border: Border(
-                bottom: BorderSide(
-                  color: AppTheme.glowBlue.withOpacity(0.2),
-                  width: 0.5,
-                ),
-              ),
-            ),
-            child: FlexibleSpaceBar(
-              centerTitle: false,
-              titlePadding: EdgeInsets.only(
-                left: isDesktop ? 32 : 20,
-                bottom: 16,
-                right: isDesktop ? 32 : 20,
-              ),
-              title: Row(
-                children: [
-                  // أيقونة مع تأثير التوهج
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      gradient: LinearGradient(
-                        colors: [
-                          AppTheme.primaryBlue.withOpacity(0.2),
-                          AppTheme.primaryPurple.withOpacity(0.2),
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.glowBlue.withOpacity(0.3),
-                          blurRadius: 20,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.reviews_outlined,
-                      color: AppTheme.glowWhite,
-                      size: isDesktop ? 28 : 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  
-                  // العنوان
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'إدارة التقييمات',
-                          style: AppTextStyles.heading3.copyWith(
-                            color: AppTheme.textWhite,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        BlocBuilder<ReviewsListBloc, ReviewsListState>(
-                          builder: (context, state) {
-                            if (state is ReviewsListLoaded) {
-                              return Text(
-                                '${state.filteredReviews.length} تقييم إجمالي',
-                                style: AppTextStyles.caption.copyWith(
-                                  color: AppTheme.textLight.withOpacity(0.8),
-                                ),
-                              );
-                            }
-                            return const SizedBox();
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  // زر التحديث
-                  IconButton(
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      context.read<ReviewsListBloc>().add(RefreshReviewsEvent());
-                    },
-                    icon: Icon(
-                      Icons.refresh_rounded,
-                      color: AppTheme.textLight,
-                    ),
-                  ),
-                ],
-              ),
+            ],
+          ),
+        ),
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppTheme.primaryBlue.withOpacity(0.1),
+                AppTheme.darkBackground,
+              ],
             ),
           ),
         ),
       ),
+      actions: [
+        // تحديث
+        IconButton(
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            context.read<ReviewsListBloc>().add(RefreshReviewsEvent());
+          },
+          icon: Icon(
+            Icons.refresh_rounded,
+            color: AppTheme.textLight,
+          ),
+        ),
+      ],
     );
   }
   
