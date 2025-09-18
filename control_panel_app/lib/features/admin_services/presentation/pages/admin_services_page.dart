@@ -51,6 +51,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
 
   // View Mode
   bool _isGridView = true;
+  bool _showFilters = false;
 
   // Selected Property
   String? _selectedPropertyId;
@@ -156,10 +157,8 @@ class _AdminServicesPageState extends State<AdminServicesPage>
             controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // Header as SliverToBoxAdapter
-              SliverToBoxAdapter(
-                child: _buildHeader(),
-              ),
+              // App Bar similar to bookings page
+              _buildSliverAppBar(),
 
               // Stats Cards as SliverToBoxAdapter
               SliverToBoxAdapter(
@@ -167,12 +166,14 @@ class _AdminServicesPageState extends State<AdminServicesPage>
               ),
 
               // Filters as SliverToBoxAdapter
-              SliverToBoxAdapter(
-                child: _buildFilters(),
-              ),
+              if (_showFilters)
+                SliverToBoxAdapter(
+                  child: _buildFilters(),
+                ),
 
-              // Content as SliverToBoxAdapter - تصحيح المشكلة
-              SliverToBoxAdapter(
+              // Content as SliverFillRemaining لضمان قيود الارتفاع
+              SliverFillRemaining(
+                hasScrollBody: true,
                 child: _buildContent(),
               ),
 
@@ -185,6 +186,140 @@ class _AdminServicesPageState extends State<AdminServicesPage>
         ],
       ),
       floatingActionButton: _buildFloatingActionButton(),
+    );
+  }
+
+  // SliverAppBar aligned with bookings page styling
+  Widget _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 120,
+      floating: true,
+      pinned: true,
+      centerTitle: false,
+      backgroundColor: AppTheme.darkBackground,
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsetsDirectional.only(start: 16, bottom: 16),
+        title: Text(
+          'إدارة الخدمات',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTextStyles.heading1.copyWith(
+            color: AppTheme.textWhite,
+            shadows: [
+              Shadow(
+                color: AppTheme.primaryBlue.withOpacity(0.3),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+        ),
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppTheme.primaryBlue.withOpacity(0.1),
+                AppTheme.darkBackground,
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: _buildAppBarActions(context),
+    );
+  }
+
+  List<Widget> _buildAppBarActions(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width < 720) {
+      return [
+        _buildAppBarIconAction(
+          icon: Icons.filter_list_rounded,
+          onPressed: () => setState(() => _showFilters = !_showFilters),
+        ),
+        _buildAppBarIconAction(
+          icon: Icons.add_rounded,
+          onPressed: _navigateToCreatePage,
+        ),
+        _buildOverflowMenu(),
+        const SizedBox(width: 4),
+      ];
+    }
+
+    return [
+      _buildAppBarIconAction(
+        icon: Icons.filter_list_rounded,
+        onPressed: () => setState(() => _showFilters = !_showFilters),
+      ),
+      _buildAppBarIconAction(
+        icon: Icons.grid_view_rounded,
+        onPressed: () => setState(() => _isGridView = true),
+      ),
+      _buildAppBarIconAction(
+        icon: Icons.view_list_rounded,
+        onPressed: () => setState(() => _isGridView = false),
+      ),
+      _buildAppBarIconAction(
+        icon: Icons.add_rounded,
+        onPressed: _navigateToCreatePage,
+      ),
+      const SizedBox(width: 4),
+    ];
+  }
+
+  Widget _buildAppBarIconAction({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return IconButton(
+      onPressed: onPressed,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      icon: Icon(
+        icon,
+        color: AppTheme.textWhite,
+        size: 20,
+      ),
+      splashRadius: 20,
+    );
+  }
+
+  Widget _buildOverflowMenu() {
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_vert_rounded, color: AppTheme.textWhite),
+      onSelected: (value) {
+        switch (value) {
+          case 'grid':
+            setState(() => _isGridView = true);
+            break;
+          case 'list':
+            setState(() => _isGridView = false);
+            break;
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'grid',
+          child: Row(
+            children: const [
+              Icon(Icons.grid_view_rounded, size: 18),
+              SizedBox(width: 8),
+              Text('شبكة'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'list',
+          child: Row(
+            children: const [
+              Icon(Icons.view_list_rounded, size: 18),
+              SizedBox(width: 8),
+              Text('قائمة'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
