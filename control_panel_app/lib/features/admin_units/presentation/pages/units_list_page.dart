@@ -793,7 +793,7 @@ class _UnitsListPageState extends State<UnitsListPage>
       sliver: SliverGrid(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          mainAxisSpacing: 16,س
+          mainAxisSpacing: 16,
           crossAxisSpacing: 16,
           childAspectRatio: 0.85,
         ),
