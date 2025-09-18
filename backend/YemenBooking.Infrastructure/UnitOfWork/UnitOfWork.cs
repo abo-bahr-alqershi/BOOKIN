@@ -39,33 +39,73 @@ namespace YemenBooking.Infrastructure.UnitOfWork
 
         public async Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken = default)
         {
-            await BeginTransactionAsync(cancellationToken);
-            try
+            const int maxRetries = 3;
+            int attempt = 0;
+            while (true)
             {
-                var result = await operation();
-                await CommitTransactionAsync(cancellationToken);
-                return result;
-            }
-            catch
-            {
-                await RollbackTransactionAsync(cancellationToken);
-                throw;
+                await BeginTransactionAsync(cancellationToken);
+                try
+                {
+                    var result = await operation();
+                    await CommitTransactionAsync(cancellationToken);
+                    return result;
+                }
+                catch (Exception ex) when (IsDeadlock(ex) && attempt < maxRetries - 1)
+                {
+                    await RollbackTransactionAsync(cancellationToken);
+                    attempt++;
+                    await Task.Delay(50 * attempt, cancellationToken);
+                    continue;
+                }
+                catch
+                {
+                    await RollbackTransactionAsync(cancellationToken);
+                    throw;
+                }
             }
         }
 
         public async Task ExecuteInTransactionAsync(Func<Task> operation, CancellationToken cancellationToken = default)
         {
-            await BeginTransactionAsync(cancellationToken);
-            try
+            const int maxRetries = 3;
+            int attempt = 0;
+            while (true)
             {
-                await operation();
-                await CommitTransactionAsync(cancellationToken);
+                await BeginTransactionAsync(cancellationToken);
+                try
+                {
+                    await operation();
+                    await CommitTransactionAsync(cancellationToken);
+                    return;
+                }
+                catch (Exception ex) when (IsDeadlock(ex) && attempt < maxRetries - 1)
+                {
+                    await RollbackTransactionAsync(cancellationToken);
+                    attempt++;
+                    await Task.Delay(50 * attempt, cancellationToken);
+                    continue;
+                }
+                catch
+                {
+                    await RollbackTransactionAsync(cancellationToken);
+                    throw;
+                }
             }
-            catch
+        }
+
+        private static bool IsDeadlock(Exception ex)
+        {
+            // SQL Server deadlock error number 1205 can be nested; scan InnerExceptions
+            while (ex != null)
             {
-                await RollbackTransactionAsync(cancellationToken);
-                throw;
+                if (ex.Message.Contains("deadlock", StringComparison.OrdinalIgnoreCase)
+                    || ex.Message.Contains("1205"))
+                {
+                    return true;
+                }
+                ex = ex.InnerException;
             }
+            return false;
         }
 
         public void Dispose()

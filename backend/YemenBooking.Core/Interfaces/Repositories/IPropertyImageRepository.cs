@@ -108,4 +108,10 @@ public interface IPropertyImageRepository : IRepository<PropertyImage>
     /// Get images by temporary key
     /// </summary>
     Task<IEnumerable<PropertyImage>> GetImagesByTempKeyAsync(string tempKey, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// تحديث ترتيب العرض لعدة صور دفعة واحدة
+    /// Batch update display order for multiple images
+    /// </summary>
+    Task<bool> UpdateDisplayOrdersAsync(IEnumerable<(Guid imageId, int displayOrder)> assignments, CancellationToken cancellationToken = default);
 }
