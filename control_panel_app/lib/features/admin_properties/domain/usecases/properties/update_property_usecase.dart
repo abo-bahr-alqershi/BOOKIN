@@ -15,6 +15,10 @@ class UpdatePropertyParams {
   final String? city;
   final int? starRating;
   final List<String>? images;
+  final String? shortDescription;
+  final double? basePricePerNight;
+  final String? currency;
+  final bool? isFeatured;
   
   UpdatePropertyParams({
     required this.propertyId,
@@ -26,6 +30,10 @@ class UpdatePropertyParams {
     this.city,
     this.starRating,
     this.images,
+    this.shortDescription,
+    this.basePricePerNight,
+    this.currency,
+    this.isFeatured,
   });
   
   Map<String, dynamic> toJson() {
@@ -38,6 +46,10 @@ class UpdatePropertyParams {
     if (city != null) data['city'] = city;
     if (starRating != null) data['starRating'] = starRating;
     if (images != null) data['images'] = images;
+    if (shortDescription != null) data['shortDescription'] = shortDescription;
+    if (basePricePerNight != null) data['basePricePerNight'] = basePricePerNight;
+    if (currency != null) data['currency'] = currency;
+    if (isFeatured != null) data['isFeatured'] = isFeatured;
     return data;
   }
 }
