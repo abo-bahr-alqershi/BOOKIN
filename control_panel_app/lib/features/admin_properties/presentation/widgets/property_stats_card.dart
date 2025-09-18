@@ -96,9 +96,9 @@ class _PropertyStatsCardState extends State<PropertyStatsCard>
                     final padding = isSmall ? 10.0 : 12.0;
                     
                     return Container(
-                      constraints: BoxConstraints(
-                        minHeight: 95,
-                        maxHeight: 120,
+                      constraints: const BoxConstraints(
+                        minHeight: 92,
+                        maxHeight: 118,
                       ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -127,11 +127,11 @@ class _PropertyStatsCardState extends State<PropertyStatsCard>
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                           child: Padding(
-                            padding: EdgeInsets.all(padding),
+                            padding: EdgeInsets.all(padding - 1),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.start,
                               children: [
                                 // الصف العلوي - الأيقونة والترند
                                 Flexible(
@@ -171,7 +171,7 @@ class _PropertyStatsCardState extends State<PropertyStatsCard>
                                             child: Container(
                                               padding: EdgeInsets.symmetric(
                                                 horizontal: isSmall ? 4 : 6,
-                                                vertical: isSmall ? 2 : 3,
+                                                vertical: isSmall ? 1 : 2,
                                               ),
                                               decoration: BoxDecoration(
                                                 color: widget.isPositive
@@ -244,7 +244,7 @@ class _PropertyStatsCardState extends State<PropertyStatsCard>
                                         ),
                                       ),
                                       
-                                      SizedBox(height: isSmall ? 2 : 4),
+                                      SizedBox(height: isSmall ? 1 : 3),
                                       
                                       // العنوان
                                       Text(
@@ -254,7 +254,7 @@ class _PropertyStatsCardState extends State<PropertyStatsCard>
                                         style: TextStyle(
                                           fontSize: titleFontSize,
                                           color: AppTheme.textMuted,
-                                          height: 1.2,
+                                          height: 1.0,
                                         ),
                                       ),
                                     ],

@@ -137,10 +137,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
             controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // Header as SliverToBoxAdapter
-              SliverToBoxAdapter(
-                child: _buildHeader(),
-              ),
+              // App Bar similar to bookings page
+              _buildSliverAppBar(),
 
               // Stats Cards as SliverToBoxAdapter
               SliverToBoxAdapter(
@@ -180,6 +178,79 @@ class _PropertiesListPageState extends State<PropertiesListPage>
           ),
         ],
       ),
+    );
+  }
+
+  // SliverAppBar aligned with bookings page styling
+  Widget _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 120,
+      floating: true,
+      pinned: true,
+      backgroundColor: AppTheme.darkBackground,
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+        title: Text(
+          'إدارة العقارات',
+          style: AppTextStyles.heading1.copyWith(
+            color: AppTheme.textWhite,
+            shadows: [
+              Shadow(
+                color: AppTheme.primaryBlue.withOpacity(0.3),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+        ),
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppTheme.primaryBlue.withOpacity(0.1),
+                AppTheme.darkBackground,
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        _buildActionButton(
+          icon: Icons.filter_list_rounded,
+          label: 'فلتر',
+          onTap: () => setState(() => _showFilters = !_showFilters),
+          isActive: _showFilters,
+        ),
+        const SizedBox(width: 8),
+        _buildActionButton(
+          icon: Icons.grid_view_rounded,
+          label: 'شبكة',
+          onTap: () => setState(() => _selectedView = 'grid'),
+          isActive: _selectedView == 'grid',
+        ),
+        const SizedBox(width: 8),
+        _buildActionButton(
+          icon: Icons.table_chart_rounded,
+          label: 'جدول',
+          onTap: () => setState(() => _selectedView = 'table'),
+          isActive: _selectedView == 'table',
+        ),
+        const SizedBox(width: 8),
+        _buildActionButton(
+          icon: Icons.map_rounded,
+          label: 'خريطة',
+          onTap: () => setState(() => _selectedView = 'map'),
+          isActive: _selectedView == 'map',
+        ),
+        const SizedBox(width: 8),
+        _buildPrimaryActionButton(
+          icon: Icons.add_rounded,
+          label: 'إضافة عقار',
+          onTap: () => context.push('/admin/properties/create'),
+        ),
+        const SizedBox(width: 8),
+      ],
     );
   }
 
@@ -416,8 +487,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
 
   Widget _buildStatsSection() {
     return Container(
-      height: 128,
-      padding: const EdgeInsets.all(16),
+      height: 120,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: BlocBuilder<PropertiesBloc, PropertiesState>(
         builder: (context, state) {
           final totalProperties =
