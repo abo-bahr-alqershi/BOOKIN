@@ -194,6 +194,18 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
                         await _fileStorageService.MoveFileAsync(thumbSource, thumbDest, cancellationToken);
                     }
                 }
+
+                // بعد نقل كل الصور، عيّن الصورة الرئيسية قبل الحفظ النهائي
+                var movedImages = await _propertyImageRepository.GetImagesByPropertyAsync(created.Id, cancellationToken);
+                var primaryCandidate = movedImages
+                    .OrderByDescending(i => i.IsMain || i.IsMainImage)
+                    .ThenBy(i => i.DisplayOrder)
+                    .ThenBy(i => i.UploadedAt)
+                    .FirstOrDefault();
+                if (primaryCandidate != null)
+                {
+                    await _propertyImageRepository.UpdateMainImageStatusAsync(primaryCandidate.Id, true, cancellationToken);
+                }
             }
 
             // إذا تم تمرير TempKey بدون قائمة Images، حاول ربط جميع صور المفتاح المؤقت
@@ -228,6 +240,18 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
                     {
                         await _fileStorageService.MoveFileAsync($"temp/{request.TempKey}/{nameWithoutExt}{suffix}{ext}", $"{destFolderPath}/{nameWithoutExt}{suffix}{ext}", cancellationToken);
                     }
+                }
+
+                // تعيين الصورة الرئيسية اعتماداً على الوسم IsMain/IsMainImage أو أول صورة
+                var movedImages = await _propertyImageRepository.GetImagesByPropertyAsync(created.Id, cancellationToken);
+                var primaryCandidate = movedImages
+                    .OrderByDescending(i => i.IsMain || i.IsMainImage)
+                    .ThenBy(i => i.DisplayOrder)
+                    .ThenBy(i => i.UploadedAt)
+                    .FirstOrDefault();
+                if (primaryCandidate != null)
+                {
+                    await _propertyImageRepository.UpdateMainImageStatusAsync(primaryCandidate.Id, true, cancellationToken);
                 }
             }
 
