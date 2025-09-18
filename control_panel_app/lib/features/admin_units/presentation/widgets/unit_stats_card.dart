@@ -217,7 +217,7 @@ class _UnitStatsCardState extends State<UnitStatsCard>
                                       ),
                                   ],
                                 ),
-                                const Expanded(child: SizedBox()),
+                                const SizedBox(height: 8),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisSize: MainAxisSize.min,

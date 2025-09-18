@@ -655,60 +655,71 @@ class _UnitsListPageState extends State<UnitsListPage>
         : '0';
 
     return Row(
-      children: AnimationConfiguration.toStaggeredList(
-        duration: const Duration(milliseconds: 375),
-        childAnimationBuilder: (widget) => SlideAnimation(
-          horizontalOffset: 50.0,
-          child: FadeInAnimation(
-            child: widget,
+      children: [
+        Expanded(
+          child: SlideAnimation(
+            horizontalOffset: 50.0,
+            child: FadeInAnimation(
+              child: UnitStatsCard(
+                title: 'إجمالي الوحدات',
+                value: totalUnits.toString(),
+                icon: Icons.home_work_rounded,
+                color: AppTheme.primaryBlue,
+                trend: '+15%',
+                isPositive: true,
+              ),
+            ),
           ),
         ),
-        children: [
-          Expanded(
-            child: UnitStatsCard(
-              title: 'إجمالي الوحدات',
-              value: totalUnits.toString(),
-              icon: Icons.home_work_rounded,
-              color: AppTheme.primaryBlue,
-              trend: '+15%',
-              isPositive: true,
+        const SizedBox(width: 12),
+        Expanded(
+          child: SlideAnimation(
+            horizontalOffset: 50.0,
+            child: FadeInAnimation(
+              child: UnitStatsCard(
+                title: 'وحدات متاحة',
+                value: availableUnits.toString(),
+                icon: Icons.check_circle_rounded,
+                color: AppTheme.success,
+                trend: '$availableUnits',
+                isPositive: true,
+              ),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: UnitStatsCard(
-              title: 'وحدات متاحة',
-              value: availableUnits.toString(),
-              icon: Icons.check_circle_rounded,
-              color: AppTheme.success,
-              trend: '$availableUnits',
-              isPositive: true,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: SlideAnimation(
+            horizontalOffset: 50.0,
+            child: FadeInAnimation(
+              child: UnitStatsCard(
+                title: 'وحدات محجوزة',
+                value: occupiedUnits.toString(),
+                icon: Icons.event_busy_rounded,
+                color: AppTheme.warning,
+                trend: '$occupiedUnits',
+                isPositive: false,
+              ),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: UnitStatsCard(
-              title: 'وحدات محجوزة',
-              value: occupiedUnits.toString(),
-              icon: Icons.event_busy_rounded,
-              color: AppTheme.warning,
-              trend: '$occupiedUnits',
-              isPositive: false,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: SlideAnimation(
+            horizontalOffset: 50.0,
+            child: FadeInAnimation(
+              child: UnitStatsCard(
+                title: 'معدل الإشغال',
+                value: '$occupancyRate%',
+                icon: Icons.analytics_rounded,
+                color: AppTheme.primaryPurple,
+                trend: '+5%',
+                isPositive: true,
+              ),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: UnitStatsCard(
-              title: 'معدل الإشغال',
-              value: '$occupancyRate%',
-              icon: Icons.analytics_rounded,
-              color: AppTheme.primaryPurple,
-              trend: '+5%',
-              isPositive: true,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -720,10 +731,17 @@ class _UnitsListPageState extends State<UnitsListPage>
         child: _showFilters
             ? UnitFiltersWidget(
                 onFiltersChanged: (filters) {
-                  setState(() => _activeFilters = filters);
+                  setState(() => _activeFilters = UnitFilters(
+                        propertyId: filters['propertyId'] as String?,
+                        unitTypeId: filters['unitTypeId'] as String?,
+                        isAvailable: filters['isAvailable'] as bool?,
+                        minPrice: filters['minPrice'] as int?,
+                        maxPrice: filters['maxPrice'] as int?,
+                        pricingMethod: filters['pricingMethod'] as String?,
+                      ));
                   context.read<UnitsListBloc>().add(
                         FilterUnitsEvent(
-                          filters: filters.toMap(),
+                          filters: filters,
                         ),
                       );
                 },

@@ -117,20 +117,18 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
     return FadeTransition(
       opacity: _fadeAnimation,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Filter Bar - نفس التصميم القديم بالضبط
           _buildMobileFilterBar(),
-
-          // Units List
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: _filteredUnits.length,
-              itemBuilder: (context, index) {
-                final unit = _filteredUnits[index];
-                return _buildMobileUnitCard(unit, index);
-              },
-            ),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(12),
+            itemCount: _filteredUnits.length,
+            itemBuilder: (context, index) {
+              final unit = _filteredUnits[index];
+              return _buildMobileUnitCard(unit, index);
+            },
           ),
         ],
       ),
@@ -619,20 +617,21 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 _buildTabletHeader(),
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SizedBox(
-                      width: 900, // Fixed width for tablet
-                      child: ListView.builder(
-                        itemCount: _filteredUnits.length,
-                        itemBuilder: (context, index) {
-                          final unit = _filteredUnits[index];
-                          return _buildTabletRow(unit, index);
-                        },
-                      ),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: 900,
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _filteredUnits.length,
+                      itemBuilder: (context, index) {
+                        final unit = _filteredUnits[index];
+                        return _buildTabletRow(unit, index);
+                      },
                     ),
                   ),
                 ),
@@ -888,14 +887,15 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 _buildDesktopHeader(),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _filteredUnits.length,
-                    itemBuilder: (context, index) =>
-                        _buildDesktopRow(_filteredUnits[index], index),
-                  ),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _filteredUnits.length,
+                  itemBuilder: (context, index) =>
+                      _buildDesktopRow(_filteredUnits[index], index),
                 ),
               ],
             ),
