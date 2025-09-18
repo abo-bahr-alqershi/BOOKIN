@@ -137,18 +137,16 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
         }
       }
       // Ensure currency is sent via header for context if provided
-      try {
-        final currency = propertyData['currency'];
-        if (currency != null && currency is String && currency.isNotEmpty) {
-          apiClient.addRequestInterceptor((options) {
-            options.headers[ApiConstants.xPropertyCurrency] = currency;
-            return options;
-          });
-        }
-      } catch (_) {}
+      final currency = propertyData['currency'];
+      final headers = <String, dynamic>{};
+      if (currency != null && currency is String && currency.isNotEmpty) {
+        headers[ApiConstants.xPropertyCurrency] = currency;
+      }
+      
       final response = await apiClient.post(
         _baseEndpoint,
         data: propertyData,
+        options: Options(headers: headers),
       );
       
       if (response.data['success'] == true) {
@@ -174,18 +172,16 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
         }
       }
       // Ensure currency header if provided
-      try {
-        final currency = propertyData['currency'];
-        if (currency != null && currency is String && currency.isNotEmpty) {
-          apiClient.addRequestInterceptor((options) {
-            options.headers[ApiConstants.xPropertyCurrency] = currency;
-            return options;
-          });
-        }
-      } catch (_) {}
+      final currency = propertyData['currency'];
+      final headers = <String, dynamic>{};
+      if (currency != null && currency is String && currency.isNotEmpty) {
+        headers[ApiConstants.xPropertyCurrency] = currency;
+      }
+      
       final response = await apiClient.put(
         '$_baseEndpoint/$propertyId',
         data: propertyData,
+        options: Options(headers: headers),
       );
       
       return response.data['success'] == true;
