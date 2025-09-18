@@ -175,16 +175,13 @@ class _UnitsListPageState extends State<UnitsListPage>
       ),
       actions: [
         _buildActionButton(
-          icon: _isGridView
-              ? CupertinoIcons.list_bullet
-              : CupertinoIcons.square_grid_2x2,
-          onPressed: () => setState(() => _isGridView = !_isGridView),
+          icon: CupertinoIcons.add,
+          onPressed: () {
+            Navigator.pop(context);
+            context.push('/admin/units/create');
+          },
         ),
-        _buildActionButton(
-          icon: CupertinoIcons.map,
-          onPressed: () => context.push('/admin/units/map'),
-        ),
-        _buildAnalyticsButton(),
+        _buildGridViewButton(),
         _buildActionButton(
           icon: _showFilters
               ? CupertinoIcons.xmark
@@ -196,7 +193,7 @@ class _UnitsListPageState extends State<UnitsListPage>
     );
   }
 
-  Widget _buildAnalyticsButton() {
+  Widget _buildGridViewButton() {
     return AnimatedBuilder(
       animation: _pulseAnimationController,
       builder: (context, child) {
@@ -233,14 +230,15 @@ class _UnitsListPageState extends State<UnitsListPage>
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () {
-                      HapticFeedback.lightImpact();
-                      _navigateToAnalytics();
+                      setState(() => _isGridView = !_isGridView);
                     },
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       child: Icon(
-                        CupertinoIcons.chart_bar_alt_fill,
+                        _isGridView
+                            ? CupertinoIcons.list_bullet
+                            : CupertinoIcons.square_grid_2x2,
                         color: AppTheme.primaryPurple,
                         size: 20,
                       ),
@@ -457,28 +455,28 @@ class _UnitsListPageState extends State<UnitsListPage>
                   subtitle: 'عرض إحصائيات وتقارير الوحدات',
                   gradient: [AppTheme.primaryPurple, AppTheme.primaryViolet],
                   onTap: () {
-                    Navigator.pop(context);
-                    context.push('/admin/units/analytics');
+                    // Navigator.pop(context);
+                    // context.push('/admin/units/analytics');
                   },
                 ),
-                _buildQuickMenuItem(
-                  icon: CupertinoIcons.map,
-                  label: 'الخريطة',
-                  subtitle: 'عرض الوحدات على الخريطة التفاعلية',
-                  gradient: [AppTheme.primaryBlue, AppTheme.primaryCyan],
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push('/admin/units/map');
-                  },
-                ),
+                // _buildQuickMenuItem(
+                //   icon: CupertinoIcons.map,
+                //   label: 'الخريطة',
+                //   subtitle: 'عرض الوحدات على الخريطة التفاعلية',
+                //   gradient: [AppTheme.primaryBlue, AppTheme.primaryCyan],
+                //   onTap: () {
+                //     Navigator.pop(context);
+                //     context.push('/admin/units/map');
+                //   },
+                // ),
                 _buildQuickMenuItem(
                   icon: CupertinoIcons.chart_pie_fill,
                   label: 'التقارير',
                   subtitle: 'تقارير مفصلة عن أداء الوحدات',
                   gradient: [AppTheme.success, AppTheme.neonGreen],
                   onTap: () {
-                    Navigator.pop(context);
-                    context.push('/admin/units/reports');
+                    // Navigator.pop(context);
+                    // context.push('/admin/units/reports');
                   },
                 ),
                 _buildQuickMenuItem(
@@ -491,16 +489,16 @@ class _UnitsListPageState extends State<UnitsListPage>
                     context.push('/admin/units/create');
                   },
                 ),
-                _buildQuickMenuItem(
-                  icon: CupertinoIcons.arrow_up_arrow_down,
-                  label: 'استيراد/تصدير',
-                  subtitle: 'استيراد أو تصدير بيانات الوحدات',
-                  gradient: [AppTheme.primaryViolet, AppTheme.primaryPurple],
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push('/admin/units/import-export');
-                  },
-                ),
+                // _buildQuickMenuItem(
+                //   icon: CupertinoIcons.arrow_up_arrow_down,
+                //   label: 'استيراد/تصدير',
+                //   subtitle: 'استيراد أو تصدير بيانات الوحدات',
+                //   gradient: [AppTheme.primaryViolet, AppTheme.primaryPurple],
+                //   onTap: () {
+                //     Navigator.pop(context);
+                //     context.push('/admin/units/import-export');
+                //   },
+                // ),
                 const SizedBox(height: 20),
                 SizedBox(height: MediaQuery.of(context).padding.bottom),
               ],
