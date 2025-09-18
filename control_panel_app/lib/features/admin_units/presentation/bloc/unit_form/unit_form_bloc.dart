@@ -109,10 +109,13 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
       final currentState = state as UnitFormReady;
       emit(currentState.copyWith(isLoadingFields: true));
       
-      // Get selected unit type
-      final unitType = currentState.availableUnitTypes.firstWhere(
-        (type) => type.id == event.unitTypeId,
-      );
+      // Try resolve selected unit type from available list if present (safe for edit mode when list may be empty)
+      UnitType? unitType;
+      try {
+        unitType = currentState.availableUnitTypes.firstWhere((type) => type.id == event.unitTypeId);
+      } catch (_) {
+        unitType = currentState.selectedUnitType; // keep previous if any (edit mode)
+      }
       
       // Load fields for this unit type
       final result = await getUnitFieldsUseCase(event.unitTypeId);
