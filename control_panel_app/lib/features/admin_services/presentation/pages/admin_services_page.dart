@@ -299,20 +299,20 @@ class _AdminServicesPageState extends State<AdminServicesPage>
         }
       },
       itemBuilder: (context) => [
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'grid',
           child: Row(
-            children: const [
+            children: [
               Icon(Icons.grid_view_rounded, size: 18),
               SizedBox(width: 8),
               Text('شبكة'),
             ],
           ),
         ),
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'list',
           child: Row(
-            children: const [
+            children: [
               Icon(Icons.view_list_rounded, size: 18),
               SizedBox(width: 8),
               Text('قائمة'),

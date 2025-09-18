@@ -299,30 +299,30 @@ class _PropertiesListPageState extends State<PropertiesListPage>
         }
       },
       itemBuilder: (context) => [
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'grid',
           child: Row(
-            children: const [
+            children: [
               Icon(Icons.grid_view_rounded, size: 18),
               SizedBox(width: 8),
               Text('شبكة'),
             ],
           ),
         ),
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'table',
           child: Row(
-            children: const [
+            children: [
               Icon(Icons.table_chart_rounded, size: 18),
               SizedBox(width: 8),
               Text('جدول'),
             ],
           ),
         ),
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'map',
           child: Row(
-            children: const [
+            children: [
               Icon(Icons.map_rounded, size: 18),
               SizedBox(width: 8),
               Text('خريطة'),
