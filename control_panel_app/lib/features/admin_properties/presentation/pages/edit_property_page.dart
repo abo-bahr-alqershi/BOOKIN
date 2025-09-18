@@ -24,12 +24,12 @@ import '../../domain/entities/property_image.dart'; // إضافة استيراد
 
 class EditPropertyPage extends StatelessWidget {
   final String propertyId;
-  
+
   const EditPropertyPage({
     super.key,
     required this.propertyId,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -43,8 +43,8 @@ class EditPropertyPage extends StatelessWidget {
             ..add(const LoadPropertyTypesEvent(pageSize: 100)),
         ),
         BlocProvider(
-          create: (_) => di.sl<AmenitiesBloc>()
-            ..add(const LoadAmenitiesEvent()),
+          create: (_) =>
+              di.sl<AmenitiesBloc>()..add(const LoadAmenitiesEvent()),
         ),
         // إضافة PropertyImagesBloc
         BlocProvider(
@@ -58,13 +58,14 @@ class EditPropertyPage extends StatelessWidget {
 
 class _EditPropertyPageContent extends StatefulWidget {
   final String propertyId;
-  
+
   const _EditPropertyPageContent({
     required this.propertyId,
   });
-  
+
   @override
-  State<_EditPropertyPageContent> createState() => _EditPropertyPageContentState();
+  State<_EditPropertyPageContent> createState() =>
+      _EditPropertyPageContentState();
 }
 
 class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
@@ -75,7 +76,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late AnimationController _glowController;
-  
+
   // Form Controllers
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -86,7 +87,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   final _longitudeController = TextEditingController();
   final _shortDescriptionController = TextEditingController();
   final _basePriceController = TextEditingController();
-  
+
   // State
   String? _selectedPropertyTypeId;
   int _starRating = 3;
@@ -100,19 +101,19 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   bool _isNavigating = false;
   int _currentStep = 0;
   final GlobalKey<PropertyImageGalleryState> _galleryKey = GlobalKey();
-  
+
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
   }
-  
+
   void _initializeAnimations() {
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _shimmerController = AnimationController(
       duration: const Duration(seconds: 1),
       vsync: this,
@@ -121,7 +122,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -129,7 +130,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       parent: _animationController,
       curve: Curves.easeOut,
     ));
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
@@ -137,10 +138,10 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       parent: _animationController,
       curve: Curves.easeOutQuart,
     ));
-    
+
     _animationController.forward();
   }
-  
+
   void _loadPropertyDataToForm(Property property) {
     if (!_isDataLoaded) {
       setState(() {
@@ -158,12 +159,13 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
         _isFeatured = property.isFeatured;
         _currency = property.currency;
         _selectedImages = property.images; // تخزين كائنات PropertyImage
-        _selectedAmenities = property.amenities.map((amenity) => amenity.id).toList();
+        _selectedAmenities =
+            property.amenities.map((amenity) => amenity.id).toList();
         _isDataLoaded = true;
       });
     }
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -179,17 +181,19 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
     _basePriceController.dispose();
     super.dispose();
   }
-  
-  void _showSnackBar(String message, {Color? backgroundColor, bool isError = false}) {
+
+  void _showSnackBar(String message,
+      {Color? backgroundColor, bool isError = false}) {
     if (!mounted) return;
-    
+
     Future.microtask(() {
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: backgroundColor ?? (isError ? AppTheme.error : AppTheme.success),
+          backgroundColor:
+              backgroundColor ?? (isError ? AppTheme.error : AppTheme.success),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -199,7 +203,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       );
     });
   }
-  
+
   void _navigateBack() {
     if (!_isNavigating && mounted) {
       _isNavigating = true;
@@ -210,7 +214,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       });
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -222,13 +226,11 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
         body: Stack(
           children: [
             _buildAnimatedBackground(),
-            
             SafeArea(
               child: Column(
                 children: [
                   _buildHeader(),
                   _buildProgressIndicator(),
-                  
                   Expanded(
                     child: BlocConsumer<PropertiesBloc, PropertiesState>(
                       listenWhen: (previous, current) {
@@ -238,7 +240,9 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                         if (state is PropertyDetailsLoaded) {
                           _loadPropertyDataToForm(state.property);
                         } else if (state is PropertyDetailsError) {
-                          _showSnackBar('خطأ في تحميل البيانات: ${state.message}', isError: true);
+                          _showSnackBar(
+                              'خطأ في تحميل البيانات: ${state.message}',
+                              isError: true);
                         } else if (state is PropertyUpdated) {
                           _showSnackBar('تم حفظ التغييرات بنجاح');
                           _navigateBack();
@@ -270,10 +274,10 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                       },
                     ),
                   ),
-                  
                   BlocBuilder<PropertiesBloc, PropertiesState>(
                     builder: (context, state) {
-                      if (state is PropertyDetailsLoaded || state is PropertyUpdating) {
+                      if (state is PropertyDetailsLoaded ||
+                          state is PropertyUpdating) {
                         return _buildActionButtons(state is PropertyUpdating);
                       }
                       return const SizedBox.shrink();
@@ -287,7 +291,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ),
     );
   }
-  
+
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
       animation: _glowController,
@@ -308,7 +312,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       },
     );
   }
-  
+
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -353,15 +357,14 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
               ),
             ),
           ),
-          
           const SizedBox(width: 16),
-          
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ShaderMask(
-                  shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                  shaderCallback: (bounds) =>
+                      AppTheme.primaryGradient.createShader(bounds),
                   child: Text(
                     'تعديل العقار',
                     style: AppTextStyles.heading2.copyWith(
@@ -390,7 +393,6 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
               ],
             ),
           ),
-          
           GestureDetector(
             onTap: _isNavigating ? null : _showDeleteConfirmation,
             child: Container(
@@ -420,7 +422,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ),
     );
   }
-  
+
   Widget _buildFormContent() {
     return Form(
       key: _formKey,
@@ -476,7 +478,10 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                 ),
               ),
               const SizedBox(width: 16),
-              Expanded(child: _CurrencyDropdown(value: _currency, onChanged: (v) => setState(() => _currency = v))),
+              Expanded(
+                  child: _CurrencyDropdown(
+                      value: _currency,
+                      onChanged: (v) => setState(() => _currency = v))),
             ],
           ),
           const SizedBox(height: 20),
@@ -548,7 +553,8 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                   controller: _latitudeController,
                   label: 'خط العرض',
                   icon: Icons.my_location_rounded,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'يرجى إدخال خط العرض';
@@ -567,7 +573,8 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                   controller: _longitudeController,
                   label: 'خط الطول',
                   icon: Icons.my_location_rounded,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'يرجى إدخال خط الطول';
@@ -707,7 +714,12 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   }
 
   Widget _buildProgressIndicator() {
-    final steps = ['المعلومات الأساسية', 'الموقع', 'الصور والمرافق', 'المراجعة'];
+    final steps = [
+      'المعلومات الأساسية',
+      'الموقع',
+      'الصور والمرافق',
+      'المراجعة'
+    ];
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -724,7 +736,9 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                   height: 32,
                   decoration: BoxDecoration(
                     gradient: isActive ? AppTheme.primaryGradient : null,
-                    color: !isActive ? AppTheme.darkSurface.withOpacity(0.5) : null,
+                    color: !isActive
+                        ? AppTheme.darkSurface.withOpacity(0.5)
+                        : null,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isActive
@@ -743,11 +757,13 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                   ),
                   child: Center(
                     child: isCompleted
-                        ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                        ? const Icon(Icons.check_rounded,
+                            size: 16, color: Colors.white)
                         : Text(
                             '${index + 1}',
                             style: AppTextStyles.caption.copyWith(
-                              color: isActive ? Colors.white : AppTheme.textMuted,
+                              color:
+                                  isActive ? Colors.white : AppTheme.textMuted,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -760,7 +776,9 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                       margin: const EdgeInsets.symmetric(horizontal: 8),
                       decoration: BoxDecoration(
                         gradient: isCompleted ? AppTheme.primaryGradient : null,
-                        color: !isCompleted ? AppTheme.darkBorder.withOpacity(0.2) : null,
+                        color: !isCompleted
+                            ? AppTheme.darkBorder.withOpacity(0.2)
+                            : null,
                         borderRadius: BorderRadius.circular(1),
                       ),
                     ),
@@ -772,7 +790,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ),
     );
   }
-  
+
   Widget _buildSectionTitle(String title) {
     return Row(
       children: [
@@ -795,7 +813,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ],
     );
   }
-  
+
   Widget _buildInputField({
     required TextEditingController controller,
     required String label,
@@ -856,9 +874,9 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ],
     );
   }
-  
+
   // باقي الدوال (_buildPropertyTypeDropdown, _buildCurrencyDropdown, etc.) تبقى كما هي...
-  
+
   Widget _buildLoadingState() {
     return AnimatedBuilder(
       animation: _shimmerController,
@@ -872,7 +890,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       },
     );
   }
-  
+
   Widget _buildUpdatingState() {
     return Center(
       child: Column(
@@ -892,7 +910,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ),
     );
   }
-  
+
   Widget _buildErrorState(String message) {
     return Center(
       child: Padding(
@@ -938,11 +956,12 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
             GestureDetector(
               onTap: () {
                 context.read<PropertiesBloc>().add(
-                  LoadPropertyDetailsEvent(propertyId: widget.propertyId),
-                );
+                      LoadPropertyDetailsEvent(propertyId: widget.propertyId),
+                    );
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
                   gradient: AppTheme.primaryGradient,
                   borderRadius: BorderRadius.circular(12),
@@ -961,7 +980,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ),
     );
   }
-  
+
   Widget _buildShimmerBox() {
     return Container(
       height: 60,
@@ -985,7 +1004,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ),
     );
   }
-  
+
   // باقي الدوال كما هي...
   Widget _buildPropertyTypeDropdown() {
     // نفس الكود السابق
@@ -1018,34 +1037,37 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
             builder: (context, state) {
               List<PropertyType> propertyTypes = [];
               bool isLoading = false;
-              
+
               if (state is PropertyTypesLoading) {
                 isLoading = true;
               } else if (state is PropertyTypesLoaded) {
                 propertyTypes = state.propertyTypes;
               }
-              
+
               String? validSelectedValue = _selectedPropertyTypeId;
-              if (validSelectedValue != null && 
+              if (validSelectedValue != null &&
                   propertyTypes.isNotEmpty &&
                   !propertyTypes.any((type) => type.id == validSelectedValue)) {
                 if (_currentProperty != null) {
-                  propertyTypes.insert(0, PropertyType(
-                    id: _currentProperty!.typeId,
-                    name: _currentProperty!.typeName,
-                    description: '',
-                    defaultAmenities: [],
-                    icon: '',
-                    propertiesCount: 0,
-                  ));
+                  propertyTypes.insert(
+                      0,
+                      PropertyType(
+                        id: _currentProperty!.typeId,
+                        name: _currentProperty!.typeName,
+                        description: '',
+                        defaultAmenities: const [],
+                        icon: '',
+                        propertiesCount: 0,
+                      ));
                 } else {
                   validSelectedValue = null;
                 }
               }
-              
+
               if (isLoading) {
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   child: Row(
                     children: [
                       SizedBox(
@@ -1069,10 +1091,11 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                   ),
                 );
               }
-              
+
               if (propertyTypes.isEmpty) {
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   child: Text(
                     'لا توجد أنواع عقارات متاحة',
                     style: AppTextStyles.bodyMedium.copyWith(
@@ -1081,12 +1104,13 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                   ),
                 );
               }
-              
+
               return DropdownButtonFormField<String>(
-                value: validSelectedValue,
+                initialValue: validSelectedValue,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 dropdownColor: AppTheme.darkCard,
                 style: AppTextStyles.bodyMedium.copyWith(
@@ -1122,9 +1146,9 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ],
     );
   }
-  
+
   // Removed old hardcoded currency dropdown
-  
+
   Widget _buildStarRatingSelector() {
     // نفس الكود السابق
     return Column(
@@ -1149,8 +1173,12 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
               child: Padding(
                 padding: const EdgeInsets.only(right: 4),
                 child: Icon(
-                  index < _starRating ? Icons.star_rounded : Icons.star_border_rounded,
-                  color: index < _starRating ? AppTheme.warning : AppTheme.textMuted,
+                  index < _starRating
+                      ? Icons.star_rounded
+                      : Icons.star_border_rounded,
+                  color: index < _starRating
+                      ? AppTheme.warning
+                      : AppTheme.textMuted,
                   size: 32,
                 ),
               ),
@@ -1160,7 +1188,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ],
     );
   }
-  
+
   Widget _buildFeaturedSwitch() {
     // نفس الكود السابق
     return Container(
@@ -1174,7 +1202,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
         ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: _isFeatured 
+          color: _isFeatured
               ? AppTheme.warning.withOpacity(0.3)
               : AppTheme.darkBorder.withOpacity(0.3),
           width: 1,
@@ -1207,7 +1235,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                 _isFeatured = value;
               });
             },
-            activeColor: AppTheme.warning,
+            activeThumbColor: AppTheme.warning,
             inactiveThumbColor: AppTheme.textMuted,
             inactiveTrackColor: AppTheme.darkBorder.withOpacity(0.3),
           ),
@@ -1215,7 +1243,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ),
     );
   }
-  
+
   Widget _buildMapButton() {
     // نفس الكود السابق
     return GestureDetector(
@@ -1258,7 +1286,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ),
     );
   }
-  
+
   Widget _buildActionButtons(bool isUpdating) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1293,8 +1321,10 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.darkSurface.withOpacity(isUpdating ? 0.3 : 0.5),
-                        AppTheme.darkSurface.withOpacity(isUpdating ? 0.2 : 0.3),
+                        AppTheme.darkSurface
+                            .withOpacity(isUpdating ? 0.3 : 0.5),
+                        AppTheme.darkSurface
+                            .withOpacity(isUpdating ? 0.2 : 0.3),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
@@ -1307,7 +1337,9 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                     child: Text(
                       'السابق',
                       style: AppTextStyles.buttonMedium.copyWith(
-                        color: isUpdating ? AppTheme.textMuted : AppTheme.textWhite,
+                        color: isUpdating
+                            ? AppTheme.textMuted
+                            : AppTheme.textWhite,
                       ),
                     ),
                   ),
@@ -1333,27 +1365,32 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  gradient: isUpdating ? LinearGradient(colors: [
-                    AppTheme.primaryBlue.withOpacity(0.3),
-                    AppTheme.primaryPurple.withOpacity(0.3),
-                  ]) : AppTheme.primaryGradient,
+                  gradient: isUpdating
+                      ? LinearGradient(colors: [
+                          AppTheme.primaryBlue.withOpacity(0.3),
+                          AppTheme.primaryPurple.withOpacity(0.3),
+                        ])
+                      : AppTheme.primaryGradient,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: isUpdating ? [] : [
-                    BoxShadow(
-                      color: AppTheme.primaryBlue.withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  boxShadow: isUpdating
+                      ? []
+                      : [
+                          BoxShadow(
+                            color: AppTheme.primaryBlue.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                 ),
                 child: Center(
                   child: isUpdating
-                      ? SizedBox(
+                      ? const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
                       : Text(
@@ -1371,7 +1408,6 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       ),
     );
   }
-
 }
 
 class _CurrencyDropdown extends StatefulWidget {
@@ -1399,7 +1435,10 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
       final usecase = di.sl<GetCurrenciesUseCase>();
       final result = await usecase(NoParams());
       result.fold(
-        (f) => setState(() { _error = f.message; _loading = false; }),
+        (f) => setState(() {
+          _error = f.message;
+          _loading = false;
+        }),
         (list) => setState(() {
           _codes = list.map((c) => c.code).toList();
           _loading = false;
@@ -1409,7 +1448,10 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
         }),
       );
     } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
     }
   }
 
@@ -1431,54 +1473,68 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
         child: Row(children: [
           const SizedBox(width: 4, height: 4),
           SizedBox(
-            width: 18, height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.textMuted),
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppTheme.textMuted),
           ),
           const SizedBox(width: 8),
-          Text('جاري تحميل العملات...', style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted)),
+          Text('جاري تحميل العملات...',
+              style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted)),
         ]),
       );
     }
     if (_error != null) {
       return DropdownButtonFormField<String>(
-        value: _codes.contains(widget.value) ? widget.value : null,
+        initialValue: _codes.contains(widget.value) ? widget.value : null,
         decoration: decoration.copyWith(errorText: _error),
-        items: _codes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-        onChanged: (v) { if (v != null) widget.onChanged(v); },
+        items: _codes
+            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+            .toList(),
+        onChanged: (v) {
+          if (v != null) widget.onChanged(v);
+        },
       );
     }
     return DropdownButtonFormField<String>(
-      value: _codes.contains(widget.value) ? widget.value : null,
+      initialValue: _codes.contains(widget.value) ? widget.value : null,
       decoration: decoration,
       dropdownColor: AppTheme.darkCard,
       style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
-      items: _codes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-      onChanged: (v) { if (v != null) widget.onChanged(v); },
+      items: _codes
+          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+          .toList(),
+      onChanged: (v) {
+        if (v != null) widget.onChanged(v);
+      },
     );
   }
-  
+
   void _saveChanges() {
     if (_formKey.currentState!.validate() && !_isNavigating) {
       // استخراج URLs من PropertyImage objects
-      final List<String> imageUrls = _selectedImages.map((img) => img.url).toList();
-      
+      final List<String> imageUrls =
+          _selectedImages.map((img) => img.url).toList();
+
       context.read<PropertiesBloc>().add(
-        UpdatePropertyEvent(
-          propertyId: widget.propertyId,
-          name: _nameController.text,
-          address: _addressController.text,
-          city: _cityController.text,
-          description: _descriptionController.text,
-          latitude: double.tryParse(_latitudeController.text),
-          longitude: double.tryParse(_longitudeController.text),
-          starRating: _starRating,
-          images: imageUrls, // تمرير URLs فقط
-          shortDescription: _shortDescriptionController.text.isNotEmpty ? _shortDescriptionController.text : null,
-          basePricePerNight: double.tryParse(_basePriceController.text),
-          currency: _currency,
-          isFeatured: _isFeatured,
-        ),
-      );
+            UpdatePropertyEvent(
+              propertyId: widget.propertyId,
+              name: _nameController.text,
+              address: _addressController.text,
+              city: _cityController.text,
+              description: _descriptionController.text,
+              latitude: double.tryParse(_latitudeController.text),
+              longitude: double.tryParse(_longitudeController.text),
+              starRating: _starRating,
+              images: imageUrls, // تمرير URLs فقط
+              shortDescription: _shortDescriptionController.text.isNotEmpty
+                  ? _shortDescriptionController.text
+                  : null,
+              basePricePerNight: double.tryParse(_basePriceController.text),
+              currency: _currency,
+              isFeatured: _isFeatured,
+            ),
+          );
     }
   }
 
@@ -1493,7 +1549,8 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
       case 1:
         final lat = double.tryParse(_latitudeController.text);
         final lng = double.tryParse(_longitudeController.text);
-        if (_addressController.text.isEmpty || _cityController.text.isEmpty) return false;
+        if (_addressController.text.isEmpty || _cityController.text.isEmpty)
+          return false;
         if (lat == null || lat < -90 || lat > 90) return false;
         if (lng == null || lng < -180 || lng > 180) return false;
         return true;
@@ -1564,10 +1621,10 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
       ),
     );
   }
-  
+
   void _showDeleteConfirmation() {
     if (_isNavigating) return;
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1576,8 +1633,8 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
           Navigator.pop(dialogContext);
           if (mounted) {
             context.read<PropertiesBloc>().add(
-              DeletePropertyEvent(widget.propertyId),
-            );
+                  DeletePropertyEvent(widget.propertyId),
+                );
           }
         },
       ),
@@ -1588,9 +1645,9 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
 // _DeleteConfirmationDialog يبقى كما هو...
 class _DeleteConfirmationDialog extends StatelessWidget {
   final VoidCallback onConfirm;
-  
+
   const _DeleteConfirmationDialog({required this.onConfirm});
-  
+
   @override
   Widget build(BuildContext context) {
     // نفس الكود السابق
