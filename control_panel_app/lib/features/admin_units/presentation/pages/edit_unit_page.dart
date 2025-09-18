@@ -1435,7 +1435,17 @@ class _EditUnitPageState extends State<EditUnitPage>
            _childrenCapacity != (_originalUnit!.childrenCapacity ?? 0) ||
            _pricingMethod != _getPricingMethodString(_originalUnit!.pricingMethod) ||
            _featuresController.text != _originalUnit!.customFeatures ||
-           _existingImages.length != (_originalUnit!.images?.length ?? 0);
+           // Detect image order change (not just count)
+           _existingImages.length != (_originalUnit!.images?.length ?? 0) ||
+           !_isSameOrder(_existingImages, _originalUnit!.images ?? const []);
+  }
+
+  bool _isSameOrder(List<String> current, List<String> original) {
+    if (current.length != original.length) return false;
+    for (var i = 0; i < current.length; i++) {
+      if (current[i] != original[i]) return false;
+    }
+    return true;
   }
   
   bool _hasChangesInStep(int step) {
