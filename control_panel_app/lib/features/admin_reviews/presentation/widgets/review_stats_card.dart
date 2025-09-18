@@ -7,14 +7,14 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/review.dart';
 
-class ReviewStatsCard extends StatefulWidget {
+class ReviewStatsCard extends StatelessWidget {
   final int totalReviews;
   final int pendingReviews;
   final double averageRating;
   final List<Review> reviews;
   final bool isDesktop;
   final bool isTablet;
-  
+
   const ReviewStatsCard({
     super.key,
     required this.totalReviews,
@@ -24,359 +24,165 @@ class ReviewStatsCard extends StatefulWidget {
     required this.isDesktop,
     required this.isTablet,
   });
-  
-  @override
-  State<ReviewStatsCard> createState() => _ReviewStatsCardState();
-}
 
-class _ReviewStatsCardState extends State<ReviewStatsCard>
-    with TickerProviderStateMixin {
-  late AnimationController _mainController;
-  late AnimationController _pulseController;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _pulseAnimation;
-  
-  @override
-  void initState() {
-    super.initState();
-    
-    _mainController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-    
-    _pulseController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    )..repeat(reverse: true);
-    
-    _scaleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _mainController,
-      curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
-    ));
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _mainController,
-      curve: const Interval(0.3, 0.8, curve: Curves.easeOut),
-    ));
-    
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.05,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _mainController.forward();
-  }
-  
-  @override
-  void dispose() {
-    _mainController.dispose();
-    _pulseController.dispose();
-    super.dispose();
-  }
-  
-  Map<String, dynamic> _calculateStats() {
-    if (widget.reviews.isEmpty) {
-      return {
-        'fiveStars': 0,
-        'fourStars': 0,
-        'threeStars': 0,
-        'twoStars': 0,
-        'oneStar': 0,
-        'withImages': 0,
-        'withResponse': 0,
-        'approved': 0,
-      };
-    }
-    
-    return {
-      'fiveStars': widget.reviews.where((r) => r.averageRating >= 4.5).length,
-      'fourStars': widget.reviews.where((r) => r.averageRating >= 3.5 && r.averageRating < 4.5).length,
-      'threeStars': widget.reviews.where((r) => r.averageRating >= 2.5 && r.averageRating < 3.5).length,
-      'twoStars': widget.reviews.where((r) => r.averageRating >= 1.5 && r.averageRating < 2.5).length,
-      'oneStar': widget.reviews.where((r) => r.averageRating < 1.5).length,
-      'withImages': widget.reviews.where((r) => r.images.isNotEmpty).length,
-      'withResponse': widget.reviews.where((r) => r.hasResponse).length,
-      'approved': widget.reviews.where((r) => r.isApproved).length,
-    };
-  }
-  
   @override
   Widget build(BuildContext context) {
-    final stats = _calculateStats();
-    final columns = widget.isDesktop ? 4 : (widget.isTablet ? 2 : 1);
-    
-    return AnimatedBuilder(
-      animation: _mainController,
-      builder: (context, child) {
-        return FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: columns,
-              childAspectRatio: widget.isDesktop ? 1.5 : (widget.isTablet ? 1.3 : 1.8),
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              children: [
-                _buildStatCard(
-                  title: 'إجمالي التقييمات',
-                  value: widget.totalReviews.toString(),
-                  icon: Icons.reviews_outlined,
-                  gradient: [
-                    AppTheme.primaryBlue.withOpacity(0.8),
-                    AppTheme.primaryPurple.withOpacity(0.8),
-                  ],
-                  index: 0,
-                ),
-                _buildStatCard(
-                  title: 'قيد المراجعة',
-                  value: widget.pendingReviews.toString(),
-                  icon: Icons.pending_outlined,
-                  gradient: [
-                    AppTheme.warning.withOpacity(0.8),
-                    Colors.orange.withOpacity(0.8),
-                  ],
-                  index: 1,
-                  isPulsing: widget.pendingReviews > 0,
-                ),
-                _buildStatCard(
-                  title: 'متوسط التقييم',
-                  value: widget.averageRating.toStringAsFixed(1),
-                  icon: Icons.star_rounded,
-                  gradient: [
-                    AppTheme.success.withOpacity(0.8),
-                    AppTheme.neonGreen.withOpacity(0.8),
-                  ],
-                  index: 2,
-                  suffix: '/ 5.0',
-                ),
-                _buildStatCard(
-                  title: 'معدل الرد',
-                  value: widget.totalReviews > 0
-                      ? '${((stats['withResponse'] / widget.totalReviews) * 100).toStringAsFixed(0)}%'
-                      : '0%',
-                  icon: Icons.reply_all_rounded,
-                  gradient: [
-                    AppTheme.info.withOpacity(0.8),
-                    AppTheme.neonBlue.withOpacity(0.8),
-                  ],
-                  index: 3,
-                ),
-              ],
+    final withResponse = reviews.where((r) => r.hasResponse).length;
+    final responseRate = totalReviews > 0 ? (withResponse / totalReviews) * 100 : 0.0;
+
+    return SizedBox(
+      height: 130,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        children: [
+          _buildStatCard(
+            title: 'إجمالي التقييمات',
+            value: totalReviews.toString(),
+            icon: Icons.reviews_outlined,
+            gradient: LinearGradient(
+              colors: [AppTheme.primaryBlue, AppTheme.primaryPurple],
             ),
           ),
-        );
-      },
+          _buildStatCard(
+            title: 'قيد المراجعة',
+            value: pendingReviews.toString(),
+            icon: Icons.pending_outlined,
+            gradient: LinearGradient(
+              colors: [AppTheme.warning, Colors.orange],
+            ),
+          ),
+          _buildStatCard(
+            title: 'متوسط التقييم',
+            value: averageRating.toStringAsFixed(1),
+            icon: Icons.star_rounded,
+            gradient: LinearGradient(
+              colors: [AppTheme.success, AppTheme.neonGreen],
+            ),
+          ),
+          _buildStatCard(
+            title: 'معدل الرد',
+            value: '${responseRate.toStringAsFixed(0)}%',
+            icon: Icons.reply_all_rounded,
+            gradient: LinearGradient(
+              colors: [AppTheme.info, AppTheme.neonBlue],
+            ),
+          ),
+        ],
+      ),
     );
   }
-  
+
   Widget _buildStatCard({
     required String title,
     required String value,
     required IconData icon,
-    required List<Color> gradient,
-    required int index,
-    String? suffix,
-    bool isPulsing = false,
+    required Gradient gradient,
   }) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 800 + (index * 200)),
-      curve: Curves.easeOutBack,
-      builder: (context, animValue, child) {
-        return Transform.scale(
-          scale: animValue,
-          child: AnimatedBuilder(
-            animation: isPulsing ? _pulseAnimation : const AlwaysStoppedAnimation(1.0),
-            builder: (context, child) {
-              return Transform.scale(
-                scale: isPulsing ? _pulseAnimation.value : 1.0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppTheme.darkCard.withOpacity(0.7),
-                        AppTheme.darkCard.withOpacity(0.5),
-                      ],
-                    ),
-                    border: Border.all(
-                      color: gradient[0].withOpacity(0.3),
-                      width: 0.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: gradient[0].withOpacity(0.2),
-                        blurRadius: 20,
-                        spreadRadius: 2,
+    return Container(
+      width: 160,
+      margin: const EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: gradient.colors.first.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  gradient.colors.first.withOpacity(0.15),
+                  gradient.colors.last.withOpacity(0.08),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: gradient.colors.first.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: -15,
+                  top: -15,
+                  child: Icon(
+                    icon,
+                    size: 80,
+                    color: gradient.colors.first.withOpacity(0.1),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        height: 32,
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                gradient: gradient,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                icon,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const Spacer(),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        title,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppTheme.textMuted,
+                          fontSize: 11,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            value,
+                            style: AppTextStyles.heading2.copyWith(
+                              color: gradient.colors.first,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Stack(
-                        children: [
-                          // كرة التدرج في الخلفية
-                          Positioned(
-                            top: -30,
-                            right: -30,
-                            child: Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: RadialGradient(
-                                  colors: [
-                                    gradient[0].withOpacity(0.3),
-                                    gradient[0].withOpacity(0.0),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          
-                          // المحتوى
-                          Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                // الأيقونة
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
-                                    gradient: LinearGradient(
-                                      colors: gradient,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: gradient[0].withOpacity(0.5),
-                                        blurRadius: 12,
-                                        spreadRadius: 2,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Icon(
-                                    icon,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
-                                ),
-                                
-                                // النص
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      title,
-                                      style: AppTextStyles.caption.copyWith(
-                                        fontWeight: FontWeight.w500,
-                                        color: AppTheme.textMuted,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        TweenAnimationBuilder<double>(
-                                          tween: Tween(
-                                            begin: 0.0,
-                                            end: double.tryParse(
-                                              value.replaceAll('%', ''),
-                                            ) ?? 0.0,
-                                          ),
-                                          duration: const Duration(milliseconds: 1500),
-                                          curve: Curves.easeOutCubic,
-                                          builder: (context, animValue, child) {
-                                            String displayValue = value;
-                                            if (value.contains('%')) {
-                                              displayValue = '${animValue.toStringAsFixed(0)}%';
-                                            } else if (value.contains('.')) {
-                                              displayValue = animValue.toStringAsFixed(1);
-                                            } else {
-                                              displayValue = animValue.toStringAsFixed(0);
-                                            }
-                                            
-                                            return Text(
-                                              displayValue,
-                                              style: AppTextStyles.heading3.copyWith(
-                                                fontWeight: FontWeight.w700,
-                                                color: AppTheme.textWhite,
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                        if (suffix != null) ...[
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            suffix,
-                                            style: AppTextStyles.bodySmall.copyWith(
-                                              fontWeight: FontWeight.w500,
-                                              color: AppTheme.textMuted.withOpacity(0.7),
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          
-                          // تأثير اللمعان
-                          if (isPulsing)
-                            Positioned.fill(
-                              child: AnimatedBuilder(
-                                animation: _pulseController,
-                                builder: (context, child) {
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                      gradient: LinearGradient(
-                                        begin: Alignment(-1.0 + 2 * _pulseController.value, -1.0),
-                                        end: Alignment(1.0 + 2 * _pulseController.value, 1.0),
-                                        colors: [
-                                          Colors.transparent,
-                                          gradient[0].withOpacity(0.1),
-                                          Colors.transparent,
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ),
-              );
-            },
+              ],
+            ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
