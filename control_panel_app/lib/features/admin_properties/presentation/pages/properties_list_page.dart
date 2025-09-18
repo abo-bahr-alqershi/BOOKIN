@@ -154,7 +154,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
                 ),
 
               // Content Area - المحتوى الرئيسي
-              SliverToBoxAdapter(
+              SliverFillRemaining(
+                hasScrollBody: true,
                 child: FadeTransition(
                   opacity: _contentFadeAnimation,
                   child: SlideTransition(
@@ -415,7 +416,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
 
   Widget _buildStatsSection() {
     return Container(
-      height: 120,
+      height: 128,
       padding: const EdgeInsets.all(16),
       child: BlocBuilder<PropertiesBloc, PropertiesState>(
         builder: (context, state) {
