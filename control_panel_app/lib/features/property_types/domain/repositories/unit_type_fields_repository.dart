@@ -37,6 +37,7 @@ abstract class UnitTypeFieldsRepository {
   
   Future<Either<Failure, bool>> updateField({
     required String fieldId,
+    String? fieldTypeId,
     String? fieldName,
     String? displayName,
     String? description,

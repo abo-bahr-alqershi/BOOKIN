@@ -13,6 +13,7 @@ class UpdateFieldUseCase implements UseCase<bool, UpdateFieldParams> {
   Future<Either<Failure, bool>> call(UpdateFieldParams params) async {
     return await repository.updateField(
       fieldId: params.fieldId,
+      fieldTypeId: params.fieldTypeId,
       fieldName: params.fieldName,
       displayName: params.displayName,
       description: params.description,
@@ -34,6 +35,7 @@ class UpdateFieldUseCase implements UseCase<bool, UpdateFieldParams> {
 
 class UpdateFieldParams extends Equatable {
   final String fieldId;
+  final String? fieldTypeId;
   final String? fieldName;
   final String? displayName;
   final String? description;
@@ -52,6 +54,7 @@ class UpdateFieldParams extends Equatable {
 
   const UpdateFieldParams({
     required this.fieldId,
+    this.fieldTypeId,
     this.fieldName,
     this.displayName,
     this.description,
@@ -72,6 +75,7 @@ class UpdateFieldParams extends Equatable {
   @override
   List<Object?> get props => [
         fieldId,
+        fieldTypeId,
         fieldName,
         displayName,
         description,

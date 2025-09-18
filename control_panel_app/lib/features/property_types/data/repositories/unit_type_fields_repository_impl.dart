@@ -112,6 +112,7 @@ class UnitTypeFieldsRepositoryImpl implements UnitTypeFieldsRepository {
   @override
   Future<Either<Failure, bool>> updateField({
     required String fieldId,
+    String? fieldTypeId,
     String? fieldName,
     String? displayName,
     String? description,
@@ -132,6 +133,7 @@ class UnitTypeFieldsRepositoryImpl implements UnitTypeFieldsRepository {
       try {
         final result = await remoteDataSource.updateField(
           fieldId: fieldId,
+          fieldTypeId: fieldTypeId,
           fieldName: fieldName,
           displayName: displayName,
           description: description,
