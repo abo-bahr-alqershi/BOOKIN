@@ -30,17 +30,17 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  
+
   String? _hoveredUnitId;
   String? _selectedUnitType;
   List<String> _unitTypes = [];
   List<Unit> _filteredUnits = [];
   bool _isLoadingTypes = false;
-  
+
   // Breakpoints
   static const double _mobileBreakpoint = 600;
   static const double _tabletBreakpoint = 1024;
-  
+
   @override
   void initState() {
     super.initState();
@@ -48,7 +48,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -56,12 +56,12 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       parent: _animationController,
       curve: Curves.easeOut,
     ));
-    
+
     _animationController.forward();
     _extractUnitTypes();
     _filterUnits();
   }
-  
+
   void _extractUnitTypes() {
     setState(() => _isLoadingTypes = true);
     final typesSet = <String>{};
@@ -71,7 +71,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
     _unitTypes = typesSet.toList()..sort();
     setState(() => _isLoadingTypes = false);
   }
-  
+
   void _filterUnits() {
     if (_selectedUnitType == null) {
       _filteredUnits = List.from(widget.units);
@@ -81,7 +81,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
           .toList();
     }
   }
-  
+
   @override
   void didUpdateWidget(FuturisticUnitsTable oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -90,13 +90,13 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       _filterUnits();
     }
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -111,7 +111,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       },
     );
   }
-  
+
   // ================ MOBILE VIEW ================
   Widget _buildMobileView() {
     return FadeTransition(
@@ -120,7 +120,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
         children: [
           // Filter Bar - نفس التصميم القديم بالضبط
           _buildMobileFilterBar(),
-          
+
           // Units List
           Expanded(
             child: ListView.builder(
@@ -136,7 +136,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
+
   Widget _buildMobileFilterBar() {
     return Container(
       margin: const EdgeInsets.all(12),
@@ -163,9 +163,9 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                 _buildFilterChip('الكل', null),
                 const SizedBox(width: 8),
                 ..._unitTypes.map((type) => Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: _buildFilterChip(type, type),
-                )),
+                      padding: const EdgeInsets.only(left: 8),
+                      child: _buildFilterChip(type, type),
+                    )),
               ],
             ),
           ),
@@ -186,10 +186,10 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
+
   Widget _buildFilterChip(String label, String? value) {
     final isSelected = _selectedUnitType == value;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -229,10 +229,10 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
+
   Widget _buildMobileUnitCard(Unit unit, int index) {
     final isHovered = _hoveredUnitId == unit.id;
-    
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
@@ -244,8 +244,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 12),
-        transform: Matrix4.identity()
-          ..scale(isHovered ? 0.98 : 1.0),
+        transform: Matrix4.identity()..scale(isHovered ? 0.98 : 1.0),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -297,7 +296,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                         ),
                       ),
                       const SizedBox(width: 12),
-                      
+
                       // Unit Name & Property
                       Expanded(
                         child: Column(
@@ -318,7 +317,8 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                                 Icon(
                                   Icons.business_rounded,
                                   size: 12,
-                                  color: AppTheme.primaryPurple.withOpacity(0.7),
+                                  color:
+                                      AppTheme.primaryPurple.withOpacity(0.7),
                                 ),
                                 const SizedBox(width: 4),
                                 Expanded(
@@ -336,14 +336,14 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                           ],
                         ),
                       ),
-                      
+
                       // Status Badge
                       _buildMobileStatusBadge(unit.isAvailable),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Details Grid
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -374,15 +374,17 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                         _buildMobileDetailRow(
                           icon: Icons.people_rounded,
                           label: 'السعة',
-                          value: unit.capacityDisplay.isEmpty ? 'غير محدد' : unit.capacityDisplay,
+                          value: unit.capacityDisplay.isEmpty
+                              ? 'غير محدد'
+                              : unit.capacityDisplay,
                           iconColor: AppTheme.warning,
                         ),
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Action Buttons
                   Row(
                     children: [
@@ -423,7 +425,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
+
   Widget _buildMobileDetailRow({
     required IconData icon,
     required String label,
@@ -448,10 +450,11 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
         Expanded(
           child: Text(
             value,
-            style: valueStyle ?? AppTextStyles.bodySmall.copyWith(
-              color: AppTheme.textLight,
-              fontWeight: FontWeight.w600,
-            ),
+            style: valueStyle ??
+                AppTextStyles.bodySmall.copyWith(
+                  color: AppTheme.textLight,
+                  fontWeight: FontWeight.w600,
+                ),
             textAlign: TextAlign.end,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -460,7 +463,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ],
     );
   }
-  
+
   Widget _buildMobileStatusBadge(bool isAvailable) {
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -510,7 +513,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
+
   Widget _buildMobileActionButton({
     required String label,
     required IconData icon,
@@ -557,7 +560,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
+
   Widget _buildMobileIconButton({
     required IconData icon,
     required Color color,
@@ -591,7 +594,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
+
   // ================ TABLET VIEW ================
   Widget _buildTabletView() {
     return FadeTransition(
@@ -640,7 +643,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
+
   Widget _buildTabletHeader() {
     return Column(
       children: [
@@ -656,9 +659,9 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                     _buildFilterChip('الكل', null),
                     const SizedBox(width: 8),
                     ..._unitTypes.map((type) => Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: _buildFilterChip(type, type),
-                    )),
+                          padding: const EdgeInsets.only(left: 8),
+                          child: _buildFilterChip(type, type),
+                        )),
                   ],
                 ),
               ),
@@ -678,7 +681,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
             ],
           ),
         ),
-        
+
         // Table Header
         Container(
           padding: const EdgeInsets.all(16),
@@ -709,11 +712,11 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ],
     );
   }
-  
+
   Widget _buildTabletRow(Unit unit, int index) {
     final isHovered = _hoveredUnitId == unit.id;
     final isEven = index % 2 == 0;
-    
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredUnitId = unit.id),
       onExit: (_) => setState(() => _hoveredUnitId = null),
@@ -794,7 +797,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                   ],
                 ),
               ),
-              
+
               // Type
               Expanded(
                 flex: 2,
@@ -805,7 +808,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                   ),
                 ),
               ),
-              
+
               // Price
               Expanded(
                 flex: 2,
@@ -817,13 +820,13 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                   ),
                 ),
               ),
-              
+
               // Status
               Expanded(
                 flex: 1,
                 child: _buildStatusCell(unit.isAvailable),
               ),
-              
+
               // Actions
               Expanded(
                 flex: 2,
@@ -853,7 +856,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
+
   // ================ DESKTOP VIEW ================
   Widget _buildDesktopView() {
     return FadeTransition(
@@ -890,7 +893,8 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                 Expanded(
                   child: ListView.builder(
                     itemCount: _filteredUnits.length,
-                    itemBuilder: (context, index) => _buildDesktopRow(_filteredUnits[index], index),
+                    itemBuilder: (context, index) =>
+                        _buildDesktopRow(_filteredUnits[index], index),
                   ),
                 ),
               ],
@@ -900,7 +904,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
+
   Widget _buildDesktopHeader() {
     return Column(
       children: [
@@ -916,9 +920,9 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                     _buildFilterChip('الكل', null),
                     const SizedBox(width: 8),
                     ..._unitTypes.map((type) => Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: _buildFilterChip(type, type),
-                    )),
+                          padding: const EdgeInsets.only(left: 8),
+                          child: _buildFilterChip(type, type),
+                        )),
                   ],
                 ),
               ),
@@ -938,7 +942,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
             ],
           ),
         ),
-        
+
         // Table Header
         Container(
           padding: const EdgeInsets.all(AppDimensions.paddingMedium),
@@ -971,7 +975,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ],
     );
   }
-  
+
   Widget _buildHeaderCell(String title, {int flex = 1}) {
     return Expanded(
       flex: flex,
@@ -984,11 +988,11 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
+
   Widget _buildDesktopRow(Unit unit, int index) {
     final isEven = index % 2 == 0;
     final isHovered = _hoveredUnitId == unit.id;
-    
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredUnitId = unit.id),
       onExit: (_) => setState(() => _hoveredUnitId = null),
@@ -1027,7 +1031,9 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
               _buildCell(unit.unitTypeName, flex: 1),
               _buildCell(unit.propertyName, flex: 2),
               _buildCell(unit.basePrice.displayAmount, flex: 1, isPrice: true),
-              _buildCell(unit.capacityDisplay.isEmpty ? '-' : unit.capacityDisplay, flex: 1),
+              _buildCell(
+                  unit.capacityDisplay.isEmpty ? '-' : unit.capacityDisplay,
+                  flex: 1),
               _buildStatusCell(unit.isAvailable, flex: 1),
               _buildActionsCell(unit, flex: 1),
             ],
@@ -1036,8 +1042,9 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
-  Widget _buildCell(String text, {int flex = 1, bool isName = false, bool isPrice = false}) {
+
+  Widget _buildCell(String text,
+      {int flex = 1, bool isName = false, bool isPrice = false}) {
     return Expanded(
       flex: flex,
       child: Text(
@@ -1055,7 +1062,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
+
   Widget _buildStatusCell(bool isAvailable, {int flex = 1}) {
     return Expanded(
       flex: flex,
@@ -1067,8 +1074,14 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: isAvailable
-                ? [AppTheme.success.withOpacity(0.2), AppTheme.success.withOpacity(0.1)]
-                : [AppTheme.error.withOpacity(0.2), AppTheme.error.withOpacity(0.1)],
+                ? [
+                    AppTheme.success.withOpacity(0.2),
+                    AppTheme.success.withOpacity(0.1)
+                  ]
+                : [
+                    AppTheme.error.withOpacity(0.2),
+                    AppTheme.error.withOpacity(0.1)
+                  ],
           ),
           borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
         ),
@@ -1083,7 +1096,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
+
   Widget _buildActionsCell(Unit unit, {int flex = 1}) {
     return Expanded(
       flex: flex,
@@ -1108,7 +1121,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
+
   Widget _buildActionButton(IconData icon, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: () {
@@ -1135,7 +1148,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
       ),
     );
   }
-  
+
   IconData _getUnitIcon(String unitType) {
     switch (unitType.toLowerCase()) {
       case 'room':

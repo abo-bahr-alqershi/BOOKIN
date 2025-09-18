@@ -12,7 +12,7 @@ class UnitStatsCard extends StatefulWidget {
   final Color color;
   final String? trend;
   final bool isPositive;
-  
+
   const UnitStatsCard({
     super.key,
     required this.title,
@@ -22,7 +22,7 @@ class UnitStatsCard extends StatefulWidget {
     this.trend,
     this.isPositive = true,
   });
-  
+
   @override
   State<UnitStatsCard> createState() => _UnitStatsCardState();
 }
@@ -33,7 +33,7 @@ class _UnitStatsCardState extends State<UnitStatsCard>
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
   bool _isHovered = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -41,7 +41,7 @@ class _UnitStatsCardState extends State<UnitStatsCard>
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.8,
       end: 1.0,
@@ -49,7 +49,7 @@ class _UnitStatsCardState extends State<UnitStatsCard>
       parent: _animationController,
       curve: Curves.elasticOut,
     ));
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -57,16 +57,16 @@ class _UnitStatsCardState extends State<UnitStatsCard>
       parent: _animationController,
       curve: Curves.easeIn,
     ));
-    
+
     _animationController.forward();
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -93,7 +93,7 @@ class _UnitStatsCardState extends State<UnitStatsCard>
                     final trendFontSize = isSmall ? 9.0 : 10.0;
                     final trendIconSize = isSmall ? 9.0 : 10.0;
                     final padding = isSmall ? 10.0 : 12.0;
-                    
+
                     return Container(
                       constraints: const BoxConstraints(
                         minHeight: 95,
@@ -115,7 +115,8 @@ class _UnitStatsCardState extends State<UnitStatsCard>
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: widget.color.withOpacity(_isHovered ? 0.2 : 0.1),
+                            color: widget.color
+                                .withOpacity(_isHovered ? 0.2 : 0.1),
                             blurRadius: _isHovered ? 25 : 20,
                             offset: const Offset(0, 4),
                           ),
@@ -132,7 +133,8 @@ class _UnitStatsCardState extends State<UnitStatsCard>
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Container(
@@ -153,13 +155,14 @@ class _UnitStatsCardState extends State<UnitStatsCard>
                                         size: iconSize,
                                       ),
                                     ),
-                                    
                                     if (widget.trend != null)
                                       Flexible(
                                         child: Container(
-                                          margin: const EdgeInsets.only(left: 4),
+                                          margin:
+                                              const EdgeInsets.only(left: 4),
                                           constraints: BoxConstraints(
-                                            maxWidth: constraints.maxWidth * 0.5,
+                                            maxWidth:
+                                                constraints.maxWidth * 0.5,
                                           ),
                                           child: Container(
                                             padding: EdgeInsets.symmetric(
@@ -168,34 +171,42 @@ class _UnitStatsCardState extends State<UnitStatsCard>
                                             ),
                                             decoration: BoxDecoration(
                                               color: widget.isPositive
-                                                  ? AppTheme.success.withOpacity(0.1)
-                                                  : AppTheme.error.withOpacity(0.1),
-                                              borderRadius: BorderRadius.circular(8),
+                                                  ? AppTheme.success
+                                                      .withOpacity(0.1)
+                                                  : AppTheme.error
+                                                      .withOpacity(0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Icon(
                                                   widget.isPositive
-                                                      ? Icons.trending_up_rounded
-                                                      : Icons.trending_down_rounded,
+                                                      ? Icons
+                                                          .trending_up_rounded
+                                                      : Icons
+                                                          .trending_down_rounded,
                                                   size: trendIconSize,
                                                   color: widget.isPositive
                                                       ? AppTheme.success
                                                       : AppTheme.error,
                                                 ),
-                                                SizedBox(width: isSmall ? 1 : 2),
+                                                SizedBox(
+                                                    width: isSmall ? 1 : 2),
                                                 Flexible(
                                                   child: Text(
                                                     widget.trend!,
-                                                    overflow: TextOverflow.ellipsis,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                     maxLines: 1,
                                                     style: TextStyle(
                                                       fontSize: trendFontSize,
                                                       color: widget.isPositive
                                                           ? AppTheme.success
                                                           : AppTheme.error,
-                                                      fontWeight: FontWeight.w600,
+                                                      fontWeight:
+                                                          FontWeight.w600,
                                                     ),
                                                   ),
                                                 ),
@@ -206,9 +217,7 @@ class _UnitStatsCardState extends State<UnitStatsCard>
                                       ),
                                   ],
                                 ),
-                                
                                 const Expanded(child: SizedBox()),
-                                
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisSize: MainAxisSize.min,
@@ -231,9 +240,7 @@ class _UnitStatsCardState extends State<UnitStatsCard>
                                         ),
                                       ),
                                     ),
-                                    
                                     SizedBox(height: isSmall ? 2 : 4),
-                                    
                                     Text(
                                       widget.title,
                                       overflow: TextOverflow.ellipsis,
