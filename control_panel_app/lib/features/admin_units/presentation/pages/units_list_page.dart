@@ -657,64 +657,80 @@ class _UnitsListPageState extends State<UnitsListPage>
     return Row(
       children: [
         Expanded(
-          child: SlideAnimation(
-            horizontalOffset: 50.0,
-            child: FadeInAnimation(
-              child: UnitStatsCard(
-                title: 'إجمالي الوحدات',
-                value: totalUnits.toString(),
-                icon: Icons.home_work_rounded,
-                color: AppTheme.primaryBlue,
-                trend: '+15%',
-                isPositive: true,
+          child: AnimationConfiguration.staggeredList(
+            position: 0,
+            duration: const Duration(milliseconds: 375),
+            child: SlideAnimation(
+              horizontalOffset: 50.0,
+              child: FadeInAnimation(
+                child: UnitStatsCard(
+                  title: 'إجمالي الوحدات',
+                  value: totalUnits.toString(),
+                  icon: Icons.home_work_rounded,
+                  color: AppTheme.primaryBlue,
+                  trend: '+15%',
+                  isPositive: true,
+                ),
               ),
             ),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: SlideAnimation(
-            horizontalOffset: 50.0,
-            child: FadeInAnimation(
-              child: UnitStatsCard(
-                title: 'وحدات متاحة',
-                value: availableUnits.toString(),
-                icon: Icons.check_circle_rounded,
-                color: AppTheme.success,
-                trend: '$availableUnits',
-                isPositive: true,
+          child: AnimationConfiguration.staggeredList(
+            position: 1,
+            duration: const Duration(milliseconds: 375),
+            child: SlideAnimation(
+              horizontalOffset: 50.0,
+              child: FadeInAnimation(
+                child: UnitStatsCard(
+                  title: 'وحدات متاحة',
+                  value: availableUnits.toString(),
+                  icon: Icons.check_circle_rounded,
+                  color: AppTheme.success,
+                  trend: '$availableUnits',
+                  isPositive: true,
+                ),
               ),
             ),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: SlideAnimation(
-            horizontalOffset: 50.0,
-            child: FadeInAnimation(
-              child: UnitStatsCard(
-                title: 'وحدات محجوزة',
-                value: occupiedUnits.toString(),
-                icon: Icons.event_busy_rounded,
-                color: AppTheme.warning,
-                trend: '$occupiedUnits',
-                isPositive: false,
+          child: AnimationConfiguration.staggeredList(
+            position: 2,
+            duration: const Duration(milliseconds: 375),
+            child: SlideAnimation(
+              horizontalOffset: 50.0,
+              child: FadeInAnimation(
+                child: UnitStatsCard(
+                  title: 'وحدات محجوزة',
+                  value: occupiedUnits.toString(),
+                  icon: Icons.event_busy_rounded,
+                  color: AppTheme.warning,
+                  trend: '$occupiedUnits',
+                  isPositive: false,
+                ),
               ),
             ),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: SlideAnimation(
-            horizontalOffset: 50.0,
-            child: FadeInAnimation(
-              child: UnitStatsCard(
-                title: 'معدل الإشغال',
-                value: '$occupancyRate%',
-                icon: Icons.analytics_rounded,
-                color: AppTheme.primaryPurple,
-                trend: '+5%',
-                isPositive: true,
+          child: AnimationConfiguration.staggeredList(
+            position: 3,
+            duration: const Duration(milliseconds: 375),
+            child: SlideAnimation(
+              horizontalOffset: 50.0,
+              child: FadeInAnimation(
+                child: UnitStatsCard(
+                  title: 'معدل الإشغال',
+                  value: '$occupancyRate%',
+                  icon: Icons.analytics_rounded,
+                  color: AppTheme.primaryPurple,
+                  trend: '+5%',
+                  isPositive: true,
+                ),
               ),
             ),
           ),
