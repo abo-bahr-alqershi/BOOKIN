@@ -3,6 +3,7 @@
 import 'package:bookn_cp_app/features/admin_units/domain/entities/unit_image.dart';
 import 'package:dartz/dartz.dart';
 import 'package:bookn_cp_app/core/error/failures.dart';
+import 'package:dio/dio.dart';
 
 abstract class UnitImagesRepository {
   Future<Either<Failure, UnitImage>> uploadImage({
@@ -16,30 +17,31 @@ abstract class UnitImagesRepository {
     List<String>? tags,
     ProgressCallback? onSendProgress,
   });
-  
-  Future<Either<Failure, List<UnitImage>>> getUnitImages(String? unitId, {String? tempKey});
-  
+
+  Future<Either<Failure, List<UnitImage>>> getUnitImages(String? unitId,
+      {String? tempKey});
+
   Future<Either<Failure, bool>> updateImage(
     String imageId,
     Map<String, dynamic> data,
   );
-  
+
   Future<Either<Failure, bool>> deleteImage(String imageId);
-  
+
   Future<Either<Failure, bool>> reorderImages(
     String? unitId,
     String? tempKey,
     List<String> imageIds,
   );
-  
+
   Future<Either<Failure, bool>> setAsPrimaryImage(
     String? unitId,
     String? tempKey,
     String imageId,
   );
-  
+
   Future<Either<Failure, bool>> deleteMultipleImages(List<String> imageIds);
-  
+
   Future<Either<Failure, List<UnitImage>>> uploadMultipleImages({
     String? unitId,
     String? tempKey,

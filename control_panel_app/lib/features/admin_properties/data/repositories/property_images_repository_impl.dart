@@ -4,6 +4,7 @@ import 'package:dartz/dartz.dart';
 import 'package:bookn_cp_app/core/error/failures.dart';
 import 'package:bookn_cp_app/core/error/exceptions.dart';
 import 'package:bookn_cp_app/core/network/network_info.dart';
+import 'package:dio/dio.dart';
 import '../../domain/entities/property_image.dart';
 import '../../domain/repositories/property_images_repository.dart';
 import '../datasources/property_images_remote_datasource.dart';
@@ -47,26 +48,31 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
-      return Left(NetworkFailure());
+      return const Left(NetworkFailure());
     }
   }
 
   @override
-  Future<Either<Failure, List<PropertyImage>>> getPropertyImages(String? propertyId, {String? tempKey}) async {
+  Future<Either<Failure, List<PropertyImage>>> getPropertyImages(
+      String? propertyId,
+      {String? tempKey}) async {
     if (await networkInfo.isConnected) {
       try {
-        final List<PropertyImageModel> result = await remoteDataSource.getPropertyImages(propertyId, tempKey: tempKey);
+        final List<PropertyImageModel> result = await remoteDataSource
+            .getPropertyImages(propertyId, tempKey: tempKey);
         return Right(result);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
-      return Left(NetworkFailure());
+      return const Left(NetworkFailure());
     }
   }
 
@@ -82,10 +88,11 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
-      return Left(NetworkFailure());
+      return const Left(NetworkFailure());
     }
   }
 
@@ -98,10 +105,11 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
-      return Left(NetworkFailure());
+      return const Left(NetworkFailure());
     }
   }
 
@@ -113,15 +121,17 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
   ) async {
     if (await networkInfo.isConnected) {
       try {
-        final bool result = await remoteDataSource.reorderImages(propertyId, tempKey, imageIds);
+        final bool result =
+            await remoteDataSource.reorderImages(propertyId, tempKey, imageIds);
         return Right(result);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
-      return Left(NetworkFailure());
+      return const Left(NetworkFailure());
     }
   }
 
@@ -133,20 +143,23 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
   ) async {
     if (await networkInfo.isConnected) {
       try {
-        final bool result = await remoteDataSource.setAsPrimaryImage(propertyId, tempKey, imageId);
+        final bool result = await remoteDataSource.setAsPrimaryImage(
+            propertyId, tempKey, imageId);
         return Right(result);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
-      return Left(NetworkFailure());
+      return const Left(NetworkFailure());
     }
   }
 
   @override
-  Future<Either<Failure, bool>> deleteMultipleImages(List<String> imageIds) async {
+  Future<Either<Failure, bool>> deleteMultipleImages(
+      List<String> imageIds) async {
     if (await networkInfo.isConnected) {
       try {
         bool allDeleted = true;
@@ -161,10 +174,11 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
-      return Left(NetworkFailure());
+      return const Left(NetworkFailure());
     }
   }
 
@@ -181,7 +195,7 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
       try {
         final List<PropertyImageModel> uploadedImages = [];
         int order = 0;
-        
+
         for (final filePath in filePaths) {
           try {
             final result = await remoteDataSource.uploadImage(
@@ -192,7 +206,9 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
               isPrimary: order == 0, // الصورة الأولى تكون رئيسية
               order: order,
               tags: tags,
-              onSendProgress: onProgress != null ? (sent, total) => onProgress(filePath, sent, total) : null,
+              onSendProgress: onProgress != null
+                  ? (sent, total) => onProgress(filePath, sent, total)
+                  : null,
             );
             uploadedImages.add(result);
             order++;
@@ -201,19 +217,20 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
             continue;
           }
         }
-        
+
         if (uploadedImages.isEmpty) {
-          return Left(ServerFailure('Failed to upload any images'));
+          return const Left(ServerFailure('Failed to upload any images'));
         }
-        
+
         return Right(uploadedImages);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
-      return Left(NetworkFailure());
+      return const Left(NetworkFailure());
     }
   }
 }
