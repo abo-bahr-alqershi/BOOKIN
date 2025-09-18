@@ -74,4 +74,28 @@ public class CreatePropertyCommand : IRequest<ResultDto<Guid>>
     /// Updated property images
     /// </summary>
     public List<string> Images { get; set; } = new List<string>();
+
+    /// <summary>
+    /// وصف مختصر للكيان
+    /// Short description
+    /// </summary>
+    public string? ShortDescription { get; set; }
+
+    /// <summary>
+    /// السعر الأساسي لليلة
+    /// Base price per night
+    /// </summary>
+    public decimal? BasePricePerNight { get; set; }
+
+    /// <summary>
+    /// رمز العملة (YER, USD, ...)
+    /// Currency code
+    /// </summary>
+    public string? Currency { get; set; }
+
+    /// <summary>
+    /// هل العقار مميز؟
+    /// Is featured
+    /// </summary>
+    public bool? IsFeatured { get; set; }
 } 

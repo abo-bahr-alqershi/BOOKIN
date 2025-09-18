@@ -101,13 +101,16 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
                 TypeId = request.PropertyTypeId,
                 Name = request.Name,
                 Address = request.Address,
+                ShortDescription = string.IsNullOrWhiteSpace(request.ShortDescription) ? null : request.ShortDescription,
                 Description = request.Description,
                 City = request.City,
-                Currency = "YER", // العملة الافتراضية
+                Currency = string.IsNullOrWhiteSpace(request.Currency) ? "YER" : request.Currency!.ToUpperInvariant(),
+                BasePricePerNight = request.BasePricePerNight ?? 0m,
                 Latitude = (decimal)request.Latitude,
                 Longitude = (decimal)request.Longitude,
                 StarRating = request.StarRating,
                 IsApproved = false,
+                IsFeatured = request.IsFeatured ?? false,
                 CreatedBy = _currentUserService.UserId,
                 CreatedAt = DateTime.UtcNow
             };
