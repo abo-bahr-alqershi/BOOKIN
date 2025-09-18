@@ -137,10 +137,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
             controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // Header as SliverToBoxAdapter
-              SliverToBoxAdapter(
-                child: _buildHeader(),
-              ),
+              // App Bar similar to bookings page
+              _buildSliverAppBar(),
 
               // Stats Cards as SliverToBoxAdapter
               SliverToBoxAdapter(
@@ -180,6 +178,158 @@ class _PropertiesListPageState extends State<PropertiesListPage>
           ),
         ],
       ),
+    );
+  }
+
+  // SliverAppBar aligned with bookings page styling
+  Widget _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 120,
+      floating: true,
+      pinned: true,
+      centerTitle: false,
+      backgroundColor: AppTheme.darkBackground,
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsetsDirectional.only(start: 16, bottom: 16),
+        title: Text(
+          'إدارة العقارات',
+          style: AppTextStyles.heading1.copyWith(
+            color: AppTheme.textWhite,
+            shadows: [
+              Shadow(
+                color: AppTheme.primaryBlue.withOpacity(0.3),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppTheme.primaryBlue.withOpacity(0.1),
+                AppTheme.darkBackground,
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: _buildAppBarActions(context),
+    );
+  }
+
+  // Compact icon-only action for AppBar to avoid overflow
+  Widget _buildAppBarIconAction({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return IconButton(
+      onPressed: onPressed,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      icon: Icon(
+        icon,
+        color: AppTheme.textWhite,
+        size: 20,
+      ),
+      splashRadius: 20,
+    );
+  }
+
+  List<Widget> _buildAppBarActions(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width < 720) {
+      return [
+        _buildAppBarIconAction(
+          icon: Icons.filter_list_rounded,
+          onPressed: () => setState(() => _showFilters = !_showFilters),
+        ),
+        _buildAppBarIconAction(
+          icon: Icons.add_rounded,
+          onPressed: () => context.push('/admin/properties/create'),
+        ),
+        _buildOverflowMenu(),
+        const SizedBox(width: 4),
+      ];
+    }
+
+    return [
+      _buildAppBarIconAction(
+        icon: Icons.filter_list_rounded,
+        onPressed: () => setState(() => _showFilters = !_showFilters),
+      ),
+      _buildAppBarIconAction(
+        icon: Icons.grid_view_rounded,
+        onPressed: () => setState(() => _selectedView = 'grid'),
+      ),
+      _buildAppBarIconAction(
+        icon: Icons.table_chart_rounded,
+        onPressed: () => setState(() => _selectedView = 'table'),
+      ),
+      _buildAppBarIconAction(
+        icon: Icons.map_rounded,
+        onPressed: () => setState(() => _selectedView = 'map'),
+      ),
+      _buildAppBarIconAction(
+        icon: Icons.add_rounded,
+        onPressed: () => context.push('/admin/properties/create'),
+      ),
+      const SizedBox(width: 4),
+    ];
+  }
+
+  Widget _buildOverflowMenu() {
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_vert_rounded, color: AppTheme.textWhite),
+      onSelected: (value) {
+        switch (value) {
+          case 'grid':
+            setState(() => _selectedView = 'grid');
+            break;
+          case 'table':
+            setState(() => _selectedView = 'table');
+            break;
+          case 'map':
+            setState(() => _selectedView = 'map');
+            break;
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'grid',
+          child: Row(
+            children: const [
+              Icon(Icons.grid_view_rounded, size: 18),
+              SizedBox(width: 8),
+              Text('شبكة'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'table',
+          child: Row(
+            children: const [
+              Icon(Icons.table_chart_rounded, size: 18),
+              SizedBox(width: 8),
+              Text('جدول'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'map',
+          child: Row(
+            children: const [
+              Icon(Icons.map_rounded, size: 18),
+              SizedBox(width: 8),
+              Text('خريطة'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -416,8 +566,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
 
   Widget _buildStatsSection() {
     return Container(
-      height: 128,
-      padding: const EdgeInsets.all(16),
+      height: 120,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: BlocBuilder<PropertiesBloc, PropertiesState>(
         builder: (context, state) {
           final totalProperties =
