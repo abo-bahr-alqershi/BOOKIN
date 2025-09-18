@@ -131,12 +131,13 @@ public class PropertyImageRepository : BaseRepository<PropertyImage>, IPropertyI
             if (image.PropertyId.HasValue)
             {
                 var otherMainImages = await _dbSet
-                    .Where(pi => pi.PropertyId == image.PropertyId && pi.Id != imageId && pi.IsMainImage)
+                    .Where(pi => pi.PropertyId == image.PropertyId && pi.Id != imageId && (pi.IsMainImage || pi.IsMain))
                     .ToListAsync(cancellationToken);
 
                 foreach (var otherImage in otherMainImages)
                 {
                     otherImage.IsMainImage = false;
+                    otherImage.IsMain = false;
                     otherImage.UpdatedAt = DateTime.UtcNow;
                 }
             }
@@ -144,18 +145,20 @@ public class PropertyImageRepository : BaseRepository<PropertyImage>, IPropertyI
             if (image.UnitId.HasValue)
             {
                 var otherMainImages = await _dbSet
-                    .Where(pi => pi.UnitId == image.UnitId && pi.Id != imageId && pi.IsMainImage)
+                    .Where(pi => pi.UnitId == image.UnitId && pi.Id != imageId && (pi.IsMainImage || pi.IsMain))
                     .ToListAsync(cancellationToken);
 
                 foreach (var otherImage in otherMainImages)
                 {
                     otherImage.IsMainImage = false;
+                    otherImage.IsMain = false;
                     otherImage.UpdatedAt = DateTime.UtcNow;
                 }
             }
         }
 
         image.IsMainImage = isMain;
+        image.IsMain = isMain;
         image.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);

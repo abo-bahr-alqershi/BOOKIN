@@ -5,6 +5,7 @@ using YemenBooking.Application.Commands.Images;
 using YemenBooking.Application.DTOs;
 using YemenBooking.Core.Interfaces.Repositories;
 using YemenBooking.Core.Interfaces;
+using System.Linq;
 
 namespace YemenBooking.Application.Handlers.Commands.Images
 {
@@ -30,11 +31,32 @@ namespace YemenBooking.Application.Handlers.Commands.Images
             var success = false;
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                // تحديث حالة الصورة الرئيسية الجديدة
-                success = await _imageRepository.UpdateMainImageStatusAsync(request.ImageId, true, cancellationToken);
+                // احصل على الصورة أولاً
+                var image = await _imageRepository.GetPropertyImageByIdAsync(request.ImageId, cancellationToken);
+                if (image == null)
+                {
+                    success = false;
+                    return;
+                }
 
-                // إذا كان مرتبطاً بكيان أو وحدة، تأكد من تمييز الصورة الجديدة فقط
-                // Updates handled inside repository or additional logic here
+                // إذا كانت الصورة غير مرتبطة بعد (إنشاء سابق للحفظ) ويوجد TempKey، قم بتحديث مجموعة المفتاح المؤقت فقط
+                if (!image.PropertyId.HasValue && !image.UnitId.HasValue && !string.IsNullOrWhiteSpace(request.TempKey))
+                {
+                    var group = await _imageRepository.GetImagesByTempKeyAsync(request.TempKey!, cancellationToken);
+                    foreach (var img in group)
+                    {
+                        img.IsMain = img.Id == request.ImageId;
+                        img.IsMainImage = img.Id == request.ImageId;
+                        img.UpdatedAt = System.DateTime.UtcNow;
+                        await _imageRepository.UpdatePropertyImageAsync(img, cancellationToken);
+                    }
+                    success = true;
+                }
+                else
+                {
+                    // إذا كانت الصورة مرتبطة بعقار/وحدة، استخدم المستودع لتفريغ الآخرين وتعيين الحالية كرئيسية
+                    success = await _imageRepository.UpdateMainImageStatusAsync(request.ImageId, true, cancellationToken);
+                }
             }, cancellationToken);
 
             return success

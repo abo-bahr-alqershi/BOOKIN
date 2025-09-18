@@ -221,6 +221,18 @@ namespace YemenBooking.Application.Handlers.Commands.Units
                         await _fileStorageService.MoveFileAsync(thumbSource, thumbDest, cancellationToken);
                     }
                 }
+
+                // Set unit main image after moving
+                var movedImages = await _propertyImageRepository.GetImagesByUnitAsync(createdId, cancellationToken);
+                var primaryCandidate = movedImages
+                    .OrderByDescending(i => i.IsMain || i.IsMainImage)
+                    .ThenBy(i => i.DisplayOrder)
+                    .ThenBy(i => i.UploadedAt)
+                    .FirstOrDefault();
+                if (primaryCandidate != null)
+                {
+                    await _propertyImageRepository.UpdateMainImageStatusAsync(primaryCandidate.Id, true, cancellationToken);
+                }
             }
 
             // إذا تم تمرير TempKey بدون قائمة Images، حاول ربط جميع صور المفتاح المؤقت
@@ -257,6 +269,18 @@ namespace YemenBooking.Application.Handlers.Commands.Units
                     {
                         await _fileStorageService.MoveFileAsync($"temp/{request.TempKey}/{nameWithoutExt}{suffix}{ext}", $"{destFolderPath}/{nameWithoutExt}{suffix}{ext}", cancellationToken);
                     }
+                }
+
+                // Set unit main image after moving by temp key
+                var movedImages = await _propertyImageRepository.GetImagesByUnitAsync(createdId, cancellationToken);
+                var primaryCandidate = movedImages
+                    .OrderByDescending(i => i.IsMain || i.IsMainImage)
+                    .ThenBy(i => i.DisplayOrder)
+                    .ThenBy(i => i.UploadedAt)
+                    .FirstOrDefault();
+                if (primaryCandidate != null)
+                {
+                    await _propertyImageRepository.UpdateMainImageStatusAsync(primaryCandidate.Id, true, cancellationToken);
                 }
             }
 
