@@ -104,4 +104,10 @@ public class UpdateUnitTypeFieldCommand : IRequest<ResultDto<Unit>>
     /// Order priority
     /// </summary>
     public int? Priority { get; set; }
+
+    /// <summary>
+    /// نوع الحقل (اختياري عند التحديث)
+    /// FieldTypeId (optional on update)
+    /// </summary>
+    public string? FieldTypeId { get; set; }
 }

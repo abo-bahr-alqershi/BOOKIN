@@ -67,9 +67,11 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
 
             // إذا كان الكيان معتمدًا وتم تعديل بيانات حساسة، إعادة تعيين الموافقة
             bool requiresReapproval = property.IsApproved &&
-                (!string.IsNullOrWhiteSpace(request.Name) && request.Name != property.Name ||
-                 !string.IsNullOrWhiteSpace(request.Address) && request.Address != property.Address ||
-                 request.StarRating.HasValue && request.StarRating.Value != property.StarRating);
+                ((!string.IsNullOrWhiteSpace(request.Name) && request.Name != property.Name) ||
+                 (!string.IsNullOrWhiteSpace(request.Address) && request.Address != property.Address) ||
+                 (request.StarRating.HasValue && request.StarRating.Value != property.StarRating) ||
+                 (!string.IsNullOrWhiteSpace(request.Currency) && !string.Equals(property.Currency, request.Currency, StringComparison.OrdinalIgnoreCase)) ||
+                 (request.BasePricePerNight.HasValue && request.BasePricePerNight.Value != property.BasePricePerNight));
             if (requiresReapproval)
                 property.IsApproved = false;
 
@@ -80,10 +82,18 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
                 property.Address = request.Address;
             if (!string.IsNullOrWhiteSpace(request.Description))
                 property.Description = request.Description;
+            if (!string.IsNullOrWhiteSpace(request.ShortDescription))
+                property.ShortDescription = request.ShortDescription;
             if (!string.IsNullOrWhiteSpace(request.City))
                 property.City = request.City;
             if (request.StarRating.HasValue)
                 property.StarRating = request.StarRating.Value;
+            if (!string.IsNullOrWhiteSpace(request.Currency))
+                property.Currency = request.Currency!.ToUpperInvariant();
+            if (request.BasePricePerNight.HasValue)
+                property.BasePricePerNight = request.BasePricePerNight.Value;
+            if (request.IsFeatured.HasValue)
+                property.IsFeatured = request.IsFeatured.Value;
             if (request.Latitude.HasValue && request.Latitude.Value >= -90 && request.Latitude.Value <= 90)
                 property.Latitude = (decimal)request.Latitude.Value;
             if (request.Longitude.HasValue && request.Longitude.Value >= -180 && request.Longitude.Value <= 180)

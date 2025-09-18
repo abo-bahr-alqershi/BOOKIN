@@ -23,6 +23,89 @@ import '../bloc/property_images/property_images_bloc.dart';
 import '../bloc/property_images/property_images_event.dart';
 import 'package:bookn_cp_app/features/helpers/presentation/utils/search_navigation_helper.dart';
 import 'package:bookn_cp_app/features/admin_users/domain/entities/user.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
+import 'package:bookn_cp_app/core/usecases/usecase.dart';
+import 'package:bookn_cp_app/features/admin_currencies/domain/usecases/get_currencies_usecase.dart';
+
+class _CurrencyDropdown extends StatefulWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+  const _CurrencyDropdown({required this.value, required this.onChanged});
+
+  @override
+  State<_CurrencyDropdown> createState() => _CurrencyDropdownState();
+}
+
+class _CurrencyDropdownState extends State<_CurrencyDropdown> {
+  List<String> _codes = const [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final usecase = di.sl<GetCurrenciesUseCase>();
+    final result = await usecase(NoParams());
+    result.fold(
+      (f) => setState(() { _error = f.message; _loading = false; }),
+      (list) => setState(() {
+        _codes = list.map((c) => c.code).toList();
+        _loading = false;
+        if (_codes.isNotEmpty && !_codes.contains(widget.value)) {
+          widget.onChanged(_codes.first);
+        }
+      }),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final decoration = InputDecoration(
+      labelText: 'العملة',
+      labelStyle: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
+      filled: true,
+      fillColor: AppTheme.darkSurface.withOpacity(0.3),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+    );
+    if (_loading) {
+      return InputDecorator(
+        decoration: decoration,
+        child: Row(children: [
+          const SizedBox(width: 4, height: 4),
+          SizedBox(
+            width: 18, height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.textMuted),
+          ),
+          const SizedBox(width: 8),
+          Text('جاري تحميل العملات...', style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted)),
+        ]),
+      );
+    }
+    if (_error != null) {
+      return DropdownButtonFormField<String>(
+        value: _codes.contains(widget.value) ? widget.value : null,
+        decoration: decoration.copyWith(errorText: _error),
+        items: _codes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+        onChanged: (v) { if (v != null) widget.onChanged(v); },
+      );
+    }
+    return DropdownButtonFormField<String>(
+      value: _codes.contains(widget.value) ? widget.value : null,
+      decoration: decoration,
+      dropdownColor: AppTheme.darkCard,
+      style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+      items: _codes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+      onChanged: (v) { if (v != null) widget.onChanged(v); },
+    );
+  }
+}
 
 class CreatePropertyPage extends StatelessWidget {
   const CreatePropertyPage({super.key});
@@ -86,6 +169,9 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
   List<String> _selectedAmenities = [];
   int _currentStep = 0;
   String? _tempKey;
+  String _currency = 'YER';
+  final _shortDescriptionController = TextEditingController();
+  final _basePriceController = TextEditingController();
   
   // Track if widget is mounted
   bool _isDisposed = false;
@@ -150,6 +236,8 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
     _descriptionController.dispose();
     _latitudeController.dispose();
     _longitudeController.dispose();
+    _shortDescriptionController.dispose();
+    _basePriceController.dispose();
     super.dispose();
   }
   
@@ -465,6 +553,33 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
           _buildOwnerSelector(),
           
           const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: _buildInputField(
+                  controller: _basePriceController,
+                  label: 'السعر الأساسي',
+                  hint: '0.0',
+                  icon: Icons.attach_money_rounded,
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'أدخل السعر';
+                    if (double.tryParse(value) == null) return 'رقم غير صالح';
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _CurrencyDropdown(
+                  value: _currency,
+                  onChanged: (v) => _safeSetState(() => _currency = v),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
           
           // Address
           _buildInputField(
@@ -516,6 +631,13 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
               }
               return null;
             },
+          ),
+          const SizedBox(height: 20),
+          _buildInputField(
+            controller: _shortDescriptionController,
+            label: 'وصف مختصر',
+            hint: 'نص مختصر يظهر في القوائم',
+            icon: Icons.short_text_rounded,
           ),
         ],
       ),
@@ -1421,12 +1543,12 @@ void _submitForm() {
         images: _selectedLocalImages.isEmpty ? [] : _selectedLocalImages,
         amenityIds: _selectedAmenities.isEmpty ? null : _selectedAmenities,
         tempKey: _tempKey,
-        shortDescription: _descriptionController.text.length > 100 
-            ? _descriptionController.text.substring(0, 100) + '...'
-            : _descriptionController.text,
-        basePricePerNight: 0.0, // يمكنك إضافة حقل للسعر
-        currency: 'YER', // يمكنك إضافة حقل للعملة
-        isFeatured: false, // يمكنك إضافة خيار للعقارات المميزة
+        shortDescription: (_shortDescriptionController.text.isNotEmpty
+                ? _shortDescriptionController.text
+                : _descriptionController.text).trim(),
+        basePricePerNight: double.tryParse(_basePriceController.text) ?? 0.0,
+        currency: _currency,
+        isFeatured: false,
       ),
     );
   }
