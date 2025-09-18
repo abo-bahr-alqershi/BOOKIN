@@ -90,6 +90,8 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       child: ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: widget.properties.length,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         itemBuilder: (context, index) {
           final property = widget.properties[index];
           return _buildMobileCard(property);

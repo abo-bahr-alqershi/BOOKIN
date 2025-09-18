@@ -130,7 +130,8 @@ class _PropertyStatsCardState extends State<PropertyStatsCard>
                             padding: EdgeInsets.all(padding),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 // الصف العلوي - الأيقونة والترند
                                 Flexible(
@@ -214,8 +215,7 @@ class _PropertyStatsCardState extends State<PropertyStatsCard>
                                   ),
                                 ),
                                 
-                                // مساحة مرنة
-                                const Expanded(child: SizedBox()),
+                                // تم توزيع المساحة باستخدام spaceBetween بدل Expanded لتجنب overflow
                                 
                                 // القيمة والعنوان
                                 Flexible(
