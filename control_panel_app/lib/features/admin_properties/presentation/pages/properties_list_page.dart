@@ -187,9 +187,10 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       expandedHeight: 120,
       floating: true,
       pinned: true,
+      centerTitle: false,
       backgroundColor: AppTheme.darkBackground,
       flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+        titlePadding: const EdgeInsetsDirectional.only(start: 16, bottom: 16),
         title: Text(
           'إدارة العقارات',
           style: AppTextStyles.heading1.copyWith(
@@ -201,6 +202,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
               ),
             ],
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         background: Container(
           decoration: BoxDecoration(
@@ -215,41 +218,117 @@ class _PropertiesListPageState extends State<PropertiesListPage>
           ),
         ),
       ),
-      actions: [
-        _buildActionButton(
+      actions: _buildAppBarActions(context),
+    );
+  }
+
+  // Compact icon-only action for AppBar to avoid overflow
+  Widget _buildAppBarIconAction({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return IconButton(
+      onPressed: onPressed,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      icon: Icon(
+        icon,
+        color: AppTheme.textWhite,
+        size: 20,
+      ),
+      splashRadius: 20,
+    );
+  }
+
+  List<Widget> _buildAppBarActions(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width < 720) {
+      return [
+        _buildAppBarIconAction(
           icon: Icons.filter_list_rounded,
-          label: 'فلتر',
-          onTap: () => setState(() => _showFilters = !_showFilters),
-          isActive: _showFilters,
+          onPressed: () => setState(() => _showFilters = !_showFilters),
         ),
-        const SizedBox(width: 8),
-        _buildActionButton(
-          icon: Icons.grid_view_rounded,
-          label: 'شبكة',
-          onTap: () => setState(() => _selectedView = 'grid'),
-          isActive: _selectedView == 'grid',
-        ),
-        const SizedBox(width: 8),
-        _buildActionButton(
-          icon: Icons.table_chart_rounded,
-          label: 'جدول',
-          onTap: () => setState(() => _selectedView = 'table'),
-          isActive: _selectedView == 'table',
-        ),
-        const SizedBox(width: 8),
-        _buildActionButton(
-          icon: Icons.map_rounded,
-          label: 'خريطة',
-          onTap: () => setState(() => _selectedView = 'map'),
-          isActive: _selectedView == 'map',
-        ),
-        const SizedBox(width: 8),
-        _buildPrimaryActionButton(
+        _buildAppBarIconAction(
           icon: Icons.add_rounded,
-          label: 'إضافة عقار',
-          onTap: () => context.push('/admin/properties/create'),
+          onPressed: () => context.push('/admin/properties/create'),
         ),
-        const SizedBox(width: 8),
+        _buildOverflowMenu(),
+        const SizedBox(width: 4),
+      ];
+    }
+
+    return [
+      _buildAppBarIconAction(
+        icon: Icons.filter_list_rounded,
+        onPressed: () => setState(() => _showFilters = !_showFilters),
+      ),
+      _buildAppBarIconAction(
+        icon: Icons.grid_view_rounded,
+        onPressed: () => setState(() => _selectedView = 'grid'),
+      ),
+      _buildAppBarIconAction(
+        icon: Icons.table_chart_rounded,
+        onPressed: () => setState(() => _selectedView = 'table'),
+      ),
+      _buildAppBarIconAction(
+        icon: Icons.map_rounded,
+        onPressed: () => setState(() => _selectedView = 'map'),
+      ),
+      _buildAppBarIconAction(
+        icon: Icons.add_rounded,
+        onPressed: () => context.push('/admin/properties/create'),
+      ),
+      const SizedBox(width: 4),
+    ];
+  }
+
+  Widget _buildOverflowMenu() {
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_vert_rounded, color: AppTheme.textWhite),
+      onSelected: (value) {
+        switch (value) {
+          case 'grid':
+            setState(() => _selectedView = 'grid');
+            break;
+          case 'table':
+            setState(() => _selectedView = 'table');
+            break;
+          case 'map':
+            setState(() => _selectedView = 'map');
+            break;
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'grid',
+          child: Row(
+            children: const [
+              Icon(Icons.grid_view_rounded, size: 18),
+              SizedBox(width: 8),
+              Text('شبكة'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'table',
+          child: Row(
+            children: const [
+              Icon(Icons.table_chart_rounded, size: 18),
+              SizedBox(width: 8),
+              Text('جدول'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'map',
+          child: Row(
+            children: const [
+              Icon(Icons.map_rounded, size: 18),
+              SizedBox(width: 8),
+              Text('خريطة'),
+            ],
+          ),
+        ),
       ],
     );
   }
