@@ -134,6 +134,7 @@ class UnitTypeFieldsBloc extends Bloc<UnitTypeFieldsEvent, UnitTypeFieldsState> 
     final result = await updateField(
       UpdateFieldParams(
         fieldId: event.fieldId,
+        fieldTypeId: event.fieldData['fieldTypeId'],
         fieldName: event.fieldData['fieldName'],
         displayName: event.fieldData['displayName'],
         description: event.fieldData['description'],

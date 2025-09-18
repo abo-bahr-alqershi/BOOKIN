@@ -40,6 +40,7 @@ abstract class UnitTypeFieldsRemoteDataSource {
   
   Future<bool> updateField({
     required String fieldId,
+    String? fieldTypeId,
     String? fieldName,
     String? displayName,
     String? description,
@@ -191,6 +192,7 @@ class UnitTypeFieldsRemoteDataSourceImpl implements UnitTypeFieldsRemoteDataSour
   }) async {
     try {
       final data = <String, dynamic>{'fieldId': fieldId};
+      if (fieldTypeId != null) data['fieldTypeId'] = fieldTypeId;
       if (fieldName != null) data['fieldName'] = fieldName;
       if (displayName != null) data['displayName'] = displayName;
       if (description != null) data['description'] = description;
