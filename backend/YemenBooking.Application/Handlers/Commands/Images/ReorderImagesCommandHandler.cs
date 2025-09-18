@@ -29,14 +29,9 @@ namespace YemenBooking.Application.Handlers.Commands.Images
         {
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                foreach (var assignment in request.Assignments)
-                {
-                    var image = await _imageRepository.GetPropertyImageByIdAsync(assignment.ImageId, cancellationToken);
-                    if (image == null) continue;
-
-                    image.DisplayOrder = assignment.DisplayOrder;
-                    await _imageRepository.UpdatePropertyImageAsync(image, cancellationToken);
-                }
+                // Batch update to minimize locks and round-trips
+                var tuples = request.Assignments.ConvertAll(a => (a.ImageId, a.DisplayOrder));
+                await _imageRepository.UpdateDisplayOrdersAsync(tuples, cancellationToken);
             }, cancellationToken);
 
             return ResultDto<bool>.Ok(true, "تم إعادة ترتيب الصور بنجاح");

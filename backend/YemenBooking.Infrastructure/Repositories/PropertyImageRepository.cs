@@ -58,20 +58,14 @@ public class PropertyImageRepository : BaseRepository<PropertyImage>, IPropertyI
 
     public async Task<IEnumerable<PropertyImage>> GetImagesByPropertyAsync(Guid propertyId, CancellationToken cancellationToken = default)
         => await _dbSet
-            .Where(pi =>
-                (!pi.PropertyId.HasValue && propertyId == Guid.Empty)
-                || (pi.PropertyId.HasValue && pi.PropertyId.Value == propertyId)
-                && !pi.IsDeleted)
+            .Where(pi => pi.PropertyId.HasValue && pi.PropertyId.Value == propertyId && !pi.IsDeleted)
             .OrderBy(pi => pi.DisplayOrder)
             .ThenBy(pi => pi.CreatedAt)
             .ToListAsync(cancellationToken);
 
     public async Task<IEnumerable<PropertyImage>> GetImagesByUnitAsync(Guid unitId, CancellationToken cancellationToken = default)
         => await _dbSet
-            .Where(pi =>
-                (!pi.UnitId.HasValue && unitId == Guid.Empty)
-                || (pi.UnitId.HasValue && pi.UnitId.Value == unitId)
-                && !pi.IsDeleted)
+            .Where(pi => pi.UnitId.HasValue && pi.UnitId.Value == unitId && !pi.IsDeleted)
             .OrderBy(pi => pi.DisplayOrder)
             .ThenBy(pi => pi.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -191,5 +185,28 @@ public class PropertyImageRepository : BaseRepository<PropertyImage>, IPropertyI
             .Where(pi => pi.TempKey == tempKey && !pi.IsDeleted)
             .OrderBy(pi => pi.CreatedAt)
             .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> UpdateDisplayOrdersAsync(IEnumerable<(Guid imageId, int displayOrder)> assignments, CancellationToken cancellationToken = default)
+    {
+        // Minimize round-trips and reduce lock time: load all once, then update
+        var ids = assignments.Select(a => a.imageId).ToList();
+        var images = await _dbSet
+            .Where(pi => ids.Contains(pi.Id))
+            .ToListAsync(cancellationToken);
+
+        var orderLookup = assignments.ToDictionary(a => a.imageId, a => a.displayOrder);
+        foreach (var img in images)
+        {
+            if (orderLookup.TryGetValue(img.Id, out var newOrder))
+            {
+                img.DisplayOrder = newOrder;
+                img.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }
