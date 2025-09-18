@@ -342,8 +342,8 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
             }
           }
           
-          // إعادة تحميل الصور للحصول على البيانات المحدثة
-          add(LoadPropertyImagesEvent(propertyId: event.propertyId));
+          // إعادة تحميل الصور للحصول على البيانات المحدثة (يجب تمرير tempKey إن وُجد)
+          add(LoadPropertyImagesEvent(propertyId: event.propertyId, tempKey: event.tempKey));
         }
       },
     );
