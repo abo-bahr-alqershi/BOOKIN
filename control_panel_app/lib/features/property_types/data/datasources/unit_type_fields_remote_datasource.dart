@@ -15,9 +15,9 @@ abstract class UnitTypeFieldsRemoteDataSource {
     bool? isForUnits,
     String? category,
   });
-  
+
   Future<UnitTypeFieldModel> getFieldById(String fieldId);
-  
+
   Future<String> createField({
     required String unitTypeId,
     required String fieldTypeId,
@@ -37,7 +37,7 @@ abstract class UnitTypeFieldsRemoteDataSource {
     required bool isPrimaryFilter,
     required int priority,
   });
-  
+
   Future<bool> updateField({
     required String fieldId,
     String? fieldTypeId,
@@ -57,11 +57,12 @@ abstract class UnitTypeFieldsRemoteDataSource {
     bool? isPrimaryFilter,
     int? priority,
   });
-  
+
   Future<bool> deleteField(String fieldId);
 }
 
-class UnitTypeFieldsRemoteDataSourceImpl implements UnitTypeFieldsRemoteDataSource {
+class UnitTypeFieldsRemoteDataSourceImpl
+    implements UnitTypeFieldsRemoteDataSource {
   final ApiClient apiClient;
   static const String _baseEndpoint = '/api/admin/unit-type-fields';
 
@@ -85,12 +86,12 @@ class UnitTypeFieldsRemoteDataSourceImpl implements UnitTypeFieldsRemoteDataSour
       if (isPublic != null) queryParams['isPublic'] = isPublic;
       if (isForUnits != null) queryParams['isForUnits'] = isForUnits;
       if (category != null) queryParams['category'] = category;
-      
+
       final response = await apiClient.get(
         '$_baseEndpoint/unit-type/$unitTypeId',
         queryParameters: queryParams,
       );
-      
+
       return (response.data as List)
           .map((field) => UnitTypeFieldModel.fromJson(field))
           .toList();
@@ -104,7 +105,7 @@ class UnitTypeFieldsRemoteDataSourceImpl implements UnitTypeFieldsRemoteDataSour
     try {
       final response = await apiClient.get('$_baseEndpoint/$fieldId');
       final result = ResultDto.fromJson(response.data, null);
-      
+
       if (result.isSuccess && result.data != null) {
         return UnitTypeFieldModel.fromJson(result.data);
       } else {
@@ -158,9 +159,9 @@ class UnitTypeFieldsRemoteDataSourceImpl implements UnitTypeFieldsRemoteDataSour
           'priority': priority,
         },
       );
-      
+
       final result = ResultDto.fromJson(response.data, null);
-      
+
       if (result.isSuccess && result.data != null) {
         return result.data as String;
       } else {
@@ -174,6 +175,7 @@ class UnitTypeFieldsRemoteDataSourceImpl implements UnitTypeFieldsRemoteDataSour
   @override
   Future<bool> updateField({
     required String fieldId,
+    String? fieldTypeId,
     String? fieldName,
     String? displayName,
     String? description,
@@ -208,12 +210,12 @@ class UnitTypeFieldsRemoteDataSourceImpl implements UnitTypeFieldsRemoteDataSour
       if (showInCards != null) data['showInCards'] = showInCards;
       if (isPrimaryFilter != null) data['isPrimaryFilter'] = isPrimaryFilter;
       if (priority != null) data['priority'] = priority;
-      
+
       final response = await apiClient.put(
         '$_baseEndpoint/$fieldId',
         data: data,
       );
-      
+
       final result = ResultDto.fromJson(response.data, null);
       return result.isSuccess;
     } on DioException catch (e) {
