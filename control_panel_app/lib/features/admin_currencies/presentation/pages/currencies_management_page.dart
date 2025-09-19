@@ -664,26 +664,27 @@ class _CurrenciesManagementPageState extends State<CurrenciesManagementPage>
 
   void _showCurrencyForm({Currency? currency}) {
     HapticFeedback.mediumImpact();
+    final currenciesBloc = context.read<CurrenciesBloc>();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => FuturisticCurrencyFormModal(
+      builder: (sheetContext) => FuturisticCurrencyFormModal(
         currency: currency,
         onSave: (updatedCurrency) {
           if (currency == null) {
-            context.read<CurrenciesBloc>().add(
-                  AddCurrencyEvent(currency: updatedCurrency),
-                );
+            currenciesBloc.add(
+              AddCurrencyEvent(currency: updatedCurrency),
+            );
           } else {
-            context.read<CurrenciesBloc>().add(
-                  UpdateCurrencyEvent(
-                    currency: updatedCurrency,
-                    oldCode: currency.code,
-                  ),
-                );
+            currenciesBloc.add(
+              UpdateCurrencyEvent(
+                currency: updatedCurrency,
+                oldCode: currency.code,
+              ),
+            );
           }
-          Navigator.pop(context);
+          Navigator.pop(sheetContext);
         },
       ),
     );
@@ -691,9 +692,10 @@ class _CurrenciesManagementPageState extends State<CurrenciesManagementPage>
 
   void _confirmDeleteCurrency(Currency currency) {
     HapticFeedback.heavyImpact();
+    final currenciesBloc = context.read<CurrenciesBloc>();
     showCupertinoDialog(
       context: context,
-      builder: (context) => BackdropFilter(
+      builder: (dialogContext) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: CupertinoAlertDialog(
           title: Text('حذف ${currency.arabicName}'),
@@ -703,16 +705,16 @@ class _CurrenciesManagementPageState extends State<CurrenciesManagementPage>
             CupertinoDialogAction(
               isDestructiveAction: true,
               onPressed: () {
-                context.read<CurrenciesBloc>().add(
-                      DeleteCurrencyEvent(code: currency.code),
-                    );
-                Navigator.pop(context);
+                currenciesBloc.add(
+                  DeleteCurrencyEvent(code: currency.code),
+                );
+                Navigator.pop(dialogContext);
               },
               child: const Text('حذف'),
             ),
             CupertinoDialogAction(
               isDefaultAction: true,
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('إلغاء'),
             ),
           ],
