@@ -425,14 +425,14 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
           ),
         ),
         const SizedBox(height: 12),
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: List.generate(5, (index) {
             final rating = (index + 1).toDouble();
             final isSelected = _minRating == rating;
             
-            return Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: GestureDetector(
+            return GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
                   setState(() {
@@ -482,7 +482,6 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
                     ],
                   ),
                 ),
-              ),
             );
           }),
         ),
