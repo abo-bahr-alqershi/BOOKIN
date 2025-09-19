@@ -115,18 +115,30 @@ class _FuturisticAuditLogsTableState extends State<FuturisticAuditLogsTable>
               ),
               
               // Table Body
-              Expanded(
-                child: Scrollbar(
-                  controller: _verticalScrollController,
-                  child: SingleChildScrollView(
-                    controller: _verticalScrollController,
-                    child: SingleChildScrollView(
-                      controller: _horizontalScrollController,
-                      scrollDirection: Axis.horizontal,
-                      child: _buildTableBody(isDesktop),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  // Ensure bounded height: on small heights give a minHeight to avoid unbounded in nested scrolls
+                  final maxTableHeight = constraints.maxHeight == double.infinity
+                      ? 400.0
+                      : constraints.maxHeight;
+                  return ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: maxTableHeight,
+                      minHeight: 200,
                     ),
-                  ),
-                ),
+                    child: Scrollbar(
+                      controller: _verticalScrollController,
+                      child: SingleChildScrollView(
+                        controller: _verticalScrollController,
+                        child: SingleChildScrollView(
+                          controller: _horizontalScrollController,
+                          scrollDirection: Axis.horizontal,
+                          child: _buildTableBody(isDesktop),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
               
               // Loading Indicator

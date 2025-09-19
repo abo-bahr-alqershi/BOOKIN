@@ -301,18 +301,28 @@ class _AuditLogsPageState extends State<AuditLogsPage>
                   
                   const Spacer(),
                   
-                  // View Mode Toggle
-                  _buildViewModeToggle(),
-                  
-                  const SizedBox(width: 16),
-                  
-                  // Filter Toggle Button
-                  _buildFilterToggleButton(),
-                  
-                  const SizedBox(width: 16),
-                  
-                  // Refresh Button
-                  _buildRefreshButton(),
+                  // Actions wrapped to prevent overflow on small widths
+                  Flexible(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      reverse: true,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Refresh Button
+                          _buildRefreshButton(),
+                          const SizedBox(width: 16),
+                          
+                          // Filter Toggle Button
+                          _buildFilterToggleButton(),
+                          const SizedBox(width: 16),
+                          
+                          // View Mode Toggle
+                          _buildViewModeToggle(),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
