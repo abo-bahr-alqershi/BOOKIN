@@ -134,7 +134,7 @@ class _AuditLogStatsCardState extends State<AuditLogStatsCard>
     return LayoutBuilder(
       builder: (context, constraints) {
         final crossAxisCount = constraints.maxWidth > 800 ? 4 : 2;
-        final childAspectRatio = constraints.maxWidth > 800 ? 1.5 : 1.3;
+        final childAspectRatio = constraints.maxWidth > 800 ? 1.6 : 1.1;
         
         return GridView.builder(
           shrinkWrap: true,
@@ -154,17 +154,19 @@ class _AuditLogStatsCardState extends State<AuditLogStatsCard>
                 _glowAnimation,
               ]),
               builder: (context, child) {
+                final safeScale = _cardAnimations[index].value.clamp(0.0, 1.0);
+                final safeOpacity = _cardAnimations[index].value.clamp(0.0, 1.0);
                 return Transform.scale(
-                  scale: _cardAnimations[index].value,
+                  scale: safeScale,
                   child: Opacity(
-                    opacity: _cardAnimations[index].value,
+                    opacity: safeOpacity,
                     child: _buildStatCard(
                       title: stats[index]['title'] as String,
                       value: _numberAnimations[index].value,
                       icon: stats[index]['icon'] as IconData,
                       color: stats[index]['color'] as Color,
                       gradient: stats[index]['gradient'] as List<Color>,
-                      glowIntensity: _glowAnimation.value,
+                      glowIntensity: _glowAnimation.value.clamp(0.0, 1.0),
                     ),
                   ),
                 );
