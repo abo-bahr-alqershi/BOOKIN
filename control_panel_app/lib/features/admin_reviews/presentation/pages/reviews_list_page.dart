@@ -179,21 +179,32 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                     }
                     
                     if (isDesktop || (!_isGridView && isTablet)) {
-                      return SliverToBoxAdapter(
+                      return SliverFillRemaining(
+                        hasScrollBody: true,
                         child: Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: isDesktop ? 32 : 20,
                           ),
-                          child: FuturisticReviewsTable(
-                            reviews: state.filteredReviews,
-                            onReviewTap: (review) => _navigateToDetails(context, review.id),
-                            onApproveTap: (review) {
-                              context.read<ReviewsListBloc>().add(
-                                ApproveReviewEvent(review.id),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              return ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: constraints.maxHeight,
+                                  maxHeight: constraints.maxHeight,
+                                ),
+                                child: FuturisticReviewsTable(
+                                  reviews: state.filteredReviews,
+                                  onReviewTap: (review) => _navigateToDetails(context, review.id),
+                                  onApproveTap: (review) {
+                                    context.read<ReviewsListBloc>().add(
+                                      ApproveReviewEvent(review.id),
+                                    );
+                                  },
+                                  onDeleteTap: (review) {
+                                    _showDeleteConfirmation(context, review.id);
+                                  },
+                                ),
                               );
-                            },
-                            onDeleteTap: (review) {
-                              _showDeleteConfirmation(context, review.id);
                             },
                           ),
                         ),
