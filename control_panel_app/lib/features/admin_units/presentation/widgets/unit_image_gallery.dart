@@ -1960,82 +1960,88 @@ class UnitImageGalleryState extends State<UnitImageGallery>
   }
   
   Widget _buildOptimizedImage(UnitImage image) {
-    return CachedNetworkImage(
-      imageUrl: image.url,
-      fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 200),
-      placeholder: (context, url) => Container(
-        color: AppTheme.darkCard.withOpacity(0.3),
-        child: Center(
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 1.5,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                AppTheme.primaryBlue.withOpacity(0.5)
-              ),
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final dpr = MediaQuery.of(context).devicePixelRatio;
+        final targetWidth = (constraints.maxWidth.isFinite
+                ? constraints.maxWidth * dpr
+                : 256 * dpr)
+            .clamp(64, 1024)
+            .round();
+        return CachedNetworkImage(
+          imageUrl: image.url,
+          fadeInDuration: const Duration(milliseconds: 0),
+          imageBuilder: (ctx, provider) => Image(
+            image: ResizeImage(provider as ImageProvider, width: targetWidth),
+            fit: BoxFit.cover,
+            filterQuality: FilterQuality.low,
           ),
-        ),
-      ),
-      errorWidget: (context, url, error) => Container(
-        color: AppTheme.darkCard.withOpacity(0.3),
-        child: Icon(
-          Icons.image_not_supported_outlined,
-          color: AppTheme.textMuted.withOpacity(0.3),
-          size: 24,
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildImageFromPath(String path) {
-    if (path.startsWith('http')) {
-      return CachedNetworkImage(
-        imageUrl: path,
-        fit: BoxFit.cover,
-        fadeInDuration: const Duration(milliseconds: 200),
-        placeholder: (context, url) => Container(
-          color: AppTheme.darkCard.withOpacity(0.3),
-          child: Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 1.5,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  AppTheme.primaryBlue.withOpacity(0.5)
-                ),
-              ),
-            ),
+          placeholder: (context, url) => Container(
+            color: AppTheme.darkCard.withOpacity(0.3),
           ),
-        ),
-        errorWidget: (context, url, error) => Container(
-          color: AppTheme.darkCard.withOpacity(0.3),
-          child: Icon(
-            Icons.image_not_supported_outlined,
-            color: AppTheme.textMuted.withOpacity(0.3),
-            size: 24,
-          ),
-        ),
-      );
-    } else {
-      return Image.file(
-        File(path),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
+          errorWidget: (context, url, error) => Container(
             color: AppTheme.darkCard.withOpacity(0.3),
             child: Icon(
               Icons.image_not_supported_outlined,
               color: AppTheme.textMuted.withOpacity(0.3),
               size: 24,
             ),
+          ),
+        );
+      },
+    );
+  }
+  
+  Widget _buildImageFromPath(String path) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final dpr = MediaQuery.of(context).devicePixelRatio;
+        final targetWidth = (constraints.maxWidth.isFinite
+                ? constraints.maxWidth * dpr
+                : 256 * dpr)
+            .clamp(64, 1024)
+            .round();
+        if (path.startsWith('http')) {
+          return CachedNetworkImage(
+            imageUrl: path,
+            fadeInDuration: const Duration(milliseconds: 0),
+            imageBuilder: (ctx, provider) => Image(
+              image: ResizeImage(provider as ImageProvider, width: targetWidth),
+              fit: BoxFit.cover,
+              filterQuality: FilterQuality.low,
+            ),
+            placeholder: (context, url) => Container(
+              color: AppTheme.darkCard.withOpacity(0.3),
+            ),
+            errorWidget: (context, url, error) => Container(
+              color: AppTheme.darkCard.withOpacity(0.3),
+              child: Icon(
+                Icons.image_not_supported_outlined,
+                color: AppTheme.textMuted.withOpacity(0.3),
+                size: 24,
+              ),
+            ),
           );
-        },
-      );
-    }
+        } else {
+          return Image.file(
+            File(path),
+            fit: BoxFit.cover,
+            filterQuality: FilterQuality.low,
+            cacheWidth: targetWidth,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: AppTheme.darkCard.withOpacity(0.3),
+                child: Icon(
+                  Icons.image_not_supported_outlined,
+                  color: AppTheme.textMuted.withOpacity(0.3),
+                  size: 24,
+                ),
+              );
+            },
+          );
+        }
+      },
+    );
   }
   
   Widget _buildMinimalistLoadingState() {
