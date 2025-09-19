@@ -225,21 +225,104 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                               
                               SizedBox(height: isCompact ? 8 : 12),
                               
-                              // معاينة التعليق
+                              // معاينة التعليق + المؤشرات ضمن Flexible لتجنّب فيضان الارتفاع
                               Flexible(
-                                child: Text(
-                                  widget.review.comment,
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    height: 1.5,
-                                    color: AppTheme.textLight,
-                                  ),
-                                  maxLines: isCompact ? 2 : 3,
-                                  overflow: TextOverflow.ellipsis,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      widget.review.comment,
+                                      style: AppTextStyles.bodySmall.copyWith(
+                                        height: 1.5,
+                                        color: AppTheme.textLight,
+                                      ),
+                                      maxLines: isCompact ? 2 : 3,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (widget.review.images.isNotEmpty || widget.review.hasResponse)
+                                      Padding(
+                                        padding: EdgeInsets.only(top: isCompact ? 6 : 10),
+                                        child: Wrap(
+                                          spacing: 8,
+                                          runSpacing: 4,
+                                          children: [
+                                            if (widget.review.images.isNotEmpty) ...[
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 4,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  color: AppTheme.primaryBlue.withOpacity(0.1),
+                                                  border: Border.all(
+                                                    color: AppTheme.primaryBlue.withOpacity(0.3),
+                                                    width: 0.5,
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.image,
+                                                      size: 12,
+                                                      color: AppTheme.primaryBlue,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      '${widget.review.images.length}',
+                                                      style: AppTextStyles.caption.copyWith(
+                                                        fontWeight: FontWeight.w600,
+                                                        color: AppTheme.primaryBlue,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                            if (widget.review.hasResponse)
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 4,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  color: AppTheme.success.withOpacity(0.1),
+                                                  border: Border.all(
+                                                    color: AppTheme.success.withOpacity(0.3),
+                                                    width: 0.5,
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.reply,
+                                                      size: 12,
+                                                      color: AppTheme.success,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      'تم الرد',
+                                                      style: AppTextStyles.caption.copyWith(
+                                                        fontWeight: FontWeight.w600,
+                                                        color: AppTheme.success,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
-                              
-                              SizedBox(height: isCompact ? 12 : 16),
-                              
+
+                              SizedBox(height: isCompact ? 10 : 14),
+
                               // التذييل
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -281,85 +364,6 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                   ),
                                 ],
                               ),
-                              
-                              // المؤشرات
-                              if (widget.review.images.isNotEmpty || widget.review.hasResponse)
-                                Padding(
-                                  padding: EdgeInsets.only(top: isCompact ? 8 : 12),
-                                  child: Wrap(
-                                    spacing: 8,
-                                    runSpacing: 4,
-                                    children: [
-                                      if (widget.review.images.isNotEmpty) ...[
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(12),
-                                            color: AppTheme.primaryBlue.withOpacity(0.1),
-                                            border: Border.all(
-                                              color: AppTheme.primaryBlue.withOpacity(0.3),
-                                              width: 0.5,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                Icons.image,
-                                                size: 12,
-                                                color: AppTheme.primaryBlue,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                '${widget.review.images.length}',
-                                                style: AppTextStyles.caption.copyWith(
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AppTheme.primaryBlue,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                      if (widget.review.hasResponse)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(12),
-                                            color: AppTheme.success.withOpacity(0.1),
-                                            border: Border.all(
-                                              color: AppTheme.success.withOpacity(0.3),
-                                              width: 0.5,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                Icons.reply,
-                                                size: 12,
-                                                color: AppTheme.success,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                'تم الرد',
-                                                style: AppTextStyles.caption.copyWith(
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AppTheme.success,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
                                 ],
                               );
                             },
