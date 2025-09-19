@@ -20,7 +20,7 @@ import '../bloc/amenities_state.dart';
 import '../widgets/futuristic_amenity_card.dart';
 import '../widgets/futuristic_amenities_table.dart';
 import '../widgets/amenity_filters_widget.dart';
-import '../widgets/amenity_stats_card.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/widgets/unit_stats_card.dart';
 import '../widgets/assign_amenity_dialog.dart';
 
 class AmenitiesManagementPage extends StatefulWidget {
@@ -632,7 +632,6 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
   }
 
   Widget _buildStatsCards(AmenityStats stats) {
-    // Ensure each animated child is wrapped in AnimationConfiguration inside an AnimationLimiter
     return AnimationLimiter(
       child: Row(
         children: [
@@ -643,13 +642,13 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
               child: SlideAnimation(
                 horizontalOffset: 50.0,
                 child: FadeInAnimation(
-                  child: AmenityStatsCard(
+                  child: UnitStatsCard(
                     title: 'إجمالي المرافق',
                     value: stats.totalAmenities.toString(),
                     icon: Icons.category_rounded,
-                    gradient: LinearGradient(
-                      colors: [AppTheme.primaryPurple, AppTheme.primaryViolet],
-                    ),
+                    color: AppTheme.primaryBlue,
+                    trend: '+0%',
+                    isPositive: true,
                   ),
                 ),
               ),
@@ -663,13 +662,13 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
               child: SlideAnimation(
                 horizontalOffset: 50.0,
                 child: FadeInAnimation(
-                  child: AmenityStatsCard(
+                  child: UnitStatsCard(
                     title: 'المرافق النشطة',
                     value: stats.activeAmenities.toString(),
                     icon: Icons.check_circle_rounded,
-                    gradient: LinearGradient(
-                      colors: [AppTheme.success, AppTheme.neonGreen],
-                    ),
+                    color: AppTheme.success,
+                    trend: '${stats.activeAmenities}',
+                    isPositive: true,
                   ),
                 ),
               ),
@@ -683,13 +682,13 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
               child: SlideAnimation(
                 horizontalOffset: 50.0,
                 child: FadeInAnimation(
-                  child: AmenityStatsCard(
+                  child: UnitStatsCard(
                     title: 'إجمالي الإسنادات',
                     value: stats.totalAssignments.toString(),
                     icon: Icons.link_rounded,
-                    gradient: LinearGradient(
-                      colors: [AppTheme.primaryBlue, AppTheme.primaryCyan],
-                    ),
+                    color: AppTheme.warning,
+                    trend: '${stats.totalAssignments}',
+                    isPositive: true,
                   ),
                 ),
               ),
@@ -703,13 +702,13 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
               child: SlideAnimation(
                 horizontalOffset: 50.0,
                 child: FadeInAnimation(
-                  child: AmenityStatsCard(
+                  child: UnitStatsCard(
                     title: 'الإيرادات',
                     value: '\$${stats.totalRevenue.toStringAsFixed(0)}',
                     icon: Icons.attach_money_rounded,
-                    gradient: LinearGradient(
-                      colors: [AppTheme.warning, AppTheme.neonPurple],
-                    ),
+                    color: AppTheme.primaryPurple,
+                    trend: '+0%',
+                    isPositive: true,
                   ),
                 ),
               ),
