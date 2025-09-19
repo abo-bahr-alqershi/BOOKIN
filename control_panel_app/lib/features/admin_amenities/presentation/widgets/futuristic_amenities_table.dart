@@ -186,54 +186,12 @@ class _FuturisticAmenitiesTableState extends State<FuturisticAmenitiesTable>
 
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          // Enhanced gradient with purple tint
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: AppTheme.isDark 
-              ? [
-                  AppTheme.darkCard.withOpacity(0.7),
-                  const Color(0xFF1A0E2E).withOpacity(0.4),
-                ]
-              : [
-                  Colors.white,
-                  AppTheme.lightBackground,
-                ],
-          ),
-          borderRadius: BorderRadius.circular(isMobile ? 16 : 24), // زوايا حادة هادئة
-          border: Border.all(
-            color: AppTheme.primaryPurple.withOpacity(0.15),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryPurple.withOpacity(AppTheme.isDark ? 0.2 : 0.08),
-              blurRadius: 30,
-              offset: const Offset(0, 10),
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(AppTheme.isDark ? 0.3 : 0.05),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(isMobile ? 16 : 24),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                if (isMobile) return _buildMobileView();
-                if (isTablet) return _buildTabletView();
-                return _buildDesktopView();
-              },
-            ),
-          ),
-        ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (isMobile) return _buildMobileView();
+          if (isTablet) return _buildTabletView();
+          return _buildDesktopView();
+        },
       ),
     );
   }
