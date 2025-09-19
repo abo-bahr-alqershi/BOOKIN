@@ -257,7 +257,6 @@ class _FuturisticAmenitiesTableState extends State<FuturisticAmenitiesTable>
             },
           ),
           if (widget.isLoadingMore) _buildLoadingIndicator(),
-          _buildFooterStats(),
         ],
       ),
     );
@@ -744,7 +743,7 @@ class _FuturisticAmenitiesTableState extends State<FuturisticAmenitiesTable>
                 flex: 1,
                 child: Text(
                   (amenity.averageExtraCost != null && amenity.averageExtraCost! > 0)
-                      ? '4${amenity.averageExtraCost!.toStringAsFixed(0)}'
+                      ? '\$${amenity.averageExtraCost!.toStringAsFixed(0)}'
                       : 'مجاني',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: (amenity.averageExtraCost != null && amenity.averageExtraCost! > 0)
