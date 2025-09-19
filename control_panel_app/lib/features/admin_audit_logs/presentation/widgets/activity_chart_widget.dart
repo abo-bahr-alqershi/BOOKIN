@@ -1,7 +1,7 @@
 // lib/features/admin_audit_logs/presentation/widgets/activity_chart_widget.dart
 
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/cupertino.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 import '../../../../core/theme/app_theme.dart';
@@ -21,89 +21,73 @@ class ActivityChartWidget extends StatefulWidget {
 }
 
 class _ActivityChartWidgetState extends State<ActivityChartWidget>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late AnimationController _glowController;
   late Animation<double> _chartAnimation;
-  late Animation<double> _glowAnimation;
-  
-  int _selectedDataType = 0; // 0: Actions, 1: Users, 2: Tables
-  
+
+  String _selectedPeriod = 'week';
+  String _selectedType = 'all';
+
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
       vsync: this,
-    )..forward();
-    
-    _glowController = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    )..repeat(reverse: true);
-    
-    _chartAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutBack,
+      duration: const Duration(milliseconds: 1500),
     );
-    
-    _glowAnimation = Tween<double>(
-      begin: 0.3,
+
+    _chartAnimation = Tween<double>(
+      begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _glowController,
-      curve: Curves.easeInOut,
+      parent: _animationController,
+      curve: Curves.easeOutBack,
     ));
+
+    _animationController.forward();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    _glowController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _glowAnimation,
-      builder: (context, child) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 400;
+
         return Container(
-          height: 320,
           decoration: BoxDecoration(
             gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
               colors: [
-                AppTheme.darkCard.withOpacity(0.6),
-                AppTheme.darkCard.withOpacity(0.4),
+                AppTheme.darkCard.withValues(alpha: 0.6),
+                AppTheme.darkCard.withValues(alpha: 0.4),
               ],
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: AppTheme.primaryBlue.withOpacity(0.2 + 0.1 * _glowAnimation.value),
-              width: 1,
+              color: AppTheme.darkBorder.withValues(alpha: 0.2),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primaryBlue.withOpacity(0.1 * _glowAnimation.value),
-                blurRadius: 20,
-                spreadRadius: 2,
-              ),
-            ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 20),
-                    Expanded(child: _buildChart()),
-                  ],
-                ),
+              child: Column(
+                children: [
+                  _buildHeader(isCompact),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: _buildChart(isCompact),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -112,368 +96,433 @@ class _ActivityChartWidgetState extends State<ActivityChartWidget>
     );
   }
 
-  Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'نشاط النظام',
-              style: AppTextStyles.heading3.copyWith(
-                color: AppTheme.textWhite,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'آخر 7 أيام',
-              style: AppTextStyles.caption.copyWith(
-                color: AppTheme.textMuted,
-              ),
-            ),
-          ],
+  Widget _buildHeader(bool isCompact) {
+    return Container(
+      padding: EdgeInsets.all(isCompact ? 12 : 16),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.darkBorder.withValues(alpha: 0.1),
+          ),
         ),
-        _buildDataTypeSelector(),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: isCompact ? 32 : 36,
+                height: isCompact ? 32 : 36,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryPurple.withValues(alpha: 0.3),
+                      AppTheme.primaryViolet.withValues(alpha: 0.2),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Icon(
+                    CupertinoIcons.chart_bar_alt_fill,
+                    color: AppTheme.primaryPurple,
+                    size: isCompact ? 16 : 18,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'تحليل النشاط',
+                      style: (isCompact
+                              ? AppTextStyles.bodyLarge
+                              : AppTextStyles.heading3)
+                          .copyWith(
+                        color: AppTheme.textWhite,
+                      ),
+                    ),
+                    Text(
+                      'إحصائيات الأنشطة حسب الفترة',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppTheme.textMuted,
+                        fontSize: isCompact ? 10 : 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildFilters(isCompact),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilters(bool isCompact) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildPeriodSelector(isCompact),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildTypeSelector(isCompact),
+        ),
       ],
     );
   }
 
-  Widget _buildDataTypeSelector() {
-    final options = ['الإجراءات', 'المستخدمون', 'الجداول'];
-    
+  Widget _buildPeriodSelector(bool isCompact) {
     return Container(
+      height: isCompact ? 32 : 36,
       decoration: BoxDecoration(
-        color: AppTheme.darkSurface.withOpacity(0.3),
+        color: AppTheme.darkBackground.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.2),
+        ),
       ),
       child: Row(
-        children: options.asMap().entries.map((entry) {
-          final index = entry.key;
-          final title = entry.value;
-          final isSelected = _selectedDataType == index;
-          
-          return GestureDetector(
-            onTap: () => setState(() => _selectedDataType = index),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                gradient: isSelected ? AppTheme.primaryGradient : null,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                title,
-                style: AppTextStyles.caption.copyWith(
-                  color: isSelected ? Colors.white : AppTheme.textMuted,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                ),
-              ),
-            ),
-          );
-        }).toList(),
+        children: [
+          _buildFilterChip(
+            label: 'أسبوع',
+            value: 'week',
+            groupValue: _selectedPeriod,
+            onChanged: (value) => setState(() => _selectedPeriod = value),
+            isCompact: isCompact,
+          ),
+          _buildFilterChip(
+            label: 'شهر',
+            value: 'month',
+            groupValue: _selectedPeriod,
+            onChanged: (value) => setState(() => _selectedPeriod = value),
+            isCompact: isCompact,
+          ),
+          _buildFilterChip(
+            label: 'سنة',
+            value: 'year',
+            groupValue: _selectedPeriod,
+            onChanged: (value) => setState(() => _selectedPeriod = value),
+            isCompact: isCompact,
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildChart() {
-    switch (_selectedDataType) {
-      case 0:
-        return _buildActionsChart();
-      case 1:
-        return _buildUsersChart();
-      case 2:
-        return _buildTablesChart();
-      default:
-        return const SizedBox.shrink();
-    }
+  Widget _buildTypeSelector(bool isCompact) {
+    return Container(
+      height: isCompact ? 32 : 36,
+      decoration: BoxDecoration(
+        color: AppTheme.darkBackground.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        children: [
+          _buildFilterChip(
+            label: 'الكل',
+            value: 'all',
+            groupValue: _selectedType,
+            onChanged: (value) => setState(() => _selectedType = value),
+            isCompact: isCompact,
+          ),
+          _buildFilterChip(
+            label: 'إضافة',
+            value: 'create',
+            groupValue: _selectedType,
+            onChanged: (value) => setState(() => _selectedType = value),
+            isCompact: isCompact,
+          ),
+          _buildFilterChip(
+            label: 'تحديث',
+            value: 'update',
+            groupValue: _selectedType,
+            onChanged: (value) => setState(() => _selectedType = value),
+            isCompact: isCompact,
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildActionsChart() {
-    final data = _getActionsData();
-    
+  Widget _buildFilterChip({
+    required String label,
+    required String value,
+    required String groupValue,
+    required Function(String) onChanged,
+    required bool isCompact,
+  }) {
+    final isSelected = value == groupValue;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onChanged(value),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: isSelected
+                ? LinearGradient(
+                    colors: [
+                      AppTheme.primaryPurple.withValues(alpha: 0.3),
+                      AppTheme.primaryViolet.withValues(alpha: 0.2),
+                    ],
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: AppTextStyles.caption.copyWith(
+                color: isSelected ? AppTheme.primaryPurple : AppTheme.textMuted,
+                fontWeight: isSelected ? FontWeight.w600 : null,
+                fontSize: isCompact ? 10 : 11,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChart(bool isCompact) {
+    final data = _prepareChartData();
+    final maxValue =
+        data.isEmpty ? 1 : data.map((e) => e.value).reduce(math.max);
+
     return AnimatedBuilder(
       animation: _chartAnimation,
       builder: (context, child) {
-        return LineChart(
-          LineChartData(
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: false,
-              horizontalInterval: 20,
-              getDrawingHorizontalLine: (value) {
-                return FlLine(
-                  color: AppTheme.darkBorder.withOpacity(0.1),
-                  strokeWidth: 1,
-                );
-              },
+        return Column(
+          children: [
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: data.map((item) {
+                  final barHeight =
+                      (item.value / maxValue) * _chartAnimation.value;
+
+                  return Expanded(
+                    child: Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: isCompact ? 2 : 4),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            item.value.toString(),
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppTheme.textMuted,
+                              fontSize: isCompact ? 9 : 10,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Expanded(
+                            child: Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    item.color,
+                                    item.color.withValues(alpha: 0.5),
+                                  ],
+                                ),
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(8),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: item.color.withValues(alpha: 0.3),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              alignment: Alignment.bottomCenter,
+                              child: FractionallySizedBox(
+                                heightFactor: barHeight,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        item.color,
+                                        item.color.withValues(alpha: 0.7),
+                                      ],
+                                    ),
+                                    borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
-            titlesData: FlTitlesData(
-              show: true,
-              rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 30,
-                  interval: 1,
-                  getTitlesWidget: (value, meta) {
-                    final days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8),
+            const SizedBox(height: 12),
+            Container(
+              height: 1,
+              color: AppTheme.darkBorder.withValues(alpha: 0.2),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: data.map((item) {
+                return Expanded(
+                  child: Center(
+                    child: RotatedBox(
+                      quarterTurns: isCompact ? 1 : 0,
                       child: Text(
-                        days[value.toInt() % 7],
+                        item.label,
                         style: AppTextStyles.caption.copyWith(
                           color: AppTheme.textMuted,
-                          fontSize: 10,
+                          fontSize: isCompact ? 8 : 10,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    );
-                  },
-                ),
-              ),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  interval: 20,
-                  reservedSize: 40,
-                  getTitlesWidget: (value, meta) {
-                    return Text(
-                      value.toInt().toString(),
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.textMuted,
-                        fontSize: 10,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            borderData: FlBorderData(show: false),
-            minX: 0,
-            maxX: 6,
-            minY: 0,
-            maxY: data.reduce(math.max) * 1.2,
-            lineBarsData: [
-              LineChartBarData(
-                spots: data.asMap().entries.map((e) {
-                  return FlSpot(e.key.toDouble(), e.value * _chartAnimation.value);
-                }).toList(),
-                isCurved: true,
-                gradient: AppTheme.primaryGradient,
-                barWidth: 3,
-                isStrokeCapRound: true,
-                dotData: FlDotData(
-                  show: true,
-                  getDotPainter: (spot, percent, barData, index) {
-                    return FlDotCirclePainter(
-                      radius: 4,
-                      color: AppTheme.primaryBlue,
-                      strokeWidth: 2,
-                      strokeColor: AppTheme.darkCard,
-                    );
-                  },
-                ),
-                belowBarData: BarAreaData(
-                  show: true,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppTheme.primaryBlue.withOpacity(0.2),
-                      AppTheme.primaryBlue.withOpacity(0.0),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildUsersChart() {
-    final data = _getUsersData();
-    final maxValue = data.values.reduce(math.max).toDouble();
-    
-    return AnimatedBuilder(
-      animation: _chartAnimation,
-      builder: (context, child) {
-        return BarChart(
-          BarChartData(
-            alignment: BarChartAlignment.spaceAround,
-            maxY: maxValue * 1.2,
-            barTouchData: BarTouchData(enabled: false),
-            titlesData: FlTitlesData(
-              show: true,
-              rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (value, meta) {
-                    final users = data.keys.toList();
-                    if (value.toInt() < users.length) {
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          users[value.toInt()].split(' ').first,
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppTheme.textMuted,
-                            fontSize: 10,
-                          ),
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 40,
-                  interval: maxValue / 5,
-                  getTitlesWidget: (value, meta) {
-                    return Text(
-                      value.toInt().toString(),
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.textMuted,
-                        fontSize: 10,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: false,
-              horizontalInterval: maxValue / 5,
-              getDrawingHorizontalLine: (value) {
-                return FlLine(
-                  color: AppTheme.darkBorder.withOpacity(0.1),
-                  strokeWidth: 1,
                 );
-              },
+              }).toList(),
             ),
-            borderData: FlBorderData(show: false),
-            barGroups: data.entries.map((entry) {
-              final index = data.keys.toList().indexOf(entry.key);
-              return BarChartGroupData(
-                x: index,
-                barRods: [
-                  BarChartRodData(
-                    toY: entry.value.toDouble() * _chartAnimation.value,
-                    gradient: AppTheme.primaryGradient,
-                    width: 20,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(6),
-                    ),
-                  ),
-                ],
-              );
-            }).toList(),
-          ),
+          ],
         );
       },
     );
   }
 
-  Widget _buildTablesChart() {
-    final data = _getTablesData();
-    
-    return AnimatedBuilder(
-      animation: _chartAnimation,
-      builder: (context, child) {
-        return PieChart(
-          PieChartData(
-            sectionsSpace: 2,
-            centerSpaceRadius: 60,
-            sections: data.entries.map((entry) {
-              final index = data.keys.toList().indexOf(entry.key);
-              final colors = [
-                AppTheme.primaryBlue,
-                AppTheme.primaryPurple,
-                AppTheme.primaryCyan,
-                AppTheme.success,
-                AppTheme.warning,
-              ];
-              
-              return PieChartSectionData(
-                color: colors[index % colors.length],
-                value: entry.value.toDouble() * _chartAnimation.value,
-                title: '${entry.value}',
-                radius: 50,
-                titleStyle: AppTextStyles.caption.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-                badgeWidget: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.darkCard,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    entry.key,
-                    style: AppTextStyles.caption.copyWith(
-                      color: colors[index % colors.length],
-                      fontSize: 10,
-                    ),
-                  ),
-                ),
-                badgePositionPercentageOffset: 1.3,
-              );
-            }).toList(),
-          ),
-        );
-      },
-    );
-  }
-
-  List<double> _getActionsData() {
-    // تحليل البيانات حسب الأيام
+  List<ChartData> _prepareChartData() {
+    // Simulate data preparation based on selected filters
     final now = DateTime.now();
-    final data = List<double>.filled(7, 0);
-    
-    for (final log in widget.auditLogs) {
-      final diff = now.difference(log.timestamp).inDays;
-      if (diff < 7) {
-        data[6 - diff]++;
+    List<ChartData> data = [];
+
+    if (_selectedPeriod == 'week') {
+      for (int i = 6; i >= 0; i--) {
+        final date = now.subtract(Duration(days: i));
+        final count = _getCountForDate(date);
+        data.add(ChartData(
+          label: _getDayLabel(date),
+          value: count,
+          color: _getColorForValue(count),
+        ));
+      }
+    } else if (_selectedPeriod == 'month') {
+      for (int i = 3; i >= 0; i--) {
+        final weekStart = now.subtract(Duration(days: i * 7));
+        final count = _getCountForWeek(weekStart);
+        data.add(ChartData(
+          label: 'أسبوع ${4 - i}',
+          value: count,
+          color: _getColorForValue(count),
+        ));
+      }
+    } else {
+      for (int i = 11; i >= 0; i--) {
+        final month = DateTime(now.year, now.month - i, 1);
+        final count = _getCountForMonth(month);
+        data.add(ChartData(
+          label: _getMonthLabel(month),
+          value: count,
+          color: _getColorForValue(count),
+        ));
       }
     }
-    
+
     return data;
   }
 
-  Map<String, int> _getUsersData() {
-    final Map<String, int> data = {};
-    
-    for (final log in widget.auditLogs) {
-      data[log.username] = (data[log.username] ?? 0) + 1;
-    }
-    
-    // أعلى 5 مستخدمين
-    final sorted = data.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    
-    return Map.fromEntries(sorted.take(5));
+  int _getCountForDate(DateTime date) {
+    return widget.auditLogs.where((log) {
+      final logDate = log.timestamp;
+      return logDate.year == date.year &&
+          logDate.month == date.month &&
+          logDate.day == date.day &&
+          (_selectedType == 'all' || log.action.toLowerCase() == _selectedType);
+    }).length;
   }
 
-  Map<String, int> _getTablesData() {
-    final Map<String, int> data = {};
-    
-    for (final log in widget.auditLogs) {
-      data[log.tableName] = (data[log.tableName] ?? 0) + 1;
-    }
-    
-    // أعلى 5 جداول
-    final sorted = data.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    
-    return Map.fromEntries(sorted.take(5));
+  int _getCountForWeek(DateTime weekStart) {
+    final weekEnd = weekStart.add(const Duration(days: 7));
+    return widget.auditLogs.where((log) {
+      return log.timestamp.isAfter(weekStart) &&
+          log.timestamp.isBefore(weekEnd) &&
+          (_selectedType == 'all' || log.action.toLowerCase() == _selectedType);
+    }).length;
   }
+
+  int _getCountForMonth(DateTime month) {
+    return widget.auditLogs.where((log) {
+      final logDate = log.timestamp;
+      return logDate.year == month.year &&
+          logDate.month == month.month &&
+          (_selectedType == 'all' || log.action.toLowerCase() == _selectedType);
+    }).length;
+  }
+
+  String _getDayLabel(DateTime date) {
+    const days = [
+      'الأحد',
+      'الإثنين',
+      'الثلاثاء',
+      'الأربعاء',
+      'الخميس',
+      'الجمعة',
+      'السبت'
+    ];
+    return days[date.weekday % 7];
+  }
+
+  String _getMonthLabel(DateTime date) {
+    const months = [
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر'
+    ];
+    return months[date.month - 1];
+  }
+
+  Color _getColorForValue(int value) {
+    if (value == 0) return AppTheme.textMuted.withValues(alpha: 0.3);
+    if (value < 5) return AppTheme.primaryBlue;
+    if (value < 10) return AppTheme.primaryPurple;
+    if (value < 20) return AppTheme.warning;
+    return AppTheme.success;
+  }
+}
+
+class ChartData {
+  final String label;
+  final int value;
+  final Color color;
+
+  ChartData({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 }
