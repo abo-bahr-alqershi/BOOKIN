@@ -48,6 +48,13 @@ class CurrenciesRepositoryImpl implements CurrenciesRepository {
     }
 
     try {
+      // Validation: ensure at most one default currency
+      final defaultCount = currencies.where((c) => c.isDefault).length;
+      if (defaultCount > 1) {
+        return const Left(ServerFailure(
+            'لا يمكن حفظ أكثر من عملة افتراضية. الرجاء إلغاء الافتراضية للعملات الأخرى.'));
+      }
+
       final currencyModels = currencies
           .map((c) => CurrencyModel.fromEntity(c))
           .toList();
@@ -105,6 +112,8 @@ class CurrenciesRepositoryImpl implements CurrenciesRepository {
     try {
       final currentCurrencies = await remoteDataSource.getCurrencies();
       
+      // If there is already a default different than requested, allow replacing
+      // but ensure only one remains default after update below.
       final updatedCurrencies = currentCurrencies.map((c) {
         return CurrencyModel(
           code: c.code,
@@ -117,6 +126,13 @@ class CurrenciesRepositoryImpl implements CurrenciesRepository {
         );
       }).toList();
       
+      // Extra safety: assert exactly one default
+      final defaults = updatedCurrencies.where((c) => c.isDefault).length;
+      if (defaults != 1) {
+        return const Left(ServerFailure(
+            'حالة غير صالحة: يجب أن تكون هناك عملة افتراضية واحدة فقط'));
+      }
+
       final result = await remoteDataSource.saveCurrencies(updatedCurrencies);
       
       if (result) {
