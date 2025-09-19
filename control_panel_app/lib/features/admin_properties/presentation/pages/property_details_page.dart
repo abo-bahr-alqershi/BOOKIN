@@ -745,7 +745,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                   children: [
                     PropertyImageGallery(
                       propertyId: property.id,
-                      // images: property.images.map((img) => img.url).toList(),
+                      initialImages: property.images,
                       onImagesChanged: (_) {},
                       isReadOnly: true,
                     ),
