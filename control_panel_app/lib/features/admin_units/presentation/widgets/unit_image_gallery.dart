@@ -700,30 +700,34 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                     top: isHovered ? 8 : -40,
                     left: 8,
                     right: 8,
-                    child: Center(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final actions = <Widget>[
                           _buildQuickActionButton(
                             icon: Icons.visibility_outlined,
                             onTap: () => _previewLocalImage(imagePath),
                           ),
-                          if (!isPrimary) ...[
-                            const SizedBox(width: 8),
+                          if (!isPrimary)
                             _buildQuickActionButton(
                               icon: Icons.star_outline_rounded,
                               onTap: () => _setLocalPrimaryImage(index),
                               color: AppTheme.warning,
                             ),
-                          ],
-                          const SizedBox(width: 8),
                           _buildQuickActionButton(
                             icon: Icons.delete_outline_rounded,
                             onTap: () => _confirmDeleteLocalImage(index),
                             color: AppTheme.error,
                           ),
-                        ],
-                      ),
+                        ];
+                        return Center(
+                          child: Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: actions,
+                          ),
+                        );
+                      },
                     ),
                   ),
                 
@@ -1484,30 +1488,34 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                     top: isHovered ? 8 : -40,
                     left: 8,
                     right: 8,
-                    child: Center(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final actions = <Widget>[
                           _buildQuickActionButton(
                             icon: Icons.visibility_outlined,
                             onTap: () => _previewImage(image),
                           ),
-                          if (!isPrimary) ...[
-                            const SizedBox(width: 8),
+                          if (!isPrimary)
                             _buildQuickActionButton(
                               icon: Icons.star_outline_rounded,
                               onTap: () => _setPrimaryImage(index),
                               color: AppTheme.warning,
                             ),
-                          ],
-                          const SizedBox(width: 8),
                           _buildQuickActionButton(
                             icon: Icons.delete_outline_rounded,
                             onTap: () => _confirmDeleteImage(image),
                             color: AppTheme.error,
                           ),
-                        ],
-                      ),
+                        ];
+                        return Center(
+                          child: Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: actions,
+                          ),
+                        );
+                      },
                     ),
                   ),
                 
