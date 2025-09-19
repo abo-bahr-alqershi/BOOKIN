@@ -56,6 +56,17 @@ class CurrenciesRemoteDataSourceImpl implements CurrenciesRemoteDataSource {
       // API returns ResultDto without data; Success indicates deletion
       return response.data['success'] == true;
     } on DioException catch (e) {
+      // Fallback for servers that don't support DELETE endpoint yet (legacy behavior)
+      if (e.response?.statusCode == 404) {
+        try {
+          final current = await getCurrencies();
+          final updated = current.where((c) => c.code != code).toList();
+          final saved = await saveCurrencies(updated);
+          return saved;
+        } on DioException catch (inner) {
+          throw _handleDioError(inner);
+        }
+      }
       throw _handleDioError(e);
     }
   }
