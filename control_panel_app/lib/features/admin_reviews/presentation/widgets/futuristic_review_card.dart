@@ -12,7 +12,7 @@ class FuturisticReviewCard extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback onApprove;
   final VoidCallback onDelete;
-  
+
   const FuturisticReviewCard({
     super.key,
     required this.review,
@@ -20,7 +20,7 @@ class FuturisticReviewCard extends StatefulWidget {
     required this.onApprove,
     required this.onDelete,
   });
-  
+
   @override
   State<FuturisticReviewCard> createState() => _FuturisticReviewCardState();
 }
@@ -30,7 +30,7 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   bool _isHovered = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -38,7 +38,7 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: 0.98,
@@ -47,13 +47,13 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
       curve: Curves.easeInOut,
     ));
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -125,17 +125,14 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                               ),
                             ),
                           ),
-                        
+
                         // المحتوى
                         Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: LayoutBuilder(
-                            builder: (context, constraints) {
-                              final isCompact = constraints.maxHeight < 220;
-                              return Column(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
+                            children: [
                               // الرأس
                               Row(
                                 children: [
@@ -148,7 +145,8 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                       gradient: AppTheme.primaryGradient,
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppTheme.glowBlue.withOpacity(0.3),
+                                          color: AppTheme.glowBlue
+                                              .withOpacity(0.3),
                                           blurRadius: 15,
                                           spreadRadius: 2,
                                         ),
@@ -156,8 +154,11 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                     ),
                                     child: Center(
                                       child: Text(
-                                        widget.review.userName.substring(0, 2).toUpperCase(),
-                                        style: AppTextStyles.bodyMedium.copyWith(
+                                        widget.review.userName
+                                            .substring(0, 2)
+                                            .toUpperCase(),
+                                        style:
+                                            AppTextStyles.bodyMedium.copyWith(
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -165,15 +166,17 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                     ),
                                   ),
                                   const SizedBox(width: 12),
-                                  
+
                                   // معلومات المستخدم
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           widget.review.userName,
-                                          style: AppTextStyles.bodyMedium.copyWith(
+                                          style:
+                                              AppTextStyles.bodyMedium.copyWith(
                                             fontWeight: FontWeight.w600,
                                             color: AppTheme.textWhite,
                                           ),
@@ -190,31 +193,37 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                       ],
                                     ),
                                   ),
-                                  
+
                                   // شارة الحالة
                                   _buildStatusBadge(),
                                 ],
                               ),
-                              
-                              SizedBox(height: isCompact ? 12 : 16),
-                              
+
+                              const SizedBox(height: 14),
+
                               // التقييم
                               Row(
                                 children: [
                                   ...List.generate(5, (index) {
-                                    final filled = index < widget.review.averageRating.floor();
+                                    final filled = index <
+                                        widget.review.averageRating.floor();
                                     return Padding(
                                       padding: const EdgeInsets.only(left: 2),
                                       child: Icon(
-                                        filled ? Icons.star_rounded : Icons.star_outline_rounded,
-                                        color: filled ? AppTheme.warning : AppTheme.textMuted,
+                                        filled
+                                            ? Icons.star_rounded
+                                            : Icons.star_outline_rounded,
+                                        color: filled
+                                            ? AppTheme.warning
+                                            : AppTheme.textMuted,
                                         size: 18,
                                       ),
                                     );
                                   }),
                                   const SizedBox(width: 8),
                                   Text(
-                                    widget.review.averageRating.toStringAsFixed(1),
+                                    widget.review.averageRating
+                                        .toStringAsFixed(1),
                                     style: AppTextStyles.bodySmall.copyWith(
                                       fontWeight: FontWeight.w600,
                                       color: AppTheme.warning,
@@ -222,110 +231,111 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                   ),
                                 ],
                               ),
-                              
-                              SizedBox(height: isCompact ? 8 : 12),
-                              
-                              // معاينة التعليق + المؤشرات ضمن Flexible لتجنّب فيضان الارتفاع
-                              Flexible(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      widget.review.comment,
-                                      style: AppTextStyles.bodySmall.copyWith(
-                                        height: 1.5,
-                                        color: AppTheme.textLight,
-                                      ),
-                                      maxLines: isCompact ? 2 : 3,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    if (widget.review.images.isNotEmpty || widget.review.hasResponse)
-                                      Padding(
-                                        padding: EdgeInsets.only(top: isCompact ? 6 : 10),
-                                        child: Wrap(
-                                          spacing: 8,
-                                          runSpacing: 4,
-                                          children: [
-                                            if (widget.review.images.isNotEmpty) ...[
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                  horizontal: 8,
-                                                  vertical: 4,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(12),
-                                                  color: AppTheme.primaryBlue.withOpacity(0.1),
-                                                  border: Border.all(
-                                                    color: AppTheme.primaryBlue.withOpacity(0.3),
-                                                    width: 0.5,
-                                                  ),
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.image,
-                                                      size: 12,
-                                                      color: AppTheme.primaryBlue,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      '${widget.review.images.length}',
-                                                      style: AppTextStyles.caption.copyWith(
-                                                        fontWeight: FontWeight.w600,
-                                                        color: AppTheme.primaryBlue,
-                                                      ),
-                                                    ),
-                                                  ],
+
+                              const SizedBox(height: 10),
+
+                              // عرض كامل للتعليق
+                              Text(
+                                widget.review.comment,
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  height: 1.5,
+                                  color: AppTheme.textLight,
+                                ),
+                                softWrap: true,
+                              ),
+                              if (widget.review.images.isNotEmpty ||
+                                  widget.review.hasResponse)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 10),
+                                  child: Wrap(
+                                    spacing: 8,
+                                    runSpacing: 4,
+                                    children: [
+                                      if (widget.review.images.isNotEmpty) ...[
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            color: AppTheme.primaryBlue
+                                                .withOpacity(0.1),
+                                            border: Border.all(
+                                              color: AppTheme.primaryBlue
+                                                  .withOpacity(0.3),
+                                              width: 0.5,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.image,
+                                                size: 12,
+                                                color: AppTheme.primaryBlue,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '${widget.review.images.length}',
+                                                style: AppTextStyles.caption
+                                                    .copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppTheme.primaryBlue,
                                                 ),
                                               ),
                                             ],
-                                            if (widget.review.hasResponse)
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                  horizontal: 8,
-                                                  vertical: 4,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(12),
-                                                  color: AppTheme.success.withOpacity(0.1),
-                                                  border: Border.all(
-                                                    color: AppTheme.success.withOpacity(0.3),
-                                                    width: 0.5,
-                                                  ),
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.reply,
-                                                      size: 12,
-                                                      color: AppTheme.success,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      'تم الرد',
-                                                      style: AppTextStyles.caption.copyWith(
-                                                        fontWeight: FontWeight.w600,
-                                                        color: AppTheme.success,
-                                                      ),
-                                                    ),
-                                                  ],
+                                          ),
+                                        ),
+                                      ],
+                                      if (widget.review.hasResponse)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            color: AppTheme.success
+                                                .withOpacity(0.1),
+                                            border: Border.all(
+                                              color: AppTheme.success
+                                                  .withOpacity(0.3),
+                                              width: 0.5,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.reply,
+                                                size: 12,
+                                                color: AppTheme.success,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'تم الرد',
+                                                style: AppTextStyles.caption
+                                                    .copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppTheme.success,
                                                 ),
                                               ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
 
-                              SizedBox(height: isCompact ? 10 : 14),
+                              const SizedBox(height: 4),
 
                               // التذييل
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   // التاريخ
                                   Row(
@@ -344,7 +354,7 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                       ),
                                     ],
                                   ),
-                                  
+
                                   // الإجراءات
                                   Row(
                                     children: [
@@ -364,9 +374,7 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                   ),
                                 ],
                               ),
-                                ],
-                              );
-                            },
+                            ],
                           ),
                         ),
                       ],
@@ -380,14 +388,14 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
       },
     );
   }
-  
+
   Widget _buildStatusBadge() {
     final color = widget.review.isPending
         ? AppTheme.warning
         : widget.review.isApproved
             ? AppTheme.success
             : AppTheme.error;
-    
+
     return Container(
       width: 8,
       height: 8,
@@ -404,7 +412,7 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
       ),
     );
   }
-  
+
   Widget _buildActionButton({
     required IconData icon,
     required Color color,
@@ -433,11 +441,11 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
       ),
     );
   }
-  
+
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays == 0) {
       if (difference.inHours == 0) {
         return 'منذ ${difference.inMinutes} دقيقة';
