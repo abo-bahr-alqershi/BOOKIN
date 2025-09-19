@@ -30,9 +30,8 @@ class LoadCitiesEvent extends CitiesEvent {
 
 /// Save cities event
 class SaveCitiesEvent extends CitiesEvent {
-  final List<City> cities;
-
-  const SaveCitiesEvent({required this.cities});
+  final List<dynamic> cities; // Keep dynamic to avoid large diffs; actual type is City
+  const SaveCitiesEvent(this.cities);
 
   @override
   List<Object?> get props => [cities];
@@ -40,9 +39,8 @@ class SaveCitiesEvent extends CitiesEvent {
 
 /// Create city event
 class CreateCityEvent extends CitiesEvent {
-  final City city;
-
-  const CreateCityEvent({required this.city});
+  final dynamic city; // City
+  const CreateCityEvent(this.city);
 
   @override
   List<Object?> get props => [city];
@@ -51,12 +49,8 @@ class CreateCityEvent extends CitiesEvent {
 /// Update city event
 class UpdateCityEvent extends CitiesEvent {
   final String oldName;
-  final City city;
-
-  const UpdateCityEvent({
-    required this.oldName,
-    required this.city,
-  });
+  final dynamic city; // City
+  const UpdateCityEvent({required this.oldName, required this.city});
 
   @override
   List<Object?> get props => [oldName, city];
@@ -65,8 +59,7 @@ class UpdateCityEvent extends CitiesEvent {
 /// Delete city event
 class DeleteCityEvent extends CitiesEvent {
   final String name;
-
-  const DeleteCityEvent({required this.name});
+  const DeleteCityEvent(this.name);
 
   @override
   List<Object?> get props => [name];
@@ -75,8 +68,7 @@ class DeleteCityEvent extends CitiesEvent {
 /// Search cities event
 class SearchCitiesEvent extends CitiesEvent {
   final String query;
-
-  const SearchCitiesEvent({required this.query});
+  const SearchCitiesEvent(this.query);
 
   @override
   List<Object?> get props => [query];
@@ -89,11 +81,7 @@ class LoadCitiesStatisticsEvent extends CitiesEvent {}
 class UploadCityImageEvent extends CitiesEvent {
   final String cityName;
   final String imagePath;
-
-  const UploadCityImageEvent({
-    required this.cityName,
-    required this.imagePath,
-  });
+  const UploadCityImageEvent({required this.cityName, required this.imagePath});
 
   @override
   List<Object?> get props => [cityName, imagePath];
@@ -103,25 +91,35 @@ class UploadCityImageEvent extends CitiesEvent {
 class DeleteCityImageEvent extends CitiesEvent {
   final String cityName;
   final String imageUrl;
-
-  const DeleteCityImageEvent({
-    required this.cityName,
-    required this.imageUrl,
-  });
+  const DeleteCityImageEvent({required this.cityName, required this.imageUrl});
 
   @override
   List<Object?> get props => [cityName, imageUrl];
 }
 
 /// Refresh cities event
-class RefreshCitiesEvent extends CitiesEvent {}
+class RefreshCitiesEvent extends CitiesEvent {
+  const RefreshCitiesEvent();
+
+  @override
+  List<Object?> get props => [];
+}
 
 /// Change page event
 class ChangeCitiesPageEvent extends CitiesEvent {
   final int page;
-
-  const ChangeCitiesPageEvent({required this.page});
+  const ChangeCitiesPageEvent(this.page);
 
   @override
   List<Object?> get props => [page];
+}
+
+// Internal event for upload progress
+class _CityImageProgressInternalEvent extends CitiesEvent {
+  final String cityName;
+  final double progress;
+  const _CityImageProgressInternalEvent(this.cityName, this.progress);
+
+  @override
+  List<Object?> get props => [cityName, progress];
 }

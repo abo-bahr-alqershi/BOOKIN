@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/api_exceptions.dart';
 import '../../../../core/network/network_info.dart';
@@ -230,10 +231,10 @@ class CitiesRepositoryImpl implements CitiesRepository {
   }
 
   @override
-  Future<Either<Failure, String>> uploadCityImage(String imagePath) async {
+  Future<Either<Failure, String>> uploadCityImage(String imagePath, {ProgressCallback? onSendProgress}) async {
     if (await networkInfo.isConnected) {
       try {
-        final result = await remoteDataSource.uploadCityImage(imagePath);
+        final result = await remoteDataSource.uploadCityImage(imagePath, onSendProgress: onSendProgress);
         return Right(result);
       } on ApiException catch (e) {
         return Left(ServerFailure(e.message));

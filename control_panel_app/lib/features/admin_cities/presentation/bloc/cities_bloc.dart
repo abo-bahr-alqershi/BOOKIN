@@ -51,6 +51,7 @@ class CitiesBloc extends Bloc<CitiesEvent, CitiesState> {
     on<DeleteCityImageEvent>(_onDeleteImage);
     on<RefreshCitiesEvent>(_onRefreshCities);
     on<ChangeCitiesPageEvent>(_onChangePage);
+    on<_CityImageProgressInternalEvent>(_onCityImageProgressInternal);
   }
 
   Future<void> _onLoadCities(
@@ -281,6 +282,12 @@ class CitiesBloc extends Bloc<CitiesEvent, CitiesState> {
     final result = await uploadCityImage(UploadCityImageParams(
       cityName: event.cityName,
       imagePath: event.imagePath,
+      onSendProgress: (sent, total) {
+        if (total > 0) {
+          final p = sent / total;
+          add(_CityImageProgressInternalEvent(event.cityName, p));
+        }
+      },
     ));
 
     result.fold(
@@ -303,6 +310,17 @@ class CitiesBloc extends Bloc<CitiesEvent, CitiesState> {
         }
       },
     );
+  }
+
+  // Internal event to reflect upload progress in state safely
+  void _onCityImageProgressInternal(
+    _CityImageProgressInternalEvent event,
+    Emitter<CitiesState> emit,
+  ) {
+    emit(CityImageUploadProgress(
+      progress: event.progress,
+      cityName: event.cityName,
+    ));
   }
 
   Future<void> _onDeleteImage(
