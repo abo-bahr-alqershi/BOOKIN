@@ -75,11 +75,14 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
           _scrollController.position.maxScrollExtent - 200) {
         final state = context.read<AmenitiesBloc>().state;
         if (state is AmenitiesLoaded && state.amenities.hasNextPage) {
-          context.read<AmenitiesBloc>().add(
-                ChangePageEvent(
-                  pageNumber: state.amenities.nextPageNumber!,
-                ),
-              );
+          final nextPage = state.amenities.nextPageNumber;
+          if (nextPage != null) {
+            context.read<AmenitiesBloc>().add(
+                  ChangePageEvent(
+                    pageNumber: nextPage,
+                  ),
+                );
+          }
         }
       }
     });
@@ -629,61 +632,73 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
   }
 
   Widget _buildStatsCards(AmenityStats stats) {
+    // Avoid wrapping Expanded in animation ParentDataWidget wrappers.
     return Row(
-      children: AnimationConfiguration.toStaggeredList(
-        duration: const Duration(milliseconds: 375),
-        childAnimationBuilder: (widget) => SlideAnimation(
-          horizontalOffset: 50.0,
-          child: FadeInAnimation(
-            child: widget,
+      children: [
+        Expanded(
+          child: SlideAnimation(
+            horizontalOffset: 50.0,
+            child: FadeInAnimation(
+              child: AmenityStatsCard(
+                title: 'إجمالي المرافق',
+                value: stats.totalAmenities.toString(),
+                icon: Icons.category_rounded,
+                gradient: LinearGradient(
+                  colors: [AppTheme.primaryPurple, AppTheme.primaryViolet],
+                ),
+              ),
+            ),
           ),
         ),
-        children: [
-          Expanded(
-            child: AmenityStatsCard(
-              title: 'إجمالي المرافق',
-              value: stats.totalAmenities.toString(),
-              icon: Icons.category_rounded,
-              gradient: LinearGradient(
-                colors: [AppTheme.primaryPurple, AppTheme.primaryViolet],
+        const SizedBox(width: 12),
+        Expanded(
+          child: SlideAnimation(
+            horizontalOffset: 50.0,
+            child: FadeInAnimation(
+              child: AmenityStatsCard(
+                title: 'المرافق النشطة',
+                value: stats.activeAmenities.toString(),
+                icon: Icons.check_circle_rounded,
+                gradient: LinearGradient(
+                  colors: [AppTheme.success, AppTheme.neonGreen],
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: AmenityStatsCard(
-              title: 'المرافق النشطة',
-              value: stats.activeAmenities.toString(),
-              icon: Icons.check_circle_rounded,
-              gradient: LinearGradient(
-                colors: [AppTheme.success, AppTheme.neonGreen],
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: SlideAnimation(
+            horizontalOffset: 50.0,
+            child: FadeInAnimation(
+              child: AmenityStatsCard(
+                title: 'إجمالي الإسنادات',
+                value: stats.totalAssignments.toString(),
+                icon: Icons.link_rounded,
+                gradient: LinearGradient(
+                  colors: [AppTheme.primaryBlue, AppTheme.primaryCyan],
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: AmenityStatsCard(
-              title: 'إجمالي الإسنادات',
-              value: stats.totalAssignments.toString(),
-              icon: Icons.link_rounded,
-              gradient: LinearGradient(
-                colors: [AppTheme.primaryBlue, AppTheme.primaryCyan],
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: SlideAnimation(
+            horizontalOffset: 50.0,
+            child: FadeInAnimation(
+              child: AmenityStatsCard(
+                title: 'الإيرادات',
+                value: '\$${stats.totalRevenue.toStringAsFixed(0)}',
+                icon: Icons.attach_money_rounded,
+                gradient: LinearGradient(
+                  colors: [AppTheme.warning, AppTheme.neonPurple],
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: AmenityStatsCard(
-              title: 'الإيرادات',
-              value: '\$${stats.totalRevenue.toStringAsFixed(0)}',
-              icon: Icons.attach_money_rounded,
-              gradient: LinearGradient(
-                colors: [AppTheme.warning, AppTheme.neonPurple],
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -804,15 +819,26 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
   }
 
   Widget _buildTableView(AmenitiesLoaded state) {
-    return SliverToBoxAdapter(
+    return SliverFillRemaining(
+      hasScrollBody: true,
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: FuturisticAmenitiesTable(
-          amenities: state.amenities.items,
-          onAmenitySelected: (amenity) => _navigateToDetails(amenity.id),
-          onEditAmenity: (amenity) => _navigateToEditAmenity(amenity.id),
-          onDeleteAmenity: (amenity) => _showDeleteConfirmation(amenity),
-          onAssignAmenity: (amenity) => _showAssignAmenityDialog(amenity),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight,
+                maxHeight: constraints.maxHeight,
+              ),
+              child: FuturisticAmenitiesTable(
+                amenities: state.amenities.items,
+                onAmenitySelected: (amenity) => _navigateToDetails(amenity.id),
+                onEditAmenity: (amenity) => _navigateToEditAmenity(amenity.id),
+                onDeleteAmenity: (amenity) => _showDeleteConfirmation(amenity),
+                onAssignAmenity: (amenity) => _showAssignAmenityDialog(amenity),
+              ),
+            );
+          },
         ),
       ),
     );

@@ -382,14 +382,16 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
   
   Widget _buildExpandedFilters(bool isDesktop) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // فلتر التقييم
         _buildRatingFilter(),
         
         const SizedBox(height: 16),
         
-        // فلاتر الحالة
+        // فلاتر الحالة + التاريخ بمحاذاة واحدة
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: _buildStatusFilter(),
@@ -412,80 +414,83 @@ class _ReviewFiltersWidgetState extends State<ReviewFiltersWidget>
   }
   
   Widget _buildRatingFilter() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'الحد الأدنى للتقييم',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textLight,
-            fontFamily: 'Cairo',
+    return Container(
+      alignment: Alignment.topLeft,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'الحد الأدنى للتقييم',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textLight,
+              fontFamily: 'Cairo',
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: List.generate(5, (index) {
-            final rating = (index + 1).toDouble();
-            final isSelected = _minRating == rating;
-            
-            return GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  setState(() {
-                    _minRating = isSelected ? null : rating;
-                  });
-                  _applyFilters();
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: isSelected
-                        ? AppTheme.warning.withOpacity(0.2)
-                        : AppTheme.inputBackground.withOpacity(0.3),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppTheme.warning.withOpacity(0.5)
-                          : AppTheme.darkBorder.withOpacity(0.2),
-                      width: 0.5,
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: List.generate(5, (index) {
+              final rating = (index + 1).toDouble();
+              final isSelected = _minRating == rating;
+              
+              return GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() {
+                      _minRating = isSelected ? null : rating;
+                    });
+                    _applyFilters();
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
                     ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.star_rounded,
-                        size: 16,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: isSelected
+                          ? AppTheme.warning.withOpacity(0.2)
+                          : AppTheme.inputBackground.withOpacity(0.3),
+                      border: Border.all(
                         color: isSelected
-                            ? AppTheme.warning
-                            : AppTheme.textMuted,
+                            ? AppTheme.warning.withOpacity(0.5)
+                            : AppTheme.darkBorder.withOpacity(0.2),
+                        width: 0.5,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        rating.toStringAsFixed(0),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.star_rounded,
+                          size: 16,
                           color: isSelected
                               ? AppTheme.warning
                               : AppTheme.textMuted,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 4),
+                        Text(
+                          rating.toStringAsFixed(0),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected
+                                ? AppTheme.warning
+                                : AppTheme.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-            );
-          }),
-        ),
-      ],
+              );
+            }),
+          ),
+        ],
+      ),
     );
   }
   
