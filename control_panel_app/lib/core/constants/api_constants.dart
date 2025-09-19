@@ -4,8 +4,8 @@ class ApiConstants {
   // Base URLs
   static const String baseUrl = String.fromEnvironment(
     'BASE_URL',
-    defaultValue: 'http://ameenalqershi-001-site1.mtempurl.com',
-    // defaultValue: 'http://192.168.0.207:5000/',
+    // Prefer local backend during development; override with --dart-define=BASE_URL
+    defaultValue: 'http://localhost:5000',
   );
 
   // Derived base URLs for different API areas
@@ -17,14 +17,12 @@ class ApiConstants {
 
   static const String imageBaseUrl = String.fromEnvironment(
     'IMAGE_BASE_URL',
-    defaultValue: 'http://ameenalqershi-001-site1.mtempurl.com',
-    // defaultValue: 'http://192.168.0.207:5000',
+    defaultValue: 'http://localhost:5000',
   );
 
   static const String socketUrl = String.fromEnvironment(
     'SOCKET_URL',
-    defaultValue: 'wss://ws.ameenalqershi-001-site1.mtempurl.com',
-    // defaultValue: 'wss://192.168.0.207:5000',
+    defaultValue: 'ws://localhost:5000',
   );
 
   // Timeouts
