@@ -127,7 +127,7 @@ namespace YemenBooking.Infrastructure.Services
             if (hasPropertyRefs) reasons.Add("مرتبطة بعقارات");
 
             var hasUnitRefs = await _db.Units.AsNoTracking()
-                .AnyAsync(u => EF.Property<string>(u, "BasePrice_Currency") == normalized && !u.IsDeleted, cancellationToken);
+                .AnyAsync(u => u.BasePrice.Currency == normalized && !u.IsDeleted, cancellationToken);
             if (hasUnitRefs) reasons.Add("مرتبطة بوحدات");
 
             var hasPricingRuleRefs = await _db.PricingRules.AsNoTracking()
@@ -135,19 +135,19 @@ namespace YemenBooking.Infrastructure.Services
             if (hasPricingRuleRefs) reasons.Add("مرتبطة بجدول التسعير");
 
             var hasBookingRefs = await _db.Bookings.AsNoTracking()
-                .AnyAsync(b => EF.Property<string>(b, "TotalPrice_Currency") == normalized && !b.IsDeleted, cancellationToken);
+                .AnyAsync(b => b.TotalPrice.Currency == normalized && !b.IsDeleted, cancellationToken);
             if (hasBookingRefs) reasons.Add("مرتبطة بحجوزات");
 
             var hasPaymentRefs = await _db.Payments.AsNoTracking()
-                .AnyAsync(p => EF.Property<string>(p, "Amount_Currency") == normalized && !p.IsDeleted, cancellationToken);
+                .AnyAsync(p => p.Amount.Currency == normalized && !p.IsDeleted, cancellationToken);
             if (hasPaymentRefs) reasons.Add("مرتبطة بمدفوعات");
 
             var hasAmenityRefs = await _db.PropertyAmenities.AsNoTracking()
-                .AnyAsync(pa => EF.Property<string>(pa, "ExtraCost_Currency") == normalized && !pa.IsDeleted, cancellationToken);
+                .AnyAsync(pa => pa.ExtraCost.Currency == normalized && !pa.IsDeleted, cancellationToken);
             if (hasAmenityRefs) reasons.Add("مرتبطة بمرافق العقار");
 
             var hasServiceRefs = await _db.PropertyServices.AsNoTracking()
-                .AnyAsync(ps => EF.Property<string>(ps, "Price_Currency") == normalized && !ps.IsDeleted, cancellationToken);
+                .AnyAsync(ps => ps.Price.Currency == normalized && !ps.IsDeleted, cancellationToken);
             if (hasServiceRefs) reasons.Add("مرتبطة بخدمات العقار");
 
             if (reasons.Count > 0)
