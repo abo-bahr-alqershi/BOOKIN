@@ -226,14 +226,16 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                               SizedBox(height: isCompact ? 8 : 12),
                               
                               // معاينة التعليق
-                              Text(
-                                widget.review.comment,
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  height: 1.5,
-                                  color: AppTheme.textLight,
+                              Flexible(
+                                child: Text(
+                                  widget.review.comment,
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    height: 1.5,
+                                    color: AppTheme.textLight,
+                                  ),
+                                  maxLines: isCompact ? 2 : 3,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: isCompact ? 2 : 4,
-                                overflow: TextOverflow.ellipsis,
                               ),
                               
                               SizedBox(height: isCompact ? 12 : 16),
@@ -286,6 +288,7 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                   padding: EdgeInsets.only(top: isCompact ? 8 : 12),
                                   child: Wrap(
                                     spacing: 8,
+                                    runSpacing: 4,
                                     children: [
                                       if (widget.review.images.isNotEmpty) ...[
                                         Container(
