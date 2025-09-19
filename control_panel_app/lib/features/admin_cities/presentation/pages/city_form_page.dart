@@ -14,6 +14,8 @@ import '../widgets/city_image_gallery.dart';
 import '../bloc/cities_bloc.dart';
 import '../bloc/cities_event.dart';
 import '../bloc/cities_state.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
+import 'package:bookn_cp_app/features/admin_cities/domain/usecases/upload_city_image_usecase.dart' as ci_uc8;
 
 class CityFormPage extends StatefulWidget {
   final City? city;
@@ -1044,10 +1046,18 @@ class _CityFormPageState extends State<CityFormPage>
 
       setState(() => _isLoading = true);
 
+      _prepareImagesAndSave();
+    }
+  }
+
+  Future<void> _prepareImagesAndSave() async {
+    try {
+      final uploadedImages = await _uploadLocalImagesIfNeeded(_images);
+
       final city = City(
         name: _nameController.text.trim(),
         country: _countryController.text.trim(),
-        images: _images,
+        images: uploadedImages,
         isActive: _isActive,
         propertiesCount: widget.city?.propertiesCount,
         createdAt: widget.city?.createdAt ?? DateTime.now(),
@@ -1063,7 +1073,39 @@ class _CityFormPageState extends State<CityFormPage>
               city: city,
             ));
       }
+    } catch (e) {
+      _showErrorMessage(e.toString());
+      setState(() => _isLoading = false);
     }
+  }
+
+  Future<List<String>> _uploadLocalImagesIfNeeded(List<String> images) async {
+    final result = <String>[];
+    final uploader = di.sl<ci_uc8.UploadCityImageUseCase>();
+    final cityName = _nameController.text.trim().isEmpty
+        ? 'city'
+        : _nameController.text.trim();
+
+    for (final img in images) {
+      final lower = img.toLowerCase();
+      final isNetwork = lower.startsWith('http://') || lower.startsWith('https://');
+      final isAsset = lower.startsWith('assets/');
+      if (isNetwork || isAsset) {
+        result.add(img);
+        continue;
+      }
+
+      final uploadRes = await uploader(
+        ci_uc8.UploadCityImageParams(cityName: cityName, imagePath: img),
+      );
+
+      uploadRes.fold(
+        (failure) => throw Exception(failure.message),
+        (url) => result.add(url),
+      );
+    }
+
+    return result;
   }
 
   void _showSuccessAnimation() {
