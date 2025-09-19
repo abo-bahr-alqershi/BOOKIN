@@ -1081,7 +1081,8 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                   AddResponseEvent(
                     reviewId: reviewId,
                     responseText: responseText,
-                    respondedBy: 'admin_id', // استبدل بمعرف المدير الفعلي
+                    // اتركه فارغًا ليقوم الداتا سورس باستخدام userId المخزن أو تجاهله
+                    respondedBy: '',
                   ),
                 );
               },
