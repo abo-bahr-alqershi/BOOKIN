@@ -119,25 +119,36 @@ namespace YemenBooking.Infrastructure.Services
             if (currency.IsDefault)
                 throw new InvalidOperationException("لا يمكن حذف العملة الافتراضية للنظام.");
 
-            // Check references concurrently
-            var propertyRefsTask = _db.Properties.AnyAsync(p => p.Currency == normalized, cancellationToken);
-            var pricingRuleRefsTask = _db.PricingRules.AnyAsync(p => p.Currency == normalized && !p.IsDeleted, cancellationToken);
-            var bookingRefsTask = _db.Bookings.AnyAsync(b => EF.Property<string>(b, "TotalPrice_Currency") == normalized && !b.IsDeleted, cancellationToken);
-            var paymentRefsTask = _db.Payments.AnyAsync(p => EF.Property<string>(p, "Amount_Currency") == normalized && !p.IsDeleted, cancellationToken);
-            var amenityRefsTask = _db.PropertyAmenities.AnyAsync(pa => EF.Property<string>(pa, "ExtraCost_Currency") == normalized && !pa.IsDeleted, cancellationToken);
-            var serviceRefsTask = _db.PropertyServices.AnyAsync(ps => EF.Property<string>(ps, "Price_Currency") == normalized && !ps.IsDeleted, cancellationToken);
-            var unitRefsTask = _db.Units.AnyAsync(u => EF.Property<string>(u, "BasePrice_Currency") == normalized && !u.IsDeleted, cancellationToken);
-
-            await Task.WhenAll(propertyRefsTask, pricingRuleRefsTask, bookingRefsTask, paymentRefsTask, amenityRefsTask, serviceRefsTask, unitRefsTask);
-
+            // Check references sequentially to avoid DbContext concurrency issues
             var reasons = new List<string>();
-            if (propertyRefsTask.Result) reasons.Add("مرتبطة بعقارات");
-            if (unitRefsTask.Result) reasons.Add("مرتبطة بوحدات");
-            if (pricingRuleRefsTask.Result) reasons.Add("مرتبطة بجدول التسعير");
-            if (bookingRefsTask.Result) reasons.Add("مرتبطة بحجوزات");
-            if (paymentRefsTask.Result) reasons.Add("مرتبطة بمدفوعات");
-            if (amenityRefsTask.Result) reasons.Add("مرتبطة بمرافق العقار");
-            if (serviceRefsTask.Result) reasons.Add("مرتبطة بخدمات العقار");
+
+            var hasPropertyRefs = await _db.Properties.AsNoTracking()
+                .AnyAsync(p => p.Currency == normalized, cancellationToken);
+            if (hasPropertyRefs) reasons.Add("مرتبطة بعقارات");
+
+            var hasUnitRefs = await _db.Units.AsNoTracking()
+                .AnyAsync(u => EF.Property<string>(u, "BasePrice_Currency") == normalized && !u.IsDeleted, cancellationToken);
+            if (hasUnitRefs) reasons.Add("مرتبطة بوحدات");
+
+            var hasPricingRuleRefs = await _db.PricingRules.AsNoTracking()
+                .AnyAsync(p => p.Currency == normalized && !p.IsDeleted, cancellationToken);
+            if (hasPricingRuleRefs) reasons.Add("مرتبطة بجدول التسعير");
+
+            var hasBookingRefs = await _db.Bookings.AsNoTracking()
+                .AnyAsync(b => EF.Property<string>(b, "TotalPrice_Currency") == normalized && !b.IsDeleted, cancellationToken);
+            if (hasBookingRefs) reasons.Add("مرتبطة بحجوزات");
+
+            var hasPaymentRefs = await _db.Payments.AsNoTracking()
+                .AnyAsync(p => EF.Property<string>(p, "Amount_Currency") == normalized && !p.IsDeleted, cancellationToken);
+            if (hasPaymentRefs) reasons.Add("مرتبطة بمدفوعات");
+
+            var hasAmenityRefs = await _db.PropertyAmenities.AsNoTracking()
+                .AnyAsync(pa => EF.Property<string>(pa, "ExtraCost_Currency") == normalized && !pa.IsDeleted, cancellationToken);
+            if (hasAmenityRefs) reasons.Add("مرتبطة بمرافق العقار");
+
+            var hasServiceRefs = await _db.PropertyServices.AsNoTracking()
+                .AnyAsync(ps => EF.Property<string>(ps, "Price_Currency") == normalized && !ps.IsDeleted, cancellationToken);
+            if (hasServiceRefs) reasons.Add("مرتبطة بخدمات العقار");
 
             if (reasons.Count > 0)
             {
