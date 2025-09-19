@@ -1056,6 +1056,9 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
   void _showAddResponseDialog(BuildContext context, String reviewId) {
     HapticFeedback.lightImpact();
     
+    // Capture the bloc from the current (correct) context
+    final reviewDetailsBloc = context.read<ReviewDetailsBloc>();
+    
     showDialog(
       context: context,
       barrierColor: Colors.black87,
@@ -1068,17 +1071,21 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
             horizontal: 20,
             vertical: 24,
           ),
-          child: AddResponseDialog(
-            reviewId: reviewId,
-            onSubmit: (responseText) {
-              context.read<ReviewDetailsBloc>().add(
-                AddResponseEvent(
-                  reviewId: reviewId,
-                  responseText: responseText,
-                  respondedBy: 'admin_id', // استبدل بمعرف المدير الفعلي
-                ),
-              );
-            },
+          child: BlocProvider.value(
+            value: reviewDetailsBloc,
+            child: AddResponseDialog(
+              reviewId: reviewId,
+              onSubmit: (responseText) {
+                // Use the captured bloc to avoid ProviderNotFound in dialog builder context
+                reviewDetailsBloc.add(
+                  AddResponseEvent(
+                    reviewId: reviewId,
+                    responseText: responseText,
+                    respondedBy: 'admin_id', // استبدل بمعرف المدير الفعلي
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ),
