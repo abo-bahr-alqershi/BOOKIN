@@ -73,9 +73,9 @@ class CitiesBloc extends Bloc<CitiesEvent, CitiesState> {
       (cities) {
         _allCities = cities;
         final totalPages = (cities.length / _itemsPerPage).ceil();
-        
+
         final pagedCities = _getPagedCities(1);
-        
+
         emit(CitiesLoaded(
           cities: cities,
           filteredCities: pagedCities,
@@ -106,7 +106,7 @@ class CitiesBloc extends Bloc<CitiesEvent, CitiesState> {
       },
       (success) {
         emit(const CityOperationSuccess(message: 'تم حفظ المدن بنجاح'));
-        add(RefreshCitiesEvent());
+        add(const RefreshCitiesEvent());
       },
     );
   }
@@ -132,7 +132,7 @@ class CitiesBloc extends Bloc<CitiesEvent, CitiesState> {
       },
       (city) {
         emit(const CityOperationSuccess(message: 'تم إضافة المدينة بنجاح'));
-        add(RefreshCitiesEvent());
+        add(const RefreshCitiesEvent());
       },
     );
   }
@@ -161,7 +161,7 @@ class CitiesBloc extends Bloc<CitiesEvent, CitiesState> {
       },
       (city) {
         emit(const CityOperationSuccess(message: 'تم تحديث المدينة بنجاح'));
-        add(RefreshCitiesEvent());
+        add(const RefreshCitiesEvent());
       },
     );
   }
@@ -187,25 +187,25 @@ class CitiesBloc extends Bloc<CitiesEvent, CitiesState> {
       },
       (success) {
         emit(const CityOperationSuccess(message: 'تم حذف المدينة بنجاح'));
-        
+
         // Update local list immediately
         if (currentState is CitiesLoaded) {
           final updatedCities = List<City>.from(currentState.cities)
             ..removeWhere((city) => city.name == event.name);
-          
+
           final totalPages = (updatedCities.length / _itemsPerPage).ceil();
           var currentPage = currentState.currentPage;
-          
+
           // Adjust page if necessary
           if (currentPage > totalPages && totalPages > 0) {
             currentPage = totalPages;
           }
-          
+
           final pagedCities = _getPagedCitiesFromList(
             updatedCities,
             currentPage,
           );
-          
+
           emit(currentState.copyWith(
             cities: updatedCities,
             filteredCities: pagedCities,
@@ -223,7 +223,7 @@ class CitiesBloc extends Bloc<CitiesEvent, CitiesState> {
   ) async {
     if (state is CitiesLoaded) {
       final currentState = state as CitiesLoaded;
-      
+
       if (event.query.isEmpty) {
         // Reset to all cities
         final pagedCities = _getPagedCities(1);
@@ -234,14 +234,15 @@ class CitiesBloc extends Bloc<CitiesEvent, CitiesState> {
         ));
       } else {
         // Filter cities
-        final filteredCities = _allCities.where((city) =>
-          city.name.toLowerCase().contains(event.query.toLowerCase()) ||
-          city.country.toLowerCase().contains(event.query.toLowerCase())
-        ).toList();
-        
+        final filteredCities = _allCities
+            .where((city) =>
+                city.name.toLowerCase().contains(event.query.toLowerCase()) ||
+                city.country.toLowerCase().contains(event.query.toLowerCase()))
+            .toList();
+
         final totalPages = (filteredCities.length / _itemsPerPage).ceil();
         final pagedCities = _getPagedCitiesFromList(filteredCities, 1);
-        
+
         emit(currentState.copyWith(
           filteredCities: pagedCities,
           currentPage: 1,
@@ -297,12 +298,12 @@ class CitiesBloc extends Bloc<CitiesEvent, CitiesState> {
         final cityIndex = _allCities.indexWhere(
           (city) => city.name == event.cityName,
         );
-        
+
         if (cityIndex != -1) {
           final updatedCity = _allCities[cityIndex].copyWith(
             images: [..._allCities[cityIndex].images, imageUrl],
           );
-          
+
           add(UpdateCityEvent(
             oldName: event.cityName,
             city: updatedCity,
@@ -339,16 +340,16 @@ class CitiesBloc extends Bloc<CitiesEvent, CitiesState> {
         final cityIndex = _allCities.indexWhere(
           (city) => city.name == event.cityName,
         );
-        
+
         if (cityIndex != -1) {
           final updatedImages = List<String>.from(
             _allCities[cityIndex].images,
           )..remove(event.imageUrl);
-          
+
           final updatedCity = _allCities[cityIndex].copyWith(
             images: updatedImages,
           );
-          
+
           add(UpdateCityEvent(
             oldName: event.cityName,
             city: updatedCity,
@@ -375,7 +376,7 @@ class CitiesBloc extends Bloc<CitiesEvent, CitiesState> {
       final pagedCities = currentState.searchQuery != null
           ? _getFilteredPagedCities(currentState.searchQuery!, event.page)
           : _getPagedCities(event.page);
-      
+
       emit(currentState.copyWith(
         filteredCities: pagedCities,
         currentPage: event.page,
@@ -390,11 +391,11 @@ class CitiesBloc extends Bloc<CitiesEvent, CitiesState> {
   List<City> _getPagedCitiesFromList(List<City> cities, int page) {
     final startIndex = (page - 1) * _itemsPerPage;
     final endIndex = startIndex + _itemsPerPage;
-    
+
     if (startIndex >= cities.length) {
       return [];
     }
-    
+
     return cities.sublist(
       startIndex,
       endIndex > cities.length ? cities.length : endIndex,
@@ -402,11 +403,12 @@ class CitiesBloc extends Bloc<CitiesEvent, CitiesState> {
   }
 
   List<City> _getFilteredPagedCities(String query, int page) {
-    final filteredCities = _allCities.where((city) =>
-      city.name.toLowerCase().contains(query.toLowerCase()) ||
-      city.country.toLowerCase().contains(query.toLowerCase())
-    ).toList();
-    
+    final filteredCities = _allCities
+        .where((city) =>
+            city.name.toLowerCase().contains(query.toLowerCase()) ||
+            city.country.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+
     return _getPagedCitiesFromList(filteredCities, page);
   }
 }

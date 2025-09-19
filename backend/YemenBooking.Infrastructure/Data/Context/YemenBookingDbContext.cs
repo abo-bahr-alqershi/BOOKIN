@@ -281,6 +281,12 @@ public class YemenBookingDbContext : DbContext
     public DbSet<City> Cities { get; set; }
 
 
+    /// <summary>
+    /// جدول التسعير
+    /// Pricing table
+    /// </summary>
+    public DbSet<PricingRule> PricingRules { get; set; }
+
 
     /// <summary>
     /// جدول الأقسام الديناميكية للصفحة الرئيسية
