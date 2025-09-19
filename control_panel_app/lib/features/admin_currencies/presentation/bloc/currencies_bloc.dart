@@ -59,6 +59,17 @@ class CurrenciesBloc extends Bloc<CurrenciesEvent, CurrenciesState> {
   ) async {
     if (state is CurrenciesLoaded) {
       final currentState = state as CurrenciesLoaded;
+      // Validation: prevent multiple default currencies on add
+      if (event.currency.isDefault &&
+          _allCurrencies.any((c) => c.isDefault)) {
+        emit(const CurrenciesError(
+            message:
+                'لا يمكن تعيين هذه العملة كافتراضية لوجود عملة افتراضية مسبقاً'));
+        // Re-emit previous loaded state to keep UI intact
+        emit(currentState.copyWith(isSaving: false));
+        return;
+      }
+
       emit(currentState.copyWith(isSaving: true));
 
       final updatedCurrencies = [..._allCurrencies, event.currency];
@@ -91,6 +102,21 @@ class CurrenciesBloc extends Bloc<CurrenciesEvent, CurrenciesState> {
   ) async {
     if (state is CurrenciesLoaded) {
       final currentState = state as CurrenciesLoaded;
+      // Validation: prevent multiple default currencies on update
+      if (event.currency.isDefault) {
+        final hasAnotherDefault = _allCurrencies.any(
+          (c) => c.isDefault && c.code != event.oldCode,
+        );
+        if (hasAnotherDefault) {
+          emit(const CurrenciesError(
+              message:
+                  'لا يمكن جعل هذه العملة افتراضية لوجود عملة افتراضية مسبقاً'));
+          // Re-emit previous loaded state to keep UI intact
+          emit(currentState.copyWith(isSaving: false));
+          return;
+        }
+      }
+
       emit(currentState.copyWith(isSaving: true));
 
       final updatedCurrencies = _allCurrencies.map((c) {
