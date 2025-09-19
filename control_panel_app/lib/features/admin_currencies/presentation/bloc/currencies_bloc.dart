@@ -82,6 +82,8 @@ class CurrenciesBloc extends Bloc<CurrenciesEvent, CurrenciesState> {
         (failure) => emit(CurrenciesError(message: failure.message)),
         (_) {
           _allCurrencies = updatedCurrencies;
+          // Emit success first for snackbar, then return to Loaded to keep UI content visible
+          emit(const CurrencyOperationSuccess(message: 'تمت إضافة العملة بنجاح'));
           emit(CurrenciesLoaded(
             currencies: updatedCurrencies,
             filteredCurrencies: _filterCurrencies(
@@ -90,7 +92,6 @@ class CurrenciesBloc extends Bloc<CurrenciesEvent, CurrenciesState> {
             ),
             searchQuery: currentState.searchQuery,
           ));
-          emit(const CurrencyOperationSuccess(message: 'تمت إضافة العملة بنجاح'));
         },
       );
     }
@@ -131,6 +132,7 @@ class CurrenciesBloc extends Bloc<CurrenciesEvent, CurrenciesState> {
         (failure) => emit(CurrenciesError(message: failure.message)),
         (_) {
           _allCurrencies = updatedCurrencies;
+          emit(const CurrencyOperationSuccess(message: 'تم تحديث العملة بنجاح'));
           emit(CurrenciesLoaded(
             currencies: updatedCurrencies,
             filteredCurrencies: _filterCurrencies(
@@ -139,7 +141,6 @@ class CurrenciesBloc extends Bloc<CurrenciesEvent, CurrenciesState> {
             ),
             searchQuery: currentState.searchQuery,
           ));
-          emit(const CurrencyOperationSuccess(message: 'تم تحديث العملة بنجاح'));
         },
       );
     }
@@ -161,6 +162,7 @@ class CurrenciesBloc extends Bloc<CurrenciesEvent, CurrenciesState> {
         (failure) => emit(CurrenciesError(message: failure.message)),
         (_) {
           _allCurrencies = _allCurrencies.where((c) => c.code != event.code).toList();
+          emit(const CurrencyOperationSuccess(message: 'تم حذف العملة بنجاح'));
           emit(CurrenciesLoaded(
             currencies: _allCurrencies,
             filteredCurrencies: _filterCurrencies(
@@ -169,7 +171,6 @@ class CurrenciesBloc extends Bloc<CurrenciesEvent, CurrenciesState> {
             ),
             searchQuery: currentState.searchQuery,
           ));
-          emit(const CurrencyOperationSuccess(message: 'تم حذف العملة بنجاح'));
         },
       );
     }
@@ -194,6 +195,7 @@ class CurrenciesBloc extends Bloc<CurrenciesEvent, CurrenciesState> {
             return c.copyWith(isDefault: c.code == event.code);
           }).toList();
           
+          emit(const CurrencyOperationSuccess(message: 'تم تعيين العملة الافتراضية'));
           emit(CurrenciesLoaded(
             currencies: _allCurrencies,
             filteredCurrencies: _filterCurrencies(
@@ -202,7 +204,6 @@ class CurrenciesBloc extends Bloc<CurrenciesEvent, CurrenciesState> {
             ),
             searchQuery: currentState.searchQuery,
           ));
-          emit(const CurrencyOperationSuccess(message: 'تم تعيين العملة الافتراضية'));
         },
       );
     }
