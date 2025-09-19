@@ -292,7 +292,7 @@ class _FuturisticAmenitiesTableState extends State<FuturisticAmenitiesTable>
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: SizedBox(
-                    width: 900,
+                    width: MediaQuery.of(context).size.width,
                     child: ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -305,7 +305,6 @@ class _FuturisticAmenitiesTableState extends State<FuturisticAmenitiesTable>
                   ),
                 ),
                 if (widget.isLoadingMore) _buildLoadingIndicator(),
-                _buildFooterStats(),
               ],
             ),
           ),
@@ -355,7 +354,6 @@ class _FuturisticAmenitiesTableState extends State<FuturisticAmenitiesTable>
                       _buildDesktopRow(_sortedAmenitiesForDisplay[index], index),
                 ),
                 if (widget.isLoadingMore) _buildLoadingIndicator(),
-                _buildFooterStats(),
               ],
             ),
           ),
