@@ -1488,25 +1488,34 @@ class PropertyImageGalleryState extends State<PropertyImageGallery>
                     top: isHovered ? 8 : -40,
                     left: 8,
                     right: 8,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildQuickActionButton(
-                          icon: Icons.visibility_outlined,
-                          onTap: () => _previewImage(image),
-                        ),
-                        if (!isPrimary)
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final actions = <Widget>[
                           _buildQuickActionButton(
-                            icon: Icons.star_outline_rounded,
-                            onTap: () => _setPrimaryImage(index),
-                            color: AppTheme.warning,
+                            icon: Icons.visibility_outlined,
+                            onTap: () => _previewImage(image),
                           ),
-                        _buildQuickActionButton(
-                          icon: Icons.delete_outline_rounded,
-                          onTap: () => _confirmDeleteImage(image),
-                          color: AppTheme.error,
-                        ),
-                      ],
+                          if (!isPrimary)
+                            _buildQuickActionButton(
+                              icon: Icons.star_outline_rounded,
+                              onTap: () => _setPrimaryImage(index),
+                              color: AppTheme.warning,
+                            ),
+                          _buildQuickActionButton(
+                            icon: Icons.delete_outline_rounded,
+                            onTap: () => _confirmDeleteImage(image),
+                            color: AppTheme.error,
+                          ),
+                        ];
+                        return Center(
+                          child: Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: actions,
+                          ),
+                        );
+                      },
                     ),
                   ),
                 
