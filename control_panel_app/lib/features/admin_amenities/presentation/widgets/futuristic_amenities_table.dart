@@ -1230,6 +1230,11 @@ class _FuturisticAmenitiesTableState extends State<FuturisticAmenitiesTable>
     );
   }
 
+  // Compatibility badge API used by the units-like table rows
+  Widget _buildStatusBadge(Amenity amenity) {
+    return _buildStatusWidget(amenity);
+  }
+
   Widget _buildPremiumActionButton({
     required IconData icon,
     required Color color,
