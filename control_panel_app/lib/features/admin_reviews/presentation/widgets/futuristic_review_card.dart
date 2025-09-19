@@ -129,9 +129,13 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                         // المحتوى
                         Padding(
                           padding: const EdgeInsets.all(20),
-                          child: Column(
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isCompact = constraints.maxHeight < 220;
+                              return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
                               // الرأس
                               Row(
                                 children: [
@@ -192,7 +196,7 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                 ],
                               ),
                               
-                              const SizedBox(height: 16),
+                              SizedBox(height: isCompact ? 12 : 16),
                               
                               // التقييم
                               Row(
@@ -219,20 +223,22 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                 ],
                               ),
                               
-                              const SizedBox(height: 12),
+                              SizedBox(height: isCompact ? 8 : 12),
                               
                               // معاينة التعليق
-                              Text(
-                                widget.review.comment,
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  height: 1.5,
-                                  color: AppTheme.textLight,
+                              Flexible(
+                                child: Text(
+                                  widget.review.comment,
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    height: 1.5,
+                                    color: AppTheme.textLight,
+                                  ),
+                                  maxLines: isCompact ? 2 : 3,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
                               ),
                               
-                              const SizedBox(height: 16),
+                              SizedBox(height: isCompact ? 12 : 16),
                               
                               // التذييل
                               Row(
@@ -279,8 +285,9 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                               // المؤشرات
                               if (widget.review.images.isNotEmpty || widget.review.hasResponse)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 12),
-                                  child: Row(
+                                  padding: EdgeInsets.only(top: isCompact ? 8 : 12),
+                                  child: Wrap(
+                                    spacing: 8,
                                     children: [
                                       if (widget.review.images.isNotEmpty) ...[
                                         Container(
@@ -315,7 +322,6 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(width: 8),
                                       ],
                                       if (widget.review.hasResponse)
                                         Container(
@@ -353,7 +359,9 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                     ],
                                   ),
                                 ),
-                            ],
+                                ],
+                              );
+                            },
                           ),
                         ),
                       ],
