@@ -1441,34 +1441,72 @@ class _FuturisticAmenitiesTableState extends State<FuturisticAmenitiesTable>
           ),
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildFooterStat(
-            icon: Icons.checklist_rounded,
-            label: 'المجموع',
-            value: totalCount.toString(),
-            color: AppTheme.primaryPurple,
-          ),
-          _buildFooterStat(
-            icon: Icons.toggle_on_rounded,
-            label: 'نشط',
-            value: activeCount.toString(),
-            color: AppTheme.success,
-          ),
-          _buildFooterStat(
-            icon: Icons.toggle_off_rounded,
-            label: 'معطل',
-            value: (totalCount - activeCount).toString(),
-            color: AppTheme.textMuted,
-          ),
-          _buildFooterStat(
-            icon: Icons.attach_money_rounded,
-            label: 'متوسط التكلفة',
-            value: '\$$averageCost',
-            color: AppTheme.warning,
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useWrap = constraints.maxWidth < 700;
+          if (useWrap) {
+            return Wrap(
+              alignment: WrapAlignment.spaceEvenly,
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                _buildFooterStat(
+                  icon: Icons.checklist_rounded,
+                  label: 'المجموع',
+                  value: totalCount.toString(),
+                  color: AppTheme.primaryPurple,
+                ),
+                _buildFooterStat(
+                  icon: Icons.toggle_on_rounded,
+                  label: 'نشط',
+                  value: activeCount.toString(),
+                  color: AppTheme.success,
+                ),
+                _buildFooterStat(
+                  icon: Icons.toggle_off_rounded,
+                  label: 'معطل',
+                  value: (totalCount - activeCount).toString(),
+                  color: AppTheme.textMuted,
+                ),
+                _buildFooterStat(
+                  icon: Icons.attach_money_rounded,
+                  label: 'متوسط التكلفة',
+                  value: '\$$averageCost',
+                  color: AppTheme.warning,
+                ),
+              ],
+            );
+          }
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildFooterStat(
+                icon: Icons.checklist_rounded,
+                label: 'المجموع',
+                value: totalCount.toString(),
+                color: AppTheme.primaryPurple,
+              ),
+              _buildFooterStat(
+                icon: Icons.toggle_on_rounded,
+                label: 'نشط',
+                value: activeCount.toString(),
+                color: AppTheme.success,
+              ),
+              _buildFooterStat(
+                icon: Icons.toggle_off_rounded,
+                label: 'معطل',
+                value: (totalCount - activeCount).toString(),
+                color: AppTheme.textMuted,
+              ),
+              _buildFooterStat(
+                icon: Icons.attach_money_rounded,
+                label: 'متوسط التكلفة',
+                value: '\$$averageCost',
+                color: AppTheme.warning,
+              ),
+            ],
+          );
+        },
       ),
     );
   }

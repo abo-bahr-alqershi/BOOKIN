@@ -632,73 +632,91 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
   }
 
   Widget _buildStatsCards(AmenityStats stats) {
-    // Avoid wrapping Expanded in animation ParentDataWidget wrappers.
-    return Row(
-      children: [
-        Expanded(
-          child: SlideAnimation(
-            horizontalOffset: 50.0,
-            child: FadeInAnimation(
-              child: AmenityStatsCard(
-                title: 'إجمالي المرافق',
-                value: stats.totalAmenities.toString(),
-                icon: Icons.category_rounded,
-                gradient: LinearGradient(
-                  colors: [AppTheme.primaryPurple, AppTheme.primaryViolet],
+    // Ensure each animated child is wrapped in AnimationConfiguration inside an AnimationLimiter
+    return AnimationLimiter(
+      child: Row(
+        children: [
+          Expanded(
+            child: AnimationConfiguration.staggeredList(
+              position: 0,
+              duration: const Duration(milliseconds: 375),
+              child: SlideAnimation(
+                horizontalOffset: 50.0,
+                child: FadeInAnimation(
+                  child: AmenityStatsCard(
+                    title: 'إجمالي المرافق',
+                    value: stats.totalAmenities.toString(),
+                    icon: Icons.category_rounded,
+                    gradient: LinearGradient(
+                      colors: [AppTheme.primaryPurple, AppTheme.primaryViolet],
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: SlideAnimation(
-            horizontalOffset: 50.0,
-            child: FadeInAnimation(
-              child: AmenityStatsCard(
-                title: 'المرافق النشطة',
-                value: stats.activeAmenities.toString(),
-                icon: Icons.check_circle_rounded,
-                gradient: LinearGradient(
-                  colors: [AppTheme.success, AppTheme.neonGreen],
+          const SizedBox(width: 12),
+          Expanded(
+            child: AnimationConfiguration.staggeredList(
+              position: 1,
+              duration: const Duration(milliseconds: 375),
+              child: SlideAnimation(
+                horizontalOffset: 50.0,
+                child: FadeInAnimation(
+                  child: AmenityStatsCard(
+                    title: 'المرافق النشطة',
+                    value: stats.activeAmenities.toString(),
+                    icon: Icons.check_circle_rounded,
+                    gradient: LinearGradient(
+                      colors: [AppTheme.success, AppTheme.neonGreen],
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: SlideAnimation(
-            horizontalOffset: 50.0,
-            child: FadeInAnimation(
-              child: AmenityStatsCard(
-                title: 'إجمالي الإسنادات',
-                value: stats.totalAssignments.toString(),
-                icon: Icons.link_rounded,
-                gradient: LinearGradient(
-                  colors: [AppTheme.primaryBlue, AppTheme.primaryCyan],
+          const SizedBox(width: 12),
+          Expanded(
+            child: AnimationConfiguration.staggeredList(
+              position: 2,
+              duration: const Duration(milliseconds: 375),
+              child: SlideAnimation(
+                horizontalOffset: 50.0,
+                child: FadeInAnimation(
+                  child: AmenityStatsCard(
+                    title: 'إجمالي الإسنادات',
+                    value: stats.totalAssignments.toString(),
+                    icon: Icons.link_rounded,
+                    gradient: LinearGradient(
+                      colors: [AppTheme.primaryBlue, AppTheme.primaryCyan],
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: SlideAnimation(
-            horizontalOffset: 50.0,
-            child: FadeInAnimation(
-              child: AmenityStatsCard(
-                title: 'الإيرادات',
-                value: '\$${stats.totalRevenue.toStringAsFixed(0)}',
-                icon: Icons.attach_money_rounded,
-                gradient: LinearGradient(
-                  colors: [AppTheme.warning, AppTheme.neonPurple],
+          const SizedBox(width: 12),
+          Expanded(
+            child: AnimationConfiguration.staggeredList(
+              position: 3,
+              duration: const Duration(milliseconds: 375),
+              child: SlideAnimation(
+                horizontalOffset: 50.0,
+                child: FadeInAnimation(
+                  child: AmenityStatsCard(
+                    title: 'الإيرادات',
+                    value: '\$${stats.totalRevenue.toStringAsFixed(0)}',
+                    icon: Icons.attach_money_rounded,
+                    gradient: LinearGradient(
+                      colors: [AppTheme.warning, AppTheme.neonPurple],
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
