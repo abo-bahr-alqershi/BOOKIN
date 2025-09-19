@@ -2361,7 +2361,6 @@ class PropertyImageGalleryState extends State<PropertyImageGallery>
               _uploadingFiles[fileKey] = true;
               _uploadingFileObjects[fileKey] = File(file.path);
               _uploadProgress[fileKey] = 0.0;
-              _simulateUploadProgress(fileKey);
             }
           });
           

@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
@@ -11,19 +12,24 @@ class UploadCityImageUseCase implements UseCase<String, UploadCityImageParams> {
 
   @override
   Future<Either<Failure, String>> call(UploadCityImageParams params) async {
-    return await repository.uploadCityImage(params.imagePath);
+    return await repository.uploadCityImage(
+      params.imagePath,
+      onSendProgress: params.onSendProgress,
+    );
   }
 }
 
 class UploadCityImageParams extends Equatable {
   final String cityName;
   final String imagePath;
+  final ProgressCallback? onSendProgress;
 
   const UploadCityImageParams({
     required this.cityName,
     required this.imagePath,
+    this.onSendProgress,
   });
 
   @override
-  List<Object?> get props => [cityName, imagePath];
+  List<Object?> get props => [cityName, imagePath, onSendProgress];
 }

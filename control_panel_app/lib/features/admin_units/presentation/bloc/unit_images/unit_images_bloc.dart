@@ -162,6 +162,17 @@ class UnitImagesBloc extends Bloc<UnitImagesEvent, UnitImagesState> {
       filePaths: event.filePaths,
       category: event.category,
       tags: event.tags,
+      onProgress: (filePath, sent, total) {
+        if (total > 0) {
+          final progress = sent / total;
+          emit(UnitImageUploading(
+            currentImages: _currentImages,
+            uploadingFileName: filePath.split('/').last,
+            uploadProgress: progress,
+            totalFiles: event.filePaths.length,
+          ));
+        }
+      },
     );
 
     final Either<Failure, List<UnitImage>> result =
