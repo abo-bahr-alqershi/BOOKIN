@@ -30,8 +30,8 @@ class LoadCitiesEvent extends CitiesEvent {
 
 /// Save cities event
 class SaveCitiesEvent extends CitiesEvent {
-  final List<dynamic> cities; // Keep dynamic to avoid large diffs; actual type is City
-  const SaveCitiesEvent(this.cities);
+  final List<City> cities;
+  const SaveCitiesEvent({required this.cities});
 
   @override
   List<Object?> get props => [cities];
@@ -39,8 +39,8 @@ class SaveCitiesEvent extends CitiesEvent {
 
 /// Create city event
 class CreateCityEvent extends CitiesEvent {
-  final dynamic city; // City
-  const CreateCityEvent(this.city);
+  final City city;
+  const CreateCityEvent({required this.city});
 
   @override
   List<Object?> get props => [city];
@@ -49,7 +49,7 @@ class CreateCityEvent extends CitiesEvent {
 /// Update city event
 class UpdateCityEvent extends CitiesEvent {
   final String oldName;
-  final dynamic city; // City
+  final City city;
   const UpdateCityEvent({required this.oldName, required this.city});
 
   @override
@@ -59,7 +59,7 @@ class UpdateCityEvent extends CitiesEvent {
 /// Delete city event
 class DeleteCityEvent extends CitiesEvent {
   final String name;
-  const DeleteCityEvent(this.name);
+  const DeleteCityEvent({required this.name});
 
   @override
   List<Object?> get props => [name];
@@ -68,7 +68,7 @@ class DeleteCityEvent extends CitiesEvent {
 /// Search cities event
 class SearchCitiesEvent extends CitiesEvent {
   final String query;
-  const SearchCitiesEvent(this.query);
+  const SearchCitiesEvent({required this.query});
 
   @override
   List<Object?> get props => [query];
@@ -114,11 +114,11 @@ class ChangeCitiesPageEvent extends CitiesEvent {
   List<Object?> get props => [page];
 }
 
-// Internal event for upload progress
-class _CityImageProgressInternalEvent extends CitiesEvent {
+// Internal event for upload progress (public within library)
+class CityImageProgressInternalEvent extends CitiesEvent {
   final String cityName;
   final double progress;
-  const _CityImageProgressInternalEvent(this.cityName, this.progress);
+  const CityImageProgressInternalEvent(this.cityName, this.progress);
 
   @override
   List<Object?> get props => [cityName, progress];
