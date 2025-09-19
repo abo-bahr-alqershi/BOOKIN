@@ -21,7 +21,7 @@ class FuturisticAmenitiesTable extends StatefulWidget {
   final VoidCallback? onLoadMore;
   final bool hasReachedMax;
   final bool isLoadingMore;
-  final ScrollController? controller;
+  final ScrollController? controller; // will not be used for inner scrolling
 
   const FuturisticAmenitiesTable({
     super.key,
@@ -110,9 +110,9 @@ class _FuturisticAmenitiesTableState extends State<FuturisticAmenitiesTable>
   }
 
   void _initializeControllers() {
-    _scrollController = widget.controller ?? ScrollController();
-    _ownsController = widget.controller == null;
-    _scrollController.addListener(_handleScroll);
+    // Do not attach internal scroll to avoid nested scrolling; use page scroll only
+    _scrollController = ScrollController();
+    _ownsController = true;
   }
 
   @override
@@ -128,14 +128,7 @@ class _FuturisticAmenitiesTableState extends State<FuturisticAmenitiesTable>
     super.dispose();
   }
 
-  void _handleScroll() {
-    if (widget.onLoadMore == null || widget.hasReachedMax) return;
-    if (!_scrollController.hasClients) return;
-    final position = _scrollController.position;
-    if (position.pixels >= position.maxScrollExtent * 0.9) {
-      widget.onLoadMore!.call();
-    }
-  }
+  void _handleScroll() {}
 
   List<Amenity> get _sortedAmenities {
     final sorted = List<Amenity>.from(widget.amenities);
@@ -215,11 +208,9 @@ class _FuturisticAmenitiesTableState extends State<FuturisticAmenitiesTable>
               children: [
                 if (!isMobile) _buildEnhancedDesktopHeader(),
                 if (isMobile) _buildEnhancedMobileHeader(),
-                Expanded(
-                  child: isMobile 
-                    ? _buildEnhancedMobileList() 
-                    : _buildEnhancedDesktopTable(),
-                ),
+                isMobile 
+                  ? _buildEnhancedMobileList() 
+                  : _buildEnhancedDesktopTable(),
                 if (widget.isLoadingMore) _buildLoadingIndicator(),
                 _buildFooterStats(), // إضافة footer مع إحصائيات
               ],
@@ -570,17 +561,12 @@ class _FuturisticAmenitiesTableState extends State<FuturisticAmenitiesTable>
   Widget _buildEnhancedDesktopTable() {
     final sortedAmenities = _sortedAmenities;
     
-    return Scrollbar(
-      controller: _scrollController,
-      thumbVisibility: true,
-      trackVisibility: true,
-      thickness: 8,
-      radius: const Radius.circular(4),
-      child: ListView.builder(
-        controller: _scrollController,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        itemCount: sortedAmenities.length,
-        itemBuilder: (context, index) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      itemCount: sortedAmenities.length,
+      itemBuilder: (context, index) {
           final amenity = sortedAmenities[index];
           final isHovered = _hoveredIndex == index;
           final isSelected = _selectedIndex == index;
@@ -857,8 +843,7 @@ class _FuturisticAmenitiesTableState extends State<FuturisticAmenitiesTable>
               ),
             ),
           );
-        },
-      ),
+      },
     );
   }
 
@@ -1057,7 +1042,8 @@ class _FuturisticAmenitiesTableState extends State<FuturisticAmenitiesTable>
     final sortedAmenities = _sortedAmenities;
     
     return ListView.builder(
-      controller: _scrollController,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       itemCount: sortedAmenities.length,
       itemBuilder: (context, index) {

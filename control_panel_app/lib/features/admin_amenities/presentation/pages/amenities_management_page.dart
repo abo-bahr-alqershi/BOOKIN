@@ -836,26 +836,15 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
   }
 
   Widget _buildTableView(AmenitiesLoaded state) {
-    return SliverFillRemaining(
-      hasScrollBody: true,
+    return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight,
-                maxHeight: constraints.maxHeight,
-              ),
-              child: FuturisticAmenitiesTable(
-                amenities: state.amenities.items,
-                onAmenitySelected: (amenity) => _navigateToDetails(amenity.id),
-                onEditAmenity: (amenity) => _navigateToEditAmenity(amenity.id),
-                onDeleteAmenity: (amenity) => _showDeleteConfirmation(amenity),
-                onAssignAmenity: (amenity) => _showAssignAmenityDialog(amenity),
-              ),
-            );
-          },
+        child: FuturisticAmenitiesTable(
+          amenities: state.amenities.items,
+          onAmenitySelected: (amenity) => _navigateToDetails(amenity.id),
+          onEditAmenity: (amenity) => _navigateToEditAmenity(amenity.id),
+          onDeleteAmenity: (amenity) => _showDeleteConfirmation(amenity),
+          onAssignAmenity: (amenity) => _showAssignAmenityDialog(amenity),
         ),
       ),
     );
