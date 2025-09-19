@@ -83,6 +83,28 @@ namespace YemenBooking.Api.Controllers.Admin
         }
 
         /// <summary>
+        /// حذف عملة نهائياً بعد التحقق من الارتباطات
+        /// Permanently delete a currency after verifying references
+        /// </summary>
+        [HttpDelete("currencies/{code}")]
+        public async Task<ActionResult<ResultDto>> DeleteCurrencyAsync([FromRoute] string code, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _currencySettingsService.DeleteCurrencyAsync(code, cancellationToken);
+                return Ok(ResultDto.Ok("تم حذف العملة بنجاح"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ResultDto.Failure(ex.Message, errorCode: "CURRENCY_DELETE_CONFLICT"));
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ResultDto.Failure(ex.Message, errorCode: "INVALID_CURRENCY_CODE"));
+            }
+        }
+
+        /// <summary>
         /// حفظ أو تحديث قائمة المدن
         /// Save or update city settings
         /// </summary>

@@ -99,5 +99,55 @@ namespace YemenBooking.Infrastructure.Services
 
             await _db.SaveChangesAsync(cancellationToken);
         }
+
+        /// <summary>
+        /// Delete currency permanently if no references exist.
+        /// Checks references in: Properties.Currency, PricingRules.Currency, Bookings.TotalPrice_Currency,
+        /// Payments.Amount_Currency, PropertyAmenities.ExtraCost_Currency, PropertyServices.Price_Currency, Units.BasePrice_Currency.
+        /// </summary>
+        public async Task DeleteCurrencyAsync(string code, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+                throw new ArgumentException("رمز العملة غير صالح", nameof(code));
+
+            var normalized = code.Trim().ToUpperInvariant();
+
+            var currency = await _db.Currencies.FirstOrDefaultAsync(c => c.Code == normalized, cancellationToken);
+            if (currency == null)
+                return; // idempotent
+
+            if (currency.IsDefault)
+                throw new InvalidOperationException("لا يمكن حذف العملة الافتراضية للنظام.");
+
+            // Check references concurrently
+            var propertyRefsTask = _db.Properties.AnyAsync(p => p.Currency == normalized, cancellationToken);
+            var pricingRuleRefsTask = _db.PricingRules.AnyAsync(p => p.Currency == normalized && !p.IsDeleted, cancellationToken);
+            var bookingRefsTask = _db.Bookings.AnyAsync(b => EF.Property<string>(b, "TotalPrice_Currency") == normalized && !b.IsDeleted, cancellationToken);
+            var paymentRefsTask = _db.Payments.AnyAsync(p => EF.Property<string>(p, "Amount_Currency") == normalized && !p.IsDeleted, cancellationToken);
+            var amenityRefsTask = _db.PropertyAmenities.AnyAsync(pa => EF.Property<string>(pa, "ExtraCost_Currency") == normalized && !pa.IsDeleted, cancellationToken);
+            var serviceRefsTask = _db.PropertyServices.AnyAsync(ps => EF.Property<string>(ps, "Price_Currency") == normalized && !ps.IsDeleted, cancellationToken);
+            var unitRefsTask = _db.Units.AnyAsync(u => EF.Property<string>(u, "BasePrice_Currency") == normalized && !u.IsDeleted, cancellationToken);
+
+            await Task.WhenAll(propertyRefsTask, pricingRuleRefsTask, bookingRefsTask, paymentRefsTask, amenityRefsTask, serviceRefsTask, unitRefsTask);
+
+            var reasons = new List<string>();
+            if (propertyRefsTask.Result) reasons.Add("مرتبطة بعقارات");
+            if (unitRefsTask.Result) reasons.Add("مرتبطة بوحدات");
+            if (pricingRuleRefsTask.Result) reasons.Add("مرتبطة بجدول التسعير");
+            if (bookingRefsTask.Result) reasons.Add("مرتبطة بحجوزات");
+            if (paymentRefsTask.Result) reasons.Add("مرتبطة بمدفوعات");
+            if (amenityRefsTask.Result) reasons.Add("مرتبطة بمرافق العقار");
+            if (serviceRefsTask.Result) reasons.Add("مرتبطة بخدمات العقار");
+
+            if (reasons.Count > 0)
+            {
+                var message = "لا يمكن حذف العملة لوجود ارتباطات: " + string.Join("، ", reasons);
+                throw new InvalidOperationException(message);
+            }
+
+            // Hard delete
+            _db.Currencies.Remove(currency);
+            await _db.SaveChangesAsync(cancellationToken);
+        }
     }
 } 

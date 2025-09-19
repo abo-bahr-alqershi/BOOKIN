@@ -80,21 +80,12 @@ class CurrenciesRepositoryImpl implements CurrenciesRepository {
     }
 
     try {
-      // Get current currencies
-      final currentCurrencies = await remoteDataSource.getCurrencies();
-      
-      // Remove the currency with the given code
-      final updatedCurrencies = currentCurrencies
-          .where((c) => c.code != code)
-          .toList();
-      
-      // Save updated list
-      final result = await remoteDataSource.saveCurrencies(updatedCurrencies);
-      
+      final result = await remoteDataSource.deleteCurrency(code);
       if (result) {
-        await localDataSource.cacheCurrencies(updatedCurrencies);
+        // Refresh and cache after delete
+        final current = await remoteDataSource.getCurrencies();
+        await localDataSource.cacheCurrencies(current);
       }
-      
       return Right(result);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));

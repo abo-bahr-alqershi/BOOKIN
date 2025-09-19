@@ -7,6 +7,7 @@ import '../models/currency_model.dart';
 abstract class CurrenciesRemoteDataSource {
   Future<List<CurrencyModel>> getCurrencies();
   Future<bool> saveCurrencies(List<CurrencyModel> currencies);
+  Future<bool> deleteCurrency(String code);
 }
 
 class CurrenciesRemoteDataSourceImpl implements CurrenciesRemoteDataSource {
@@ -46,10 +47,24 @@ class CurrenciesRemoteDataSourceImpl implements CurrenciesRemoteDataSource {
     }
   }
 
+  @override
+  Future<bool> deleteCurrency(String code) async {
+    try {
+      final response = await apiClient.delete(
+        '${ApiConstants.adminBaseUrl}/system-settings/currencies/$code',
+      );
+      // API returns ResultDto without data; Success indicates deletion
+      return response.data['success'] == true;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
   Exception _handleDioError(DioException e) {
     if (e.response != null) {
       final message = e.response?.data['message'] ?? 'خطأ في الخادم';
-      throw ApiException.fromDioError(e);
+      final code = e.response?.data['errorCode'] as String?;
+      throw ApiException(message: message, code: code);
     }
     return ApiException(message: 'خطأ في الاتصال');
   }
