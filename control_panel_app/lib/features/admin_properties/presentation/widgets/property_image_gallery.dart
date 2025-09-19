@@ -700,25 +700,30 @@ class PropertyImageGalleryState extends State<PropertyImageGallery>
                     top: isHovered ? 8 : -40,
                     left: 8,
                     right: 8,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildQuickActionButton(
-                          icon: Icons.visibility_outlined,
-                          onTap: () => _previewLocalImage(imagePath),
-                        ),
-                        if (!isPrimary)
+                    child: Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           _buildQuickActionButton(
-                            icon: Icons.star_outline_rounded,
-                            onTap: () => _setLocalPrimaryImage(index),
-                            color: AppTheme.warning,
+                            icon: Icons.visibility_outlined,
+                            onTap: () => _previewLocalImage(imagePath),
                           ),
-                        _buildQuickActionButton(
-                          icon: Icons.delete_outline_rounded,
-                          onTap: () => _confirmDeleteLocalImage(index),
-                          color: AppTheme.error,
-                        ),
-                      ],
+                          if (!isPrimary) ...[
+                            const SizedBox(width: 8),
+                            _buildQuickActionButton(
+                              icon: Icons.star_outline_rounded,
+                              onTap: () => _setLocalPrimaryImage(index),
+                              color: AppTheme.warning,
+                            ),
+                          ],
+                          const SizedBox(width: 8),
+                          _buildQuickActionButton(
+                            icon: Icons.delete_outline_rounded,
+                            onTap: () => _confirmDeleteLocalImage(index),
+                            color: AppTheme.error,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 
