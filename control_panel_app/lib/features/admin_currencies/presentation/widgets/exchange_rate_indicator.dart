@@ -198,6 +198,7 @@ class _ExchangeRateIndicatorState extends State<ExchangeRateIndicator>
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 currency.arabicCode,
@@ -242,12 +243,14 @@ class _ExchangeRateIndicatorState extends State<ExchangeRateIndicator>
                 ],
               ),
               const SizedBox(height: 0),
-              Text(
+              Flexible(
+                child: Text(
                 isUp ? '+0.25%' : '-0.12%',
                 style: AppTextStyles.caption.copyWith(
                   color: isUp ? AppTheme.success : AppTheme.error,
                   fontWeight: FontWeight.w500,
                 ),
+              ),
               ),
             ],
           ),

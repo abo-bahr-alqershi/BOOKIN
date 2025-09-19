@@ -19,5 +19,11 @@ namespace YemenBooking.Application.Interfaces.Services
         /// Save or update the list of currencies
         /// </summary>
         Task SaveCurrenciesAsync(List<CurrencyDto> currencies, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Delete a currency permanently after verifying there are no references.
+        /// Throws InvalidOperationException with a descriptive message if deletion is not allowed.
+        /// </summary>
+        Task DeleteCurrencyAsync(string code, CancellationToken cancellationToken = default);
     }
 } 

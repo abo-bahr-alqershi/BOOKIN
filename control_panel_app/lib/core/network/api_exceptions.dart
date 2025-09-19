@@ -5,12 +5,14 @@ class ApiException implements Exception {
   final int? statusCode;
   final dynamic data;
   final DioExceptionType? type;
+  final String? code;
 
   ApiException({
     required this.message,
     this.statusCode,
     this.data,
     this.type,
+    this.code,
   });
 
   factory ApiException.fromDioError(DioException dioError) {
@@ -61,6 +63,7 @@ class ApiException implements Exception {
       statusCode: statusCode,
       data: data,
       type: dioError.type,
+      code: data is Map<String, dynamic> ? data['errorCode'] as String? : null,
     );
   }
 
