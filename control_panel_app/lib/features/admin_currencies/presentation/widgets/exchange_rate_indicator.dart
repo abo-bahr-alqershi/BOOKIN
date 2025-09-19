@@ -190,7 +190,7 @@ class _ExchangeRateIndicatorState extends State<ExchangeRateIndicator>
     final isUp = math.Random().nextBool(); // Simulate trend
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -220,6 +220,7 @@ class _ExchangeRateIndicatorState extends State<ExchangeRateIndicator>
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
@@ -240,7 +241,7 @@ class _ExchangeRateIndicatorState extends State<ExchangeRateIndicator>
                   ),
                 ],
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 0),
               Text(
                 isUp ? '+0.25%' : '-0.12%',
                 style: AppTextStyles.caption.copyWith(
