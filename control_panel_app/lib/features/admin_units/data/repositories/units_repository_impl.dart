@@ -50,14 +50,14 @@ class UnitsRepositoryImpl implements UnitsRepository {
       } on DioException catch (e) {
         return Left(ServerFailure(e.message ?? 'حدث خطأ في الاتصال'));
       } catch (e) {
-        return Left(ServerFailure('حدث خطأ غير متوقع'));
+        return const Left(ServerFailure('حدث خطأ غير متوقع'));
       }
     } else {
       try {
         final localUnits = await localDataSource.getCachedUnits();
         return Right(localUnits);
       } on CacheException {
-        return Left(CacheFailure('لا توجد بيانات محفوظة'));
+        return const Left(CacheFailure('لا توجد بيانات محفوظة'));
       }
     }
   }
@@ -78,10 +78,10 @@ class UnitsRepositoryImpl implements UnitsRepository {
         if (localUnit != null) {
           return Right(localUnit);
         } else {
-          return Left(CacheFailure('لا توجد بيانات محفوظة'));
+          return const Left(CacheFailure('لا توجد بيانات محفوظة'));
         }
       } on CacheException {
-        return Left(CacheFailure('لا توجد بيانات محفوظة'));
+        return const Left(CacheFailure('لا توجد بيانات محفوظة'));
       }
     }
   }
@@ -103,18 +103,19 @@ class UnitsRepositoryImpl implements UnitsRepository {
   }) async {
     if (await networkInfo.isConnected) {
       try {
+        // Backend expects a flat body matching CreateUnitCommand, not wrapped in a 'command' object
         final unitData = {
-          'command': {
-            'propertyId': propertyId,
-            'unitTypeId': unitTypeId,
-            'name': name,
-            'basePrice': basePrice,
-            'customFeatures': customFeatures,
-            'pricingMethod': pricingMethod,
-            'fieldValues': _convertFieldValuesToString(fieldValues),
-            'images': images ?? [],
-            if (tempKey != null && tempKey.isNotEmpty) 'tempKey': tempKey,
-          }
+          'propertyId': propertyId,
+          'unitTypeId': unitTypeId,
+          'name': name,
+          'basePrice': basePrice,
+          'customFeatures': customFeatures,
+          'pricingMethod': pricingMethod,
+          'fieldValues': _convertFieldValuesToString(fieldValues),
+          'images': images ?? [],
+          if (tempKey != null && tempKey.isNotEmpty) 'tempKey': tempKey,
+          if (adultCapacity != null) 'adultCapacity': adultCapacity,
+          if (childrenCapacity != null) 'childrenCapacity': childrenCapacity,
         };
         final unitId = await remoteDataSource.createUnit(unitData);
         return Right(unitId);
@@ -122,7 +123,7 @@ class UnitsRepositoryImpl implements UnitsRepository {
         return Left(ServerFailure(e.message));
       }
     } else {
-      return Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
+      return const Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
     }
   }
 
@@ -146,7 +147,8 @@ class UnitsRepositoryImpl implements UnitsRepository {
           if (basePrice != null) 'basePrice': basePrice,
           if (customFeatures != null) 'customFeatures': customFeatures,
           if (pricingMethod != null) 'pricingMethod': pricingMethod,
-          if (fieldValues != null) 'fieldValues': _convertFieldValuesToString(fieldValues),
+          if (fieldValues != null)
+            'fieldValues': _convertFieldValuesToString(fieldValues),
           if (images != null) 'images': images,
         };
         final result = await remoteDataSource.updateUnit(unitId, unitData);
@@ -155,7 +157,7 @@ class UnitsRepositoryImpl implements UnitsRepository {
         return Left(ServerFailure(e.message));
       }
     } else {
-      return Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
+      return const Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
     }
   }
 
@@ -169,7 +171,7 @@ class UnitsRepositoryImpl implements UnitsRepository {
         return Left(ServerFailure(e.message));
       }
     } else {
-      return Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
+      return const Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
     }
   }
 
@@ -179,18 +181,20 @@ class UnitsRepositoryImpl implements UnitsRepository {
   ) async {
     if (await networkInfo.isConnected) {
       try {
-        final unitTypes = await remoteDataSource.getUnitTypesByProperty(propertyTypeId);
+        final unitTypes =
+            await remoteDataSource.getUnitTypesByProperty(propertyTypeId);
         return Right(unitTypes);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }
     } else {
-      return Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
+      return const Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
     }
   }
 
   @override
-  Future<Either<Failure, List<UnitTypeField>>> getUnitFields(String unitTypeId) async {
+  Future<Either<Failure, List<UnitTypeField>>> getUnitFields(
+      String unitTypeId) async {
     if (await networkInfo.isConnected) {
       try {
         final fields = await remoteDataSource.getUnitFields(unitTypeId);
@@ -199,7 +203,7 @@ class UnitsRepositoryImpl implements UnitsRepository {
         return Left(ServerFailure(e.message));
       }
     } else {
-      return Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
+      return const Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
     }
   }
 
@@ -210,20 +214,22 @@ class UnitsRepositoryImpl implements UnitsRepository {
   ) async {
     if (await networkInfo.isConnected) {
       try {
-        final result = await remoteDataSource.assignUnitToSections(unitId, sectionIds);
+        final result =
+            await remoteDataSource.assignUnitToSections(unitId, sectionIds);
         return Right(result);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }
     } else {
-      return Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
+      return const Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
     }
   }
 
   /// تحويل قيم الحقول إلى string كما يتوقعها Backend
-  List<Map<String, dynamic>> _convertFieldValuesToString(List<Map<String, dynamic>>? fieldValues) {
+  List<Map<String, dynamic>> _convertFieldValuesToString(
+      List<Map<String, dynamic>>? fieldValues) {
     if (fieldValues == null) return [];
-    
+
     return fieldValues.map((field) {
       return {
         'fieldId': field['fieldId'],

@@ -22,6 +22,7 @@ import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/
     hide UpdateUnitImageEvent;
 import 'package:get_it/get_it.dart';
 import 'package:bookn_cp_app/core/network/api_client.dart';
+import 'package:intl/intl.dart';
 
 class EditUnitPage extends StatefulWidget {
   final String unitId;
@@ -62,6 +63,8 @@ class _EditUnitPageState extends State<EditUnitPage>
   int _childrenCapacity = 0;
   String _pricingMethod = 'per_night';
   Map<String, dynamic> _dynamicFieldValues = {};
+  final Map<String, dynamic> _originalDynamicFieldValues =
+      {}; // حفظ القيم الأصلية
   String? _selectedPropertyName;
   final GlobalKey<UnitImageGalleryState> _galleryKey = GlobalKey();
 
@@ -70,11 +73,19 @@ class _EditUnitPageState extends State<EditUnitPage>
   bool _isDataLoaded = false;
   bool _hasChanges = false;
   List<String> _existingImages = [];
+  List<String> _originalImages = []; // حفظ الصور الأصلية
+  bool _imagesChanged = false; // تتبع تغييرات الصور
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
+
+    // Initialize form in edit mode
+    context
+        .read<UnitFormBloc>()
+        .add(InitializeFormEvent(unitId: widget.unitId));
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUnitData();
     });
@@ -158,17 +169,18 @@ class _EditUnitPageState extends State<EditUnitPage>
       // Set pricing method
       _pricingMethod = _getPricingMethodString(unit.pricingMethod);
 
-      // Set dynamic field values
-      for (var fieldValue in unit.fieldValues) {
-        _dynamicFieldValues[fieldValue.fieldId] = fieldValue.fieldValue;
-      }
+      // تحميل قيم الحقول الديناميكية من كلا المصدرين
+      _loadDynamicFieldValues(unit);
 
       // Set existing images
-      _existingImages = unit.images ?? [];
+      _existingImages = List<String>.from(unit.images ?? []);
+      _originalImages = List<String>.from(unit.images ?? []);
     });
 
-    // لا تعيد تهيئة النموذج هنا لتجنب سباق الحالة الذي يمسح الحقول الديناميكية
-    // Ensure dynamic fields are loaded based on the unit's type in edit mode
+    // تحديث UnitFormBloc بجميع البيانات
+    _updateFormBloc();
+
+    // Load unit type fields
     if (unit.unitTypeId.isNotEmpty) {
       context.read<UnitFormBloc>().add(
             UnitTypeSelectedEvent(unitTypeId: unit.unitTypeId),
@@ -181,6 +193,33 @@ class _EditUnitPageState extends State<EditUnitPage>
         _animationController.forward();
       }
     });
+  }
+
+  void _loadDynamicFieldValues(Unit unit) {
+    // تحميل من fieldValues
+    for (var fieldValue in unit.fieldValues) {
+      _dynamicFieldValues[fieldValue.fieldId] = fieldValue.fieldValue;
+      _originalDynamicFieldValues[fieldValue.fieldId] = fieldValue.fieldValue;
+    }
+
+    // تحميل من dynamicFields (FieldGroupWithValues)
+    for (var group in unit.dynamicFields) {
+      for (var field in group.fieldValues) {
+        _dynamicFieldValues[field.fieldId] = field.fieldValue;
+        _originalDynamicFieldValues[field.fieldId] = field.fieldValue;
+      }
+    }
+  }
+
+  void _updateFormBloc() {
+    // تحديث جميع الحقول في البلوك
+    _updateUnitName();
+    _updateDescription();
+    _updatePricing();
+    _updateFeatures();
+    _updateCapacity();
+    _updateUnitImage();
+    _updateDynamicFields();
   }
 
   String _getPricingMethodString(PricingMethod method) {
@@ -872,12 +911,14 @@ class _EditUnitPageState extends State<EditUnitPage>
             onImagesChanged: (images) {
               setState(() {
                 _existingImages = images.map((img) => img.url).toList();
+                _imagesChanged =
+                    !_areImagesEqual(_existingImages, _originalImages);
                 _updateUnitImage();
               });
             },
           ),
 
-          // Dynamic Fields Section - استخدام الويدجت المحدثة
+          // Dynamic Fields Section - عرض الحقول الديناميكية إذا توفرت
           if (state is UnitFormReady && state.unitTypeFields.isNotEmpty) ...[
             const SizedBox(height: 30),
             DynamicFieldsWidget(
@@ -886,6 +927,7 @@ class _EditUnitPageState extends State<EditUnitPage>
               onChanged: (values) {
                 setState(() {
                   _dynamicFieldValues = values;
+                  _hasChanges = _checkForChanges(); // تحديث حالة التغييرات
                 });
                 _updateDynamicFields();
               },
@@ -1013,8 +1055,7 @@ class _EditUnitPageState extends State<EditUnitPage>
               {
                 'label': 'عدد الصور',
                 'value': '${_existingImages.length} صورة',
-                'changed': _existingImages.length !=
-                    (_originalUnit?.images?.length ?? 0)
+                'changed': _imagesChanged
               },
             ],
           ),
@@ -1032,9 +1073,250 @@ class _EditUnitPageState extends State<EditUnitPage>
               },
             ],
           ),
+
+          // عرض الحقول الديناميكية المعدلة
+          if (state is UnitFormReady && state.unitTypeFields.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildDynamicFieldsReviewCard(state.unitTypeFields),
+          ],
         ],
       ),
     );
+  }
+
+  // إضافة قسم مراجعة الحقول الديناميكية
+  Widget _buildDynamicFieldsReviewCard(List<dynamic> fields) {
+    final changedFields = fields.where((field) {
+      final currentValue = _dynamicFieldValues[field.fieldId];
+      final originalValue = _originalDynamicFieldValues[field.fieldId];
+      return currentValue != originalValue;
+    }).toList();
+
+    final hasChanges = changedFields.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: hasChanges
+              ? [
+                  AppTheme.warning.withOpacity(0.05),
+                  AppTheme.darkCard.withOpacity(0.4),
+                ]
+              : [
+                  AppTheme.darkCard.withOpacity(0.5),
+                  AppTheme.darkCard.withOpacity(0.3),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: hasChanges
+              ? AppTheme.warning.withOpacity(0.3)
+              : AppTheme.darkBorder.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: hasChanges
+                      ? LinearGradient(colors: [
+                          AppTheme.warning,
+                          AppTheme.warning.withOpacity(0.7)
+                        ])
+                      : AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(
+                  Icons.dynamic_form_rounded,
+                  size: 14,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'الحقول الإضافية',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: hasChanges ? AppTheme.warning : AppTheme.primaryBlue,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (hasChanges) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppTheme.warning.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${changedFields.length} تغيير',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppTheme.warning,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...fields.map((field) {
+            final currentValue = _dynamicFieldValues[field.fieldId];
+            final originalValue = _originalDynamicFieldValues[field.fieldId];
+            final isChanged = currentValue != originalValue;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      if (isChanged)
+                        Container(
+                          width: 6,
+                          height: 6,
+                          margin: const EdgeInsets.only(right: 4, top: 5),
+                          decoration: BoxDecoration(
+                            color: AppTheme.warning,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      Icon(
+                        _getFieldIcon(field.fieldTypeId),
+                        size: 14,
+                        color: isChanged
+                            ? AppTheme.warning.withOpacity(0.7)
+                            : AppTheme.textMuted.withOpacity(0.7),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        field.displayName,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color:
+                              isChanged ? AppTheme.warning : AppTheme.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          _formatFieldValue(field, currentValue),
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppTheme.textWhite,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.end,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (isChanged &&
+                            originalValue != null &&
+                            originalValue.toString().isNotEmpty)
+                          Text(
+                            'كان: ${_formatFieldValue(field, originalValue)}',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppTheme.textMuted.withOpacity(0.7),
+                              fontSize: 10,
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                            textAlign: TextAlign.end,
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // دالة مساعدة للحصول على أيقونة الحقل
+  IconData _getFieldIcon(String fieldType) {
+    switch (fieldType) {
+      case 'text':
+        return Icons.text_fields_rounded;
+      case 'textarea':
+        return Icons.subject_rounded;
+      case 'number':
+        return Icons.numbers_rounded;
+      case 'currency':
+        return Icons.attach_money_rounded;
+      case 'boolean':
+        return Icons.toggle_on_rounded;
+      case 'select':
+        return Icons.arrow_drop_down_circle_rounded;
+      case 'multiselect':
+        return Icons.checklist_rounded;
+      case 'date':
+        return Icons.calendar_today_rounded;
+      case 'email':
+        return Icons.email_rounded;
+      case 'phone':
+        return Icons.phone_rounded;
+      case 'file':
+        return Icons.attach_file_rounded;
+      case 'image':
+        return Icons.image_rounded;
+      default:
+        return Icons.info_rounded;
+    }
+  }
+
+  // دالة مساعدة لتنسيق قيمة الحقل للعرض
+  String _formatFieldValue(dynamic field, dynamic value) {
+    if (value == null || value.toString().isEmpty) return 'غير محدد';
+
+    switch (field.fieldTypeId) {
+      case 'boolean':
+        final boolValue = value.toString().toLowerCase();
+        return (boolValue == 'true' || boolValue == '1' || boolValue == 'yes')
+            ? 'نعم'
+            : 'لا';
+
+      case 'currency':
+        if (value is num) {
+          return '${value.toStringAsFixed(2)} ريال';
+        }
+        return '$value ريال';
+
+      case 'date':
+        if (value is String) {
+          try {
+            final date = DateTime.parse(value);
+            return DateFormat('dd/MM/yyyy').format(date);
+          } catch (_) {
+            return value;
+          }
+        } else if (value is DateTime) {
+          return DateFormat('dd/MM/yyyy').format(value);
+        }
+        return value.toString();
+
+      case 'multiselect':
+        if (value is List) {
+          return value.join('، ');
+        }
+        return value.toString();
+
+      default:
+        return value.toString();
+    }
   }
 
   Widget _buildOriginalValueIndicator(
@@ -1486,11 +1768,12 @@ class _EditUnitPageState extends State<EditUnitPage>
     );
   }
 
-  // Additional helper methods specific to Edit
+  // تحسين دالة التحقق من التغييرات
   bool _checkForChanges() {
     if (_originalUnit == null) return false;
 
-    return _nameController.text != _originalUnit!.name ||
+    // التحقق من الحقول الأساسية
+    final basicFieldsChanged = _nameController.text != _originalUnit!.name ||
         _descriptionController.text != _originalUnit!.customFeatures ||
         double.tryParse(_priceController.text) !=
             _originalUnit!.basePrice.amount ||
@@ -1499,13 +1782,40 @@ class _EditUnitPageState extends State<EditUnitPage>
         _childrenCapacity != (_originalUnit!.childrenCapacity ?? 0) ||
         _pricingMethod !=
             _getPricingMethodString(_originalUnit!.pricingMethod) ||
-        _featuresController.text != _originalUnit!.customFeatures ||
-        // Detect image order change (not just count)
-        _existingImages.length != (_originalUnit!.images?.length ?? 0) ||
-        !_isSameOrder(_existingImages, _originalUnit!.images ?? const []);
+        _featuresController.text != _originalUnit!.customFeatures;
+
+    // التحقق من تغييرات الصور
+    final imagesChanged =
+        _imagesChanged || !_areImagesEqual(_existingImages, _originalImages);
+
+    // التحقق من تغييرات الحقول الديناميكية
+    final dynamicFieldsChanged = _checkDynamicFieldsChanges();
+
+    return basicFieldsChanged || imagesChanged || dynamicFieldsChanged;
   }
 
-  bool _isSameOrder(List<String> current, List<String> original) {
+  // دالة للتحقق من تغييرات الحقول الديناميكية
+  bool _checkDynamicFieldsChanges() {
+    // التحقق من كل حقل ديناميكي
+    for (final entry in _dynamicFieldValues.entries) {
+      final originalValue = _originalDynamicFieldValues[entry.key];
+      if (entry.value != originalValue) {
+        return true;
+      }
+    }
+
+    // التحقق من الحقول التي كانت موجودة وحذفت
+    for (final entry in _originalDynamicFieldValues.entries) {
+      if (!_dynamicFieldValues.containsKey(entry.key)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // دالة للمقارنة بين قوائم الصور
+  bool _areImagesEqual(List<String> current, List<String> original) {
     if (current.length != original.length) return false;
     for (var i = 0; i < current.length; i++) {
       if (current[i] != original[i]) return false;
@@ -1528,9 +1838,10 @@ class _EditUnitPageState extends State<EditUnitPage>
             _childrenCapacity != (_originalUnit!.childrenCapacity ?? 0) ||
             _pricingMethod !=
                 _getPricingMethodString(_originalUnit!.pricingMethod);
-      case 2: // Features & Images
+      case 2: // Features, Images & Dynamic Fields
         return _featuresController.text != _originalUnit!.customFeatures ||
-            _existingImages.length != (_originalUnit!.images?.length ?? 0);
+            _imagesChanged ||
+            _checkDynamicFieldsChanges();
       default:
         return false;
     }
@@ -1586,12 +1897,25 @@ class _EditUnitPageState extends State<EditUnitPage>
       });
     }
 
-    if (_existingImages.length != (_originalUnit!.images?.length ?? 0)) {
+    if (_imagesChanged) {
       changes.add({
-        'field': 'عدد الصور',
-        'oldValue': '${_originalUnit!.images?.length ?? 0} صورة',
+        'field': 'الصور',
+        'oldValue': '${_originalImages.length} صورة',
         'newValue': '${_existingImages.length} صورة',
       });
+    }
+
+    // إضافة تغييرات الحقول الديناميكية
+    for (final entry in _dynamicFieldValues.entries) {
+      final originalValue = _originalDynamicFieldValues[entry.key];
+      if (entry.value != originalValue) {
+        // نحتاج للحصول على معلومات الحقل لعرض الاسم
+        changes.add({
+          'field': 'حقل ديناميكي',
+          'oldValue': originalValue?.toString() ?? 'غير محدد',
+          'newValue': entry.value?.toString() ?? 'غير محدد',
+        });
+      }
     }
 
     return changes;
@@ -1605,10 +1929,31 @@ class _EditUnitPageState extends State<EditUnitPage>
       builder: (context) => _ResetConfirmationDialog(
         onConfirm: () {
           Navigator.pop(context);
-          _populateFormWithUnitData(_originalUnit!);
+
+          // إعادة تعيين جميع القيم
           setState(() {
+            _nameController.text = _originalUnit!.name;
+            _descriptionController.text = _originalUnit!.customFeatures;
+            _priceController.text = _originalUnit!.basePrice.amount.toString();
+            _featuresController.text = _originalUnit!.customFeatures;
+            _adultCapacity =
+                _originalUnit!.adultsCapacity ?? _originalUnit!.maxCapacity;
+            _childrenCapacity = _originalUnit!.childrenCapacity ?? 0;
+            _pricingMethod =
+                _getPricingMethodString(_originalUnit!.pricingMethod);
+            _existingImages = List<String>.from(_originalImages);
+            _imagesChanged = false;
+
+            // إعادة تعيين الحقول الديناميكية
+            _dynamicFieldValues =
+                Map<String, dynamic>.from(_originalDynamicFieldValues);
+
             _hasChanges = false;
           });
+
+          // تحديث البلوك
+          _updateFormBloc();
+
           _showSuccessMessage('تم استرجاع البيانات الأصلية');
         },
       ),
@@ -1626,7 +1971,7 @@ class _EditUnitPageState extends State<EditUnitPage>
     return result ?? false;
   }
 
-  // Keep all the other methods from create_unit_page.dart (unchanged)
+  // Keep all the other methods from original file (unchanged)
   Widget _buildPricingMethodSelector() {
     final methods = [
       {'value': 'daily', 'label': 'لليلة الواحدة'},
@@ -1766,30 +2111,6 @@ class _EditUnitPageState extends State<EditUnitPage>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildDynamicFields(List<dynamic> fields) {
-    return Column(
-      children: fields.map((field) {
-        final controller = TextEditingController(
-          text: _dynamicFieldValues[field.fieldId]?.toString() ?? '',
-        );
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: _buildInputField(
-            controller: controller,
-            label: field.displayName,
-            hint: field.description ?? 'أدخل ${field.displayName}',
-            icon: Icons.info_rounded,
-            onChanged: (value) {
-              _dynamicFieldValues[field.fieldId] = value;
-              _updateDynamicFields();
-            },
-          ),
-        );
-      }).toList(),
     );
   }
 
@@ -1960,11 +2281,9 @@ class _EditUnitPageState extends State<EditUnitPage>
   }
 
   void _updateFeatures() {
-    if (_featuresController.text.isNotEmpty) {
-      context.read<UnitFormBloc>().add(
-            UpdateFeaturesEvent(features: _featuresController.text),
-          );
-    }
+    context.read<UnitFormBloc>().add(
+          UpdateFeaturesEvent(features: _featuresController.text),
+        );
   }
 
   void _updateUnitName() {
@@ -2085,12 +2404,8 @@ class _EditUnitPageState extends State<EditUnitPage>
     }
 
     if (_formKey.currentState!.validate()) {
-      _updateUnitName();
-      _updateDescription();
-      _updatePricing();
-      _updateFeatures();
-      _updateCapacity();
-      _updateUnitImage();
+      // تحديث جميع البيانات في البلوك
+      _updateFormBloc();
 
       Future.delayed(const Duration(milliseconds: 100), () {
         context.read<UnitFormBloc>().add(SubmitFormEvent());
@@ -2171,7 +2486,7 @@ class _EditUnitPageState extends State<EditUnitPage>
   }
 }
 
-// Additional Dialogs for Edit Page
+// Additional Dialogs for Edit Page (unchanged from original)
 class _ResetConfirmationDialog extends StatelessWidget {
   final VoidCallback onConfirm;
 
