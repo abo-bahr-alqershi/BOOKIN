@@ -154,10 +154,6 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
 
   @override
   Widget build(BuildContext context) {
-    // حساب الارتفاع الديناميكي بناءً على المحتوى
-    final hasFilterFields = _getFilterFields().isNotEmpty;
-    final baseHeight = hasFilterFields ? 420.0 : 380.0;
-
     return SlideTransition(
       position: _slideAnimation,
       child: FadeTransition(
@@ -203,7 +199,6 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
                     scale: _pressScale.value * _hoverScale.value,
                     child: Container(
                       margin: const EdgeInsets.all(AppDimensions.paddingSmall),
-                      height: baseHeight,
                       child: Stack(
                         children: [
                           // Main Card
@@ -292,59 +287,71 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
                 width: widget.isSelected ? 2 : 1,
               ),
             ),
-            child: Stack(
-              children: [
-                // Background Pattern
-                if (widget.isSelected || _isHovered)
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _AdvancedPatternPainter(
-                        color: AppTheme.primaryBlue.withOpacity(0.03),
-                        animation: _sparkleAnimation.value,
-                      ),
-                    ),
-                  ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final bool isCompact = constraints.maxHeight < 360;
+                final double imageHeight = isCompact ? 110 : 140;
+                final int maxFields = isCompact ? 1 : 3;
+                final EdgeInsets footerPadding = isCompact
+                    ? const EdgeInsets.all(10)
+                    : const EdgeInsets.all(12);
 
-                // Content
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                return Stack(
                   children: [
-                    // Image Section
-                    _buildImageSection(),
-
-                    // Info Section
-                    Expanded(
-                      child: Padding(
-                        padding:
-                            const EdgeInsets.all(AppDimensions.paddingMedium),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildHeader(),
-                            const SizedBox(height: AppDimensions.spaceSmall),
-                            _buildDetails(),
-
-                            // عرض الحقول الديناميكية
-                            if (_getFilterFields().isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              _buildDynamicFields(),
-                            ],
-
-                            const Spacer(),
-                            _buildFooter(),
-                          ],
+                    // Background Pattern
+                    if (widget.isSelected || _isHovered)
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _AdvancedPatternPainter(
+                            color: AppTheme.primaryBlue.withOpacity(0.03),
+                            animation: _sparkleAnimation.value,
+                          ),
                         ),
                       ),
+
+                    // Content
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Image Section
+                        _buildImageSection(imageHeight: imageHeight),
+
+                        // Info Section
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(
+                                AppDimensions.paddingMedium),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildHeader(),
+                                const SizedBox(
+                                    height: AppDimensions.spaceSmall),
+                                _buildDetails(),
+
+                                // عرض الحقول الديناميكية
+                                if (_getFilterFields().isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  _buildDynamicFields(maxFields: maxFields),
+                                ],
+
+                                const SizedBox(height: 6),
+                                _buildFooter(padding: footerPadding),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+
+                    // Status Badge
+                    _buildStatusBadge(),
+
+                    // Quick Actions
+                    if (!_showActions) _buildQuickActions(),
                   ],
-                ),
-
-                // Status Badge
-                _buildStatusBadge(),
-
-                // Quick Actions
-                if (!_showActions) _buildQuickActions(),
-              ],
+                );
+              },
             ),
           ),
         ),
@@ -353,12 +360,14 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
   }
 
   // دالة جديدة لبناء قسم الحقول الديناميكية
-  Widget _buildDynamicFields() {
+  Widget _buildDynamicFields({int maxFields = 3}) {
     final filterFields = _getFilterFields();
 
     if (filterFields.isEmpty) {
       return const SizedBox.shrink();
     }
+
+    final visibleFields = filterFields.take(maxFields).toList();
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -414,7 +423,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
 
           // عرض الحقول في صفوف منظمة
           Column(
-            children: filterFields.map((fieldData) {
+            children: visibleFields.map((fieldData) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: _buildDynamicFieldRow(
@@ -458,7 +467,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
     }
 
     if (filterFields.isNotEmpty) {
-      return filterFields.take(3).toList();
+      return filterFields;
     }
 
     // بديل: إذا لم تكن هناك حقول أساسية، اعرض أول 3 حقول ذات قيمة
@@ -485,7 +494,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       }
     }
 
-    return fallback.take(3).toList();
+    return fallback;
   }
 
   // دالة جديدة لعرض الحقل في صف منظم
@@ -680,9 +689,9 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
     }
   }
 
-  Widget _buildImageSection() {
+  Widget _buildImageSection({required double imageHeight}) {
     return Container(
-      height: 140,
+      height: imageHeight,
       decoration: const BoxDecoration(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppDimensions.radiusXLarge),
@@ -980,12 +989,12 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
     );
   }
 
-  Widget _buildFooter() {
+  Widget _buildFooter({EdgeInsets padding = const EdgeInsets.all(12)}) {
     return Column(
       children: [
         // Price Section
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: padding,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
