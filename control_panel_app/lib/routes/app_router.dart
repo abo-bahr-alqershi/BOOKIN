@@ -443,8 +443,7 @@ class AppRouter {
             return MultiBlocProvider(
               providers: [
                 BlocProvider<UnitFormBloc>(
-                  create: (_) => di.sl<UnitFormBloc>()
-                    ..add(InitializeFormEvent(unitId: unitId)),
+                  create: (_) => di.sl<UnitFormBloc>()..add(const InitializeFormEvent()),
                 ),
                 BlocProvider<UnitDetailsBloc>(
                   create: (_) => di.sl<UnitDetailsBloc>()

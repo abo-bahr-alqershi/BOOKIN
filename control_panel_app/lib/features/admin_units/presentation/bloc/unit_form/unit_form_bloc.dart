@@ -41,10 +41,8 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
     InitializeFormEvent event,
     Emitter<UnitFormState> emit,
   ) async {
-    emit(UnitFormLoading());
-    
+    // لا تستخدم حالة تحميل هنا لتجنب الرجوع البصري ومسح الحقول عند التحرير
     if (event.unitId != null) {
-      // Load existing unit for editing
       emit(UnitFormReady(
         isEditMode: true,
         unitId: event.unitId,

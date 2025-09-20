@@ -162,10 +162,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       _existingImages = unit.images ?? [];
     });
     
-    // Initialize form with unit data
-    context.read<UnitFormBloc>().add(
-      InitializeFormEvent(unitId: widget.unitId),
-    );
+    // لا تعيد تهيئة النموذج هنا لتجنب سباق الحالة الذي يمسح الحقول الديناميكية
     // Ensure dynamic fields are loaded based on the unit's type in edit mode
     if (unit.unitTypeId.isNotEmpty) {
       context.read<UnitFormBloc>().add(
