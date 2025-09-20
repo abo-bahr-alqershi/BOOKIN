@@ -1180,27 +1180,111 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
   }
 
   void _showDeleteConfirmation(Unit unit) {
-    showCupertinoDialog(
+    HapticFeedback.mediumImpact();
+    showDialog(
       context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('تأكيد الحذف'),
-        content: Text('هل أنت متأكد من حذف وحدة "${unit.name}"؟'),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+      barrierColor: Colors.black87,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: AppTheme.error.withOpacity(0.3),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.error.withOpacity(0.2),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppTheme.error.withOpacity(0.1),
+                  ),
+                  child: Icon(
+                    Icons.delete_outline,
+                    color: AppTheme.error,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'حذف الوحدة؟',
+                  style: AppTextStyles.heading3.copyWith(
+                    color: AppTheme.textWhite,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'لا يمكن التراجع عن هذا الإجراء',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'إلغاء',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: AppTheme.textLight,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          context.read<UnitDetailsBloc>().add(
+                                DeleteUnitDetailsEvent(unitId: unit.id),
+                              );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.error,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'حذف',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          CupertinoDialogAction(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<UnitDetailsBloc>().add(
-                    DeleteUnitDetailsEvent(unitId: unit.id),
-                  );
-            },
-            isDestructiveAction: true,
-            child: const Text('حذف'),
-          ),
-        ],
+        ),
       ),
     );
   }
