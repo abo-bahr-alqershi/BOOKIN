@@ -240,7 +240,7 @@ class _ExchangeRateIndicatorState extends State<ExchangeRateIndicator>
                 children: [
                   Text(
                     rate.toStringAsFixed(4),
-                    style: AppTextStyles.bodyLarge copyWith(
+                    style: AppTextStyles.bodyLarge.copyWith(
                       color: AppTheme.primaryCyan,
                       fontWeight: FontWeight.bold,
                     ),
@@ -275,6 +275,7 @@ class _ExchangeRateIndicatorState extends State<ExchangeRateIndicator>
       'USD': '\$',
       'EUR': '€',
       'GBP': '£',
+      'YER': '﷼',
       'SAR': '﷼',
       'AED': 'د.إ',
       'KWD': 'د.ك',

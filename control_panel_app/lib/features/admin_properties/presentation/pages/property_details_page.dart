@@ -75,23 +75,24 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
       create: (_) => di.sl<PropertyImagesBloc>()
         ..add(LoadPropertyImagesEvent(propertyId: widget.propertyId)),
       child: Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      body: BlocBuilder<PropertiesBloc, PropertiesState>(
-        builder: (context, state) {
-          if (state is PropertyDetailsLoading) {
-            return _buildLoadingState();
-          }
+        backgroundColor: AppTheme.darkBackground,
+        body: BlocBuilder<PropertiesBloc, PropertiesState>(
+          builder: (context, state) {
+            if (state is PropertyDetailsLoading) {
+              return _buildLoadingState();
+            }
 
-          if (state is PropertyDetailsError) {
-            return _buildErrorState(state.message);
-          }
+            if (state is PropertyDetailsError) {
+              return _buildErrorState(state.message);
+            }
 
-          if (state is PropertyDetailsLoaded) {
-            return _buildLoadedState(state.property);
-          }
+            if (state is PropertyDetailsLoaded) {
+              return _buildLoadedState(state.property);
+            }
 
-          return _buildEmptyState();
-        },
+            return _buildEmptyState();
+          },
+        ),
       ),
     );
   }
@@ -256,7 +257,8 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
                               ? img.thumbnails.large
                               : img.url)
                       .toString();
-                } else if (imgState is PropertyImagesLoaded && imgState.images.isNotEmpty) {
+                } else if (imgState is PropertyImagesLoaded &&
+                    imgState.images.isNotEmpty) {
                   final img = imgState.images.first;
                   heroUrl = (img.thumbnails.hd.isNotEmpty
                           ? img.thumbnails.hd
