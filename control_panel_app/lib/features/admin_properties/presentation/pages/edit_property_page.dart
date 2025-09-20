@@ -18,6 +18,7 @@ import '../widgets/property_map_view.dart';
 import 'package:bookn_cp_app/injection_container.dart' as di;
 import 'package:bookn_cp_app/core/usecases/usecase.dart';
 import 'package:bookn_cp_app/features/admin_currencies/domain/usecases/get_currencies_usecase.dart';
+import 'package:bookn_cp_app/features/admin_cities/domain/usecases/get_cities_usecase.dart' as ci_uc;
 import '../../domain/entities/property.dart';
 import '../../domain/entities/property_type.dart';
 import '../../domain/entities/property_image.dart'; // إضافة استيراد
@@ -95,6 +96,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   List<String> _selectedAmenities = [];
   bool _isFeatured = false;
   String _currency = 'YER';
+  String? _selectedCity;
   final _currencyDropdownKey = GlobalKey();
   Property? _currentProperty;
   bool _isDataLoaded = false;
@@ -150,6 +152,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
         _shortDescriptionController.text = property.shortDescription ?? '';
         _addressController.text = property.address;
         _cityController.text = property.city;
+        _selectedCity = property.city.isNotEmpty ? property.city : null;
         _descriptionController.text = property.description;
         _latitudeController.text = property.latitude?.toString() ?? '';
         _longitudeController.text = property.longitude?.toString() ?? '';
@@ -1420,7 +1423,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
               propertyId: widget.propertyId,
               name: _nameController.text,
               address: _addressController.text,
-              city: _cityController.text,
+              city: _cityController.text.isEmpty ? null : _cityController.text,
               description: _descriptionController.text,
               latitude: double.tryParse(_latitudeController.text),
               longitude: double.tryParse(_longitudeController.text),
@@ -1448,7 +1451,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       case 1:
         final lat = double.tryParse(_latitudeController.text);
         final lng = double.tryParse(_longitudeController.text);
-        if (_addressController.text.isEmpty || _cityController.text.isEmpty)
+        if (_addressController.text.isEmpty)
           return false;
         if (lat == null || lat < -90 || lat > 90) return false;
         if (lng == null || lng < -180 || lng > 180) return false;
@@ -1638,6 +1641,95 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
       onChanged: (v) {
         if (v != null) widget.onChanged(v);
       },
+    );
+  }
+}
+
+class _CityDropdown extends StatefulWidget {
+  final String? value;
+  final ValueChanged<String?> onChanged;
+  const _CityDropdown({required this.value, required this.onChanged});
+
+  @override
+  State<_CityDropdown> createState() => _CityDropdownState();
+}
+
+class _CityDropdownState extends State<_CityDropdown> {
+  List<String> _cities = const [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final usecase = di.sl<ci_uc.GetCitiesUseCase>();
+      final result = await usecase(const ci_uc.GetCitiesParams());
+      result.fold(
+        (f) => setState(() { _error = f.message; _loading = false; }),
+        (list) => setState(() {
+          _cities = list.map((c) => c.name).toList();
+          _loading = false;
+          if (_cities.isNotEmpty && (widget.value == null || !_cities.contains(widget.value))) {
+            widget.onChanged(_cities.first);
+          }
+        }),
+      );
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final decoration = const InputDecoration(
+      border: InputBorder.none,
+      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    );
+
+    if (_loading) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(children: const [
+          SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+          SizedBox(width: 12),
+          Text('جاري تحميل المدن...'),
+        ]),
+      );
+    }
+
+    if (_error != null) {
+      return DropdownButtonFormField<String?>(
+        value: _cities.contains(widget.value) ? widget.value : null,
+        decoration: decoration,
+        dropdownColor: AppTheme.darkCard,
+        style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+        items: [
+          const DropdownMenuItem(value: null, child: Text('بدون مدينة')),
+          ..._cities.map((c) => DropdownMenuItem(value: c, child: Text(c)))
+        ],
+        onChanged: (v) => widget.onChanged(v),
+      );
+    }
+
+    return DropdownButtonFormField<String?>(
+      value: _cities.contains(widget.value) ? widget.value : null,
+      decoration: decoration,
+      dropdownColor: AppTheme.darkCard,
+      style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+      hint: Text('اختر المدينة', style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textMuted)),
+      items: [
+        const DropdownMenuItem(value: null, child: Text('بدون مدينة')),
+        ..._cities.map((c) => DropdownMenuItem(value: c, child: Text(c)))
+      ],
+      onChanged: (v) => widget.onChanged(v),
     );
   }
 }

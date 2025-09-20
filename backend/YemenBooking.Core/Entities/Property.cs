@@ -58,7 +58,7 @@ public class Property : BaseEntity<Guid>
     /// City
     /// </summary>
     [Display(Name = "المدينة")]
-    public string City { get; set; }
+    public string? City { get; set; }
     
     /// <summary>
     /// خط العرض

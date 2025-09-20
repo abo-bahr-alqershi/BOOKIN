@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
+import 'package:bookn_cp_app/features/admin_currencies/domain/usecases/get_currencies_usecase.dart';
+import 'package:bookn_cp_app/features/admin_cities/domain/usecases/get_cities_usecase.dart' as ci_uc;
+import 'package:bookn_cp_app/core/usecases/usecase.dart';
 import '../../../../injection_container.dart';
 import '../../../../services/local_storage_service.dart';
 import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
@@ -15,17 +19,41 @@ class SelectCityCurrencyPage extends StatefulWidget {
 }
 
 class _SelectCityCurrencyPageState extends State<SelectCityCurrencyPage> {
-  final _cities = const ['صنعاء', 'عدن', 'تعز', 'حضرموت', 'الحديدة'];
-  final _currencies = const ['YER', 'SAR', 'USD'];
+  List<String> _cities = const [];
+  List<String> _currencies = const [];
   String? _city;
   String? _currency;
+  bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
     final storage = sl<LocalStorageService>();
-    _city = storage.getSelectedCity().isNotEmpty ? storage.getSelectedCity() : null;
-    _currency = storage.getSelectedCurrency();
+    try {
+      // Load currencies
+      final curUsecase = di.sl<GetCurrenciesUseCase>();
+      final curRes = await curUsecase(NoParams());
+      curRes.fold((f) {}, (list) {
+        _currencies = list.map((c) => c.code).toList();
+      });
+      // Load cities
+      final citiesUsecase = di.sl<ci_uc.GetCitiesUseCase>();
+      final citiesRes = await citiesUsecase(const ci_uc.GetCitiesParams());
+      citiesRes.fold((f) {}, (list) {
+        _cities = list.map((c) => c.name).toList();
+      });
+      _city = storage.getSelectedCity().isNotEmpty ? storage.getSelectedCity() : null;
+      _currency = storage.getSelectedCurrency();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -39,7 +67,9 @@ class _SelectCityCurrencyPageState extends State<SelectCityCurrencyPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('اختر مدينتك', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w600)),
