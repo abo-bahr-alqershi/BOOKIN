@@ -1723,6 +1723,7 @@ class _CreateUnitPageState extends State<CreateUnitPage>
 
   // Helper Methods
   void _updateCapacity() {
+    print('👥 Updating capacity: adults=$_adultCapacity, children=$_childrenCapacity');
     context.read<UnitFormBloc>().add(
           UpdateCapacityEvent(
             adultCapacity: _adultCapacity,
@@ -1731,8 +1732,8 @@ class _CreateUnitPageState extends State<CreateUnitPage>
         );
   }
 
-  // Helper Methods
   void _updateUnitImage() {
+    print('🖼️ Updating unit images: $_selectedLocalImages');
     context.read<UnitFormBloc>().add(
           UpdateUnitImageEvent(
             images: _selectedLocalImages,
@@ -1754,41 +1755,45 @@ class _CreateUnitPageState extends State<CreateUnitPage>
         // استخدام قيم enum بدلاً من constructor
         final pricingMethod = _getPricingMethodEnum();
 
+        print('💰 Updating pricing: ${money.toJson()}, method: ${pricingMethod.value}');
+
         context.read<UnitFormBloc>().add(
               UpdatePricingEvent(
                 basePrice: money,
                 pricingMethod: pricingMethod,
               ),
             );
+      } else {
+        print('❌ Invalid price: ${_priceController.text}');
       }
+    } else {
+      print('❌ Price is empty');
     }
   }
 
   void _updateFeatures() {
-    if (_featuresController.text.isNotEmpty) {
-      context.read<UnitFormBloc>().add(
-            UpdateFeaturesEvent(features: _featuresController.text),
-          );
-    }
+    print('✨ Updating features: ${_featuresController.text}');
+    context.read<UnitFormBloc>().add(
+          UpdateFeaturesEvent(features: _featuresController.text),
+        );
   }
 
   void _updateUnitName() {
-    // if (_nameController.text.isNotEmpty) {
+    print('📝 Updating unit name: ${_nameController.text}');
     context.read<UnitFormBloc>().add(
           UpdateUnitNameEvent(name: _nameController.text),
         );
-    // }
   }
 
   void _updateDescription() {
-    // if (_descriptionController.text.isNotEmpty) {
+    print('📄 Updating description: ${_descriptionController.text}');
     context.read<UnitFormBloc>().add(
           UpdateDescriptionEvent(description: _descriptionController.text),
         );
-    // }
   }
 
   void _updateDynamicFields() {
+    print('🔧 Updating dynamic fields: $_dynamicFieldValues');
     context.read<UnitFormBloc>().add(
           UpdateDynamicFieldsEvent(values: _dynamicFieldValues),
         );

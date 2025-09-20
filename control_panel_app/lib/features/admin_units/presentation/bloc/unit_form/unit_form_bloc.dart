@@ -206,6 +206,14 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
         return;
       }
       
+      // إضافة logging للتحقق من البيانات
+      print('🔍 Validating form data:');
+      print('  - PropertyId: ${currentState.selectedPropertyId}');
+      print('  - UnitTypeId: ${currentState.selectedUnitType?.id}');
+      print('  - Name: ${currentState.unitName}');
+      print('  - BasePrice: ${currentState.basePrice?.toJson()}');
+      print('  - PricingMethod: ${currentState.pricingMethod?.value}');
+      
       emit(UnitFormLoading());
       
       if (currentState.isEditMode) {
@@ -224,8 +232,14 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
         ));
         
         result.fold(
-          (failure) => emit(UnitFormError(message: failure.message)),
-          (_) => emit(UnitFormSubmitted(unitId: currentState.unitId)),
+          (failure) {
+            print('❌ Update Unit Error: ${failure.message}');
+            emit(UnitFormError(message: failure.message));
+          },
+          (_) {
+            print('✅ Unit Updated Successfully: ${currentState.unitId}');
+            emit(UnitFormSubmitted(unitId: currentState.unitId));
+          },
         );
       } else {
         // Create new unit - مع التحقق الآمن
@@ -245,8 +259,14 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
         ));
         
         result.fold(
-          (failure) => emit(UnitFormError(message: failure.message)),
-          (newUnitId) => emit(UnitFormSubmitted(unitId: newUnitId)),
+          (failure) {
+            print('❌ Create Unit Error: ${failure.message}');
+            emit(UnitFormError(message: failure.message));
+          },
+          (newUnitId) {
+            print('✅ Unit Created Successfully: $newUnitId');
+            emit(UnitFormSubmitted(unitId: newUnitId));
+          },
         );
       }
     }
@@ -259,7 +279,7 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
     }
     
     // للإنشاء، تحقق من جميع الحقول المطلوبة
-    return state.selectedPropertyId != null &&
+    final isValid = state.selectedPropertyId != null &&
            state.selectedUnitType != null &&
            state.unitName != null &&
            state.unitName!.isNotEmpty &&
@@ -267,16 +287,31 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
            state.pricingMethod != null &&
            state.description != null &&
            state.description!.isNotEmpty;
+    
+    if (!isValid) {
+      print('❌ Form validation failed:');
+      print('  - selectedPropertyId: ${state.selectedPropertyId}');
+      print('  - selectedUnitType: ${state.selectedUnitType}');
+      print('  - unitName: ${state.unitName}');
+      print('  - basePrice: ${state.basePrice}');
+      print('  - pricingMethod: ${state.pricingMethod}');
+      print('  - description: ${state.description}');
+    }
+    
+    return isValid;
   }
 
   List<Map<String, dynamic>> _convertDynamicFieldsToList(
     Map<String, dynamic> fieldValues,
   ) {
-    return fieldValues.entries
+    final result = fieldValues.entries
         .map((entry) => {
               'fieldId': entry.key,
               'fieldValue': entry.value?.toString() ?? '',
             })
         .toList();
+    
+    print('🔧 Converted dynamic fields: $result');
+    return result;
   }
 }

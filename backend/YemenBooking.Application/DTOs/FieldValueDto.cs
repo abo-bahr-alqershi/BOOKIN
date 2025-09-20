@@ -1,5 +1,6 @@
 namespace YemenBooking.Application.DTOs;
 using System;
+using System.ComponentModel.DataAnnotations;
 
 /// <summary>
 /// بيانات نقل قيمة حقل عام
@@ -11,11 +12,13 @@ public class FieldValueDto
     /// معرف الحقل
     /// FieldId
     /// </summary>
+    [Required(ErrorMessage = "معرف الحقل مطلوب")]
     public Guid FieldId { get; set; }
 
     /// <summary>
     /// قيمة الحقل
     /// FieldValue
     /// </summary>
+    [Required(ErrorMessage = "قيمة الحقل مطلوبة")]
     public string FieldValue { get; set; }
 } 

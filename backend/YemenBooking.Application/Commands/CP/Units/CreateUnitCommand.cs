@@ -1,6 +1,7 @@
 using MediatR;
 using YemenBooking.Application.DTOs;
 using YemenBooking.Core.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace YemenBooking.Application.Commands.Units;
 
@@ -20,24 +21,29 @@ public class CreateUnitCommand : IRequest<ResultDto<Guid>>
     /// معرف الكيان
     /// Property ID
     /// </summary>
+    [Required(ErrorMessage = "معرف الكيان مطلوب")]
     public Guid PropertyId { get; set; }
 
     /// <summary>
     /// معرف نوع الوحدة
     /// Unit type ID
     /// </summary>
+    [Required(ErrorMessage = "معرف نوع الوحدة مطلوب")]
     public Guid UnitTypeId { get; set; }
 
     /// <summary>
     /// اسم الوحدة
     /// Unit name
     /// </summary>
+    [Required(ErrorMessage = "اسم الوحدة مطلوب")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "اسم الوحدة يجب أن يكون بين 1 و 100 حرف")]
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
     /// السعر الأساسي للوحدة
     /// Base price of the unit
     /// </summary>
+    [Required(ErrorMessage = "السعر الأساسي مطلوب")]
     public MoneyDto BasePrice { get; set; }
 
     /// <summary>
@@ -50,6 +56,7 @@ public class CreateUnitCommand : IRequest<ResultDto<Guid>>
     /// طريقة حساب السعر
     /// Pricing calculation method (Hourly, Daily, Weekly, Monthly)
     /// </summary>
+    [Required(ErrorMessage = "طريقة حساب السعر مطلوبة")]
     public PricingMethod PricingMethod { get; set; }
 
     /// <summary>

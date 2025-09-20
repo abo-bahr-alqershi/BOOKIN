@@ -103,18 +103,17 @@ class UnitsRepositoryImpl implements UnitsRepository {
   }) async {
     if (await networkInfo.isConnected) {
       try {
+        // إرسال البيانات مباشرة بدون command wrapper
         final unitData = {
-          'command': {
-            'propertyId': propertyId,
-            'unitTypeId': unitTypeId,
-            'name': name,
-            'basePrice': basePrice,
-            'customFeatures': customFeatures,
-            'pricingMethod': pricingMethod,
-            'fieldValues': _convertFieldValuesToString(fieldValues),
-            'images': images ?? [],
-            if (tempKey != null && tempKey.isNotEmpty) 'tempKey': tempKey,
-          }
+          'propertyId': propertyId,
+          'unitTypeId': unitTypeId,
+          'name': name,
+          'basePrice': basePrice,
+          'customFeatures': customFeatures,
+          'pricingMethod': pricingMethod,
+          'fieldValues': _convertFieldValuesToString(fieldValues),
+          'images': images ?? [],
+          if (tempKey != null && tempKey.isNotEmpty) 'tempKey': tempKey,
         };
         final unitId = await remoteDataSource.createUnit(unitData);
         return Right(unitId);
@@ -224,11 +223,14 @@ class UnitsRepositoryImpl implements UnitsRepository {
   List<Map<String, dynamic>> _convertFieldValuesToString(List<Map<String, dynamic>>? fieldValues) {
     if (fieldValues == null) return [];
     
-    return fieldValues.map((field) {
+    final result = fieldValues.map((field) {
       return {
         'fieldId': field['fieldId'],
         'fieldValue': field['fieldValue']?.toString() ?? '',
       };
     }).toList();
+    
+    print('🔧 Converted field values: $result');
+    return result;
   }
 }

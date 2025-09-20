@@ -85,14 +85,13 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
   Future<String> createUnit(Map<String, dynamic> unitData) async {
     try {
       // إضافة logging لمعرفة البيانات المرسلة
-      print('=== Creating Unit with Data ===');
-      print(unitData);
+      print('🔵 POST Request to: /api/admin/Units');
+      print('📦 Data: $unitData');
       
       final response = await apiClient.post('/api/admin/Units', data: unitData);
       
       // التحقق من استجابة السيرفر
-      print('=== Server Response ===');
-      print(response.data);
+      print('✅ Server Response: ${response.data}');
       
       // تحسين استخراج ID
       if (response.data is Map && response.data.containsKey('data')) {
@@ -104,10 +103,8 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
       }
     } on DioException catch (e) {
       // تحسين معالجة الأخطاء
-      print('=== DioException Details ===');
-      print('Status Code: ${e.response?.statusCode}');
-      print('Response Data: ${e.response?.data}');
-      print('Request Data: ${e.requestOptions.data}');
+      print('❌ Error Status: ${e.response?.statusCode}');
+      print('❌ Error Data: ${e.response?.data}');
       
       throw _handleDioError(e);
     }
@@ -179,10 +176,28 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
       String message = 'حدث خطأ في الخادم';
       
       if (responseData is Map) {
-        message = responseData['message'] ?? 
-                  responseData['error'] ?? 
-                  responseData['errors']?.toString() ?? 
-                  message;
+        // معالجة أخطاء validation
+        if (responseData.containsKey('errors')) {
+          final errors = responseData['errors'] as Map<String, dynamic>;
+          final errorMessages = <String>[];
+          
+          errors.forEach((field, fieldErrors) {
+            if (fieldErrors is List) {
+              for (final fieldError in fieldErrors) {
+                errorMessages.add('$field: $fieldError');
+              }
+            } else {
+              errorMessages.add('$field: $fieldErrors');
+            }
+          });
+          
+          message = errorMessages.join(', ');
+        } else {
+          message = responseData['message'] ?? 
+                    responseData['error'] ?? 
+                    responseData['title'] ?? 
+                    message;
+        }
       } else if (responseData is String) {
         message = responseData;
       }
