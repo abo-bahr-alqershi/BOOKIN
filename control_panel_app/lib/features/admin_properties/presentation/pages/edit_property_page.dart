@@ -605,16 +605,15 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
             },
           ),
           const SizedBox(height: 20),
-          _buildInputField(
-            controller: _cityController,
-            label: 'المدينة',
-            icon: Icons.location_city_rounded,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'يرجى إدخال المدينة';
-              }
-              return null;
+          _CityDropdown(
+            value: _selectedCity,
+            onChanged: (v) {
+              setState(() {
+                _selectedCity = v;
+                _cityController.text = v ?? '';
+              });
             },
+            requiredField: true,
           ),
         ],
       ),
