@@ -12,10 +12,35 @@ class UnitFieldValueModel extends UnitFieldValue {
 
   factory UnitFieldValueModel.fromJson(Map<String, dynamic> json) {
     final fieldObj = json['field'] as Map<String, dynamic>?;
+
+    bool? _coerceBool(dynamic v) {
+      if (v == null) return null;
+      if (v is bool) return v;
+      if (v is num) return v != 0;
+      if (v is String) {
+        final s = v.toLowerCase().trim();
+        if (s == 'true' || s == '1' || s == 'yes' || s == 'y') return true;
+        if (s == 'false' || s == '0' || s == 'no' || s == 'n') return false;
+      }
+      return null;
+    }
+
+    String _coerceString(dynamic v) {
+      if (v == null) return '';
+      return v.toString();
+    }
+
+    final rawIsPrimary = json.containsKey('isPrimaryFilter')
+        ? json['isPrimaryFilter']
+        : fieldObj?['isPrimaryFilter'];
+
     return UnitFieldValueModel(
       fieldId: json['fieldId'] as String,
-      fieldValue:
-          (json['fieldValue'] as String?) ?? (json['value'] as String?) ?? '',
+      fieldValue: _coerceString(
+        json.containsKey('fieldValue')
+            ? json['fieldValue']
+            : (json.containsKey('value') ? json['value'] : ''),
+      ),
       fieldName:
           (json['fieldName'] as String?) ?? fieldObj?['fieldName'] as String?,
       displayName: (json['displayName'] as String?) ??
@@ -24,8 +49,7 @@ class UnitFieldValueModel extends UnitFieldValue {
           (json['fieldType'] as String?) ??
           fieldObj?['fieldTypeId'] as String? ??
           fieldObj?['fieldType'] as String?,
-      isPrimaryFilter: (json['isPrimaryFilter'] as bool?) ??
-          fieldObj?['isPrimaryFilter'] as bool?,
+      isPrimaryFilter: _coerceBool(rawIsPrimary),
     );
   }
 
