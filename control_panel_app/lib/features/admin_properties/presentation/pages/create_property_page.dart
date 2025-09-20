@@ -26,6 +26,7 @@ import 'package:bookn_cp_app/features/admin_users/domain/entities/user.dart';
 import 'package:bookn_cp_app/injection_container.dart' as di;
 import 'package:bookn_cp_app/core/usecases/usecase.dart';
 import 'package:bookn_cp_app/features/admin_currencies/domain/usecases/get_currencies_usecase.dart';
+import 'package:bookn_cp_app/features/admin_cities/domain/usecases/get_cities_usecase.dart' as ci_uc;
 
 class _CurrencyDropdown extends StatefulWidget {
   final String value;
@@ -107,6 +108,102 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
   }
 }
 
+class _CityDropdown extends StatefulWidget {
+  final String? value;
+  final ValueChanged<String?> onChanged;
+  const _CityDropdown({required this.value, required this.onChanged});
+
+  @override
+  State<_CityDropdown> createState() => _CityDropdownState();
+}
+
+class _CityDropdownState extends State<_CityDropdown> {
+  List<String> _cities = const [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final usecase = di.sl<ci_uc.GetCitiesUseCase>();
+      final result = await usecase(const ci_uc.GetCitiesParams());
+      result.fold(
+        (f) => setState(() { _error = f.message; _loading = false; }),
+        (list) => setState(() {
+          _cities = list.map((c) => c.name).toList();
+          _loading = false;
+          if (_cities.isNotEmpty && (widget.value == null || !_cities.contains(widget.value))) {
+            widget.onChanged(_cities.first);
+          }
+        }),
+      );
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final decoration = InputDecoration(
+      labelText: 'المدينة (اختياري)',
+      labelStyle: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
+      filled: true,
+      fillColor: AppTheme.darkSurface.withOpacity(0.3),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+    );
+
+    if (_loading) {
+      return InputDecorator(
+        decoration: decoration,
+        child: Row(children: [
+          const SizedBox(width: 4, height: 4),
+          SizedBox(
+            width: 18, height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.textMuted),
+          ),
+          const SizedBox(width: 8),
+          Text('جاري تحميل المدن...', style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted)),
+        ]),
+      );
+    }
+
+    if (_error != null) {
+      return DropdownButtonFormField<String?>(
+        value: _cities.contains(widget.value) ? widget.value : null,
+        decoration: decoration.copyWith(errorText: _error),
+        items: [
+          const DropdownMenuItem(value: null, child: Text('بدون مدينة')),
+          ..._cities.map((c) => DropdownMenuItem(value: c, child: Text(c)))
+        ],
+        onChanged: (v) => widget.onChanged(v),
+      );
+    }
+
+    return DropdownButtonFormField<String?>(
+      value: _cities.contains(widget.value) ? widget.value : null,
+      decoration: decoration,
+      dropdownColor: AppTheme.darkCard,
+      style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+      items: [
+        const DropdownMenuItem(value: null, child: Text('بدون مدينة')),
+        ..._cities.map((c) => DropdownMenuItem(value: c, child: Text(c)))
+      ],
+      onChanged: (v) => widget.onChanged(v),
+    );
+  }
+}
+
 class CreatePropertyPage extends StatelessWidget {
   const CreatePropertyPage({super.key});
 
@@ -170,6 +267,7 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
   int _currentStep = 0;
   String? _tempKey;
   String _currency = 'YER';
+  String? _selectedCity;
   final _shortDescriptionController = TextEditingController();
   final _basePriceController = TextEditingController();
   
@@ -598,17 +696,12 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
           const SizedBox(height: 20),
           
           // City
-          _buildInputField(
-            controller: _cityController,
-            label: 'المدينة',
-            hint: 'أدخل اسم المدينة',
-            icon: Icons.location_city_rounded,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'الرجاء إدخال المدينة';
-              }
-              return null;
-            },
+          _CityDropdown(
+            value: _selectedCity,
+            onChanged: (v) => _safeSetState(() {
+              _selectedCity = v;
+              _cityController.text = v ?? '';
+            }),
           ),
           
           const SizedBox(height: 20),
@@ -1428,7 +1521,6 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
         _selectedPropertyTypeId == null ||
         _selectedOwner == null ||
         _addressController.text.isEmpty ||
-        _cityController.text.isEmpty ||
         _descriptionController.text.isEmpty) {
       _showErrorMessage('الرجاء ملء جميع الحقول المطلوبة');
       return false;

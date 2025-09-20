@@ -58,10 +58,10 @@ public class CreatePropertyCommand : IRequest<ResultDto<Guid>>
     public double Longitude { get; set; }
 
     /// <summary>
-    /// المدينة
-    /// City
+    /// المدينة (اختياري)
+    /// City (optional)
     /// </summary>
-    public string City { get; set; }
+    public string? City { get; set; }
 
     /// <summary>
     /// تقييم النجوم

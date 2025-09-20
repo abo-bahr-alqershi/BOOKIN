@@ -15,11 +15,13 @@ namespace YemenBooking.Api.Controllers.Common
     {
         private readonly ISystemSettingsService _settingsService;
         private readonly ICurrencySettingsService _currencySettingsService;
+        private readonly ICitySettingsService _citySettingsService;
 
-        public SystemSettingsController(ISystemSettingsService settingsService, ICurrencySettingsService currencySettingsService)
+        public SystemSettingsController(ISystemSettingsService settingsService, ICurrencySettingsService currencySettingsService, ICitySettingsService citySettingsService)
         {
             _settingsService = settingsService;
             _currencySettingsService = currencySettingsService;
+            _citySettingsService = citySettingsService;
         }
 
         /// <summary>
@@ -43,6 +45,18 @@ namespace YemenBooking.Api.Controllers.Common
         {
             var currencies = await _currencySettingsService.GetCurrenciesAsync(cancellationToken);
             return Ok(ResultDto<List<CurrencyDto>>.Succeeded(currencies));
+        }
+
+        /// <summary>
+        /// جلب قائمة المدن
+        /// Get city settings
+        /// </summary>
+        [AllowAnonymous]
+        [HttpGet("cities")]
+        public async Task<ActionResult<ResultDto<List<CityDto>>>> GetCitiesAsync(CancellationToken cancellationToken)
+        {
+            var cities = await _citySettingsService.GetCitiesAsync(cancellationToken);
+            return Ok(ResultDto<List<CityDto>>.Succeeded(cities));
         }
     }
 } 

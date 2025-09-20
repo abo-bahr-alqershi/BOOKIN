@@ -30,7 +30,7 @@ public class PropertyConfiguration : IEntityTypeConfiguration<Property>
         builder.Property(p => p.TypeId).IsRequired();
         builder.Property(p => p.Name).IsRequired().HasMaxLength(100);
         builder.Property(p => p.Address).IsRequired().HasMaxLength(500);
-        builder.Property(p => p.City).IsRequired().HasMaxLength(50);
+        builder.Property(p => p.City).HasMaxLength(50);
         builder.Property(p => p.Latitude).HasColumnType("decimal(9,6)");
         builder.Property(p => p.Longitude).HasColumnType("decimal(9,6)");
         builder.Property(p => p.StarRating).HasDefaultValue(0);
