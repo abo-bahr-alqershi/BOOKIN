@@ -1279,4 +1279,193 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
         return Icons.home_rounded;
     }
   }
+
+  // =============== Dynamic Fields helpers ===============
+  List<Map<String, dynamic>> _getPrimaryFilterFields(Unit unit) {
+    final fields = <Map<String, dynamic>>[];
+    final seen = <String>{};
+
+    // From flat fieldValues
+    for (final fv in unit.fieldValues) {
+      if (fv.isPrimaryFilter == true && !seen.contains(fv.fieldId)) {
+        fields.add({
+          'displayName': fv.displayName ?? fv.fieldName ?? 'حقل',
+          'value': fv.fieldValue,
+          'fieldTypeId': fv.fieldTypeId ?? 'text',
+        });
+        seen.add(fv.fieldId);
+      }
+    }
+
+    // From grouped dynamicFields
+    for (final group in unit.dynamicFields) {
+      for (final f in group.fieldValues) {
+        if (f.isPrimaryFilter == true && !seen.contains(f.fieldId)) {
+          fields.add({
+            'displayName': f.displayName ?? f.fieldName ?? 'حقل',
+            'value': f.fieldValue,
+            'fieldTypeId': f.fieldTypeId ?? 'text',
+          });
+          seen.add(f.fieldId);
+        }
+      }
+    }
+
+    if (fields.isNotEmpty) return fields;
+
+    // Fallback: first non-empty values
+    for (final fv in unit.fieldValues) {
+      if (fv.fieldValue.isNotEmpty && !seen.contains(fv.fieldId)) {
+        fields.add({
+          'displayName': fv.displayName ?? fv.fieldName ?? 'حقل',
+          'value': fv.fieldValue,
+          'fieldTypeId': fv.fieldTypeId ?? 'text',
+        });
+        seen.add(fv.fieldId);
+      }
+    }
+    for (final group in unit.dynamicFields) {
+      for (final f in group.fieldValues) {
+        if (f.fieldValue.isNotEmpty && !seen.contains(f.fieldId)) {
+          fields.add({
+            'displayName': f.displayName ?? f.fieldName ?? 'حقل',
+            'value': f.fieldValue,
+            'fieldTypeId': f.fieldTypeId ?? 'text',
+          });
+          seen.add(f.fieldId);
+        }
+      }
+    }
+    return fields;
+  }
+
+  Widget _buildDynamicFieldRow({
+    required String displayName,
+    required dynamic value,
+    required String fieldType,
+  }) {
+    final formatted = _formatDynamicFieldValue(value, fieldType);
+    final icon = _getFieldTypeIcon(fieldType);
+    final color = _getFieldTypeColor(fieldType);
+
+    return Row(
+      children: [
+        Icon(icon, size: 12, color: color.withOpacity(0.7)),
+        const SizedBox(width: 6),
+        Text(
+          '$displayName:',
+          style: AppTextStyles.caption.copyWith(
+            color: AppTheme.textMuted,
+            fontSize: 10,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            formatted,
+            style: AppTextStyles.caption.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+              fontSize: 10,
+            ),
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDynamicFieldValue(dynamic value, String fieldType) {
+    if (value == null || value.toString().isEmpty) return 'غير محدد';
+    switch (fieldType) {
+      case 'boolean':
+        final v = value.toString().toLowerCase();
+        return (v == 'true' || v == '1' || v == 'yes') ? 'نعم' : 'لا';
+      case 'currency':
+        final num? n = value is num ? value : num.tryParse(value.toString());
+        return n != null ? '${n.toStringAsFixed(0)} ريال' : '$value ريال';
+      case 'date':
+        try {
+          final d = value is DateTime ? value : DateTime.parse(value.toString());
+          final mm = d.month.toString().padLeft(2, '0');
+          final dd = d.day.toString().padLeft(2, '0');
+          return '${d.year}-$mm-$dd';
+        } catch (_) {
+          return value.toString();
+        }
+      case 'number':
+        if (value is num) return value.toString();
+        return value.toString();
+      case 'multiselect':
+        if (value is List) return value.join(', ');
+        return value.toString();
+      case 'text':
+      case 'textarea':
+      case 'select':
+      case 'email':
+      case 'phone':
+      case 'file':
+      case 'image':
+      default:
+        final s = value.toString();
+        return s.length > 20 ? '${s.substring(0, 20)}...' : s;
+    }
+  }
+
+  IconData _getFieldTypeIcon(String fieldType) {
+    switch (fieldType) {
+      case 'text':
+        return Icons.text_fields_rounded;
+      case 'textarea':
+        return Icons.notes_rounded;
+      case 'number':
+        return Icons.numbers_rounded;
+      case 'currency':
+        return Icons.attach_money_rounded;
+      case 'boolean':
+        return Icons.toggle_on_rounded;
+      case 'select':
+        return Icons.arrow_drop_down_circle_rounded;
+      case 'multiselect':
+        return Icons.checklist_rounded;
+      case 'date':
+        return Icons.calendar_today_rounded;
+      case 'email':
+        return Icons.email_rounded;
+      case 'phone':
+        return Icons.phone_rounded;
+      case 'file':
+        return Icons.attach_file_rounded;
+      case 'image':
+        return Icons.image_rounded;
+      default:
+        return Icons.info_rounded;
+    }
+  }
+
+  Color _getFieldTypeColor(String fieldType) {
+    switch (fieldType) {
+      case 'boolean':
+        return AppTheme.info;
+      case 'currency':
+      case 'number':
+        return AppTheme.success;
+      case 'date':
+        return AppTheme.primaryPurple;
+      case 'select':
+      case 'multiselect':
+        return AppTheme.neonPurple;
+      case 'email':
+        return AppTheme.primaryBlue;
+      case 'phone':
+        return AppTheme.primaryCyan;
+      case 'file':
+      case 'image':
+        return AppTheme.warning;
+      default:
+        return AppTheme.primaryBlue;
+    }
+  }
 }
