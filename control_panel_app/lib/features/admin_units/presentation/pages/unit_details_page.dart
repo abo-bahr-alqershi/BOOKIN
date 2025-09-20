@@ -52,6 +52,55 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
     _loadUnitDetails();
   }
 
+  // جمع الحقول الأساسية من المصدرين
+  List<Map<String, dynamic>> _collectPrimaryFilterFields(Unit unit) {
+    final List<Map<String, dynamic>> fields = [];
+    for (final fv in unit.fieldValues) {
+      if (fv.isPrimaryFilter == true) {
+        fields.add({
+          'displayName': fv.displayName ?? fv.fieldName ?? 'حقل',
+          'value': fv.fieldValue,
+          'fieldTypeId': fv.fieldTypeId ?? 'text',
+        });
+      }
+    }
+    for (final group in unit.dynamicFields) {
+      for (final f in group.fieldValues) {
+        if (f.isPrimaryFilter == true) {
+          fields.add({
+            'displayName': f.displayName ?? f.fieldName ?? 'حقل',
+            'value': f.fieldValue,
+            'fieldTypeId': f.fieldTypeId ?? 'text',
+          });
+        }
+      }
+    }
+    // بديل إن لم توجد أساسية
+    if (fields.isEmpty) {
+      for (final fv in unit.fieldValues) {
+        if (fv.fieldValue.isNotEmpty) {
+          fields.add({
+            'displayName': fv.displayName ?? fv.fieldName ?? 'حقل',
+            'value': fv.fieldValue,
+            'fieldTypeId': fv.fieldTypeId ?? 'text',
+          });
+        }
+      }
+      for (final group in unit.dynamicFields) {
+        for (final f in group.fieldValues) {
+          if (f.fieldValue.isNotEmpty) {
+            fields.add({
+              'displayName': f.displayName ?? f.fieldName ?? 'حقل',
+              'value': f.fieldValue,
+              'fieldTypeId': f.fieldTypeId ?? 'text',
+            });
+          }
+        }
+      }
+    }
+    return fields;
+  }
+
   void _setupScrollListener() {
     _scrollController.addListener(() {
       if (mounted) {
@@ -459,6 +508,23 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
           _buildInfoRow('النوع', unit.unitTypeName),
           _buildInfoRow('العقار', unit.propertyName),
           _buildInfoRow('السعة', '${unit.maxCapacity} أشخاص'),
+          // الحقول الأساسية (Primary Filters)
+          Builder(builder: (context) {
+            final primary = _collectPrimaryFilterFields(unit);
+            if (primary.isEmpty) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
+                _buildSectionTitle('المعلومات الأساسية'),
+                const SizedBox(height: 12),
+                ...primary.map((f) => _buildInfoRow(
+                      f['displayName'] as String,
+                      _formatFieldValue(f['value'], f['fieldTypeId'] as String),
+                    )),
+              ],
+            );
+          }),
           if (unit.customFeatures.isNotEmpty) ...[
             const SizedBox(height: 24),
             _buildSectionTitle('الوصف'),
@@ -471,11 +537,11 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
               ),
             ),
           ],
-          if (unit.dynamicFields.isNotEmpty) ...[
+          if (unit.dynamicFields.isNotEmpty || unit.fieldValues.isNotEmpty) ...[
             const SizedBox(height: 24),
             _buildSectionTitle('معلومات إضافية'),
             const SizedBox(height: 12),
-            _buildDynamicFields(unit.dynamicFields),
+            _buildAllDynamicFields(unit),
           ],
         ],
       ),
@@ -655,9 +721,11 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
               ),
               const SizedBox(height: 8),
               ...group.fieldValues.map((field) {
+                final value = field.fieldValue;
+                if (value.isEmpty) return const SizedBox.shrink();
                 return _buildInfoRow(
                   field.displayName ?? field.fieldName ?? '',
-                  field.fieldValue,
+                  _formatFieldValue(value, field.fieldTypeId ?? 'text'),
                 );
               }),
             ],
@@ -665,6 +733,61 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
         );
       }).toList(),
     );
+  }
+
+  // جمع الحقول من المصدرين وعرض غير المكررات
+  Widget _buildAllDynamicFields(Unit unit) {
+    final grouped = unit.dynamicFields;
+    final groupedFieldIds = <String>{
+      for (final g in grouped)
+        for (final f in g.fieldValues) f.fieldId,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (grouped.isNotEmpty) _buildDynamicFields(grouped),
+        ...unit.fieldValues
+            .where((fv) => !groupedFieldIds.contains(fv.fieldId))
+            .where((fv) => fv.fieldValue.isNotEmpty)
+            .map((fv) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildInfoRow(
+                    fv.displayName ?? fv.fieldName ?? 'حقل',
+                    _formatFieldValue(fv.fieldValue, fv.fieldTypeId ?? 'text'),
+                  ),
+                ))
+            .toList(),
+      ],
+    );
+  }
+
+  // منسق بسيط للقيم مثل الكارد
+  String _formatFieldValue(dynamic value, String fieldType) {
+    if (value == null || value.toString().isEmpty) return 'غير محدد';
+    switch (fieldType) {
+      case 'boolean':
+        final v = value.toString().toLowerCase();
+        return (v == 'true' || v == '1' || v == 'yes') ? 'نعم' : 'لا';
+      case 'currency':
+        final num? n = value is num ? value : num.tryParse(value.toString());
+        return n != null ? '${n.toStringAsFixed(0)} ريال' : '$value ريال';
+      case 'date':
+        try {
+          final d = value is DateTime ? value : DateTime.parse(value.toString());
+          return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+        } catch (_) {
+          return value.toString();
+        }
+      case 'number':
+        if (value is num) return value.toString();
+        return value.toString();
+      case 'multiselect':
+        if (value is List) return value.join(', ');
+        return value.toString();
+      default:
+        return value.toString();
+    }
   }
 
   Widget _buildFloatingHeader(Unit unit) {
