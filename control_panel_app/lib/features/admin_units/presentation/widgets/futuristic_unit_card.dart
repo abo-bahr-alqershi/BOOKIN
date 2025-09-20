@@ -8,6 +8,7 @@ import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import 'package:bookn_cp_app/core/theme/app_dimensions.dart';
 import '../../domain/entities/unit.dart';
+import 'package:intl/intl.dart';
 
 class FuturisticUnitCard extends StatefulWidget {
   final Unit unit;
@@ -39,7 +40,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
   late AnimationController _glowController;
   late AnimationController _entranceController;
   late AnimationController _sparkleController;
-  
+
   // Animations
   late Animation<double> _hoverScale;
   late Animation<double> _pressScale;
@@ -47,26 +48,26 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
   late Animation<double> _entranceAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _sparkleAnimation;
-  
+
   // State
   bool _isHovered = false;
   bool _isPressed = false;
   bool _showActions = false;
-  
+
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _startEntranceAnimation();
   }
-  
+
   void _initializeAnimations() {
     // Hover Animation
     _hoverController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    
+
     _hoverScale = Tween<double>(
       begin: 1.0,
       end: 1.02,
@@ -74,13 +75,13 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       parent: _hoverController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     // Press Animation
     _pressController = AnimationController(
       duration: const Duration(milliseconds: 150),
       vsync: this,
     );
-    
+
     _pressScale = Tween<double>(
       begin: 1.0,
       end: 0.98,
@@ -88,13 +89,13 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       parent: _pressController,
       curve: Curves.easeInOut,
     ));
-    
+
     // Glow Animation
     _glowController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.3,
       end: 1.0,
@@ -102,18 +103,18 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       parent: _glowController,
       curve: Curves.easeInOut,
     ));
-    
+
     // Entrance Animation
     _entranceController = AnimationController(
       duration: Duration(milliseconds: 600 + (widget.index * 100)),
       vsync: this,
     );
-    
+
     _entranceAnimation = CurvedAnimation(
       parent: _entranceController,
       curve: Curves.easeOutBack,
     );
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
@@ -121,19 +122,19 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       parent: _entranceController,
       curve: Curves.easeOutQuart,
     ));
-    
+
     // Sparkle Animation
     _sparkleController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat();
-    
+
     _sparkleAnimation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
     ).animate(_sparkleController);
   }
-  
+
   void _startEntranceAnimation() {
     Future.delayed(Duration(milliseconds: widget.index * 50), () {
       if (mounted) {
@@ -141,7 +142,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       }
     });
   }
-  
+
   @override
   void dispose() {
     _hoverController.dispose();
@@ -151,9 +152,13 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
     _sparkleController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
+    // حساب الارتفاع الديناميكي بناءً على المحتوى
+    final hasFilterFields = _getFilterFields().isNotEmpty;
+    final baseHeight = hasFilterFields ? 420.0 : 380.0;
+
     return SlideTransition(
       position: _slideAnimation,
       child: FadeTransition(
@@ -202,19 +207,18 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
                     scale: _pressScale.value * _hoverScale.value,
                     child: Container(
                       margin: const EdgeInsets.all(AppDimensions.paddingSmall),
-                      height: 380,
+                      height: baseHeight,
                       child: Stack(
                         children: [
                           // Main Card
                           _buildMainCard(),
-                          
+
                           // Sparkle Effect
                           if (widget.isSelected || _isHovered)
                             _buildSparkleEffect(),
-                          
+
                           // Action Overlay
-                          if (_showActions)
-                            _buildActionOverlay(),
+                          if (_showActions) _buildActionOverlay(),
                         ],
                       ),
                     ),
@@ -227,7 +231,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       ),
     );
   }
-  
+
   Widget _buildMainCard() {
     return Container(
       decoration: BoxDecoration(
@@ -245,7 +249,8 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
           // Inner glow
           if (widget.isSelected || _isHovered)
             BoxShadow(
-              color: AppTheme.primaryPurple.withOpacity(0.2 * _glowAnimation.value),
+              color: AppTheme.primaryPurple
+                  .withOpacity(0.2 * _glowAnimation.value),
               blurRadius: 20,
               offset: const Offset(0, 0),
             ),
@@ -303,24 +308,32 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
                       ),
                     ),
                   ),
-                
+
                 // Content
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Image Section
                     _buildImageSection(),
-                    
+
                     // Info Section
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+                        padding:
+                            const EdgeInsets.all(AppDimensions.paddingMedium),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildHeader(),
                             const SizedBox(height: AppDimensions.spaceSmall),
                             _buildDetails(),
+
+                            // عرض الحقول الديناميكية
+                            if (_getFilterFields().isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              _buildDynamicFields(),
+                            ],
+
                             const Spacer(),
                             _buildFooter(),
                           ],
@@ -329,13 +342,12 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
                     ),
                   ],
                 ),
-                
+
                 // Status Badge
                 _buildStatusBadge(),
-                
+
                 // Quick Actions
-                if (!_showActions)
-                  _buildQuickActions(),
+                if (!_showActions) _buildQuickActions(),
               ],
             ),
           ),
@@ -343,12 +355,350 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       ),
     );
   }
-  
+
+  // دالة جديدة لبناء قسم الحقول الديناميكية
+  Widget _buildDynamicFields() {
+    final filterFields = _getFilterFields();
+
+    if (filterFields.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkSurface.withOpacity(0.3),
+            AppTheme.darkSurface.withOpacity(0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.2),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // عنوان القسم
+          Row(
+            children: [
+              Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.neonPurple.withOpacity(0.8),
+                      AppTheme.neonGreen.withOpacity(0.6),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.dynamic_form_rounded,
+                  size: 10,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'معلومات إضافية',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppTheme.neonPurple,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // عرض الحقول
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: filterFields.map((fieldData) {
+              final fieldValue = fieldData['value'];
+              final fieldTypeId = fieldData['fieldTypeId'];
+              final displayName = fieldData['displayName'];
+
+              return _buildDynamicFieldChip(
+                displayName: displayName,
+                value: fieldValue,
+                fieldType: fieldTypeId,
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // دالة للحصول على الحقول المناسبة للعرض
+  List<Map<String, dynamic>> _getFilterFields() {
+    final List<Map<String, dynamic>> filterFields = [];
+
+    // من fieldValues
+    for (final fieldValue in widget.unit.fieldValues) {
+      // نفترض أننا نريد عرض الحقول التي لها قيمة فقط
+      if (fieldValue.fieldValue.isNotEmpty) {
+        filterFields.add({
+          'displayName':
+              fieldValue.displayName ?? fieldValue.fieldName ?? 'حقل',
+          'value': fieldValue.fieldValue,
+          'fieldTypeId': fieldValue.fieldTypeId ?? 'text',
+        });
+      }
+    }
+
+    // من dynamicFields (FieldGroupWithValues)
+    for (final group in widget.unit.dynamicFields) {
+      for (final field in group.fieldValues) {
+        if (field.fieldValue.isNotEmpty) {
+          filterFields.add({
+            'displayName': field.displayName ?? field.fieldName ?? 'حقل',
+            'value': field.fieldValue,
+            'fieldTypeId': field.fieldTypeId ?? 'text',
+          });
+        }
+      }
+    }
+
+    // نأخذ أول 3 حقول فقط لعدم ازدحام الكارد
+    return filterFields.take(3).toList();
+  }
+
+  // دالة لبناء chip للحقل الديناميكي
+  Widget _buildDynamicFieldChip({
+    required String displayName,
+    required dynamic value,
+    required String fieldType,
+  }) {
+    // تنسيق القيمة حسب النوع
+    final formattedValue = _formatDynamicFieldValue(value, fieldType);
+    final icon = _getFieldTypeIcon(fieldType);
+    final color = _getFieldTypeColor(fieldType);
+
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 150),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.15),
+            color.withOpacity(0.08),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 11,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  displayName,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted,
+                    fontSize: 9,
+                    height: 1,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  formattedValue,
+                  style: AppTextStyles.caption.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 10,
+                    height: 1,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // دالة لتنسيق قيمة الحقل حسب نوعه
+  String _formatDynamicFieldValue(dynamic value, String fieldType) {
+    if (value == null || value.toString().isEmpty) {
+      return 'غير محدد';
+    }
+
+    switch (fieldType) {
+      case 'boolean':
+        final boolValue = value.toString().toLowerCase();
+        return (boolValue == 'true' || boolValue == '1' || boolValue == 'yes')
+            ? 'نعم'
+            : 'لا';
+
+      case 'currency':
+        if (value is num) {
+          return '${value.toStringAsFixed(0)} ريال';
+        }
+        final numValue = double.tryParse(value.toString());
+        if (numValue != null) {
+          return '${numValue.toStringAsFixed(0)} ريال';
+        }
+        return '$value ريال';
+
+      case 'date':
+        try {
+          DateTime date;
+          if (value is DateTime) {
+            date = value;
+          } else {
+            date = DateTime.parse(value.toString());
+          }
+          return DateFormat('dd/MM/yyyy').format(date);
+        } catch (_) {
+          return value.toString();
+        }
+
+      case 'number':
+        if (value is num) {
+          return value.toStringAsFixed(value is int ? 0 : 1);
+        }
+        return value.toString();
+
+      case 'select':
+      case 'text':
+      case 'textarea':
+        final strValue = value.toString();
+        return strValue.length > 15
+            ? '${strValue.substring(0, 15)}...'
+            : strValue;
+
+      case 'multiselect':
+        if (value is List) {
+          final items = value.take(2).join(', ');
+          if (value.length > 2) {
+            return '$items +${value.length - 2}';
+          }
+          return items;
+        }
+        return value.toString();
+
+      case 'phone':
+        final phone = value.toString();
+        if (phone.length == 10) {
+          return '${phone.substring(0, 4)} ${phone.substring(4)}';
+        }
+        return phone;
+
+      case 'email':
+        final email = value.toString();
+        if (email.length > 20) {
+          final parts = email.split('@');
+          if (parts.length == 2) {
+            final username = parts[0].length > 10
+                ? '${parts[0].substring(0, 10)}...'
+                : parts[0];
+            return '$username@${parts[1]}';
+          }
+        }
+        return email;
+
+      case 'file':
+      case 'image':
+        return 'ملف مرفق';
+
+      default:
+        final strValue = value.toString();
+        return strValue.length > 15
+            ? '${strValue.substring(0, 15)}...'
+            : strValue;
+    }
+  }
+
+  // دالة للحصول على أيقونة حسب نوع الحقل
+  IconData _getFieldTypeIcon(String fieldType) {
+    switch (fieldType) {
+      case 'text':
+        return Icons.text_fields_rounded;
+      case 'textarea':
+        return Icons.notes_rounded;
+      case 'number':
+        return Icons.numbers_rounded;
+      case 'currency':
+        return Icons.attach_money_rounded;
+      case 'boolean':
+        return Icons.toggle_on_rounded;
+      case 'select':
+        return Icons.arrow_drop_down_circle_rounded;
+      case 'multiselect':
+        return Icons.checklist_rounded;
+      case 'date':
+        return Icons.calendar_today_rounded;
+      case 'email':
+        return Icons.email_rounded;
+      case 'phone':
+        return Icons.phone_rounded;
+      case 'file':
+        return Icons.attach_file_rounded;
+      case 'image':
+        return Icons.image_rounded;
+      default:
+        return Icons.info_rounded;
+    }
+  }
+
+  // دالة للحصول على لون حسب نوع الحقل
+  Color _getFieldTypeColor(String fieldType) {
+    switch (fieldType) {
+      case 'boolean':
+        return AppTheme.info;
+      case 'currency':
+      case 'number':
+        return AppTheme.success;
+      case 'date':
+        return AppTheme.primaryPurple;
+      case 'select':
+      case 'multiselect':
+        return AppTheme.neonPurple;
+      case 'email':
+        return AppTheme.primaryBlue;
+      case 'phone':
+        return AppTheme.primaryCyan;
+      case 'file':
+      case 'image':
+        return AppTheme.warning;
+      default:
+        return AppTheme.primaryBlue;
+    }
+  }
+
   Widget _buildImageSection() {
     return Container(
       height: 140,
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.vertical(
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppDimensions.radiusXLarge),
         ),
       ),
@@ -371,7 +721,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
                   ),
                 )
               : _buildImagePlaceholder(),
-          
+
           // Gradient Overlay
           Container(
             decoration: BoxDecoration(
@@ -389,7 +739,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
               ),
             ),
           ),
-          
+
           // View & Booking Stats
           Positioned(
             bottom: 8,
@@ -400,7 +750,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       ),
     );
   }
-  
+
   Widget _buildImagePlaceholder() {
     return Container(
       decoration: BoxDecoration(
@@ -439,7 +789,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       ),
     );
   }
-  
+
   Widget _buildStatsChips() {
     return Row(
       children: [
@@ -457,7 +807,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       ],
     );
   }
-  
+
   Widget _buildStatChip(IconData icon, String value, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -488,7 +838,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       ),
     );
   }
-  
+
   Widget _buildHeader() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -509,9 +859,9 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        
+
         const SizedBox(height: 4),
-        
+
         // Unit Type & Property
         Row(
           children: [
@@ -555,7 +905,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       ],
     );
   }
-  
+
   Widget _buildDetails() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -582,9 +932,9 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
             ),
           ],
         ),
-        
+
         const SizedBox(height: 8),
-        
+
         // Capacity & Features
         Wrap(
           spacing: 6,
@@ -597,21 +947,21 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
                 widget.unit.capacityDisplay,
                 AppTheme.primaryCyan,
               ),
-            
+
             // Top Features (max 2)
-            ...widget.unit.featuresList.take(2).map((feature) =>
-              _buildFeatureChip(
-                _getFeatureIcon(feature),
-                feature,
-                AppTheme.primaryPurple,
-              ),
-            ),
+            ...widget.unit.featuresList.take(2).map(
+                  (feature) => _buildFeatureChip(
+                    _getFeatureIcon(feature),
+                    feature,
+                    AppTheme.primaryPurple,
+                  ),
+                ),
           ],
         ),
       ],
     );
   }
-  
+
   Widget _buildFeatureChip(IconData icon, String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -643,7 +993,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       ),
     );
   }
-  
+
   Widget _buildFooter() {
     return Column(
       children: [
@@ -676,8 +1026,8 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       ShaderMask(
-                        shaderCallback: (bounds) => 
-                          AppTheme.primaryGradient.createShader(bounds),
+                        shaderCallback: (bounds) =>
+                            AppTheme.primaryGradient.createShader(bounds),
                         child: Text(
                           widget.unit.basePrice.displayAmount,
                           style: AppTextStyles.heading3.copyWith(
@@ -720,7 +1070,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
                     ),
                 ],
               ),
-              
+
               // Pricing Method
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -761,7 +1111,8 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       ],
     );
   }
-  
+
+  // باقي الدوال كما هي...
   Widget _buildStatusBadge() {
     return Positioned(
       top: 12,
@@ -826,12 +1177,12 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       ),
     );
   }
-  
+
   Widget _buildQuickActions() {
     if (widget.onEdit == null && widget.onDelete == null) {
       return const SizedBox.shrink();
     }
-    
+
     return Positioned(
       top: 12,
       left: 12,
@@ -863,8 +1214,9 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       ),
     );
   }
-  
-  Widget _buildActionIconButton(IconData icon, Color color, VoidCallback onTap) {
+
+  Widget _buildActionIconButton(
+      IconData icon, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
@@ -897,7 +1249,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       ),
     );
   }
-  
+
   Widget _buildActionOverlay() {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -965,7 +1317,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       ),
     );
   }
-  
+
   Widget _buildOverlayActionButton(
     IconData icon,
     String label,
@@ -1011,7 +1363,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       ),
     );
   }
-  
+
   Widget _buildSparkleEffect() {
     return Positioned.fill(
       child: IgnorePointer(
@@ -1029,7 +1381,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       ),
     );
   }
-  
+
   IconData _getFeatureIcon(String feature) {
     final featureLower = feature.toLowerCase();
     if (featureLower.contains('واي فاي') || featureLower.contains('wifi')) {
@@ -1038,7 +1390,8 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       return Icons.ac_unit_rounded;
     } else if (featureLower.contains('مطبخ')) {
       return Icons.kitchen_rounded;
-    } else if (featureLower.contains('موقف') || featureLower.contains('parking')) {
+    } else if (featureLower.contains('موقف') ||
+        featureLower.contains('parking')) {
       return Icons.local_parking_rounded;
     } else if (featureLower.contains('مسبح') || featureLower.contains('pool')) {
       return Icons.pool_rounded;
@@ -1067,25 +1420,25 @@ class _AdvancedPatternPainter extends CustomPainter {
     // Hexagonal pattern
     const double hexSize = 15;
     final double hexHeight = hexSize * math.sqrt(3);
-    
+
     for (double y = 0; y < size.height + hexHeight; y += hexHeight * 0.75) {
       for (double x = 0; x < size.width + hexSize * 2; x += hexSize * 3) {
         final offset = (y ~/ (hexHeight * 0.75)).isEven ? 0.0 : hexSize * 1.5;
-        
+
         // Animated opacity based on position
         final distance = math.sqrt(
-          math.pow(x + offset - size.width / 2, 2) + 
-          math.pow(y - size.height / 2, 2),
+          math.pow(x + offset - size.width / 2, 2) +
+              math.pow(y - size.height / 2, 2),
         );
         final maxDistance = math.sqrt(
-          math.pow(size.width / 2, 2) + 
-          math.pow(size.height / 2, 2),
+          math.pow(size.width / 2, 2) + math.pow(size.height / 2, 2),
         );
         final normalizedDistance = distance / maxDistance;
-        final opacity = (math.sin(animation + normalizedDistance * math.pi) + 1) / 2;
-        
+        final opacity =
+            (math.sin(animation + normalizedDistance * math.pi) + 1) / 2;
+
         paint.color = color.withOpacity(color.opacity * opacity * 0.5);
-        
+
         _drawHexagon(
           canvas,
           Offset(x + offset, y),
@@ -1095,14 +1448,14 @@ class _AdvancedPatternPainter extends CustomPainter {
       }
     }
   }
-  
+
   void _drawHexagon(Canvas canvas, Offset center, double size, Paint paint) {
     final path = Path();
     for (int i = 0; i < 6; i++) {
       final angle = (math.pi / 3) * i;
       final x = center.dx + size * math.cos(angle);
       final y = center.dy + size * math.sin(angle);
-      
+
       if (i == 0) {
         path.moveTo(x, y);
       } else {
@@ -1134,22 +1487,22 @@ class _SparklePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final random = math.Random(42); // Fixed seed for consistent sparkles
-    
+
     for (int i = 0; i < 5; i++) {
       final x = random.nextDouble() * size.width;
       final y = random.nextDouble() * size.height;
-      
+
       final sparkleProgress = (progress + i * 0.2) % 1.0;
       final opacity = math.sin(sparkleProgress * math.pi);
       final sparkleSize = 2 + opacity * 2;
-      
+
       paint.color = color.withOpacity(color.opacity * opacity);
-      
+
       // Draw sparkle
       canvas.save();
       canvas.translate(x, y);
       canvas.rotate(progress * 2 * math.pi);
-      
+
       // Draw cross
       canvas.drawRect(
         Rect.fromCenter(
@@ -1167,7 +1520,7 @@ class _SparklePainter extends CustomPainter {
         ),
         paint,
       );
-      
+
       canvas.restore();
     }
   }

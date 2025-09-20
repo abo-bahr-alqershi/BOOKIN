@@ -3,6 +3,8 @@
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:bookn_cp_app/features/admin_units/domain/entities/money.dart';
 import 'package:bookn_cp_app/features/admin_units/domain/entities/pricing_method.dart';
+import 'package:bookn_cp_app/features/admin_units/domain/entities/unit_type.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/widgets/dynamic_fields_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,7 +17,8 @@ import '../bloc/unit_form/unit_form_bloc.dart';
 import 'package:bookn_cp_app/features/admin_properties/domain/entities/property.dart';
 import 'package:bookn_cp_app/features/admin_units/presentation/widgets/unit_image_gallery.dart';
 import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_bloc.dart';
-import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_event.dart' hide UpdateUnitImageEvent;
+import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_event.dart'
+    hide UpdateUnitImageEvent;
 import 'package:get_it/get_it.dart';
 import 'package:bookn_cp_app/core/network/api_client.dart';
 
@@ -33,14 +36,14 @@ class _CreateUnitPageState extends State<CreateUnitPage>
   late AnimationController _glowController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  
+
   // Form Controllers
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
   final _featuresController = TextEditingController();
-  
+
   // State
   String? _selectedPropertyId;
   String? _selectedUnitTypeId;
@@ -55,7 +58,7 @@ class _CreateUnitPageState extends State<CreateUnitPage>
   final GlobalKey<UnitImageGalleryState> _galleryKey = GlobalKey();
   List<String> _selectedLocalImages = [];
   String? _tempKey;
-  
+
   @override
   void initState() {
     super.initState();
@@ -66,18 +69,18 @@ class _CreateUnitPageState extends State<CreateUnitPage>
     // Re-initialize form with tempKey
     context.read<UnitFormBloc>().add(InitializeFormEvent(tempKey: _tempKey));
   }
-  
+
   void _initializeAnimations() {
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _glowController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -85,7 +88,7 @@ class _CreateUnitPageState extends State<CreateUnitPage>
       parent: _animationController,
       curve: Curves.easeOut,
     ));
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
@@ -93,7 +96,7 @@ class _CreateUnitPageState extends State<CreateUnitPage>
       parent: _animationController,
       curve: Curves.easeOutQuart,
     ));
-    
+
     // Start animation after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -101,18 +104,19 @@ class _CreateUnitPageState extends State<CreateUnitPage>
       }
     });
   }
-  
+
   void _loadInitialData() {
     // Initialize form without unitId for create mode
     context.read<UnitFormBloc>().add(const InitializeFormEvent());
   }
-  
+
   @override
   void dispose() {
     // Purge temp images if user leaves without saving
     if (_tempKey != null) {
       try {
-        GetIt.instance<ApiClient>().delete('/api/images/purge-temp', queryParameters: {'tempKey': _tempKey});
+        GetIt.instance<ApiClient>().delete('/api/images/purge-temp',
+            queryParameters: {'tempKey': _tempKey});
       } catch (_) {}
     }
     _animationController.dispose();
@@ -123,7 +127,7 @@ class _CreateUnitPageState extends State<CreateUnitPage>
     _featuresController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<UnitFormBloc, UnitFormState>(
@@ -155,17 +159,17 @@ class _CreateUnitPageState extends State<CreateUnitPage>
           children: [
             // Animated Background
             _buildAnimatedBackground(),
-            
+
             // Main Content
             SafeArea(
               child: Column(
                 children: [
                   // Header
                   _buildHeader(),
-                  
+
                   // Progress Indicator
                   _buildProgressIndicator(),
-                  
+
                   // Form Content
                   Expanded(
                     child: FadeTransition(
@@ -176,7 +180,7 @@ class _CreateUnitPageState extends State<CreateUnitPage>
                       ),
                     ),
                   ),
-                  
+
                   // Action Buttons
                   _buildActionButtons(),
                 ],
@@ -187,7 +191,7 @@ class _CreateUnitPageState extends State<CreateUnitPage>
       ),
     );
   }
-  
+
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
       animation: _glowController,
@@ -214,7 +218,7 @@ class _CreateUnitPageState extends State<CreateUnitPage>
       },
     );
   }
-  
+
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -260,16 +264,17 @@ class _CreateUnitPageState extends State<CreateUnitPage>
               ),
             ),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Title
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ShaderMask(
-                  shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                  shaderCallback: (bounds) =>
+                      AppTheme.primaryGradient.createShader(bounds),
                   child: Text(
                     'إضافة وحدة جديدة',
                     style: AppTextStyles.heading2.copyWith(
@@ -292,10 +297,15 @@ class _CreateUnitPageState extends State<CreateUnitPage>
       ),
     );
   }
-  
+
   Widget _buildProgressIndicator() {
-    final steps = ['المعلومات الأساسية', 'السعة والتسعير', 'المميزات', 'المراجعة'];
-    
+    final steps = [
+      'المعلومات الأساسية',
+      'السعة والتسعير',
+      'المميزات',
+      'المراجعة'
+    ];
+
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -303,7 +313,7 @@ class _CreateUnitPageState extends State<CreateUnitPage>
         children: List.generate(steps.length, (index) {
           final isActive = index <= _currentStep;
           final isCompleted = index < _currentStep;
-          
+
           return Expanded(
             child: Row(
               children: [
@@ -314,7 +324,9 @@ class _CreateUnitPageState extends State<CreateUnitPage>
                   height: 32,
                   decoration: BoxDecoration(
                     gradient: isActive ? AppTheme.primaryGradient : null,
-                    color: !isActive ? AppTheme.darkSurface.withOpacity(0.5) : null,
+                    color: !isActive
+                        ? AppTheme.darkSurface.withOpacity(0.5)
+                        : null,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isActive
@@ -341,13 +353,14 @@ class _CreateUnitPageState extends State<CreateUnitPage>
                         : Text(
                             '${index + 1}',
                             style: AppTextStyles.caption.copyWith(
-                              color: isActive ? Colors.white : AppTheme.textMuted,
+                              color:
+                                  isActive ? Colors.white : AppTheme.textMuted,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                   ),
                 ),
-                
+
                 // Line
                 if (index < steps.length - 1)
                   Expanded(
@@ -356,7 +369,9 @@ class _CreateUnitPageState extends State<CreateUnitPage>
                       margin: const EdgeInsets.symmetric(horizontal: 8),
                       decoration: BoxDecoration(
                         gradient: isCompleted ? AppTheme.primaryGradient : null,
-                        color: !isCompleted ? AppTheme.darkBorder.withOpacity(0.2) : null,
+                        color: !isCompleted
+                            ? AppTheme.darkBorder.withOpacity(0.2)
+                            : null,
                         borderRadius: BorderRadius.circular(1),
                       ),
                     ),
@@ -368,7 +383,7 @@ class _CreateUnitPageState extends State<CreateUnitPage>
       ),
     );
   }
-  
+
   Widget _buildFormContent() {
     return BlocBuilder<UnitFormBloc, UnitFormState>(
       builder: (context, state) {
@@ -387,67 +402,67 @@ class _CreateUnitPageState extends State<CreateUnitPage>
       },
     );
   }
-  
-Widget _buildBasicInfoStep(UnitFormState state) {
-  return SingleChildScrollView(
-    padding: const EdgeInsets.all(20),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Unit Name
-        _buildInputField(
-          controller: _nameController,
-          label: 'اسم الوحدة',
-          hint: 'أدخل اسم الوحدة',
-          icon: Icons.home_rounded,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'الرجاء إدخال اسم الوحدة';
-            }
-            return null;
-          },
-          onChanged: (value) => _updateUnitName(), // أضف هذا
-        ),
-        
-        const SizedBox(height: 20),
-        
-        // Property Selector
-        _buildPropertySelector(state),
-        
-        const SizedBox(height: 20),
-        
-        // Unit Type Selector
-        _buildUnitTypeSelector(state),
-        
-        const SizedBox(height: 20),
-        
-        // Description
-        _buildInputField(
-          controller: _descriptionController,
-          label: 'الوصف',
-          hint: 'أدخل وصف الوحدة',
-          icon: Icons.description_rounded,
-          maxLines: 5,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'الرجاء إدخال وصف الوحدة';
-            }
-            return null;
-          },
-          onChanged: (value) => _updateDescription(), // أضف هذا
-        ),
-      ],
-    ),
-  );
-}
-  
+
+  Widget _buildBasicInfoStep(UnitFormState state) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Unit Name
+          _buildInputField(
+            controller: _nameController,
+            label: 'اسم الوحدة',
+            hint: 'أدخل اسم الوحدة',
+            icon: Icons.home_rounded,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'الرجاء إدخال اسم الوحدة';
+              }
+              return null;
+            },
+            onChanged: (value) => _updateUnitName(), // أضف هذا
+          ),
+
+          const SizedBox(height: 20),
+
+          // Property Selector
+          _buildPropertySelector(state),
+
+          const SizedBox(height: 20),
+
+          // Unit Type Selector
+          _buildUnitTypeSelector(state),
+
+          const SizedBox(height: 20),
+
+          // Description
+          _buildInputField(
+            controller: _descriptionController,
+            label: 'الوصف',
+            hint: 'أدخل وصف الوحدة',
+            icon: Icons.description_rounded,
+            maxLines: 5,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'الرجاء إدخال وصف الوحدة';
+              }
+              return null;
+            },
+            onChanged: (value) => _updateDescription(), // أضف هذا
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCapacityPricingStep(UnitFormState state) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if(_isHasAdults || _isHasChildren)...[
+          if (_isHasAdults || _isHasChildren) ...[
             // Capacity Section
             Text(
               'السعة الاستيعابية',
@@ -457,10 +472,10 @@ Widget _buildBasicInfoStep(UnitFormState state) {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             Row(
               children: [
-                if(_isHasAdults)...[
+                if (_isHasAdults) ...[
                   Expanded(
                     child: _buildCapacityCounter(
                       label: 'البالغين',
@@ -480,7 +495,7 @@ Widget _buildBasicInfoStep(UnitFormState state) {
                   ),
                   const SizedBox(width: 16),
                 ],
-                if(_isHasChildren)...[
+                if (_isHasChildren) ...[
                   Expanded(
                     child: _buildCapacityCounter(
                       label: 'الأطفال',
@@ -501,7 +516,7 @@ Widget _buildBasicInfoStep(UnitFormState state) {
                 ],
               ],
             ),
-            
+
             const SizedBox(height: 30),
           ],
           // Pricing Section
@@ -513,7 +528,7 @@ Widget _buildBasicInfoStep(UnitFormState state) {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           _buildInputField(
             controller: _priceController,
             label: 'السعر الأساسي',
@@ -534,16 +549,16 @@ Widget _buildBasicInfoStep(UnitFormState state) {
               _updatePricing();
             },
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Pricing Method Selector
           _buildPricingMethodSelector(),
         ],
       ),
     );
   }
-  
+
   Widget _buildFeaturesStep(UnitFormState state) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -558,7 +573,7 @@ Widget _buildBasicInfoStep(UnitFormState state) {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           _buildInputField(
             controller: _featuresController,
             label: 'المميزات المتاحة',
@@ -569,7 +584,7 @@ Widget _buildBasicInfoStep(UnitFormState state) {
               _updateFeatures();
             },
           ),
-          
+
           const SizedBox(height: 30),
 
           Text(
@@ -592,26 +607,27 @@ Widget _buildBasicInfoStep(UnitFormState state) {
               });
             },
           ),
-          
-          const SizedBox(height: 30),
-          
-          // Dynamic Fields Section (if available from state)
+
+          // Dynamic Fields Section - استخدام الويدجت المحدثة
           if (state is UnitFormReady && state.unitTypeFields.isNotEmpty) ...[
-            Text(
-              'معلومات إضافية',
-              style: AppTextStyles.heading3.copyWith(
-                color: AppTheme.textWhite,
-                fontWeight: FontWeight.bold,
-              ),
+            const SizedBox(height: 30),
+            DynamicFieldsWidget(
+              fields: state.unitTypeFields,
+              values: _dynamicFieldValues,
+              onChanged: (values) {
+                setState(() {
+                  _dynamicFieldValues = values;
+                });
+                _updateDynamicFields();
+              },
+              isReadOnly: false,
             ),
-            const SizedBox(height: 16),
-            _buildDynamicFields(state.unitTypeFields),
           ],
         ],
       ),
     );
   }
-  
+
   Widget _buildReviewStep(UnitFormState state) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -626,7 +642,7 @@ Widget _buildBasicInfoStep(UnitFormState state) {
             ),
           ),
           const SizedBox(height: 20),
-          
+
           _buildReviewCard(
             title: 'المعلومات الأساسية',
             items: [
@@ -635,41 +651,357 @@ Widget _buildBasicInfoStep(UnitFormState state) {
               {'label': 'النوع', 'value': _getUnitTypeName(state)},
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
-          _buildReviewCard(
-            title: 'السعة والتسعير',
-            items: [
-              {'label': 'البالغين', 'value': '$_adultCapacity'},
-              {'label': 'الأطفال', 'value': '$_childrenCapacity'},
-              {'label': 'السعر', 'value': '${_priceController.text} ريال'},
-              {'label': 'طريقة التسعير', 'value': _getPricingMethodText()},
-            ],
-          ),
-          
+
+          if (_isHasAdults || _isHasChildren) ...[
+            _buildReviewCard(
+              title: 'السعة والتسعير',
+              items: [
+                if (_isHasAdults)
+                  {'label': 'البالغين', 'value': '$_adultCapacity'},
+                if (_isHasChildren)
+                  {'label': 'الأطفال', 'value': '$_childrenCapacity'},
+                {'label': 'السعر', 'value': '${_priceController.text} ريال'},
+                {'label': 'طريقة التسعير', 'value': _getPricingMethodText()},
+              ],
+            ),
+          ] else ...[
+            _buildReviewCard(
+              title: 'التسعير',
+              items: [
+                {'label': 'السعر', 'value': '${_priceController.text} ريال'},
+                {'label': 'طريقة التسعير', 'value': _getPricingMethodText()},
+              ],
+            ),
+          ],
+
           const SizedBox(height: 16),
-          
+
           _buildReviewCard(
             title: 'المميزات',
             items: [
-              {'label': 'المميزات', 'value': _featuresController.text.isEmpty ? 'لا توجد' : _featuresController.text},
+              {
+                'label': 'المميزات',
+                'value': _featuresController.text.isEmpty
+                    ? 'لا توجد'
+                    : _featuresController.text
+              },
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           _buildReviewCard(
             title: 'الوصف',
             items: [
               {'label': 'الوصف', 'value': _descriptionController.text},
             ],
           ),
+
+          // عرض الصور إذا وجدت
+          if (_selectedLocalImages.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildImagesReviewCard(),
+          ],
+
+          // عرض الحقول الديناميكية
+          if (state is UnitFormReady &&
+              state.unitTypeFields.isNotEmpty &&
+              _dynamicFieldValues.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildDynamicFieldsReviewCard(state.unitTypeFields),
+          ],
         ],
       ),
     );
   }
-  
+
+  // إضافة دالة جديدة لعرض الحقول الديناميكية في المراجعة
+  Widget _buildDynamicFieldsReviewCard(List<UnitTypeField> fields) {
+    // فلترة الحقول التي لها قيم فقط
+    final fieldsWithValues = fields.where((field) {
+      final value = _dynamicFieldValues[field.fieldId];
+      return value != null && value.toString().isNotEmpty;
+    }).toList();
+
+    if (fieldsWithValues.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.5),
+            AppTheme.darkCard.withOpacity(0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(
+                  Icons.dynamic_form_rounded,
+                  size: 14,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'معلومات إضافية',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppTheme.primaryBlue,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...fieldsWithValues.map((field) {
+            final value = _dynamicFieldValues[field.fieldId];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Row(
+                      children: [
+                        Icon(
+                          _getFieldIcon(field.fieldTypeId),
+                          size: 14,
+                          color: AppTheme.textMuted.withOpacity(0.7),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            field.displayName,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      _formatFieldValue(field, value),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppTheme.textWhite,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.end,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // إضافة دالة لعرض الصور في المراجعة
+  Widget _buildImagesReviewCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.5),
+            AppTheme.darkCard.withOpacity(0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppTheme.info, AppTheme.info.withOpacity(0.7)],
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(
+                  Icons.image_rounded,
+                  size: 14,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'الصور',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppTheme.info,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(
+                Icons.photo_library_rounded,
+                size: 14,
+                color: AppTheme.textMuted.withOpacity(0.7),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'عدد الصور',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppTheme.textMuted,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.info.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${_selectedLocalImages.length}',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppTheme.info,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // دالة مساعدة للحصول على أيقونة الحقل
+  IconData _getFieldIcon(String fieldType) {
+    switch (fieldType) {
+      case 'text':
+        return Icons.text_fields_rounded;
+      case 'textarea':
+        return Icons.subject_rounded;
+      case 'number':
+        return Icons.numbers_rounded;
+      case 'currency':
+        return Icons.attach_money_rounded;
+      case 'boolean':
+        return Icons.toggle_on_rounded;
+      case 'select':
+        return Icons.arrow_drop_down_circle_rounded;
+      case 'multiselect':
+        return Icons.checklist_rounded;
+      case 'date':
+        return Icons.calendar_today_rounded;
+      case 'email':
+        return Icons.email_rounded;
+      case 'phone':
+        return Icons.phone_rounded;
+      case 'file':
+        return Icons.attach_file_rounded;
+      case 'image':
+        return Icons.image_rounded;
+      default:
+        return Icons.info_rounded;
+    }
+  }
+
+  // دالة مساعدة لتنسيق قيمة الحقل للعرض
+  String _formatFieldValue(UnitTypeField field, dynamic value) {
+    if (value == null) return 'غير محدد';
+
+    switch (field.fieldTypeId) {
+      case 'boolean':
+        return value == true ? 'نعم' : 'لا';
+
+      case 'currency':
+        if (value is num) {
+          return '${value.toStringAsFixed(2)} ريال';
+        }
+        return '$value ريال';
+
+      case 'date':
+        if (value is String) {
+          try {
+            final date = DateTime.parse(value);
+            return '${date.day}/${date.month}/${date.year}';
+          } catch (_) {
+            return value;
+          }
+        } else if (value is DateTime) {
+          return '${value.day}/${value.month}/${value.year}';
+        }
+        return value.toString();
+
+      case 'multiselect':
+        if (value is List) {
+          return value.join('، ');
+        }
+        return value.toString();
+
+      case 'select':
+        return value.toString();
+
+      case 'number':
+        return value.toString();
+
+      case 'phone':
+        final phone = value.toString();
+        if (phone.length == 10) {
+          return '${phone.substring(0, 4)} ${phone.substring(4, 7)} ${phone.substring(7)}';
+        }
+        return phone;
+
+      case 'email':
+        return value.toString().toLowerCase();
+
+      case 'file':
+      case 'image':
+        if (value is String && value.isNotEmpty) {
+          final fileName = value.split('/').last;
+          return fileName.length > 20
+              ? '...${fileName.substring(fileName.length - 20)}'
+              : fileName;
+        }
+        return 'ملف مرفق';
+
+      default:
+        return value.toString();
+    }
+  }
+
   Widget _buildPropertySelector(UnitFormState state) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -695,43 +1027,45 @@ Widget _buildBasicInfoStep(UnitFormState state) {
                     _selectedUnitTypeId = null;
                   });
                   context.read<UnitFormBloc>().add(
-                    PropertySelectedEvent(propertyId: property.id, propertyTypeId: property.typeId),
-                  );
+                        PropertySelectedEvent(
+                            propertyId: property.id,
+                            propertyTypeId: property.typeId),
+                      );
                 },
               },
             );
           },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTheme.darkCard.withOpacity(0.5),
-                AppTheme.darkCard.withOpacity(0.3),
-              ],
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.darkCard.withOpacity(0.5),
+                  AppTheme.darkCard.withOpacity(0.3),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppTheme.darkBorder.withOpacity(0.3),
+                width: 1,
+              ),
             ),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppTheme.darkBorder.withOpacity(0.3),
-              width: 1,
-            ),
-          ),
             child: Row(
               children: [
                 Icon(
                   Icons.home_work_outlined,
-                color: AppTheme.primaryBlue.withOpacity(0.7),
-              ),
+                  color: AppTheme.primaryBlue.withOpacity(0.7),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     _selectedPropertyName ?? 'اختر العقار',
-              style: AppTextStyles.bodyMedium.copyWith(
+                    style: AppTextStyles.bodyMedium.copyWith(
                       color: _selectedPropertyName == null
                           ? AppTheme.textMuted.withOpacity(0.5)
                           : AppTheme.textWhite,
-                ),
-              ),
+                    ),
+                  ),
                 ),
                 Icon(
                   Icons.search,
@@ -744,10 +1078,10 @@ Widget _buildBasicInfoStep(UnitFormState state) {
       ],
     );
   }
-  
+
   // Widget _buildUnitTypeSelector(UnitFormState state) {
   //   List<DropdownMenuItem<String>> items = [];
-    
+
   //   if (state is UnitFormReady && state.availableUnitTypes.isNotEmpty) {
   //     items = state.availableUnitTypes.map((unitType) {
   //       _isHasAdults = unitType.isHasAdults;
@@ -759,7 +1093,7 @@ Widget _buildBasicInfoStep(UnitFormState state) {
   //       );
   //     }).toList();
   //   }
-    
+
   //   return Column(
   //     crossAxisAlignment: CrossAxisAlignment.start,
   //     children: [
@@ -824,159 +1158,159 @@ Widget _buildBasicInfoStep(UnitFormState state) {
   //   );
   // }
   Widget _buildUnitTypeSelector(UnitFormState state) {
-  List<DropdownMenuItem<String>> items = [];
-  bool isLoadingUnitTypes = false;
-  
-  if (state is UnitFormReady) {
-    isLoadingUnitTypes = state.isLoadingUnitTypes;
-    
-    if (state.availableUnitTypes.isNotEmpty) {
-      items = state.availableUnitTypes.map((unitType) {
-        _isHasAdults = unitType.isHasAdults;
-        _isHasChildren = unitType.isHasChildren;
-        _adultCapacity = _isHasAdults ? 2 : 0;
-        return DropdownMenuItem<String>(
-          value: unitType.id,
-          child: Text(unitType.name),
-        );
-      }).toList();
+    List<DropdownMenuItem<String>> items = [];
+    bool isLoadingUnitTypes = false;
+
+    if (state is UnitFormReady) {
+      isLoadingUnitTypes = state.isLoadingUnitTypes;
+
+      if (state.availableUnitTypes.isNotEmpty) {
+        items = state.availableUnitTypes.map((unitType) {
+          _isHasAdults = unitType.isHasAdults;
+          _isHasChildren = unitType.isHasChildren;
+          _adultCapacity = _isHasAdults ? 2 : 0;
+          return DropdownMenuItem<String>(
+            value: unitType.id,
+            child: Text(unitType.name),
+          );
+        }).toList();
+      }
     }
-  }
-  
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        children: [
-          Text(
-            'نوع الوحدة',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.textWhite,
-              fontWeight: FontWeight.w600,
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'نوع الوحدة',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textWhite,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (isLoadingUnitTypes) ...[
+              const SizedBox(width: 8),
+              // Animated Loading Dots
+              _buildLoadingDots(),
+            ],
+          ],
+        ),
+        const SizedBox(height: 8),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.darkCard.withOpacity(isLoadingUnitTypes ? 0.3 : 0.5),
+                AppTheme.darkCard.withOpacity(0.3),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isLoadingUnitTypes
+                  ? AppTheme.primaryBlue.withOpacity(0.3)
+                  : AppTheme.darkBorder.withOpacity(0.3),
+              width: 1,
             ),
           ),
-          if (isLoadingUnitTypes) ...[
-            const SizedBox(width: 8),
-            // Animated Loading Dots
-            _buildLoadingDots(),
-          ],
-        ],
-      ),
-      const SizedBox(height: 8),
-      AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.darkCard.withOpacity(isLoadingUnitTypes ? 0.3 : 0.5),
-              AppTheme.darkCard.withOpacity(0.3),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isLoadingUnitTypes 
-              ? AppTheme.primaryBlue.withOpacity(0.3)
-              : AppTheme.darkBorder.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-        child: Stack(
-          alignment: Alignment.centerRight,
-          children: [
-            DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _selectedUnitTypeId,
-                isExpanded: true,
-                dropdownColor: AppTheme.darkCard,
-                icon: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: isLoadingUnitTypes 
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            AppTheme.primaryBlue.withOpacity(0.7),
+          child: Stack(
+            alignment: Alignment.centerRight,
+            children: [
+              DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedUnitTypeId,
+                  isExpanded: true,
+                  dropdownColor: AppTheme.darkCard,
+                  icon: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: isLoadingUnitTypes
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppTheme.primaryBlue.withOpacity(0.7),
+                              ),
+                            ),
+                          )
+                        : Icon(
+                            Icons.arrow_drop_down_rounded,
+                            key: const ValueKey('dropdown_icon'),
+                            color: AppTheme.primaryBlue.withOpacity(0.7),
                           ),
-                        ),
-                      )
-                    : Icon(
-                        Icons.arrow_drop_down_rounded,
-                        key: const ValueKey('dropdown_icon'),
-                        color: AppTheme.primaryBlue.withOpacity(0.7),
+                  ),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textWhite,
+                  ),
+                  hint: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Text(
+                      isLoadingUnitTypes
+                          ? 'جاري تحميل أنواع الوحدات...'
+                          : 'اختر نوع الوحدة',
+                      key: ValueKey(isLoadingUnitTypes),
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppTheme.textMuted.withOpacity(0.5),
                       ),
-                ),
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppTheme.textWhite,
-                ),
-                hint: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: Text(
-                    isLoadingUnitTypes 
-                      ? 'جاري تحميل أنواع الوحدات...'
-                      : 'اختر نوع الوحدة',
-                    key: ValueKey(isLoadingUnitTypes),
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppTheme.textMuted.withOpacity(0.5),
                     ),
                   ),
+                  items: items,
+                  onChanged: (_selectedPropertyId == null || isLoadingUnitTypes)
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _selectedUnitTypeId = value;
+                          });
+                          if (value != null) {
+                            context.read<UnitFormBloc>().add(
+                                  UnitTypeSelectedEvent(unitTypeId: value),
+                                );
+                          }
+                        },
                 ),
-                items: items,
-                onChanged: (_selectedPropertyId == null || isLoadingUnitTypes)
-                    ? null
-                    : (value) {
-                        setState(() {
-                          _selectedUnitTypeId = value;
-                        });
-                        if (value != null) {
-                          context.read<UnitFormBloc>().add(
-                            UnitTypeSelectedEvent(unitTypeId: value),
-                          );
-                        }
-                      },
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
 // أضف هذه الدالة المساعدة بعد دالة _buildUnitTypeSelector
-Widget _buildLoadingDots() {
-  return TweenAnimationBuilder<double>(
-    tween: Tween(begin: 0.0, end: 1.0),
-    duration: const Duration(milliseconds: 1500),
-    builder: (context, value, child) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(3, (index) {
-          final delay = index * 0.3;
-          final opacity = ((value - delay).clamp(0.0, 1.0) * 2 - 1).clamp(0.0, 1.0);
-          
-          return AnimatedOpacity(
-            opacity: opacity,
-            duration: const Duration(milliseconds: 300),
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryBlue,
-                shape: BoxShape.circle,
+  Widget _buildLoadingDots() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 1500),
+      builder: (context, value, child) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (index) {
+            final delay = index * 0.3;
+            final opacity =
+                ((value - delay).clamp(0.0, 1.0) * 2 - 1).clamp(0.0, 1.0);
+
+            return AnimatedOpacity(
+              opacity: opacity,
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryBlue,
+                  shape: BoxShape.circle,
+                ),
               ),
-            ),
-          );
-        }),
-      );
-    },
-    onEnd: () {
-    },
-  );
-}
+            );
+          }),
+        );
+      },
+      onEnd: () {},
+    );
+  }
 
   Widget _buildPricingMethodSelector() {
     final methods = [
@@ -984,7 +1318,7 @@ Widget _buildLoadingDots() {
       {'value': 'weekly', 'label': 'للأسبوع'},
       {'value': 'monthly', 'label': 'للشهر'},
     ];
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1010,7 +1344,8 @@ Widget _buildLoadingDots() {
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   gradient: isSelected ? AppTheme.primaryGradient : null,
                   color: isSelected ? null : AppTheme.darkCard.withOpacity(0.5),
@@ -1026,7 +1361,8 @@ Widget _buildLoadingDots() {
                   method['label']!,
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: isSelected ? Colors.white : AppTheme.textMuted,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
               ),
@@ -1036,14 +1372,14 @@ Widget _buildLoadingDots() {
       ],
     );
   }
-  
+
   Widget _buildDynamicFields(List<dynamic> fields) {
     return Column(
       children: fields.map((field) {
         final controller = TextEditingController(
           text: _dynamicFieldValues[field.fieldId]?.toString() ?? '',
         );
-        
+
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: _buildInputField(
@@ -1060,7 +1396,7 @@ Widget _buildLoadingDots() {
       }).toList(),
     );
   }
-  
+
   Widget _buildInputField({
     required TextEditingController controller,
     required String label,
@@ -1125,7 +1461,7 @@ Widget _buildLoadingDots() {
       ],
     );
   }
-  
+
   Widget _buildCapacityCounter({
     required String label,
     required int value,
@@ -1221,7 +1557,7 @@ Widget _buildLoadingDots() {
       ),
     );
   }
-  
+
   Widget _buildReviewCard({
     required String title,
     required List<Map<String, String>> items,
@@ -1253,36 +1589,36 @@ Widget _buildLoadingDots() {
           ),
           const SizedBox(height: 12),
           ...items.map((item) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  item['label']!,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    item['value']!,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppTheme.textWhite,
-                      fontWeight: FontWeight.w600,
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      item['label']!,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppTheme.textMuted,
+                      ),
                     ),
-                    textAlign: TextAlign.end,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    Expanded(
+                      child: Text(
+                        item['value']!,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppTheme.textWhite,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.end,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          )),
+              )),
         ],
       ),
     );
   }
-  
+
   Widget _buildActionButtons() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1333,9 +1669,9 @@ Widget _buildLoadingDots() {
                 ),
               ),
             ),
-          
+
           if (_currentStep > 0) const SizedBox(width: 12),
-          
+
           // Next/Submit Button
           Expanded(
             flex: _currentStep == 0 ? 1 : 1,
@@ -1384,94 +1720,94 @@ Widget _buildLoadingDots() {
       ),
     );
   }
-  
+
   // Helper Methods
   void _updateCapacity() {
     context.read<UnitFormBloc>().add(
-      UpdateCapacityEvent(
-        adultCapacity: _adultCapacity,
-        childrenCapacity: _childrenCapacity,
-      ),
-    );
+          UpdateCapacityEvent(
+            adultCapacity: _adultCapacity,
+            childrenCapacity: _childrenCapacity,
+          ),
+        );
   }
-  
+
   // Helper Methods
   void _updateUnitImage() {
     context.read<UnitFormBloc>().add(
-      UpdateUnitImageEvent(
-        images: _selectedLocalImages,
-      ),
-    );
+          UpdateUnitImageEvent(
+            images: _selectedLocalImages,
+          ),
+        );
   }
 
-void _updatePricing() {
-  if (_priceController.text.isNotEmpty) {
-    final price = double.tryParse(_priceController.text);
-    if (price != null && price > 0) {
-      // إنشاء Money و PricingMethod objects
-      final money = Money(
-        amount: price,
-        currency: 'YER', // أو العملة المناسبة
-        formattedAmount: price.toString(),
-      );
-      
-      // استخدام قيم enum بدلاً من constructor
-      final pricingMethod = _getPricingMethodEnum();
-      
-      context.read<UnitFormBloc>().add(
-        UpdatePricingEvent(
-          basePrice: money,
-          pricingMethod: pricingMethod,
-        ),
-      );
+  void _updatePricing() {
+    if (_priceController.text.isNotEmpty) {
+      final price = double.tryParse(_priceController.text);
+      if (price != null && price > 0) {
+        // إنشاء Money و PricingMethod objects
+        final money = Money(
+          amount: price,
+          currency: 'YER', // أو العملة المناسبة
+          formattedAmount: price.toString(),
+        );
+
+        // استخدام قيم enum بدلاً من constructor
+        final pricingMethod = _getPricingMethodEnum();
+
+        context.read<UnitFormBloc>().add(
+              UpdatePricingEvent(
+                basePrice: money,
+                pricingMethod: pricingMethod,
+              ),
+            );
+      }
     }
   }
-}
-  
+
   void _updateFeatures() {
     if (_featuresController.text.isNotEmpty) {
       context.read<UnitFormBloc>().add(
-        UpdateFeaturesEvent(features: _featuresController.text),
-      );
+            UpdateFeaturesEvent(features: _featuresController.text),
+          );
     }
   }
 
   void _updateUnitName() {
     // if (_nameController.text.isNotEmpty) {
-      context.read<UnitFormBloc>().add(
-        UpdateUnitNameEvent(name: _nameController.text),
-      );
+    context.read<UnitFormBloc>().add(
+          UpdateUnitNameEvent(name: _nameController.text),
+        );
     // }
   }
 
   void _updateDescription() {
     // if (_descriptionController.text.isNotEmpty) {
-      context.read<UnitFormBloc>().add(
-        UpdateDescriptionEvent(description: _descriptionController.text),
-      );
+    context.read<UnitFormBloc>().add(
+          UpdateDescriptionEvent(description: _descriptionController.text),
+        );
     // }
   }
-  
+
   void _updateDynamicFields() {
     context.read<UnitFormBloc>().add(
-      UpdateDynamicFieldsEvent(values: _dynamicFieldValues),
-    );
+          UpdateDynamicFieldsEvent(values: _dynamicFieldValues),
+        );
   }
-  
+
   String _getPropertyName(UnitFormState state) {
     if (_selectedPropertyName != null) {
       return _selectedPropertyName!;
     }
     return 'غير محدد';
   }
-  
+
   String _getUnitTypeName(UnitFormState state) {
     if (state is UnitFormReady && state.selectedUnitType != null) {
       return state.selectedUnitType!.name;
     }
     return 'غير محدد';
   }
-  
+
   String _getPricingMethodText() {
     switch (_pricingMethod) {
       case 'daily':
@@ -1484,7 +1820,7 @@ void _updatePricing() {
         return 'للساعة';
     }
   }
-  
+
   PricingMethod _getPricingMethodEnum() {
     switch (_pricingMethod) {
       case 'daily':
@@ -1497,7 +1833,8 @@ void _updatePricing() {
         return PricingMethod.hourly;
     }
   }
-    void _handleBack() {
+
+  void _handleBack() {
     if (_currentStep > 0) {
       setState(() {
         _currentStep--;
@@ -1507,7 +1844,6 @@ void _updatePricing() {
     }
   }
 
-
   void _previousStep() {
     if (_currentStep > 0) {
       setState(() {
@@ -1515,18 +1851,18 @@ void _updatePricing() {
       });
     }
   }
-  
+
   void _nextStep() {
     if (_currentStep < 3) {
       // Validate current step
       bool isValid = true;
-      
+
       if (_currentStep == 0) {
         isValid = _validateBasicInfo();
       } else if (_currentStep == 1) {
         isValid = _validateCapacityPricing();
       }
-      
+
       if (isValid) {
         setState(() {
           _currentStep++;
@@ -1534,7 +1870,7 @@ void _updatePricing() {
       }
     }
   }
-  
+
   bool _validateBasicInfo() {
     if (_nameController.text.isEmpty ||
         _selectedPropertyId == null ||
@@ -1545,39 +1881,39 @@ void _updatePricing() {
     }
     return true;
   }
-  
+
   bool _validateCapacityPricing() {
     if (_priceController.text.isEmpty) {
       _showErrorMessage('الرجاء إدخال السعر');
       return false;
     }
-    
+
     final price = double.tryParse(_priceController.text);
     if (price == null || price <= 0) {
       _showErrorMessage('السعر غير صحيح');
       return false;
     }
-    
+
     return true;
   }
-  
-void _submitForm() {
-  if (_formKey.currentState!.validate()) {
-    // تأكد من تحديث جميع البيانات قبل الإرسال
-    _updateUnitName();
-    _updateDescription();
-    _updatePricing();
-    _updateFeatures();
-    _updateCapacity();
-    _updateUnitImage();
-    
-    // انتظر قليلاً للتأكد من تحديث البلوك
-    Future.delayed(const Duration(milliseconds: 100), () {
-      context.read<UnitFormBloc>().add(SubmitFormEvent());
-    });
+
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      // تأكد من تحديث جميع البيانات قبل الإرسال
+      _updateUnitName();
+      _updateDescription();
+      _updatePricing();
+      _updateFeatures();
+      _updateCapacity();
+      _updateUnitImage();
+
+      // انتظر قليلاً للتأكد من تحديث البلوك
+      Future.delayed(const Duration(milliseconds: 100), () {
+        context.read<UnitFormBloc>().add(SubmitFormEvent());
+      });
+    }
   }
-}
-  
+
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1601,7 +1937,7 @@ void _submitForm() {
       ),
     );
   }
-  
+
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1629,14 +1965,13 @@ void _submitForm() {
 
 class _CreateUnitBackgroundPainter extends CustomPainter {
   final double glowIntensity;
-  
+
   _CreateUnitBackgroundPainter({required this.glowIntensity});
-  
+
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.fill;
-    
+    final paint = Paint()..style = PaintingStyle.fill;
+
     // Draw glowing orbs
     paint.shader = RadialGradient(
       colors: [
@@ -1648,13 +1983,13 @@ class _CreateUnitBackgroundPainter extends CustomPainter {
       center: Offset(size.width * 0.8, size.height * 0.2),
       radius: 150,
     ));
-    
+
     canvas.drawCircle(
       Offset(size.width * 0.8, size.height * 0.2),
       150,
       paint,
     );
-    
+
     paint.shader = RadialGradient(
       colors: [
         AppTheme.primaryPurple.withOpacity(0.1 * glowIntensity),
@@ -1665,14 +2000,14 @@ class _CreateUnitBackgroundPainter extends CustomPainter {
       center: Offset(size.width * 0.2, size.height * 0.7),
       radius: 100,
     ));
-    
+
     canvas.drawCircle(
       Offset(size.width * 0.2, size.height * 0.7),
       100,
       paint,
     );
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

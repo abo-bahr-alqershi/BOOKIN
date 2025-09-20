@@ -4,6 +4,7 @@ import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:bookn_cp_app/features/admin_units/domain/entities/money.dart';
 import 'package:bookn_cp_app/features/admin_units/domain/entities/pricing_method.dart';
 import 'package:bookn_cp_app/features/admin_units/domain/entities/unit.dart';
+import 'package:bookn_cp_app/features/admin_units/presentation/widgets/dynamic_fields_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,13 +18,14 @@ import '../bloc/unit_details/unit_details_bloc.dart';
 import 'package:bookn_cp_app/features/admin_properties/domain/entities/property.dart';
 import 'package:bookn_cp_app/features/admin_units/presentation/widgets/unit_image_gallery.dart';
 import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_bloc.dart';
-import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_event.dart' hide UpdateUnitImageEvent;
+import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_event.dart'
+    hide UpdateUnitImageEvent;
 import 'package:get_it/get_it.dart';
 import 'package:bookn_cp_app/core/network/api_client.dart';
 
 class EditUnitPage extends StatefulWidget {
   final String unitId;
-  
+
   const EditUnitPage({
     super.key,
     required this.unitId,
@@ -42,14 +44,14 @@ class _EditUnitPageState extends State<EditUnitPage>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _loadingRotation;
-  
+
   // Form Controllers
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
   final _featuresController = TextEditingController();
-  
+
   // State
   String? _selectedPropertyId;
   String? _selectedUnitTypeId;
@@ -62,13 +64,13 @@ class _EditUnitPageState extends State<EditUnitPage>
   Map<String, dynamic> _dynamicFieldValues = {};
   String? _selectedPropertyName;
   final GlobalKey<UnitImageGalleryState> _galleryKey = GlobalKey();
-  
+
   // Edit specific state
   Unit? _originalUnit;
   bool _isDataLoaded = false;
   bool _hasChanges = false;
   List<String> _existingImages = [];
-  
+
   @override
   void initState() {
     super.initState();
@@ -77,23 +79,23 @@ class _EditUnitPageState extends State<EditUnitPage>
       _loadUnitData();
     });
   }
-  
+
   void _initializeAnimations() {
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _glowController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _loadingAnimationController = AnimationController(
       duration: const Duration(seconds: 1),
       vsync: this,
     )..repeat();
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -101,7 +103,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       parent: _animationController,
       curve: Curves.easeOut,
     ));
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
@@ -109,7 +111,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       parent: _animationController,
       curve: Curves.easeOutQuart,
     ));
-    
+
     _loadingRotation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
@@ -118,58 +120,61 @@ class _EditUnitPageState extends State<EditUnitPage>
       curve: Curves.linear,
     ));
   }
-  
+
   void _loadUnitData() {
     // Load unit details first
-    context.read<UnitDetailsBloc>().add(LoadUnitDetailsEvent(unitId: widget.unitId));
+    context
+        .read<UnitDetailsBloc>()
+        .add(LoadUnitDetailsEvent(unitId: widget.unitId));
   }
-  
+
   void _populateFormWithUnitData(Unit unit) {
     if (_isDataLoaded) return;
-    
+
     setState(() {
       _originalUnit = unit;
       _isDataLoaded = true;
-      
+
       // Populate text controllers
       _nameController.text = unit.name;
       _descriptionController.text = unit.customFeatures;
       _priceController.text = unit.basePrice.amount.toString();
-      
+
       // Extract features from customFeatures if it's comma-separated
       _featuresController.text = unit.customFeatures;
-      
+
       // Set property and unit type
       _selectedPropertyId = unit.propertyId;
       _selectedPropertyName = unit.propertyName;
       _selectedUnitTypeId = unit.unitTypeId;
-      
+
       // Set capacities
       _adultCapacity = unit.adultsCapacity ?? unit.maxCapacity;
       _childrenCapacity = unit.childrenCapacity ?? 0;
       _isHasAdults = unit.adultsCapacity != null && unit.adultsCapacity! > 0;
-      _isHasChildren = unit.childrenCapacity != null && unit.childrenCapacity! > 0;
-      
+      _isHasChildren =
+          unit.childrenCapacity != null && unit.childrenCapacity! > 0;
+
       // Set pricing method
       _pricingMethod = _getPricingMethodString(unit.pricingMethod);
-      
+
       // Set dynamic field values
       for (var fieldValue in unit.fieldValues) {
         _dynamicFieldValues[fieldValue.fieldId] = fieldValue.fieldValue;
       }
-      
+
       // Set existing images
       _existingImages = unit.images ?? [];
     });
-    
+
     // لا تعيد تهيئة النموذج هنا لتجنب سباق الحالة الذي يمسح الحقول الديناميكية
     // Ensure dynamic fields are loaded based on the unit's type in edit mode
     if (unit.unitTypeId.isNotEmpty) {
       context.read<UnitFormBloc>().add(
-        UnitTypeSelectedEvent(unitTypeId: unit.unitTypeId),
-      );
+            UnitTypeSelectedEvent(unitTypeId: unit.unitTypeId),
+          );
     }
-    
+
     // Start animation after data is loaded
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
@@ -177,7 +182,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       }
     });
   }
-  
+
   String _getPricingMethodString(PricingMethod method) {
     switch (method) {
       case PricingMethod.daily:
@@ -192,7 +197,7 @@ class _EditUnitPageState extends State<EditUnitPage>
         return 'daily';
     }
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -204,7 +209,7 @@ class _EditUnitPageState extends State<EditUnitPage>
     _featuresController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -236,7 +241,7 @@ class _EditUnitPageState extends State<EditUnitPage>
               children: [
                 // Animated Background
                 _buildAnimatedBackground(),
-                
+
                 // Main Content or Loading
                 SafeArea(
                   child: !_isDataLoaded
@@ -245,10 +250,10 @@ class _EditUnitPageState extends State<EditUnitPage>
                           children: [
                             // Header
                             _buildHeader(),
-                            
+
                             // Progress Indicator
                             _buildProgressIndicator(),
-                            
+
                             // Form Content
                             Expanded(
                               child: FadeTransition(
@@ -259,7 +264,7 @@ class _EditUnitPageState extends State<EditUnitPage>
                                 ),
                               ),
                             ),
-                            
+
                             // Action Buttons
                             _buildActionButtons(),
                           ],
@@ -272,7 +277,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       ),
     );
   }
-  
+
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
       animation: _glowController,
@@ -299,7 +304,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       },
     );
   }
-  
+
   Widget _buildLoadingState() {
     return Center(
       child: Column(
@@ -355,7 +360,8 @@ class _EditUnitPageState extends State<EditUnitPage>
           ),
           const SizedBox(height: 32),
           ShaderMask(
-            shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+            shaderCallback: (bounds) =>
+                AppTheme.primaryGradient.createShader(bounds),
             child: Text(
               'جاري تحميل بيانات الوحدة...',
               style: AppTextStyles.heading3.copyWith(
@@ -375,7 +381,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       ),
     );
   }
-  
+
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -421,9 +427,9 @@ class _EditUnitPageState extends State<EditUnitPage>
               ),
             ),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Title
           Expanded(
             child: Column(
@@ -432,7 +438,8 @@ class _EditUnitPageState extends State<EditUnitPage>
                 Row(
                   children: [
                     ShaderMask(
-                      shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                      shaderCallback: (bounds) =>
+                          AppTheme.primaryGradient.createShader(bounds),
                       child: Text(
                         'تعديل الوحدة',
                         style: AppTextStyles.heading2.copyWith(
@@ -444,7 +451,8 @@ class _EditUnitPageState extends State<EditUnitPage>
                     const SizedBox(width: 8),
                     if (_hasChanges)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: AppTheme.warning.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(12),
@@ -473,7 +481,7 @@ class _EditUnitPageState extends State<EditUnitPage>
               ],
             ),
           ),
-          
+
           // Reset Button
           if (_hasChanges)
             GestureDetector(
@@ -500,10 +508,15 @@ class _EditUnitPageState extends State<EditUnitPage>
       ),
     );
   }
-  
+
   Widget _buildProgressIndicator() {
-    final steps = ['المعلومات الأساسية', 'السعة والتسعير', 'المميزات والصور', 'المراجعة'];
-    
+    final steps = [
+      'المعلومات الأساسية',
+      'السعة والتسعير',
+      'المميزات والصور',
+      'المراجعة'
+    ];
+
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -512,7 +525,7 @@ class _EditUnitPageState extends State<EditUnitPage>
           final isActive = index <= _currentStep;
           final isCompleted = index < _currentStep;
           final isModified = _hasChangesInStep(index);
-          
+
           return Expanded(
             child: Row(
               children: [
@@ -523,7 +536,9 @@ class _EditUnitPageState extends State<EditUnitPage>
                   height: 32,
                   decoration: BoxDecoration(
                     gradient: isActive ? AppTheme.primaryGradient : null,
-                    color: !isActive ? AppTheme.darkSurface.withOpacity(0.5) : null,
+                    color: !isActive
+                        ? AppTheme.darkSurface.withOpacity(0.5)
+                        : null,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isModified
@@ -547,20 +562,23 @@ class _EditUnitPageState extends State<EditUnitPage>
                   child: Center(
                     child: isCompleted
                         ? Icon(
-                            isModified ? Icons.edit_rounded : Icons.check_rounded,
+                            isModified
+                                ? Icons.edit_rounded
+                                : Icons.check_rounded,
                             size: 16,
                             color: Colors.white,
                           )
                         : Text(
                             '${index + 1}',
                             style: AppTextStyles.caption.copyWith(
-                              color: isActive ? Colors.white : AppTheme.textMuted,
+                              color:
+                                  isActive ? Colors.white : AppTheme.textMuted,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                   ),
                 ),
-                
+
                 // Line
                 if (index < steps.length - 1)
                   Expanded(
@@ -568,12 +586,17 @@ class _EditUnitPageState extends State<EditUnitPage>
                       height: 2,
                       margin: const EdgeInsets.symmetric(horizontal: 8),
                       decoration: BoxDecoration(
-                        gradient: isCompleted 
+                        gradient: isCompleted
                             ? isModified
-                                ? LinearGradient(colors: [AppTheme.warning, AppTheme.warning.withOpacity(0.5)])
+                                ? LinearGradient(colors: [
+                                    AppTheme.warning,
+                                    AppTheme.warning.withOpacity(0.5)
+                                  ])
                                 : AppTheme.primaryGradient
                             : null,
-                        color: !isCompleted ? AppTheme.darkBorder.withOpacity(0.2) : null,
+                        color: !isCompleted
+                            ? AppTheme.darkBorder.withOpacity(0.2)
+                            : null,
                         borderRadius: BorderRadius.circular(1),
                       ),
                     ),
@@ -585,7 +608,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       ),
     );
   }
-  
+
   Widget _buildFormContent() {
     return BlocBuilder<UnitFormBloc, UnitFormState>(
       builder: (context, state) {
@@ -609,7 +632,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       },
     );
   }
-  
+
   Widget _buildBasicInfoStep(UnitFormState state) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -623,7 +646,7 @@ class _EditUnitPageState extends State<EditUnitPage>
               _originalUnit!.name,
               _nameController.text != _originalUnit!.name,
             ),
-          
+
           // Unit Name
           _buildInputField(
             controller: _nameController,
@@ -638,35 +661,38 @@ class _EditUnitPageState extends State<EditUnitPage>
             },
             onChanged: (value) => _updateUnitName(),
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Property Selector (Read-only in edit mode)
           _buildReadOnlyField(
             label: 'العقار',
             value: _selectedPropertyName ?? 'غير محدد',
             icon: Icons.home_work_outlined,
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Unit Type Selector (Read-only in edit mode)
           _buildReadOnlyField(
             label: 'نوع الوحدة',
             value: _originalUnit?.unitTypeName ?? 'غير محدد',
             icon: Icons.apartment_rounded,
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Description
-          if (_originalUnit != null && _descriptionController.text != _originalUnit!.customFeatures)
+          if (_originalUnit != null &&
+              _descriptionController.text != _originalUnit!.customFeatures)
             _buildOriginalValueIndicator(
               'الوصف الأصلي',
-              _originalUnit!.customFeatures.isEmpty ? 'لا يوجد' : _originalUnit!.customFeatures,
+              _originalUnit!.customFeatures.isEmpty
+                  ? 'لا يوجد'
+                  : _originalUnit!.customFeatures,
               true,
             ),
-          
+
           _buildInputField(
             controller: _descriptionController,
             label: 'الوصف',
@@ -685,14 +711,14 @@ class _EditUnitPageState extends State<EditUnitPage>
       ),
     );
   }
-  
+
   Widget _buildCapacityPricingStep(UnitFormState state) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if(_isHasAdults || _isHasChildren)...[
+          if (_isHasAdults || _isHasChildren) ...[
             // Capacity Section
             Text(
               'السعة الاستيعابية',
@@ -702,15 +728,17 @@ class _EditUnitPageState extends State<EditUnitPage>
               ),
             ),
             const SizedBox(height: 16),
-            
+
             Row(
               children: [
-                if(_isHasAdults)...[
+                if (_isHasAdults) ...[
                   Expanded(
                     child: _buildCapacityCounter(
                       label: 'البالغين',
                       value: _adultCapacity,
-                      originalValue: _originalUnit?.adultsCapacity ?? _originalUnit?.maxCapacity ?? 0,
+                      originalValue: _originalUnit?.adultsCapacity ??
+                          _originalUnit?.maxCapacity ??
+                          0,
                       icon: Icons.person,
                       onIncrement: () {
                         setState(() => _adultCapacity++);
@@ -726,7 +754,7 @@ class _EditUnitPageState extends State<EditUnitPage>
                   ),
                   const SizedBox(width: 16),
                 ],
-                if(_isHasChildren)...[
+                if (_isHasChildren) ...[
                   Expanded(
                     child: _buildCapacityCounter(
                       label: 'الأطفال',
@@ -748,10 +776,10 @@ class _EditUnitPageState extends State<EditUnitPage>
                 ],
               ],
             ),
-            
+
             const SizedBox(height: 30),
           ],
-          
+
           // Pricing Section
           Text(
             'التسعير',
@@ -761,15 +789,16 @@ class _EditUnitPageState extends State<EditUnitPage>
             ),
           ),
           const SizedBox(height: 16),
-          
-          if (_originalUnit != null && 
-              double.tryParse(_priceController.text) != _originalUnit!.basePrice.amount)
+
+          if (_originalUnit != null &&
+              double.tryParse(_priceController.text) !=
+                  _originalUnit!.basePrice.amount)
             _buildOriginalValueIndicator(
               'السعر الأصلي',
               _originalUnit!.basePrice.displayAmount,
               true,
             ),
-          
+
           _buildInputField(
             controller: _priceController,
             label: 'السعر الأساسي',
@@ -790,16 +819,16 @@ class _EditUnitPageState extends State<EditUnitPage>
               _updatePricing();
             },
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Pricing Method Selector
           _buildPricingMethodSelector(),
         ],
       ),
     );
   }
-  
+
   Widget _buildFeaturesStep(UnitFormState state) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -814,7 +843,7 @@ class _EditUnitPageState extends State<EditUnitPage>
             ),
           ),
           const SizedBox(height: 16),
-          
+
           _buildInputField(
             controller: _featuresController,
             label: 'المميزات المتاحة',
@@ -825,42 +854,17 @@ class _EditUnitPageState extends State<EditUnitPage>
               _updateFeatures();
             },
           ),
-          
+
           const SizedBox(height: 30),
 
-          Row(
-            children: [
-              Text(
-                'صور الوحدة',
-                style: AppTextStyles.heading3.copyWith(
-                  color: AppTheme.textWhite,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 8),
-              if (_existingImages.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryBlue.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppTheme.primaryBlue.withOpacity(0.5),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    '${_existingImages.length} صورة',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppTheme.primaryBlue,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-            ],
+          Text(
+            'صور الوحدة',
+            style: AppTextStyles.heading3.copyWith(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 12),
-          
           UnitImageGallery(
             key: _galleryKey,
             unitId: widget.unitId,
@@ -872,26 +876,27 @@ class _EditUnitPageState extends State<EditUnitPage>
               });
             },
           ),
-          
-          const SizedBox(height: 30),
-          
-          // Dynamic Fields Section (if available from state)
+
+          // Dynamic Fields Section - استخدام الويدجت المحدثة
           if (state is UnitFormReady && state.unitTypeFields.isNotEmpty) ...[
-            Text(
-              'معلومات إضافية',
-              style: AppTextStyles.heading3.copyWith(
-                color: AppTheme.textWhite,
-                fontWeight: FontWeight.bold,
-              ),
+            const SizedBox(height: 30),
+            DynamicFieldsWidget(
+              fields: state.unitTypeFields,
+              values: _dynamicFieldValues,
+              onChanged: (values) {
+                setState(() {
+                  _dynamicFieldValues = values;
+                });
+                _updateDynamicFields();
+              },
+              isReadOnly: false,
             ),
-            const SizedBox(height: 16),
-            _buildDynamicFields(state.unitTypeFields),
           ],
         ],
       ),
     );
   }
-  
+
   Widget _buildReviewStep(UnitFormState state) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -910,7 +915,8 @@ class _EditUnitPageState extends State<EditUnitPage>
               const SizedBox(width: 12),
               if (_hasChanges)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -931,60 +937,110 @@ class _EditUnitPageState extends State<EditUnitPage>
             ],
           ),
           const SizedBox(height: 20),
-          
+
           // Changes Summary
-          if (_hasChanges)
-            _buildChangesSummary(),
-          
+          if (_hasChanges) _buildChangesSummary(),
+
           const SizedBox(height: 20),
-          
+
           _buildReviewCard(
             title: 'المعلومات الأساسية',
             items: [
-              {'label': 'الاسم', 'value': _nameController.text, 'changed': _nameController.text != _originalUnit?.name},
-              {'label': 'العقار', 'value': _selectedPropertyName ?? '', 'changed': false},
-              {'label': 'النوع', 'value': _originalUnit?.unitTypeName ?? '', 'changed': false},
+              {
+                'label': 'الاسم',
+                'value': _nameController.text,
+                'changed': _nameController.text != _originalUnit?.name
+              },
+              {
+                'label': 'العقار',
+                'value': _selectedPropertyName ?? '',
+                'changed': false
+              },
+              {
+                'label': 'النوع',
+                'value': _originalUnit?.unitTypeName ?? '',
+                'changed': false
+              },
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           _buildReviewCard(
             title: 'السعة والتسعير',
             items: [
-              {'label': 'البالغين', 'value': '$_adultCapacity', 'changed': _adultCapacity != (_originalUnit?.adultsCapacity ?? _originalUnit?.maxCapacity)},
-              {'label': 'الأطفال', 'value': '$_childrenCapacity', 'changed': _childrenCapacity != (_originalUnit?.childrenCapacity ?? 0)},
-              {'label': 'السعر', 'value': '${_priceController.text} ريال', 'changed': double.tryParse(_priceController.text) != _originalUnit?.basePrice.amount},
-              {'label': 'طريقة التسعير', 'value': _getPricingMethodText(), 'changed': _pricingMethod != _getPricingMethodString(_originalUnit!.pricingMethod)},
+              {
+                'label': 'البالغين',
+                'value': '$_adultCapacity',
+                'changed': _adultCapacity !=
+                    (_originalUnit?.adultsCapacity ??
+                        _originalUnit?.maxCapacity)
+              },
+              {
+                'label': 'الأطفال',
+                'value': '$_childrenCapacity',
+                'changed':
+                    _childrenCapacity != (_originalUnit?.childrenCapacity ?? 0)
+              },
+              {
+                'label': 'السعر',
+                'value': '${_priceController.text} ريال',
+                'changed': double.tryParse(_priceController.text) !=
+                    _originalUnit?.basePrice.amount
+              },
+              {
+                'label': 'طريقة التسعير',
+                'value': _getPricingMethodText(),
+                'changed': _pricingMethod !=
+                    _getPricingMethodString(_originalUnit!.pricingMethod)
+              },
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           _buildReviewCard(
             title: 'المميزات والصور',
             items: [
-              {'label': 'المميزات', 'value': _featuresController.text.isEmpty ? 'لا توجد' : _featuresController.text, 'changed': _featuresController.text != _originalUnit?.customFeatures},
-              {'label': 'عدد الصور', 'value': '${_existingImages.length} صورة', 'changed': _existingImages.length != (_originalUnit?.images?.length ?? 0)},
+              {
+                'label': 'المميزات',
+                'value': _featuresController.text.isEmpty
+                    ? 'لا توجد'
+                    : _featuresController.text,
+                'changed':
+                    _featuresController.text != _originalUnit?.customFeatures
+              },
+              {
+                'label': 'عدد الصور',
+                'value': '${_existingImages.length} صورة',
+                'changed': _existingImages.length !=
+                    (_originalUnit?.images?.length ?? 0)
+              },
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           _buildReviewCard(
             title: 'الوصف',
             items: [
-              {'label': 'الوصف', 'value': _descriptionController.text, 'changed': _descriptionController.text != _originalUnit?.customFeatures},
+              {
+                'label': 'الوصف',
+                'value': _descriptionController.text,
+                'changed':
+                    _descriptionController.text != _originalUnit?.customFeatures
+              },
             ],
           ),
         ],
       ),
     );
   }
-  
-  Widget _buildOriginalValueIndicator(String label, String value, bool isChanged) {
+
+  Widget _buildOriginalValueIndicator(
+      String label, String value, bool isChanged) {
     if (!isChanged) return const SizedBox.shrink();
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1031,7 +1087,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       ),
     );
   }
-  
+
   Widget _buildReadOnlyField({
     required String label,
     required String value,
@@ -1090,10 +1146,10 @@ class _EditUnitPageState extends State<EditUnitPage>
       ],
     );
   }
-  
+
   Widget _buildChangesSummary() {
     final changes = _getChangedFields();
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1131,75 +1187,75 @@ class _EditUnitPageState extends State<EditUnitPage>
           ),
           const SizedBox(height: 12),
           ...changes.map((change) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  margin: const EdgeInsets.only(top: 6),
-                  decoration: BoxDecoration(
-                    color: AppTheme.warning,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        change['field']!,
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppTheme.textWhite,
-                          fontWeight: FontWeight.w600,
-                        ),
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      margin: const EdgeInsets.only(top: 6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.warning,
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(height: 2),
-                      Row(
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Flexible(
-                            child: Text(
-                              'من: ${change['oldValue']}',
-                              style: AppTextStyles.caption.copyWith(
-                                color: AppTheme.textMuted,
-                                decoration: TextDecoration.lineThrough,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          Text(
+                            change['field']!,
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppTheme.textWhite,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.arrow_forward_rounded,
-                            size: 12,
-                            color: AppTheme.warning,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              'إلى: ${change['newValue']}',
-                              style: AppTextStyles.caption.copyWith(
-                                color: AppTheme.success,
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  'من: ${change['oldValue']}',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: AppTheme.textMuted,
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 12,
+                                color: AppTheme.warning,
+                              ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  'إلى: ${change['newValue']}',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: AppTheme.success,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          )),
+              )),
         ],
       ),
     );
   }
-  
+
   Widget _buildCapacityCounter({
     required String label,
     required int value,
@@ -1209,7 +1265,7 @@ class _EditUnitPageState extends State<EditUnitPage>
     required VoidCallback onDecrement,
   }) {
     final hasChanged = value != originalValue;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1236,7 +1292,9 @@ class _EditUnitPageState extends State<EditUnitPage>
         children: [
           Row(
             children: [
-              Icon(icon, color: hasChanged ? AppTheme.warning : AppTheme.primaryBlue, size: 20),
+              Icon(icon,
+                  color: hasChanged ? AppTheme.warning : AppTheme.primaryBlue,
+                  size: 20),
               const SizedBox(width: 8),
               Text(
                 label,
@@ -1314,13 +1372,13 @@ class _EditUnitPageState extends State<EditUnitPage>
       ),
     );
   }
-  
+
   Widget _buildReviewCard({
     required String title,
     required List<Map<String, dynamic>> items,
   }) {
     final hasChanges = items.any((item) => item['changed'] == true);
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1358,7 +1416,8 @@ class _EditUnitPageState extends State<EditUnitPage>
               if (hasChanges) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppTheme.warning.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
@@ -1377,70 +1436,73 @@ class _EditUnitPageState extends State<EditUnitPage>
           ),
           const SizedBox(height: 12),
           ...items.map((item) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    if (item['changed'] == true)
-                      Container(
-                        width: 6,
-                        height: 6,
-                        margin: const EdgeInsets.only(right: 4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.warning,
-                          shape: BoxShape.circle,
+                    Row(
+                      children: [
+                        if (item['changed'] == true)
+                          Container(
+                            width: 6,
+                            height: 6,
+                            margin: const EdgeInsets.only(right: 4),
+                            decoration: BoxDecoration(
+                              color: AppTheme.warning,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        Text(
+                          item['label']!,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: item['changed'] == true
+                                ? AppTheme.warning
+                                : AppTheme.textMuted,
+                          ),
                         ),
-                      ),
-                    Text(
-                      item['label']!,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: item['changed'] == true
-                            ? AppTheme.warning
-                            : AppTheme.textMuted,
+                      ],
+                    ),
+                    Expanded(
+                      child: Text(
+                        item['value']!,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: item['changed'] == true
+                              ? AppTheme.textWhite
+                              : AppTheme.textWhite,
+                          fontWeight: item['changed'] == true
+                              ? FontWeight.w600
+                              : FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.end,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-                Expanded(
-                  child: Text(
-                    item['value']!,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: item['changed'] == true
-                          ? AppTheme.textWhite
-                          : AppTheme.textWhite,
-                      fontWeight: item['changed'] == true
-                          ? FontWeight.w600
-                          : FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.end,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          )),
+              )),
         ],
       ),
     );
   }
-  
+
   // Additional helper methods specific to Edit
   bool _checkForChanges() {
     if (_originalUnit == null) return false;
-    
+
     return _nameController.text != _originalUnit!.name ||
-           _descriptionController.text != _originalUnit!.customFeatures ||
-           double.tryParse(_priceController.text) != _originalUnit!.basePrice.amount ||
-           _adultCapacity != (_originalUnit!.adultsCapacity ?? _originalUnit!.maxCapacity) ||
-           _childrenCapacity != (_originalUnit!.childrenCapacity ?? 0) ||
-           _pricingMethod != _getPricingMethodString(_originalUnit!.pricingMethod) ||
-           _featuresController.text != _originalUnit!.customFeatures ||
-           // Detect image order change (not just count)
-           _existingImages.length != (_originalUnit!.images?.length ?? 0) ||
-           !_isSameOrder(_existingImages, _originalUnit!.images ?? const []);
+        _descriptionController.text != _originalUnit!.customFeatures ||
+        double.tryParse(_priceController.text) !=
+            _originalUnit!.basePrice.amount ||
+        _adultCapacity !=
+            (_originalUnit!.adultsCapacity ?? _originalUnit!.maxCapacity) ||
+        _childrenCapacity != (_originalUnit!.childrenCapacity ?? 0) ||
+        _pricingMethod !=
+            _getPricingMethodString(_originalUnit!.pricingMethod) ||
+        _featuresController.text != _originalUnit!.customFeatures ||
+        // Detect image order change (not just count)
+        _existingImages.length != (_originalUnit!.images?.length ?? 0) ||
+        !_isSameOrder(_existingImages, _originalUnit!.images ?? const []);
   }
 
   bool _isSameOrder(List<String> current, List<String> original) {
@@ -1450,31 +1512,34 @@ class _EditUnitPageState extends State<EditUnitPage>
     }
     return true;
   }
-  
+
   bool _hasChangesInStep(int step) {
     if (_originalUnit == null) return false;
-    
+
     switch (step) {
       case 0: // Basic Info
         return _nameController.text != _originalUnit!.name ||
-               _descriptionController.text != _originalUnit!.customFeatures;
+            _descriptionController.text != _originalUnit!.customFeatures;
       case 1: // Capacity & Pricing
-        return double.tryParse(_priceController.text) != _originalUnit!.basePrice.amount ||
-               _adultCapacity != (_originalUnit!.adultsCapacity ?? _originalUnit!.maxCapacity) ||
-               _childrenCapacity != (_originalUnit!.childrenCapacity ?? 0) ||
-               _pricingMethod != _getPricingMethodString(_originalUnit!.pricingMethod);
+        return double.tryParse(_priceController.text) !=
+                _originalUnit!.basePrice.amount ||
+            _adultCapacity !=
+                (_originalUnit!.adultsCapacity ?? _originalUnit!.maxCapacity) ||
+            _childrenCapacity != (_originalUnit!.childrenCapacity ?? 0) ||
+            _pricingMethod !=
+                _getPricingMethodString(_originalUnit!.pricingMethod);
       case 2: // Features & Images
         return _featuresController.text != _originalUnit!.customFeatures ||
-               _existingImages.length != (_originalUnit!.images?.length ?? 0);
+            _existingImages.length != (_originalUnit!.images?.length ?? 0);
       default:
         return false;
     }
   }
-  
+
   List<Map<String, String>> _getChangedFields() {
     final changes = <Map<String, String>>[];
     if (_originalUnit == null) return changes;
-    
+
     if (_nameController.text != _originalUnit!.name) {
       changes.add({
         'field': 'اسم الوحدة',
@@ -1482,31 +1547,37 @@ class _EditUnitPageState extends State<EditUnitPage>
         'newValue': _nameController.text,
       });
     }
-    
+
     if (_descriptionController.text != _originalUnit!.customFeatures) {
       changes.add({
         'field': 'الوصف',
-        'oldValue': _originalUnit!.customFeatures.isEmpty ? 'لا يوجد' : _originalUnit!.customFeatures,
+        'oldValue': _originalUnit!.customFeatures.isEmpty
+            ? 'لا يوجد'
+            : _originalUnit!.customFeatures,
         'newValue': _descriptionController.text,
       });
     }
-    
-    if (double.tryParse(_priceController.text) != _originalUnit!.basePrice.amount) {
+
+    if (double.tryParse(_priceController.text) !=
+        _originalUnit!.basePrice.amount) {
       changes.add({
         'field': 'السعر',
         'oldValue': _originalUnit!.basePrice.displayAmount,
-        'newValue': '${_priceController.text} ${_originalUnit!.basePrice.currency}',
+        'newValue':
+            '${_priceController.text} ${_originalUnit!.basePrice.currency}',
       });
     }
-    
-    if (_adultCapacity != (_originalUnit!.adultsCapacity ?? _originalUnit!.maxCapacity)) {
+
+    if (_adultCapacity !=
+        (_originalUnit!.adultsCapacity ?? _originalUnit!.maxCapacity)) {
       changes.add({
         'field': 'سعة البالغين',
-        'oldValue': '${_originalUnit!.adultsCapacity ?? _originalUnit!.maxCapacity}',
+        'oldValue':
+            '${_originalUnit!.adultsCapacity ?? _originalUnit!.maxCapacity}',
         'newValue': '$_adultCapacity',
       });
     }
-    
+
     if (_childrenCapacity != (_originalUnit!.childrenCapacity ?? 0)) {
       changes.add({
         'field': 'سعة الأطفال',
@@ -1514,7 +1585,7 @@ class _EditUnitPageState extends State<EditUnitPage>
         'newValue': '$_childrenCapacity',
       });
     }
-    
+
     if (_existingImages.length != (_originalUnit!.images?.length ?? 0)) {
       changes.add({
         'field': 'عدد الصور',
@@ -1522,13 +1593,13 @@ class _EditUnitPageState extends State<EditUnitPage>
         'newValue': '${_existingImages.length} صورة',
       });
     }
-    
+
     return changes;
   }
-  
+
   void _resetChanges() {
     if (_originalUnit == null) return;
-    
+
     showDialog(
       context: context,
       builder: (context) => _ResetConfirmationDialog(
@@ -1543,18 +1614,18 @@ class _EditUnitPageState extends State<EditUnitPage>
       ),
     );
   }
-  
+
   Future<bool> _onWillPop() async {
     if (!_hasChanges) return true;
-    
+
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => _UnsavedChangesDialog(),
     );
-    
+
     return result ?? false;
   }
-  
+
   // Keep all the other methods from create_unit_page.dart (unchanged)
   Widget _buildPricingMethodSelector() {
     final methods = [
@@ -1562,7 +1633,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       {'value': 'weekly', 'label': 'للأسبوع'},
       {'value': 'monthly', 'label': 'للشهر'},
     ];
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1578,9 +1649,13 @@ class _EditUnitPageState extends State<EditUnitPage>
           spacing: 12,
           children: methods.map((method) {
             final isSelected = _pricingMethod == method['value'];
-            final originalMethod = _originalUnit != null ? _getPricingMethodString(_originalUnit!.pricingMethod) : '';
-            final hasChanged = _originalUnit != null && method['value'] == _pricingMethod && _pricingMethod != originalMethod;
-            
+            final originalMethod = _originalUnit != null
+                ? _getPricingMethodString(_originalUnit!.pricingMethod)
+                : '';
+            final hasChanged = _originalUnit != null &&
+                method['value'] == _pricingMethod &&
+                _pricingMethod != originalMethod;
+
             return GestureDetector(
               onTap: () {
                 setState(() {
@@ -1591,11 +1666,15 @@ class _EditUnitPageState extends State<EditUnitPage>
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  gradient: isSelected 
+                  gradient: isSelected
                       ? hasChanged
-                          ? LinearGradient(colors: [AppTheme.warning, AppTheme.warning.withOpacity(0.7)])
+                          ? LinearGradient(colors: [
+                              AppTheme.warning,
+                              AppTheme.warning.withOpacity(0.7)
+                            ])
                           : AppTheme.primaryGradient
                       : null,
                   color: isSelected ? null : AppTheme.darkCard.withOpacity(0.5),
@@ -1613,7 +1692,8 @@ class _EditUnitPageState extends State<EditUnitPage>
                   method['label']!,
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: isSelected ? Colors.white : AppTheme.textMuted,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
               ),
@@ -1623,7 +1703,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       ],
     );
   }
-  
+
   Widget _buildInputField({
     required TextEditingController controller,
     required String label,
@@ -1688,14 +1768,14 @@ class _EditUnitPageState extends State<EditUnitPage>
       ],
     );
   }
-  
+
   Widget _buildDynamicFields(List<dynamic> fields) {
     return Column(
       children: fields.map((field) {
         final controller = TextEditingController(
           text: _dynamicFieldValues[field.fieldId]?.toString() ?? '',
         );
-        
+
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: _buildInputField(
@@ -1712,7 +1792,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       }).toList(),
     );
   }
-  
+
   Widget _buildActionButtons() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1763,9 +1843,9 @@ class _EditUnitPageState extends State<EditUnitPage>
                 ),
               ),
             ),
-          
+
           if (_currentStep > 0) const SizedBox(width: 12),
-          
+
           // Next/Submit Button
           Expanded(
             flex: _currentStep == 0 ? 1 : 1,
@@ -1775,7 +1855,10 @@ class _EditUnitPageState extends State<EditUnitPage>
                 height: 48,
                 decoration: BoxDecoration(
                   gradient: _hasChanges
-                      ? LinearGradient(colors: [AppTheme.warning, AppTheme.warning.withOpacity(0.8)])
+                      ? LinearGradient(colors: [
+                          AppTheme.warning,
+                          AppTheme.warning.withOpacity(0.8)
+                        ])
                       : AppTheme.primaryGradient,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
@@ -1805,7 +1888,7 @@ class _EditUnitPageState extends State<EditUnitPage>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           if (_currentStep == 3 && _hasChanges)
-                            Icon(
+                            const Icon(
                               Icons.save_rounded,
                               color: Colors.white,
                               size: 20,
@@ -1813,9 +1896,9 @@ class _EditUnitPageState extends State<EditUnitPage>
                           if (_currentStep == 3 && _hasChanges)
                             const SizedBox(width: 8),
                           Text(
-                            _currentStep < 3 
-                                ? 'التالي' 
-                                : _hasChanges 
+                            _currentStep < 3
+                                ? 'التالي'
+                                : _hasChanges
                                     ? 'حفظ التغييرات'
                                     : 'لا توجد تغييرات',
                             style: AppTextStyles.buttonMedium.copyWith(
@@ -1835,23 +1918,23 @@ class _EditUnitPageState extends State<EditUnitPage>
       ),
     );
   }
-  
+
   // Helper Methods (same as create but with modifications for edit)
   void _updateCapacity() {
     context.read<UnitFormBloc>().add(
-      UpdateCapacityEvent(
-        adultCapacity: _adultCapacity,
-        childrenCapacity: _childrenCapacity,
-      ),
-    );
+          UpdateCapacityEvent(
+            adultCapacity: _adultCapacity,
+            childrenCapacity: _childrenCapacity,
+          ),
+        );
   }
-  
+
   void _updateUnitImage() {
     context.read<UnitFormBloc>().add(
-      UpdateUnitImageEvent(
-        images: _existingImages,
-      ),
-    );
+          UpdateUnitImageEvent(
+            images: _existingImages,
+          ),
+        );
   }
 
   void _updatePricing() {
@@ -1863,45 +1946,45 @@ class _EditUnitPageState extends State<EditUnitPage>
           currency: _originalUnit?.basePrice.currency ?? 'YER',
           formattedAmount: price.toString(),
         );
-        
+
         final pricingMethod = _getPricingMethodEnum();
-        
+
         context.read<UnitFormBloc>().add(
-          UpdatePricingEvent(
-            basePrice: money,
-            pricingMethod: pricingMethod,
-          ),
-        );
+              UpdatePricingEvent(
+                basePrice: money,
+                pricingMethod: pricingMethod,
+              ),
+            );
       }
     }
   }
-  
+
   void _updateFeatures() {
     if (_featuresController.text.isNotEmpty) {
       context.read<UnitFormBloc>().add(
-        UpdateFeaturesEvent(features: _featuresController.text),
-      );
+            UpdateFeaturesEvent(features: _featuresController.text),
+          );
     }
   }
 
   void _updateUnitName() {
     context.read<UnitFormBloc>().add(
-      UpdateUnitNameEvent(name: _nameController.text),
-    );
+          UpdateUnitNameEvent(name: _nameController.text),
+        );
   }
 
   void _updateDescription() {
     context.read<UnitFormBloc>().add(
-      UpdateDescriptionEvent(description: _descriptionController.text),
-    );
+          UpdateDescriptionEvent(description: _descriptionController.text),
+        );
   }
-  
+
   void _updateDynamicFields() {
     context.read<UnitFormBloc>().add(
-      UpdateDynamicFieldsEvent(values: _dynamicFieldValues),
-    );
+          UpdateDynamicFieldsEvent(values: _dynamicFieldValues),
+        );
   }
-  
+
   String _getPricingMethodText() {
     switch (_pricingMethod) {
       case 'daily':
@@ -1914,7 +1997,7 @@ class _EditUnitPageState extends State<EditUnitPage>
         return 'للساعة';
     }
   }
-  
+
   PricingMethod _getPricingMethodEnum() {
     switch (_pricingMethod) {
       case 'daily':
@@ -1927,7 +2010,7 @@ class _EditUnitPageState extends State<EditUnitPage>
         return PricingMethod.hourly;
     }
   }
-  
+
   void _handleBack() {
     if (_currentStep > 0) {
       setState(() {
@@ -1953,17 +2036,17 @@ class _EditUnitPageState extends State<EditUnitPage>
       });
     }
   }
-  
+
   void _nextStep() {
     if (_currentStep < 3) {
       bool isValid = true;
-      
+
       if (_currentStep == 0) {
         isValid = _validateBasicInfo();
       } else if (_currentStep == 1) {
         isValid = _validateCapacityPricing();
       }
-      
+
       if (isValid) {
         setState(() {
           _currentStep++;
@@ -1971,37 +2054,36 @@ class _EditUnitPageState extends State<EditUnitPage>
       }
     }
   }
-  
+
   bool _validateBasicInfo() {
-    if (_nameController.text.isEmpty ||
-        _descriptionController.text.isEmpty) {
+    if (_nameController.text.isEmpty || _descriptionController.text.isEmpty) {
       _showErrorMessage('الرجاء ملء جميع الحقول المطلوبة');
       return false;
     }
     return true;
   }
-  
+
   bool _validateCapacityPricing() {
     if (_priceController.text.isEmpty) {
       _showErrorMessage('الرجاء إدخال السعر');
       return false;
     }
-    
+
     final price = double.tryParse(_priceController.text);
     if (price == null || price <= 0) {
       _showErrorMessage('السعر غير صحيح');
       return false;
     }
-    
+
     return true;
   }
-  
+
   void _submitForm() {
     if (!_hasChanges) {
       _showInfoMessage('لا توجد تغييرات للحفظ');
       return;
     }
-    
+
     if (_formKey.currentState!.validate()) {
       _updateUnitName();
       _updateDescription();
@@ -2009,13 +2091,13 @@ class _EditUnitPageState extends State<EditUnitPage>
       _updateFeatures();
       _updateCapacity();
       _updateUnitImage();
-      
+
       Future.delayed(const Duration(milliseconds: 100), () {
         context.read<UnitFormBloc>().add(SubmitFormEvent());
       });
     }
   }
-  
+
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -2039,7 +2121,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       ),
     );
   }
-  
+
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -2063,7 +2145,7 @@ class _EditUnitPageState extends State<EditUnitPage>
       ),
     );
   }
-  
+
   void _showInfoMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -2092,9 +2174,9 @@ class _EditUnitPageState extends State<EditUnitPage>
 // Additional Dialogs for Edit Page
 class _ResetConfirmationDialog extends StatelessWidget {
   final VoidCallback onConfirm;
-  
+
   const _ResetConfirmationDialog({required this.onConfirm});
-  
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -2338,14 +2420,13 @@ class _UnsavedChangesDialog extends StatelessWidget {
 
 class _EditUnitBackgroundPainter extends CustomPainter {
   final double glowIntensity;
-  
+
   _EditUnitBackgroundPainter({required this.glowIntensity});
-  
+
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.fill;
-    
+    final paint = Paint()..style = PaintingStyle.fill;
+
     // Draw glowing orbs with edit theme
     paint.shader = RadialGradient(
       colors: [
@@ -2357,13 +2438,13 @@ class _EditUnitBackgroundPainter extends CustomPainter {
       center: Offset(size.width * 0.8, size.height * 0.2),
       radius: 150,
     ));
-    
+
     canvas.drawCircle(
       Offset(size.width * 0.8, size.height * 0.2),
       150,
       paint,
     );
-    
+
     paint.shader = RadialGradient(
       colors: [
         AppTheme.primaryPurple.withOpacity(0.1 * glowIntensity),
@@ -2374,14 +2455,14 @@ class _EditUnitBackgroundPainter extends CustomPainter {
       center: Offset(size.width * 0.2, size.height * 0.7),
       radius: 100,
     ));
-    
+
     canvas.drawCircle(
       Offset(size.width * 0.2, size.height * 0.7),
       100,
       paint,
     );
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

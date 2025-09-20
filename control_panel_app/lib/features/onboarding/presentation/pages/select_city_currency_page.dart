@@ -3,7 +3,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:bookn_cp_app/injection_container.dart' as di;
 import 'package:bookn_cp_app/features/admin_currencies/domain/usecases/get_currencies_usecase.dart';
-import 'package:bookn_cp_app/features/admin_cities/domain/usecases/get_cities_usecase.dart' as ci_uc;
+import 'package:bookn_cp_app/features/admin_cities/domain/usecases/get_cities_usecase.dart'
+    as ci_uc;
 import 'package:bookn_cp_app/core/usecases/usecase.dart';
 import '../../../../injection_container.dart';
 import '../../../../services/local_storage_service.dart';
@@ -47,7 +48,9 @@ class _SelectCityCurrencyPageState extends State<SelectCityCurrencyPage> {
       citiesRes.fold((f) {}, (list) {
         _cities = list.map((c) => c.name).toList();
       });
-      _city = storage.getSelectedCity().isNotEmpty ? storage.getSelectedCity() : null;
+      _city = storage.getSelectedCity().isNotEmpty
+          ? storage.getSelectedCity()
+          : null;
       _currency = storage.getSelectedCurrency();
     } catch (e) {
       _error = e.toString();
@@ -72,40 +75,52 @@ class _SelectCityCurrencyPageState extends State<SelectCityCurrencyPage> {
             : (_error != null
                 ? _buildErrorView(_error!)
                 : Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('اختر مدينتك', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            _buildDropdown<String>(
-              value: _city,
-              hint: 'اختر المدينة',
-              items: _cities,
-              onChanged: (v) => setState(() => _city = v),
-            ),
-            const SizedBox(height: 16),
-            Text('اختر عملتك', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            _buildDropdown<String>(
-              value: _currency,
-              hint: 'اختر العملة',
-              items: _currencies,
-              onChanged: (v) => setState(() => _currency = v),
-            ),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _city == null || _currency == null ? null : _continue,
-                child: const Text('متابعة'),
-              ),
-            ),
-          ],
-        )),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('اختر مدينتك',
+                          style: TextStyle(
+                              color: AppTheme.textWhite,
+                              fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      _buildDropdown<String>(
+                        value: _city,
+                        hint: 'اختر المدينة',
+                        items: _cities,
+                        onChanged: (v) => setState(() => _city = v),
+                      ),
+                      const SizedBox(height: 16),
+                      Text('اختر عملتك',
+                          style: TextStyle(
+                              color: AppTheme.textWhite,
+                              fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      _buildDropdown<String>(
+                        value: _currency,
+                        hint: 'اختر العملة',
+                        items: _currencies,
+                        onChanged: (v) => setState(() => _currency = v),
+                      ),
+                      const Spacer(),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _city == null || _currency == null
+                              ? null
+                              : _continue,
+                          child: const Text('متابعة'),
+                        ),
+                      ),
+                    ],
+                  )),
       ),
     );
   }
 
-  Widget _buildDropdown<T>({required T? value, required String hint, required List<T> items, required ValueChanged<T?> onChanged}) {
+  Widget _buildDropdown<T>(
+      {required T? value,
+      required String hint,
+      required List<T> items,
+      required ValueChanged<T?> onChanged}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
@@ -115,7 +130,9 @@ class _SelectCityCurrencyPageState extends State<SelectCityCurrencyPage> {
       ),
       child: DropdownButton<T>(
         value: value,
-        items: items.map((e) => DropdownMenuItem<T>(value: e, child: Text('$e'))).toList(),
+        items: items
+            .map((e) => DropdownMenuItem<T>(value: e, child: Text('$e')))
+            .toList(),
         onChanged: onChanged,
         isExpanded: true,
         underline: const SizedBox.shrink(),
@@ -131,7 +148,8 @@ class _SelectCityCurrencyPageState extends State<SelectCityCurrencyPage> {
         children: [
           Text(
             'فشل تحميل البيانات',
-            style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: AppTheme.textWhite, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
@@ -142,7 +160,10 @@ class _SelectCityCurrencyPageState extends State<SelectCityCurrencyPage> {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
-              setState(() { _loading = true; _error = null; });
+              setState(() {
+                _loading = true;
+                _error = null;
+              });
               _load();
             },
             child: const Text('إعادة المحاولة'),
@@ -167,4 +188,3 @@ class _SelectCityCurrencyPageState extends State<SelectCityCurrencyPage> {
     }
   }
 }
-

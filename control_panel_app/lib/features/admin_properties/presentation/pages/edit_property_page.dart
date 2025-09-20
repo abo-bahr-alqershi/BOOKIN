@@ -18,7 +18,8 @@ import '../widgets/property_map_view.dart';
 import 'package:bookn_cp_app/injection_container.dart' as di;
 import 'package:bookn_cp_app/core/usecases/usecase.dart';
 import 'package:bookn_cp_app/features/admin_currencies/domain/usecases/get_currencies_usecase.dart';
-import 'package:bookn_cp_app/features/admin_cities/domain/usecases/get_cities_usecase.dart' as ci_uc;
+import 'package:bookn_cp_app/features/admin_cities/domain/usecases/get_cities_usecase.dart'
+    as ci_uc;
 import '../../domain/entities/property.dart';
 import '../../domain/entities/property_type.dart';
 import '../../domain/entities/property_image.dart'; // إضافة استيراد
@@ -1450,8 +1451,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       case 1:
         final lat = double.tryParse(_latitudeController.text);
         final lng = double.tryParse(_longitudeController.text);
-        if (_addressController.text.isEmpty)
-          return false;
+        if (_addressController.text.isEmpty) return false;
         if (lat == null || lat < -90 || lat > 90) return false;
         if (lng == null || lng < -180 || lng > 180) return false;
         return true;
@@ -1648,7 +1648,10 @@ class _CityDropdown extends StatefulWidget {
   final String? value;
   final ValueChanged<String?> onChanged;
   final bool requiredField;
-  const _CityDropdown({required this.value, required this.onChanged, this.requiredField = false});
+  const _CityDropdown(
+      {required this.value,
+      required this.onChanged,
+      this.requiredField = false});
 
   @override
   State<_CityDropdown> createState() => _CityDropdownState();
@@ -1670,11 +1673,15 @@ class _CityDropdownState extends State<_CityDropdown> {
       final usecase = di.sl<ci_uc.GetCitiesUseCase>();
       final result = await usecase(const ci_uc.GetCitiesParams());
       result.fold(
-        (f) => setState(() { _error = f.message; _loading = false; }),
+        (f) => setState(() {
+          _error = f.message;
+          _loading = false;
+        }),
         (list) => setState(() {
           _cities = list.map((c) => c.name).toList();
           _loading = false;
-          if (_cities.isNotEmpty && (widget.value == null || !_cities.contains(widget.value))) {
+          if (_cities.isNotEmpty &&
+              (widget.value == null || !_cities.contains(widget.value))) {
             widget.onChanged(_cities.first);
           }
         }),
@@ -1689,7 +1696,7 @@ class _CityDropdownState extends State<_CityDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    final decoration = const InputDecoration(
+    const decoration = InputDecoration(
       border: InputBorder.none,
       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     );
@@ -1697,37 +1704,46 @@ class _CityDropdownState extends State<_CityDropdown> {
     if (_loading) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Row(children: const [
-          SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+        child: const Row(children: [
+          SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2)),
           SizedBox(width: 12),
           Text('جاري تحميل المدن...'),
         ]),
       );
     }
 
-    final items = _cities.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList();
+    final items =
+        _cities.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList();
 
     if (_error != null) {
       return DropdownButtonFormField<String?>(
-        value: _cities.contains(widget.value) ? widget.value : null,
+        initialValue: _cities.contains(widget.value) ? widget.value : null,
         decoration: decoration,
         dropdownColor: AppTheme.darkCard,
         style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
         items: items,
         onChanged: (v) => widget.onChanged(v),
-        validator: widget.requiredField ? (v) => (v == null || (v as String).isEmpty) ? 'المدينة مطلوبة' : null : null,
+        validator: widget.requiredField
+            ? (v) => (v == null || (v).isEmpty) ? 'المدينة مطلوبة' : null
+            : null,
       );
     }
 
     return DropdownButtonFormField<String?>(
-      value: _cities.contains(widget.value) ? widget.value : null,
+      initialValue: _cities.contains(widget.value) ? widget.value : null,
       decoration: decoration,
       dropdownColor: AppTheme.darkCard,
       style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
-      hint: Text('اختر المدينة', style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textMuted)),
+      hint: Text('اختر المدينة',
+          style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textMuted)),
       items: items,
       onChanged: (v) => widget.onChanged(v),
-      validator: widget.requiredField ? (v) => (v == null || (v as String).isEmpty) ? 'المدينة مطلوبة' : null : null,
+      validator: widget.requiredField
+          ? (v) => (v == null || (v).isEmpty) ? 'المدينة مطلوبة' : null
+          : null,
     );
   }
 }
