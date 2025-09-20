@@ -820,14 +820,29 @@ class _UnitsListPageState extends State<UnitsListPage>
   }
 
   Widget _buildGridView(UnitsListLoaded state) {
+    final width = MediaQuery.of(context).size.width;
+    // Responsive columns and aspect ratio
+    int crossAxisCount;
+    double childAspectRatio;
+    if (width < 700) {
+      crossAxisCount = 1;
+      childAspectRatio = 0.78; // More height per card on small screens
+    } else if (width < 1100) {
+      crossAxisCount = 2;
+      childAspectRatio = 0.8;
+    } else {
+      crossAxisCount = 3;
+      childAspectRatio = 0.85;
+    }
+
     return SliverPadding(
       padding: const EdgeInsets.all(16),
       sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
-          childAspectRatio: 0.85,
+          childAspectRatio: childAspectRatio,
         ),
         delegate: SliverChildBuilderDelegate(
           (context, index) {
