@@ -151,36 +151,43 @@ class _ExchangeRateIndicatorState extends State<ExchangeRateIndicator>
   Widget _buildBaseCurrencySection() {
     return Container(
       width: 100,
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppTheme.success, AppTheme.neonGreen],
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      alignment: Alignment.center,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppTheme.success, AppTheme.neonGreen],
+                ),
+                shape: BoxShape.circle,
               ),
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              _getCurrencySymbol(widget.baseCurrency.code),
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+              child: Text(
+                _getCurrencySymbol(widget.baseCurrency.code),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            widget.baseCurrency.arabicCode,
-            style: AppTextStyles.caption.copyWith(
-              color: AppTheme.textWhite,
-              fontWeight: FontWeight.w600,
+            const SizedBox(height: 2),
+            Text(
+              widget.baseCurrency.arabicCode,
+              style: AppTextStyles.caption.copyWith(
+                color: AppTheme.textWhite,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -190,31 +197,36 @@ class _ExchangeRateIndicatorState extends State<ExchangeRateIndicator>
     final isUp = math.Random().nextBool(); // Simulate trend
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Currency info
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                currency.arabicCode,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppTheme.textWhite,
-                  fontWeight: FontWeight.w600,
+          Flexible(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  currency.arabicCode,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textWhite,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                currency.code,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppTheme.textMuted,
+                const SizedBox(height: 1),
+                Text(
+                  currency.code,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
           // Exchange rate with trend
@@ -224,10 +236,11 @@ class _ExchangeRateIndicatorState extends State<ExchangeRateIndicator>
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     rate.toStringAsFixed(4),
-                    style: AppTextStyles.bodyLarge.copyWith(
+                    style: AppTextStyles.bodyLarge copyWith(
                       color: AppTheme.primaryCyan,
                       fontWeight: FontWeight.bold,
                     ),
@@ -243,14 +256,12 @@ class _ExchangeRateIndicatorState extends State<ExchangeRateIndicator>
                 ],
               ),
               const SizedBox(height: 0),
-              Flexible(
-                child: Text(
+              Text(
                 isUp ? '+0.25%' : '-0.12%',
                 style: AppTextStyles.caption.copyWith(
                   color: isUp ? AppTheme.success : AppTheme.error,
                   fontWeight: FontWeight.w500,
                 ),
-              ),
               ),
             ],
           ),
