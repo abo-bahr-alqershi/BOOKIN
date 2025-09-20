@@ -45,6 +45,7 @@ class _CityImageGalleryState extends State<CityImageGallery>
   bool _isSelectionMode = false;
   bool _isReorderMode = false;
   final Set<int> _selectedIndices = {};
+  int? _hoveredIndex;
 
   @override
   void initState() {
@@ -187,60 +188,120 @@ class _CityImageGalleryState extends State<CityImageGallery>
           ],
         ),
         if (!widget.isReadOnly && _localImages.isNotEmpty)
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              // Reorder toggle
-              _buildEnhancedActionButton(
-                icon: Icons.swap_vert_rounded,
-                label: _isReorderMode ? 'إنهاء الترتيب' : 'ترتيب',
-                onTap: () {
-                  setState(() {
-                    _isReorderMode = !_isReorderMode;
-                    _isSelectionMode = false;
-                    _selectedIndices.clear();
-                  });
-                },
-                isActive: _isReorderMode,
+              Row(
+                children: [
+                  if (!_isSelectionMode)
+                    _buildActionChip(
+                      icon: _isReorderMode ? Icons.done_rounded : Icons.swap_vert_rounded,
+                      label: _isReorderMode ? 'تم' : 'ترتيب',
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        setState(() {
+                          _isReorderMode = !_isReorderMode;
+                          if (_isReorderMode) {
+                            _isSelectionMode = false;
+                            _selectedIndices.clear();
+                          }
+                        });
+                      },
+                      isActive: _isReorderMode,
+                    ),
+                  const SizedBox(width: 8),
+                  if (!_isReorderMode)
+                    _buildActionChip(
+                      icon: _isSelectionMode ? Icons.done_rounded : Icons.check_circle_outline_rounded,
+                      label: _isSelectionMode ? 'تم' : 'تحديد',
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        setState(() {
+                          _isSelectionMode = !_isSelectionMode;
+                          if (_isSelectionMode) {
+                            _isReorderMode = false;
+                          } else {
+                            _selectedIndices.clear();
+                          }
+                        });
+                      },
+                      isActive: _isSelectionMode,
+                    ),
+                  if (_isSelectionMode && _selectedIndices.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    _buildActionChip(
+                      icon: Icons.delete_outline_rounded,
+                      label: 'حذف',
+                      onTap: _deleteSelectedImages,
+                      color: AppTheme.error,
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(width: 8),
-              // Enhanced selection mode toggle
-              _buildEnhancedActionButton(
-                icon: _isSelectionMode
-                    ? Icons.close_rounded
-                    : Icons.check_circle_outline_rounded,
-                label: _isSelectionMode ? 'إلغاء' : 'تحديد',
-                onTap: () {
-                  setState(() {
-                    _isSelectionMode = !_isSelectionMode;
-                    _isReorderMode = false;
-                    _selectedIndices.clear();
-                  });
-                },
-                isActive: _isSelectionMode,
-              ),
-
-              // Delete selected with animation
-              if (_isSelectionMode && _selectedIndices.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: 1),
-                  duration: const Duration(milliseconds: 300),
-                  builder: (context, value, child) {
-                    return Transform.scale(
-                      scale: value,
-                      child: _buildEnhancedActionButton(
-                        icon: Icons.delete_outline_rounded,
-                        label: 'حذف',
-                        onTap: _deleteSelectedImages,
-                        isDestructive: true,
-                      ),
-                    );
-                  },
+              if (_isSelectionMode || _isReorderMode)
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.darkCard.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.darkBorder.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Text(
+                    _isReorderMode
+                        ? 'اسحب الصور لإعادة الترتيب'
+                        : 'اضغط لتحديد الصور ثم احذفها',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppTheme.textMuted,
+                    ),
+                  ),
                 ),
-              ],
             ],
           ),
       ],
+    );
+  }
+
+  Widget _buildActionChip({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool isActive = false,
+    Color? color,
+  }) {
+    final baseColor = color ?? AppTheme.primaryBlue;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: isActive
+              ? LinearGradient(colors: [baseColor.withValues(alpha: 0.2), baseColor.withValues(alpha: 0.1)])
+              : null,
+          color: !isActive ? AppTheme.darkCard.withValues(alpha: 0.5) : null,
+          border: Border.all(
+            color: (isActive ? baseColor : AppTheme.darkBorder).withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: isActive ? baseColor : AppTheme.textMuted),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: AppTextStyles.caption.copyWith(
+                color: isActive ? baseColor : AppTheme.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -497,8 +558,11 @@ class _CityImageGalleryState extends State<CityImageGallery>
     final imagePath = _localImages[index];
     final isNetworkImage = imagePath.startsWith('http');
 
-    return GestureDetector(
-      onTap: () {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredIndex = index),
+      onExit: (_) => setState(() => _hoveredIndex = null),
+      child: GestureDetector(
+        onTap: () {
         HapticFeedback.lightImpact();
         if (_isSelectionMode) {
           setState(() {
@@ -511,14 +575,14 @@ class _CityImageGalleryState extends State<CityImageGallery>
         } else {
           _previewImage(imagePath);
         }
-      },
-      onLongPress: () {
+        },
+        onLongPress: () {
         if (!widget.isReadOnly) {
           HapticFeedback.mediumImpact();
           _showImageOptions(index);
         }
-      },
-      child: AnimatedContainer(
+        },
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         transform: Matrix4.identity()..scale(isSelected ? 0.95 : 1.0),
         decoration: BoxDecoration(
@@ -694,6 +758,37 @@ class _CityImageGalleryState extends State<CityImageGallery>
                   ),
                 ),
 
+              // Quick Actions (hover)
+              if (!widget.isReadOnly && !_isSelectionMode && !_isReorderMode)
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 200),
+                  top: (_hoveredIndex == index) ? 8 : -40,
+                  left: 8,
+                  right: 8,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildQuickActionButton(
+                        icon: Icons.visibility_outlined,
+                        onTap: () => _previewImage(imagePath),
+                      ),
+                      if (!isPrimary) const SizedBox(width: 6),
+                      if (!isPrimary)
+                        _buildQuickActionButton(
+                          icon: Icons.star_outline_rounded,
+                          color: AppTheme.warning,
+                          onTap: () => _showImageOptions(index),
+                        ),
+                      const SizedBox(width: 6),
+                      _buildQuickActionButton(
+                        icon: Icons.delete_outline_rounded,
+                        color: AppTheme.error,
+                        onTap: () => _deleteImage(index),
+                      ),
+                    ],
+                  ),
+                ),
+
               // Upload progress with better design
               if (_uploadProgress.containsKey(imagePath))
                 Positioned.fill(
@@ -728,6 +823,30 @@ class _CityImageGalleryState extends State<CityImageGallery>
             ],
           ),
         ),
+      ),
+    ));
+  }
+
+  Widget _buildQuickActionButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: AppTheme.darkBackground.withValues(alpha: 0.8),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: (color ?? AppTheme.primaryBlue).withValues(alpha: 0.3),
+          ),
+        ),
+        child: Icon(icon, size: 16, color: color ?? AppTheme.primaryBlue),
       ),
     );
   }
