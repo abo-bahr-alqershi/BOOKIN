@@ -509,19 +509,25 @@ class _CityImageGalleryState extends State<CityImageGallery>
 
   Widget _buildReorderableGrid() {
     final cross = _getGridCrossAxisCount(context);
-    // Build children with keys
+    // Compute tile size to provide bounded constraints for children
+    const spacing = 12.0;
+    // Try to account for typical horizontal padding (20). If parent differs, Wrap will still layout fine
+    final availableWidth = MediaQuery.of(context).size.width - (2 * 20) - (spacing * (cross - 1));
+    final tileSize = availableWidth / cross;
+    // Build children with fixed size boxes so Wrap/ReorderableWrap can lay them out
     final children = <Widget>[];
     for (int index = 0; index < _localImages.length; index++) {
-      children.add(Container(
+      children.add(SizedBox(
         key: ValueKey(_localImages[index]),
-        width: double.infinity,
+        width: tileSize,
+        height: tileSize,
         child: _buildEnhancedImageItem(index),
       ));
     }
 
     return ReorderableWrap(
-      spacing: 12,
-      runSpacing: 12,
+      spacing: spacing,
+      runSpacing: spacing,
       needsLongPressDraggable: false,
       maxMainAxisCount: cross,
       onReorder: (oldIndex, newIndex) {
