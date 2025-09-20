@@ -509,37 +509,9 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
           _buildInfoRow('العقار', unit.propertyName),
           _buildInfoRow('السعة', '${unit.maxCapacity} أشخاص'),
           // الحقول الأساسية (Primary Filters)
-          Builder(builder: (context) {
-            final primary = _collectPrimaryFilterFields(unit);
-            if (primary.isEmpty) return const SizedBox.shrink();
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 24),
-                _buildSectionTitle('المعلومات الأساسية'),
-                const SizedBox(height: 12),
-                ...primary.map((f) => _buildInfoRow(
-                      f['displayName'] as String,
-                      _formatFieldValue(f['value'], f['fieldTypeId'] as String),
-                    )),
-              ],
-            );
-          }),
-          if (unit.customFeatures.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            _buildSectionTitle('الوصف'),
-            const SizedBox(height: 12),
-            Text(
-              unit.customFeatures,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppTheme.textLight,
-                height: 1.5,
-              ),
-            ),
-          ],
           if (unit.dynamicFields.isNotEmpty || unit.fieldValues.isNotEmpty) ...[
             const SizedBox(height: 24),
-            _buildSectionTitle('معلومات إضافية'),
+            _buildSectionTitle('المعلومات الأساسية'),
             const SizedBox(height: 12),
             _buildAllDynamicFields(unit),
           ],
@@ -754,8 +726,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
                     fv.displayName ?? fv.fieldName ?? 'حقل',
                     _formatFieldValue(fv.fieldValue, fv.fieldTypeId ?? 'text'),
                   ),
-                ))
-            .toList(),
+                )),
       ],
     );
   }
@@ -772,7 +743,8 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
         return n != null ? '${n.toStringAsFixed(0)} ريال' : '$value ريال';
       case 'date':
         try {
-          final d = value is DateTime ? value : DateTime.parse(value.toString());
+          final d =
+              value is DateTime ? value : DateTime.parse(value.toString());
           return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
         } catch (_) {
           return value.toString();
