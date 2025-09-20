@@ -434,10 +434,9 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
   List<Map<String, dynamic>> _getFilterFields() {
     final List<Map<String, dynamic>> filterFields = [];
 
-    // أولوية: الحقول التي isPrimaryFilter = true
+    // أولوية: الحقول التي isPrimaryFilter = true (تُعرض حتى لو كانت القيم فارغة)
     for (final fieldValue in widget.unit.fieldValues) {
-      if (fieldValue.isPrimaryFilter == true &&
-          fieldValue.fieldValue.isNotEmpty) {
+      if (fieldValue.isPrimaryFilter == true) {
         filterFields.add({
           'displayName':
               fieldValue.displayName ?? fieldValue.fieldName ?? 'حقل',
@@ -448,7 +447,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
     }
     for (final group in widget.unit.dynamicFields) {
       for (final field in group.fieldValues) {
-        if (field.isPrimaryFilter == true && field.fieldValue.isNotEmpty) {
+        if (field.isPrimaryFilter == true) {
           filterFields.add({
             'displayName': field.displayName ?? field.fieldName ?? 'حقل',
             'value': field.fieldValue,
