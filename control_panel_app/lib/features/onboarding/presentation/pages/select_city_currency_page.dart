@@ -24,7 +24,6 @@ class _SelectCityCurrencyPageState extends State<SelectCityCurrencyPage> {
   String? _city;
   String? _currency;
   bool _loading = true;
-  String? _error;
 
   @override
   void initState() {
