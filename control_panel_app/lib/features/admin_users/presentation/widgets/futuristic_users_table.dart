@@ -115,6 +115,8 @@ class _FuturisticUsersTableState extends State<FuturisticUsersTable>
     return FadeTransition(
       opacity: _fadeAnimation,
       child: ListView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
         padding: const EdgeInsets.all(12),
         itemCount: _sortedUsers.length,
         itemBuilder: (context, index) {
@@ -403,19 +405,19 @@ class _FuturisticUsersTableState extends State<FuturisticUsersTable>
             child: Column(
               children: [
                 _buildTabletHeader(),
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SizedBox(
-                      width: 900, // عرض ثابت للتابلت
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: _sortedUsers.length,
-                        itemBuilder: (context, index) {
-                          final user = _sortedUsers[index];
-                          return _buildTabletRow(user);
-                        },
-                      ),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: 900, // عرض ثابت للتابلت
+                    child: ListView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: _sortedUsers.length,
+                      itemBuilder: (context, index) {
+                        final user = _sortedUsers[index];
+                        return _buildTabletRow(user);
+                      },
                     ),
                   ),
                 ),
@@ -675,9 +677,7 @@ class _FuturisticUsersTableState extends State<FuturisticUsersTable>
             child: Column(
               children: [
                 _buildDesktopHeader(),
-                Expanded(
-                  child: _buildDesktopBody(),
-                ),
+                _buildDesktopBody(),
               ],
             ),
           ),
@@ -776,6 +776,8 @@ class _FuturisticUsersTableState extends State<FuturisticUsersTable>
   
   Widget _buildDesktopBody() {
     return ListView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: _sortedUsers.length,
       itemBuilder: (context, index) {
