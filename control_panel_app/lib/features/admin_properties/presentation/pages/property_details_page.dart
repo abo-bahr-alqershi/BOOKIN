@@ -16,6 +16,11 @@ import '../widgets/property_map_view.dart';
 import '../widgets/property_info_card.dart';
 import '../widgets/property_amenities_grid.dart';
 import '../widgets/property_policies_list.dart';
+import '../../../../core/widgets/cached_image_widget.dart';
+import '../bloc/property_images/property_images_bloc.dart';
+import '../bloc/property_images/property_images_state.dart';
+import '../bloc/property_images/property_images_event.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
 
 class PropertyDetailsPage extends StatefulWidget {
   final String propertyId;
@@ -66,7 +71,10 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocProvider<PropertyImagesBloc>(
+      create: (_) => di.sl<PropertyImagesBloc>()
+        ..add(LoadPropertyImagesEvent(propertyId: widget.propertyId)),
+      child: Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: BlocBuilder<PropertiesBloc, PropertiesState>(
         builder: (context, state) {
@@ -236,15 +244,36 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
         background: Stack(
           fit: StackFit.expand,
           children: [
-            // Property Image with Parallax
-            if (property.images.isNotEmpty)
-              Image.network(
-                property.images.first.url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
-              )
-            else
-              _buildImagePlaceholder(),
+            // Property Image with Parallax (prefers loaded gallery images if available)
+            BlocBuilder<PropertyImagesBloc, PropertyImagesState>(
+              builder: (context, imgState) {
+                String? heroUrl;
+                if (property.images.isNotEmpty) {
+                  final img = property.images.first;
+                  heroUrl = (img.thumbnails.hd.isNotEmpty
+                          ? img.thumbnails.hd
+                          : img.thumbnails.large.isNotEmpty
+                              ? img.thumbnails.large
+                              : img.url)
+                      .toString();
+                } else if (imgState is PropertyImagesLoaded && imgState.images.isNotEmpty) {
+                  final img = imgState.images.first;
+                  heroUrl = (img.thumbnails.hd.isNotEmpty
+                          ? img.thumbnails.hd
+                          : img.thumbnails.large.isNotEmpty
+                              ? img.thumbnails.large
+                              : img.url)
+                      .toString();
+                }
+                if (heroUrl != null && heroUrl.isNotEmpty) {
+                  return CachedImageWidget(
+                    imageUrl: heroUrl,
+                    fit: BoxFit.cover,
+                  );
+                }
+                return _buildImagePlaceholder();
+              },
+            ),
 
             // Gradient Overlay
             _buildGradientOverlay(),
