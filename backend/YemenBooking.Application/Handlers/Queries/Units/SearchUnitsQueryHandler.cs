@@ -9,14 +9,12 @@ using Microsoft.Extensions.Logging;
 using YemenBooking.Application.DTOs;
 using YemenBooking.Application.DTOs.Units;
 using YemenBooking.Application.Queries.Units;
-using YemenBooking.Core.Entities;
 using YemenBooking.Core.Enums;
 using YemenBooking.Core.Interfaces.Repositories;
 using YemenBooking.Application.Interfaces.Services;
+using YemenBooking.Core.Entities; // added for SearchLog
 using UnitEntity = YemenBooking.Core.Entities.Unit;
 using System.Text.Json;
-using YemenBooking.Core.Entities;
-using YemenBooking.Application.Interfaces.Services;
 
 namespace YemenBooking.Application.Handlers.Queries.Units
 {
@@ -216,10 +214,12 @@ namespace YemenBooking.Application.Handlers.Queries.Units
                     ValueId = fv.Id,
                     UnitId = fv.UnitId,
                     FieldId = fv.UnitTypeFieldId,
-                    FieldName = fv.UnitTypeField.FieldName,
-                    DisplayName = fv.UnitTypeField.DisplayName,
+                    FieldName = fv.UnitTypeField?.FieldName ?? string.Empty,
+                    DisplayName = fv.UnitTypeField?.DisplayName ?? string.Empty,
+                    FieldType = fv.UnitTypeField?.FieldTypeId ?? string.Empty,
                     FieldValue = fv.FieldValue,
-                    Field = new UnitTypeFieldDto
+                    IsPrimaryFilter = fv.UnitTypeField?.IsPrimaryFilter ?? false,
+                    Field = fv.UnitTypeField == null ? null : new UnitTypeFieldDto
                     {
                         FieldId = fv.UnitTypeField.Id.ToString(),
                         UnitTypeId = fv.UnitTypeField.UnitTypeId.ToString(),
@@ -234,7 +234,11 @@ namespace YemenBooking.Application.Handlers.Queries.Units
                         IsPublic = fv.UnitTypeField.IsPublic,
                         SortOrder = fv.UnitTypeField.SortOrder,
                         Category = fv.UnitTypeField.Category,
-                        GroupId = fv.UnitTypeField.FieldGroupFields.FirstOrDefault()?.GroupId.ToString() ?? string.Empty
+                        GroupId = fv.UnitTypeField.FieldGroupFields.FirstOrDefault()?.GroupId.ToString() ?? string.Empty,
+                        IsForUnits = fv.UnitTypeField.IsForUnits,
+                        ShowInCards = fv.UnitTypeField.ShowInCards,
+                        IsPrimaryFilter = fv.UnitTypeField.IsPrimaryFilter,
+                        Priority = fv.UnitTypeField.Priority
                     },
                     CreatedAt = fv.CreatedAt,
                     UpdatedAt = fv.UpdatedAt
@@ -264,4 +268,4 @@ namespace YemenBooking.Application.Handlers.Queries.Units
             };
         }
     }
-} 
+}

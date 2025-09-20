@@ -30,25 +30,31 @@ public class UnitFieldValueDto
     /// اسم الحقل
     /// FieldName
     /// </summary>
-    public string FieldName { get; set; }
+    public string FieldName { get; set; } = string.Empty;
 
     /// <summary>
     /// الاسم المعروض للحقل
     /// DisplayName
     /// </summary>
-    public string DisplayName { get; set; }
+    public string DisplayName { get; set; } = string.Empty;
 
     /// <summary>
     /// قيمة الحقل (سلسلة نصية)
     /// Field value as string
     /// </summary>
-    public string Value { get; set; }
+    public string Value { get; set; } = string.Empty;
 
     /// <summary>
     /// نوع الحقل (نصي، رقم، تاريخ ...)
     /// Field type (text, number, date ...)
     /// </summary>
-    public string FieldType { get; set; }
+    public string FieldType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// هل الحقل فلترة أساسية؟ (مكرر على مستوى القيمة لسهولة الاستهلاك في الواجهات)
+    /// Is primary filter indicator (duplicated at value level for client convenience)
+    /// </summary>
+    public bool IsPrimaryFilter { get; set; }
 
     // احتفاظ بالخاصية القديمة للتوافق العكسي
     public string FieldValue
@@ -61,7 +67,7 @@ public class UnitFieldValueDto
     /// معلومات الحقل الديناميكي
     /// Field (UnitTypeFieldDto)
     /// </summary>
-    public UnitTypeFieldDto Field { get; set; }
+    public UnitTypeFieldDto? Field { get; set; }
 
     /// <summary>
     /// تاريخ الإنشاء
@@ -74,4 +80,4 @@ public class UnitFieldValueDto
     /// UpdatedAt
     /// </summary>
     public DateTime UpdatedAt { get; set; }
-} 
+}

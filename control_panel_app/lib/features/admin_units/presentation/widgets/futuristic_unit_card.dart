@@ -51,7 +51,6 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
 
   // State
   bool _isHovered = false;
-  bool _isPressed = false;
   bool _showActions = false;
 
   @override
@@ -171,15 +170,12 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
               widget.onTap();
             },
             onTapDown: (_) {
-              setState(() => _isPressed = true);
               _pressController.forward();
             },
             onTapUp: (_) {
-              setState(() => _isPressed = false);
               _pressController.reverse();
             },
             onTapCancel: () {
-              setState(() => _isPressed = false);
               _pressController.reverse();
             },
             onLongPress: () {
@@ -382,7 +378,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // عنوان القسم
+          // عنوان القسم مع أيقونة مميزة للفلاتر الأساسية
           Row(
             children: [
               Container(
@@ -398,14 +394,14 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.dynamic_form_rounded,
+                  Icons.filter_list_rounded, // أيقونة الفلتر
                   size: 10,
                   color: Colors.white,
                 ),
               ),
               const SizedBox(width: 6),
               Text(
-                'معلومات إضافية',
+                'المعلومات الأساسية', // تغيير النص ليعكس أنها معلومات أساسية
                 style: AppTextStyles.caption.copyWith(
                   color: AppTheme.neonPurple,
                   fontWeight: FontWeight.bold,
@@ -416,19 +412,16 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
           ),
           const SizedBox(height: 8),
 
-          // عرض الحقول
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
+          // عرض الحقول في صفوف منظمة
+          Column(
             children: filterFields.map((fieldData) {
-              final fieldValue = fieldData['value'];
-              final fieldTypeId = fieldData['fieldTypeId'];
-              final displayName = fieldData['displayName'];
-
-              return _buildDynamicFieldChip(
-                displayName: displayName,
-                value: fieldValue,
-                fieldType: fieldTypeId,
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: _buildDynamicFieldRow(
+                  displayName: fieldData['displayName'],
+                  value: fieldData['value'],
+                  fieldType: fieldData['fieldTypeId'],
+                ),
               );
             }).toList(),
           ),
@@ -437,14 +430,14 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
     );
   }
 
-  // دالة للحصول على الحقول المناسبة للعرض
+  // دالة محدثة للحصول على الحقول المناسبة للعرض
   List<Map<String, dynamic>> _getFilterFields() {
     final List<Map<String, dynamic>> filterFields = [];
 
-    // من fieldValues
+    // أولوية: الحقول التي isPrimaryFilter = true
     for (final fieldValue in widget.unit.fieldValues) {
-      // نفترض أننا نريد عرض الحقول التي لها قيمة فقط
-      if (fieldValue.fieldValue.isNotEmpty) {
+      if (fieldValue.isPrimaryFilter == true &&
+          fieldValue.fieldValue.isNotEmpty) {
         filterFields.add({
           'displayName':
               fieldValue.displayName ?? fieldValue.fieldName ?? 'حقل',
@@ -453,11 +446,9 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
         });
       }
     }
-
-    // من dynamicFields (FieldGroupWithValues)
     for (final group in widget.unit.dynamicFields) {
       for (final field in group.fieldValues) {
-        if (field.fieldValue.isNotEmpty) {
+        if (field.isPrimaryFilter == true && field.fieldValue.isNotEmpty) {
           filterFields.add({
             'displayName': field.displayName ?? field.fieldName ?? 'حقل',
             'value': field.fieldValue,
@@ -467,81 +458,77 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
       }
     }
 
-    // نأخذ أول 3 حقول فقط لعدم ازدحام الكارد
-    return filterFields.take(3).toList();
+    if (filterFields.isNotEmpty) {
+      return filterFields.take(3).toList();
+    }
+
+    // بديل: إذا لم تكن هناك حقول أساسية، اعرض أول 3 حقول ذات قيمة
+    final List<Map<String, dynamic>> fallback = [];
+    for (final fieldValue in widget.unit.fieldValues) {
+      if (fieldValue.fieldValue.isNotEmpty) {
+        fallback.add({
+          'displayName':
+              fieldValue.displayName ?? fieldValue.fieldName ?? 'حقل',
+          'value': fieldValue.fieldValue,
+          'fieldTypeId': fieldValue.fieldTypeId ?? 'text',
+        });
+      }
+    }
+    for (final group in widget.unit.dynamicFields) {
+      for (final field in group.fieldValues) {
+        if (field.fieldValue.isNotEmpty) {
+          fallback.add({
+            'displayName': field.displayName ?? field.fieldName ?? 'حقل',
+            'value': field.fieldValue,
+            'fieldTypeId': field.fieldTypeId ?? 'text',
+          });
+        }
+      }
+    }
+
+    return fallback.take(3).toList();
   }
 
-  // دالة لبناء chip للحقل الديناميكي
-  Widget _buildDynamicFieldChip({
+  // دالة جديدة لعرض الحقل في صف منظم
+  Widget _buildDynamicFieldRow({
     required String displayName,
     required dynamic value,
     required String fieldType,
   }) {
-    // تنسيق القيمة حسب النوع
     final formattedValue = _formatDynamicFieldValue(value, fieldType);
     final icon = _getFieldTypeIcon(fieldType);
     final color = _getFieldTypeColor(fieldType);
 
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 150),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 4,
-      ),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            color.withOpacity(0.15),
-            color.withOpacity(0.08),
-          ],
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 12,
+          color: color.withOpacity(0.7),
         ),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 0.5,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 11,
-            color: color,
+        const SizedBox(width: 6),
+        Text(
+          '$displayName:',
+          style: AppTextStyles.caption.copyWith(
+            color: AppTheme.textMuted,
+            fontSize: 10,
           ),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  displayName,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppTheme.textMuted,
-                    fontSize: 9,
-                    height: 1,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  formattedValue,
-                  style: AppTextStyles.caption.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 10,
-                    height: 1,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            formattedValue,
+            style: AppTextStyles.caption.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+              fontSize: 10,
             ),
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

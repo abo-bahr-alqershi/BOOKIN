@@ -6,6 +6,7 @@ class UnitFieldValue extends Equatable {
   final String? fieldName;
   final String? displayName;
   final String? fieldTypeId;
+  final bool? isPrimaryFilter; // new
 
   const UnitFieldValue({
     required this.fieldId,
@@ -13,6 +14,7 @@ class UnitFieldValue extends Equatable {
     this.fieldName,
     this.displayName,
     this.fieldTypeId,
+    this.isPrimaryFilter, // new
   });
 
   @override
@@ -22,6 +24,7 @@ class UnitFieldValue extends Equatable {
         fieldName,
         displayName,
         fieldTypeId,
+        isPrimaryFilter, // new
       ];
 }
 

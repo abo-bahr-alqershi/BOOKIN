@@ -34,8 +34,8 @@ namespace YemenBooking.Application.Mappings
 
             // Notification mapping
             CreateMap<Notification, NotificationDto>()
-                .ForMember(dest => dest.RecipientName, opt => opt.MapFrom(src => src.Recipient.Name))
-                .ForMember(dest => dest.SenderName, opt => opt.MapFrom(src => src.Sender.Name));
+                .ForMember(dest => dest.RecipientName, opt => opt.MapFrom(src => src.Recipient != null ? src.Recipient.Name : string.Empty))
+                .ForMember(dest => dest.SenderName, opt => opt.MapFrom(src => src.Sender != null ? src.Sender.Name : string.Empty));
 
             // Payment mapping
             CreateMap<Payment, PaymentDto>();
@@ -103,9 +103,19 @@ namespace YemenBooking.Application.Mappings
             CreateMap<UnitTypeField, UnitTypeFieldDto>()
                 .ForMember(dest => dest.FieldId, opt => opt.MapFrom(src => src.Id.ToString()))
                 .ForMember(dest => dest.UnitTypeId, opt => opt.MapFrom(src => src.UnitTypeId.ToString()))
+                .ForMember(dest => dest.FieldTypeId, opt => opt.MapFrom(src => src.FieldTypeId))
                 .ForMember(dest => dest.FieldName, opt => opt.MapFrom(src => src.FieldName))
                 .ForMember(dest => dest.DisplayName, opt => opt.MapFrom(src => src.DisplayName))
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
+                .ForMember(dest => dest.IsRequired, opt => opt.MapFrom(src => src.IsRequired))
+                .ForMember(dest => dest.IsSearchable, opt => opt.MapFrom(src => src.IsSearchable))
+                .ForMember(dest => dest.IsPublic, opt => opt.MapFrom(src => src.IsPublic))
+                .ForMember(dest => dest.SortOrder, opt => opt.MapFrom(src => src.SortOrder))
+                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
+                .ForMember(dest => dest.IsForUnits, opt => opt.MapFrom(src => src.IsForUnits))
+                .ForMember(dest => dest.ShowInCards, opt => opt.MapFrom(src => src.ShowInCards))
+                .ForMember(dest => dest.IsPrimaryFilter, opt => opt.MapFrom(src => src.IsPrimaryFilter))
+                .ForMember(dest => dest.Priority, opt => opt.MapFrom(src => src.Priority))
                 // ignore heavy JSON conversion for now
                 .ForMember(dest => dest.FieldOptions, opt => opt.Ignore())
                 .ForMember(dest => dest.ValidationRules, opt => opt.Ignore());
@@ -113,12 +123,14 @@ namespace YemenBooking.Application.Mappings
             // Unit field value mapping
             CreateMap<UnitFieldValue, UnitFieldValueDto>()
                 .ForMember(dest => dest.ValueId, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.UnitId, opt => opt.MapFrom(src => src.UnitId))
                 .ForMember(dest => dest.FieldId, opt => opt.MapFrom(src => src.UnitTypeFieldId))
-                .ForMember(dest => dest.FieldName, opt => opt.MapFrom(src => src.UnitTypeField.FieldName))
-                .ForMember(dest => dest.DisplayName, opt => opt.MapFrom(src => src.UnitTypeField.DisplayName))
+                .ForMember(dest => dest.FieldName, opt => opt.MapFrom(src => src.UnitTypeField != null ? src.UnitTypeField.FieldName : string.Empty))
+                .ForMember(dest => dest.DisplayName, opt => opt.MapFrom(src => src.UnitTypeField != null ? src.UnitTypeField.DisplayName : string.Empty))
                 .ForMember(dest => dest.Value, opt => opt.MapFrom(src => src.FieldValue))
-                .ForMember(dest => dest.FieldType, opt => opt.MapFrom(src => src.UnitTypeField.FieldTypeId))
-                .ForMember(dest => dest.Field, opt => opt.MapFrom(src => src.UnitTypeField));
+                .ForMember(dest => dest.FieldType, opt => opt.MapFrom(src => src.UnitTypeField != null ? src.UnitTypeField.FieldTypeId : string.Empty))
+                .ForMember(dest => dest.Field, opt => opt.MapFrom(src => src.UnitTypeField))
+                .ForMember(dest => dest.IsPrimaryFilter, opt => opt.MapFrom(src => src.UnitTypeField != null && src.UnitTypeField.IsPrimaryFilter));
 
             // Money value object mapping
             CreateMap<Money, MoneyDto>();

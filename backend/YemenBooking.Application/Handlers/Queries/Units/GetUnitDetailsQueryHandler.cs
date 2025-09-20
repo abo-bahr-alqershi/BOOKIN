@@ -87,9 +87,10 @@ namespace YemenBooking.Application.Handlers.Queries.Units
                             {
                                 ValueId = valueEntity.Id,
                                 FieldId = link.FieldId,
-                                FieldName = link.UnitTypeField.FieldName,
-                                DisplayName = link.UnitTypeField.DisplayName,
-                                Value = valueEntity.FieldValue
+                                FieldName = link.UnitTypeField?.FieldName ?? string.Empty,
+                                DisplayName = link.UnitTypeField?.DisplayName ?? string.Empty,
+                                Value = valueEntity.FieldValue,
+                                IsPrimaryFilter = link.UnitTypeField?.IsPrimaryFilter ?? false
                             });
                         }
                     }
@@ -113,8 +114,38 @@ namespace YemenBooking.Application.Handlers.Queries.Units
                 PricingMethod = unit.PricingMethod.ToString(),
                 FieldValues = unit.FieldValues.Select(fv => new UnitFieldValueDto
                 {
+                    ValueId = fv.Id,
+                    UnitId = fv.UnitId,
                     FieldId = fv.UnitTypeFieldId,
-                    FieldValue = fv.FieldValue
+                    FieldName = fv.UnitTypeField?.FieldName ?? string.Empty,
+                    DisplayName = fv.UnitTypeField?.DisplayName ?? string.Empty,
+                    FieldType = fv.UnitTypeField?.FieldTypeId ?? string.Empty,
+                    FieldValue = fv.FieldValue,
+                    IsPrimaryFilter = fv.UnitTypeField?.IsPrimaryFilter ?? false,
+                    Field = fv.UnitTypeField == null ? null : new UnitTypeFieldDto
+                    {
+                        FieldId = fv.UnitTypeField.Id.ToString(),
+                        UnitTypeId = fv.UnitTypeField.UnitTypeId.ToString(),
+                        FieldTypeId = fv.UnitTypeField.FieldTypeId,
+                        FieldName = fv.UnitTypeField.FieldName,
+                        DisplayName = fv.UnitTypeField.DisplayName,
+                        Description = fv.UnitTypeField.Description,
+                        // options and rules may be large; you can hydrate on demand
+                        FieldOptions = new System.Collections.Generic.Dictionary<string, object>(),
+                        ValidationRules = new System.Collections.Generic.Dictionary<string, object>(),
+                        IsRequired = fv.UnitTypeField.IsRequired,
+                        IsSearchable = fv.UnitTypeField.IsSearchable,
+                        IsPublic = fv.UnitTypeField.IsPublic,
+                        SortOrder = fv.UnitTypeField.SortOrder,
+                        Category = fv.UnitTypeField.Category,
+                        GroupId = fv.UnitTypeField.FieldGroupFields.FirstOrDefault()?.GroupId.ToString() ?? string.Empty,
+                        IsForUnits = fv.UnitTypeField.IsForUnits,
+                        ShowInCards = fv.UnitTypeField.ShowInCards,
+                        IsPrimaryFilter = fv.UnitTypeField.IsPrimaryFilter,
+                        Priority = fv.UnitTypeField.Priority
+                    },
+                    CreatedAt = fv.CreatedAt,
+                    UpdatedAt = fv.UpdatedAt
                 }).ToList(),
                 DynamicFields = dynamicFields
             };
@@ -123,4 +154,4 @@ namespace YemenBooking.Application.Handlers.Queries.Units
             return ResultDto<UnitDetailsDto>.Succeeded(dto);
         }
     }
-} 
+}

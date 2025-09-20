@@ -2,26 +2,30 @@ import '../../domain/entities/unit_field_value.dart';
 
 class UnitFieldValueModel extends UnitFieldValue {
   const UnitFieldValueModel({
-    required String fieldId,
-    required String fieldValue,
-    String? fieldName,
-    String? displayName,
-    String? fieldTypeId,
-  }) : super(
-          fieldId: fieldId,
-          fieldValue: fieldValue,
-          fieldName: fieldName,
-          displayName: displayName,
-          fieldTypeId: fieldTypeId,
-        );
+    required super.fieldId,
+    required super.fieldValue,
+    super.fieldName,
+    super.displayName,
+    super.fieldTypeId,
+    super.isPrimaryFilter,
+  });
 
   factory UnitFieldValueModel.fromJson(Map<String, dynamic> json) {
+    final fieldObj = json['field'] as Map<String, dynamic>?;
     return UnitFieldValueModel(
       fieldId: json['fieldId'] as String,
-      fieldValue: json['fieldValue'] as String,
-      fieldName: json['fieldName'] as String?,
-      displayName: json['displayName'] as String?,
-      fieldTypeId: json['fieldTypeId'] as String?,
+      fieldValue:
+          (json['fieldValue'] as String?) ?? (json['value'] as String?) ?? '',
+      fieldName:
+          (json['fieldName'] as String?) ?? fieldObj?['fieldName'] as String?,
+      displayName: (json['displayName'] as String?) ??
+          fieldObj?['displayName'] as String?,
+      fieldTypeId: (json['fieldTypeId'] as String?) ??
+          (json['fieldType'] as String?) ??
+          fieldObj?['fieldTypeId'] as String? ??
+          fieldObj?['fieldType'] as String?,
+      isPrimaryFilter: (json['isPrimaryFilter'] as bool?) ??
+          fieldObj?['isPrimaryFilter'] as bool?,
     );
   }
 
@@ -32,6 +36,7 @@ class UnitFieldValueModel extends UnitFieldValue {
       if (fieldName != null) 'fieldName': fieldName,
       if (displayName != null) 'displayName': displayName,
       if (fieldTypeId != null) 'fieldTypeId': fieldTypeId,
+      if (isPrimaryFilter != null) 'isPrimaryFilter': isPrimaryFilter,
     };
   }
 
@@ -42,24 +47,19 @@ class UnitFieldValueModel extends UnitFieldValue {
       fieldName: entity.fieldName,
       displayName: entity.displayName,
       fieldTypeId: entity.fieldTypeId,
+      isPrimaryFilter: entity.isPrimaryFilter,
     );
   }
 }
 
 class FieldGroupWithValuesModel extends FieldGroupWithValues {
   const FieldGroupWithValuesModel({
-    required String groupId,
-    required String groupName,
-    required String displayName,
-    required String description,
-    required List<UnitFieldValue> fieldValues,
-  }) : super(
-          groupId: groupId,
-          groupName: groupName,
-          displayName: displayName,
-          description: description,
-          fieldValues: fieldValues,
-        );
+    required super.groupId,
+    required super.groupName,
+    required super.displayName,
+    required super.description,
+    required super.fieldValues,
+  });
 
   factory FieldGroupWithValuesModel.fromJson(Map<String, dynamic> json) {
     return FieldGroupWithValuesModel(

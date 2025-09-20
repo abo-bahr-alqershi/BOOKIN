@@ -82,7 +82,11 @@ namespace YemenBooking.Application.Handlers.Queries.Units
                 FieldValues = unit.FieldValues.Select(fv => new UnitFieldValueDto
                 {
                     FieldId = fv.UnitTypeFieldId,
-                    FieldValue = fv.FieldValue
+                    FieldName = fv.UnitTypeField.FieldName,
+                    DisplayName = fv.UnitTypeField.DisplayName,
+                    FieldType = fv.UnitTypeField.FieldTypeId,
+                    FieldValue = fv.FieldValue,
+                    IsPrimaryFilter = fv.UnitTypeField.IsPrimaryFilter,
                 }).ToList(),
                 DynamicFields = new List<FieldGroupWithValuesDto>()
             };
@@ -91,4 +95,4 @@ namespace YemenBooking.Application.Handlers.Queries.Units
             return ResultDto<UnitDetailsDto>.Succeeded(dto);
         }
     }
-} 
+}

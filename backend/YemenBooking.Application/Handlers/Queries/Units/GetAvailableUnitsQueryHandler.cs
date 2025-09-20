@@ -9,7 +9,6 @@ using YemenBooking.Application.DTOs;
 using YemenBooking.Application.Queries.Units;
 using YemenBooking.Core.Interfaces.Repositories;
 using YemenBooking.Application.Interfaces.Services;
-using YemenBooking.Application.Interfaces.Services;
 
 namespace YemenBooking.Application.Handlers.Queries.Units
 {
@@ -52,6 +51,7 @@ namespace YemenBooking.Application.Handlers.Queries.Units
                 .Include(u => u.Property)
                 .Include(u => u.UnitType)
                 .Include(u => u.FieldValues)
+                    .ThenInclude(fv => fv.UnitTypeField)
                 .Where(u => availableIds.Contains(u.Id));
 
             if (request.IsAvailable.HasValue)
@@ -92,11 +92,15 @@ namespace YemenBooking.Application.Handlers.Queries.Units
                 FieldValues = u.FieldValues.Select(fv => new UnitFieldValueDto
                 {
                     FieldId = fv.UnitTypeFieldId,
-                    FieldValue = fv.FieldValue
+                    FieldName = fv.UnitTypeField?.FieldName ?? string.Empty,
+                    DisplayName = fv.UnitTypeField?.DisplayName ?? string.Empty,
+                    FieldType = fv.UnitTypeField?.FieldTypeId ?? string.Empty,
+                    FieldValue = fv.FieldValue,
+                    IsPrimaryFilter = fv.UnitTypeField?.IsPrimaryFilter ?? false
                 }).ToList()
             }).ToList();
 
             return PaginatedResult<UnitDto>.Create(dtos, request.PageNumber, request.PageSize, totalCount);
         }
     }
-} 
+}
