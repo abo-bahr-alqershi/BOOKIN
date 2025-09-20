@@ -187,7 +187,10 @@ class PropertyImageGalleryState extends State<PropertyImageGallery>
   Widget _buildContent(PropertyImagesState state) {
     final images = _displayImages.isNotEmpty ? _displayImages : _getImagesFromState(state);
     
-    return Column(
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.zero,
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildEnhancedHeader(images.length, state),
@@ -203,36 +206,41 @@ class PropertyImageGalleryState extends State<PropertyImageGallery>
           child: _buildMainContent(images, state),
         ),
       ],
+      ),
     );
   }
   
   Widget _buildLocalModeContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLocalHeaderSection(_localImages.length),
-        const SizedBox(height: 20),
-        
-        if (!widget.isReadOnly && 
-            _localImages.length < widget.maxImages && 
-            !_isLocalSelectionMode && 
-            !_isLocalReorderMode)
-          _buildMinimalistUploadArea(),
-        
-        if (_localImages.isNotEmpty) ...[
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildLocalHeaderSection(_localImages.length),
+          const SizedBox(height: 20),
+          
           if (!widget.isReadOnly && 
               _localImages.length < widget.maxImages && 
               !_isLocalSelectionMode && 
               !_isLocalReorderMode)
-            const SizedBox(height: 24),
-          _isLocalReorderMode
-            ? _buildLocalReorderableGrid(_localImages)
-            : _buildLocalImagesGrid(_localImages),
+            _buildMinimalistUploadArea(),
+          
+          if (_localImages.isNotEmpty) ...[
+            if (!widget.isReadOnly && 
+                _localImages.length < widget.maxImages && 
+                !_isLocalSelectionMode && 
+                !_isLocalReorderMode)
+              const SizedBox(height: 24),
+            _isLocalReorderMode
+              ? _buildLocalReorderableGrid(_localImages)
+              : _buildLocalImagesGrid(_localImages),
+          ],
+          
+          if (_localImages.isEmpty && widget.isReadOnly)
+            _buildMinimalistEmptyState(),
         ],
-        
-        if (_localImages.isEmpty && widget.isReadOnly)
-          _buildMinimalistEmptyState(),
-      ],
+      ),
     );
   }
   
