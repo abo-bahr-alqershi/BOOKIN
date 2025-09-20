@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:reorderables/reorderables.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
@@ -42,6 +43,7 @@ class _CityImageGalleryState extends State<CityImageGallery>
   final Map<String, double> _uploadProgress = {};
   int? _primaryImageIndex = 0;
   bool _isSelectionMode = false;
+  bool _isReorderMode = false;
   final Set<int> _selectedIndices = {};
 
   @override
@@ -89,11 +91,11 @@ class _CityImageGalleryState extends State<CityImageGallery>
         if (!widget.isReadOnly && _localImages.length < widget.maxImages)
           _buildEnhancedUploadArea(),
 
-        // Images grid with animations
+        // Images grid with animations or reorder grid
         if (_localImages.isNotEmpty) ...[
           if (!widget.isReadOnly && _localImages.length < widget.maxImages)
             const SizedBox(height: 20),
-          _buildEnhancedImagesGrid(),
+          _isReorderMode ? _buildReorderableGrid() : _buildEnhancedImagesGrid(),
         ],
 
         // Empty state with better design
@@ -187,6 +189,20 @@ class _CityImageGalleryState extends State<CityImageGallery>
         if (!widget.isReadOnly && _localImages.isNotEmpty)
           Row(
             children: [
+              // Reorder toggle
+              _buildEnhancedActionButton(
+                icon: Icons.swap_vert_rounded,
+                label: _isReorderMode ? 'إنهاء الترتيب' : 'ترتيب',
+                onTap: () {
+                  setState(() {
+                    _isReorderMode = !_isReorderMode;
+                    _isSelectionMode = false;
+                    _selectedIndices.clear();
+                  });
+                },
+                isActive: _isReorderMode,
+              ),
+              const SizedBox(width: 8),
               // Enhanced selection mode toggle
               _buildEnhancedActionButton(
                 icon: _isSelectionMode
@@ -196,6 +212,7 @@ class _CityImageGalleryState extends State<CityImageGallery>
                 onTap: () {
                   setState(() {
                     _isSelectionMode = !_isSelectionMode;
+                    _isReorderMode = false;
                     _selectedIndices.clear();
                   });
                 },
@@ -426,6 +443,44 @@ class _CityImageGalleryState extends State<CityImageGallery>
           );
         },
       ),
+    );
+  }
+
+  Widget _buildReorderableGrid() {
+    final cross = _getGridCrossAxisCount(context);
+    // Build children with keys
+    final children = <Widget>[];
+    for (int index = 0; index < _localImages.length; index++) {
+      children.add(Container(
+        key: ValueKey(_localImages[index]),
+        width: double.infinity,
+        child: _buildEnhancedImageItem(index),
+      ));
+    }
+
+    return ReorderableWrap(
+      spacing: 12,
+      runSpacing: 12,
+      needsLongPressDraggable: false,
+      maxMainAxisCount: cross,
+      onReorder: (oldIndex, newIndex) {
+        setState(() {
+          final item = _localImages.removeAt(oldIndex);
+          _localImages.insert(newIndex, item);
+          // Adjust primary index if needed
+          if (_primaryImageIndex != null) {
+            if (oldIndex == _primaryImageIndex) {
+              _primaryImageIndex = newIndex;
+            } else if (_primaryImageIndex! > oldIndex && _primaryImageIndex! <= newIndex) {
+              _primaryImageIndex = _primaryImageIndex! - 1;
+            } else if (_primaryImageIndex! < oldIndex && _primaryImageIndex! >= newIndex) {
+              _primaryImageIndex = _primaryImageIndex! + 1;
+            }
+          }
+        });
+        widget.onImagesChanged(_localImages);
+      },
+      children: children,
     );
   }
 
@@ -801,6 +856,15 @@ class _CityImageGalleryState extends State<CityImageGallery>
           Navigator.pop(context);
           setState(() {
             _primaryImageIndex = index;
+            // Move primary to front to mirror unit/property behavior
+            if (index != 0) {
+              final item = _localImages.removeAt(index);
+              _localImages.insert(0, item);
+              _primaryImageIndex = 0;
+              widget.onImagesChanged(_localImages);
+            } else {
+              widget.onImagesChanged(_localImages);
+            }
           });
         },
         onDelete: () {
