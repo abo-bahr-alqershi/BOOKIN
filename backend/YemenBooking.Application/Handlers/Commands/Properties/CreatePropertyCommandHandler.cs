@@ -73,7 +73,8 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
                 return ResultDto<Guid>.Failed("معرف المالك مطلوب");
             if (request.PropertyTypeId == Guid.Empty)
                 return ResultDto<Guid>.Failed("معرف نوع الكيان مطلوب");
-            // City is optional; if provided, normalize spacing
+            if (string.IsNullOrWhiteSpace(request.City))
+                return ResultDto<Guid>.Failed("اسم المدينة مطلوب");
             if (request.StarRating < 1 || request.StarRating > 5)
                 return ResultDto<Guid>.Failed("تقييم النجوم يجب أن يكون بين 1 و 5");
             if (request.Latitude < -90 || request.Latitude > 90)
@@ -102,7 +103,7 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
                 Address = request.Address,
                 ShortDescription = string.IsNullOrWhiteSpace(request.ShortDescription) ? null : request.ShortDescription,
                 Description = request.Description,
-                City = string.IsNullOrWhiteSpace(request.City) ? null : request.City!.Trim(),
+                City = request.City.Trim(),
                 Currency = string.IsNullOrWhiteSpace(request.Currency) ? "YER" : request.Currency!.ToUpperInvariant(),
                 BasePricePerNight = request.BasePricePerNight ?? 0m,
                 Latitude = (decimal)request.Latitude,

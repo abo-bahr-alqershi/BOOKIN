@@ -111,7 +111,8 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
 class _CityDropdown extends StatefulWidget {
   final String? value;
   final ValueChanged<String?> onChanged;
-  const _CityDropdown({required this.value, required this.onChanged});
+  final bool requiredField;
+  const _CityDropdown({required this.value, required this.onChanged, this.requiredField = false});
 
   @override
   State<_CityDropdown> createState() => _CityDropdownState();
@@ -138,7 +139,7 @@ class _CityDropdownState extends State<_CityDropdown> {
           _cities = list.map((c) => c.name).toList();
           _loading = false;
           if (_cities.isNotEmpty && (widget.value == null || !_cities.contains(widget.value))) {
-            widget.onChanged(_cities.first);
+            // Do not auto-select when required; keep null so validator can trigger
           }
         }),
       );
@@ -153,7 +154,7 @@ class _CityDropdownState extends State<_CityDropdown> {
   @override
   Widget build(BuildContext context) {
     final decoration = InputDecoration(
-      labelText: 'المدينة (اختياري)',
+      labelText: widget.requiredField ? 'المدينة (إجباري)' : 'المدينة (اختياري)',
       labelStyle: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
       filled: true,
       fillColor: AppTheme.darkSurface.withOpacity(0.3),
@@ -178,15 +179,15 @@ class _CityDropdownState extends State<_CityDropdown> {
       );
     }
 
+    final items = _cities.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList();
+
     if (_error != null) {
       return DropdownButtonFormField<String?>(
         value: _cities.contains(widget.value) ? widget.value : null,
         decoration: decoration.copyWith(errorText: _error),
-        items: [
-          const DropdownMenuItem(value: null, child: Text('بدون مدينة')),
-          ..._cities.map((c) => DropdownMenuItem(value: c, child: Text(c)))
-        ],
+        items: items,
         onChanged: (v) => widget.onChanged(v),
+        validator: widget.requiredField ? (v) => (v == null || (v as String).isEmpty) ? 'المدينة مطلوبة' : null : null,
       );
     }
 
@@ -195,11 +196,9 @@ class _CityDropdownState extends State<_CityDropdown> {
       decoration: decoration,
       dropdownColor: AppTheme.darkCard,
       style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
-      items: [
-        const DropdownMenuItem(value: null, child: Text('بدون مدينة')),
-        ..._cities.map((c) => DropdownMenuItem(value: c, child: Text(c)))
-      ],
+      items: items,
       onChanged: (v) => widget.onChanged(v),
+      validator: widget.requiredField ? (v) => (v == null || (v as String).isEmpty) ? 'المدينة مطلوبة' : null : null,
     );
   }
 }
@@ -702,6 +701,7 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
               _selectedCity = v;
               _cityController.text = v ?? '';
             }),
+            requiredField: true,
           ),
           
           const SizedBox(height: 20),
