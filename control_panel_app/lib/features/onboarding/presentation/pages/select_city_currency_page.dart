@@ -24,6 +24,7 @@ class _SelectCityCurrencyPageState extends State<SelectCityCurrencyPage> {
   String? _city;
   String? _currency;
   bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -68,7 +69,9 @@ class _SelectCityCurrencyPageState extends State<SelectCityCurrencyPage> {
         padding: const EdgeInsets.all(16),
         child: _loading
             ? const Center(child: CircularProgressIndicator())
-            : Column(
+            : (_error != null
+                ? _buildErrorView(_error!)
+                : Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('اختر مدينتك', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w600)),
@@ -97,7 +100,7 @@ class _SelectCityCurrencyPageState extends State<SelectCityCurrencyPage> {
               ),
             ),
           ],
-        ),
+        )),
       ),
     );
   }
@@ -117,6 +120,34 @@ class _SelectCityCurrencyPageState extends State<SelectCityCurrencyPage> {
         isExpanded: true,
         underline: const SizedBox.shrink(),
         hint: Text(hint),
+      ),
+    );
+  }
+
+  Widget _buildErrorView(String message) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'فشل تحميل البيانات',
+            style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: TextStyle(color: AppTheme.textLight),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              setState(() { _loading = true; _error = null; });
+              _load();
+            },
+            child: const Text('إعادة المحاولة'),
+          ),
+        ],
       ),
     );
   }
