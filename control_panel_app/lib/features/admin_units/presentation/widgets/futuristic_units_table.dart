@@ -381,6 +381,58 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                     ),
                   ),
 
+                  const SizedBox(height: 8),
+
+                  // Dynamic Fields (Primary Filters)
+                  Builder(builder: (context) {
+                    final fields = _getPrimaryFilterFields(unit);
+                    if (fields.isEmpty) return const SizedBox.shrink();
+                    final visible = fields.take(3).toList();
+                    return Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.darkSurface.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: AppTheme.darkBorder.withOpacity(0.2),
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.filter_list_rounded,
+                                size: 14,
+                                color: AppTheme.neonPurple,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'المعلومات الأساسية',
+                                style: AppTextStyles.caption.copyWith(
+                                  color: AppTheme.neonPurple,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          ...visible.map((f) => Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: _buildDynamicFieldRow(
+                                  displayName: f['displayName'] as String,
+                                  value: f['value'],
+                                  fieldType: f['fieldTypeId'] as String,
+                                ),
+                              )),
+                        ],
+                      ),
+                    );
+                  }),
+
                   const SizedBox(height: 12),
 
                   // Action Buttons
@@ -790,6 +842,26 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
+                          Builder(builder: (context) {
+                            final fields = _getPrimaryFilterFields(unit);
+                            if (fields.isEmpty) return const SizedBox.shrink();
+                            final visible = fields.take(2).toList();
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: visible
+                                    .map((f) => _buildDynamicFieldRow(
+                                          displayName:
+                                              f['displayName'] as String,
+                                          value: f['value'],
+                                          fieldType:
+                                              f['fieldTypeId'] as String,
+                                        ))
+                                    .toList(),
+                              ),
+                            );
+                          }),
                         ],
                       ),
                     ),
@@ -1027,7 +1099,40 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
           ),
           child: Row(
             children: [
-              _buildCell(unit.name, flex: 2, isName: true),
+              // Name + compact primary fields under it
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      unit.name,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppTheme.textWhite,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Builder(builder: (context) {
+                      final fields = _getPrimaryFilterFields(unit);
+                      if (fields.isEmpty) return const SizedBox.shrink();
+                      final visible = fields.take(2).toList();
+                      return Row(
+                        children: visible
+                            .map((f) => Expanded(
+                                  child: _buildDynamicFieldRow(
+                                    displayName: f['displayName'] as String,
+                                    value: f['value'],
+                                    fieldType: f['fieldTypeId'] as String,
+                                  ),
+                                ))
+                            .toList(),
+                      );
+                    }),
+                  ],
+                ),
+              ),
               _buildCell(unit.unitTypeName, flex: 1),
               _buildCell(unit.propertyName, flex: 2),
               _buildCell(unit.basePrice.displayAmount, flex: 1, isPrice: true),
