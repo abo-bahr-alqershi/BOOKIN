@@ -15,6 +15,7 @@ class CreateUnitUseCase implements UseCase<String, CreateUnitParams> {
       propertyId: params.propertyId,
       unitTypeId: params.unitTypeId,
       name: params.name,
+      description: params.description,
       basePrice: params.basePrice,
       customFeatures: params.customFeatures,
       pricingMethod: params.pricingMethod,

@@ -14,6 +14,7 @@ class UpdateUnitUseCase implements UseCase<bool, UpdateUnitParams> {
     return await repository.updateUnit(
       unitId: params.unitId,
       name: params.name,
+      description: params.description,
       basePrice: params.basePrice,
       customFeatures: params.customFeatures,
       pricingMethod: params.pricingMethod,
