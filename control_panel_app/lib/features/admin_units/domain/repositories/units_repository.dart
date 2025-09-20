@@ -22,6 +22,7 @@ abstract class UnitsRepository {
     required String propertyId,
     required String unitTypeId,
     required String name,
+    required String description,
     required Map<String, dynamic> basePrice,
     required String customFeatures,
     required String pricingMethod,
@@ -35,6 +36,7 @@ abstract class UnitsRepository {
   Future<Either<Failure, bool>> updateUnit({
     required String unitId,
     String? name,
+    String? description,
     Map<String, dynamic>? basePrice,
     String? customFeatures,
     String? pricingMethod,

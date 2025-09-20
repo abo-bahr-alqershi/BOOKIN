@@ -275,7 +275,7 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
     return fieldValues.entries
         .map((entry) => {
               'fieldId': entry.key,
-              'fieldValue': entry.value,
+              'fieldValue': entry.value?.toString() ?? '',
             })
         .toList();
   }

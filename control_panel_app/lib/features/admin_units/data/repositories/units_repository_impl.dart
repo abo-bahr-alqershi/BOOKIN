@@ -91,6 +91,7 @@ class UnitsRepositoryImpl implements UnitsRepository {
     required String propertyId,
     required String unitTypeId,
     required String name,
+    required String description,
     required Map<String, dynamic> basePrice,
     required String customFeatures,
     required String pricingMethod,
@@ -103,17 +104,17 @@ class UnitsRepositoryImpl implements UnitsRepository {
     if (await networkInfo.isConnected) {
       try {
         final unitData = {
-          'propertyId': propertyId,
-          'unitTypeId': unitTypeId,
-          'name': name,
-          'basePrice': basePrice,
-          'customFeatures': customFeatures,
-          'pricingMethod': pricingMethod,
-          'fieldValues': fieldValues,
-          'images': images,
-          'adultCapacity': adultCapacity,
-          'childrenCapacity': childrenCapacity,
-          if (tempKey != null && tempKey.isNotEmpty) 'tempKey': tempKey,
+          'command': {
+            'propertyId': propertyId,
+            'unitTypeId': unitTypeId,
+            'name': name,
+            'basePrice': basePrice,
+            'customFeatures': customFeatures,
+            'pricingMethod': pricingMethod,
+            'fieldValues': _convertFieldValuesToString(fieldValues),
+            'images': images ?? [],
+            if (tempKey != null && tempKey.isNotEmpty) 'tempKey': tempKey,
+          }
         };
         final unitId = await remoteDataSource.createUnit(unitData);
         return Right(unitId);
@@ -129,6 +130,7 @@ class UnitsRepositoryImpl implements UnitsRepository {
   Future<Either<Failure, bool>> updateUnit({
     required String unitId,
     String? name,
+    String? description,
     Map<String, dynamic>? basePrice,
     String? customFeatures,
     String? pricingMethod,
@@ -144,10 +146,8 @@ class UnitsRepositoryImpl implements UnitsRepository {
           if (basePrice != null) 'basePrice': basePrice,
           if (customFeatures != null) 'customFeatures': customFeatures,
           if (pricingMethod != null) 'pricingMethod': pricingMethod,
-          if (fieldValues != null) 'fieldValues': fieldValues,
+          if (fieldValues != null) 'fieldValues': _convertFieldValuesToString(fieldValues),
           if (images != null) 'images': images,
-          if (adultCapacity != null) 'adultCapacity': adultCapacity,
-          if (childrenCapacity != null) 'childrenCapacity': childrenCapacity,
         };
         final result = await remoteDataSource.updateUnit(unitId, unitData);
         return Right(result);
@@ -218,5 +218,17 @@ class UnitsRepositoryImpl implements UnitsRepository {
     } else {
       return Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
     }
+  }
+
+  /// تحويل قيم الحقول إلى string كما يتوقعها Backend
+  List<Map<String, dynamic>> _convertFieldValuesToString(List<Map<String, dynamic>>? fieldValues) {
+    if (fieldValues == null) return [];
+    
+    return fieldValues.map((field) {
+      return {
+        'fieldId': field['fieldId'],
+        'fieldValue': field['fieldValue']?.toString() ?? '',
+      };
+    }).toList();
   }
 }
