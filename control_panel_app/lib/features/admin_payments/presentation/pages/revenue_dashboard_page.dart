@@ -4,9 +4,9 @@ import 'dart:ui';
 import '../widgets/revenue_chart_widget.dart';
 import '../widgets/payment_stats_cards.dart';
 import '../widgets/payment_breakdown_pie_chart.dart';
-import '../../../../../../core/theme/app_theme.dart';
-import '../../../../../../core/theme/app_text_styles.dart';
-import '../../../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../domain/entities/payment_analytics.dart';
 
 class RevenueDashboardPage extends StatefulWidget {
