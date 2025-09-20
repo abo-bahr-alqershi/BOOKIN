@@ -154,10 +154,6 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
 
   @override
   Widget build(BuildContext context) {
-    // حساب الارتفاع الديناميكي بناءً على المحتوى
-    final hasFilterFields = _getFilterFields().isNotEmpty;
-    final baseHeight = hasFilterFields ? 420.0 : 380.0;
-
     return SlideTransition(
       position: _slideAnimation,
       child: FadeTransition(
@@ -203,7 +199,6 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
                     scale: _pressScale.value * _hoverScale.value,
                     child: Container(
                       margin: const EdgeInsets.all(AppDimensions.paddingSmall),
-                      height: baseHeight,
                       child: Stack(
                         children: [
                           // Main Card
