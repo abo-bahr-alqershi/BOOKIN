@@ -855,8 +855,7 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
                                           displayName:
                                               f['displayName'] as String,
                                           value: f['value'],
-                                          fieldType:
-                                              f['fieldTypeId'] as String,
+                                          fieldType: f['fieldTypeId'] as String,
                                         ))
                                     .toList(),
                               ),
