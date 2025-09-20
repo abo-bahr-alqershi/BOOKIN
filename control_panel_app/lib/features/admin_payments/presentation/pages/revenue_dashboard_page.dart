@@ -174,7 +174,7 @@ class _RevenueDashboardPageState extends State<RevenueDashboardPage>
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+      padding: const EdgeInsets.all(AppDimensions.paddingSmall),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -189,7 +189,7 @@ class _RevenueDashboardPageState extends State<RevenueDashboardPage>
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    CupertinoIcons.arrow_left,
+                    CupertinoIcons.arrow_right,
                     color: AppTheme.textWhite,
                     size: 20,
                   ),
@@ -216,7 +216,7 @@ class _RevenueDashboardPageState extends State<RevenueDashboardPage>
                     Text(
                       'هذا الشهر',
                       style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.textWhite,
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -252,7 +252,7 @@ class _RevenueDashboardPageState extends State<RevenueDashboardPage>
   Widget _buildMainRevenueCard() {
     return Container(
       margin: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLarge,
+        horizontal: AppDimensions.paddingSmall,
       ),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -277,9 +277,9 @@ class _RevenueDashboardPageState extends State<RevenueDashboardPage>
                   color: AppTheme.textWhite.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
+                child: const Icon(
                   CupertinoIcons.money_dollar_circle_fill,
-                  color: AppTheme.textWhite,
+                  color: Colors.white,
                   size: 28,
                 ),
               ),
@@ -325,7 +325,7 @@ class _RevenueDashboardPageState extends State<RevenueDashboardPage>
           Text(
             'إجمالي الإيرادات',
             style: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.textWhite.withValues(alpha: 0.8),
+              color: Colors.white.withValues(alpha: 0.8),
             ),
           ),
           const SizedBox(height: 8),
@@ -336,7 +336,7 @@ class _RevenueDashboardPageState extends State<RevenueDashboardPage>
               return Text(
                 '${value.toStringAsFixed(0)} ر.ي',
                 style: AppTextStyles.displayMedium.copyWith(
-                  color: AppTheme.textWhite,
+                  color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
               );
@@ -414,7 +414,7 @@ class _RevenueDashboardPageState extends State<RevenueDashboardPage>
 
   Widget _buildRevenueBreakdown() {
     return Container(
-      margin: const EdgeInsets.all(AppDimensions.paddingLarge),
+      margin: const EdgeInsets.all(AppDimensions.paddingSmall),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -539,7 +539,7 @@ class _RevenueDashboardPageState extends State<RevenueDashboardPage>
 
   Widget _buildChartsSection() {
     return Container(
-      margin: const EdgeInsets.all(AppDimensions.paddingLarge),
+      margin: const EdgeInsets.all(AppDimensions.paddingSmall),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -615,7 +615,7 @@ class _RevenueDashboardPageState extends State<RevenueDashboardPage>
 
   Widget _buildQuickStats() {
     return Container(
-      margin: const EdgeInsets.all(AppDimensions.paddingLarge),
+      margin: const EdgeInsets.all(AppDimensions.paddingSmall),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
