@@ -142,44 +142,234 @@ class _UsersListPageState extends State<UsersListPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
-      body: Stack(
-        children: [
-          // Animated Background
-          _buildAnimatedBackground(),
-          
-          // Main Content
-          SafeArea(
-            child: Column(
-              children: [
-                // Futuristic Header
-                _buildHeader(),
-                
-                // Stats Cards
-                _buildStatsSection(),
-                
-                // Search Bar
-                _buildSearchBar(),
-                
-                // Filters Section
-                if (_showFilters) _buildFiltersSection(),
-                
-                // Content Area
-                Expanded(
-                  child: FadeTransition(
-                    opacity: _contentFadeAnimation,
-                    child: SlideTransition(
-                      position: _contentSlideAnimation,
-                      child: _buildContent(),
-                    ),
-                  ),
-                ),
+      body: CustomScrollView(
+        controller: _scrollController,
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        slivers: [
+          _buildSliverAppBar(),
+          _buildStatsSliver(),
+          _buildSearchSliver(),
+          _buildFiltersSliver(),
+          _buildContentSliver(),
+        ],
+      ),
+      floatingActionButton: _buildFabButton(),
+    );
+  }
+
+  SliverAppBar _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 120,
+      floating: true,
+      pinned: true,
+      backgroundColor: AppTheme.darkBackground,
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+        title: Text(
+          'إدارة المستخدمين',
+          style: AppTextStyles.heading1.copyWith(
+            color: AppTheme.textWhite,
+            shadows: [
+              Shadow(
+                color: AppTheme.primaryBlue.withOpacity(0.3),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+        ),
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppTheme.primaryBlue.withOpacity(0.1),
+                AppTheme.darkBackground,
               ],
             ),
           ),
-          
-          // Floating Action Button
-          _buildFloatingActionButton(),
-        ],
+        ),
+      ),
+      actions: [
+        _buildHeaderAction(icon: Icons.grid_view_rounded, isActive: _selectedView == 'grid', onPressed: () => setState(() => _selectedView = 'grid')),
+        _buildHeaderAction(icon: Icons.table_chart_rounded, isActive: _selectedView == 'table', onPressed: () => setState(() => _selectedView = 'table')),
+        _buildHeaderAction(icon: Icons.analytics_rounded, isActive: _selectedView == 'chart', onPressed: () => setState(() => _selectedView = 'chart')),
+        _buildHeaderAction(icon: _showFilters ? Icons.close_rounded : Icons.filter_list_rounded, isActive: _showFilters, onPressed: () => setState(() => _showFilters = !_showFilters)),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+
+  Widget _buildHeaderAction({
+    required IconData icon,
+    required bool isActive,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: (isActive ? AppTheme.primaryBlue : AppTheme.darkBorder).withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            child: Icon(
+              icon,
+              color: isActive ? AppTheme.primaryBlue : AppTheme.textWhite,
+              size: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  SliverToBoxAdapter _buildStatsSliver() {
+    return SliverToBoxAdapter(
+      child: Container(
+        height: 120,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: BlocBuilder<UsersListBloc, UsersListState>(
+          builder: (context, state) {
+            final totalUsers = state is UsersListLoaded ? state.totalCount : 0;
+            final activeUsers = state is UsersListLoaded ? state.users.where((u) => u.isActive).length : 0;
+            final newUsers = state is UsersListLoaded ? _getNewUsersCount(state.users) : 0;
+            final inactiveUsers = state is UsersListLoaded ? state.users.where((u) => !u.isActive).length : 0;
+            return Row(
+              children: [
+                Expanded(child: UserStatsCard(title: 'إجمالي المستخدمين', value: totalUsers.toString(), icon: Icons.people_rounded, color: AppTheme.primaryBlue, trend: '+15%', isPositive: true)),
+                const SizedBox(width: 12),
+                Expanded(child: UserStatsCard(title: 'المستخدمين النشطين', value: activeUsers.toString(), icon: Icons.verified_user_rounded, color: AppTheme.success, trend: '+8%', isPositive: true)),
+                const SizedBox(width: 12),
+                Expanded(child: UserStatsCard(title: 'المستخدمين الجدد', value: newUsers.toString(), icon: Icons.person_add_rounded, color: AppTheme.warning, trend: '12', isPositive: true)),
+                const SizedBox(width: 12),
+                Expanded(child: UserStatsCard(title: 'غير النشطين', value: inactiveUsers.toString(), icon: Icons.person_off_rounded, color: AppTheme.error, trend: '-3%', isPositive: false)),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  SliverToBoxAdapter _buildSearchSliver() {
+    return SliverToBoxAdapter(child: _buildSearchBar());
+  }
+
+  SliverToBoxAdapter _buildFiltersSliver() {
+    return SliverToBoxAdapter(child: _buildFiltersSection());
+  }
+
+  Widget _buildFabButton() {
+    return FloatingActionButton(
+      onPressed: () => context.push('/admin/users/create'),
+      backgroundColor: AppTheme.primaryBlue,
+      child: const Icon(
+        Icons.person_add_rounded,
+        color: Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildContentSliver() {
+    return BlocBuilder<UsersListBloc, UsersListState>(
+      builder: (context, state) {
+        if (state is UsersListLoading) {
+          return const SliverFillRemaining(
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (state is UsersListError) {
+          return SliverFillRemaining(
+            child: _buildErrorState(state.message),
+          );
+        }
+        if (state is UsersListLoaded) {
+          if (state.users.isEmpty) {
+            return const SliverFillRemaining(
+              child: SizedBox.shrink(),
+            );
+          }
+          switch (_selectedView) {
+            case 'grid':
+              return _buildGridSliver(state);
+            case 'table':
+              return SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: FuturisticUsersTable(
+                    users: state.users,
+                    onUserTap: (userId) => _navigateToUserDetails(userId),
+                    onStatusToggle: (userId, activate) {
+                      context.read<UsersListBloc>().add(
+                            ToggleUserStatusEvent(userId: userId, activate: activate),
+                          );
+                    },
+                    onDelete: (userId) => _showDeleteConfirmation(userId),
+                  ),
+                ),
+              );
+            case 'chart':
+              return SliverToBoxAdapter(child: _buildChartView(state));
+            default:
+              return _buildGridSliver(state);
+          }
+        }
+        return const SliverFillRemaining(child: SizedBox.shrink());
+      },
+    );
+  }
+
+  SliverPadding _buildGridSliver(UsersListLoaded state) {
+    // Compute responsive columns
+    int crossAxisCount = 4;
+    final width = MediaQuery.of(context).size.width;
+    if (width < 1200) crossAxisCount = 3;
+    if (width < 900) crossAxisCount = 2;
+    if (width < 600) crossAxisCount = 1;
+
+    final itemCount = state.users.length + (state.hasMore ? 1 : 0);
+
+    return SliverPadding(
+      padding: const EdgeInsets.all(16),
+      sliver: SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 1.2,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            if (index >= state.users.length) {
+              return _buildLoadMoreIndicator();
+            }
+            final user = state.users[index];
+            return _UserGridCard(
+              user: user,
+              onTap: () => _navigateToUserDetails(user.id),
+              onEdit: () => _navigateToEditUser(user.id),
+              onDelete: () => _showDeleteConfirmation(user.id),
+              onStatusToggle: (activate) {
+                context.read<UsersListBloc>().add(
+                      ToggleUserStatusEvent(userId: user.id, activate: activate),
+                    );
+              },
+            );
+          },
+          childCount: itemCount,
+        ),
       ),
     );
   }
