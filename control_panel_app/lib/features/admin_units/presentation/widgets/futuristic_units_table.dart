@@ -1388,7 +1388,8 @@ class _FuturisticUnitsTableState extends State<FuturisticUnitsTable>
         return n != null ? '${n.toStringAsFixed(0)} ريال' : '$value ريال';
       case 'date':
         try {
-          final d = value is DateTime ? value : DateTime.parse(value.toString());
+          final d =
+              value is DateTime ? value : DateTime.parse(value.toString());
           final mm = d.month.toString().padLeft(2, '0');
           final dd = d.day.toString().padLeft(2, '0');
           return '${d.year}-$mm-$dd';
