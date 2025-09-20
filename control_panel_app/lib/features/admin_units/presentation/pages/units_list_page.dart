@@ -826,13 +826,13 @@ class _UnitsListPageState extends State<UnitsListPage>
     double childAspectRatio;
     if (width < 700) {
       crossAxisCount = 1;
-      childAspectRatio = 0.78; // More height per card on small screens
+      childAspectRatio = 0.9; // provide more height to avoid overflow
     } else if (width < 1100) {
       crossAxisCount = 2;
-      childAspectRatio = 0.8;
+      childAspectRatio = 0.9;
     } else {
       crossAxisCount = 3;
-      childAspectRatio = 0.85;
+      childAspectRatio = 0.95;
     }
 
     return SliverPadding(

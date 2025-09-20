@@ -289,12 +289,17 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
             ),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final bool isCompact = constraints.maxHeight < 360;
-                final double imageHeight = isCompact ? 110 : 140;
-                final int maxFields = isCompact ? 1 : 3;
-                final EdgeInsets footerPadding = isCompact
+                final double maxH = constraints.maxHeight;
+                final bool isUltraCompact = maxH < 240;
+                final bool isCompact = !isUltraCompact && maxH < 360;
+                final double imageHeight = isUltraCompact
+                    ? 80
+                    : (isCompact ? 110 : 140);
+                final int maxFields = isUltraCompact ? 1 : (isCompact ? 2 : 3);
+                final EdgeInsets footerPadding = isCompact || isUltraCompact
                     ? const EdgeInsets.all(10)
                     : const EdgeInsets.all(12);
+                final bool useGradientPrice = !isUltraCompact;
 
                 return Stack(
                   children: [
@@ -327,16 +332,29 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
                                 _buildHeader(),
                                 const SizedBox(
                                     height: AppDimensions.spaceSmall),
-                                _buildDetails(),
-
-                                // عرض الحقول الديناميكية
-                                if (_getFilterFields().isNotEmpty) ...[
-                                  const SizedBox(height: 6),
-                                  _buildDynamicFields(maxFields: maxFields),
-                                ],
-
+                                // منطقة قابلة للتمرير لملاءمة المحتوى دون فيض
+                                Expanded(
+                                  child: SingleChildScrollView(
+                                    physics: const ClampingScrollPhysics(),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        _buildDetails(),
+                                        if (_getFilterFields().isNotEmpty) ...[
+                                          const SizedBox(height: 6),
+                                          _buildDynamicFields(
+                                              maxFields: maxFields),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ),
                                 const SizedBox(height: 6),
-                                _buildFooter(padding: footerPadding),
+                                _buildFooter(
+                                  padding: footerPadding,
+                                  useGradientPrice: useGradientPrice,
+                                ),
                               ],
                             ),
                           ),
@@ -989,7 +1007,7 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
     );
   }
 
-  Widget _buildFooter({EdgeInsets padding = const EdgeInsets.all(12)}) {
+  Widget _buildFooter({EdgeInsets padding = const EdgeInsets.all(12), bool useGradientPrice = true}) {
     return Column(
       children: [
         // Price Section
@@ -1020,17 +1038,26 @@ class _FuturisticUnitCardState extends State<FuturisticUnitCard>
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      ShaderMask(
-                        shaderCallback: (bounds) =>
-                            AppTheme.primaryGradient.createShader(bounds),
-                        child: Text(
-                          widget.unit.basePrice.displayAmount,
-                          style: AppTextStyles.heading3.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                      useGradientPrice
+                          ? ShaderMask(
+                              shaderCallback: (bounds) =>
+                                  AppTheme.primaryGradient
+                                      .createShader(bounds),
+                              child: Text(
+                                widget.unit.basePrice.displayAmount,
+                                style: AppTextStyles.heading3.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            )
+                          : Text(
+                              widget.unit.basePrice.displayAmount,
+                              style: AppTextStyles.heading3.copyWith(
+                                color: AppTheme.primaryBlue,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                       const SizedBox(width: 4),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 2),
