@@ -722,7 +722,6 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
               const SizedBox(height: 8),
               ...group.fieldValues.map((field) {
                 final value = field.fieldValue;
-                if (value.isEmpty) return const SizedBox.shrink();
                 return _buildInfoRow(
                   field.displayName ?? field.fieldName ?? '',
                   _formatFieldValue(value, field.fieldTypeId ?? 'text'),
@@ -749,7 +748,6 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
         if (grouped.isNotEmpty) _buildDynamicFields(grouped),
         ...unit.fieldValues
             .where((fv) => !groupedFieldIds.contains(fv.fieldId))
-            .where((fv) => fv.fieldValue.isNotEmpty)
             .map((fv) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _buildInfoRow(
