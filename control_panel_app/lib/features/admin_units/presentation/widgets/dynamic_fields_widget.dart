@@ -30,6 +30,17 @@ class _DynamicFieldsWidgetState extends State<DynamicFieldsWidget> {
   late Map<String, TextEditingController> _textControllers;
   late Map<String, dynamic> _currentValues;
 
+  // Safely coerce dynamic values into a boolean
+  bool _asBool(dynamic v) {
+    if (v is bool) return v;
+    if (v is String) {
+      final s = v.toLowerCase().trim();
+      return s == 'true' || s == '1' || s == 'yes' || s == 'y';
+    }
+    if (v is num) return v != 0;
+    return false;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -533,7 +544,7 @@ class _DynamicFieldsWidgetState extends State<DynamicFieldsWidget> {
   }
 
   Widget _buildBooleanField(UnitTypeField field) {
-    final value = _currentValues[field.fieldId] ?? false;
+    final bool value = _asBool(_currentValues[field.fieldId]);
 
     return GestureDetector(
       onTap: widget.isReadOnly
