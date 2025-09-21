@@ -4,6 +4,7 @@ using YemenBooking.Application.Commands.Amenities;
 using YemenBooking.Application.DTOs;
 using YemenBooking.Core.Interfaces;
 using YemenBooking.Core.Entities;
+using YemenBooking.Application.Interfaces.Services;
 
 namespace YemenBooking.Application.Handlers.Commands.Amenities;
 

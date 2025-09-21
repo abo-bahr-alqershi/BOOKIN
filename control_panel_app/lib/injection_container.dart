@@ -912,6 +912,8 @@ void _initAdminProperties() {
         updateAmenity: sl<ap_uc_am3.UpdateAmenityUseCase>(),
         deleteAmenity: sl<ap_uc_am4.DeleteAmenityUseCase>(),
         assignAmenityToProperty: sl<ap_uc_am5.AssignAmenityToPropertyUseCase>(),
+        unassignAmenityFromProperty:
+            sl<ap_uc_am6.UnassignAmenityFromPropertyUseCase>(),
       ));
   sl.registerFactory(() => ap_po_bloc.PoliciesBloc(
         getPolicies: sl<ap_uc_po1.GetPoliciesUseCase>(),

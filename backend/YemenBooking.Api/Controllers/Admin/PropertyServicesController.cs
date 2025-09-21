@@ -5,8 +5,8 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using YemenBooking.Application.Commands.Services;
+using YemenBooking.Application.DTOs;
 using YemenBooking.Application.Queries.Services;
-using YemenBooking.Application.Dtos;
 
 namespace YemenBooking.Api.Controllers.Admin
 {

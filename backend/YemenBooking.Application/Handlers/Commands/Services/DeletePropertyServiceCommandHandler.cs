@@ -55,10 +55,6 @@ namespace YemenBooking.Application.Handlers.Commands.Services
             if (hasBookingRefs)
                 return ResultDto<bool>.Failed("لا يمكن حذف الخدمة لارتباطها بحجوزات جارية أو سابقة");
 
-            var hasPaymentRefs = await _serviceRepository.ServiceHasPaymentReferencesAsync(request.ServiceId, cancellationToken);
-            if (hasPaymentRefs)
-                return ResultDto<bool>.Failed("لا يمكن حذف الخدمة لوجود مدفوعات مرتبطة بها");
-
             var success = await _serviceRepository.DeletePropertyServiceAsync(request.ServiceId, cancellationToken);
             if (!success)
                 return ResultDto<bool>.Failed("فشل حذف الخدمة");

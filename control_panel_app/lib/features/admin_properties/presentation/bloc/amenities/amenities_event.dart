@@ -91,3 +91,16 @@ class AssignAmenityToPropertyEvent extends AmenitiesEvent {
   @override
   List<Object?> get props => [amenityId, propertyId, isAvailable, extraCost, currency, description];
 }
+
+class UnassignAmenityFromPropertyEvent extends AmenitiesEvent {
+  final String amenityId;
+  final String propertyId;
+
+  const UnassignAmenityFromPropertyEvent({
+    required this.amenityId,
+    required this.propertyId,
+  });
+
+  @override
+  List<Object> get props => [amenityId, propertyId];
+}

@@ -2,23 +2,23 @@
 
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:bookn_cp_app/features/admin_properties/domain/entities/property.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:ui';
 import 'dart:math' as math;
-import 'package:bookn_cp_app/core/theme/app_colors.dart';
 import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import '../bloc/properties/properties_bloc.dart';
 import '../widgets/futuristic_property_table.dart';
 import '../widgets/property_filters_widget.dart';
 import '../widgets/property_stats_card.dart';
 import 'package:bookn_cp_app/core/widgets/loading_widget.dart';
-import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/amenities/amenities_bloc.dart' as ap_am_bloc;
-import 'package:bookn_cp_app/features/admin_properties/domain/repositories/amenities_repository.dart' as ap_repo;
-import 'package:bookn_cp_app/core/di/service_locator.dart' as di;
-
+import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/amenities/amenities_bloc.dart'
+    as ap_am_bloc;
+import 'package:bookn_cp_app/features/admin_properties/domain/repositories/amenities_repository.dart'
+    as ap_repo;
 
 class PropertiesListPage extends StatefulWidget {
   const PropertiesListPage({super.key});
@@ -194,57 +194,57 @@ class _PropertiesListPageState extends State<PropertiesListPage>
         }
       },
       child: Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      body: Stack(
-        children: [
-          // Animated Background
-          _buildAnimatedBackground(),
+        backgroundColor: AppTheme.darkBackground,
+        body: Stack(
+          children: [
+            // Animated Background
+            _buildAnimatedBackground(),
 
-          // Main Content with CustomScrollView for scrolling
-          CustomScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // App Bar similar to bookings page
-              _buildSliverAppBar(),
+            // Main Content with CustomScrollView for scrolling
+            CustomScrollView(
+              controller: _scrollController,
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // App Bar similar to bookings page
+                _buildSliverAppBar(),
 
-              // Stats Cards as SliverToBoxAdapter
-              SliverToBoxAdapter(
-                child: _buildStatsSection(),
-              ),
-
-              // Filters Section as SliverToBoxAdapter
-              if (_showFilters)
+                // Stats Cards as SliverToBoxAdapter
                 SliverToBoxAdapter(
-                  child: _buildFiltersSection(),
+                  child: _buildStatsSection(),
                 ),
 
-              // Content Area - المحتوى الرئيسي
-              SliverToBoxAdapter(
-                child: FadeTransition(
-                  opacity: _contentFadeAnimation,
-                  child: SlideTransition(
-                    position: _contentSlideAnimation,
-                    child: _buildContent(),
+                // Filters Section as SliverToBoxAdapter
+                if (_showFilters)
+                  SliverToBoxAdapter(
+                    child: _buildFiltersSection(),
+                  ),
+
+                // Content Area - المحتوى الرئيسي
+                SliverToBoxAdapter(
+                  child: FadeTransition(
+                    opacity: _contentFadeAnimation,
+                    child: SlideTransition(
+                      position: _contentSlideAnimation,
+                      child: _buildContent(),
+                    ),
                   ),
                 ),
-              ),
 
-              // Bottom padding
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 100),
-              ),
-            ],
-          ),
+                // Bottom padding
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: 100),
+                ),
+              ],
+            ),
 
-          // Floating Action Button
-          Positioned(
-            bottom: 24,
-            right: 24,
-            child: _buildFloatingActionButton(),
-          ),
-        ],
-      ),
+            // Floating Action Button
+            Positioned(
+              bottom: 24,
+              right: 24,
+              child: _buildFloatingActionButton(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -429,209 +429,6 @@ class _PropertiesListPageState extends State<PropertiesListPage>
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkCard.withOpacity(0.7),
-            AppTheme.darkCard.withOpacity(0.3),
-          ],
-        ),
-        border: Border(
-          bottom: BorderSide(
-            color: AppTheme.primaryBlue.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-      ),
-      child: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Column(
-            children: [
-              // Title Section
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (bounds) =>
-                              AppTheme.primaryGradient.createShader(bounds),
-                          child: Text(
-                            'إدارة العقارات',
-                            style: AppTextStyles.heading1.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'إدارة جميع العقارات والوحدات المسجلة',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppTheme.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Action Buttons - مع scroll أفقي
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildActionButton(
-                      icon: Icons.filter_list_rounded,
-                      label: 'فلتر',
-                      onTap: () => setState(() => _showFilters = !_showFilters),
-                      isActive: _showFilters,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildActionButton(
-                      icon: Icons.grid_view_rounded,
-                      label: 'شبكة',
-                      onTap: () => setState(() => _selectedView = 'grid'),
-                      isActive: _selectedView == 'grid',
-                    ),
-                    const SizedBox(width: 8),
-                    _buildActionButton(
-                      icon: Icons.table_chart_rounded,
-                      label: 'جدول',
-                      onTap: () => setState(() => _selectedView = 'table'),
-                      isActive: _selectedView == 'table',
-                    ),
-                    const SizedBox(width: 8),
-                    _buildActionButton(
-                      icon: Icons.map_rounded,
-                      label: 'خريطة',
-                      onTap: () => setState(() => _selectedView = 'map'),
-                      isActive: _selectedView == 'map',
-                    ),
-                    const SizedBox(width: 16),
-                    _buildPrimaryActionButton(
-                      icon: Icons.add_rounded,
-                      label: 'إضافة عقار',
-                      onTap: () => context.push('/admin/properties/create'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    bool isActive = false,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: isActive
-              ? AppTheme.primaryGradient
-              : LinearGradient(
-                  colors: [
-                    AppTheme.darkCard.withOpacity(0.5),
-                    AppTheme.darkCard.withOpacity(0.3),
-                  ],
-                ),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isActive
-                ? AppTheme.primaryBlue.withOpacity(0.5)
-                : AppTheme.darkBorder.withOpacity(0.3),
-            width: 1,
-          ),
-          boxShadow: isActive
-              ? [
-                  BoxShadow(
-                    color: AppTheme.primaryBlue.withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isActive ? Colors.white : AppTheme.textMuted,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: isActive ? Colors.white : AppTheme.textMuted,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPrimaryActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        onTap();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryBlue.withOpacity(0.4),
-              blurRadius: 15,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: Colors.white),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: AppTextStyles.buttonMedium.copyWith(
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildStatsSection() {
     return Container(
       height: 120,
@@ -757,7 +554,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
                     _showDeleteConfirmation(propertyId);
                   },
                   onAssignAmenities: (property) {
-                    _openAssignAmenities(propertyId: property.id, propertyName: property.name);
+                    _openAssignAmenities(
+                        propertyId: property.id, propertyName: property.name);
                   },
                 ),
               );
@@ -943,7 +741,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
     context.push('/admin/properties/$propertyId/edit');
   }
 
-  void _openAssignAmenities({required String propertyId, required String propertyName}) {
+  void _openAssignAmenities(
+      {required String propertyId, required String propertyName}) {
     HapticFeedback.mediumImpact();
     showDialog(
       context: context,
@@ -962,7 +761,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
                 width: 1,
               ),
             ),
-            child: _PropertyAmenitiesAssignView(propertyId: propertyId, propertyName: propertyName),
+            child: _PropertyAmenitiesAssignView(
+                propertyId: propertyId, propertyName: propertyName),
           ),
         ),
       ),
@@ -1715,149 +1515,6 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
   }
 }
 
-// Delete Confirmation Dialog - تبقى كما هي
-class _DeleteConfirmationDialog extends StatelessWidget {
-  final VoidCallback onConfirm;
-
-  const _DeleteConfirmationDialog({required this.onConfirm});
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        width: 400,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.darkCard.withOpacity(0.95),
-              AppTheme.darkCard.withOpacity(0.85),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: AppTheme.error.withOpacity(0.3),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.error.withOpacity(0.2),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.error.withOpacity(0.2),
-                    AppTheme.error.withOpacity(0.1),
-                  ],
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.warning_rounded,
-                color: AppTheme.error,
-                size: 32,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'تأكيد الحذف',
-              style: AppTextStyles.heading3.copyWith(
-                color: AppTheme.textWhite,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'هل أنت متأكد من حذف هذا العقار؟\nلا يمكن التراجع عن هذا الإجراء.',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppTheme.textMuted,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.darkSurface.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppTheme.darkBorder.withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'إلغاء',
-                          style: AppTextStyles.buttonMedium.copyWith(
-                            color: AppTheme.textMuted,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.mediumImpact();
-                      onConfirm();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppTheme.error,
-                            AppTheme.error.withOpacity(0.8),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.error.withOpacity(0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          'حذف',
-                          style: AppTextStyles.buttonMedium.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // Background Painter - تبقى كما هي
 class _FuturisticBackgroundPainter extends CustomPainter {
   final double rotation;
@@ -1916,16 +1573,18 @@ class _FuturisticBackgroundPainter extends CustomPainter {
 class _PropertyAmenitiesAssignView extends StatefulWidget {
   final String propertyId;
   final String propertyName;
-  const _PropertyAmenitiesAssignView({required this.propertyId, required this.propertyName});
+  const _PropertyAmenitiesAssignView(
+      {required this.propertyId, required this.propertyName});
 
   @override
-  State<_PropertyAmenitiesAssignView> createState() => _PropertyAmenitiesAssignViewState();
+  State<_PropertyAmenitiesAssignView> createState() =>
+      _PropertyAmenitiesAssignViewState();
 }
 
-class _PropertyAmenitiesAssignViewState extends State<_PropertyAmenitiesAssignView> {
+class _PropertyAmenitiesAssignViewState
+    extends State<_PropertyAmenitiesAssignView> {
   bool _loading = true;
   String? _error;
-  List<dynamic> _allAmenities = [];
   Set<String> _assignedAmenityIds = {};
   bool _submitting = false;
 
@@ -1939,13 +1598,24 @@ class _PropertyAmenitiesAssignViewState extends State<_PropertyAmenitiesAssignVi
     try {
       final amenitiesBloc = context.read<ap_am_bloc.AmenitiesBloc>();
       // request both: all amenities and property amenities
-      amenitiesBloc.add(const ap_am_bloc.LoadAmenitiesEvent(pageNumber: 1, pageSize: 100));
+      amenitiesBloc.add(
+          const ap_am_bloc.LoadAmenitiesEvent(pageNumber: 1, pageSize: 100));
       final repo = di.sl<ap_repo.AmenitiesRepository>();
-      final propertyAmenitiesEither = await repo.getPropertyAmenities(widget.propertyId);
-      propertyAmenitiesEither.fold((f){ _error = f.message; }, (list){ _assignedAmenityIds = list.map((a)=>a.id).toSet(); });
-      setState((){ _loading = false; });
+      final propertyAmenitiesEither =
+          await repo.getPropertyAmenities(widget.propertyId);
+      propertyAmenitiesEither.fold((f) {
+        _error = f.message;
+      }, (list) {
+        _assignedAmenityIds = list.map((a) => a.id).toSet();
+      });
+      setState(() {
+        _loading = false;
+      });
     } catch (e) {
-      setState((){ _error = e.toString(); _loading = false; });
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
     }
   }
 
@@ -1955,7 +1625,10 @@ class _PropertyAmenitiesAssignViewState extends State<_PropertyAmenitiesAssignVi
       return const SizedBox(
         width: 640,
         height: 520,
-        child: Center(child: LoadingWidget(type: LoadingType.futuristic, message: 'جاري تحميل المرافق...')),
+        child: Center(
+            child: LoadingWidget(
+                type: LoadingType.futuristic,
+                message: 'جاري تحميل المرافق...')),
       );
     }
     if (_error != null) {
@@ -1966,18 +1639,23 @@ class _PropertyAmenitiesAssignViewState extends State<_PropertyAmenitiesAssignVi
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 40),
+              Icon(Icons.error_outline_rounded,
+                  color: AppTheme.error, size: 40),
               const SizedBox(height: 8),
-              Text(_error!, style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.error)),
+              Text(_error!,
+                  style:
+                      AppTextStyles.bodyMedium.copyWith(color: AppTheme.error)),
             ],
           ),
         ),
       );
     }
 
+    final modalHeight = math.min(MediaQuery.of(context).size.height * 0.9, 640.0);
+
     return Container(
       width: 720,
-      constraints: const BoxConstraints(maxHeight: 640),
+      height: modalHeight,
       decoration: BoxDecoration(
         color: AppTheme.darkCard,
         borderRadius: BorderRadius.circular(24),
@@ -1996,7 +1674,10 @@ class _PropertyAmenitiesAssignViewState extends State<_PropertyAmenitiesAssignVi
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [AppTheme.primaryPurple.withOpacity(0.1), AppTheme.primaryBlue.withOpacity(0.05)]),
+        gradient: LinearGradient(colors: [
+          AppTheme.primaryPurple.withOpacity(0.1),
+          AppTheme.primaryBlue.withOpacity(0.05)
+        ]),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Row(
@@ -2004,16 +1685,24 @@ class _PropertyAmenitiesAssignViewState extends State<_PropertyAmenitiesAssignVi
           Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(gradient: AppTheme.primaryGradient, borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.link_rounded, color: Colors.white, size: 20),
+            decoration: BoxDecoration(
+                gradient: AppTheme.primaryGradient,
+                borderRadius: BorderRadius.circular(10)),
+            child:
+                const Icon(Icons.link_rounded, color: Colors.white, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('تعيين مرافق للعقار', style: AppTextStyles.bodyLarge.copyWith(color: AppTheme.textWhite, fontWeight: FontWeight.bold)),
-                Text(widget.propertyName, style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted)),
+                Text('تعيين مرافق للعقار',
+                    style: AppTextStyles.bodyLarge.copyWith(
+                        color: AppTheme.textWhite,
+                        fontWeight: FontWeight.bold)),
+                Text(widget.propertyName,
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppTheme.textMuted)),
               ],
             ),
           ),
@@ -2030,7 +1719,6 @@ class _PropertyAmenitiesAssignViewState extends State<_PropertyAmenitiesAssignVi
     return BlocBuilder<ap_am_bloc.AmenitiesBloc, ap_am_bloc.AmenitiesState>(
       builder: (context, state) {
         if (state is ap_am_bloc.AmenitiesLoaded) {
-          _allAmenities = state.amenities;
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: state.amenities.length,
@@ -2042,9 +1730,14 @@ class _PropertyAmenitiesAssignViewState extends State<_PropertyAmenitiesAssignVi
           );
         }
         if (state is ap_am_bloc.AmenitiesError) {
-          return Center(child: Text(state.message, style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.error)));
+          return Center(
+              child: Text(state.message,
+                  style: AppTextStyles.bodyMedium
+                      .copyWith(color: AppTheme.error)));
         }
-        return const Center(child: LoadingWidget(type: LoadingType.futuristic, message: 'جاري التحميل...'));
+        return const Center(
+            child: LoadingWidget(
+                type: LoadingType.futuristic, message: 'جاري التحميل...'));
       },
     );
   }
@@ -2056,24 +1749,39 @@ class _PropertyAmenitiesAssignViewState extends State<_PropertyAmenitiesAssignVi
       decoration: BoxDecoration(
         color: AppTheme.darkSurface.withOpacity(0.4),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: selected ? AppTheme.primaryPurple.withOpacity(0.3) : AppTheme.darkBorder.withOpacity(0.2)),
+        border: Border.all(
+            color: selected
+                ? AppTheme.primaryPurple.withOpacity(0.3)
+                : AppTheme.darkBorder.withOpacity(0.2)),
       ),
       child: Row(
         children: [
-          Icon(selected ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
-              color: selected ? AppTheme.primaryPurple : AppTheme.textMuted, size: 18),
+          Icon(
+              selected
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked,
+              color: selected ? AppTheme.primaryPurple : AppTheme.textMuted,
+              size: 18),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(amenity.name, style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite, fontWeight: FontWeight.w600)),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(amenity.name,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppTheme.textWhite, fontWeight: FontWeight.w600)),
               if ((amenity.description as String?)?.isNotEmpty == true)
-                Text(amenity.description, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted)),
+                Text(amenity.description,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppTheme.textMuted)),
             ]),
           ),
           Switch(
             value: selected,
-            onChanged: _submitting ? null : (val) => _toggleAmenity(amenity.id, val),
-            activeColor: AppTheme.primaryPurple,
+            onChanged:
+                _submitting ? null : (val) => _toggleAmenity(amenity.id, val),
+            activeThumbColor: AppTheme.primaryPurple,
           )
         ],
       ),
@@ -2085,11 +1793,15 @@ class _PropertyAmenitiesAssignViewState extends State<_PropertyAmenitiesAssignVi
     try {
       final repo = di.sl<ap_repo.AmenitiesRepository>();
       if (enable) {
-        final res = await repo.assignAmenityToProperty(amenityId, widget.propertyId, {'isAvailable': true});
-        res.fold((f) => _showError(f.message), (_) => _assignedAmenityIds.add(amenityId));
+        final res = await repo.assignAmenityToProperty(
+            amenityId, widget.propertyId, {'isAvailable': true});
+        res.fold((f) => _showError(f.message),
+            (_) => _assignedAmenityIds.add(amenityId));
       } else {
-        final res = await repo.unassignAmenityFromProperty(amenityId, widget.propertyId);
-        res.fold((f) => _showError(f.message), (_) => _assignedAmenityIds.remove(amenityId));
+        final res = await repo.unassignAmenityFromProperty(
+            amenityId, widget.propertyId);
+        res.fold((f) => _showError(f.message),
+            (_) => _assignedAmenityIds.remove(amenityId));
       }
       setState(() {});
     } finally {
@@ -2101,17 +1813,26 @@ class _PropertyAmenitiesAssignViewState extends State<_PropertyAmenitiesAssignVi
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [AppTheme.darkSurface.withOpacity(0.6), AppTheme.darkSurface.withOpacity(0.3)]),
+        gradient: LinearGradient(colors: [
+          AppTheme.darkSurface.withOpacity(0.6),
+          AppTheme.darkSurface.withOpacity(0.3)
+        ]),
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
       ),
       child: Row(
         children: [
           Expanded(
-            child: Text('عدد المرافق المعينة: ${_assignedAmenityIds.length}', style: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted)),
+            child: Text('عدد المرافق المعينة: ${_assignedAmenityIds.length}',
+                style: AppTextStyles.bodySmall
+                    .copyWith(color: AppTheme.textMuted)),
           ),
           ElevatedButton.icon(
             onPressed: _submitting ? null : () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryPurple, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryPurple,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12))),
             icon: const Icon(Icons.check_rounded, size: 18),
             label: const Text('تم'),
           )
@@ -2121,6 +1842,7 @@ class _PropertyAmenitiesAssignViewState extends State<_PropertyAmenitiesAssignVi
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: AppTheme.error));
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: AppTheme.error));
   }
 }

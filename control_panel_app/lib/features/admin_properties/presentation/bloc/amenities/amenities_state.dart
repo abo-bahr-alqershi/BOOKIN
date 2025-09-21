@@ -4,7 +4,7 @@ part of 'amenities_bloc.dart';
 
 abstract class AmenitiesState extends Equatable {
   const AmenitiesState();
-  
+
   @override
   List<Object?> get props => [];
 }
@@ -20,7 +20,7 @@ class AmenitiesLoaded extends AmenitiesState {
   final int totalPages;
   final bool hasNextPage;
   final bool hasPreviousPage;
-  
+
   const AmenitiesLoaded({
     required this.amenities,
     required this.totalCount,
@@ -29,23 +29,23 @@ class AmenitiesLoaded extends AmenitiesState {
     required this.hasNextPage,
     required this.hasPreviousPage,
   });
-  
+
   @override
   List<Object> get props => [
-    amenities,
-    totalCount,
-    currentPage,
-    totalPages,
-    hasNextPage,
-    hasPreviousPage,
-  ];
+        amenities,
+        totalCount,
+        currentPage,
+        totalPages,
+        hasNextPage,
+        hasPreviousPage,
+      ];
 }
 
 class AmenitiesError extends AmenitiesState {
   final String message;
-  
+
   const AmenitiesError(this.message);
-  
+
   @override
   List<Object> get props => [message];
 }
@@ -54,9 +54,9 @@ class AmenityCreating extends AmenitiesState {}
 
 class AmenityCreated extends AmenitiesState {
   final String amenityId;
-  
+
   const AmenityCreated(this.amenityId);
-  
+
   @override
   List<Object> get props => [amenityId];
 }
@@ -72,3 +72,7 @@ class AmenityDeleted extends AmenitiesState {}
 class AmenityAssigning extends AmenitiesState {}
 
 class AmenityAssigned extends AmenitiesState {}
+
+class AmenityUnassigning extends AmenitiesState {}
+
+class AmenityUnassigned extends AmenitiesState {}

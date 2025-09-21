@@ -1,5 +1,6 @@
 // lib/features/admin_properties/data/datasources/amenities_remote_datasource.dart
 
+import 'package:bookn_cp_app/core/error/exceptions.dart' show ServerException;
 import 'package:dio/dio.dart';
 import 'package:bookn_cp_app/core/network/api_client.dart';
 import 'package:bookn_cp_app/core/network/api_exceptions.dart';
@@ -19,7 +20,8 @@ abstract class AmenitiesRemoteDataSource {
   Future<String> createAmenity(Map<String, dynamic> data);
   Future<bool> updateAmenity(String amenityId, Map<String, dynamic> data);
   Future<bool> deleteAmenity(String amenityId);
-  Future<bool> assignAmenityToProperty(String amenityId, String propertyId, Map<String, dynamic> data);
+  Future<bool> assignAmenityToProperty(
+      String amenityId, String propertyId, Map<String, dynamic> data);
   Future<bool> unassignAmenityFromProperty(String amenityId, String propertyId);
   Future<List<AmenityModel>> getPropertyAmenities(String propertyId);
 }
@@ -27,9 +29,9 @@ abstract class AmenitiesRemoteDataSource {
 class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
   final ApiClient apiClient;
   static const String _baseEndpoint = '/api/admin/amenities';
-  
+
   AmenitiesRemoteDataSourceImpl({required this.apiClient});
-  
+
   @override
   Future<PaginatedResult<AmenityModel>> getAllAmenities({
     int? pageNumber,
@@ -48,21 +50,21 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
         if (isAssigned != null) 'isAssigned': isAssigned,
         if (isFree != null) 'isFree': isFree,
       };
-      
+
       final response = await apiClient.get(
         _baseEndpoint,
         queryParameters: queryParams,
       );
-      
+
       return PaginatedResult<AmenityModel>.fromJson(
         response.data,
-        (json) => AmenityModel.fromJson(json as Map<String, dynamic>),
+        (json) => AmenityModel.fromJson(json),
       );
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
   }
-  
+
   @override
   Future<AmenityModel> getAmenityById(String amenityId) async {
     try {
@@ -70,43 +72,50 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
       final root = response.data['data'] is Map<String, dynamic>
           ? response.data['data']
           : response.data;
-      if (response.data['success'] == true || response.data['isSuccess'] == true || root is Map<String, dynamic>) {
+      if (response.data['success'] == true ||
+          response.data['isSuccess'] == true ||
+          root is Map<String, dynamic>) {
         return AmenityModel.fromJson(root as Map<String, dynamic>);
       } else {
-        throw ServerException(response.data['message'] ?? 'Failed to get amenity');
+        throw ServerException(
+            response.data['message'] ?? 'Failed to get amenity');
       }
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
   }
-  
+
   @override
   Future<String> createAmenity(Map<String, dynamic> data) async {
     try {
       final response = await apiClient.post(_baseEndpoint, data: data);
-      if (response.data['success'] == true || response.data['isSuccess'] == true) {
+      if (response.data['success'] == true ||
+          response.data['isSuccess'] == true) {
         return (response.data['data'] ?? response.data['id'] ?? '').toString();
       } else {
-        throw ServerException(response.data['message'] ?? 'Failed to create amenity');
+        throw ServerException(
+            response.data['message'] ?? 'Failed to create amenity');
       }
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
   }
-  
+
   @override
-  Future<bool> updateAmenity(String amenityId, Map<String, dynamic> data) async {
+  Future<bool> updateAmenity(
+      String amenityId, Map<String, dynamic> data) async {
     try {
       final response = await apiClient.put(
         '$_baseEndpoint/$amenityId',
         data: data,
       );
-      return response.data['success'] == true || response.data['isSuccess'] == true;
+      return response.data['success'] == true ||
+          response.data['isSuccess'] == true;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
   }
-  
+
   @override
   Future<bool> deleteAmenity(String amenityId) async {
     try {
@@ -114,8 +123,13 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
       if (response.data is Map<String, dynamic>) {
         final map = response.data as Map<String, dynamic>;
         if (map['success'] == true || map['isSuccess'] == true) return true;
-        if (response.statusCode == 409 || map['errorCode'] == 'AMENITY_DELETE_CONFLICT') {
-          throw ApiException(message: map['message'] ?? 'لا يمكن حذف المرفق لارتباطه ببيانات أخرى', statusCode: 409, code: 'AMENITY_DELETE_CONFLICT');
+        if (response.statusCode == 409 ||
+            map['errorCode'] == 'AMENITY_DELETE_CONFLICT') {
+          throw ApiException(
+              message:
+                  map['message'] ?? 'لا يمكن حذف المرفق لارتباطه ببيانات أخرى',
+              statusCode: 409,
+              code: 'AMENITY_DELETE_CONFLICT');
         }
       }
       if (response.statusCode == 200 || response.statusCode == 204) return true;
@@ -124,7 +138,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
       throw ApiException.fromDioError(e);
     }
   }
-  
+
   @override
   Future<bool> assignAmenityToProperty(
     String amenityId,
@@ -136,16 +150,19 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
         '$_baseEndpoint/$amenityId/assign/property/$propertyId',
         data: data,
       );
-      return response.data['success'] == true || response.data['isSuccess'] == true;
+      return response.data['success'] == true ||
+          response.data['isSuccess'] == true;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
   }
 
   @override
-  Future<bool> unassignAmenityFromProperty(String amenityId, String propertyId) async {
+  Future<bool> unassignAmenityFromProperty(
+      String amenityId, String propertyId) async {
     try {
-      final response = await apiClient.delete('$_baseEndpoint/$amenityId/assign/property/$propertyId');
+      final response = await apiClient
+          .delete('$_baseEndpoint/$amenityId/assign/property/$propertyId');
       if (response.data is Map<String, dynamic>) {
         final map = response.data as Map<String, dynamic>;
         return map['success'] == true || map['isSuccess'] == true;
@@ -155,24 +172,29 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
       throw ApiException.fromDioError(e);
     }
   }
-  
+
   @override
   Future<List<AmenityModel>> getPropertyAmenities(String propertyId) async {
     try {
       // لا يوجد مسار مباشر لجلب مرافق الكيان
       // نستخدم تفاصيل الكيان والتي تتضمن قائمة amenities
-      final response = await apiClient.get('/api/admin/Properties/$propertyId/details', queryParameters: {
+      final response = await apiClient
+          .get('/api/admin/Properties/$propertyId/details', queryParameters: {
         'includeUnits': false,
       });
       if (response.data is Map<String, dynamic>) {
         final map = response.data as Map<String, dynamic>;
-        if ((map['success'] == true || map['isSuccess'] == true) && map['data'] is Map<String, dynamic>) {
+        if ((map['success'] == true || map['isSuccess'] == true) &&
+            map['data'] is Map<String, dynamic>) {
           final data = map['data'] as Map<String, dynamic>;
           final List<dynamic> list = (data['amenities'] as List?) ?? const [];
-          return list.map((j) => AmenityModel.fromJson(j as Map<String, dynamic>)).toList();
+          return list
+              .map((j) => AmenityModel.fromJson(j as Map<String, dynamic>))
+              .toList();
         }
       }
-        throw ServerException(response.data['message'] ?? 'Failed to get property amenities');
+      throw ServerException(
+          response.data['message'] ?? 'Failed to get property amenities');
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

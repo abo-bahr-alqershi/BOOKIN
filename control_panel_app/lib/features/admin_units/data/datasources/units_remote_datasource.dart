@@ -35,7 +35,7 @@ abstract class UnitsRemoteDataSource {
 
 class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
   final ApiClient apiClient;
-  
+
   UnitsRemoteDataSourceImpl({required this.apiClient});
 
   @override
@@ -92,13 +92,13 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
       // إضافة logging لمعرفة البيانات المرسلة
       print('=== Creating Unit with Data ===');
       print(unitData);
-      
+
       final response = await apiClient.post('/api/admin/Units', data: unitData);
-      
+
       // التحقق من استجابة السيرفر
       print('=== Server Response ===');
       print(response.data);
-      
+
       // تحسين استخراج ID
       if (response.data is Map && response.data.containsKey('data')) {
         return response.data['data'].toString();
@@ -115,7 +115,7 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
       print('Status Code: ${e.response?.statusCode}');
       print('Response Data: ${e.response?.data}');
       print('Request Data: ${e.requestOptions.data}');
-      
+
       throw _handleDioError(e);
     }
   }
@@ -123,7 +123,8 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
   @override
   Future<bool> updateUnit(String unitId, Map<String, dynamic> unitData) async {
     try {
-      final response = await apiClient.put('/api/admin/Units/$unitId', data: unitData);
+      final response =
+          await apiClient.put('/api/admin/Units/$unitId', data: unitData);
       return response.data['success'] ?? false;
     } on api.ApiException catch (e) {
       throw ServerException(e.message);
@@ -147,7 +148,8 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
   }
 
   @override
-  Future<List<UnitTypeModel>> getUnitTypesByProperty(String propertyTypeId) async {
+  Future<List<UnitTypeModel>> getUnitTypesByProperty(
+      String propertyTypeId) async {
     try {
       final response = await apiClient.get(
         '/api/admin/unit-types/property-type/$propertyTypeId',
@@ -177,7 +179,8 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
   }
 
   @override
-  Future<bool> assignUnitToSections(String unitId, List<String> sectionIds) async {
+  Future<bool> assignUnitToSections(
+      String unitId, List<String> sectionIds) async {
     try {
       final response = await apiClient.post(
         '/api/admin/units/$unitId/sections',
@@ -196,16 +199,16 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
       // إظهار تفاصيل الخطأ من السيرفر
       final responseData = error.response?.data;
       String message = 'حدث خطأ في الخادم';
-      
+
       if (responseData is Map) {
-        message = responseData['message'] ?? 
-                  responseData['error'] ?? 
-                  responseData['errors']?.toString() ?? 
-                  message;
+        message = responseData['message'] ??
+            responseData['error'] ??
+            responseData['errors']?.toString() ??
+            message;
       } else if (responseData is String) {
         message = responseData;
       }
-      
+
       print('Server Error Message: $message');
       return ServerException(message);
     } else if (error.type == DioExceptionType.connectionTimeout) {

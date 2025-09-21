@@ -107,10 +107,10 @@ namespace YemenBooking.Application.Handlers.Commands.Amenities
                 // تحديث مباشر لفهرس العقارات المتأثرة
                 try
                 {
-                    var ptaIds = await _unitOfWork.Repository<PropertyTypeAmenity>()
+                    var _ptaIds = await _unitOfWork.Repository<PropertyTypeAmenity>()
                         .FindAsync(x => x.AmenityId == existingAmenity.Id, cancellationToken);
                     var propertyAmenities = await _unitOfWork.Repository<PropertyAmenity>()
-                        .FindAsync(x => ptaIds.Select(p => p.Id).Contains(x.PtaId), cancellationToken);
+                        .FindAsync(x => _ptaIds.Select(p => p.Id).Contains(x.PtaId), cancellationToken);
 
                     foreach (var pa in propertyAmenities)
                     {

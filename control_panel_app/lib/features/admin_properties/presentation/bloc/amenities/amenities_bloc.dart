@@ -2,13 +2,13 @@
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:bookn_cp_app/core/models/paginated_result.dart';
 import '../../../domain/entities/amenity.dart';
 import '../../../domain/usecases/amenities/get_amenities_usecase.dart';
 import '../../../domain/usecases/amenities/create_amenity_usecase.dart';
 import '../../../domain/usecases/amenities/update_amenity_usecase.dart';
 import '../../../domain/usecases/amenities/delete_amenity_usecase.dart';
 import '../../../domain/usecases/amenities/assign_amenity_to_property_usecase.dart';
+import '../../../domain/usecases/amenities/unassign_amenity_from_property_usecase.dart';
 
 part 'amenities_event.dart';
 part 'amenities_state.dart';
@@ -19,27 +19,30 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
   final UpdateAmenityUseCase updateAmenity;
   final DeleteAmenityUseCase deleteAmenity;
   final AssignAmenityToPropertyUseCase assignAmenityToProperty;
-  
+  final UnassignAmenityFromPropertyUseCase unassignAmenityFromProperty;
+
   AmenitiesBloc({
     required this.getAmenities,
     required this.createAmenity,
     required this.updateAmenity,
     required this.deleteAmenity,
     required this.assignAmenityToProperty,
+    required this.unassignAmenityFromProperty,
   }) : super(AmenitiesInitial()) {
     on<LoadAmenitiesEvent>(_onLoadAmenities);
     on<CreateAmenityEvent>(_onCreateAmenity);
     on<UpdateAmenityEvent>(_onUpdateAmenity);
     on<DeleteAmenityEvent>(_onDeleteAmenity);
     on<AssignAmenityToPropertyEvent>(_onAssignAmenityToProperty);
+    on<UnassignAmenityFromPropertyEvent>(_onUnassignAmenityFromProperty);
   }
-  
+
   Future<void> _onLoadAmenities(
     LoadAmenitiesEvent event,
     Emitter<AmenitiesState> emit,
   ) async {
     emit(AmenitiesLoading());
-    
+
     final result = await getAmenities(
       GetAmenitiesParams(
         pageNumber: event.pageNumber,
@@ -50,7 +53,7 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
         isFree: event.isFree,
       ),
     );
-    
+
     result.fold(
       (failure) => emit(AmenitiesError(failure.message)),
       (paginatedResult) => emit(AmenitiesLoaded(
@@ -63,13 +66,13 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
       )),
     );
   }
-  
+
   Future<void> _onCreateAmenity(
     CreateAmenityEvent event,
     Emitter<AmenitiesState> emit,
   ) async {
     emit(AmenityCreating());
-    
+
     final result = await createAmenity(
       CreateAmenityParams(
         name: event.name,
@@ -77,22 +80,22 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
         icon: event.icon,
       ),
     );
-    
+
     result.fold(
       (failure) => emit(AmenitiesError(failure.message)),
       (amenityId) {
         emit(AmenityCreated(amenityId));
-        add(LoadAmenitiesEvent());
+        add(const LoadAmenitiesEvent());
       },
     );
   }
-  
+
   Future<void> _onUpdateAmenity(
     UpdateAmenityEvent event,
     Emitter<AmenitiesState> emit,
   ) async {
     emit(AmenityUpdating());
-    
+
     final result = await updateAmenity(
       UpdateAmenityParams(
         amenityId: event.amenityId,
@@ -101,39 +104,39 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
         icon: event.icon,
       ),
     );
-    
+
     result.fold(
       (failure) => emit(AmenitiesError(failure.message)),
       (_) {
         emit(AmenityUpdated());
-        add(LoadAmenitiesEvent());
+        add(const LoadAmenitiesEvent());
       },
     );
   }
-  
+
   Future<void> _onDeleteAmenity(
     DeleteAmenityEvent event,
     Emitter<AmenitiesState> emit,
   ) async {
     emit(AmenityDeleting());
-    
+
     final result = await deleteAmenity(event.amenityId);
-    
+
     result.fold(
       (failure) => emit(AmenitiesError(failure.message)),
       (_) {
         emit(AmenityDeleted());
-        add(LoadAmenitiesEvent());
+        add(const LoadAmenitiesEvent());
       },
     );
   }
-  
+
   Future<void> _onAssignAmenityToProperty(
     AssignAmenityToPropertyEvent event,
     Emitter<AmenitiesState> emit,
   ) async {
     emit(AmenityAssigning());
-    
+
     final result = await assignAmenityToProperty(
       AssignAmenityParams(
         amenityId: event.amenityId,
@@ -144,11 +147,33 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
         description: event.description,
       ),
     );
-    
+
     result.fold(
       (failure) => emit(AmenitiesError(failure.message)),
       (_) {
         emit(AmenityAssigned());
+        add(LoadAmenitiesEvent(propertyId: event.propertyId));
+      },
+    );
+  }
+
+  Future<void> _onUnassignAmenityFromProperty(
+    UnassignAmenityFromPropertyEvent event,
+    Emitter<AmenitiesState> emit,
+  ) async {
+    emit(AmenityUnassigning());
+
+    final result = await unassignAmenityFromProperty(
+      UnassignAmenityParams(
+        amenityId: event.amenityId,
+        propertyId: event.propertyId,
+      ),
+    );
+
+    result.fold(
+      (failure) => emit(AmenitiesError(failure.message)),
+      (_) {
+        emit(AmenityUnassigned());
         add(LoadAmenitiesEvent(propertyId: event.propertyId));
       },
     );
