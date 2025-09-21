@@ -98,6 +98,18 @@ public interface IUnitRepository : IRepository<Unit>
     Task<bool> CheckActiveBookingsAsync(Guid unitId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// التحقق من وجود أي حجوزات للوحدة (بغض النظر عن الحالة)
+    /// Check if the unit has any bookings regardless of status
+    /// </summary>
+    Task<bool> HasAnyBookingsAsync(Guid unitId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// التحقق من وجود أي مدفوعات مرتبطة بحجوزات هذه الوحدة (حتى وإن كانت مستردة)
+    /// Check if there are any payments associated with bookings of this unit (including refunded)
+    /// </summary>
+    Task<bool> HasAnyPaymentsAsync(Guid unitId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// الحصول على توفر الوحدة
     /// Get unit availability
     /// </summary>
