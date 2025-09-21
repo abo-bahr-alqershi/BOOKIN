@@ -822,6 +822,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
 
   void _showApproveConfirmation(BuildContext context, String reviewId) {
     HapticFeedback.mediumImpact();
+    final reviewsListBloc = context.read<ReviewsListBloc>();
     showDialog(
       context: context,
       barrierColor: Colors.black87,
@@ -900,9 +901,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          context.read<ReviewsListBloc>().add(
-                            ApproveReviewEvent(reviewId),
-                          );
+                          reviewsListBloc.add(ApproveReviewEvent(reviewId));
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.success,
