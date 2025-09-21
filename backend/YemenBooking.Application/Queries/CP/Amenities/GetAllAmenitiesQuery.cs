@@ -43,4 +43,9 @@ public class GetAllAmenitiesQuery : IRequest<PaginatedResult<AmenityDto>>
     /// Filter amenities free (extra cost == 0) (optional)
     /// </summary>
     public bool? IsFree { get; set; }
+
+    /// <summary>
+    /// Filter amenities that belong to a specific property type
+    /// </summary>
+    public Guid? PropertyTypeId { get; set; }
 } 

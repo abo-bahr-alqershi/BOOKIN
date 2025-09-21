@@ -30,6 +30,20 @@ class LoadAmenitiesEvent extends AmenitiesEvent {
   List<Object?> get props => [pageNumber, pageSize, searchTerm, propertyId, isAssigned, isFree];
 }
 
+class LoadAmenitiesEventWithType extends LoadAmenitiesEvent {
+  final String propertyTypeId;
+
+  const LoadAmenitiesEventWithType({
+    this.propertyTypeId = '',
+    int pageNumber = 1,
+    int pageSize = 10,
+    String? searchTerm,
+  }) : super(pageNumber: pageNumber, pageSize: pageSize, searchTerm: searchTerm);
+
+  @override
+  List<Object?> get props => [propertyTypeId, pageNumber, pageSize, searchTerm];
+}
+
 class CreateAmenityEvent extends AmenitiesEvent {
   final String name;
   final String description;

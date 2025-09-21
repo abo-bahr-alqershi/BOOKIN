@@ -51,6 +51,7 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
         propertyId: event.propertyId,
         isAssigned: event.isAssigned,
         isFree: event.isFree,
+        propertyTypeId: event is LoadAmenitiesEventWithType ? event.propertyTypeId : null,
       ),
     );
 

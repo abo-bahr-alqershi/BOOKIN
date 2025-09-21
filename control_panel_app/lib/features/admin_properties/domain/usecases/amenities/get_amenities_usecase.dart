@@ -14,6 +14,7 @@ class GetAmenitiesParams {
   final String? propertyId;
   final bool? isAssigned;
   final bool? isFree;
+  final String? propertyTypeId;
   
   GetAmenitiesParams({
     this.pageNumber = 1,
@@ -22,6 +23,7 @@ class GetAmenitiesParams {
     this.propertyId,
     this.isAssigned,
     this.isFree,
+    this.propertyTypeId,
   });
 }
 
@@ -39,6 +41,7 @@ class GetAmenitiesUseCase implements UseCase<PaginatedResult<Amenity>, GetAmenit
       propertyId: params.propertyId,
       isAssigned: params.isAssigned,
       isFree: params.isFree,
+      propertyTypeId: params.propertyTypeId,
     );
   }
 }

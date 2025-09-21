@@ -219,7 +219,7 @@ class CreatePropertyPage extends StatelessWidget {
         ),
         BlocProvider<AmenitiesBloc>(
           create: (context) => GetIt.instance<AmenitiesBloc>()
-            ..add(const LoadAmenitiesEvent(pageSize: 100)), // جلب كل المرافق مرة واحدة
+            ..add(const LoadAmenitiesEvent(pageSize: 100)), // سيتم تصفية حسب النوع لاحقاً
         ),
         // لإدارة رفع الصور بعد إنشاء العقار
         BlocProvider(
@@ -897,6 +897,7 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
                       _selectedAmenities = amenities;
                     });
                   },
+                  propertyTypeId: _selectedPropertyTypeId,
                 );
               }
               return const SizedBox.shrink();
@@ -1096,6 +1097,14 @@ class _CreatePropertyViewState extends State<_CreatePropertyView>
                       _safeSetState(() {
                         _selectedPropertyTypeId = value;
                       });
+                      if (value != null && value.isNotEmpty) {
+                        context.read<AmenitiesBloc>().add(
+                              LoadAmenitiesEventWithType(
+                                propertyTypeId: value,
+                                pageSize: 100,
+                              ),
+                            );
+                      }
                     },
                   ),
                 ),

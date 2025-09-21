@@ -308,11 +308,11 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                         } else if (state is PropertyDetailsError) {
                           return _buildErrorState(state.message);
                         } else if (state is PropertyDetailsLoaded) {
-                          return FadeTransition(
+                return FadeTransition(
                             opacity: _fadeAnimation,
                             child: SlideTransition(
                               position: _slideAnimation,
-                              child: _buildFormContent(),
+                    child: _buildFormContent(),
                             ),
                           );
                         } else if (state is PropertyUpdating) {
@@ -708,6 +708,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                 _selectedAmenities = amenities;
               });
             },
+            propertyTypeId: _selectedPropertyTypeId ?? _currentProperty?.typeId,
           ),
         ],
       ),
@@ -1181,6 +1182,14 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
                   setState(() {
                     _selectedPropertyTypeId = value;
                   });
+                  if (value != null && value.isNotEmpty) {
+                    context.read<AmenitiesBloc>().add(
+                          LoadAmenitiesEventWithType(
+                            propertyTypeId: value,
+                            pageSize: 100,
+                          ),
+                        );
+                  }
                 },
                 validator: (value) {
                   if (value == null) {
