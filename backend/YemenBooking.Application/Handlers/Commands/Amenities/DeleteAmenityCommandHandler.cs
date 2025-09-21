@@ -68,11 +68,22 @@ namespace YemenBooking.Application.Handlers.Commands.Amenities
                 if (_currentUserService.Role != "Admin")
                     return ResultDto<bool>.Failed("غير مصرح لك بحذف المرفق");
 
-                // التحقق من عدم استخدام المرفق بأنواع الكيانات
+                // التحقق من عدم استخدام المرفق بأنواع الكيانات أو الكيانات نفسها
                 var isUsedInType = await _unitOfWork.Repository<PropertyTypeAmenity>()
                     .ExistsAsync(pta => pta.AmenityId == request.AmenityId, cancellationToken);
                 if (isUsedInType)
                     return ResultDto<bool>.Failed("لا يمكن حذف المرفق لأنه مرتبط بأنواع الكيانات");
+
+                // إذا كانت هناك وسيلة من هذا النوع مخصصة لعقار، نرفض الحذف
+                var ptaIds = await _unitOfWork.Repository<PropertyTypeAmenity>()
+                    .FindAsync(x => x.AmenityId == request.AmenityId, cancellationToken);
+                if (ptaIds.Any())
+                {
+                    var hasPropertyAmenity = await _unitOfWork.Repository<PropertyAmenity>()
+                        .ExistsAsync(pa => ptaIds.Select(p => p.Id).Contains(pa.PtaId), cancellationToken);
+                    if (hasPropertyAmenity)
+                        return ResultDto<bool>.Failed("لا يمكن حذف المرفق لأنه مستخدم في عقارات حالية");
+                }
 
                 // التنفيذ: الحذف الناعم
                 existingAmenity.IsDeleted = true;

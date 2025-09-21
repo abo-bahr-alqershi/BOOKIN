@@ -92,6 +92,19 @@ class ServiceOperationSuccess extends ServicesState {
   List<Object> get props => [message];
 }
 
+/// ⏳ حالات خاصة بالحذف لإظهار اللودر المستقبلي والنتيجة
+class ServicesDeleting extends ServicesState {}
+
+class ServicesDeleteSuccess extends ServicesState {}
+
+class ServicesDeleteFailed extends ServicesState {
+  final String message;
+  const ServicesDeleteFailed(this.message);
+
+  @override
+  List<Object> get props => [message];
+}
+
 /// حالة تحميل تفاصيل الخدمة
 class ServiceDetailsLoading extends ServicesState {}
 

@@ -142,7 +142,19 @@ class _AdminServicesPageState extends State<AdminServicesPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<ServicesBloc, ServicesState>(
+      listener: (context, state) {
+        if (state is ServicesDeleting) {
+          _showDeletingDialog();
+        } else if (state is ServicesDeleteFailed) {
+          _dismissDeletingDialog();
+          _showSnack(state.message, AppTheme.error);
+        } else if (state is ServicesDeleteSuccess) {
+          _dismissDeletingDialog();
+          _showSnack('تم حذف الخدمة بنجاح', AppTheme.success);
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: Stack(
         children: [
@@ -186,6 +198,49 @@ class _AdminServicesPageState extends State<AdminServicesPage>
         ],
       ),
       floatingActionButton: _buildFloatingActionButton(),
+      ),
+    );
+  }
+
+  bool _isDeleting = false;
+  void _showDeletingDialog() {
+    if (_isDeleting) return;
+    _isDeleting = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      builder: (_) => const Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        elevation: 0,
+        child: Center(
+          child: LoadingWidget(
+            type: LoadingType.futuristic,
+            message: 'جاري حذف الخدمة...'
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _dismissDeletingDialog() {
+    if (_isDeleting) {
+      _isDeleting = false;
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    }
+  }
+
+  void _showSnack(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 
@@ -838,6 +893,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(dialogCtx);
+                          _showDeletingDialog();
                           context.read<ServicesBloc>().add(
                                 DeleteServiceEvent(service.id),
                               );

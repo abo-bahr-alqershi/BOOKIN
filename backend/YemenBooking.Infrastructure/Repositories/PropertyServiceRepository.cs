@@ -72,5 +72,11 @@ namespace YemenBooking.Infrastructure.Repositories
 
         public async Task<Property?> GetPropertyByIdAsync(Guid propertyId, CancellationToken cancellationToken = default)
             => await _context.Set<Property>().FirstOrDefaultAsync(p => p.Id == propertyId, cancellationToken);
+
+        public async Task<bool> ServiceHasBookingReferencesAsync(Guid serviceId, CancellationToken cancellationToken = default)
+            => await _context.Set<BookingService>().AnyAsync(bs => bs.ServiceId == serviceId, cancellationToken);
+
+        public async Task<bool> ServiceHasPaymentReferencesAsync(Guid serviceId, CancellationToken cancellationToken = default)
+            => await _context.Set<Payment>().AnyAsync(p => p.ServiceId == serviceId, cancellationToken);
     }
 }

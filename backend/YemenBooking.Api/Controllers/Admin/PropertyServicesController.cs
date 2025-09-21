@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using YemenBooking.Application.Commands.Services;
 using YemenBooking.Application.Queries.Services;
+using YemenBooking.Application.Dtos;
 
 namespace YemenBooking.Api.Controllers.Admin
 {
@@ -49,6 +50,11 @@ namespace YemenBooking.Api.Controllers.Admin
         {
             var command = new DeletePropertyServiceCommand { ServiceId = serviceId };
             var result = await _mediator.Send(command);
+            // If failed due to reference checks, return 409 with reason
+            if (!result.IsSuccess && (result.Message?.Contains("لا يمكن حذف الخدمة") == true))
+            {
+                return Conflict(ResultDto.Failure(result.Message, errorCode: "SERVICE_DELETE_CONFLICT"));
+            }
             return Ok(result);
         }
 

@@ -99,7 +99,19 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<AmenitiesBloc, AmenitiesState>(
+      listener: (context, state) {
+        if (state is AmenityOperationInProgress && state.operation == 'delete') {
+          _showDeletingDialog();
+        } else if (state is AmenityOperationSuccess) {
+          _dismissDeletingDialog();
+          _showSnack('تمت العملية بنجاح', AppTheme.success);
+        } else if (state is AmenityOperationFailure) {
+          _dismissDeletingDialog();
+          _showSnack(state.message, AppTheme.error);
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: CustomScrollView(
         controller: _scrollController,
@@ -114,6 +126,49 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
         ],
       ),
       floatingActionButton: _buildEnhancedFloatingActionButton(),
+      ),
+    );
+  }
+
+  bool _isDeleting = false;
+  void _showDeletingDialog() {
+    if (_isDeleting) return;
+    _isDeleting = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      builder: (_) => const Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        elevation: 0,
+        child: Center(
+          child: LoadingWidget(
+            type: LoadingType.futuristic,
+            message: 'جاري حذف المرفق...'
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _dismissDeletingDialog() {
+    if (_isDeleting) {
+      _isDeleting = false;
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    }
+  }
+
+  void _showSnack(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 
@@ -1063,6 +1118,7 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(dialogCtx);
+                          _showDeletingDialog();
                           context.read<AmenitiesBloc>().add(
                                 DeleteAmenityEvent(amenityId: amenity.id),
                               );
