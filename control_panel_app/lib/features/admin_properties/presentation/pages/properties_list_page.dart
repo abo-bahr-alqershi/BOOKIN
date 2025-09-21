@@ -759,7 +759,10 @@ class _PropertiesListPageState extends State<PropertiesListPage>
                   },
                   onAssignAmenities: (property) {
                     _openAssignAmenities(
-                        propertyId: property.id, propertyName: property.name);
+                      propertyId: property.id,
+                      propertyName: property.name,
+                      propertyTypeId: property.typeId,
+                    );
                   },
                 ),
               );
@@ -947,15 +950,22 @@ class _PropertiesListPageState extends State<PropertiesListPage>
     context.push('/admin/properties/$propertyId/edit');
   }
 
-  void _openAssignAmenities(
-      {required String propertyId, required String propertyName}) {
+  void _openAssignAmenities({
+    required String propertyId,
+    required String propertyName,
+    required String propertyTypeId,
+  }) {
     HapticFeedback.mediumImpact();
     showDialog(
       context: context,
       barrierColor: Colors.black87,
       builder: (dialogContext) => BlocProvider<ap_am_bloc.AmenitiesBloc>(
         create: (_) => di.sl<ap_am_bloc.AmenitiesBloc>()
-          ..add(const ap_am_bloc.LoadAmenitiesEvent(pageNumber: 1, pageSize: 100)),
+          ..add(ap_am_bloc.LoadAmenitiesEventWithType(
+            propertyTypeId: propertyTypeId,
+            pageNumber: 1,
+            pageSize: 100,
+          )),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Dialog(
