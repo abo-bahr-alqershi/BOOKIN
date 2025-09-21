@@ -41,15 +41,19 @@ class CreateAmenityEvent extends AmenitiesEvent {
   final String name;
   final String description;
   final String icon;
+  final String? propertyTypeId;
+  final bool isDefaultForType;
 
   const CreateAmenityEvent({
     required this.name,
     required this.description,
     required this.icon,
+    this.propertyTypeId,
+    this.isDefaultForType = false,
   });
 
   @override
-  List<Object> get props => [name, description, icon];
+  List<Object?> get props => [name, description, icon, propertyTypeId, isDefaultForType];
 }
 
 /// ✏️ حدث تحديث مرفق
@@ -114,6 +118,22 @@ class AssignAmenityToPropertyEvent extends AmenitiesEvent {
         extraCost,
         description,
       ];
+}
+
+/// 🧩 حدث ربط مرفق بنوع عقار
+class AssignAmenityToPropertyTypeEvent extends AmenitiesEvent {
+  final String amenityId;
+  final String propertyTypeId;
+  final bool isDefault;
+
+  const AssignAmenityToPropertyTypeEvent({
+    required this.amenityId,
+    required this.propertyTypeId,
+    this.isDefault = false,
+  });
+
+  @override
+  List<Object?> get props => [amenityId, propertyTypeId, isDefault];
 }
 
 /// 📊 حدث تحميل الإحصائيات

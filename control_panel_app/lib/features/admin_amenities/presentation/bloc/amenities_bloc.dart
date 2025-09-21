@@ -39,6 +39,7 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
     on<DeleteAmenityEvent>(_onDeleteAmenity);
     on<ToggleAmenityStatusEvent>(_onToggleAmenityStatus);
     on<AssignAmenityToPropertyEvent>(_onAssignAmenityToProperty);
+    on<AssignAmenityToPropertyTypeEvent>(_onAssignAmenityToPropertyType);
     on<LoadAmenityStatsEvent>(_onLoadAmenityStats);
     on<SearchAmenitiesEvent>(_onSearchAmenities);
     on<SelectAmenityEvent>(_onSelectAmenity);
@@ -49,6 +50,33 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
     on<ChangePageSizeEvent>(_onChangePageSize);
     on<ApplyFiltersEvent>(_onApplyFilters);
     on<ClearFiltersEvent>(_onClearFilters);
+  }
+
+  Future<void> _onAssignAmenityToPropertyType(
+    AssignAmenityToPropertyTypeEvent event,
+    Emitter<AmenitiesState> emit,
+  ) async {
+    emit(AmenityOperationInProgress(
+      operation: 'assign_property_type',
+      amenityId: event.amenityId,
+    ));
+
+    final result = await repository.assignAmenityToPropertyType(
+      amenityId: event.amenityId,
+      propertyTypeId: event.propertyTypeId,
+      isDefault: event.isDefault,
+    );
+
+    result.fold(
+      (failure) => emit(AmenityOperationFailure(
+        message: failure.message,
+        amenityId: event.amenityId,
+      )),
+      (_) => emit(AmenityOperationSuccess(
+        message: 'تم ربط المرفق بنوع العقار بنجاح',
+        amenityId: event.amenityId,
+      )),
+    );
   }
 
   Future<void> _onLoadAmenities(
@@ -117,6 +145,8 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
         name: event.name,
         description: event.description,
         icon: event.icon,
+        propertyTypeId: event.propertyTypeId,
+        isDefaultForType: event.isDefaultForType,
       ),
     );
 

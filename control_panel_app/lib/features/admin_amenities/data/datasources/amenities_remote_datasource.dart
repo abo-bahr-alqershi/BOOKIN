@@ -9,6 +9,8 @@ abstract class AmenitiesRemoteDataSource {
     required String name,
     required String description,
     required String icon,
+    String? propertyTypeId,
+    bool isDefaultForType = false,
   });
 
   Future<bool> updateAmenity({
@@ -42,6 +44,12 @@ abstract class AmenitiesRemoteDataSource {
   Future<bool> toggleAmenityStatus(String amenityId);
 
   Future<List<AmenityModel>> getPopularAmenities({int limit = 10});
+
+  Future<bool> assignAmenityToPropertyType({
+    required String amenityId,
+    required String propertyTypeId,
+    bool isDefault = false,
+  });
 }
 
 class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
@@ -55,6 +63,8 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
     required String name,
     required String description,
     required String icon,
+    String? propertyTypeId,
+    bool isDefaultForType = false,
   }) async {
     try {
       final response = await apiClient.post(
@@ -63,6 +73,8 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
           'name': name,
           'description': description,
           'icon': icon,
+          if (propertyTypeId != null) 'propertyTypeId': propertyTypeId,
+          if (propertyTypeId != null) 'isDefaultForType': isDefaultForType,
         },
       );
 
@@ -244,6 +256,30 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
             .toList();
       } else {
         throw ApiException(message: response.data['message'] ?? 'فشل جلب المرافق الشائعة');
+      }
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<bool> assignAmenityToPropertyType({
+    required String amenityId,
+    required String propertyTypeId,
+    bool isDefault = false,
+  }) async {
+    try {
+      final response = await apiClient.post(
+        '$_baseEndpoint/$amenityId/assign/property-type/$propertyTypeId',
+        data: {
+          'isDefault': isDefault,
+        },
+      );
+
+      if (response.data['isSuccess'] == true || response.data['success'] == true) {
+        return true;
+      } else {
+        throw ApiException(message: response.data['message'] ?? 'فشل ربط المرفق بنوع العقار');
       }
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);

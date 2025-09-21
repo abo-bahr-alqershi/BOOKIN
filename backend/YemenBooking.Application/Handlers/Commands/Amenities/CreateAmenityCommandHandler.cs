@@ -9,6 +9,7 @@ using YemenBooking.Application.DTOs;
 using YemenBooking.Core.Interfaces;
 using YemenBooking.Application.Interfaces.Services;
 using YemenBooking.Core.Entities;
+using System.Linq;
 
 namespace YemenBooking.Application.Handlers.Commands.Amenities
 {
@@ -70,6 +71,41 @@ namespace YemenBooking.Application.Handlers.Commands.Amenities
 
                 await _unitOfWork.Repository<Amenity>().AddAsync(amenity, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                // If a PropertyTypeId was provided, create the link immediately
+                if (request.PropertyTypeId.HasValue && request.PropertyTypeId.Value != Guid.Empty)
+                {
+                    // validate property type exists
+                    var propertyType = await _unitOfWork.Repository<PropertyType>()
+                        .GetByIdAsync(request.PropertyTypeId.Value, cancellationToken);
+                    if (propertyType == null)
+                    {
+                        return ResultDto<Guid>.Failed("نوع الكيان المحدد غير موجود");
+                    }
+
+                    var linkExists = await _unitOfWork.Repository<PropertyTypeAmenity>()
+                        .ExistsAsync(x => x.PropertyTypeId == request.PropertyTypeId.Value && x.AmenityId == amenity.Id, cancellationToken);
+                    if (!linkExists)
+                    {
+                        var pta = new PropertyTypeAmenity
+                        {
+                            PropertyTypeId = request.PropertyTypeId.Value,
+                            AmenityId = amenity.Id,
+                            IsDefault = request.IsDefaultForType
+                        };
+                        await _unitOfWork.Repository<PropertyTypeAmenity>().AddAsync(pta, cancellationToken);
+                        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                        await _auditService.LogActivityAsync(
+                            nameof(PropertyTypeAmenity),
+                            pta.Id.ToString(),
+                            "CREATE",
+                            "تم ربط المرفق بنوع الكيان مباشرة بعد الإنشاء",
+                            null,
+                            pta,
+                            cancellationToken);
+                    }
+                }
 
                 // الآثار الجانبية: تسجيل العملية في السجل
                 await _auditService.LogActivityAsync(
