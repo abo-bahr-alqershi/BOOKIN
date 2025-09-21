@@ -3,6 +3,7 @@
 import 'package:bookn_cp_app/core/constants/api_constants.dart';
 import 'package:dio/dio.dart';
 import 'package:bookn_cp_app/core/network/api_client.dart';
+import 'package:bookn_cp_app/core/network/api_exceptions.dart' as api;
 import 'package:bookn_cp_app/core/error/exceptions.dart';
 import 'package:bookn_cp_app/core/models/paginated_result.dart';
 import '../models/property_model.dart';
@@ -92,7 +93,7 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
         response.data,
         (json) => PropertyModel.fromJson(json as Map<String, dynamic>),
       );
-    } on ApiException catch (e) {
+    } on api.ApiException catch (e) {
       throw ServerException(e.message);
     } on DioException catch (e) { // Fallback if ApiClient throws DioException in some paths
       throw ServerException(e.response?.data['message'] ?? 'Failed to fetch properties');
@@ -109,7 +110,7 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
       } else {
         throw ServerException(response.data['message'] ?? 'Failed to get property');
       }
-    } on ApiException catch (e) {
+    } on api.ApiException catch (e) {
       throw ServerException(e.message);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to fetch property');
@@ -129,7 +130,7 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
       } else {
         throw ServerException(response.data['message'] ?? 'Failed to get property details');
       }
-    } on ApiException catch (e) {
+    } on api.ApiException catch (e) {
       throw ServerException(e.message);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to fetch property details');
@@ -166,7 +167,7 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
       } else {
         throw ServerException(response.data['message'] ?? 'Failed to create property');
       }
-    } on ApiException catch (e) {
+    } on api.ApiException catch (e) {
       throw ServerException(e.message);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to create property');
@@ -199,7 +200,7 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
       );
       
       return response.data['success'] == true;
-    } on ApiException catch (e) {
+    } on api.ApiException catch (e) {
       throw ServerException(e.message);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to update property');
@@ -216,7 +217,7 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
       // إذا أعاد الخادم رسالة فشل بأسباب الارتباطات
       final msg = (response.data is Map) ? response.data['message'] : null;
       throw ServerException(msg ?? 'Failed to delete property');
-    } on ApiException catch (e) {
+    } on api.ApiException catch (e) {
       throw ServerException(e.message);
     } on DioException catch (e) {
       final data = e.response?.data;
@@ -230,7 +231,7 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
     try {
       final response = await apiClient.post('$_baseEndpoint/$propertyId/approve');
       return response.data['success'] == true;
-    } on ApiException catch (e) {
+    } on api.ApiException catch (e) {
       throw ServerException(e.message);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to approve property');
@@ -242,7 +243,7 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
     try {
       final response = await apiClient.post('$_baseEndpoint/$propertyId/reject');
       return response.data['success'] == true;
-    } on ApiException catch (e) {
+    } on api.ApiException catch (e) {
       throw ServerException(e.message);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to reject property');
@@ -269,7 +270,7 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
         response.data,
         (json) => PropertyModel.fromJson(json as Map<String, dynamic>),
       );
-    } on ApiException catch (e) {
+    } on api.ApiException catch (e) {
       throw ServerException(e.message);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to fetch pending properties');
@@ -284,7 +285,7 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
         data: {'sectionIds': sectionIds},
       );
       return response.data['success'] == true;
-    } on ApiException catch (e) {
+    } on api.ApiException catch (e) {
       throw ServerException(e.message);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to add property to sections');
