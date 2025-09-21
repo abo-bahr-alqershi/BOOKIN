@@ -25,6 +25,7 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
   List<int> _selectedStarRatings = [];
   bool? _isApproved;
   bool? _hasActiveBookings;
+  final TextEditingController _searchController = TextEditingController();
   
   @override
   Widget build(BuildContext context) {
@@ -35,6 +36,8 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
         runSpacing: 12,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
+          // Search field (identity matching Bookings filters)
+          SizedBox(width: 260, child: _buildSearchField()),
           // Property Type Filter
           SizedBox(width: 220, child: _buildPropertyTypeFilter()),
           
@@ -53,6 +56,46 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
           // Apply Button
           _buildApplyButton(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSearchField() {
+    return Container(
+      height: 40,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withValues(alpha: 0.3),
+            AppTheme.darkCard.withValues(alpha: 0.2),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.2),
+        ),
+      ),
+      child: TextField(
+        controller: _searchController,
+        style: AppTextStyles.bodyMedium.copyWith(
+          color: AppTheme.textWhite,
+          fontSize: 13,
+        ),
+        decoration: InputDecoration(
+          hintText: 'بحث بالاسم أو المدينة...',
+          hintStyle: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textMuted,
+            fontSize: 13,
+          ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: AppTheme.textMuted,
+            size: 18,
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        ),
+        onSubmitted: (_) => _applyFilters(),
       ),
     );
   }
@@ -325,6 +368,7 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
     return GestureDetector(
       onTap: () {
         widget.onFilterChanged({
+          'searchTerm': _searchController.text.trim().isEmpty ? null : _searchController.text.trim(),
           'propertyTypeId': _selectedPropertyTypeId,
           'minPrice': _priceRange.start,
           'maxPrice': _priceRange.end,

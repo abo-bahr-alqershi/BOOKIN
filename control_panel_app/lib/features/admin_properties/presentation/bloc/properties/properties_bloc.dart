@@ -219,6 +219,7 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
       GetAllPropertiesParams(
         pageNumber: 1,
         pageSize: 20,
+        searchTerm: event.searchTerm,
         propertyTypeId: event.propertyTypeId,
         minPrice: event.minPrice,
         maxPrice: event.maxPrice,
@@ -242,6 +243,8 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
         activeFilters: {
           if (event.propertyTypeId != null)
             'propertyTypeId': event.propertyTypeId!,
+          if (event.searchTerm != null && event.searchTerm!.isNotEmpty)
+            'searchTerm': event.searchTerm!,
           if (event.minPrice != null) 'minPrice': event.minPrice!,
           if (event.maxPrice != null) 'maxPrice': event.maxPrice!,
           if (event.amenityIds != null) 'amenityIds': event.amenityIds!,

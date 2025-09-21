@@ -154,6 +154,7 @@ class RejectPropertyEvent extends PropertiesEvent {
 }
 
 class FilterPropertiesEvent extends PropertiesEvent {
+  final String? searchTerm;
   final String? propertyTypeId;
   final double? minPrice;
   final double? maxPrice;
@@ -164,6 +165,7 @@ class FilterPropertiesEvent extends PropertiesEvent {
   final bool? hasActiveBookings;
   
   const FilterPropertiesEvent({
+    this.searchTerm,
     this.propertyTypeId,
     this.minPrice,
     this.maxPrice,
@@ -176,7 +178,7 @@ class FilterPropertiesEvent extends PropertiesEvent {
   
   @override
   List<Object?> get props => [
-    propertyTypeId, minPrice, maxPrice,
+    searchTerm, propertyTypeId, minPrice, maxPrice,
     amenityIds, starRatings, minAverageRating, isApproved, hasActiveBookings,
   ];
 }
