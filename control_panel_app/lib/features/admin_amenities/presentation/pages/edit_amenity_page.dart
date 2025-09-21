@@ -82,6 +82,21 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
       _descriptionController.text = initial.description;
       _selectedIcon = initial.icon;
     }
+    // If no initial amenity provided, attempt to load from bloc list after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.initialAmenity == null) {
+        try {
+          final bloc = context.read<AmenitiesBloc>();
+          final st = bloc.state;
+          if (st is! AmenitiesLoaded) {
+            bloc.add(const LoadAmenitiesEvent(pageNumber: 1, pageSize: 1000));
+          } else {
+            // Try prefill from already loaded state
+            _tryPrefillFromState(st);
+          }
+        } catch (_) {}
+      }
+    });
   }
 
   @override
@@ -104,6 +119,8 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
           });
         } else if (state is AmenitiesError) {
           _showErrorMessage(state.message);
+        } else if (state is AmenitiesLoaded && widget.initialAmenity == null) {
+          _tryPrefillFromState(state);
         }
       },
       child: Scaffold(
@@ -132,6 +149,19 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
         ),
       ),
     );
+  }
+
+  void _tryPrefillFromState(AmenitiesLoaded state) {
+    try {
+      final found = state.amenities.items.firstWhere((a) => a.id == widget.amenityId);
+      setState(() {
+        _nameController.text = found.name;
+        _descriptionController.text = found.description;
+        _selectedIcon = found.icon;
+      });
+    } catch (_) {
+      // not found, ignore
+    }
   }
 
   Widget _buildAnimatedBackground() {
