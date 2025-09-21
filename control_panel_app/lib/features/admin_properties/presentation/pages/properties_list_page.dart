@@ -153,7 +153,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
 
               // Content Area - المحتوى الرئيسي
               SliverFillRemaining(
-                hasScrollBody: true,
+                hasScrollBody: false,
                 child: FadeTransition(
                   opacity: _contentFadeAnimation,
                   child: SlideTransition(
