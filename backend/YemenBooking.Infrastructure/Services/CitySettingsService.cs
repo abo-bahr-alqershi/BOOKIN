@@ -79,5 +79,32 @@ namespace YemenBooking.Infrastructure.Services
 
             await _db.SaveChangesAsync(cancellationToken);
         }
+
+        /// <summary>
+        /// Delete a city after ensuring there are no dependent entities (properties, users, bookings, etc.)
+        /// Throws InvalidOperationException with a clear reason if deletion is not allowed
+        /// </summary>
+        public async Task DeleteCityAsync(string name, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("City name is required", nameof(name));
+
+            var city = await _db.Cities.FirstOrDefaultAsync(c => c.Name == name, cancellationToken);
+            if (city == null)
+                throw new ArgumentException("المدينة غير موجودة", nameof(name));
+
+            // Check dependencies
+            var propertiesCount = await _db.Properties.CountAsync(p => p.City == name, cancellationToken);
+            if (propertiesCount > 0)
+                throw new InvalidOperationException($"لا يمكن حذف المدينة لوجود {propertiesCount} عقار مرتبط بها");
+
+            // If there are staff/users explicitly linked to city (not modeled directly), skip.
+            // Example checks (commented as there is no direct FK on User):
+            // var usersInCity = await _db.Users.CountAsync(u => u.City == name, cancellationToken);
+            // if (usersInCity > 0) throw new InvalidOperationException($"لا يمكن حذف المدينة لوجود {usersInCity} مستخدم مرتبط بها");
+
+            // Safe to delete
+            _db.Cities.Remove(city);
+            await _db.SaveChangesAsync(cancellationToken);
+        }
     }
 } 

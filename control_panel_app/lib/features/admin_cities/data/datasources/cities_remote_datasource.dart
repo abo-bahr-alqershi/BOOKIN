@@ -133,10 +133,16 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   @override
   Future<bool> deleteCity(String name) async {
     try {
-      // حذف عبر إعادة حفظ القائمة بدون هذه المدينة
-      final existing = await getCities();
-      final updated = existing.where((c) => c.name != name).toList();
-      return await saveCities(updated);
+      final response = await apiClient.delete('$_basePath/${Uri.encodeComponent(name)}');
+      if (response.data is Map<String, dynamic>) {
+        final map = response.data as Map<String, dynamic>;
+        if (map['success'] == true || map['isSuccess'] == true) return true;
+        // Surface backend reason if conflict
+        if (response.statusCode == 409 || map['errorCode'] == 'CITY_DELETE_CONFLICT') {
+          throw ApiException(message: map['message'] ?? 'Deletion conflict');
+        }
+      }
+      return response.statusCode == 200 || response.statusCode == 204;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
