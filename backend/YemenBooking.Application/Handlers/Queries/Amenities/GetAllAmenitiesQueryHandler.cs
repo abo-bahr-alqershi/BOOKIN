@@ -48,6 +48,14 @@ namespace YemenBooking.Application.Handlers.Queries.Amenities
                     .ToList();
             }
 
+            // Filter by property type if provided
+            if (request.PropertyTypeId.HasValue)
+            {
+                var pta = await _amenityRepository.GetAmenitiesByPropertyTypeAsync(request.PropertyTypeId.Value, cancellationToken);
+                var amenityIdsForType = pta.Select(x => x.AmenityId).ToHashSet();
+                amenities = amenities.Where(a => amenityIdsForType.Contains(a.Id)).ToList();
+            }
+
             // Apply filters for related property and extra cost
             if (request.PropertyId.HasValue)
             {

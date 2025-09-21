@@ -13,6 +13,7 @@ abstract class AmenitiesRepository {
     String? propertyId,
     bool? isAssigned,
     bool? isFree,
+    String? propertyTypeId,
   });
   Future<Either<Failure, Amenity>> getAmenityById(String amenityId);
   Future<Either<Failure, String>> createAmenity(Map<String, dynamic> data);

@@ -26,6 +26,7 @@ class AmenitiesRepositoryImpl implements AmenitiesRepository {
     String? propertyId,
     bool? isAssigned,
     bool? isFree,
+    String? propertyTypeId,
   }) async {
     if (await networkInfo.isConnected) {
       try {
@@ -36,6 +37,7 @@ class AmenitiesRepositoryImpl implements AmenitiesRepository {
           propertyId: propertyId,
           isAssigned: isAssigned,
           isFree: isFree,
+          propertyTypeId: propertyTypeId,
         );
         return Right(result as PaginatedResult<Amenity>);
       } on ServerException catch (e) {

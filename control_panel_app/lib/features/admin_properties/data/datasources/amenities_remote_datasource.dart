@@ -15,6 +15,7 @@ abstract class AmenitiesRemoteDataSource {
     String? propertyId,
     bool? isAssigned,
     bool? isFree,
+    String? propertyTypeId,
   });
   Future<AmenityModel> getAmenityById(String amenityId);
   Future<String> createAmenity(Map<String, dynamic> data);
@@ -40,6 +41,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
     String? propertyId,
     bool? isAssigned,
     bool? isFree,
+    String? propertyTypeId,
   }) async {
     try {
       final queryParams = <String, dynamic>{
@@ -49,6 +51,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
         if (propertyId != null) 'propertyId': propertyId,
         if (isAssigned != null) 'isAssigned': isAssigned,
         if (isFree != null) 'isFree': isFree,
+        if (propertyTypeId != null) 'propertyTypeId': propertyTypeId,
       };
 
       final response = await apiClient.get(

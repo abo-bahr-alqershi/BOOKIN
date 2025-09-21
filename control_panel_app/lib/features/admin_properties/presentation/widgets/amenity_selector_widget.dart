@@ -14,12 +14,14 @@ class AmenitySelectorWidget extends StatefulWidget {
   final List<String> selectedAmenities;
   final Function(List<String>) onAmenitiesChanged;
   final bool isReadOnly;
+  final String? propertyTypeId;
 
   const AmenitySelectorWidget({
     super.key,
     required this.selectedAmenities,
     required this.onAmenitiesChanged,
     this.isReadOnly = false,
+    this.propertyTypeId,
   });
 
   @override
@@ -31,6 +33,10 @@ class _AmenitySelectorWidgetState extends State<AmenitySelectorWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // Require property type selection first
+    if (widget.propertyTypeId == null || widget.propertyTypeId!.isEmpty) {
+      return _buildSelectPropertyTypeHint();
+    }
     return BlocBuilder<AmenitiesBloc, AmenitiesState>(
       builder: (context, state) {
         if (state is AmenitiesLoading) {
@@ -49,18 +55,45 @@ class _AmenitySelectorWidgetState extends State<AmenitySelectorWidget> {
           return _buildAmenitiesGrid(state.amenities);
         }
 
-        // Initial state - request load only if not already loading
+        // Initial state - request filtered load by property type
         if (state is AmenitiesInitial) {
-          // سنطلب التحميل مرة واحدة فقط
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.read<AmenitiesBloc>().add(
-                  const LoadAmenitiesEvent(pageSize: 100), // جلب كل المرافق
-                );
+            if (mounted && widget.propertyTypeId != null && widget.propertyTypeId!.isNotEmpty) {
+              context.read<AmenitiesBloc>().add(
+                    LoadAmenitiesEventWithType(
+                      propertyTypeId: widget.propertyTypeId!,
+                      pageSize: 100,
+                    ),
+                  );
+            }
           });
         }
 
         return _buildLoadingState();
       },
+    );
+  }
+
+  Widget _buildSelectPropertyTypeHint() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.darkSurface.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.darkBorder.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.category_rounded, color: AppTheme.textMuted),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'اختر نوع العقار أولاً لعرض المرافق المتاحة له فقط',
+              style: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
