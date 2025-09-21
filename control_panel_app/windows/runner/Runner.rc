@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.yemenbooking.app" "\0"
+            VALUE "CompanyName", "com.bookncp.app" "\0"
             VALUE "FileDescription", "bookn_cp_app" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "bookn_cp_app" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.yemenbooking.app. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 com.bookncp.app. All rights reserved." "\0"
             VALUE "OriginalFilename", "bookn_cp_app.exe" "\0"
             VALUE "ProductName", "bookn_cp_app" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
