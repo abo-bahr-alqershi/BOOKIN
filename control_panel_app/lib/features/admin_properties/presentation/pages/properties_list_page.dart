@@ -14,6 +14,7 @@ import '../bloc/properties/properties_bloc.dart';
 import '../widgets/futuristic_property_table.dart';
 import '../widgets/property_filters_widget.dart';
 import '../widgets/property_stats_card.dart';
+import 'package:bookn_cp_app/core/widgets/loading_widget.dart';
 
 class PropertiesListPage extends StatefulWidget {
   const PropertiesListPage({super.key});
@@ -40,6 +41,47 @@ class _PropertiesListPageState extends State<PropertiesListPage>
   final ScrollController _scrollController = ScrollController();
   bool _showFilters = false;
   String _selectedView = 'table'; // grid, table, map
+  bool _isDeleting = false;
+
+  void _showDeletingDialog({String message = 'جاري حذف العقار...'}) {
+    if (_isDeleting) return;
+    _isDeleting = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black87,
+      builder: (dialogContext) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppTheme.primaryBlue.withOpacity(0.2),
+              ),
+            ),
+            child: LoadingWidget(
+              type: LoadingType.futuristic,
+              message: message,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _dismissDeletingDialog() {
+    if (_isDeleting) {
+      _isDeleting = false;
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -125,7 +167,39 @@ class _PropertiesListPageState extends State<PropertiesListPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<PropertiesBloc, PropertiesState>(
+      listener: (context, state) {
+        if (state is PropertyDeleting) {
+          _showDeletingDialog();
+        } else if (state is PropertyDeleted) {
+          _dismissDeletingDialog();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('تم حذف العقار بنجاح'),
+              backgroundColor: AppTheme.success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        } else if (state is PropertiesError && _isDeleting) {
+          _dismissDeletingDialog();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('فشل الحذف: ${state.message}'),
+              backgroundColor: AppTheme.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: Stack(
         children: [
@@ -176,6 +250,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
             child: _buildFloatingActionButton(),
           ),
         ],
+      ),
       ),
     );
   }

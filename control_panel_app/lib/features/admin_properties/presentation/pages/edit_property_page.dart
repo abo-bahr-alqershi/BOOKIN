@@ -20,6 +20,7 @@ import 'package:bookn_cp_app/core/usecases/usecase.dart';
 import 'package:bookn_cp_app/features/admin_currencies/domain/usecases/get_currencies_usecase.dart';
 import 'package:bookn_cp_app/features/admin_cities/domain/usecases/get_cities_usecase.dart'
     as ci_uc;
+import 'package:bookn_cp_app/core/widgets/loading_widget.dart';
 import '../../domain/entities/property.dart';
 import '../../domain/entities/property_type.dart';
 import '../../domain/entities/property_image.dart'; // إضافة استيراد
@@ -104,6 +105,47 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
   bool _isNavigating = false;
   int _currentStep = 0;
   final GlobalKey<PropertyImageGalleryState> _galleryKey = GlobalKey();
+  bool _isDeleting = false;
+
+  void _showDeletingDialog({String message = 'جاري حذف العقار...'}) {
+    if (_isDeleting) return;
+    _isDeleting = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black87,
+      builder: (dialogContext) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppTheme.primaryBlue.withOpacity(0.2),
+              ),
+            ),
+            child: LoadingWidget(
+              type: LoadingType.futuristic,
+              message: message,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _dismissDeletingDialog() {
+    if (_isDeleting) {
+      _isDeleting = false;
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -225,7 +267,20 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
       onWillPop: () async {
         return !_isNavigating;
       },
-      child: Scaffold(
+      child: BlocListener<PropertiesBloc, PropertiesState>(
+        listener: (context, state) {
+          if (state is PropertyDeleting) {
+            _showDeletingDialog();
+          } else if (state is PropertyDeleted) {
+            _dismissDeletingDialog();
+            _showSnackBar('تم حذف العقار بنجاح');
+            _navigateBack();
+          } else if (state is PropertiesError && _isDeleting) {
+            _dismissDeletingDialog();
+            _showSnackBar('فشل الحذف: ${state.message}', isError: true);
+          }
+        },
+        child: Scaffold(
         backgroundColor: AppTheme.darkBackground,
         body: Stack(
           children: [
@@ -291,6 +346,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
               ),
             ),
           ],
+        ),
         ),
       ),
     );
