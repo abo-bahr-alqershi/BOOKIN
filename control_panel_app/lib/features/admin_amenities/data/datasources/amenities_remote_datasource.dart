@@ -116,17 +116,22 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
     try {
       final response = await apiClient.delete('$_baseEndpoint/$amenityId');
 
-      if (response.data['isSuccess'] == true || response.data['success'] == true) {
-        return true;
-      } else {
-        throw ServerException(
-           response.data['message'] ?? 'Failed to delete amenity',
-        );
+      if (response.data is Map<String, dynamic>) {
+        final map = response.data as Map<String, dynamic>;
+        if (map['isSuccess'] == true || map['success'] == true) return true;
+        // Surface backend reason on conflict
+        if (response.statusCode == 409 || map['errorCode'] == 'AMENITY_DELETE_CONFLICT') {
+          throw ServerException(map['message'] ?? 'Deletion conflict');
+        }
       }
+      if (response.statusCode == 200 || response.statusCode == 204) return true;
+      throw ServerException(response.data['message'] ?? 'Failed to delete amenity');
     } on DioException catch (e) {
-      throw ServerException(
-         e.response?.data['message'] ?? 'Network error occurred',
-      );
+      final data = e.response?.data;
+      if (e.response?.statusCode == 409 && data is Map<String, dynamic>) {
+        throw ServerException(data['message'] ?? 'Deletion conflict');
+      }
+      throw ServerException(e.response?.data['message'] ?? 'Network error occurred');
     }
   }
 

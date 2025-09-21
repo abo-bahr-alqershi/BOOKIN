@@ -47,6 +47,11 @@ namespace YemenBooking.Api.Controllers.Admin
         {
             var command = new DeleteAmenityCommand { AmenityId = amenityId };
             var result = await _mediator.Send(command);
+            // If failed due to reference checks, return 409 with reason
+            if (!result.IsSuccess && (result.Message?.Contains("لا يمكن حذف المرفق") == true))
+            {
+                return Conflict(ResultDto.Failure(result.Message, errorCode: "AMENITY_DELETE_CONFLICT"));
+            }
             return Ok(result);
         }
 
