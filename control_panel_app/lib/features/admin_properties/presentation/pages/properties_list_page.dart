@@ -49,25 +49,15 @@ class _PropertiesListPageState extends State<PropertiesListPage>
     showDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black87,
-      builder: (dialogContext) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.darkCard.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: AppTheme.primaryBlue.withOpacity(0.2),
-              ),
-            ),
-            child: LoadingWidget(
-              type: LoadingType.futuristic,
-              message: message,
-            ),
+      barrierColor: Colors.transparent,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        elevation: 0,
+        child: Center(
+          child: LoadingWidget(
+            type: LoadingType.futuristic,
+            message: message,
           ),
         ),
       ),
