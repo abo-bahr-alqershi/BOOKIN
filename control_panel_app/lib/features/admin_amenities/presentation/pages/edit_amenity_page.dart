@@ -35,6 +35,7 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
   String _selectedIcon = 'star_rounded';
   String? _selectedPropertyTypeId; // optional selection for assignment after update
   bool _isDefaultForType = false;
+  bool _isPrefillReady = false;
 
   @override
   void initState() {
@@ -78,9 +79,12 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
   void _prefill() {
     final initial = widget.initialAmenity;
     if (initial != null) {
-      _nameController.text = initial.name;
-      _descriptionController.text = initial.description;
-      _selectedIcon = initial.icon;
+      setState(() {
+        _nameController.text = initial.name;
+        _descriptionController.text = initial.description;
+        _selectedIcon = initial.icon;
+        _isPrefillReady = true;
+      });
     }
     // If no initial amenity provided, attempt to load from bloc list after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -137,7 +141,7 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
                       opacity: _fadeAnimation,
                       child: SlideTransition(
                         position: _slideAnimation,
-                        child: _buildForm(),
+                        child: _isPrefillReady ? _buildForm() : _buildFormLoading(),
                       ),
                     ),
                   ),
@@ -158,10 +162,34 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
         _nameController.text = found.name;
         _descriptionController.text = found.description;
         _selectedIcon = found.icon;
+        _isPrefillReady = true;
       });
     } catch (_) {
       // not found, ignore
     }
+  }
+
+  Widget _buildFormLoading() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 32,
+            height: 32,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppTheme.primaryBlue,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'جاري تحميل بيانات المرفق...',
+            style: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildAnimatedBackground() {
