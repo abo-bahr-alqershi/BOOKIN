@@ -12,6 +12,7 @@ class FuturisticReviewCard extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback onApprove;
   final VoidCallback onDelete;
+  final bool isApproving;
 
   const FuturisticReviewCard({
     super.key,
@@ -19,6 +20,7 @@ class FuturisticReviewCard extends StatefulWidget {
     required this.onTap,
     required this.onApprove,
     required this.onDelete,
+    this.isApproving = false,
   });
 
   @override
@@ -359,11 +361,13 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
                                   Row(
                                     children: [
                                       if (widget.review.isPending)
-                                        _buildActionButton(
-                                          icon: Icons.check,
-                                          color: AppTheme.success,
-                                          onTap: widget.onApprove,
-                                        ),
+                                        (widget.isApproving
+                                            ? _buildLoadingPill(color: AppTheme.success)
+                                            : _buildActionButton(
+                                                icon: Icons.check,
+                                                color: AppTheme.success,
+                                                onTap: widget.onApprove,
+                                              )),
                                       const SizedBox(width: 8),
                                       _buildActionButton(
                                         icon: Icons.delete_outline,
@@ -437,6 +441,28 @@ class _FuturisticReviewCardState extends State<FuturisticReviewCard>
           icon,
           size: 16,
           color: color,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingPill({required Color color}) {
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: color.withOpacity(0.1),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 0.5,
+        ),
+      ),
+      child: SizedBox(
+        width: 16,
+        height: 16,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(color),
         ),
       ),
     );

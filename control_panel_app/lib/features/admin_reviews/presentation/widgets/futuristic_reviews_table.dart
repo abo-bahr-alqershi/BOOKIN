@@ -12,6 +12,7 @@ class FuturisticReviewsTable extends StatefulWidget {
   final Function(Review) onReviewTap;
   final Function(Review) onApproveTap;
   final Function(Review) onDeleteTap;
+  final Set<String> approvingReviewIds;
   
   const FuturisticReviewsTable({
     super.key,
@@ -19,6 +20,7 @@ class FuturisticReviewsTable extends StatefulWidget {
     required this.onReviewTap,
     required this.onApproveTap,
     required this.onDeleteTap,
+    this.approvingReviewIds = const <String>{},
   });
   
   @override
@@ -249,6 +251,7 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
   
   Widget _buildTableRow(Review review, int index, bool isDesktop) {
     final isHovered = _hoveredIndex == index;
+    final bool isApproving = widget.approvingReviewIds.contains(review.id);
     
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredIndex = index),
@@ -411,11 +414,13 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       if (review.isPending)
-                        _buildActionButton(
-                          icon: Icons.check,
-                          color: AppTheme.success,
-                          onTap: () => widget.onApproveTap(review),
-                        ),
+                        (isApproving
+                            ? _buildLoadingPill(color: AppTheme.success)
+                            : _buildActionButton(
+                                icon: Icons.check,
+                                color: AppTheme.success,
+                                onTap: () => widget.onApproveTap(review),
+                              )),
                       const SizedBox(width: 8),
                       _buildActionButton(
                         icon: Icons.delete_outline,
@@ -504,6 +509,24 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
             size: 16,
             color: color,
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingPill({required Color color}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: color.withOpacity(0.1),
+      ),
+      child: SizedBox(
+        width: 16,
+        height: 16,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(color),
         ),
       ),
     );

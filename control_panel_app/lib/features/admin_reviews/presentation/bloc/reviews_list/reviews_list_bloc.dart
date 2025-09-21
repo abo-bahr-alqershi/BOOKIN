@@ -57,6 +57,7 @@ class ReviewsListBloc extends Bloc<ReviewsListEvent, ReviewsListState> {
           filteredReviews: reviews,
           pendingCount: reviews.where((r) => r.isPending).length,
           averageRating: _calculateAverageRating(reviews),
+          approvingReviewIds: const <String>{},
         ));
       },
     );
@@ -102,11 +103,20 @@ class ReviewsListBloc extends Bloc<ReviewsListEvent, ReviewsListState> {
   ) async {
     if (state is ReviewsListLoaded) {
       final currentState = state as ReviewsListLoaded;
-      
+      // Mark this review as approving
+      final Set<String> newApproving = Set<String>.from(currentState.approvingReviewIds)
+        ..add(event.reviewId);
+      emit(currentState.copyWith(approvingReviewIds: newApproving));
+
       final result = await approveReview(event.reviewId);
       
       result.fold(
-        (failure) => emit(ReviewsListError(failure.message)),
+        (failure) {
+          // Remove from approving on failure and surface error
+          final Set<String> cleaned = Set<String>.from(newApproving)..remove(event.reviewId);
+          emit(currentState.copyWith(approvingReviewIds: cleaned));
+          emit(ReviewsListError(failure.message));
+        },
         (_) {
           final updatedReviews = currentState.reviews.map((review) {
             if (review.id == event.reviewId) {
@@ -133,10 +143,12 @@ class ReviewsListBloc extends Bloc<ReviewsListEvent, ReviewsListState> {
           }).toList();
           
           _allReviews = updatedReviews;
+          final Set<String> cleaned = Set<String>.from(newApproving)..remove(event.reviewId);
           emit(currentState.copyWith(
             reviews: updatedReviews,
             filteredReviews: updatedReviews,
             pendingCount: updatedReviews.where((r) => r.isPending).length,
+            approvingReviewIds: cleaned,
           ));
         },
       );
