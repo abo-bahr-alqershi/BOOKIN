@@ -162,11 +162,11 @@ class DeepLinkService {
       ),
       uriPrefix: 'https://yemenbooking.page.link',
       androidParameters: const AndroidParameters(
-        packageName: 'com.yemenbooking.app',
+        packageName: 'com.bookncp.app',
         minimumVersion: 1,
       ),
       iosParameters: const IOSParameters(
-        bundleId: 'com.yemenbooking.app',
+        bundleId: 'com.bookncp.app',
         minimumVersion: '1.0.0',
         appStoreId: '123456789',
       ),
