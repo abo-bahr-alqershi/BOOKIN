@@ -97,8 +97,8 @@ namespace YemenBooking.Application.Handlers.Commands.Units
                     {
                         try { await _fileStorageService.DeleteFileAsync(img.Url, cancellationToken); } catch { /* best-effort */ }
                     }
-                    await _propertyImageRepository.DeletePropertyImageAsync(img.Id, cancellationToken);
                 }
+                await _propertyImageRepository.HardDeleteByUnitIdAsync(request.UnitId, cancellationToken);
             }
             catch (Exception ex)
             {
