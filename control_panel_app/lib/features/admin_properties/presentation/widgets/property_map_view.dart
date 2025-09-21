@@ -1,6 +1,8 @@
 // lib/features/admin_properties/presentation/widgets/property_map_view.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:ui';
@@ -69,6 +71,13 @@ class _PropertyMapViewState extends State<PropertyMapView> {
               _setMapStyle();
             },
             markers: _markers,
+            zoomGesturesEnabled: true,
+            scrollGesturesEnabled: true,
+            rotateGesturesEnabled: false,
+            tiltGesturesEnabled: false,
+            gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+              Factory<EagerGestureRecognizer>(() => EagerGestureRecognizer()),
+            },
             onTap: widget.isReadOnly
                 ? null
                 : (position) {
