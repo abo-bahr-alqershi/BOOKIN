@@ -210,11 +210,18 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
   Future<bool> deleteProperty(String propertyId) async {
     try {
       final response = await apiClient.delete('$_baseEndpoint/$propertyId');
-      return response.data['success'] == true;
+      if (response.data is Map && response.data['success'] == true) {
+        return true;
+      }
+      // إذا أعاد الخادم رسالة فشل بأسباب الارتباطات
+      final msg = (response.data is Map) ? response.data['message'] : null;
+      throw ServerException(msg ?? 'Failed to delete property');
     } on ApiException catch (e) {
       throw ServerException(e.message);
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to delete property');
+      final data = e.response?.data;
+      final message = data is Map ? (data['message'] ?? data['error']) : e.message;
+      throw ServerException(message ?? 'Failed to delete property');
     }
   }
   

@@ -113,6 +113,18 @@ namespace YemenBooking.Infrastructure.Repositories
                 .CountAsync(b => b.Unit.PropertyId == propertyId, cancellationToken);
         }
 
+        public async Task<int> GetUnitsCountAsync(Guid propertyId, CancellationToken cancellationToken = default)
+            => await _context.Set<Unit>().CountAsync(u => u.PropertyId == propertyId, cancellationToken);
+
+        public async Task<int> GetServicesCountAsync(Guid propertyId, CancellationToken cancellationToken = default)
+            => await _context.Set<PropertyService>().CountAsync(s => s.PropertyId == propertyId, cancellationToken);
+
+        public async Task<int> GetAmenitiesCountAsync(Guid propertyId, CancellationToken cancellationToken = default)
+            => await _context.Set<PropertyAmenity>().CountAsync(a => a.PropertyId == propertyId, cancellationToken);
+
+        public async Task<int> GetPaymentsCountAsync(Guid propertyId, CancellationToken cancellationToken = default)
+            => await _context.Set<Payment>().CountAsync(p => p.Booking.Unit.PropertyId == propertyId, cancellationToken);
+
         public async Task<IEnumerable<PropertyAmenity>> GetPropertyAmenitiesAsync(Guid propertyId, CancellationToken cancellationToken = default)
             => (await _context.Set<PropertyAmenity>().Where(a => a.PropertyId == propertyId).ToListAsync(cancellationToken));
 

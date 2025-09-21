@@ -54,6 +54,8 @@ namespace YemenBooking.Api.Controllers.Admin
         {
             var command = new DeletePropertyCommand { PropertyId = propertyId };
             var result = await _mediator.Send(command);
+            if (!result.Success)
+                return Conflict(result);
             return Ok(result);
         }
 

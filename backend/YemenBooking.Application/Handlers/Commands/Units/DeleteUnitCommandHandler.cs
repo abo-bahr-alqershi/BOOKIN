@@ -70,10 +70,10 @@ namespace YemenBooking.Application.Handlers.Commands.Units
             if (_currentUserService.Role != "Admin" && property.OwnerId != _currentUserService.UserId)
                 return ResultDto<bool>.Failed("غير مصرح لك بحذف هذه الوحدة");
 
-            // التحقق من عدم وجود حجوزات نشطة أو مستقبلية
-            bool hasActive = await _unitRepository.CheckActiveBookingsAsync(request.UnitId, cancellationToken);
+            // التحقق من عدم وجود حجوزات نشطة أو مستقبلية أو مدفوعات مرتبطة بالحجوزات
+            var hasActive = await _unitRepository.CheckActiveBookingsAsync(request.UnitId, cancellationToken);
             if (hasActive)
-                return ResultDto<bool>.Failed("لا يمكن حذف الوحدة لوجود حجوزات نشطة أو مستقبلية");
+                return ResultDto<bool>.Failed("لا يمكن حذف الوحدة لوجود حجوزات نشطة أو مستقبلية مرتبطة بها");
 
             // جلب قيم الحقول الديناميكية قبل الحذف
             var dynamicValues = await _valueRepository.GetValuesByUnitIdAsync(request.UnitId, cancellationToken);

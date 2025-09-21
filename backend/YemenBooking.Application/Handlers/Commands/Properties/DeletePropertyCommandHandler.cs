@@ -54,10 +54,26 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
             if (_currentUserService.Role != "Admin" && property.OwnerId != _currentUserService.UserId)
                 return ResultDto<bool>.Failed("غير مصرح لك بحذف هذا الكيان");
 
-            // التحقق من عدم وجود حجوزات نشطة أو مستقبلية
-            bool hasActiveBookings = await _propertyRepository.CheckActiveBookingsAsync(request.PropertyId, cancellationToken);
+            // فحوصات الارتباطات الحرجة قبل الحذف
+            var hasActiveBookings = await _propertyRepository.CheckActiveBookingsAsync(request.PropertyId, cancellationToken);
             if (hasActiveBookings)
-                return ResultDto<bool>.Failed("لا يمكن حذف الكيان لوجود حجوزات نشطة أو مستقبلية");
+                return ResultDto<bool>.Failed("لا يمكن حذف العقار لوجود حجوزات نشطة أو مستقبلية مرتبطة به أو بوحداته");
+
+            var unitsCount = await _propertyRepository.GetUnitsCountAsync(request.PropertyId, cancellationToken);
+            if (unitsCount > 0)
+                return ResultDto<bool>.Failed($"لا يمكن حذف العقار لوجود {unitsCount} وحدة مرتبطة به. يرجى حذف أو نقل الوحدات أولاً");
+
+            var servicesCount = await _propertyRepository.GetServicesCountAsync(request.PropertyId, cancellationToken);
+            if (servicesCount > 0)
+                return ResultDto<bool>.Failed($"لا يمكن حذف العقار لوجود {servicesCount} خدمة مرتبطة به. يرجى حذف الخدمات أولاً");
+
+            var amenitiesCount = await _propertyRepository.GetAmenitiesCountAsync(request.PropertyId, cancellationToken);
+            if (amenitiesCount > 0)
+                return ResultDto<bool>.Failed($"لا يمكن حذف العقار لوجود {amenitiesCount} مرافق مرتبطة به. يرجى إزالة الربط بالمرافق أولاً");
+
+            var paymentsCount = await _propertyRepository.GetPaymentsCountAsync(request.PropertyId, cancellationToken);
+            if (paymentsCount > 0)
+                return ResultDto<bool>.Failed($"لا يمكن حذف العقار لوجود {paymentsCount} مدفوعات مرتبطة بحجوزاته");
 
             var success = await _propertyRepository.DeletePropertyAsync(request.PropertyId, cancellationToken);
             if (!success)
