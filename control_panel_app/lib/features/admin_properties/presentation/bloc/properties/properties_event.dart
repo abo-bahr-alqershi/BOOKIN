@@ -18,7 +18,7 @@ class LoadPropertiesEvent extends PropertiesEvent {
   
   const LoadPropertiesEvent({
     this.pageNumber = 1,
-    this.pageSize = 10,
+    this.pageSize = 1000,
     this.sortBy,
     this.isAscending,
     this.isApproved,
