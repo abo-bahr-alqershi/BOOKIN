@@ -39,7 +39,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
   // State
   final ScrollController _scrollController = ScrollController();
   bool _showFilters = false;
-  String _selectedView = 'grid'; // grid, table, map
+  String _selectedView = 'table'; // grid, table, map
 
   @override
   void initState() {

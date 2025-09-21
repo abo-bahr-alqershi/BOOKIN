@@ -309,7 +309,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage>
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: const Icon(
-                CupertinoIcons.chevron_back,
+                CupertinoIcons.chevron_forward,
                 color: Colors.white,
                 size: 20,
               ),
