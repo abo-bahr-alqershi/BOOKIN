@@ -672,7 +672,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
         if (state is PropertiesLoaded) {
           switch (_selectedView) {
             case 'grid':
-              return _buildGridView(state);
+          return _buildGridView(state);
             case 'table':
               return Padding(
                 padding: const EdgeInsets.all(16),
@@ -680,14 +680,10 @@ class _PropertiesListPageState extends State<PropertiesListPage>
                   properties: state.properties,
                   onPropertyTap: (property) => _navigateToProperty(property.id),
                   onApprove: (propertyId) {
-                    context
-                        .read<PropertiesBloc>()
-                        .add(ApprovePropertyEvent(propertyId));
+                    _showApproveConfirmation(propertyId);
                   },
                   onReject: (propertyId) {
-                    context
-                        .read<PropertiesBloc>()
-                        .add(RejectPropertyEvent(propertyId));
+                    _showRejectConfirmation(propertyId);
                   },
                   onDelete: (propertyId) {
                     _showDeleteConfirmation(propertyId);
@@ -736,6 +732,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
             onTap: () => _navigateToProperty(property.id),
             onEdit: () => _navigateToEditProperty(property.id),
             onDelete: () => _showDeleteConfirmation(property.id),
+            onApprove: () => _showApproveConfirmation(property.id),
+            onReject: () => _showRejectConfirmation(property.id),
           );
         },
       ),
@@ -982,6 +980,226 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       ),
     );
   }
+
+  void _showApproveConfirmation(String propertyId) {
+    HapticFeedback.mediumImpact();
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: AppTheme.success.withOpacity(0.3),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.success.withOpacity(0.2),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppTheme.success.withOpacity(0.1),
+                  ),
+                  child: Icon(
+                    Icons.check_circle_outline,
+                    color: AppTheme.success,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'الموافقة على العقار؟',
+                  style: AppTextStyles.heading3.copyWith(
+                    color: AppTheme.textWhite,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'سيتم اعتماد هذا العقار. هل تريد المتابعة؟',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'إلغاء',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: AppTheme.textLight,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          context
+                              .read<PropertiesBloc>()
+                              .add(ApprovePropertyEvent(propertyId));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.success,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'موافقة',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showRejectConfirmation(String propertyId) {
+    HapticFeedback.mediumImpact();
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: AppTheme.error.withOpacity(0.3),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.error.withOpacity(0.2),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppTheme.error.withOpacity(0.1),
+                  ),
+                  child: Icon(
+                    Icons.highlight_off_rounded,
+                    color: AppTheme.error,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'رفض العقار؟',
+                  style: AppTextStyles.heading3.copyWith(
+                    color: AppTheme.textWhite,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'سيتم رفض هذا العقار. هل تريد المتابعة؟',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'إلغاء',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: AppTheme.textLight,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          context
+                              .read<PropertiesBloc>()
+                              .add(RejectPropertyEvent(propertyId));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.error,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'رفض',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // Property Grid Card Widget - تبقى كما هي
@@ -990,12 +1208,16 @@ class _PropertyGridCard extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onApprove;
+  final VoidCallback onReject;
 
   const _PropertyGridCard({
     required this.property,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
+    required this.onApprove,
+    required this.onReject,
   });
 
   @override
@@ -1032,6 +1254,8 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final bool isSmall = width < 500;
     return MouseRegion(
       onEnter: (_) {
         setState(() => _isHovered = true);
@@ -1194,29 +1418,20 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
                                   ),
                                 ),
                               ),
+                              // Actions Row (Edit/Delete) + Approve/Reject responsive placement
+                              const SizedBox(height: 8),
+                              if (!isSmall) _buildTopRightActions(),
+                              if (isSmall) _buildBottomActions(),
                             ],
                           ),
                         ),
 
-                        // Action Buttons (on hover)
-                        if (_isHovered)
+                        // Hover Actions on large screens only (kept for desktop aesthetics)
+                        if (_isHovered && !isSmall)
                           Positioned(
                             top: 8,
                             right: 8,
-                            child: Row(
-                              children: [
-                                _buildActionIcon(
-                                  Icons.edit_rounded,
-                                  widget.onEdit,
-                                ),
-                                const SizedBox(width: 4),
-                                _buildActionIcon(
-                                  Icons.delete_rounded,
-                                  widget.onDelete,
-                                  color: AppTheme.error,
-                                ),
-                              ],
-                            ),
+                            child: _buildTopRightActions(),
                           ),
                       ],
                     ),
@@ -1225,6 +1440,123 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopRightActions() {
+    return Row(
+      children: [
+        _buildActionIcon(
+          Icons.edit_rounded,
+          widget.onEdit,
+        ),
+        const SizedBox(width: 4),
+        _buildActionIcon(
+          Icons.delete_rounded,
+          widget.onDelete,
+          color: AppTheme.error,
+        ),
+        if (!widget.property.isApproved) ...[
+          const SizedBox(width: 4),
+          _buildActionIcon(
+            Icons.check_rounded,
+            widget.onApprove,
+            color: AppTheme.success,
+          ),
+          const SizedBox(width: 4),
+          _buildActionIcon(
+            Icons.close_rounded,
+            widget.onReject,
+            color: AppTheme.warning,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildBottomActions() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            _buildActionChip(
+              icon: Icons.edit_rounded,
+              label: 'تعديل',
+              onTap: widget.onEdit,
+            ),
+            const SizedBox(width: 6),
+            _buildActionChip(
+              icon: Icons.delete_rounded,
+              label: 'حذف',
+              onTap: widget.onDelete,
+              color: AppTheme.error,
+            ),
+          ],
+        ),
+        if (!widget.property.isApproved) ...[
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              _buildActionChip(
+                icon: Icons.check_rounded,
+                label: 'موافقة',
+                onTap: widget.onApprove,
+                color: AppTheme.success,
+              ),
+              const SizedBox(width: 6),
+              _buildActionChip(
+                icon: Icons.close_rounded,
+                label: 'رفض',
+                onTap: widget.onReject,
+                color: AppTheme.warning,
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildActionChip({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppTheme.darkBackground.withOpacity(0.8),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: (color ?? AppTheme.primaryBlue).withOpacity(0.3),
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color ?? AppTheme.primaryBlue),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: color ?? AppTheme.primaryBlue,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
