@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/error/exceptions.dart';
+import '../../../../core/network/api_exceptions.dart';
 import '../../../../core/models/paginated_result.dart';
 import '../models/amenity_model.dart';
 
@@ -69,14 +69,10 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
       if (response.data['isSuccess'] == true || response.data['success'] == true) {
         return (response.data['data'] ?? response.data['id'] ?? '').toString();
       } else {
-        throw ServerException(
-           response.data['message'] ?? 'Failed to create amenity',
-        );
+        throw ApiException(message: response.data['message'] ?? 'فشل إنشاء المرفق');
       }
     } on DioException catch (e) {
-      throw ServerException(
-         e.response?.data['message'] ?? 'Network error occurred',
-      );
+      throw ApiException.fromDioError(e);
     }
   }
 
@@ -100,14 +96,10 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
       if (response.data['isSuccess'] == true || response.data['success'] == true) {
         return true;
       } else {
-        throw ServerException(
-           response.data['message'] ?? 'Failed to update amenity',
-        );
+        throw ApiException(message: response.data['message'] ?? 'فشل تحديث المرفق');
       }
     } on DioException catch (e) {
-      throw ServerException(
-         e.response?.data['message'] ?? 'Network error occurred',
-      );
+      throw ApiException.fromDioError(e);
     }
   }
 
@@ -121,17 +113,13 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
         if (map['isSuccess'] == true || map['success'] == true) return true;
         // Surface backend reason on conflict
         if (response.statusCode == 409 || map['errorCode'] == 'AMENITY_DELETE_CONFLICT') {
-          throw ServerException(map['message'] ?? 'Deletion conflict');
+          throw ApiException(message: map['message'] ?? 'لا يمكن حذف المرفق لارتباطه ببيانات أخرى', statusCode: 409, code: 'AMENITY_DELETE_CONFLICT');
         }
       }
       if (response.statusCode == 200 || response.statusCode == 204) return true;
-      throw ServerException(response.data['message'] ?? 'Failed to delete amenity');
+      throw ApiException(message: response.data['message'] ?? 'فشل حذف المرفق');
     } on DioException catch (e) {
-      final data = e.response?.data;
-      if (e.response?.statusCode == 409 && data is Map<String, dynamic>) {
-        throw ServerException(data['message'] ?? 'Deletion conflict');
-      }
-      throw ServerException(e.response?.data['message'] ?? 'Network error occurred');
+      throw ApiException.fromDioError(e);
     }
   }
 
@@ -175,12 +163,10 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
           pageSize: root['pageSize'] ?? items.length,
         );
       } else {
-        throw const ServerException( 'Invalid response format');
+        throw ApiException(message: 'استجابة غير صالحة من الخادم');
       }
     } on DioException catch (e) {
-      throw ServerException(
-         e.response?.data['message'] ?? 'Network error occurred',
-      );
+      throw ApiException.fromDioError(e);
     }
   }
 
@@ -205,14 +191,10 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
       if (response.data['isSuccess'] == true) {
         return true;
       } else {
-        throw ServerException(
-           response.data['message'] ?? 'Failed to assign amenity',
-        );
+        throw ApiException(message: response.data['message'] ?? 'فشل إسناد المرفق');
       }
     } on DioException catch (e) {
-      throw ServerException(
-         e.response?.data['message'] ?? 'Network error occurred',
-      );
+      throw ApiException.fromDioError(e);
     }
   }
 
@@ -224,14 +206,10 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
       if (response.data['isSuccess'] == true || response.data['success'] == true) {
         return AmenityStatsModel.fromJson(response.data['data']);
       } else {
-        throw ServerException(
-           response.data['message'] ?? 'Failed to get stats',
-        );
+        throw ApiException(message: response.data['message'] ?? 'فشل جلب الإحصائيات');
       }
     } on DioException catch (e) {
-      throw ServerException(
-         e.response?.data['message'] ?? 'Network error occurred',
-      );
+      throw ApiException.fromDioError(e);
     }
   }
 
@@ -245,14 +223,10 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
       if (response.data['isSuccess'] == true || response.data['success'] == true) {
         return true;
       } else {
-        throw ServerException(
-           response.data['message'] ?? 'Failed to toggle status',
-        );
+        throw ApiException(message: response.data['message'] ?? 'فشل تغيير الحالة');
       }
     } on DioException catch (e) {
-      throw ServerException(
-         e.response?.data['message'] ?? 'Network error occurred',
-      );
+      throw ApiException.fromDioError(e);
     }
   }
 
@@ -269,15 +243,10 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
             .map((json) => AmenityModel.fromJson(json))
             .toList();
       } else {
-        throw ServerException(
-          
-              response.data['message'] ?? 'Failed to get popular amenities',
-        );
+        throw ApiException(message: response.data['message'] ?? 'فشل جلب المرافق الشائعة');
       }
     } on DioException catch (e) {
-      throw ServerException(
-         e.response?.data['message'] ?? 'Network error occurred',
-      );
+      throw ApiException.fromDioError(e);
     }
   }
 }

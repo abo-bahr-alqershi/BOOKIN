@@ -2,7 +2,7 @@
 
 import 'package:dio/dio.dart';
 import 'package:bookn_cp_app/core/network/api_client.dart';
-import 'package:bookn_cp_app/core/error/exceptions.dart';
+import 'package:bookn_cp_app/core/network/api_exceptions.dart';
 import 'package:bookn_cp_app/core/models/paginated_result.dart';
 import '../models/amenity_model.dart';
 
@@ -58,7 +58,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
         (json) => AmenityModel.fromJson(json as Map<String, dynamic>),
       );
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to fetch amenities');
+      throw ApiException.fromDioError(e);
     }
   }
   
@@ -75,7 +75,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
         throw ServerException(response.data['message'] ?? 'Failed to get amenity');
       }
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to fetch amenity');
+      throw ApiException.fromDioError(e);
     }
   }
   
@@ -89,7 +89,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
         throw ServerException(response.data['message'] ?? 'Failed to create amenity');
       }
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to create amenity');
+      throw ApiException.fromDioError(e);
     }
   }
   
@@ -102,7 +102,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
       );
       return response.data['success'] == true || response.data['isSuccess'] == true;
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to update amenity');
+      throw ApiException.fromDioError(e);
     }
   }
   
@@ -114,17 +114,13 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
         final map = response.data as Map<String, dynamic>;
         if (map['success'] == true || map['isSuccess'] == true) return true;
         if (response.statusCode == 409 || map['errorCode'] == 'AMENITY_DELETE_CONFLICT') {
-          throw ServerException(map['message'] ?? 'Deletion conflict');
+          throw ApiException(message: map['message'] ?? 'لا يمكن حذف المرفق لارتباطه ببيانات أخرى', statusCode: 409, code: 'AMENITY_DELETE_CONFLICT');
         }
       }
       if (response.statusCode == 200 || response.statusCode == 204) return true;
-      throw ServerException(response.data['message'] ?? 'Failed to delete amenity');
+      throw ApiException(message: response.data['message'] ?? 'فشل حذف المرفق');
     } on DioException catch (e) {
-      final data = e.response?.data;
-      if (e.response?.statusCode == 409 && data is Map<String, dynamic>) {
-        throw ServerException(data['message'] ?? 'Deletion conflict');
-      }
-      throw ServerException(e.response?.data['message'] ?? 'Failed to delete amenity');
+      throw ApiException.fromDioError(e);
     }
   }
   
@@ -141,7 +137,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
       );
       return response.data['success'] == true || response.data['isSuccess'] == true;
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to assign amenity to property');
+      throw ApiException.fromDioError(e);
     }
   }
   
@@ -163,7 +159,7 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
       }
         throw ServerException(response.data['message'] ?? 'Failed to get property amenities');
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to fetch property amenities');
+      throw ApiException.fromDioError(e);
     }
   }
 }
