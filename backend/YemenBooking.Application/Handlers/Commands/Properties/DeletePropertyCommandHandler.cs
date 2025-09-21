@@ -8,6 +8,7 @@ using YemenBooking.Application.DTOs;
 using YemenBooking.Core.Interfaces.Repositories;
 using YemenBooking.Application.Interfaces.Services;
 using YemenBooking.Core.Interfaces;
+using System.Linq;
 
 namespace YemenBooking.Application.Handlers.Commands.Properties
 {
@@ -22,6 +23,8 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
         private readonly IIndexingService _indexingService;
         private readonly ILogger<DeletePropertyCommandHandler> _logger;
         private readonly IMediator _mediator;
+        private readonly IPropertyImageRepository _propertyImageRepository;
+        private readonly IFileStorageService _fileStorageService;
 
         public DeletePropertyCommandHandler(
             IPropertyRepository propertyRepository,
@@ -29,7 +32,9 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
             IAuditService auditService,
             IIndexingService indexingService,
             ILogger<DeletePropertyCommandHandler> logger,
-            IMediator mediator)
+            IMediator mediator,
+            IPropertyImageRepository propertyImageRepository,
+            IFileStorageService fileStorageService)
         {
             _propertyRepository = propertyRepository;
             _currentUserService = currentUserService;
@@ -37,6 +42,8 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
             _indexingService = indexingService;
             _logger = logger;
             _mediator = mediator;
+            _propertyImageRepository = propertyImageRepository;
+            _fileStorageService = fileStorageService;
         }
 
         public async Task<ResultDto<bool>> Handle(DeletePropertyCommand request, CancellationToken cancellationToken)
@@ -74,6 +81,24 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
             var paymentsCount = await _propertyRepository.GetPaymentsCountAsync(request.PropertyId, cancellationToken);
             if (paymentsCount > 0)
                 return ResultDto<bool>.Failed($"لا يمكن حذف العقار لوجود {paymentsCount} مدفوعات مرتبطة بحجوزاته");
+
+            // حذف جميع صور العقار من التخزين ومن قاعدة البيانات قبل حذف السجل
+            try
+            {
+                var images = await _propertyImageRepository.GetImagesByPropertyAsync(request.PropertyId, cancellationToken);
+                foreach (var img in images)
+                {
+                    if (!string.IsNullOrWhiteSpace(img.Url))
+                    {
+                        try { await _fileStorageService.DeleteFileAsync(img.Url, cancellationToken); } catch { /* best-effort */ }
+                    }
+                    await _propertyImageRepository.DeletePropertyImageAsync(img.Id, cancellationToken);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "تعذر حذف بعض صور الكيان {PropertyId} قبل الحذف", request.PropertyId);
+            }
 
             var success = await _propertyRepository.DeletePropertyAsync(request.PropertyId, cancellationToken);
             if (!success)

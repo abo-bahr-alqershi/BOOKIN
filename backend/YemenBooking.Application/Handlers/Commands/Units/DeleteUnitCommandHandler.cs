@@ -11,6 +11,7 @@ using YemenBooking.Core.Interfaces;
 using YemenBooking.Core.Events;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using YemenBooking.Application.Interfaces.Services;
 
 namespace YemenBooking.Application.Handlers.Commands.Units
 {
@@ -29,6 +30,7 @@ namespace YemenBooking.Application.Handlers.Commands.Units
         private readonly IMediator _mediator;
         private readonly IIndexingService _indexingService;
         private readonly IPropertyImageRepository _propertyImageRepository;
+        private readonly IFileStorageService _fileStorageService;
 
         public DeleteUnitCommandHandler(
             IUnitRepository unitRepository,
@@ -40,7 +42,8 @@ namespace YemenBooking.Application.Handlers.Commands.Units
             IMediator mediator,
             ILogger<DeleteUnitCommandHandler> logger,
             IIndexingService indexingService,
-            IPropertyImageRepository propertyImageRepository)
+            IPropertyImageRepository propertyImageRepository,
+            IFileStorageService fileStorageService)
         {
             _unitRepository = unitRepository;
             _propertyRepository = propertyRepository;
@@ -52,6 +55,7 @@ namespace YemenBooking.Application.Handlers.Commands.Units
             _logger = logger;
             _indexingService = indexingService;
             _propertyImageRepository = propertyImageRepository;
+            _fileStorageService = fileStorageService;
         }
 
         public async Task<ResultDto<bool>> Handle(DeleteUnitCommand request, CancellationToken cancellationToken)
@@ -83,18 +87,22 @@ namespace YemenBooking.Application.Handlers.Commands.Units
             if (hasAnyPayments)
                 return ResultDto<bool>.Failed("لا يمكن حذف الوحدة لوجود مدفوعات مرتبطة بحجوزاتها حتى وإن كانت مستردة");
 
-            // فك ارتباط الصور المرتبطة بالوحدة لتجنب تعارض FK (قد لا يكون FK مُكوَّناً بـ SET NULL في قاعدة البيانات الحالية)
+            // حذف جميع صور الوحدة من قاعدة البيانات ومن التخزين الفعلي قبل حذف الوحدة
             try
             {
                 var unitImages = await _propertyImageRepository.GetImagesByUnitAsync(request.UnitId, cancellationToken);
                 foreach (var img in unitImages)
                 {
-                    await _propertyImageRepository.UnassignImageAsync(img.Id, cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(img.Url))
+                    {
+                        try { await _fileStorageService.DeleteFileAsync(img.Url, cancellationToken); } catch { /* best-effort */ }
+                    }
+                    await _propertyImageRepository.DeletePropertyImageAsync(img.Id, cancellationToken);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "تعذر فك ارتباط بعض الصور قبل حذف الوحدة {UnitId}", request.UnitId);
+                _logger.LogWarning(ex, "تعذر حذف بعض صور الوحدة {UnitId} قبل الحذف", request.UnitId);
             }
 
             // جلب قيم الحقول الديناميكية قبل الحذف (للاستخدام في الفهرسة بعد الحذف)
