@@ -125,6 +125,24 @@ namespace YemenBooking.Api.Controllers.Admin
         }
 
         /// <summary>
+        /// إلغاء إسناد مرفق من عقار
+        /// Unassign an amenity from a property
+        /// </summary>
+        [HttpDelete("{amenityId}/assign/property/{propertyId}")]
+        public async Task<IActionResult> UnassignAmenityFromProperty(Guid amenityId, Guid propertyId)
+        {
+            var cmd = new YemenBooking.Application.Commands.Amenities.UnassignAmenityFromPropertyCommand
+            {
+                AmenityId = amenityId,
+                PropertyId = propertyId
+            };
+            var result = await _mediator.Send(cmd);
+            if (!result.IsSuccess)
+                return Conflict(ResultDto.Failure(result.Message ?? "تعذر إلغاء الإسناد"));
+            return Ok(result);
+        }
+
+        /// <summary>
         /// تخصيص مرفق لنوع الكيان
         /// Assign an amenity to a property type
         /// </summary>
