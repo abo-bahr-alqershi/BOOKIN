@@ -11,7 +11,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:get_it/get_it.dart';
-import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/property_types/property_types_bloc.dart' as ap_pt_bloc;
+import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/property_types/property_types_bloc.dart'
+    as ap_pt_bloc;
 
 class CreateAmenityPage extends StatefulWidget {
   const CreateAmenityPage({super.key});
@@ -193,7 +194,8 @@ class _CreateAmenityPageState extends State<CreateAmenityPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ShaderMask(
-                  shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                  shaderCallback: (bounds) =>
+                      AppTheme.primaryGradient.createShader(bounds),
                   child: Text(
                     'إضافة مرفق جديد',
                     style: AppTextStyles.heading2.copyWith(
@@ -252,12 +254,16 @@ class _CreateAmenityPageState extends State<CreateAmenityPage>
           ),
         ),
         const SizedBox(height: 8),
-        BlocBuilder<ap_pt_bloc.PropertyTypesBloc, ap_pt_bloc.PropertyTypesState>(
+        BlocBuilder<ap_pt_bloc.PropertyTypesBloc,
+            ap_pt_bloc.PropertyTypesState>(
           builder: (context, state) {
             if (state is ap_pt_bloc.PropertyTypesInitial) {
-              context.read<ap_pt_bloc.PropertyTypesBloc>().add(const ap_pt_bloc.LoadPropertyTypesEvent(pageSize: 1000));
+              context
+                  .read<ap_pt_bloc.PropertyTypesBloc>()
+                  .add(const ap_pt_bloc.LoadPropertyTypesEvent(pageSize: 1000));
             }
-            if (state is ap_pt_bloc.PropertyTypesLoading || state is ap_pt_bloc.PropertyTypesInitial) {
+            if (state is ap_pt_bloc.PropertyTypesLoading ||
+                state is ap_pt_bloc.PropertyTypesInitial) {
               return _buildLoadingDropdown();
             }
             if (state is ap_pt_bloc.PropertyTypesError) {
@@ -272,23 +278,33 @@ class _CreateAmenityPageState extends State<CreateAmenityPage>
                     AppTheme.darkCard.withOpacity(0.3),
                   ]),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.darkBorder.withOpacity(0.3), width: 1),
+                  border: Border.all(
+                      color: AppTheme.darkBorder.withOpacity(0.3), width: 1),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String?>(
                     value: _selectedPropertyTypeId,
                     isExpanded: true,
                     dropdownColor: AppTheme.darkCard,
-                    icon: Icon(Icons.arrow_drop_down_rounded, color: AppTheme.primaryBlue.withOpacity(0.7)),
-                    style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
-                    hint: Text('اختر نوع العقار لربطه بالمرفق', style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textMuted.withOpacity(0.5))),
+                    icon: Icon(Icons.arrow_drop_down_rounded,
+                        color: AppTheme.primaryBlue.withOpacity(0.7)),
+                    style: AppTextStyles.bodyMedium
+                        .copyWith(color: AppTheme.textWhite),
+                    hint: Text('اختر نوع العقار لربطه بالمرفق',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppTheme.textMuted.withOpacity(0.5))),
                     items: [
-                      const DropdownMenuItem<String?>(value: null, child: Text('بدون')), ...state.propertyTypes.map((t) => DropdownMenuItem<String?>(value: t.id, child: Text(t.name))).toList()
+                      const DropdownMenuItem<String?>(
+                          value: null, child: Text('بدون')),
+                      ...state.propertyTypes.map((t) =>
+                          DropdownMenuItem<String?>(
+                              value: t.id, child: Text(t.name)))
                     ],
                     onChanged: (value) {
                       setState(() {
                         _selectedPropertyTypeId = value;
-                        if (_selectedPropertyTypeId == null) _isDefaultForType = false;
+                        if (_selectedPropertyTypeId == null)
+                          _isDefaultForType = false;
                       });
                     },
                   ),
@@ -311,10 +327,13 @@ class _CreateAmenityPageState extends State<CreateAmenityPage>
           children: [
             Checkbox(
               value: _isDefaultForType,
-              onChanged: (val) => setState(() => _isDefaultForType = val ?? false),
+              onChanged: (val) =>
+                  setState(() => _isDefaultForType = val ?? false),
               activeColor: AppTheme.primaryBlue,
             ),
-            Text('تعيينه كافتراضي لنوع العقار المختار', style: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted)),
+            Text('تعيينه كافتراضي لنوع العقار المختار',
+                style: AppTextStyles.bodySmall
+                    .copyWith(color: AppTheme.textMuted)),
           ],
         ),
       ),
@@ -707,4 +726,3 @@ class _CreateAmenityPageState extends State<CreateAmenityPage>
     );
   }
 }
-
