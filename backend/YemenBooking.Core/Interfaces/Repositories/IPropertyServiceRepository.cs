@@ -56,4 +56,16 @@ public interface IPropertyServiceRepository : IRepository<PropertyService>
     /// </summary>
     Task<Property?> GetPropertyByIdAsync(Guid propertyId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// التحقق من وجود مراجع للحجوزات تستخدم هذه الخدمة
+    /// Check if any booking references this service
+    /// </summary>
+    Task<bool> ServiceHasBookingReferencesAsync(Guid serviceId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// التحقق من وجود مدفوعات مرتبطة بهذه الخدمة
+    /// Check if any payment references this service
+    /// </summary>
+    Task<bool> ServiceHasPaymentReferencesAsync(Guid serviceId, CancellationToken cancellationToken = default);
+
 }
