@@ -101,7 +101,8 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
   Widget build(BuildContext context) {
     return BlocListener<AmenitiesBloc, AmenitiesState>(
       listener: (context, state) {
-        if (state is AmenityOperationInProgress && state.operation == 'delete') {
+        if (state is AmenityOperationInProgress &&
+            state.operation == 'delete') {
           _showDeletingDialog();
         } else if (state is AmenityOperationSuccess) {
           _dismissDeletingDialog();
@@ -115,20 +116,20 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
         }
       },
       child: Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      body: CustomScrollView(
-        controller: _scrollController,
-        physics: const BouncingScrollPhysics(
-          parent: AlwaysScrollableScrollPhysics(),
+        backgroundColor: AppTheme.darkBackground,
+        body: CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            _buildSliverAppBar(),
+            _buildStatsSection(),
+            _buildFilterSection(),
+            _buildAmenitiesList(),
+          ],
         ),
-        slivers: [
-          _buildSliverAppBar(),
-          _buildStatsSection(),
-          _buildFilterSection(),
-          _buildAmenitiesList(),
-        ],
-      ),
-      floatingActionButton: _buildEnhancedFloatingActionButton(),
+        // floatingActionButton: _buildEnhancedFloatingActionButton(),
       ),
     );
   }
@@ -147,9 +148,7 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
         elevation: 0,
         child: Center(
           child: LoadingWidget(
-            type: LoadingType.futuristic,
-            message: 'جاري حذف المرفق...'
-          ),
+              type: LoadingType.futuristic, message: 'جاري حذف المرفق...'),
         ),
       ),
     );
@@ -216,8 +215,11 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
           onPressed: () => setState(() => _isGridView = !_isGridView),
         ),
         _buildActionButton(
-          icon: CupertinoIcons.chart_bar,
-          onPressed: () => context.push('/admin/amenities/reports'),
+          icon: CupertinoIcons.add,
+          onPressed: () {
+            // Navigator.pop(context);
+            context.push('/admin/amenities/create');
+          },
         ),
         _buildAnalyticsButton(),
         _buildActionButton(
