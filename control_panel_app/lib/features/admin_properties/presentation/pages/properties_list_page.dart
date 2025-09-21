@@ -716,8 +716,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
     return Padding(
       padding: const EdgeInsets.all(16),
       child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: false,
+        physics: const BouncingScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: crossAxisCount,
           crossAxisSpacing: 16,
