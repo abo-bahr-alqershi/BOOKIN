@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:ui';
 import 'dart:math' as math;
+import 'package:bookn_cp_app/core/theme/app_colors.dart';
 import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import '../bloc/properties/properties_bloc.dart';
 import '../widgets/futuristic_property_table.dart';
@@ -426,6 +427,209 @@ class _PropertiesListPageState extends State<PropertiesListPage>
           ),
         );
       },
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withOpacity(0.7),
+            AppTheme.darkCard.withOpacity(0.3),
+          ],
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.primaryBlue.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+      ),
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Column(
+            children: [
+              // Title Section
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (bounds) =>
+                              AppTheme.primaryGradient.createShader(bounds),
+                          child: Text(
+                            'إدارة العقارات',
+                            style: AppTextStyles.heading1.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'إدارة جميع العقارات والوحدات المسجلة',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // Action Buttons - مع scroll أفقي
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildActionButton(
+                      icon: Icons.filter_list_rounded,
+                      label: 'فلتر',
+                      onTap: () => setState(() => _showFilters = !_showFilters),
+                      isActive: _showFilters,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      icon: Icons.grid_view_rounded,
+                      label: 'شبكة',
+                      onTap: () => setState(() => _selectedView = 'grid'),
+                      isActive: _selectedView == 'grid',
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      icon: Icons.table_chart_rounded,
+                      label: 'جدول',
+                      onTap: () => setState(() => _selectedView = 'table'),
+                      isActive: _selectedView == 'table',
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      icon: Icons.map_rounded,
+                      label: 'خريطة',
+                      onTap: () => setState(() => _selectedView = 'map'),
+                      isActive: _selectedView == 'map',
+                    ),
+                    const SizedBox(width: 16),
+                    _buildPrimaryActionButton(
+                      icon: Icons.add_rounded,
+                      label: 'إضافة عقار',
+                      onTap: () => context.push('/admin/properties/create'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool isActive = false,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: isActive
+              ? AppTheme.primaryGradient
+              : LinearGradient(
+                  colors: [
+                    AppTheme.darkCard.withOpacity(0.5),
+                    AppTheme.darkCard.withOpacity(0.3),
+                  ],
+                ),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isActive
+                ? AppTheme.primaryBlue.withOpacity(0.5)
+                : AppTheme.darkBorder.withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: AppTheme.primaryBlue.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isActive ? Colors.white : AppTheme.textMuted,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: isActive ? Colors.white : AppTheme.textMuted,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrimaryActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: AppTheme.primaryGradient,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryBlue.withOpacity(0.4),
+              blurRadius: 15,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: AppTextStyles.buttonMedium.copyWith(
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1515,6 +1719,149 @@ class _PropertyGridCardState extends State<_PropertyGridCard>
   }
 }
 
+// Delete Confirmation Dialog - تبقى كما هي
+class _DeleteConfirmationDialog extends StatelessWidget {
+  final VoidCallback onConfirm;
+
+  const _DeleteConfirmationDialog({required this.onConfirm});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: 400,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.darkCard.withOpacity(0.95),
+              AppTheme.darkCard.withOpacity(0.85),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppTheme.error.withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.error.withOpacity(0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.error.withOpacity(0.2),
+                    AppTheme.error.withOpacity(0.1),
+                  ],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.warning_rounded,
+                color: AppTheme.error,
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'تأكيد الحذف',
+              style: AppTextStyles.heading3.copyWith(
+                color: AppTheme.textWhite,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'هل أنت متأكد من حذف هذا العقار؟\nلا يمكن التراجع عن هذا الإجراء.',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppTheme.textMuted,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.darkSurface.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppTheme.darkBorder.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'إلغاء',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      onConfirm();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppTheme.error,
+                            AppTheme.error.withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.error.withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          'حذف',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // Background Painter - تبقى كما هي
 class _FuturisticBackgroundPainter extends CustomPainter {
   final double rotation;
@@ -1585,6 +1932,7 @@ class _PropertyAmenitiesAssignViewState
     extends State<_PropertyAmenitiesAssignView> {
   bool _loading = true;
   String? _error;
+  List<dynamic> _allAmenities = [];
   Set<String> _assignedAmenityIds = {};
   bool _submitting = false;
 
@@ -1651,11 +1999,9 @@ class _PropertyAmenitiesAssignViewState
       );
     }
 
-    final modalHeight = math.min(MediaQuery.of(context).size.height * 0.9, 640.0);
-
     return Container(
       width: 720,
-      height: modalHeight,
+      constraints: const BoxConstraints(maxHeight: 640),
       decoration: BoxDecoration(
         color: AppTheme.darkCard,
         borderRadius: BorderRadius.circular(24),
@@ -1719,6 +2065,7 @@ class _PropertyAmenitiesAssignViewState
     return BlocBuilder<ap_am_bloc.AmenitiesBloc, ap_am_bloc.AmenitiesState>(
       builder: (context, state) {
         if (state is ap_am_bloc.AmenitiesLoaded) {
+          _allAmenities = state.amenities;
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: state.amenities.length,
