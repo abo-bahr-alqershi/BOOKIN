@@ -875,7 +875,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
     showDialog(
       context: context,
       barrierColor: Colors.black87,
-      builder: (context) => BackdropFilter(
+      builder: (dialogContext) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Dialog(
           backgroundColor: Colors.transparent,
@@ -949,7 +949,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.pop(context);
+                          Navigator.pop(dialogContext);
                           context
                               .read<PropertiesBloc>()
                               .add(DeletePropertyEvent(propertyId));
@@ -985,7 +985,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
     showDialog(
       context: context,
       barrierColor: Colors.black87,
-      builder: (context) => BackdropFilter(
+      builder: (dialogContext) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Dialog(
           backgroundColor: Colors.transparent,
@@ -1059,7 +1059,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.pop(context);
+                          Navigator.pop(dialogContext);
                           context
                               .read<PropertiesBloc>()
                               .add(ApprovePropertyEvent(propertyId));
@@ -1095,7 +1095,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
     showDialog(
       context: context,
       barrierColor: Colors.black87,
-      builder: (context) => BackdropFilter(
+      builder: (dialogContext) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Dialog(
           backgroundColor: Colors.transparent,
@@ -1169,7 +1169,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.pop(context);
+                          Navigator.pop(dialogContext);
                           context
                               .read<PropertiesBloc>()
                               .add(RejectPropertyEvent(propertyId));
