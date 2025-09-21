@@ -226,6 +226,7 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
         starRatings: event.starRatings,
         minAverageRating: event.minAverageRating,
         isApproved: event.isApproved,
+        hasActiveBookings: event.hasActiveBookings,
       ),
     );
 
@@ -248,6 +249,8 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
           if (event.minAverageRating != null)
             'minAverageRating': event.minAverageRating!,
           if (event.isApproved != null) 'isApproved': event.isApproved!,
+          if (event.hasActiveBookings != null)
+            'hasActiveBookings': event.hasActiveBookings!,
         },
       )),
     );

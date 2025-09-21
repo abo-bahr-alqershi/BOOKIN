@@ -24,36 +24,31 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
   RangeValues _priceRange = const RangeValues(0, 1000);
   List<int> _selectedStarRatings = [];
   bool? _isApproved;
+  bool? _hasActiveBookings;
   
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      child: Row(
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           // Property Type Filter
-          Expanded(
-            child: _buildPropertyTypeFilter(),
-          ),
-          const SizedBox(width: 12),
+          SizedBox(width: 220, child: _buildPropertyTypeFilter()),
           
           // Price Range Filter
-          Expanded(
-            child: _buildPriceRangeFilter(),
-          ),
-          const SizedBox(width: 12),
+          SizedBox(width: 260, child: _buildPriceRangeFilter()),
           
           // Star Rating Filter
-          Expanded(
-            child: _buildStarRatingFilter(),
-          ),
-          const SizedBox(width: 12),
+          SizedBox(width: 200, child: _buildStarRatingFilter()),
           
           // Status Filter
-          Expanded(
-            child: _buildStatusFilter(),
-          ),
-          const SizedBox(width: 12),
+          SizedBox(width: 200, child: _buildStatusFilter()),
+
+          // Active Bookings Filter
+          SizedBox(width: 220, child: _buildHasActiveBookingsFilter()),
           
           // Apply Button
           _buildApplyButton(),
@@ -267,6 +262,64 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
       ),
     );
   }
+
+  Widget _buildHasActiveBookingsFilter() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withValues(alpha: 0.5),
+            AppTheme.darkCard.withValues(alpha: 0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<bool?>(
+          value: _hasActiveBookings,
+          isExpanded: true,
+          dropdownColor: AppTheme.darkCard,
+          icon: Icon(
+            Icons.arrow_drop_down_rounded,
+            color: AppTheme.primaryBlue.withValues(alpha: 0.7),
+          ),
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppTheme.textWhite,
+          ),
+          hint: Text(
+            'حجوزات نشطة',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppTheme.textMuted.withValues(alpha: 0.5),
+            ),
+          ),
+          items: const [
+            DropdownMenuItem(
+              value: null,
+              child: Text('الكل'),
+            ),
+            DropdownMenuItem(
+              value: true,
+              child: Text('نعم'),
+            ),
+            DropdownMenuItem(
+              value: false,
+              child: Text('لا'),
+            ),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _hasActiveBookings = value;
+            });
+          },
+        ),
+      ),
+    );
+  }
   
   Widget _buildApplyButton() {
     return GestureDetector(
@@ -277,6 +330,7 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
           'maxPrice': _priceRange.end,
           'starRatings': _selectedStarRatings,
           'isApproved': _isApproved,
+          'hasActiveBookings': _hasActiveBookings,
         });
       },
       child: Container(

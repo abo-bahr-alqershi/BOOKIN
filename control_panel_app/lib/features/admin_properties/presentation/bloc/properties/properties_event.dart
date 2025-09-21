@@ -161,6 +161,7 @@ class FilterPropertiesEvent extends PropertiesEvent {
   final List<int>? starRatings;
   final double? minAverageRating;
   final bool? isApproved;
+  final bool? hasActiveBookings;
   
   const FilterPropertiesEvent({
     this.propertyTypeId,
@@ -170,12 +171,13 @@ class FilterPropertiesEvent extends PropertiesEvent {
     this.starRatings,
     this.minAverageRating,
     this.isApproved,
+    this.hasActiveBookings,
   });
   
   @override
   List<Object?> get props => [
     propertyTypeId, minPrice, maxPrice,
-    amenityIds, starRatings, minAverageRating, isApproved,
+    amenityIds, starRatings, minAverageRating, isApproved, hasActiveBookings,
   ];
 }
 
