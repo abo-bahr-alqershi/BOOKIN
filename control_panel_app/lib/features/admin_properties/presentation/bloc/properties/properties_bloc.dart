@@ -218,7 +218,7 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
     final result = await getAllProperties(
       GetAllPropertiesParams(
         pageNumber: 1,
-        pageSize: 10,
+        pageSize: 1000,
         propertyTypeId: event.propertyTypeId,
         minPrice: event.minPrice,
         maxPrice: event.maxPrice,
@@ -260,7 +260,7 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
     final result = await getAllProperties(
       GetAllPropertiesParams(
         pageNumber: 1,
-        pageSize: 10,
+        pageSize: 1000,
         searchTerm: event.searchTerm,
       ),
     );

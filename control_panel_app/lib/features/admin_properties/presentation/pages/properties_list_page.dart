@@ -110,7 +110,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
   }
 
   void _loadProperties() {
-    context.read<PropertiesBloc>().add(const LoadPropertiesEvent());
+    context.read<PropertiesBloc>().add(const LoadPropertiesEvent(pageSize: 1000));
   }
 
   @override
@@ -152,8 +152,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
                 ),
 
               // Content Area - المحتوى الرئيسي
-              SliverFillRemaining(
-                hasScrollBody: true,
+              SliverToBoxAdapter(
                 child: FadeTransition(
                   opacity: _contentFadeAnimation,
                   child: SlideTransition(
@@ -716,8 +715,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
     return Padding(
       padding: const EdgeInsets.all(16),
       child: GridView.builder(
-        shrinkWrap: false,
-        physics: const BouncingScrollPhysics(),
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: crossAxisCount,
           crossAxisSpacing: 16,

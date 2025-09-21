@@ -528,7 +528,7 @@ class AppRouter {
           builder: (context, state) {
             return BlocProvider<ap_bloc.PropertiesBloc>(
               create: (_) => di.sl<ap_bloc.PropertiesBloc>()
-                ..add(const ap_bloc.LoadPropertiesEvent()),
+                ..add(const ap_bloc.LoadPropertiesEvent(pageSize: 1000)),
               child: const ap_pages.PropertiesListPage(),
             );
           },
