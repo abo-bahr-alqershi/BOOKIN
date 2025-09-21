@@ -883,6 +883,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppTheme.error,
             ),
+            maxLines: 6,
+            overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -1983,17 +1985,23 @@ class _PropertyAmenitiesAssignViewState
       return SizedBox(
         width: 640,
         height: 520,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.error_outline_rounded,
-                  color: AppTheme.error, size: 40),
-              const SizedBox(height: 8),
-              Text(_error!,
-                  style:
-                      AppTextStyles.bodyMedium.copyWith(color: AppTheme.error)),
-            ],
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.error_outline_rounded,
+                    color: AppTheme.error, size: 40),
+                const SizedBox(height: 8),
+                Text(
+                  _error!,
+                  style: AppTextStyles.bodyMedium
+                      .copyWith(color: AppTheme.error),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ),
       );
