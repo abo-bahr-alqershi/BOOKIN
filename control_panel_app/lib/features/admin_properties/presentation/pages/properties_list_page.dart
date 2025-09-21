@@ -15,6 +15,10 @@ import '../widgets/futuristic_property_table.dart';
 import '../widgets/property_filters_widget.dart';
 import '../widgets/property_stats_card.dart';
 import 'package:bookn_cp_app/core/widgets/loading_widget.dart';
+import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/amenities/amenities_bloc.dart' as ap_am_bloc;
+import 'package:bookn_cp_app/features/admin_properties/domain/repositories/amenities_repository.dart' as ap_repo;
+import 'package:bookn_cp_app/core/di/service_locator.dart' as di;
+
 
 class PropertiesListPage extends StatefulWidget {
   const PropertiesListPage({super.key});
@@ -752,6 +756,9 @@ class _PropertiesListPageState extends State<PropertiesListPage>
                   onDelete: (propertyId) {
                     _showDeleteConfirmation(propertyId);
                   },
+                  onAssignAmenities: (property) {
+                    _openAssignAmenities(propertyId: property.id, propertyName: property.name);
+                  },
                 ),
               );
             case 'map':
@@ -934,6 +941,32 @@ class _PropertiesListPageState extends State<PropertiesListPage>
 
   void _navigateToEditProperty(String propertyId) {
     context.push('/admin/properties/$propertyId/edit');
+  }
+
+  void _openAssignAmenities({required String propertyId, required String propertyName}) {
+    HapticFeedback.mediumImpact();
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (dialogContext) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(0),
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: AppTheme.primaryPurple.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: _PropertyAmenitiesAssignView(propertyId: propertyId, propertyName: propertyName),
+          ),
+        ),
+      ),
+    );
   }
 
   void _showDeleteConfirmation(String propertyId) {
@@ -1878,4 +1911,216 @@ class _FuturisticBackgroundPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class _PropertyAmenitiesAssignView extends StatefulWidget {
+  final String propertyId;
+  final String propertyName;
+  const _PropertyAmenitiesAssignView({required this.propertyId, required this.propertyName});
+
+  @override
+  State<_PropertyAmenitiesAssignView> createState() => _PropertyAmenitiesAssignViewState();
+}
+
+class _PropertyAmenitiesAssignViewState extends State<_PropertyAmenitiesAssignView> {
+  bool _loading = true;
+  String? _error;
+  List<dynamic> _allAmenities = [];
+  Set<String> _assignedAmenityIds = {};
+  bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final amenitiesBloc = context.read<ap_am_bloc.AmenitiesBloc>();
+      // request both: all amenities and property amenities
+      amenitiesBloc.add(const ap_am_bloc.LoadAmenitiesEvent(pageNumber: 1, pageSize: 100));
+      final repo = di.sl<ap_repo.AmenitiesRepository>();
+      final propertyAmenitiesEither = await repo.getPropertyAmenities(widget.propertyId);
+      propertyAmenitiesEither.fold((f){ _error = f.message; }, (list){ _assignedAmenityIds = list.map((a)=>a.id).toSet(); });
+      setState((){ _loading = false; });
+    } catch (e) {
+      setState((){ _error = e.toString(); _loading = false; });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const SizedBox(
+        width: 640,
+        height: 520,
+        child: Center(child: LoadingWidget(type: LoadingType.futuristic, message: 'جاري تحميل المرافق...')),
+      );
+    }
+    if (_error != null) {
+      return SizedBox(
+        width: 640,
+        height: 520,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 40),
+              const SizedBox(height: 8),
+              Text(_error!, style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.error)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: 720,
+      constraints: const BoxConstraints(maxHeight: 640),
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        children: [
+          _buildHeader(),
+          Expanded(child: _buildBody()),
+          _buildFooter(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [AppTheme.primaryPurple.withOpacity(0.1), AppTheme.primaryBlue.withOpacity(0.05)]),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(gradient: AppTheme.primaryGradient, borderRadius: BorderRadius.circular(10)),
+            child: const Icon(Icons.link_rounded, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('تعيين مرافق للعقار', style: AppTextStyles.bodyLarge.copyWith(color: AppTheme.textWhite, fontWeight: FontWeight.bold)),
+                Text(widget.propertyName, style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted)),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: _submitting ? null : () => Navigator.pop(context),
+            icon: Icon(Icons.close_rounded, color: AppTheme.textMuted),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    return BlocBuilder<ap_am_bloc.AmenitiesBloc, ap_am_bloc.AmenitiesState>(
+      builder: (context, state) {
+        if (state is ap_am_bloc.AmenitiesLoaded) {
+          _allAmenities = state.amenities;
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: state.amenities.length,
+            itemBuilder: (context, index) {
+              final amenity = state.amenities[index];
+              final selected = _assignedAmenityIds.contains(amenity.id);
+              return _buildAmenityRow(amenity, selected);
+            },
+          );
+        }
+        if (state is ap_am_bloc.AmenitiesError) {
+          return Center(child: Text(state.message, style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.error)));
+        }
+        return const Center(child: LoadingWidget(type: LoadingType.futuristic, message: 'جاري التحميل...'));
+      },
+    );
+  }
+
+  Widget _buildAmenityRow(dynamic amenity, bool selected) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.darkSurface.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: selected ? AppTheme.primaryPurple.withOpacity(0.3) : AppTheme.darkBorder.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(selected ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+              color: selected ? AppTheme.primaryPurple : AppTheme.textMuted, size: 18),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(amenity.name, style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite, fontWeight: FontWeight.w600)),
+              if ((amenity.description as String?)?.isNotEmpty == true)
+                Text(amenity.description, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted)),
+            ]),
+          ),
+          Switch(
+            value: selected,
+            onChanged: _submitting ? null : (val) => _toggleAmenity(amenity.id, val),
+            activeColor: AppTheme.primaryPurple,
+          )
+        ],
+      ),
+    );
+  }
+
+  Future<void> _toggleAmenity(String amenityId, bool enable) async {
+    setState(() => _submitting = true);
+    try {
+      final repo = di.sl<ap_repo.AmenitiesRepository>();
+      if (enable) {
+        final res = await repo.assignAmenityToProperty(amenityId, widget.propertyId, {'isAvailable': true});
+        res.fold((f) => _showError(f.message), (_) => _assignedAmenityIds.add(amenityId));
+      } else {
+        final res = await repo.unassignAmenityFromProperty(amenityId, widget.propertyId);
+        res.fold((f) => _showError(f.message), (_) => _assignedAmenityIds.remove(amenityId));
+      }
+      setState(() {});
+    } finally {
+      setState(() => _submitting = false);
+    }
+  }
+
+  Widget _buildFooter() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [AppTheme.darkSurface.withOpacity(0.6), AppTheme.darkSurface.withOpacity(0.3)]),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text('عدد المرافق المعينة: ${_assignedAmenityIds.length}', style: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted)),
+          ),
+          ElevatedButton.icon(
+            onPressed: _submitting ? null : () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryPurple, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            icon: const Icon(Icons.check_rounded, size: 18),
+            label: const Text('تم'),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: AppTheme.error));
+  }
 }

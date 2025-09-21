@@ -119,6 +119,25 @@ class AmenitiesRepositoryImpl implements AmenitiesRepository {
       return Left(NetworkFailure('No internet connection'));
     }
   }
+
+  @override
+  Future<Either<Failure, bool>> unassignAmenityFromProperty(
+    String amenityId,
+    String propertyId,
+  ) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final success = await remoteDataSource.unassignAmenityFromProperty(amenityId, propertyId);
+        return Right(success);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      } catch (e) {
+        return Left(UnknownFailure(e.toString()));
+      }
+    } else {
+      return const Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
+    }
+  }
   
   @override
   Future<Either<Failure, List<Amenity>>> getPropertyAmenities(String propertyId) async {

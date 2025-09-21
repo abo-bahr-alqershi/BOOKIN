@@ -19,5 +19,6 @@ abstract class AmenitiesRepository {
   Future<Either<Failure, bool>> updateAmenity(String amenityId, Map<String, dynamic> data);
   Future<Either<Failure, bool>> deleteAmenity(String amenityId);
   Future<Either<Failure, bool>> assignAmenityToProperty(String amenityId, String propertyId, Map<String, dynamic> data);
+  Future<Either<Failure, bool>> unassignAmenityFromProperty(String amenityId, String propertyId);
   Future<Either<Failure, List<Amenity>>> getPropertyAmenities(String propertyId);
 }

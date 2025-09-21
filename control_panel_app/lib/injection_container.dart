@@ -394,6 +394,8 @@ import 'features/admin_properties/domain/usecases/amenities/delete_amenity_useca
     as ap_uc_am4;
 import 'features/admin_properties/domain/usecases/amenities/assign_amenity_to_property_usecase.dart'
     as ap_uc_am5;
+import 'features/admin_properties/domain/usecases/amenities/unassign_amenity_from_property_usecase.dart'
+    as ap_uc_am6;
 import 'features/admin_properties/domain/usecases/policies/get_policies_usecase.dart'
     as ap_uc_po1;
 import 'features/admin_properties/domain/usecases/policies/create_policy_usecase.dart'
@@ -976,6 +978,8 @@ void _initAdminProperties() {
       () => ap_uc_am4.DeleteAmenityUseCase(sl()));
   sl.registerLazySingleton<ap_uc_am5.AssignAmenityToPropertyUseCase>(
       () => ap_uc_am5.AssignAmenityToPropertyUseCase(sl()));
+  sl.registerLazySingleton<ap_uc_am6.UnassignAmenityFromPropertyUseCase>(
+      () => ap_uc_am6.UnassignAmenityFromPropertyUseCase(sl()));
 
   // Use cases - policies
   sl.registerLazySingleton<ap_uc_po1.GetPoliciesUseCase>(

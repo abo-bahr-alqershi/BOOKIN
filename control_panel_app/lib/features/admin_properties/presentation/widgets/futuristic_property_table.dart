@@ -15,6 +15,7 @@ class FuturisticPropertyTable extends StatefulWidget {
   final Function(String) onApprove;
   final Function(String) onReject;
   final Function(String) onDelete;
+  final Function(Property) onAssignAmenities;
   
   const FuturisticPropertyTable({
     super.key,
@@ -23,6 +24,7 @@ class FuturisticPropertyTable extends StatefulWidget {
     required this.onApprove,
     required this.onReject,
     required this.onDelete,
+    required this.onAssignAmenities,
   });
   
   @override
@@ -277,6 +279,15 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                               },
                             ),
                           ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildMobileActionButton(
+                            label: 'تعيين مرافق',
+                            icon: Icons.link_rounded,
+                            color: AppTheme.primaryPurple,
+                            onTap: () => widget.onAssignAmenities(property),
+                          ),
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: _buildMobileActionButton(
@@ -670,6 +681,12 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                       ),
                     const SizedBox(width: 4),
                     _buildActionButton(
+                      icon: Icons.link_rounded,
+                      color: AppTheme.primaryPurple,
+                      onTap: () => widget.onAssignAmenities(property),
+                    ),
+                    const SizedBox(width: 4),
+                    _buildActionButton(
                       icon: Icons.delete_rounded,
                       color: AppTheme.error,
                       onTap: () => widget.onDelete(property.id),
@@ -988,6 +1005,12 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                           // Navigate to edit
                         },
                       ),
+                    const SizedBox(width: 4),
+                    _buildActionButton(
+                      icon: Icons.link_rounded,
+                      color: AppTheme.primaryPurple,
+                      onTap: () => widget.onAssignAmenities(property),
+                    ),
                     const SizedBox(width: 4),
                     _buildActionButton(
                       icon: Icons.delete_rounded,

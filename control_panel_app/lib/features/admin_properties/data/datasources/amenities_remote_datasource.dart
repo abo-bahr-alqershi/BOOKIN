@@ -20,6 +20,7 @@ abstract class AmenitiesRemoteDataSource {
   Future<bool> updateAmenity(String amenityId, Map<String, dynamic> data);
   Future<bool> deleteAmenity(String amenityId);
   Future<bool> assignAmenityToProperty(String amenityId, String propertyId, Map<String, dynamic> data);
+  Future<bool> unassignAmenityFromProperty(String amenityId, String propertyId);
   Future<List<AmenityModel>> getPropertyAmenities(String propertyId);
 }
 
@@ -136,6 +137,20 @@ class AmenitiesRemoteDataSourceImpl implements AmenitiesRemoteDataSource {
         data: data,
       );
       return response.data['success'] == true || response.data['isSuccess'] == true;
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<bool> unassignAmenityFromProperty(String amenityId, String propertyId) async {
+    try {
+      final response = await apiClient.delete('$_baseEndpoint/$amenityId/assign/property/$propertyId');
+      if (response.data is Map<String, dynamic>) {
+        final map = response.data as Map<String, dynamic>;
+        return map['success'] == true || map['isSuccess'] == true;
+      }
+      return response.statusCode == 200 || response.statusCode == 204;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
