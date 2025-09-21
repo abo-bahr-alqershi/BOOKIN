@@ -219,6 +219,7 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
       GetAllPropertiesParams(
         pageNumber: 1,
         pageSize: 20,
+        searchTerm: event.searchTerm,
         propertyTypeId: event.propertyTypeId,
         minPrice: event.minPrice,
         maxPrice: event.maxPrice,
@@ -226,6 +227,7 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
         starRatings: event.starRatings,
         minAverageRating: event.minAverageRating,
         isApproved: event.isApproved,
+        hasActiveBookings: event.hasActiveBookings,
       ),
     );
 
@@ -241,6 +243,8 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
         activeFilters: {
           if (event.propertyTypeId != null)
             'propertyTypeId': event.propertyTypeId!,
+          if (event.searchTerm != null && event.searchTerm!.isNotEmpty)
+            'searchTerm': event.searchTerm!,
           if (event.minPrice != null) 'minPrice': event.minPrice!,
           if (event.maxPrice != null) 'maxPrice': event.maxPrice!,
           if (event.amenityIds != null) 'amenityIds': event.amenityIds!,
@@ -248,6 +252,8 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
           if (event.minAverageRating != null)
             'minAverageRating': event.minAverageRating!,
           if (event.isApproved != null) 'isApproved': event.isApproved!,
+          if (event.hasActiveBookings != null)
+            'hasActiveBookings': event.hasActiveBookings!,
         },
       )),
     );

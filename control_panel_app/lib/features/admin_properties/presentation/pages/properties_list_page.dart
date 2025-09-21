@@ -719,6 +719,8 @@ class _PropertiesListPageState extends State<PropertiesListPage>
                     starRatings: filters['starRatings'],
                     minAverageRating: filters['minAverageRating'],
                     isApproved: filters['isApproved'],
+                    // دعم فلتر يحتوي حجوزات نشطة
+                    hasActiveBookings: filters['hasActiveBookings'],
                   ),
                 );
           },
