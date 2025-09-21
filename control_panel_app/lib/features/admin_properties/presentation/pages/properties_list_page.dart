@@ -953,22 +953,26 @@ class _PropertiesListPageState extends State<PropertiesListPage>
     showDialog(
       context: context,
       barrierColor: Colors.black87,
-      builder: (dialogContext) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(0),
-            decoration: BoxDecoration(
-              color: AppTheme.darkCard,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: AppTheme.primaryPurple.withOpacity(0.3),
-                width: 1,
+      builder: (dialogContext) => BlocProvider<ap_am_bloc.AmenitiesBloc>(
+        create: (_) => di.sl<ap_am_bloc.AmenitiesBloc>()
+          ..add(const ap_am_bloc.LoadAmenitiesEvent(pageNumber: 1, pageSize: 100)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.all(0),
+              decoration: BoxDecoration(
+                color: AppTheme.darkCard,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: AppTheme.primaryPurple.withOpacity(0.3),
+                  width: 1,
+                ),
               ),
+              child: _PropertyAmenitiesAssignView(
+                  propertyId: propertyId, propertyName: propertyName),
             ),
-            child: _PropertyAmenitiesAssignView(
-                propertyId: propertyId, propertyName: propertyName),
           ),
         ),
       ),
