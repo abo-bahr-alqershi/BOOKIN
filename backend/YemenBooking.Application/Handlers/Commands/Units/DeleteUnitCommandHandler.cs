@@ -10,6 +10,7 @@ using YemenBooking.Application.Interfaces.Services;
 using YemenBooking.Core.Interfaces;
 using YemenBooking.Core.Events;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
 namespace YemenBooking.Application.Handlers.Commands.Units
 {
@@ -27,6 +28,7 @@ namespace YemenBooking.Application.Handlers.Commands.Units
         private readonly IUnitTypeFieldRepository _fieldRepository;
         private readonly IMediator _mediator;
         private readonly IIndexingService _indexingService;
+        private readonly IPropertyImageRepository _propertyImageRepository;
 
         public DeleteUnitCommandHandler(
             IUnitRepository unitRepository,
@@ -37,7 +39,8 @@ namespace YemenBooking.Application.Handlers.Commands.Units
             IUnitTypeFieldRepository fieldRepository,
             IMediator mediator,
             ILogger<DeleteUnitCommandHandler> logger,
-            IIndexingService indexingService)
+            IIndexingService indexingService,
+            IPropertyImageRepository propertyImageRepository)
         {
             _unitRepository = unitRepository;
             _propertyRepository = propertyRepository;
@@ -48,6 +51,7 @@ namespace YemenBooking.Application.Handlers.Commands.Units
             _mediator = mediator;
             _logger = logger;
             _indexingService = indexingService;
+            _propertyImageRepository = propertyImageRepository;
         }
 
         public async Task<ResultDto<bool>> Handle(DeleteUnitCommand request, CancellationToken cancellationToken)
@@ -79,7 +83,21 @@ namespace YemenBooking.Application.Handlers.Commands.Units
             if (hasAnyPayments)
                 return ResultDto<bool>.Failed("لا يمكن حذف الوحدة لوجود مدفوعات مرتبطة بحجوزاتها حتى وإن كانت مستردة");
 
-            // جلب قيم الحقول الديناميكية قبل الحذف
+            // فك ارتباط الصور المرتبطة بالوحدة لتجنب تعارض FK (قد لا يكون FK مُكوَّناً بـ SET NULL في قاعدة البيانات الحالية)
+            try
+            {
+                var unitImages = await _propertyImageRepository.GetImagesByUnitAsync(request.UnitId, cancellationToken);
+                foreach (var img in unitImages)
+                {
+                    await _propertyImageRepository.UnassignImageAsync(img.Id, cancellationToken);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "تعذر فك ارتباط بعض الصور قبل حذف الوحدة {UnitId}", request.UnitId);
+            }
+
+            // جلب قيم الحقول الديناميكية قبل الحذف (للاستخدام في الفهرسة بعد الحذف)
             var dynamicValues = await _valueRepository.GetValuesByUnitIdAsync(request.UnitId, cancellationToken);
 
             // تنفيذ الحذف
