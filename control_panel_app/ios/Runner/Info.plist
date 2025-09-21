@@ -50,7 +50,7 @@
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>نحتاج إلى موقعك لعرض العقارات القريبة منك</string>
     <key>GMS_API_KEY</key>
-    <string>$(GMS_API_KEY)</string>
+    <string>AIzaSyA3PbOyGhE-5zBfbpiRX10wp4gRVDYKI-c</string>
     <!-- Camera and Photo Library permissions -->
     <key>NSCameraUsageDescription</key>
     <string>نحتاج لاستخدام الكاميرا لالتقاط صورة الملف الشخصي</string>
