@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import '../models/unit_model.dart';
 import '../models/unit_type_model.dart';
 import '../../domain/entities/unit_type.dart';
+import 'package:bookn_cp_app/core/network/api_exceptions.dart' as api;
 
 abstract class UnitsRemoteDataSource {
   Future<List<UnitModel>> getUnits({
@@ -66,6 +67,8 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
 
       final List<dynamic> items = response.data['items'] ?? [];
       return items.map((json) => UnitModel.fromJson(json)).toList();
+    } on api.ApiException catch (e) {
+      throw ServerException(e.message);
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -76,6 +79,8 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
     try {
       final response = await apiClient.get('/api/admin/Units/$unitId/details');
       return UnitModel.fromJson(response.data['data']);
+    } on api.ApiException catch (e) {
+      throw ServerException(e.message);
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -102,6 +107,8 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
       } else {
         throw Exception('Invalid response format');
       }
+    } on api.ApiException catch (e) {
+      return Future.error(ServerException(e.message));
     } on DioException catch (e) {
       // تحسين معالجة الأخطاء
       print('=== DioException Details ===');
@@ -118,6 +125,8 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
     try {
       final response = await apiClient.put('/api/admin/Units/$unitId', data: unitData);
       return response.data['success'] ?? false;
+    } on api.ApiException catch (e) {
+      throw ServerException(e.message);
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -130,6 +139,8 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
       if (response.data is Map && response.data['success'] == true) return true;
       final msg = (response.data is Map) ? response.data['message'] : null;
       throw ServerException(msg ?? 'Failed to delete unit');
+    } on api.ApiException catch (e) {
+      throw ServerException(e.message);
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -143,6 +154,8 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
       );
       final List<dynamic> items = response.data['items'] ?? [];
       return items.map((json) => UnitTypeModel.fromJson(json)).toList();
+    } on api.ApiException catch (e) {
+      throw ServerException(e.message);
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -156,6 +169,8 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
       );
       final List<dynamic> items = response.data ?? [];
       return items.map((json) => UnitTypeFieldModel.fromJson(json)).toList();
+    } on api.ApiException catch (e) {
+      throw ServerException(e.message);
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -169,6 +184,8 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
         data: {'sectionIds': sectionIds},
       );
       return response.data['success'] ?? false;
+    } on api.ApiException catch (e) {
+      throw ServerException(e.message);
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
