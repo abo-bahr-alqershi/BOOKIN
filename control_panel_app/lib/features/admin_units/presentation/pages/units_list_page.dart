@@ -910,7 +910,7 @@ class _UnitsListPageState extends State<UnitsListPage>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (sheetContext) => Container(
         decoration: BoxDecoration(
           color: AppTheme.darkCard,
           borderRadius: const BorderRadius.vertical(
@@ -934,32 +934,32 @@ class _UnitsListPageState extends State<UnitsListPage>
               icon: CupertinoIcons.checkmark_circle,
               label: 'تفعيل الكل',
               onTap: () {
-                final state = context.read<UnitsListBloc>().state;
+                final state = this.context.read<UnitsListBloc>().state;
                 if (state is UnitsListLoaded) {
-                  context.read<UnitsListBloc>().add(
+                  this.context.read<UnitsListBloc>().add(
                         BulkActivateUnitsEvent(
                           unitIds:
                               state.selectedUnits.map((u) => u.id).toList(),
                         ),
                       );
                 }
-                Navigator.pop(context);
+                Navigator.pop(sheetContext);
               },
             ),
             _buildBulkActionButton(
               icon: CupertinoIcons.xmark_circle,
               label: 'تعطيل الكل',
               onTap: () {
-                final state = context.read<UnitsListBloc>().state;
+                final state = this.context.read<UnitsListBloc>().state;
                 if (state is UnitsListLoaded) {
-                  context.read<UnitsListBloc>().add(
+                  this.context.read<UnitsListBloc>().add(
                         BulkDeactivateUnitsEvent(
                           unitIds:
                               state.selectedUnits.map((u) => u.id).toList(),
                         ),
                       );
                 }
-                Navigator.pop(context);
+                Navigator.pop(sheetContext);
               },
             ),
             _buildBulkActionButton(
@@ -967,7 +967,7 @@ class _UnitsListPageState extends State<UnitsListPage>
               label: 'حذف الكل',
               color: AppTheme.error,
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(sheetContext);
                 _showBulkDeleteConfirmation();
               },
             ),
@@ -1022,7 +1022,7 @@ class _UnitsListPageState extends State<UnitsListPage>
     showDialog(
       context: context,
       barrierColor: Colors.black87,
-      builder: (context) => BackdropFilter(
+      builder: (dialogContext) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Dialog(
           backgroundColor: Colors.transparent,
@@ -1077,7 +1077,7 @@ class _UnitsListPageState extends State<UnitsListPage>
                   children: [
                     Expanded(
                       child: TextButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => Navigator.pop(dialogContext),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
@@ -1096,8 +1096,8 @@ class _UnitsListPageState extends State<UnitsListPage>
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.pop(context);
-                          context
+                          Navigator.pop(dialogContext);
+                          this.context
                               .read<UnitsListBloc>()
                               .add(DeleteUnitEvent(unitId: unit.id));
                         },
@@ -1130,7 +1130,7 @@ class _UnitsListPageState extends State<UnitsListPage>
   void _showBulkDeleteConfirmation() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: AppTheme.darkCard,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
@@ -1162,7 +1162,7 @@ class _UnitsListPageState extends State<UnitsListPage>
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: Text(
               'إلغاء',
               style: AppTextStyles.buttonMedium.copyWith(
@@ -1184,16 +1184,16 @@ class _UnitsListPageState extends State<UnitsListPage>
               color: Colors.transparent,
               child: InkWell(
                 onTap: () {
-                  final state = context.read<UnitsListBloc>().state;
+                  final state = this.context.read<UnitsListBloc>().state;
                   if (state is UnitsListLoaded) {
-                    context.read<UnitsListBloc>().add(
+                    this.context.read<UnitsListBloc>().add(
                           BulkDeleteUnitsEvent(
                             unitIds:
                                 state.selectedUnits.map((u) => u.id).toList(),
                           ),
                         );
                   }
-                  Navigator.pop(context);
+                  Navigator.pop(dialogContext);
                 },
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
