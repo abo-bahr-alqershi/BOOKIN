@@ -10,6 +10,8 @@ abstract class AmenitiesRepository {
     required String name,
     required String description,
     required String icon,
+    String? propertyTypeId,
+    bool isDefaultForType,
   });
 
   /// تحديث مرفق
@@ -51,5 +53,12 @@ abstract class AmenitiesRepository {
   /// جلب المرافق الأكثر استخداماً
   Future<Either<Failure, List<Amenity>>> getPopularAmenities({
     int limit = 10,
+  });
+
+  /// ربط مرفق بنوع عقار
+  Future<Either<Failure, bool>> assignAmenityToPropertyType({
+    required String amenityId,
+    required String propertyTypeId,
+    bool isDefault = false,
   });
 }

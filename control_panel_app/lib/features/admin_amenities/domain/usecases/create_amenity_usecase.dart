@@ -15,6 +15,8 @@ class CreateAmenityUseCase implements UseCase<String, CreateAmenityParams> {
       name: params.name,
       description: params.description,
       icon: params.icon,
+      propertyTypeId: params.propertyTypeId,
+      isDefaultForType: params.isDefaultForType,
     );
   }
 }
@@ -23,13 +25,17 @@ class CreateAmenityParams extends Equatable {
   final String name;
   final String description;
   final String icon;
+  final String? propertyTypeId;
+  final bool isDefaultForType;
 
   const CreateAmenityParams({
     required this.name,
     required this.description,
     required this.icon,
+    this.propertyTypeId,
+    this.isDefaultForType = false,
   });
 
   @override
-  List<Object> get props => [name, description, icon];
+  List<Object?> get props => [name, description, icon, propertyTypeId, isDefaultForType];
 }

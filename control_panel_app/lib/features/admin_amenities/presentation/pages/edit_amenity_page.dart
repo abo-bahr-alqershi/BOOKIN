@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/property_types/property_types_bloc.dart' as ap_pt_bloc;
 
 class EditAmenityPage extends StatefulWidget {
   final String amenityId;
@@ -32,6 +33,8 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
   final TextEditingController _descriptionController = TextEditingController();
 
   String _selectedIcon = 'star_rounded';
+  String? _selectedPropertyTypeId; // optional selection for assignment after update
+  bool _isDefaultForType = false;
 
   @override
   void initState() {
@@ -237,7 +240,92 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
             const SizedBox(height: 20),
             _buildDescriptionField(),
             const SizedBox(height: 20),
+            _buildPropertyTypeSelector(),
+            const SizedBox(height: 12),
+            _buildDefaultForTypeCheckbox(),
+            const SizedBox(height: 20),
             _buildIconSelector(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPropertyTypeSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'ربط بنوع عقار (اختياري)',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textWhite,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        BlocBuilder<ap_pt_bloc.PropertyTypesBloc, ap_pt_bloc.PropertyTypesState>(
+          builder: (context, state) {
+            if (state is ap_pt_bloc.PropertyTypesInitial) {
+              context.read<ap_pt_bloc.PropertyTypesBloc>().add(const ap_pt_bloc.LoadPropertyTypesEvent(pageSize: 1000));
+            }
+            if (state is ap_pt_bloc.PropertyTypesLoading || state is ap_pt_bloc.PropertyTypesInitial) {
+              return _buildLoadingDropdown();
+            }
+            if (state is ap_pt_bloc.PropertyTypesError) {
+              return _buildErrorDropdown(state.message);
+            }
+            if (state is ap_pt_bloc.PropertyTypesLoaded) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [
+                    AppTheme.darkCard.withOpacity(0.5),
+                    AppTheme.darkCard.withOpacity(0.3),
+                  ]),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.darkBorder.withOpacity(0.3), width: 1),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String?>(
+                    value: _selectedPropertyTypeId,
+                    isExpanded: true,
+                    dropdownColor: AppTheme.darkCard,
+                    icon: Icon(Icons.arrow_drop_down_rounded, color: AppTheme.primaryBlue.withOpacity(0.7)),
+                    style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+                    hint: Text('اختر نوع العقار لربطه بالمرفق', style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textMuted.withOpacity(0.5))),
+                    items: [
+                      const DropdownMenuItem<String?>(value: null, child: Text('بدون')), ...state.propertyTypes.map((t) => DropdownMenuItem<String?>(value: t.id, child: Text(t.name))).toList()
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedPropertyTypeId = value;
+                        if (_selectedPropertyTypeId == null) _isDefaultForType = false;
+                      });
+                    },
+                  ),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDefaultForTypeCheckbox() {
+    return Opacity(
+      opacity: _selectedPropertyTypeId == null ? 0.6 : 1.0,
+      child: IgnorePointer(
+        ignoring: _selectedPropertyTypeId == null,
+        child: Row(
+          children: [
+            Checkbox(
+              value: _isDefaultForType,
+              onChanged: (val) => setState(() => _isDefaultForType = val ?? false),
+              activeColor: AppTheme.primaryBlue,
+            ),
+            Text('تعيينه كافتراضي لنوع العقار المختار', style: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted)),
           ],
         ),
       ),
@@ -529,6 +617,16 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
               icon: _selectedIcon,
             ),
           );
+      // If user selected a property type, trigger assignment after update
+      if (_selectedPropertyTypeId != null) {
+        context.read<AmenitiesBloc>().add(
+              AssignAmenityToPropertyTypeEvent(
+                amenityId: widget.amenityId,
+                propertyTypeId: _selectedPropertyTypeId!,
+                isDefault: _isDefaultForType,
+              ),
+            );
+      }
     }
   }
 

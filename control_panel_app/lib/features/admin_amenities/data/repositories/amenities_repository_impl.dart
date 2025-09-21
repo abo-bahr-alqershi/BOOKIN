@@ -16,12 +16,16 @@ class AmenitiesRepositoryImpl implements AmenitiesRepository {
     required String name,
     required String description,
     required String icon,
+    String? propertyTypeId,
+    bool isDefaultForType = false,
   }) async {
     try {
       final result = await remoteDataSource.createAmenity(
         name: name,
         description: description,
         icon: icon,
+        propertyTypeId: propertyTypeId,
+        isDefaultForType: isDefaultForType,
       );
       return Right(result);
     } on ServerException catch (e) {
@@ -158,6 +162,26 @@ class AmenitiesRepositoryImpl implements AmenitiesRepository {
   }) async {
     try {
       final result = await remoteDataSource.getPopularAmenities(limit: limit);
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> assignAmenityToPropertyType({
+    required String amenityId,
+    required String propertyTypeId,
+    bool isDefault = false,
+  }) async {
+    try {
+      final result = await remoteDataSource.assignAmenityToPropertyType(
+        amenityId: amenityId,
+        propertyTypeId: propertyTypeId,
+        isDefault: isDefault,
+      );
       return Right(result);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
