@@ -1,6 +1,6 @@
 // lib/features/admin_reviews/presentation/pages/review_details_page.dart
 
-import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/reviews_list/reviews_list_bloc.dart';
+import '../../../../injection_container.dart' as di;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -14,6 +14,7 @@ import '../widgets/review_images_gallery.dart';
 import '../widgets/review_response_card.dart';
 import '../widgets/add_response_dialog.dart';
 import '../widgets/rating_breakdown_widget.dart';
+import '../../domain/usecases/approve_review_usecase.dart';
 
 class ReviewDetailsPage extends StatefulWidget {
   final String reviewId;
@@ -37,6 +38,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
   
   final ScrollController _scrollController = ScrollController();
   bool _showFloatingHeader = false;
+  bool _isApproving = false;
   
   @override
   void initState() {
@@ -869,11 +871,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
   }
   
   Widget _buildFloatingActions(BuildContext context, Review review) {
-    final bool isApproving = context.watch<ReviewsListBloc>().state is ReviewsListLoaded
-        ? (context.watch<ReviewsListBloc>().state as ReviewsListLoaded)
-            .approvingReviewIds
-            .contains(widget.reviewId)
-        : false;
+    final bool isApproving = _isApproving;
     return Positioned(
       bottom: 32,
       right: 20,
@@ -1062,9 +1060,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          context.read<ReviewsListBloc>().add(
-                            ApproveReviewEvent(reviewId),
-                          );
+                          _approveReview(reviewId);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.success,
@@ -1090,6 +1086,36 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
         ),
       ),
     );
+  }
+
+  Future<void> _approveReview(String reviewId) async {
+    if (_isApproving) return;
+    setState(() {
+      _isApproving = true;
+    });
+    try {
+      final useCase = di.sl<ApproveReviewUseCase>();
+      final result = await useCase(reviewId);
+      result.fold(
+        (failure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(failure.message)),
+          );
+        },
+        (_) {
+          // Refresh details after approval
+          if (mounted) {
+            context.read<ReviewDetailsBloc>().add(RefreshReviewDetailsEvent());
+          }
+        },
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isApproving = false;
+        });
+      }
+    }
   }
   
   Widget _buildLoadingState() {
