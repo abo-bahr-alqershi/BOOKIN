@@ -67,6 +67,47 @@ class _UnitsListPageState extends State<UnitsListPage>
   bool _isGridView = false;
   bool _showFilters = false;
   UnitFilters? _activeFilters;
+  bool _isDeleting = false;
+
+  void _showDeletingDialog({String message = 'جاري حذف الوحدة...'}) {
+    if (_isDeleting) return;
+    _isDeleting = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black87,
+      builder: (dialogContext) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+              ),
+            ),
+            child: const LoadingWidget(
+              type: LoadingType.futuristic,
+              message: 'جاري حذف الوحدة...',
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _dismissDeletingDialog() {
+    if (_isDeleting) {
+      _isDeleting = false;
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -122,7 +163,39 @@ class _UnitsListPageState extends State<UnitsListPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<UnitsListBloc, UnitsListState>(
+      listener: (context, state) {
+        // When delete is triggered, show loader before state transition to error/loaded
+        // We infer delete in progress when a DeleteUnitEvent is fired, but here we track via dialog visibility
+        if (state is UnitsListError && _isDeleting) {
+          _dismissDeletingDialog();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('فشل الحذف: ${state.message}'),
+              backgroundColor: AppTheme.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state is UnitsListLoaded && _isDeleting) {
+          _dismissDeletingDialog();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('تم حذف الوحدة بنجاح'),
+              backgroundColor: AppTheme.success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: CustomScrollView(
         controller: _scrollController,
@@ -137,6 +210,7 @@ class _UnitsListPageState extends State<UnitsListPage>
         ],
       ),
       floatingActionButton: _buildEnhancedFloatingActionButton(),
+      ),
     );
   }
 
@@ -1097,6 +1171,7 @@ class _UnitsListPageState extends State<UnitsListPage>
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(dialogContext);
+                          _showDeletingDialog();
                           this.context
                               .read<UnitsListBloc>()
                               .add(DeleteUnitEvent(unitId: unit.id));
