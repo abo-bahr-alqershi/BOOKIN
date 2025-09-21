@@ -672,7 +672,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
         if (state is PropertiesLoaded) {
           switch (_selectedView) {
             case 'grid':
-          return _buildGridView(state);
+              return _buildGridView(state);
             case 'table':
               return Padding(
                 padding: const EdgeInsets.all(16),
