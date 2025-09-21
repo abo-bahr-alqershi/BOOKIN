@@ -23,7 +23,7 @@ import '../widgets/futuristic_services_table.dart';
 import 'create_service_page.dart';
 import '../widgets/service_icon_picker.dart';
 import '../widgets/service_details_dialog.dart';
-import '../widgets/service_stats_card.dart';
+import '../widgets/service_stats_row.dart';
 import '../widgets/service_filters_widget.dart';
 import '../utils/service_icons.dart';
 
@@ -509,44 +509,11 @@ class _AdminServicesPageState extends State<AdminServicesPage>
     return BlocBuilder<ServicesBloc, ServicesState>(
       builder: (context, state) {
         if (state is ServicesLoaded) {
-          return Container(
-            height: 120,
-            padding: const EdgeInsets.all(20),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 200,
-                    child: ServiceStatsCard(
-                      title: 'إجمالي الخدمات',
-                      value: state.totalServices.toString(),
-                      icon: Icons.room_service_rounded,
-                      color: AppTheme.primaryBlue,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  SizedBox(
-                    width: 200,
-                    child: ServiceStatsCard(
-                      title: 'خدمات مدفوعة',
-                      value: state.paidServices.toString(),
-                      icon: Icons.attach_money_rounded,
-                      color: AppTheme.success,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  SizedBox(
-                    width: 200,
-                    child: ServiceStatsCard(
-                      title: 'أيقونات متاحة',
-                      value: ServiceIcons.icons.length.toString(),
-                      icon: Icons.palette_rounded,
-                      color: AppTheme.warning,
-                    ),
-                  ),
-                ],
-              ),
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: ServiceStatsRow(
+              totalServices: state.totalServices,
+              paidServices: state.paidServices,
             ),
           );
         }
