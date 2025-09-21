@@ -104,6 +104,24 @@ namespace YemenBooking.Infrastructure.Repositories
         public async Task<bool> CheckActiveBookingsAsync(Guid unitId, CancellationToken cancellationToken = default)
             => await _context.Bookings.AnyAsync(b => b.UnitId == unitId && b.Status == BookingStatus.Confirmed, cancellationToken);
 
+        /// <summary>
+        /// التحقق من وجود أي حجوزات للوحدة (بغض النظر عن الحالة)
+        /// </summary>
+        public async Task<bool> HasAnyBookingsAsync(Guid unitId, CancellationToken cancellationToken = default)
+        {
+            return await _context.Bookings.AnyAsync(b => b.UnitId == unitId, cancellationToken);
+        }
+
+        /// <summary>
+        /// التحقق من وجود أي مدفوعات مرتبطة بحجوزات هذه الوحدة (حتى وإن كانت مستردة)
+        /// </summary>
+        public async Task<bool> HasAnyPaymentsAsync(Guid unitId, CancellationToken cancellationToken = default)
+        {
+            return await _context.Payments
+                .Include(p => p.Booking)
+                .AnyAsync(p => p.Booking.UnitId == unitId, cancellationToken);
+        }
+
         public async Task<IDictionary<DateTime, bool>> GetUnitAvailabilityAsync(Guid unitId, DateTime fromDate, DateTime toDate, CancellationToken cancellationToken = default)
         {
             var dict = new Dictionary<DateTime, bool>();
