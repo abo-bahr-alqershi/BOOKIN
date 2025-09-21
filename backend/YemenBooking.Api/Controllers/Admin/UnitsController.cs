@@ -71,6 +71,8 @@ namespace YemenBooking.Api.Controllers.Admin
         {
             var command = new DeleteUnitCommand { UnitId = id };
             var result = await _mediator.Send(command);
+            if (!result.Success)
+                return Conflict(result);
             return Ok(result);
         }
 

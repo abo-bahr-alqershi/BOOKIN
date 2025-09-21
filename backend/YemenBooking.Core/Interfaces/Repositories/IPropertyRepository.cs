@@ -138,6 +138,30 @@ public interface IPropertyRepository : IRepository<Property>
     Task<int> GetPropertyBookingCountAsync(Guid propertyId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// عدد الوحدات المرتبطة بالعقار
+    /// Units count for the property
+    /// </summary>
+    Task<int> GetUnitsCountAsync(Guid propertyId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// عدد الخدمات المرتبطة بالعقار
+    /// Services count for the property
+    /// </summary>
+    Task<int> GetServicesCountAsync(Guid propertyId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// عدد المرافق المرتبطة بالعقار
+    /// Amenities count for the property
+    /// </summary>
+    Task<int> GetAmenitiesCountAsync(Guid propertyId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// عدد المدفوعات المرتبطة بحجوزات هذا العقار
+    /// Payments count for bookings of this property
+    /// </summary>
+    Task<int> GetPaymentsCountAsync(Guid propertyId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// الحصول على مرافق الكيان
     /// Get property amenities
     /// </summary>

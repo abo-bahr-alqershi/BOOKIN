@@ -127,7 +127,9 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
   Future<bool> deleteUnit(String unitId) async {
     try {
       final response = await apiClient.delete('/api/admin/Units/$unitId');
-      return response.data['success'] ?? false;
+      if (response.data is Map && response.data['success'] == true) return true;
+      final msg = (response.data is Map) ? response.data['message'] : null;
+      throw ServerException(msg ?? 'Failed to delete unit');
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
