@@ -2,6 +2,7 @@
 
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:bookn_cp_app/features/admin_properties/domain/entities/property.dart';
+import 'package:bookn_cp_app/features/admin_properties/presentation/widgets/property_map_cluster_view.dart';
 import 'package:bookn_cp_app/injection_container.dart' as di;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -819,21 +820,38 @@ class _PropertiesListPageState extends State<PropertiesListPage>
   }
 
   Widget _buildMapView(PropertiesLoaded state) {
+    // حساب الارتفاع الديناميكي بناءً على حجم الشاشة
+    final screenHeight = MediaQuery.of(context).size.height;
+    final appBarHeight = AppBar().preferredSize.height;
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+
+    // احتساب الارتفاع المتاح (الشاشة كاملة ناقص الأجزاء العلوية)
+    final availableHeight =
+        screenHeight - appBarHeight - statusBarHeight - 100; // 100 للهوامش
+
     return Container(
-      height: 500,
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.darkCard.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.darkBorder.withOpacity(0.3),
-        ),
-      ),
-      child: Center(
-        child: Text(
-          'Map View - Coming Soon',
-          style: TextStyle(color: AppTheme.textMuted),
-        ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      height:
+          availableHeight.clamp(500.0, 900.0), // الحد الأدنى 500 والأقصى 900
+      child: PropertyMapClusterView(
+        properties: state.properties,
+        onPropertySelected: (property) {
+          _navigateToProperty(property.id);
+        },
+        onFilterChanged: (filters) {
+          context.read<PropertiesBloc>().add(
+                FilterPropertiesEvent(
+                  propertyTypeId: filters['propertyTypeId'],
+                  minPrice: filters['minPrice'],
+                  maxPrice: filters['maxPrice'],
+                  amenityIds: filters['amenityIds'],
+                  starRatings: filters['starRatings'],
+                  minAverageRating: filters['minAverageRating'],
+                  isApproved: filters['isApproved'],
+                  hasActiveBookings: filters['hasActiveBookings'],
+                ),
+              );
+        },
       ),
     );
   }
@@ -2012,8 +2030,8 @@ class _PropertyAmenitiesAssignViewState
                 const SizedBox(height: 8),
                 Text(
                   _error!,
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: AppTheme.error),
+                  style:
+                      AppTextStyles.bodyMedium.copyWith(color: AppTheme.error),
                   textAlign: TextAlign.center,
                 ),
               ],

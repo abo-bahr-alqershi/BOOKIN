@@ -49,7 +49,7 @@ import 'package:bookn_cp_app/features/admin_amenities/presentation/pages/create_
 import 'package:bookn_cp_app/features/admin_amenities/presentation/pages/edit_amenity_page.dart';
 import 'package:bookn_cp_app/features/admin_reviews/presentation/pages/reviews_list_page.dart';
 import 'package:bookn_cp_app/features/admin_reviews/presentation/pages/review_details_page.dart';
-import 'package:bookn_cp_app/features/admin_reviews/domain/entities/review.dart';
+// removed unused import: review entity
 import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/reviews_list/reviews_list_bloc.dart'
     as ar_list_bloc;
 import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/review_details/review_details_bloc.dart'
@@ -529,9 +529,18 @@ class AppRouter {
         GoRoute(
           path: '/admin/properties',
           builder: (context, state) {
-            return BlocProvider<ap_bloc.PropertiesBloc>(
-              create: (_) => di.sl<ap_bloc.PropertiesBloc>()
-                ..add(const ap_bloc.LoadPropertiesEvent(pageSize: 20)),
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider<ap_bloc.PropertiesBloc>(
+                  create: (_) => di.sl<ap_bloc.PropertiesBloc>()
+                    ..add(const ap_bloc.LoadPropertiesEvent(pageSize: 20)),
+                ),
+                BlocProvider<ap_prop_pt_bloc.PropertyTypesBloc>(
+                  create: (_) => di.sl<ap_prop_pt_bloc.PropertyTypesBloc>()
+                    ..add(const ap_prop_pt_bloc.LoadPropertyTypesEvent(
+                        pageSize: 1000)),
+                ),
+              ],
               child: const ap_pages.PropertiesListPage(),
             );
           },
@@ -621,9 +630,12 @@ class AppRouter {
           builder: (context, state) {
             return MultiBlocProvider(
               providers: [
-                BlocProvider<aa_bloc.AmenitiesBloc>(create: (_) => di.sl<aa_bloc.AmenitiesBloc>()),
+                BlocProvider<aa_bloc.AmenitiesBloc>(
+                    create: (_) => di.sl<aa_bloc.AmenitiesBloc>()),
                 BlocProvider<ap_pt_bloc.PropertyTypesBloc>(
-                  create: (_) => di.sl<ap_pt_bloc.PropertyTypesBloc>()..add(const ap_pt_bloc.LoadPropertyTypesEvent(pageSize: 1000)),
+                  create: (_) => di.sl<ap_pt_bloc.PropertyTypesBloc>()
+                    ..add(const ap_pt_bloc.LoadPropertyTypesEvent(
+                        pageSize: 1000)),
                 ),
               ],
               child: const AmenitiesManagementPage(),
@@ -636,9 +648,12 @@ class AppRouter {
           builder: (context, state) {
             return MultiBlocProvider(
               providers: [
-                BlocProvider<aa_bloc.AmenitiesBloc>(create: (_) => di.sl<aa_bloc.AmenitiesBloc>()),
+                BlocProvider<aa_bloc.AmenitiesBloc>(
+                    create: (_) => di.sl<aa_bloc.AmenitiesBloc>()),
                 BlocProvider<ap_pt_bloc.PropertyTypesBloc>(
-                  create: (_) => di.sl<ap_pt_bloc.PropertyTypesBloc>()..add(const ap_pt_bloc.LoadPropertyTypesEvent(pageSize: 1000)),
+                  create: (_) => di.sl<ap_pt_bloc.PropertyTypesBloc>()
+                    ..add(const ap_pt_bloc.LoadPropertyTypesEvent(
+                        pageSize: 1000)),
                 ),
               ],
               child: const CreateAmenityPage(),
@@ -653,9 +668,12 @@ class AppRouter {
             final initialAmenity = state.extra;
             return MultiBlocProvider(
               providers: [
-                BlocProvider<aa_bloc.AmenitiesBloc>(create: (_) => di.sl<aa_bloc.AmenitiesBloc>()),
+                BlocProvider<aa_bloc.AmenitiesBloc>(
+                    create: (_) => di.sl<aa_bloc.AmenitiesBloc>()),
                 BlocProvider<ap_pt_bloc.PropertyTypesBloc>(
-                  create: (_) => di.sl<ap_pt_bloc.PropertyTypesBloc>()..add(const ap_pt_bloc.LoadPropertyTypesEvent(pageSize: 1000)),
+                  create: (_) => di.sl<ap_pt_bloc.PropertyTypesBloc>()
+                    ..add(const ap_pt_bloc.LoadPropertyTypesEvent(
+                        pageSize: 1000)),
                 ),
               ],
               child: EditAmenityPage(
@@ -814,7 +832,6 @@ class AppRouter {
         GoRoute(
           path: '/admin/cities/:cityId/edit',
           builder: (context, state) {
-            final cityId = state.pathParameters['cityId']!;
             final city = state.extra as City?;
             return BlocProvider<ci_bloc.CitiesBloc>(
               create: (_) => di.sl<ci_bloc.CitiesBloc>(),
@@ -928,12 +945,6 @@ class AppRouter {
       ],
     );
   }
-
-  static const List<String> _protectedPaths = <String>[
-    '/profile',
-    '/conversations',
-    '/chat',
-  ];
 }
 
 class GoRouterRefreshStream extends ChangeNotifier {

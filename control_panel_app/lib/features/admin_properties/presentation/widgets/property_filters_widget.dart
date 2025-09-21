@@ -3,18 +3,17 @@
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:bookn_cp_app/core/theme/app_colors.dart';
 import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import '../bloc/property_types/property_types_bloc.dart';
 
 class PropertyFiltersWidget extends StatefulWidget {
   final Function(Map<String, dynamic>) onFilterChanged;
-  
+
   const PropertyFiltersWidget({
     super.key,
     required this.onFilterChanged,
   });
-  
+
   @override
   State<PropertyFiltersWidget> createState() => _PropertyFiltersWidgetState();
 }
@@ -22,11 +21,11 @@ class PropertyFiltersWidget extends StatefulWidget {
 class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
   String? _selectedPropertyTypeId;
   RangeValues _priceRange = const RangeValues(0, 1000);
-  List<int> _selectedStarRatings = [];
+  final List<int> _selectedStarRatings = [];
   bool? _isApproved;
   bool? _hasActiveBookings;
   final TextEditingController _searchController = TextEditingController();
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -40,19 +39,19 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
           SizedBox(width: 260, child: _buildSearchField()),
           // Property Type Filter
           SizedBox(width: 220, child: _buildPropertyTypeFilter()),
-          
+
           // Price Range Filter
           SizedBox(width: 260, child: _buildPriceRangeFilter()),
-          
+
           // Star Rating Filter
           SizedBox(width: 200, child: _buildStarRatingFilter()),
-          
+
           // Status Filter
           SizedBox(width: 200, child: _buildStatusFilter()),
 
           // Active Bookings Filter
           SizedBox(width: 220, child: _buildHasActiveBookingsFilter()),
-          
+
           // Apply Button
           _buildApplyButton(),
         ],
@@ -93,13 +92,14 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
             size: 18,
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
         onSubmitted: (_) => _applyFilters(),
       ),
     );
   }
-  
+
   Widget _buildPropertyTypeFilter() {
     return BlocBuilder<PropertyTypesBloc, PropertyTypesState>(
       builder: (context, state) {
@@ -138,7 +138,7 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
                   ),
                 ),
                 items: [
-                  DropdownMenuItem(
+                  const DropdownMenuItem(
                     value: null,
                     child: Text('الكل'),
                   ),
@@ -147,7 +147,7 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
                       value: type.id,
                       child: Text(type.name),
                     );
-                  }).toList(),
+                  }),
                 ],
                 onChanged: (value) {
                   setState(() {
@@ -162,7 +162,7 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
       },
     );
   }
-  
+
   Widget _buildPriceRangeFilter() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -204,7 +204,7 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
       ),
     );
   }
-  
+
   Widget _buildStarRatingFilter() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -226,7 +226,7 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
         children: List.generate(5, (index) {
           final rating = index + 1;
           final isSelected = _selectedStarRatings.contains(rating);
-          
+
           return GestureDetector(
             onTap: () {
               setState(() {
@@ -240,14 +240,16 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
             child: Icon(
               Icons.star_rounded,
               size: 16,
-              color: isSelected ? AppTheme.warning : AppTheme.textMuted.withValues(alpha: 0.3),
+              color: isSelected
+                  ? AppTheme.warning
+                  : AppTheme.textMuted.withValues(alpha: 0.3),
             ),
           );
         }),
       ),
     );
   }
-  
+
   Widget _buildStatusFilter() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -363,19 +365,26 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
       ),
     );
   }
-  
+
+  // Apply current filters (used by onSubmitted and Apply button)
+  void _applyFilters() {
+    widget.onFilterChanged({
+      'searchTerm': _searchController.text.trim().isEmpty
+          ? null
+          : _searchController.text.trim(),
+      'propertyTypeId': _selectedPropertyTypeId,
+      'minPrice': _priceRange.start,
+      'maxPrice': _priceRange.end,
+      'starRatings': _selectedStarRatings,
+      'isApproved': _isApproved,
+      'hasActiveBookings': _hasActiveBookings,
+    });
+  }
+
   Widget _buildApplyButton() {
     return GestureDetector(
       onTap: () {
-        widget.onFilterChanged({
-          'searchTerm': _searchController.text.trim().isEmpty ? null : _searchController.text.trim(),
-          'propertyTypeId': _selectedPropertyTypeId,
-          'minPrice': _priceRange.start,
-          'maxPrice': _priceRange.end,
-          'starRatings': _selectedStarRatings,
-          'isApproved': _isApproved,
-          'hasActiveBookings': _hasActiveBookings,
-        });
+        _applyFilters();
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
