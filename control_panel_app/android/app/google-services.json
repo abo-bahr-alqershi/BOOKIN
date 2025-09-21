@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "90807496145",
-    "project_id": "yemen-booking-c66e0",
-    "storage_bucket": "yemen-booking-c66e0.firebasestorage.app"
+    "project_number": "799150074342",
+    "project_id": "bookncp-51a35",
+    "storage_bucket": "bookncp-51a35.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:90807496145:android:04ac391e693b1665b244f0",
+        "mobilesdk_app_id": "1:799150074342:android:a179254dbbfe4a2ce58e27",
         "android_client_info": {
           "package_name": "com.bookncp.app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBvDi3Wq3AkjGuAGiR-V8RLsxV8iuiQMlE"
+          "current_key": "AIzaSyDKdpo8snbClcZf33zyGa3Gu1YP4GaxR4k"
         }
       ],
       "services": {
