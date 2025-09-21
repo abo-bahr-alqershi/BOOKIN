@@ -197,9 +197,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                                   approvingReviewIds: state.approvingReviewIds,
                                   onReviewTap: (review) => _navigateToDetails(context, review.id),
                                   onApproveTap: (review) {
-                                    context.read<ReviewsListBloc>().add(
-                                      ApproveReviewEvent(review.id),
-                                    );
+                                    _showApproveConfirmation(context, review.id);
                                   },
                                   onDeleteTap: (review) {
                                     _showDeleteConfirmation(context, review.id);
@@ -472,9 +470,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                   review: reviews[index],
                   onTap: () => _navigateToDetails(context, reviews[index].id),
                   onApprove: () {
-                    context.read<ReviewsListBloc>().add(
-                      ApproveReviewEvent(reviews[index].id),
-                    );
+                    _showApproveConfirmation(context, reviews[index].id);
                   },
                   onDelete: () {
                     _showDeleteConfirmation(context, reviews[index].id);
@@ -808,6 +804,116 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                         ),
                         child: Text(
                           'حذف',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showApproveConfirmation(BuildContext context, String reviewId) {
+    HapticFeedback.mediumImpact();
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: AppTheme.success.withOpacity(0.3),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.success.withOpacity(0.2),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppTheme.success.withOpacity(0.1),
+                  ),
+                  child: Icon(
+                    Icons.check_circle_outline,
+                    color: AppTheme.success,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'الموافقة على التقييم؟',
+                  style: AppTextStyles.heading3.copyWith(
+                    color: AppTheme.textWhite,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'سيتم اعتماد هذا التقييم. هل تريد المتابعة؟',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'إلغاء',
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: AppTheme.textLight,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          context.read<ReviewsListBloc>().add(
+                            ApproveReviewEvent(reviewId),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.success,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'موافقة',
                           style: AppTextStyles.buttonMedium.copyWith(
                             color: Colors.white,
                           ),
