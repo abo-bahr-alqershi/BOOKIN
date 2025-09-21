@@ -114,4 +114,22 @@ public interface IPropertyImageRepository : IRepository<PropertyImage>
     /// Batch update display order for multiple images
     /// </summary>
     Task<bool> UpdateDisplayOrdersAsync(IEnumerable<(Guid imageId, int displayOrder)> assignments, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// حذف دائم لجميع صور العقار (تخطي فلتر الحذف الناعم)
+    /// Hard delete all images for a property (ignores soft-delete filter)
+    /// </summary>
+    Task<int> HardDeleteByPropertyIdAsync(Guid propertyId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// حذف دائم لجميع صور الوحدة (تخطي فلتر الحذف الناعم)
+    /// Hard delete all images for a unit (ignores soft-delete filter)
+    /// </summary>
+    Task<int> HardDeleteByUnitIdAsync(Guid unitId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// حذف دائم لصورة واحدة
+    /// Hard delete a single image
+    /// </summary>
+    Task<bool> HardDeleteAsync(Guid imageId, CancellationToken cancellationToken = default);
 }

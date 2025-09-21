@@ -53,6 +53,44 @@ public class PropertyImageRepository : BaseRepository<PropertyImage>, IPropertyI
         return true;
     }
 
+    /// <summary>
+    /// حذف دائم لصورة واحدة (تجاوز الحذف الناعم والفلتر)
+    /// </summary>
+    public async Task<bool> HardDeleteAsync(Guid imageId, CancellationToken cancellationToken = default)
+    {
+        var image = await _dbSet.IgnoreQueryFilters().FirstOrDefaultAsync(pi => pi.Id == imageId, cancellationToken);
+        if (image == null) return false;
+        _dbSet.Remove(image);
+        await _context.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    /// <summary>
+    /// حذف دائم لكل صور العقار
+    /// </summary>
+    public async Task<int> HardDeleteByPropertyIdAsync(Guid propertyId, CancellationToken cancellationToken = default)
+    {
+        var images = await _dbSet.IgnoreQueryFilters()
+            .Where(pi => pi.PropertyId == propertyId)
+            .ToListAsync(cancellationToken);
+        if (images.Count == 0) return 0;
+        _dbSet.RemoveRange(images);
+        return await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// حذف دائم لكل صور الوحدة
+    /// </summary>
+    public async Task<int> HardDeleteByUnitIdAsync(Guid unitId, CancellationToken cancellationToken = default)
+    {
+        var images = await _dbSet.IgnoreQueryFilters()
+            .Where(pi => pi.UnitId == unitId)
+            .ToListAsync(cancellationToken);
+        if (images.Count == 0) return 0;
+        _dbSet.RemoveRange(images);
+        return await _context.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<IEnumerable<PropertyImage>> GetByPropertyIdAsync(Guid propertyId, CancellationToken cancellationToken = default)
         => await GetImagesByPropertyAsync(propertyId, cancellationToken);
 

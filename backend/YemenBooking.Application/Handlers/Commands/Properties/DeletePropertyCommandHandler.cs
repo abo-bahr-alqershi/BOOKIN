@@ -92,8 +92,9 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
                     {
                         try { await _fileStorageService.DeleteFileAsync(img.Url, cancellationToken); } catch { /* best-effort */ }
                     }
-                    await _propertyImageRepository.DeletePropertyImageAsync(img.Id, cancellationToken);
                 }
+                // حذف دائم لسجلات الصور لتجنب أي فلتر SoftDelete قد يمنع الإزالة قبل حذف العقار
+                await _propertyImageRepository.HardDeleteByPropertyIdAsync(request.PropertyId, cancellationToken);
             }
             catch (Exception ex)
             {
