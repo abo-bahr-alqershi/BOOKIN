@@ -194,6 +194,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                                 ),
                                 child: FuturisticReviewsTable(
                                   reviews: state.filteredReviews,
+                                  approvingReviewIds: state.approvingReviewIds,
                                   onReviewTap: (review) => _navigateToDetails(context, review.id),
                                   onApproveTap: (review) {
                                     context.read<ReviewsListBloc>().add(
@@ -478,6 +479,12 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                   onDelete: () {
                     _showDeleteConfirmation(context, reviews[index].id);
                   },
+                  isApproving: (context.read<ReviewsListBloc>().state
+                          is ReviewsListLoaded)
+                      ? (context.read<ReviewsListBloc>().state as ReviewsListLoaded)
+                          .approvingReviewIds
+                          .contains(reviews[index].id)
+                      : false,
                 ),
               ),
             ),

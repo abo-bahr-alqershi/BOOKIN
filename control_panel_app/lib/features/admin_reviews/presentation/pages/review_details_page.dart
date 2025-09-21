@@ -869,6 +869,11 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
   }
   
   Widget _buildFloatingActions(BuildContext context, Review review) {
+    final bool isApproving = context.watch<ReviewsListBloc>().state is ReviewsListLoaded
+        ? (context.watch<ReviewsListBloc>().state as ReviewsListLoaded)
+            .approvingReviewIds
+            .contains(widget.reviewId)
+        : false;
     return Positioned(
       bottom: 32,
       right: 20,
@@ -876,16 +881,18 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
         mainAxisSize: MainAxisSize.min,
         children: [
           if (review.isPending) ...[
-            _buildFloatingActionButton(
-              icon: Icons.check,
-              color: AppTheme.success,
-              onTap: () {
-                HapticFeedback.mediumImpact();
-                context.read<ReviewsListBloc>().add(
-                  ApproveReviewEvent(widget.reviewId),
-                );
-              },
-            ),
+            isApproving
+                ? _buildLoadingFloatingButton(color: AppTheme.success)
+                : _buildFloatingActionButton(
+                    icon: Icons.check,
+                    color: AppTheme.success,
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      context.read<ReviewsListBloc>().add(
+                        ApproveReviewEvent(widget.reviewId),
+                      );
+                    },
+                  ),
             const SizedBox(height: 12),
             _buildFloatingActionButton(
               icon: Icons.close,
@@ -940,6 +947,36 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                 color: Colors.white,
                 size: 24,
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingFloatingButton({required Color color}) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color,
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.5),
+              blurRadius: 20,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: const Padding(
+          padding: EdgeInsets.all(14),
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: Colors.white,
             ),
           ),
         ),
