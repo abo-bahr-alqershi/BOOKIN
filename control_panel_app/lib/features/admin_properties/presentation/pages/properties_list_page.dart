@@ -110,7 +110,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
   }
 
   void _loadProperties() {
-    context.read<PropertiesBloc>().add(const LoadPropertiesEvent(pageSize: 1000));
+    context.read<PropertiesBloc>().add(const LoadPropertiesEvent(pageSize: 20));
   }
 
   @override

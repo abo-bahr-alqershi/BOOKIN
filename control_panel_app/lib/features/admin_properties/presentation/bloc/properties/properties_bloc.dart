@@ -24,7 +24,7 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
   final DeletePropertyUseCase deleteProperty;
   final ApprovePropertyUseCase approveProperty;
   final RejectPropertyUseCase rejectProperty;
-  
+
   PropertiesBloc({
     required this.getAllProperties,
     required this.getPropertyDetails,
@@ -44,13 +44,13 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
     on<FilterPropertiesEvent>(_onFilterProperties);
     on<SearchPropertiesEvent>(_onSearchProperties);
   }
-  
+
   Future<void> _onLoadProperties(
     LoadPropertiesEvent event,
     Emitter<PropertiesState> emit,
   ) async {
     emit(PropertiesLoading());
-    
+
     final result = await getAllProperties(
       GetAllPropertiesParams(
         pageNumber: event.pageNumber,
@@ -60,7 +60,7 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
         isApproved: event.isApproved,
       ),
     );
-    
+
     result.fold(
       (failure) => emit(PropertiesError(failure.message)),
       (paginatedResult) => emit(PropertiesLoaded(
@@ -73,32 +73,32 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
       )),
     );
   }
-  
+
   Future<void> _onLoadPropertyDetails(
     LoadPropertyDetailsEvent event,
     Emitter<PropertiesState> emit,
   ) async {
     emit(PropertyDetailsLoading());
-    
+
     final result = await getPropertyDetails(
       GetPropertyDetailsParams(
         propertyId: event.propertyId,
         includeUnits: event.includeUnits,
       ),
     );
-    
+
     result.fold(
       (failure) => emit(PropertyDetailsError(failure.message)),
       (property) => emit(PropertyDetailsLoaded(property)),
     );
   }
-  
+
   Future<void> _onCreateProperty(
     CreatePropertyEvent event,
     Emitter<PropertiesState> emit,
   ) async {
     emit(PropertyCreating());
-    
+
     final result = await createProperty(
       CreatePropertyParams(
         name: event.name,
@@ -119,22 +119,22 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
         isFeatured: event.isFeatured,
       ),
     );
-    
+
     result.fold(
       (failure) => emit(PropertiesError(failure.message)),
       (propertyId) {
         emit(PropertyCreated(propertyId));
-        add(LoadPropertiesEvent());
+        add(const LoadPropertiesEvent());
       },
     );
   }
-  
+
   Future<void> _onUpdateProperty(
     UpdatePropertyEvent event,
     Emitter<PropertiesState> emit,
   ) async {
     emit(PropertyUpdating());
-    
+
     final result = await updateProperty(
       UpdatePropertyParams(
         propertyId: event.propertyId,
@@ -152,39 +152,39 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
         isFeatured: event.isFeatured,
       ),
     );
-    
+
     result.fold(
       (failure) => emit(PropertiesError(failure.message)),
       (_) {
         emit(PropertyUpdated());
-        add(LoadPropertiesEvent());
+        add(const LoadPropertiesEvent());
       },
     );
   }
-  
+
   Future<void> _onDeleteProperty(
     DeletePropertyEvent event,
     Emitter<PropertiesState> emit,
   ) async {
     emit(PropertyDeleting());
-    
+
     final result = await deleteProperty(event.propertyId);
-    
+
     result.fold(
       (failure) => emit(PropertiesError(failure.message)),
       (_) {
         emit(PropertyDeleted());
-        add(LoadPropertiesEvent());
+        add(const LoadPropertiesEvent());
       },
     );
   }
-  
+
   Future<void> _onApproveProperty(
     ApprovePropertyEvent event,
     Emitter<PropertiesState> emit,
   ) async {
     final result = await approveProperty(event.propertyId);
-    
+
     result.fold(
       (failure) => emit(PropertiesError(failure.message)),
       (_) {
@@ -193,13 +193,13 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
       },
     );
   }
-  
+
   Future<void> _onRejectProperty(
     RejectPropertyEvent event,
     Emitter<PropertiesState> emit,
   ) async {
     final result = await rejectProperty(event.propertyId);
-    
+
     result.fold(
       (failure) => emit(PropertiesError(failure.message)),
       (_) {
@@ -208,17 +208,17 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
       },
     );
   }
-  
+
   Future<void> _onFilterProperties(
     FilterPropertiesEvent event,
     Emitter<PropertiesState> emit,
   ) async {
     emit(PropertiesLoading());
-    
+
     final result = await getAllProperties(
       GetAllPropertiesParams(
         pageNumber: 1,
-        pageSize: 1000,
+        pageSize: 20,
         propertyTypeId: event.propertyTypeId,
         minPrice: event.minPrice,
         maxPrice: event.maxPrice,
@@ -228,7 +228,7 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
         isApproved: event.isApproved,
       ),
     );
-    
+
     result.fold(
       (failure) => emit(PropertiesError(failure.message)),
       (paginatedResult) => emit(PropertiesLoaded(
@@ -239,32 +239,34 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
         hasNextPage: paginatedResult.hasNextPage,
         hasPreviousPage: paginatedResult.hasPreviousPage,
         activeFilters: {
-          if (event.propertyTypeId != null) 'propertyTypeId': event.propertyTypeId!,
+          if (event.propertyTypeId != null)
+            'propertyTypeId': event.propertyTypeId!,
           if (event.minPrice != null) 'minPrice': event.minPrice!,
           if (event.maxPrice != null) 'maxPrice': event.maxPrice!,
           if (event.amenityIds != null) 'amenityIds': event.amenityIds!,
           if (event.starRatings != null) 'starRatings': event.starRatings!,
-          if (event.minAverageRating != null) 'minAverageRating': event.minAverageRating!,
+          if (event.minAverageRating != null)
+            'minAverageRating': event.minAverageRating!,
           if (event.isApproved != null) 'isApproved': event.isApproved!,
         },
       )),
     );
   }
-  
+
   Future<void> _onSearchProperties(
     SearchPropertiesEvent event,
     Emitter<PropertiesState> emit,
   ) async {
     emit(PropertiesLoading());
-    
+
     final result = await getAllProperties(
       GetAllPropertiesParams(
         pageNumber: 1,
-        pageSize: 1000,
+        pageSize: 20,
         searchTerm: event.searchTerm,
       ),
     );
-    
+
     result.fold(
       (failure) => emit(PropertiesError(failure.message)),
       (paginatedResult) => emit(PropertiesLoaded(

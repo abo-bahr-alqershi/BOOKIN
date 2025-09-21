@@ -443,7 +443,8 @@ class AppRouter {
             return MultiBlocProvider(
               providers: [
                 BlocProvider<UnitFormBloc>(
-                  create: (_) => di.sl<UnitFormBloc>()..add(const InitializeFormEvent()),
+                  create: (_) =>
+                      di.sl<UnitFormBloc>()..add(const InitializeFormEvent()),
                 ),
                 BlocProvider<UnitDetailsBloc>(
                   create: (_) => di.sl<UnitDetailsBloc>()
@@ -528,7 +529,7 @@ class AppRouter {
           builder: (context, state) {
             return BlocProvider<ap_bloc.PropertiesBloc>(
               create: (_) => di.sl<ap_bloc.PropertiesBloc>()
-                ..add(const ap_bloc.LoadPropertiesEvent(pageSize: 1000)),
+                ..add(const ap_bloc.LoadPropertiesEvent(pageSize: 20)),
               child: const ap_pages.PropertiesListPage(),
             );
           },

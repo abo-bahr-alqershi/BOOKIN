@@ -50,7 +50,7 @@ class BookingCalendarBloc
         startDate: dateRange.start,
         endDate: dateRange.end,
         unitId: _currentUnitId,
-        pageSize: 1000, // جلب جميع الحجوزات للشهر
+        pageSize: 20, // جلب جميع الحجوزات للشهر
       ),
     );
 
@@ -160,7 +160,7 @@ class BookingCalendarBloc
           propertyId: event.propertyId,
           startDate: dateRange.start,
           endDate: dateRange.end,
-          pageSize: 1000,
+          pageSize: 20,
         ),
       );
 
