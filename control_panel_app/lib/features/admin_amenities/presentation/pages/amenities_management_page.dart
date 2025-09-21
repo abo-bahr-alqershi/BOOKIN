@@ -105,10 +105,13 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
           _showDeletingDialog();
         } else if (state is AmenityOperationSuccess) {
           _dismissDeletingDialog();
-          _showSnack('تمت العملية بنجاح', AppTheme.success);
+          _showSnack('تم حذف المرفق بنجاح', AppTheme.success);
         } else if (state is AmenityOperationFailure) {
           _dismissDeletingDialog();
-          _showSnack(state.message, AppTheme.error);
+          final msg = state.message.contains('لا يمكن حذف')
+              ? state.message
+              : 'فشل الحذف: ${state.message}';
+          _showSnack(msg, AppTheme.error);
         }
       },
       child: Scaffold(
