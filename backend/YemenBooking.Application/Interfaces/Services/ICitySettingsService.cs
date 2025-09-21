@@ -19,5 +19,10 @@ namespace YemenBooking.Application.Interfaces.Services
         /// Save or update the list of cities
         /// </summary>
         Task SaveCitiesAsync(List<CityDto> cities, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Delete a city after validating there are no dependent entities
+        /// </summary>
+        Task DeleteCityAsync(string name, CancellationToken cancellationToken = default);
     }
 } 

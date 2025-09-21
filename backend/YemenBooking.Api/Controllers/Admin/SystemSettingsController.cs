@@ -114,5 +114,27 @@ namespace YemenBooking.Api.Controllers.Admin
             await _citySettingsService.SaveCitiesAsync(cities, cancellationToken);
             return Ok(ResultDto<bool>.Succeeded(true));
         }
+
+        /// <summary>
+        /// حذف مدينة مع التحقق من الارتباطات
+        /// Delete city after validating dependent references
+        /// </summary>
+        [HttpDelete("cities/{name}")]
+        public async Task<ActionResult<ResultDto>> DeleteCityAsync([FromRoute] string name, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _citySettingsService.DeleteCityAsync(name, cancellationToken);
+                return Ok(ResultDto.Ok("تم حذف المدينة بنجاح"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ResultDto.Failure(ex.Message, errorCode: "CITY_DELETE_CONFLICT"));
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ResultDto.Failure(ex.Message, errorCode: "INVALID_CITY_NAME"));
+            }
+        }
     }
 } 

@@ -588,10 +588,45 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
   }
 
   void _handleStateChanges(BuildContext context, CitiesState state) {
-    if (state is CityOperationSuccess) {
+    if (state is CityOperationInProgress && state.operation == 'deleting') {
+      _showDeletingDialog(cityName: state.cityName);
+    } else if (state is CityOperationSuccess) {
+      _dismissDeletingDialog();
       _showSuccessMessage(state.message);
     } else if (state is CityOperationFailure) {
+      _dismissDeletingDialog();
       _showErrorMessage(state.message);
+    }
+  }
+
+  bool _isDeleting = false;
+  void _showDeletingDialog({String? cityName}) {
+    if (_isDeleting) return;
+    _isDeleting = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      builder: (_) => const Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        elevation: 0,
+        child: Center(
+          child: LoadingWidget(
+            type: LoadingType.futuristic,
+            message: 'جاري حذف المدينة...'
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _dismissDeletingDialog() {
+    if (_isDeleting) {
+      _isDeleting = false;
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
     }
   }
 
