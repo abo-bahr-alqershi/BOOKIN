@@ -200,14 +200,14 @@ class ServicesBloc extends Bloc<ServicesEvent, ServicesState> {
     DeleteServiceEvent event,
     Emitter<ServicesState> emit,
   ) async {
-    emit(ServiceOperationInProgress());
+    emit(ServicesDeleting());
 
     final result = await deleteServiceUseCase(event.serviceId);
 
     result.fold(
-      (failure) => emit(ServicesError(failure.message)),
+      (failure) => emit(ServicesDeleteFailed(failure.message)),
       (success) {
-        emit(const ServiceOperationSuccess('تم حذف الخدمة بنجاح'));
+        emit(ServicesDeleteSuccess());
         // Reload services
         if (_selectedPropertyId != null) {
           add(LoadServicesEvent(propertyId: _selectedPropertyId));

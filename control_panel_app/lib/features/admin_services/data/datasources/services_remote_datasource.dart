@@ -113,7 +113,15 @@ class ServicesRemoteDataSourceImpl implements ServicesRemoteDataSource {
   Future<bool> deleteService(String serviceId) async {
     try {
       final response = await apiClient.delete('$_basePath/$serviceId');
-      return response.data['success'] == true;
+      if (response.data is Map<String, dynamic>) {
+        final map = response.data as Map<String, dynamic>;
+        if (map['success'] == true || map['isSuccess'] == true) return true;
+        // surface backend reason on conflict
+        if (response.statusCode == 409 || map['errorCode'] == 'SERVICE_DELETE_CONFLICT') {
+          throw ApiException(message: map['message'] ?? 'Deletion conflict');
+        }
+      }
+      return response.statusCode == 200 || response.statusCode == 204;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
