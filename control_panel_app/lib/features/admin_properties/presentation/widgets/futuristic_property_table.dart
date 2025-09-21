@@ -247,30 +247,27 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                     
                     const SizedBox(height: 12),
                     
-                    // Action Buttons
-                    Row(
-                      children: [
-                        if (!property.isApproved) ...[
-                          Expanded(
-                            child: _buildMobileActionButton(
+                    // Action Buttons (responsive)
+                    LayoutBuilder(
+                      builder: (context, box) {
+                        final bool isSmall = box.maxWidth < 380;
+
+                        final List<Widget> actions = <Widget>[
+                          if (!property.isApproved) ...[
+                            _buildMobileActionButton(
                               label: 'موافقة',
                               icon: Icons.check_rounded,
                               color: AppTheme.success,
                               onTap: () => widget.onApprove(property.id),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildMobileActionButton(
+                            _buildMobileActionButton(
                               label: 'رفض',
                               icon: Icons.close_rounded,
                               color: AppTheme.warning,
                               onTap: () => widget.onReject(property.id),
                             ),
-                          ),
-                        ] else
-                          Expanded(
-                            child: _buildMobileActionButton(
+                          ] else
+                            _buildMobileActionButton(
                               label: 'تعديل',
                               icon: Icons.edit_rounded,
                               color: AppTheme.primaryBlue,
@@ -278,26 +275,41 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                                 // Navigate to edit
                               },
                             ),
-                          ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildMobileActionButton(
+                          _buildMobileActionButton(
                             label: 'تعيين مرافق',
                             icon: Icons.link_rounded,
                             color: AppTheme.primaryPurple,
                             onTap: () => widget.onAssignAmenities(property),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildMobileActionButton(
+                          _buildMobileActionButton(
                             label: 'حذف',
                             icon: Icons.delete_rounded,
                             color: AppTheme.error,
                             onTap: () => widget.onDelete(property.id),
                           ),
-                        ),
-                      ],
+                        ];
+
+                        if (isSmall) {
+                          final double itemWidth = (box.maxWidth - 8) / 2;
+                          return Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: actions
+                                .map((w) => SizedBox(width: itemWidth, child: w))
+                                .toList(),
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            for (int i = 0; i < actions.length; i++) ...[
+                              Expanded(child: actions[i]),
+                              if (i != actions.length - 1)
+                                const SizedBox(width: 8),
+                            ]
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
