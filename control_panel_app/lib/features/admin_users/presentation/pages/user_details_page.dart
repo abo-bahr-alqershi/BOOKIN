@@ -8,6 +8,12 @@ import 'package:go_router/go_router.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
+import 'package:bookn_cp_app/features/admin_bookings/domain/usecases/bookings/get_bookings_by_user_usecase.dart';
+import 'package:bookn_cp_app/features/admin_bookings/domain/entities/booking.dart';
+import 'package:bookn_cp_app/features/admin_bookings/presentation/widgets/futuristic_bookings_table.dart';
+import 'package:bookn_cp_app/features/admin_reviews/domain/usecases/get_all_reviews_usecase.dart';
+import 'package:bookn_cp_app/features/admin_reviews/domain/entities/review.dart';
 import '../bloc/user_details/user_details_bloc.dart';
 import '../widgets/user_form_dialog.dart';
 import '../widgets/user_role_selector.dart';
@@ -44,6 +50,20 @@ class _UserDetailsPageState extends State<UserDetailsPage>
   
   // State
   String _selectedTab = 'overview';
+  // Bookings state
+  final int _bookingsPageSize = 10;
+  List<Booking> _userBookings = [];
+  bool _isLoadingBookings = false;
+  String? _bookingsError;
+  int _bookingsPage = 1;
+  bool _bookingsHasMore = true;
+  // Reviews state
+  final int _reviewsPageSize = 10;
+  List<Review> _userReviews = [];
+  bool _isLoadingReviews = false;
+  String? _reviewsError;
+  int _reviewsPage = 1;
+  bool _reviewsHasMore = true;
   
   @override
   void initState() {
@@ -164,7 +184,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                     _buildSliverAppBar(state),
                     SliverToBoxAdapter(child: _buildUserInfoCard(state)),
                     SliverToBoxAdapter(child: _buildStatsSection(state)),
-                    SliverToBoxAdapter(child: _buildTabNavigation()),
+                    SliverToBoxAdapter(child: _buildTabNavigation(state)),
                     _buildTabContentSliver(state),
                   ],
                 );
@@ -937,7 +957,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
     );
   }
   
-  Widget _buildTabNavigation() {
+  Widget _buildTabNavigation(UserDetailsLoaded state) {
     final tabs = [
       {'id': 'overview', 'label': 'نظرة عامة', 'icon': Icons.dashboard_rounded},
       {'id': 'bookings', 'label': 'الحجوزات', 'icon': Icons.book_online_rounded},
@@ -958,6 +978,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                   _selectedTab = tab['id'] as String;
                 });
                 HapticFeedback.lightImpact();
+                _ensureTabDataLoaded(state);
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
@@ -1076,18 +1097,91 @@ class _UserDetailsPageState extends State<UserDetailsPage>
   }
   
   Widget _buildBookingsTab(UserDetailsLoaded state) {
-    return _buildEmptyState(
-      icon: Icons.book_online_rounded,
-      title: 'قائمة الحجوزات',
-      subtitle: 'سيتم عرض حجوزات المستخدم هنا',
+    if (_isLoadingBookings && _userBookings.isEmpty) {
+      return _buildLoadingState();
+    }
+    if (_bookingsError != null) {
+      return _buildErrorState(_bookingsError!);
+    }
+    if (_userBookings.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.book_online_rounded,
+        title: 'لا توجد حجوزات',
+        subtitle: 'لم يتم العثور على حجوزات لهذا المستخدم',
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FuturisticBookingsTable(
+          bookings: _userBookings,
+          selectedBookings: const [],
+          onBookingTap: (bookingId) => context.push('/admin/bookings/$bookingId'),
+          onSelectionChanged: (_) {},
+          showActions: false,
+        ),
+        const SizedBox(height: 12),
+        if (_bookingsHasMore)
+          Center(
+            child: GestureDetector(
+              onTap: _isLoadingBookings
+                  ? null
+                  : () => _loadUserBookings(state.userDetails.id, loadMore: true),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  _isLoadingBookings ? 'جاري التحميل...' : 'تحميل المزيد',
+                  style: AppTextStyles.buttonMedium.copyWith(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
   
   Widget _buildReviewsTab(UserDetailsLoaded state) {
-    return _buildEmptyState(
-      icon: Icons.star_rounded,
-      title: 'المراجعات',
-      subtitle: 'سيتم عرض مراجعات المستخدم هنا',
+    if (_isLoadingReviews && _userReviews.isEmpty) {
+      return _buildLoadingState();
+    }
+    if (_reviewsError != null) {
+      return _buildErrorState(_reviewsError!);
+    }
+    if (_userReviews.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.star_rounded,
+        title: 'لا توجد مراجعات',
+        subtitle: 'لم يتم العثور على مراجعات لهذا المستخدم',
+      );
+    }
+    return Column(
+      children: [
+        ..._userReviews.map((r) => _buildReviewRow(r)).toList(),
+        const SizedBox(height: 12),
+        if (_reviewsHasMore)
+          Center(
+            child: GestureDetector(
+              onTap: _isLoadingReviews
+                  ? null
+                  : () => _loadUserReviews(state.userDetails.id, loadMore: true),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  _isLoadingReviews ? 'جاري التحميل...' : 'تحميل المزيد',
+                  style: AppTextStyles.buttonMedium.copyWith(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
   
@@ -1096,6 +1190,159 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       icon: Icons.timeline_rounded,
       title: 'سجل النشاط',
       subtitle: 'سيتم عرض سجل نشاط المستخدم هنا',
+    );
+  }
+
+  // Data loading helpers
+  void _ensureTabDataLoaded(UserDetailsLoaded state) {
+    if (_selectedTab == 'bookings' && _userBookings.isEmpty && !_isLoadingBookings) {
+      _loadUserBookings(state.userDetails.id);
+    } else if (_selectedTab == 'reviews' && _userReviews.isEmpty && !_isLoadingReviews) {
+      _loadUserReviews(state.userDetails.id);
+    }
+  }
+
+  Future<void> _loadUserBookings(String userId, {bool loadMore = false}) async {
+    setState(() {
+      _isLoadingBookings = true;
+      _bookingsError = null;
+      if (!loadMore) {
+        _bookingsPage = 1;
+        _userBookings = [];
+        _bookingsHasMore = true;
+      }
+    });
+    try {
+      final useCase = di.sl<GetBookingsByUserUseCase>();
+      final result = await useCase(GetBookingsByUserParams(
+        userId: userId,
+        pageNumber: _bookingsPage,
+        pageSize: _bookingsPageSize,
+      ));
+      result.fold((failure) {
+        setState(() {
+          _bookingsError = failure.message;
+        });
+      }, (paginated) {
+        setState(() {
+          _userBookings = [..._userBookings, ...paginated.items];
+          final totalCount = paginated.totalCount;
+          final loadedCount = _userBookings.length;
+          _bookingsHasMore = loadedCount < totalCount;
+          if (_bookingsHasMore) {
+            _bookingsPage += 1;
+          }
+        });
+      });
+    } catch (e) {
+      setState(() {
+        _bookingsError = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingBookings = false);
+      }
+    }
+  }
+
+  Future<void> _loadUserReviews(String userId, {bool loadMore = false}) async {
+    setState(() {
+      _isLoadingReviews = true;
+      _reviewsError = null;
+      if (!loadMore) {
+        _reviewsPage = 1;
+        _userReviews = [];
+        _reviewsHasMore = true;
+      }
+    });
+    try {
+      final useCase = di.sl<GetAllReviewsUseCase>();
+      final result = await useCase(GetAllReviewsParams(
+        userId: userId,
+        pageNumber: _reviewsPage,
+        pageSize: _reviewsPageSize,
+      ));
+      result.fold((failure) {
+        setState(() {
+          _reviewsError = failure.message;
+        });
+      }, (list) {
+        setState(() {
+          _userReviews = [..._userReviews, ...list];
+          // Backend returns list; infer hasMore by page size
+          final fetchedCount = list.length;
+          _reviewsHasMore = fetchedCount >= _reviewsPageSize;
+          if (_reviewsHasMore) {
+            _reviewsPage += 1;
+          }
+        });
+      });
+    } catch (e) {
+      setState(() {
+        _reviewsError = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingReviews = false);
+      }
+    }
+  }
+
+  Widget _buildReviewRow(Review review) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.darkBorder.withOpacity(0.2), width: 1),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: AppTheme.primaryGradient,
+            ),
+            child: Center(
+              child: Text(
+                review.userName.isNotEmpty ? review.userName.substring(0, 1).toUpperCase() : 'U',
+                style: AppTextStyles.caption.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        review.propertyName,
+                        style: AppTextStyles.bodySmall.copyWith(color: AppTheme.textWhite, fontWeight: FontWeight.w600),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(Icons.star_rounded, size: 14, color: AppTheme.warning),
+                    const SizedBox(width: 2),
+                    Text(review.averageRating.toStringAsFixed(1), style: AppTextStyles.caption.copyWith(color: AppTheme.warning)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _formatDate(review.createdAt),
+                  style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
   
