@@ -6,6 +6,7 @@ import 'dart:ui';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/review.dart';
+import 'futuristic_review_card.dart';
 
 class FuturisticReviewsTable extends StatefulWidget {
   final List<Review> reviews;
@@ -78,6 +79,31 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
     final isDesktop = size.width > 1200;
     final isCompact = size.width < 480;
     
+    // في الشاشات الصغيرة جداً، نعرض كروت بدلاً من جدول
+    if (isCompact) {
+      return ListView.builder(
+        shrinkWrap: widget.shrinkWrap,
+        physics: widget.shrinkWrap
+            ? const NeverScrollableScrollPhysics()
+            : const BouncingScrollPhysics(),
+        padding: const EdgeInsets.all(12),
+        itemCount: _sortedReviews.length,
+        itemBuilder: (context, index) {
+          final review = _sortedReviews[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: FuturisticReviewCard(
+              review: review,
+              onTap: () => widget.onReviewTap(review),
+              onApprove: () => widget.onApproveTap(review),
+              onDelete: () => widget.onDeleteTap(review),
+              isApproving: widget.approvingReviewIds.contains(review.id),
+            ),
+          );
+        },
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
