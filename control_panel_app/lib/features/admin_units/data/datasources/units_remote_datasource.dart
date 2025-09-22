@@ -16,6 +16,16 @@ abstract class UnitsRemoteDataSource {
     double? minPrice,
     double? maxPrice,
     String? searchQuery,
+    String? pricingMethod,
+    DateTime? checkInDate,
+    DateTime? checkOutDate,
+    int? numberOfGuests,
+    bool? hasActiveBookings,
+    String? location,
+    String? sortBy,
+    double? latitude,
+    double? longitude,
+    double? radiusKm,
   });
 
   Future<UnitModel> getUnitDetails(String unitId);
@@ -48,6 +58,16 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
     double? minPrice,
     double? maxPrice,
     String? searchQuery,
+    String? pricingMethod,
+    DateTime? checkInDate,
+    DateTime? checkOutDate,
+    int? numberOfGuests,
+    bool? hasActiveBookings,
+    String? location,
+    String? sortBy,
+    double? latitude,
+    double? longitude,
+    double? radiusKm,
   }) async {
     try {
       final queryParams = <String, dynamic>{};
@@ -59,6 +79,16 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
       if (minPrice != null) queryParams['minPrice'] = minPrice;
       if (maxPrice != null) queryParams['maxPrice'] = maxPrice;
       if (searchQuery != null) queryParams['nameContains'] = searchQuery;
+      if (pricingMethod != null) queryParams['pricingMethod'] = pricingMethod;
+      if (checkInDate != null) queryParams['checkInDate'] = checkInDate.toIso8601String();
+      if (checkOutDate != null) queryParams['checkOutDate'] = checkOutDate.toIso8601String();
+      if (numberOfGuests != null) queryParams['numberOfGuests'] = numberOfGuests;
+      if (hasActiveBookings != null) queryParams['hasActiveBookings'] = hasActiveBookings;
+      if (location != null) queryParams['location'] = location;
+      if (sortBy != null) queryParams['sortBy'] = sortBy;
+      if (latitude != null) queryParams['latitude'] = latitude;
+      if (longitude != null) queryParams['longitude'] = longitude;
+      if (radiusKm != null) queryParams['radiusKm'] = radiusKm;
 
       final response = await apiClient.get(
         '/api/admin/Units',

@@ -1529,6 +1529,15 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
     'minPrice': null,
     'maxPrice': null,
     'pricingMethod': null,
+    'checkInDate': null,
+    'checkOutDate': null,
+    'numberOfGuests': null,
+    'hasActiveBookings': null,
+    'location': null,
+    'sortBy': null,
+    'latitude': null,
+    'longitude': null,
+    'radiusKm': null,
   };
 
   final _minPriceController = TextEditingController();
@@ -1758,6 +1767,21 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
         
         // Pricing Method Filters
         _buildPricingMethodFilters(),
+
+        const SizedBox(height: 20),
+
+        // Availability by date + guests
+        _buildAvailabilityWindowFilters(),
+
+        const SizedBox(height: 20),
+
+        // Geo filters
+        _buildGeoFilters(),
+
+        const SizedBox(height: 20),
+
+        // Sort by
+        _buildSortBy(),
       ],
     );
   }
@@ -2050,6 +2074,296 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
     );
   }
 
+  Widget _buildAvailabilityWindowFilters() {
+    DateTime? checkIn = _filters['checkInDate'];
+    DateTime? checkOut = _filters['checkOutDate'];
+    int? guests = _filters['numberOfGuests'];
+    
+    Future<void> pickDate(String key, DateTime? initial) async {
+      final now = DateTime.now();
+      final picked = await showDatePicker(
+        context: context,
+        initialDate: initial ?? now,
+        firstDate: DateTime(now.year - 2),
+        lastDate: DateTime(now.year + 3),
+        builder: (context, child) => Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: AppTheme.primaryBlue,
+              onPrimary: Colors.white,
+              surface: AppTheme.darkCard,
+              onSurface: AppTheme.textWhite,
+            ),
+          ),
+          child: child!,
+        ),
+      );
+      if (picked != null) {
+        _updateFilter(key, DateTime(picked.year, picked.month, picked.day));
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'فترة التوفر وعدد الضيوف',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textWhite,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildDateButton(
+                label: 'من',
+                value: checkIn,
+                onTap: () => pickDate('checkInDate', checkIn),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildDateButton(
+                label: 'إلى',
+                value: checkOut,
+                onTap: () => pickDate('checkOutDate', checkOut),
+              ),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 130,
+              child: _buildGuestsInput(
+                label: 'الضيوف',
+                value: guests,
+                onChanged: (v) => _updateFilter('numberOfGuests', v),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateButton({
+    required String label,
+    required DateTime? value,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.darkSurface.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.darkBorder.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_month_rounded, size: 16, color: AppTheme.primaryBlue),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                value != null ? value.toString().split(' ').first : label,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: value != null ? AppTheme.textWhite : AppTheme.textMuted,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGuestsInput({
+    required String label,
+    required int? value,
+    required Function(int?) onChanged,
+  }) {
+    final controller = TextEditingController(text: value?.toString() ?? '');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.caption.copyWith(
+            color: AppTheme.textMuted,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            color: AppTheme.darkSurface.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.darkBorder.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            ),
+            onChanged: (v) => onChanged(int.tryParse(v)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGeoFilters() {
+    final latController = TextEditingController(text: _filters['latitude']?.toString() ?? '');
+    final lonController = TextEditingController(text: _filters['longitude']?.toString() ?? '');
+    final radiusController = TextEditingController(text: _filters['radiusKm']?.toString() ?? '');
+    final locationController = TextEditingController(text: _filters['location']?.toString() ?? '');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'الموقع الجغرافي',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textWhite,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildTextInput('المدينة/العنوان', locationController, (v) => _updateFilter('location', v)),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(width: 110, child: _buildTextInput('Latitude', latController, (v) => _updateFilter('latitude', double.tryParse(v))),),
+            const SizedBox(width: 12),
+            SizedBox(width: 110, child: _buildTextInput('Longitude', lonController, (v) => _updateFilter('longitude', double.tryParse(v))),),
+            const SizedBox(width: 12),
+            SizedBox(width: 110, child: _buildTextInput('نطاق (كم)', radiusController, (v) => _updateFilter('radiusKm', double.tryParse(v))),),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextInput(String label, TextEditingController controller, Function(String) onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.caption.copyWith(
+            color: AppTheme.textMuted,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            color: AppTheme.darkSurface.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.darkBorder.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: TextField(
+            controller: controller,
+            style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            ),
+            onChanged: onChanged,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSortBy() {
+    final options = const {
+      'popularity': 'الأكثر حجزاً',
+      'price_asc': 'السعر تصاعدي',
+      'price_desc': 'السعر تنازلي',
+      'name_asc': 'الاسم تصاعدي',
+      'name_desc': 'الاسم تنازلي',
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'الترتيب',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textWhite,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: options.entries.map((e) {
+            final isSelected = _filters['sortBy'] == e.key;
+            return GestureDetector(
+              onTap: () => _updateFilter('sortBy', isSelected ? null : e.key),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: isSelected ? AppTheme.primaryGradient : null,
+                  color: !isSelected ? AppTheme.darkSurface.withOpacity(0.3) : null,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppTheme.primaryBlue
+                        : AppTheme.darkBorder.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  e.value,
+                  style: AppTextStyles.caption.copyWith(
+                    color: isSelected ? Colors.white : AppTheme.textMuted,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  String _getSortLabel(String key) {
+    switch (key) {
+      case 'popularity':
+        return 'الأكثر حجزاً';
+      case 'price_asc':
+        return 'السعر تصاعدي';
+      case 'price_desc':
+        return 'السعر تنازلي';
+      case 'name_asc':
+        return 'الاسم تصاعدي';
+      case 'name_desc':
+        return 'الاسم تنازلي';
+      default:
+        return key;
+    }
+  }
+
   Widget _buildActiveFiltersChips() {
     List<Widget> chips = [];
     
@@ -2078,6 +2392,41 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
           case 'pricingMethod':
             label = _getPricingMethodLabel(value);
             icon = Icons.schedule_rounded;
+            color = AppTheme.primaryPurple;
+            break;
+          case 'checkInDate':
+            label = 'من: ${value.toString().split('T').first}';
+            icon = Icons.calendar_today_rounded;
+            color = AppTheme.primaryBlue;
+            break;
+          case 'checkOutDate':
+            label = 'إلى: ${value.toString().split('T').first}';
+            icon = Icons.calendar_today_rounded;
+            color = AppTheme.primaryBlue;
+            break;
+          case 'numberOfGuests':
+            label = 'ضيوف: $value';
+            icon = Icons.group_rounded;
+            color = AppTheme.primaryBlue;
+            break;
+          case 'hasActiveBookings':
+            label = value ? 'بحجوزات نشطة' : 'بدون حجوزات';
+            icon = Icons.event_available_rounded;
+            color = AppTheme.primaryPurple;
+            break;
+          case 'location':
+            label = 'الموقع: $value';
+            icon = Icons.place_rounded;
+            color = AppTheme.warning;
+            break;
+          case 'radiusKm':
+            label = 'نطاق: ${value}كم';
+            icon = Icons.radar_rounded;
+            color = AppTheme.warning;
+            break;
+          case 'sortBy':
+            label = 'ترتيب: ${_getSortLabel(value)}';
+            icon = Icons.sort_rounded;
             color = AppTheme.primaryPurple;
             break;
         }
