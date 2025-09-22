@@ -13,6 +13,7 @@ class FuturisticReviewsTable extends StatefulWidget {
   final Function(Review) onApproveTap;
   final Function(Review) onDeleteTap;
   final Set<String> approvingReviewIds;
+  final bool shrinkWrap;
   
   const FuturisticReviewsTable({
     super.key,
@@ -21,6 +22,7 @@ class FuturisticReviewsTable extends StatefulWidget {
     required this.onApproveTap,
     required this.onDeleteTap,
     this.approvingReviewIds = const <String>{},
+    this.shrinkWrap = false,
   });
   
   @override
@@ -166,16 +168,26 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
               ),
               
               // جسم الجدول
-              Expanded(
-                child: ListView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: _sortedReviews.length,
-                  itemBuilder: (context, index) {
-                    final review = _sortedReviews[index];
-                    return _buildTableRow(review, index, isDesktop);
-                  },
-                ),
-              ),
+              widget.shrinkWrap
+                  ? ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _sortedReviews.length,
+                      itemBuilder: (context, index) {
+                        final review = _sortedReviews[index];
+                        return _buildTableRow(review, index, isDesktop);
+                      },
+                    )
+                  : Expanded(
+                      child: ListView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: _sortedReviews.length,
+                        itemBuilder: (context, index) {
+                          final review = _sortedReviews[index];
+                          return _buildTableRow(review, index, isDesktop);
+                        },
+                      ),
+                    ),
             ],
           ),
         ),
