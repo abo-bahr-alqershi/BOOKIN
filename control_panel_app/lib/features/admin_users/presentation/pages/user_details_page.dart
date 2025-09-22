@@ -146,56 +146,32 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       backgroundColor: AppTheme.darkBackground,
       body: Stack(
         children: [
-          // Animated Background
           _buildAnimatedBackground(),
-          
-          // Main Content
-          SafeArea(
-            child: BlocBuilder<UserDetailsBloc, UserDetailsState>(
-              builder: (context, state) {
-                if (state is UserDetailsLoading) {
-                  return _buildLoadingState();
-                }
-                
-                if (state is UserDetailsError) {
-                  return _buildErrorState(state.message);
-                }
-                
-                if (state is UserDetailsLoaded) {
-                  return Column(
-                    children: [
-                      // Header
-                      _buildHeader(state),
-                      
-                      // User Info Card
-                      _buildUserInfoCard(state),
-                      
-                      // Stats Cards
-                      _buildStatsSection(state),
-                      
-                      // Tab Navigation
-                      _buildTabNavigation(),
-                      
-                      // Tab Content
-                      Expanded(
-                        child: FadeTransition(
-                          opacity: _contentFadeAnimation,
-                          child: SlideTransition(
-                            position: _contentSlideAnimation,
-                            child: _buildTabContent(state),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                }
-                
-                return const SizedBox.shrink();
-              },
-            ),
+          BlocBuilder<UserDetailsBloc, UserDetailsState>(
+            builder: (context, state) {
+              if (state is UserDetailsLoading) {
+                return _buildLoadingState();
+              }
+              if (state is UserDetailsError) {
+                return _buildErrorState(state.message);
+              }
+              if (state is UserDetailsLoaded) {
+                return CustomScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  slivers: [
+                    _buildSliverAppBar(state),
+                    SliverToBoxAdapter(child: _buildUserInfoCard(state)),
+                    SliverToBoxAdapter(child: _buildStatsSection(state)),
+                    SliverToBoxAdapter(child: _buildTabNavigation()),
+                    _buildTabContentSliver(state),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
           ),
-          
-          // Floating Action Button
           _buildFloatingActionButton(),
         ],
       ),
@@ -230,6 +206,123 @@ class _UserDetailsPageState extends State<UserDetailsPage>
     );
   }
   
+  SliverAppBar _buildSliverAppBar(UserDetailsLoaded state) {
+    return SliverAppBar(
+      expandedHeight: 120,
+      floating: true,
+      pinned: true,
+      backgroundColor: AppTheme.darkBackground,
+      leading: GestureDetector(
+        onTap: () => context.pop(),
+        child: Container(
+          margin: const EdgeInsets.only(left: 8),
+          decoration: BoxDecoration(
+            color: AppTheme.darkCard.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.darkBorder.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+        ),
+      ),
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+        title: Text(
+          'تفاصيل المستخدم',
+          style: AppTextStyles.heading1.copyWith(
+            color: AppTheme.textWhite,
+            shadows: [
+              Shadow(
+                color: AppTheme.primaryBlue.withOpacity(0.3),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+        ),
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppTheme.primaryBlue.withOpacity(0.1),
+                AppTheme.darkBackground,
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        _buildHeaderAction(
+          icon: Icons.edit_rounded,
+          onPressed: () => _navigateToEditPage(state),
+        ),
+        _buildHeaderAction(
+          icon: Icons.security_rounded,
+          onPressed: () => _showRoleSelector(state),
+        ),
+        _buildHeaderAction(
+          icon: state.userDetails.isActive ? Icons.block_rounded : Icons.check_circle_rounded,
+          isActive: !state.userDetails.isActive,
+          onPressed: () => _toggleUserStatus(state),
+        ),
+        _buildHeaderAction(
+          icon: Icons.delete_rounded,
+          isDanger: true,
+          onPressed: _showDeleteConfirmation,
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+
+  Widget _buildHeaderAction({
+    required IconData icon,
+    required VoidCallback onPressed,
+    bool isActive = false,
+    bool isDanger = false,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: (
+            isDanger
+                ? AppTheme.error
+                : isActive
+                    ? AppTheme.primaryBlue
+                    : AppTheme.darkBorder
+          ).withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onPressed();
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            child: Icon(
+              icon,
+              color: isDanger
+                  ? AppTheme.error
+                  : (isActive ? AppTheme.primaryBlue : AppTheme.textWhite),
+              size: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeader(UserDetailsLoaded state) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -919,66 +1012,66 @@ class _UserDetailsPageState extends State<UserDetailsPage>
     );
   }
   
-  Widget _buildTabContent(UserDetailsLoaded state) {
+  SliverToBoxAdapter _buildTabContentSliver(UserDetailsLoaded state) {
+    Widget child;
     switch (_selectedTab) {
-      case 'overview':
-        return _buildOverviewTab(state);
       case 'bookings':
-        return _buildBookingsTab(state);
+        child = _buildBookingsTab(state);
+        break;
       case 'reviews':
-        return _buildReviewsTab(state);
+        child = _buildReviewsTab(state);
+        break;
       case 'activity':
-        return _buildActivityTab(state);
+        child = _buildActivityTab(state);
+        break;
+      case 'overview':
       default:
-        return _buildOverviewTab(state);
+        child = Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: _buildOverviewTab(state),
+        );
+        break;
     }
+    return SliverToBoxAdapter(child: child);
   }
   
   Widget _buildOverviewTab(UserDetailsLoaded state) {
     final user = state.userDetails;
-    
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _buildSectionCard(
-            title: 'معلومات الحساب',
-            icon: Icons.account_circle_rounded,
-            children: [
-              _buildDetailRow('معرف المستخدم', user.id),
-              _buildDetailRow('الاسم', user.userName),
-              _buildDetailRow('البريد الإلكتروني', user.email),
-              _buildDetailRow('الهاتف', user.phoneNumber),
-              _buildDetailRow('تاريخ الإنشاء', _formatDate(user.createdAt)),
-              if (user.role != null)
-                _buildDetailRow('الدور', _getRoleText(user.role!)),
-            ],
-          ),
-          
-          const SizedBox(height: 16),
-          
-          _buildSectionCard(
-            title: 'إحصائيات الحجوزات',
-            icon: Icons.analytics_rounded,
-            children: [
-              _buildDetailRow('إجمالي الحجوزات', user.bookingsCount.toString()),
-              _buildDetailRow('الحجوزات الملغاة', user.canceledBookingsCount.toString()),
-              _buildDetailRow('الحجوزات المعلقة', user.pendingBookingsCount.toString()),
-            ],
-          ),
-          
-          const SizedBox(height: 16),
-          
-          _buildSectionCard(
-            title: 'المعاملات المالية',
-            icon: Icons.account_balance_wallet_rounded,
-            children: [
-              _buildDetailRow('إجمالي المدفوعات', '﷼${user.totalPayments.toStringAsFixed(2)}'),
-              _buildDetailRow('إجمالي المردودات', '﷼${user.totalRefunds.toStringAsFixed(2)}'),
-            ],
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        _buildSectionCard(
+          title: 'معلومات الحساب',
+          icon: Icons.account_circle_rounded,
+          children: [
+            _buildDetailRow('معرف المستخدم', user.id),
+            _buildDetailRow('الاسم', user.userName),
+            _buildDetailRow('البريد الإلكتروني', user.email),
+            _buildDetailRow('الهاتف', user.phoneNumber),
+            _buildDetailRow('تاريخ الإنشاء', _formatDate(user.createdAt)),
+            if (user.role != null)
+              _buildDetailRow('الدور', _getRoleText(user.role!)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildSectionCard(
+          title: 'إحصائيات الحجوزات',
+          icon: Icons.analytics_rounded,
+          children: [
+            _buildDetailRow('إجمالي الحجوزات', user.bookingsCount.toString()),
+            _buildDetailRow('الحجوزات الملغاة', user.canceledBookingsCount.toString()),
+            _buildDetailRow('الحجوزات المعلقة', user.pendingBookingsCount.toString()),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildSectionCard(
+          title: 'المعاملات المالية',
+          icon: Icons.account_balance_wallet_rounded,
+          children: [
+            _buildDetailRow('إجمالي المدفوعات', '﷼${user.totalPayments.toStringAsFixed(2)}'),
+            _buildDetailRow('إجمالي المردودات', '﷼${user.totalRefunds.toStringAsFixed(2)}'),
+          ],
+        ),
+      ],
     );
   }
   
