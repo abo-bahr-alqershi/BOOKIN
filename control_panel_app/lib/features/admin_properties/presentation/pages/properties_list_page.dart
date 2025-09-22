@@ -707,7 +707,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
   Widget _buildFiltersSection() {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      height: 80,
+      height: 300,
       child: SingleChildScrollView(
         child: PropertyFiltersWidget(
           onFilterChanged: (filters) {

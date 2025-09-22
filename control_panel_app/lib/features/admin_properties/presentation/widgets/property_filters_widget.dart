@@ -27,53 +27,73 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        crossAxisAlignment: WrapCrossAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Search field (identity matching Bookings filters)
-          SizedBox(width: 260, child: _buildSearchField()),
-          // Property Type Filter
-          SizedBox(width: 220, child: _buildPropertyTypeFilter()),
+          // عنوان الفلترات
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'فلترة العقارات',
+                  style: AppTextStyles.displayMedium.copyWith(
+                    color: AppTheme.textWhite,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                // زر إعادة تعيين
+                _buildResetButton(),
+              ],
+            ),
+          ),
 
-          // Price Range Filter
-          SizedBox(width: 260, child: _buildPriceRangeFilter()),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              // حقل البحث
+              SizedBox(width: 260, child: _buildSearchField()),
 
-          // Star Rating Filter
-          SizedBox(width: 200, child: _buildStarRatingFilter()),
+              // فلتر نوع العقار
+              SizedBox(width: 220, child: _buildPropertyTypeFilter()),
 
-          // Status Filter
-          SizedBox(width: 200, child: _buildStatusFilter()),
+              // فلتر نطاق السعر
+              SizedBox(width: 280, child: _buildPriceRangeFilter()),
 
-          // Active Bookings Filter
-          SizedBox(width: 220, child: _buildHasActiveBookingsFilter()),
+              // فلتر التقييم بالنجوم
+              SizedBox(width: 220, child: _buildStarRatingFilter()),
 
-          // Apply Button
-          _buildApplyButton(),
+              // فلتر حالة الاعتماد
+              SizedBox(width: 200, child: _buildStatusFilter()),
+
+              // فلتر الحجوزات النشطة
+              SizedBox(width: 220, child: _buildHasActiveBookingsFilter()),
+
+              // زر التطبيق
+              _buildApplyButton(),
+            ],
+          ),
         ],
       ),
     );
   }
 
   Widget _buildSearchField() {
-    return Container(
-      height: 40,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkCard.withValues(alpha: 0.3),
-            AppTheme.darkCard.withValues(alpha: 0.2),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppTheme.darkBorder.withValues(alpha: 0.2),
-        ),
-      ),
+    return _buildFilterContainer(
+      label: 'البحث',
+      icon: Icons.search_rounded,
       child: TextField(
         controller: _searchController,
         style: AppTextStyles.bodyMedium.copyWith(
@@ -81,19 +101,13 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
           fontSize: 13,
         ),
         decoration: InputDecoration(
-          hintText: 'بحث بالاسم أو المدينة...',
+          hintText: 'اسم العقار، المدينة، أو العنوان...',
           hintStyle: AppTextStyles.bodyMedium.copyWith(
-            color: AppTheme.textMuted,
+            color: AppTheme.textMuted.withValues(alpha: 0.6),
             fontSize: 13,
           ),
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            color: AppTheme.textMuted,
-            size: 18,
-          ),
           border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8),
         ),
         onSubmitted: (_) => _applyFilters(),
       ),
@@ -104,21 +118,9 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
     return BlocBuilder<PropertyTypesBloc, PropertyTypesState>(
       builder: (context, state) {
         if (state is PropertyTypesLoaded) {
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.darkCard.withValues(alpha: 0.5),
-                  AppTheme.darkCard.withValues(alpha: 0.3),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: AppTheme.darkBorder.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
+          return _buildFilterContainer(
+            label: 'نوع العقار',
+            icon: Icons.home_work_rounded,
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _selectedPropertyTypeId,
@@ -127,20 +129,21 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
                 icon: Icon(
                   Icons.arrow_drop_down_rounded,
                   color: AppTheme.primaryBlue.withValues(alpha: 0.7),
+                  size: 20,
                 ),
                 style: AppTextStyles.bodySmall.copyWith(
                   color: AppTheme.textWhite,
                 ),
                 hint: Text(
-                  'نوع العقار',
+                  'اختر النوع',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppTheme.textMuted.withValues(alpha: 0.5),
+                    color: AppTheme.textMuted.withValues(alpha: 0.6),
                   ),
                 ),
                 items: [
                   const DropdownMenuItem(
                     value: null,
-                    child: Text('الكل'),
+                    child: Text('جميع الأنواع'),
                   ),
                   ...state.propertyTypes.map((type) {
                     return DropdownMenuItem(
@@ -164,41 +167,57 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
   }
 
   Widget _buildPriceRangeFilter() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkCard.withValues(alpha: 0.5),
-            AppTheme.darkCard.withValues(alpha: 0.3),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.darkBorder.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
+    return _buildFilterContainer(
+      label: 'نطاق السعر (ريال/ليلة)',
+      icon: Icons.monetization_on_rounded,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'السعر: ${_priceRange.start.toInt()} - ${_priceRange.end.toInt()}',
-            style: AppTextStyles.caption.copyWith(
-              color: AppTheme.textMuted,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'من: ${_priceRange.start.toInt()} ريال',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textWhite.withValues(alpha: 0.8),
+                    fontSize: 11,
+                  ),
+                ),
+                Text(
+                  'إلى: ${_priceRange.end.toInt()} ريال',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textWhite.withValues(alpha: 0.8),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ),
           ),
-          RangeSlider(
-            values: _priceRange,
-            min: 0,
-            max: 1000,
-            activeColor: AppTheme.primaryBlue,
-            inactiveColor: AppTheme.darkBorder,
-            onChanged: (values) {
-              setState(() {
-                _priceRange = values;
-              });
-            },
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 4,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+            ),
+            child: RangeSlider(
+              values: _priceRange,
+              min: 0,
+              max: 1000,
+              divisions: 20,
+              activeColor: AppTheme.primaryBlue,
+              inactiveColor: AppTheme.darkBorder.withValues(alpha: 0.3),
+              labels: RangeLabels(
+                '${_priceRange.start.toInt()}',
+                '${_priceRange.end.toInt()}',
+              ),
+              onChanged: (values) {
+                setState(() {
+                  _priceRange = values;
+                });
+              },
+            ),
           ),
         ],
       ),
@@ -206,66 +225,78 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
   }
 
   Widget _buildStarRatingFilter() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkCard.withValues(alpha: 0.5),
-            AppTheme.darkCard.withValues(alpha: 0.3),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.darkBorder.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(5, (index) {
-          final rating = index + 1;
-          final isSelected = _selectedStarRatings.contains(rating);
-
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                if (isSelected) {
-                  _selectedStarRatings.remove(rating);
-                } else {
-                  _selectedStarRatings.add(rating);
-                }
-              });
-            },
-            child: Icon(
-              Icons.star_rounded,
-              size: 16,
-              color: isSelected
-                  ? AppTheme.warning
-                  : AppTheme.textMuted.withValues(alpha: 0.3),
+    return _buildFilterContainer(
+      label: 'التقييم',
+      icon: Icons.star_rounded,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              _selectedStarRatings.isEmpty
+                  ? 'اختر التقييمات المطلوبة'
+                  : 'التقييمات: ${_selectedStarRatings.join(", ")} نجوم',
+              style: AppTextStyles.caption.copyWith(
+                color: AppTheme.textMuted.withValues(alpha: 0.8),
+                fontSize: 11,
+              ),
             ),
-          );
-        }),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(5, (index) {
+              final rating = index + 1;
+              final isSelected = _selectedStarRatings.contains(rating);
+
+              return Tooltip(
+                message: '$rating نجوم',
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (isSelected) {
+                        _selectedStarRatings.remove(rating);
+                      } else {
+                        _selectedStarRatings.add(rating);
+                      }
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.star_rounded,
+                          size: 20,
+                          color: isSelected
+                              ? AppTheme.warning
+                              : AppTheme.textMuted.withValues(alpha: 0.3),
+                        ),
+                        Text(
+                          '$rating',
+                          style: AppTextStyles.caption.copyWith(
+                            color: isSelected
+                                ? AppTheme.warning
+                                : AppTheme.textMuted.withValues(alpha: 0.5),
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildStatusFilter() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkCard.withValues(alpha: 0.5),
-            AppTheme.darkCard.withValues(alpha: 0.3),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.darkBorder.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
+    return _buildFilterContainer(
+      label: 'حالة الاعتماد',
+      icon: Icons.verified_rounded,
       child: DropdownButtonHideUnderline(
         child: DropdownButton<bool?>(
           value: _isApproved,
@@ -274,28 +305,48 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
           icon: Icon(
             Icons.arrow_drop_down_rounded,
             color: AppTheme.primaryBlue.withValues(alpha: 0.7),
+            size: 20,
           ),
           style: AppTextStyles.bodySmall.copyWith(
             color: AppTheme.textWhite,
           ),
           hint: Text(
-            'الحالة',
+            'اختر الحالة',
             style: AppTextStyles.bodySmall.copyWith(
-              color: AppTheme.textMuted.withValues(alpha: 0.5),
+              color: AppTheme.textMuted.withValues(alpha: 0.6),
             ),
           ),
-          items: const [
+          items: [
             DropdownMenuItem(
               value: null,
-              child: Text('الكل'),
+              child: Row(
+                children: [
+                  Icon(Icons.all_inclusive,
+                      size: 14, color: AppTheme.textMuted),
+                  const SizedBox(width: 8),
+                  const Text('جميع الحالات'),
+                ],
+              ),
             ),
             DropdownMenuItem(
               value: true,
-              child: Text('معتمد'),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle, size: 14, color: AppTheme.success),
+                  const SizedBox(width: 8),
+                  const Text('معتمد'),
+                ],
+              ),
             ),
             DropdownMenuItem(
               value: false,
-              child: Text('قيد المراجعة'),
+              child: Row(
+                children: [
+                  Icon(Icons.pending, size: 14, color: AppTheme.warning),
+                  const SizedBox(width: 8),
+                  const Text('قيد المراجعة'),
+                ],
+              ),
             ),
           ],
           onChanged: (value) {
@@ -309,21 +360,9 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
   }
 
   Widget _buildHasActiveBookingsFilter() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkCard.withValues(alpha: 0.5),
-            AppTheme.darkCard.withValues(alpha: 0.3),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.darkBorder.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
+    return _buildFilterContainer(
+      label: 'الحجوزات',
+      icon: Icons.calendar_month_rounded,
       child: DropdownButtonHideUnderline(
         child: DropdownButton<bool?>(
           value: _hasActiveBookings,
@@ -332,28 +371,55 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
           icon: Icon(
             Icons.arrow_drop_down_rounded,
             color: AppTheme.primaryBlue.withValues(alpha: 0.7),
+            size: 20,
           ),
           style: AppTextStyles.bodySmall.copyWith(
             color: AppTheme.textWhite,
           ),
           hint: Text(
-            'حجوزات نشطة',
+            'حالة الحجوزات',
             style: AppTextStyles.bodySmall.copyWith(
-              color: AppTheme.textMuted.withValues(alpha: 0.5),
+              color: AppTheme.textMuted.withValues(alpha: 0.6),
             ),
           ),
-          items: const [
-            DropdownMenuItem(
+          items: [
+            const DropdownMenuItem(
               value: null,
-              child: Text('الكل'),
+              child: Text('جميع العقارات'),
             ),
             DropdownMenuItem(
               value: true,
-              child: Text('نعم'),
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppTheme.success,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('مع حجوزات نشطة'),
+                ],
+              ),
             ),
             DropdownMenuItem(
               value: false,
-              child: Text('لا'),
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppTheme.textMuted,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('بدون حجوزات'),
+                ],
+              ),
             ),
           ],
           onChanged: (value) {
@@ -366,7 +432,167 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
     );
   }
 
-  // Apply current filters (used by onSubmitted and Apply button)
+  // Container موحد للفلاتر مع label وicon
+  Widget _buildFilterContainer({
+    required String label,
+    required IconData icon,
+    required Widget child,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withValues(alpha: 0.5),
+            AppTheme.darkCard.withValues(alpha: 0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with label and icon
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.primaryBlue.withValues(alpha: 0.1),
+                  AppTheme.primaryBlue.withValues(alpha: 0.05),
+                ],
+              ),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(11),
+                topRight: Radius.circular(11),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 14,
+                  color: AppTheme.primaryBlue.withValues(alpha: 0.8),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textWhite.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildApplyButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _applyFilters,
+        borderRadius: BorderRadius.circular(10),
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: AppTheme.primaryGradient,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.filter_list_rounded,
+                  color: Colors.white,
+                  size: 16,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'تطبيق الفلاتر',
+                  style: AppTextStyles.buttonSmall.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResetButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _resetFilters,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: AppTheme.textMuted.withValues(alpha: 0.3),
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.refresh_rounded,
+                color: AppTheme.textMuted,
+                size: 14,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'إعادة تعيين',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppTheme.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _resetFilters() {
+    setState(() {
+      _searchController.clear();
+      _selectedPropertyTypeId = null;
+      _priceRange = const RangeValues(0, 1000);
+      _selectedStarRatings.clear();
+      _isApproved = null;
+      _hasActiveBookings = null;
+    });
+
+    // إرسال فلاتر فارغة
+    widget.onFilterChanged({});
+  }
+
   void _applyFilters() {
     widget.onFilterChanged({
       'searchTerm': _searchController.text.trim().isEmpty
@@ -379,26 +605,5 @@ class _PropertyFiltersWidgetState extends State<PropertyFiltersWidget> {
       'isApproved': _isApproved,
       'hasActiveBookings': _hasActiveBookings,
     });
-  }
-
-  Widget _buildApplyButton() {
-    return GestureDetector(
-      onTap: () {
-        _applyFilters();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Text(
-          'تطبيق',
-          style: AppTextStyles.buttonSmall.copyWith(
-            color: Colors.white,
-          ),
-        ),
-      ),
-    );
   }
 }
