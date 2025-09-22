@@ -1168,6 +1168,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
           onApproveTap: (_) {},
           onDeleteTap: (_) {},
           approvingReviewIds: const {},
+          shrinkWrap: true,
         ),
         const SizedBox(height: 12),
         if (_reviewsHasMore)
