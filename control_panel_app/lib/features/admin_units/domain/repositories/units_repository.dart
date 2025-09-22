@@ -14,6 +14,16 @@ abstract class UnitsRepository {
     double? minPrice,
     double? maxPrice,
     String? searchQuery,
+    String? pricingMethod,
+    DateTime? checkInDate,
+    DateTime? checkOutDate,
+    int? numberOfGuests,
+    bool? hasActiveBookings,
+    String? location,
+    String? sortBy,
+    double? latitude,
+    double? longitude,
+    double? radiusKm,
   });
 
   Future<Either<Failure, Unit>> getUnitDetails(String unitId);
