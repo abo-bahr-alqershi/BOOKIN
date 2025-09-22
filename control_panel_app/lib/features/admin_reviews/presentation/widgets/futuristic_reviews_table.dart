@@ -363,8 +363,11 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                 Expanded(
                   flex: 1,
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
+                      Flexible(
+                        fit: FlexFit.loose,
+                        child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 4,
@@ -377,23 +380,27 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                             width: 0.5,
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.star_rounded,
-                              size: 14,
-                              color: _getRatingColor(review.averageRating),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              review.averageRating.toStringAsFixed(1),
-                              style: AppTextStyles.caption.copyWith(
-                                fontWeight: FontWeight.w600,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.star_rounded,
+                                size: 14,
                                 color: _getRatingColor(review.averageRating),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  review.averageRating.toStringAsFixed(1),
+                                  style: AppTextStyles.caption.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: _getRatingColor(review.averageRating),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -422,8 +429,10 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                 // خلية الإجراءات
                 Expanded(
                   flex: 1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                  child: Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: 8,
+                    runSpacing: 4,
                     children: [
                       if (review.isPending)
                         (isApproving
@@ -433,7 +442,6 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                                 color: AppTheme.success,
                                 onTap: () => widget.onApproveTap(review),
                               )),
-                      const SizedBox(width: 8),
                       _buildActionButton(
                         icon: Icons.delete_outline,
                         color: AppTheme.error,
