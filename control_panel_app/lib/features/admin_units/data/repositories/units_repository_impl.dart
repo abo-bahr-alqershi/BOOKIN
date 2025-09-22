@@ -30,6 +30,16 @@ class UnitsRepositoryImpl implements UnitsRepository {
     double? minPrice,
     double? maxPrice,
     String? searchQuery,
+    String? pricingMethod,
+    DateTime? checkInDate,
+    DateTime? checkOutDate,
+    int? numberOfGuests,
+    bool? hasActiveBookings,
+    String? location,
+    String? sortBy,
+    double? latitude,
+    double? longitude,
+    double? radiusKm,
   }) async {
     if (await networkInfo.isConnected) {
       try {
@@ -42,6 +52,16 @@ class UnitsRepositoryImpl implements UnitsRepository {
           minPrice: minPrice,
           maxPrice: maxPrice,
           searchQuery: searchQuery,
+          pricingMethod: pricingMethod,
+          checkInDate: checkInDate,
+          checkOutDate: checkOutDate,
+          numberOfGuests: numberOfGuests,
+          hasActiveBookings: hasActiveBookings,
+          location: location,
+          sortBy: sortBy,
+          latitude: latitude,
+          longitude: longitude,
+          radiusKm: radiusKm,
         );
         await localDataSource.cacheUnits(remoteUnits);
         return Right(remoteUnits);

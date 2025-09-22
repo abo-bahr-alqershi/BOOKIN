@@ -21,6 +21,16 @@ class GetUnitsUseCase implements UseCase<List<Unit>, GetUnitsParams> {
       minPrice: params.minPrice,
       maxPrice: params.maxPrice,
       searchQuery: params.searchQuery,
+      pricingMethod: params.pricingMethod,
+      checkInDate: params.checkInDate,
+      checkOutDate: params.checkOutDate,
+      numberOfGuests: params.numberOfGuests,
+      hasActiveBookings: params.hasActiveBookings,
+      location: params.location,
+      sortBy: params.sortBy,
+      latitude: params.latitude,
+      longitude: params.longitude,
+      radiusKm: params.radiusKm,
     );
   }
 }
@@ -34,6 +44,16 @@ class GetUnitsParams extends Equatable {
   final double? minPrice;
   final double? maxPrice;
   final String? searchQuery;
+  final String? pricingMethod;
+  final DateTime? checkInDate;
+  final DateTime? checkOutDate;
+  final int? numberOfGuests;
+  final bool? hasActiveBookings;
+  final String? location;
+  final String? sortBy;
+  final double? latitude;
+  final double? longitude;
+  final double? radiusKm;
 
   const GetUnitsParams({
     this.pageNumber,
@@ -44,6 +64,16 @@ class GetUnitsParams extends Equatable {
     this.minPrice,
     this.maxPrice,
     this.searchQuery,
+    this.pricingMethod,
+    this.checkInDate,
+    this.checkOutDate,
+    this.numberOfGuests,
+    this.hasActiveBookings,
+    this.location,
+    this.sortBy,
+    this.latitude,
+    this.longitude,
+    this.radiusKm,
   });
 
   @override
@@ -56,5 +86,15 @@ class GetUnitsParams extends Equatable {
         minPrice,
         maxPrice,
         searchQuery,
+      pricingMethod,
+      checkInDate,
+      checkOutDate,
+      numberOfGuests,
+      hasActiveBookings,
+      location,
+      sortBy,
+      latitude,
+      longitude,
+      radiusKm,
       ];
 }
