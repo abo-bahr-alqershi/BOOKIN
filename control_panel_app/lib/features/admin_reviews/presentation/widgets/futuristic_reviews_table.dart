@@ -76,6 +76,7 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width > 1200;
+    final isCompact = size.width < 480;
     
     return Container(
       decoration: BoxDecoration(
@@ -134,33 +135,39 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                         flex: 2,
                         sortKey: 'user',
                         isFirst: true,
+                        isCompact: isCompact,
                       ),
                       _buildHeaderCell(
                         'العقار',
                         flex: 2,
                         sortKey: 'property',
+                        isCompact: isCompact,
                       ),
                       _buildHeaderCell(
                         'التقييم',
                         flex: 1,
                         sortKey: 'rating',
+                        isCompact: isCompact,
                       ),
                       if (isDesktop) ...[
                         _buildHeaderCell(
                           'التاريخ',
                           flex: 1,
                           sortKey: 'date',
+                          isCompact: isCompact,
                         ),
                         _buildHeaderCell(
                           'الحالة',
                           flex: 1,
                           sortKey: 'status',
+                          isCompact: isCompact,
                         ),
                       ],
                       _buildHeaderCell(
                         'الإجراءات',
                         flex: 1,
                         sortable: false,
+                        isCompact: isCompact,
                       ),
                     ],
                   ),
@@ -201,6 +208,7 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
     String? sortKey,
     bool sortable = true,
     bool isFirst = false,
+    bool isCompact = false,
   }) {
     final isActive = _sortBy == sortKey;
     
@@ -225,22 +233,28 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
           padding: EdgeInsets.only(
             right: isFirst ? 0 : 8,
             left: 8,
-            top: 4,
-            bottom: 4,
+            top: isCompact ? 2 : 4,
+            bottom: isCompact ? 2 : 4,
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                title,
-                style: AppTextStyles.bodySmall.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: isActive 
-                      ? AppTheme.primaryBlue
-                      : AppTheme.textMuted,
-                  letterSpacing: 0.5,
+              Flexible(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontSize: isCompact ? 11 : null,
+                    fontWeight: FontWeight.w600,
+                    color: isActive 
+                        ? AppTheme.primaryBlue
+                        : AppTheme.textMuted,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
-              if (sortable && sortKey != null) ...[
+              if (sortable && sortKey != null && !isCompact) ...[
                 const SizedBox(width: 4),
                 AnimatedRotation(
                   turns: isActive && _ascending ? 0.5 : 0.0,
@@ -291,7 +305,7 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
               horizontal: isDesktop ? 24 : 16,
               vertical: 16,
             ),
-            child: Row(
+                  child: Row(
               children: [
                 // خلية المستخدم
                 Expanded(
@@ -335,6 +349,8 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                                 style: AppTextStyles.caption.copyWith(
                                   color: AppTheme.textMuted,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ],
@@ -354,6 +370,7 @@ class _FuturisticReviewsTableState extends State<FuturisticReviewsTable> {
                       style: AppTextStyles.bodySmall.copyWith(
                         color: AppTheme.textLight,
                       ),
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
