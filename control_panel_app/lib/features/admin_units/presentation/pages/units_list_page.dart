@@ -186,20 +186,20 @@ class _UnitsListPageState extends State<UnitsListPage>
         }
       },
       child: Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      body: CustomScrollView(
-        controller: _scrollController,
-        physics: const BouncingScrollPhysics(
-          parent: AlwaysScrollableScrollPhysics(),
+        backgroundColor: AppTheme.darkBackground,
+        body: CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            _buildSliverAppBar(),
+            _buildStatsSection(),
+            _buildFilterSection(),
+            _buildUnitsList(),
+          ],
         ),
-        slivers: [
-          _buildSliverAppBar(),
-          _buildStatsSection(),
-          _buildFilterSection(),
-          _buildUnitsList(),
-        ],
-      ),
-      floatingActionButton: _buildEnhancedFloatingActionButton(),
+        floatingActionButton: _buildEnhancedFloatingActionButton(),
       ),
     );
   }
@@ -805,24 +805,55 @@ class _UnitsListPageState extends State<UnitsListPage>
     return SliverToBoxAdapter(
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        height: _showFilters ? 180 : 0,
+        constraints: BoxConstraints(
+          maxHeight: _showFilters
+              ? MediaQuery.of(context).size.height * 0.5 // 60% من ارتفاع الشاشة
+              : 0,
+        ),
         child: _showFilters
-            ? UnitFiltersWidget(
-                onFiltersChanged: (filters) {
-                  setState(() => _activeFilters = UnitFilters(
-                        propertyId: filters['propertyId'] as String?,
-                        unitTypeId: filters['unitTypeId'] as String?,
-                        isAvailable: filters['isAvailable'] as bool?,
-                        minPrice: filters['minPrice'] as int?,
-                        maxPrice: filters['maxPrice'] as int?,
-                        pricingMethod: filters['pricingMethod'] as String?,
-                      ));
-                  context.read<UnitsListBloc>().add(
-                        FilterUnitsEvent(
-                          filters: filters,
-                        ),
-                      );
-                },
+            ? Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppTheme.darkCard.withValues(alpha: 0.3),
+                      AppTheme.darkCard.withValues(alpha: 0.1),
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(20),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.05),
+                      blurRadius: 20,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(20),
+                  ),
+                  child: UnitFiltersWidget(
+                    onFiltersChanged: (filters) {
+                      setState(() => _activeFilters = UnitFilters(
+                            propertyId: filters['propertyId'] as String?,
+                            unitTypeId: filters['unitTypeId'] as String?,
+                            isAvailable: filters['isAvailable'] as bool?,
+                            minPrice: filters['minPrice'] as int?,
+                            maxPrice: filters['maxPrice'] as int?,
+                            pricingMethod: filters['pricingMethod'] as String?,
+                          ));
+                      context.read<UnitsListBloc>().add(
+                            FilterUnitsEvent(
+                              filters: filters,
+                            ),
+                          );
+                    },
+                  ),
+                ),
               )
             : const SizedBox.shrink(),
       ),
@@ -998,9 +1029,9 @@ class _UnitsListPageState extends State<UnitsListPage>
               icon: CupertinoIcons.checkmark_circle,
               label: 'تفعيل الكل',
               onTap: () {
-                final state = this.context.read<UnitsListBloc>().state;
+                final state = context.read<UnitsListBloc>().state;
                 if (state is UnitsListLoaded) {
-                  this.context.read<UnitsListBloc>().add(
+                  context.read<UnitsListBloc>().add(
                         BulkActivateUnitsEvent(
                           unitIds:
                               state.selectedUnits.map((u) => u.id).toList(),
@@ -1014,9 +1045,9 @@ class _UnitsListPageState extends State<UnitsListPage>
               icon: CupertinoIcons.xmark_circle,
               label: 'تعطيل الكل',
               onTap: () {
-                final state = this.context.read<UnitsListBloc>().state;
+                final state = context.read<UnitsListBloc>().state;
                 if (state is UnitsListLoaded) {
-                  this.context.read<UnitsListBloc>().add(
+                  context.read<UnitsListBloc>().add(
                         BulkDeactivateUnitsEvent(
                           unitIds:
                               state.selectedUnits.map((u) => u.id).toList(),
@@ -1162,7 +1193,7 @@ class _UnitsListPageState extends State<UnitsListPage>
                         onPressed: () {
                           Navigator.pop(dialogContext);
                           _showDeletingDialog();
-                          this.context
+                          context
                               .read<UnitsListBloc>()
                               .add(DeleteUnitEvent(unitId: unit.id));
                         },
@@ -1249,9 +1280,9 @@ class _UnitsListPageState extends State<UnitsListPage>
               color: Colors.transparent,
               child: InkWell(
                 onTap: () {
-                  final state = this.context.read<UnitsListBloc>().state;
+                  final state = context.read<UnitsListBloc>().state;
                   if (state is UnitsListLoaded) {
-                    this.context.read<UnitsListBloc>().add(
+                    context.read<UnitsListBloc>().add(
                           BulkDeleteUnitsEvent(
                             unitIds:
                                 state.selectedUnits.map((u) => u.id).toList(),
