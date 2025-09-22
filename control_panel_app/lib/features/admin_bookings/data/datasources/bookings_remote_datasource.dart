@@ -509,8 +509,9 @@ class BookingsRemoteDataSourceImpl implements BookingsRemoteDataSource {
         if (sortBy != null) 'sortBy': sortBy,
       };
 
+      // Backend route uses path parameter: /api/admin/bookings/property/{propertyId}
       final response = await apiClient.get(
-        '$_baseEndpoint/by-property',
+        '$_baseEndpoint/property/$propertyId',
         queryParameters: queryParams,
       );
 
@@ -543,13 +544,14 @@ class BookingsRemoteDataSourceImpl implements BookingsRemoteDataSource {
   }) async {
     try {
       final queryParams = <String, dynamic>{
-        'status': status.displayNameEn,
+        'status': status.apiValue,
         if (pageNumber != null) 'pageNumber': pageNumber,
         if (pageSize != null) 'pageSize': pageSize,
       };
 
+      // Backend route: /api/admin/bookings/status
       final response = await apiClient.get(
-        '$_baseEndpoint/by-status',
+        '$_baseEndpoint/status',
         queryParameters: queryParams,
       );
 
@@ -591,8 +593,9 @@ class BookingsRemoteDataSourceImpl implements BookingsRemoteDataSource {
         if (pageSize != null) 'pageSize': pageSize,
       };
 
+      // Backend route: /api/admin/bookings/unit/{unitId}
       final response = await apiClient.get(
-        '$_baseEndpoint/by-unit',
+        '$_baseEndpoint/unit/$unitId',
         queryParameters: queryParams,
       );
 
@@ -636,7 +639,7 @@ class BookingsRemoteDataSourceImpl implements BookingsRemoteDataSource {
         'userId': userId,
         if (pageNumber != null) 'pageNumber': pageNumber,
         if (pageSize != null) 'pageSize': pageSize,
-        if (status != null) 'status': status.displayNameEn,
+        if (status != null) 'status': status.apiValue,
         if (guestNameOrEmail != null) 'guestNameOrEmail': guestNameOrEmail,
         if (unitId != null) 'unitId': unitId,
         if (bookingSource != null) 'bookingSource': bookingSource,
@@ -646,8 +649,9 @@ class BookingsRemoteDataSourceImpl implements BookingsRemoteDataSource {
         if (sortBy != null) 'sortBy': sortBy,
       };
 
+      // Backend route: /api/admin/bookings/user/{userId}
       final response = await apiClient.get(
-        '$_baseEndpoint/by-user',
+        '$_baseEndpoint/user/$userId',
         queryParameters: queryParams,
       );
 
