@@ -155,8 +155,6 @@ class _UnitsListPageState extends State<UnitsListPage>
   Widget build(BuildContext context) {
     return BlocListener<UnitsListBloc, UnitsListState>(
       listener: (context, state) {
-        // When delete is triggered, show loader before state transition to error/loaded
-        // We infer delete in progress when a DeleteUnitEvent is fired, but here we track via dialog visibility
         if (state is UnitsListError && _isDeleting) {
           _dismissDeletingDialog();
           ScaffoldMessenger.of(context).showSnackBar(
@@ -187,16 +185,44 @@ class _UnitsListPageState extends State<UnitsListPage>
       },
       child: Scaffold(
         backgroundColor: AppTheme.darkBackground,
-        body: CustomScrollView(
-          controller: _scrollController,
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
-          slivers: [
-            _buildSliverAppBar(),
-            _buildStatsSection(),
-            _buildFilterSection(),
-            _buildUnitsList(),
+        body: Stack(
+          children: [
+            // المحتوى الأساسي
+            CustomScrollView(
+              controller: _scrollController,
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              slivers: [
+                _buildSliverAppBar(),
+                _buildStatsSection(),
+                _buildFilterSection(),
+                _buildUnitsList(),
+              ],
+            ),
+
+            // LoadingWidget العائم - يظهر فوق كل شيء عند الفلترة
+            BlocBuilder<UnitsListBloc, UnitsListState>(
+              builder: (context, state) {
+                if (state is UnitsListLoading && _showFilters) {
+                  return Positioned.fill(
+                    child: Container(
+                      color: AppTheme.darkBackground.withValues(alpha: 0.8),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                        child: const Center(
+                          child: LoadingWidget(
+                            type: LoadingType.futuristic,
+                            message: 'جاري تطبيق الفلاتر...',
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
           ],
         ),
         floatingActionButton: _buildEnhancedFloatingActionButton(),
@@ -806,9 +832,8 @@ class _UnitsListPageState extends State<UnitsListPage>
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         constraints: BoxConstraints(
-          maxHeight: _showFilters
-              ? MediaQuery.of(context).size.height * 0.5 // 60% من ارتفاع الشاشة
-              : 0,
+          maxHeight:
+              _showFilters ? MediaQuery.of(context).size.height * 0.5 : 0,
         ),
         child: _showFilters
             ? Container(
@@ -832,27 +857,61 @@ class _UnitsListPageState extends State<UnitsListPage>
                     ),
                   ],
                 ),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(20),
-                  ),
-                  child: UnitFiltersWidget(
-                    onFiltersChanged: (filters) {
-                      setState(() => _activeFilters = UnitFilters(
-                            propertyId: filters['propertyId'] as String?,
-                            unitTypeId: filters['unitTypeId'] as String?,
-                            isAvailable: filters['isAvailable'] as bool?,
-                            minPrice: filters['minPrice'] as int?,
-                            maxPrice: filters['maxPrice'] as int?,
-                            pricingMethod: filters['pricingMethod'] as String?,
-                          ));
-                      context.read<UnitsListBloc>().add(
-                            FilterUnitsEvent(
-                              filters: filters,
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(20),
+                      ),
+                      child: UnitFiltersWidget(
+                        onFiltersChanged: (filters) {
+                          setState(() => _activeFilters = UnitFilters(
+                                propertyId: filters['propertyId'] as String?,
+                                unitTypeId: filters['unitTypeId'] as String?,
+                                isAvailable: filters['isAvailable'] as bool?,
+                                minPrice: filters['minPrice'] as int?,
+                                maxPrice: filters['maxPrice'] as int?,
+                                pricingMethod:
+                                    filters['pricingMethod'] as String?,
+                              ));
+                          context.read<UnitsListBloc>().add(
+                                FilterUnitsEvent(
+                                  filters: filters,
+                                ),
+                              );
+                        },
+                      ),
+                    ),
+
+                    // شريط تحميل صغير في أعلى الفلاتر
+                    BlocBuilder<UnitsListBloc, UnitsListState>(
+                      builder: (context, state) {
+                        if (state is UnitsListLoading) {
+                          return Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              height: 3,
+                              decoration: const BoxDecoration(
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(20),
+                                  topRight: Radius.circular(20),
+                                ),
+                              ),
+                              child: LinearProgressIndicator(
+                                backgroundColor: Colors.transparent,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppTheme.primaryBlue,
+                                ),
+                              ),
                             ),
                           );
-                    },
-                  ),
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ],
                 ),
               )
             : const SizedBox.shrink(),
@@ -863,7 +922,20 @@ class _UnitsListPageState extends State<UnitsListPage>
   Widget _buildUnitsList() {
     return BlocBuilder<UnitsListBloc, UnitsListState>(
       builder: (context, state) {
-        if (state is UnitsListLoading) {
+        // إذا كان هناك تحميل والفلاتر مفتوحة، لا نظهر LoadingWidget هنا
+        // لأنه سيظهر في الـ Stack فوق كل شيء
+        if (state is UnitsListLoading && _showFilters) {
+          // نعرض container فارغ بدلاً من LoadingWidget
+          return SliverToBoxAdapter(
+            child: Container(
+              height: 200,
+              // يمكن أن يكون فارغاً أو نضع placeholder
+            ),
+          );
+        }
+
+        // التحميل العادي (بدون فلاتر)
+        if (state is UnitsListLoading && !_showFilters) {
           return const SliverFillRemaining(
             child: LoadingWidget(
               type: LoadingType.futuristic,
