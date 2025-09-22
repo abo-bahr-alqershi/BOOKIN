@@ -392,6 +392,17 @@ class _BookingFiltersWidgetState extends State<BookingFiltersWidget> {
         scrollDirection: Axis.horizontal,
         children: [
           _buildQuickFilterChip(
+            label: 'كل الوقت',
+            isSelected: _filters.startDate == null && _filters.endDate == null,
+            onTap: () {
+              setState(() {
+                _filters = _filters.copyWith(startDate: null, endDate: null);
+              });
+              _applyFilters();
+            },
+            isCompact: isCompact,
+          ),
+          _buildQuickFilterChip(
             label: 'اليوم',
             isSelected: _isToday(),
             onTap: _selectToday,

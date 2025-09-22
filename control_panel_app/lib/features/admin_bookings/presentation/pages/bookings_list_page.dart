@@ -539,10 +539,11 @@ class _BookingsListPageState extends State<BookingsListPage>
   void _loadBookings() {
     context.read<BookingsListBloc>().add(
           LoadBookingsEvent(
-            startDate: DateTime.now().subtract(const Duration(days: 30)),
-            endDate: DateTime.now(),
+            // Expand default range to 1 year back to avoid missing older bookings
+            startDate: DateTime.now().subtract(const Duration(days: 365)),
+            endDate: DateTime.now().add(const Duration(days: 1)),
             pageNumber: 1,
-            pageSize: 20,
+            pageSize: 50,
           ),
         );
   }

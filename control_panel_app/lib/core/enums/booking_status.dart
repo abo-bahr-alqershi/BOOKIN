@@ -37,3 +37,21 @@ extension BookingStatusExtension on BookingStatus {
     }
   }
 }
+
+extension BookingStatusApi on BookingStatus {
+  /// API enum string expected by backend (no spaces, e.g. "CheckedIn")
+  String get apiValue {
+    switch (this) {
+      case BookingStatus.confirmed:
+        return 'Confirmed';
+      case BookingStatus.pending:
+        return 'Pending';
+      case BookingStatus.cancelled:
+        return 'Cancelled';
+      case BookingStatus.completed:
+        return 'Completed';
+      case BookingStatus.checkedIn:
+        return 'CheckedIn';
+    }
+  }
+}
