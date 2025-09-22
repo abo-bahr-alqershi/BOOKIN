@@ -332,7 +332,7 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
                 ),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                suffixText: 'ر.س',
+                suffixText: 'ر.ي',
                 suffixStyle: AppTextStyles.caption.copyWith(
                   color: AppTheme.primaryBlue.withValues(alpha: 0.5),
                   fontSize: 11,
@@ -1299,12 +1299,12 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
 
         switch (key) {
           case 'minPrice':
-            label = 'من: $value ر.س';
+            label = 'من: $value ر.ي';
             icon = Icons.arrow_downward_rounded;
             color = AppTheme.success;
             break;
           case 'maxPrice':
-            label = 'إلى: $value ر.س';
+            label = 'إلى: $value ر.ي';
             icon = Icons.arrow_upward_rounded;
             color = AppTheme.success;
             break;
