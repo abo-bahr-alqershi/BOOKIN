@@ -3,6 +3,9 @@
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'dart:ui' as ui;
 import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 
 class UnitFiltersWidget extends StatefulWidget {
@@ -44,10 +47,12 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
   final _minPriceController = TextEditingController();
   final _maxPriceController = TextEditingController();
   final _locationController = TextEditingController();
-  final _latController = TextEditingController();
-  final _lonController = TextEditingController();
   final _radiusController = TextEditingController();
   final _guestsController = TextEditingController();
+
+  // متغيرات الموقع المحدد
+  LatLng? _selectedLocation;
+  String? _selectedAddress;
 
   @override
   void initState() {
@@ -82,8 +87,6 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
     _minPriceController.dispose();
     _maxPriceController.dispose();
     _locationController.dispose();
-    _latController.dispose();
-    _lonController.dispose();
     _radiusController.dispose();
     _guestsController.dispose();
     super.dispose();
@@ -103,10 +106,10 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
       _minPriceController.clear();
       _maxPriceController.clear();
       _locationController.clear();
-      _latController.clear();
-      _lonController.clear();
       _radiusController.clear();
       _guestsController.clear();
+      _selectedLocation = null;
+      _selectedAddress = null;
     });
     widget.onFiltersChanged(_filters);
     HapticFeedback.mediumImpact();
@@ -121,59 +124,35 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Container(
-          height: double.infinity, // استخدام الارتفاع الكامل المتاح
+          height: double.infinity,
           padding: const EdgeInsets.all(16),
           child: SingleChildScrollView(
-            // إضافة التمرير
             physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // عنوان الفلترات مع زر إعادة التعيين
                 _buildHeader(),
                 const SizedBox(height: 16),
-
-                // محتوى الفلترات
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
                   children: [
-                    // فلتر السعر
                     SizedBox(width: 280, child: _buildPriceRangeFilter()),
-
-                    // فلتر حالة الوحدة
                     SizedBox(width: 220, child: _buildAvailabilityFilter()),
-
-                    // فلتر طريقة التسعير
                     SizedBox(width: 280, child: _buildPricingMethodFilter()),
-
-                    // فلتر التواريخ
                     SizedBox(width: 280, child: _buildDateRangeFilter()),
-
-                    // فلتر عدد الضيوف
                     SizedBox(width: 180, child: _buildGuestsFilter()),
-
-                    // فلتر الحجوزات النشطة
                     SizedBox(width: 220, child: _buildActiveBookingsFilter()),
-
-                    // فلتر الموقع
-                    SizedBox(width: 300, child: _buildLocationFilter()),
-
-                    // فلتر الترتيب
+                    SizedBox(width: 340, child: _buildLocationFilter()),
                     SizedBox(width: 400, child: _buildSortFilter()),
-
-                    // زر التطبيق
                     _buildApplyButton(),
                   ],
                 ),
-
-                // عرض الفلاتر النشطة
                 if (_activeFiltersCount > 0) ...[
                   const SizedBox(height: 16),
                   _buildActiveFiltersChips(),
                 ],
-
-                const SizedBox(height: 16), // مساحة إضافية في الأسفل
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -226,7 +205,6 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
               ),
             ],
           ),
-          // زر إعادة تعيين
           if (_activeFiltersCount > 0) _buildResetButton(),
         ],
       ),
@@ -297,7 +275,6 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
             ],
           ),
           const SizedBox(height: 8),
-          // أزرار سريعة للأسعار
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -801,113 +778,327 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
       icon: Icons.location_on_rounded,
       child: Column(
         children: [
-          // حقل البحث بالموقع
-          Container(
-            decoration: BoxDecoration(
-              color: AppTheme.darkSurface.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppTheme.darkBorder.withValues(alpha: 0.2),
-              ),
-            ),
-            child: TextField(
-              controller: _locationController,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppTheme.textWhite,
-                fontSize: 13,
-              ),
-              decoration: InputDecoration(
-                hintText: 'المدينة أو العنوان...',
-                hintStyle: AppTextStyles.caption.copyWith(
-                  color: AppTheme.textMuted.withValues(alpha: 0.5),
-                  fontSize: 12,
-                ),
-                prefixIcon: Icon(
-                  Icons.search_rounded,
-                  size: 16,
-                  color: AppTheme.textMuted.withValues(alpha: 0.5),
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
-              ),
-              onChanged: (v) => _updateFilter('location', v.isEmpty ? null : v),
-            ),
-          ),
-          const SizedBox(height: 8),
-          // إحداثيات ونطاق البحث
-          ExpansionTile(
-            title: Text(
-              'بحث متقدم بالإحداثيات',
-              style: AppTextStyles.caption.copyWith(
-                color: AppTheme.primaryBlue.withValues(alpha: 0.7),
-                fontSize: 11,
-              ),
-            ),
-            tilePadding: EdgeInsets.zero,
+          Row(
             children: [
-              Row(
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.darkSurface.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppTheme.darkBorder.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: TextField(
+                    controller: _locationController,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppTheme.textWhite,
+                      fontSize: 13,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'المدينة أو العنوان...',
+                      hintStyle: AppTextStyles.caption.copyWith(
+                        color: AppTheme.textMuted.withValues(alpha: 0.5),
+                        fontSize: 12,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        size: 16,
+                        color: AppTheme.textMuted.withValues(alpha: 0.5),
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    onChanged: (v) =>
+                        _updateFilter('location', v.isEmpty ? null : v),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _buildMapButton(),
+            ],
+          ),
+          if (_selectedLocation != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
                 children: [
-                  Expanded(
-                    child: _buildCoordinateField('Latitude', _latController,
-                        (v) => _updateFilter('latitude', double.tryParse(v))),
+                  Icon(
+                    Icons.check_circle_rounded,
+                    size: 14,
+                    color: AppTheme.primaryBlue,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: _buildCoordinateField('Longitude', _lonController,
-                        (v) => _updateFilter('longitude', double.tryParse(v))),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'موقع محدد',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppTheme.primaryBlue,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (_selectedAddress != null)
+                          Text(
+                            _selectedAddress!,
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppTheme.textWhite.withValues(alpha: 0.8),
+                              fontSize: 11,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        Text(
+                          'Lat: ${_selectedLocation!.latitude.toStringAsFixed(4)}, Lng: ${_selectedLocation!.longitude.toStringAsFixed(4)}',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppTheme.textMuted.withValues(alpha: 0.7),
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 6),
-                  SizedBox(
-                    width: 80,
-                    child: _buildCoordinateField('نطاق (كم)', _radiusController,
-                        (v) => _updateFilter('radiusKm', double.tryParse(v))),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedLocation = null;
+                        _selectedAddress = null;
+                        _filters['latitude'] = null;
+                        _filters['longitude'] = null;
+                      });
+                      widget.onFiltersChanged(_filters);
+                    },
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 16,
+                      color: AppTheme.textMuted,
+                    ),
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          _buildRadiusField(),
         ],
       ),
     );
   }
 
-  Widget _buildCoordinateField(String label, TextEditingController controller,
-      Function(String) onChanged) {
+  Widget _buildMapButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _openMapPicker,
+        borderRadius: BorderRadius.circular(8),
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.primaryBlue.withValues(alpha: 0.8),
+                AppTheme.primaryBlue.withValues(alpha: 0.6),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.map_rounded,
+                  size: 16,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'تحديد على الخريطة',
+                  style: AppTextStyles.caption.copyWith(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRadiusField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: AppTextStyles.caption.copyWith(
-            color: AppTheme.textMuted.withValues(alpha: 0.6),
-            fontSize: 10,
+        Row(
+          children: [
+            Icon(
+              Icons.radar_rounded,
+              size: 14,
+              color: AppTheme.warning.withValues(alpha: 0.8),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'نطاق البحث (كيلومتر)',
+              style: AppTextStyles.caption.copyWith(
+                color: AppTheme.textWhite.withValues(alpha: 0.8),
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            color: AppTheme.darkSurface.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppTheme.darkBorder.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Icon(
+                  Icons.straighten_rounded,
+                  size: 14,
+                  color: AppTheme.warning.withValues(alpha: 0.6),
+                ),
+              ),
+              Expanded(
+                child: TextField(
+                  controller: _radiusController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppTheme.textWhite,
+                    fontSize: 13,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'مثال: 5',
+                    hintStyle: AppTextStyles.caption.copyWith(
+                      color: AppTheme.textMuted.withValues(alpha: 0.5),
+                      fontSize: 12,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    suffixText: 'كم',
+                    suffixStyle: AppTextStyles.caption.copyWith(
+                      color: AppTheme.warning.withValues(alpha: 0.5),
+                      fontSize: 11,
+                    ),
+                  ),
+                  onChanged: (v) =>
+                      _updateFilter('radiusKm', double.tryParse(v)),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Container(
-          height: 32,
-          decoration: BoxDecoration(
-            color: AppTheme.darkSurface.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: AppTheme.darkBorder.withValues(alpha: 0.15),
-            ),
-          ),
-          child: TextField(
-            controller: controller,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: AppTextStyles.caption.copyWith(
-              color: AppTheme.textWhite,
-              fontSize: 11,
-            ),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 8),
-            ),
-            onChanged: onChanged,
+        const SizedBox(height: 6),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildRadiusChip('1 كم', 1),
+              const SizedBox(width: 6),
+              _buildRadiusChip('5 كم', 5),
+              const SizedBox(width: 6),
+              _buildRadiusChip('10 كم', 10),
+              const SizedBox(width: 6),
+              _buildRadiusChip('25 كم', 25),
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildRadiusChip(String label, double radius) {
+    final isActive = _filters['radiusKm'] == radius;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _filters['radiusKm'] = radius;
+          _radiusController.text = radius.toString();
+        });
+        widget.onFiltersChanged(_filters);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          gradient: isActive
+              ? LinearGradient(colors: [
+                  AppTheme.warning.withValues(alpha: 0.8),
+                  AppTheme.warning.withValues(alpha: 0.6),
+                ])
+              : null,
+          color: !isActive ? AppTheme.darkSurface.withValues(alpha: 0.2) : null,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isActive
+                ? AppTheme.warning.withValues(alpha: 0.5)
+                : AppTheme.darkBorder.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.caption.copyWith(
+            color: isActive
+                ? Colors.white
+                : AppTheme.textMuted.withValues(alpha: 0.7),
+            fontSize: 11,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openMapPicker() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => _MapPickerDialog(
+        initialLocation: _selectedLocation,
+        onLocationSelected: (location, address) {
+          setState(() {
+            _selectedLocation = location;
+            _selectedAddress = address;
+            _filters['latitude'] = location.latitude;
+            _filters['longitude'] = location.longitude;
+            if (address != null) {
+              _locationController.text = address;
+              _filters['location'] = address;
+            }
+          });
+          widget.onFiltersChanged(_filters);
+        },
+      ),
     );
   }
 
@@ -989,7 +1180,6 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
     );
   }
 
-  // Container موحد للفلاتر مع label وicon
   Widget _buildFilterContainer({
     required String label,
     required IconData icon,
@@ -1012,7 +1202,6 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with label and icon
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -1046,7 +1235,6 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
               ],
             ),
           ),
-          // Content
           Padding(
             padding: const EdgeInsets.all(8),
             child: child,
@@ -1160,6 +1348,14 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
             icon = Icons.radar_rounded;
             color = AppTheme.warning;
             break;
+          case 'latitude':
+          case 'longitude':
+            if (key == 'latitude' && _filters['longitude'] != null) {
+              label = 'إحداثيات محددة';
+              icon = Icons.gps_fixed_rounded;
+              color = AppTheme.primaryBlue;
+            }
+            break;
           case 'sortBy':
             label = _getSortLabel(value);
             icon = Icons.sort_rounded;
@@ -1248,5 +1444,371 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
       default:
         return value;
     }
+  }
+}
+
+// Dialog لاختيار الموقع على الخريطة
+class _MapPickerDialog extends StatefulWidget {
+  final LatLng? initialLocation;
+  final Function(LatLng, String?) onLocationSelected;
+
+  const _MapPickerDialog({
+    this.initialLocation,
+    required this.onLocationSelected,
+  });
+
+  @override
+  State<_MapPickerDialog> createState() => _MapPickerDialogState();
+}
+
+class _MapPickerDialogState extends State<_MapPickerDialog> {
+  GoogleMapController? _mapController;
+  LatLng? _selectedLocation;
+  String? _selectedAddress;
+  Set<Marker> _markers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedLocation = widget.initialLocation;
+    if (_selectedLocation != null) {
+      _updateMarker(_selectedLocation!);
+    }
+  }
+
+  void _updateMarker(LatLng location) {
+    setState(() {
+      _selectedLocation = location;
+      _markers = {
+        Marker(
+          markerId: const MarkerId('selected'),
+          position: location,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+        ),
+      };
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: EdgeInsets.zero,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.darkCard,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Stack(
+              children: [
+                GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: _selectedLocation ?? const LatLng(15.3694, 44.1910),
+                    zoom: 12,
+                  ),
+                  onMapCreated: (controller) {
+                    _mapController = controller;
+                    controller.setMapStyle('''
+                      [
+                        {
+                          "elementType": "geometry",
+                          "stylers": [{"color": "#1d2c4d"}]
+                        },
+                        {
+                          "elementType": "labels.text.fill",
+                          "stylers": [{"color": "#8ec3f5"}]
+                        },
+                        {
+                          "elementType": "labels.text.stroke",
+                          "stylers": [{"color": "#1a3646"}]
+                        },
+                        {
+                          "featureType": "water",
+                          "elementType": "geometry",
+                          "stylers": [{"color": "#0e1626"}]
+                        },
+                        {
+                          "featureType": "road",
+                          "elementType": "geometry",
+                          "stylers": [{"color": "#2f3948"}]
+                        }
+                      ]
+                    ''');
+                  },
+                  markers: _markers,
+                  onTap: (location) {
+                    _updateMarker(location);
+                    _selectedAddress =
+                        'Lat: ${location.latitude.toStringAsFixed(4)}, Lng: ${location.longitude.toStringAsFixed(4)}';
+                  },
+                ),
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: EdgeInsets.only(
+                      top: MediaQuery.of(context).padding.top + 16,
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppTheme.darkCard,
+                          AppTheme.darkCard.withValues(alpha: 0.95),
+                          AppTheme.darkCard.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.darkSurface
+                                      .withValues(alpha: 0.8),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: AppTheme.darkBorder
+                                        .withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  color: AppTheme.textWhite,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'تحديد الموقع على الخريطة',
+                                style: AppTextStyles.heading3.copyWith(
+                                  color: AppTheme.textWhite,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppTheme.darkSurface.withValues(alpha: 0.8),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: TextField(
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppTheme.textWhite,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'ابحث عن موقع...',
+                              hintStyle: AppTextStyles.bodyMedium.copyWith(
+                                color: AppTheme.textMuted,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.search_rounded,
+                                color: AppTheme.textMuted,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 35),
+                    child: Icon(
+                      Icons.location_on_rounded,
+                      size: 40,
+                      color: AppTheme.primaryBlue,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          AppTheme.darkCard,
+                          AppTheme.darkCard.withValues(alpha: 0.95),
+                          AppTheme.darkCard.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        if (_selectedLocation != null)
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color:
+                                  AppTheme.darkSurface.withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color:
+                                    AppTheme.primaryBlue.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on_rounded,
+                                  color: AppTheme.primaryBlue,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'الموقع المحدد',
+                                        style: AppTextStyles.caption.copyWith(
+                                          color: AppTheme.textMuted,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                      Text(
+                                        _selectedAddress ??
+                                            'Lat: ${_selectedLocation!.latitude.toStringAsFixed(4)}, Lng: ${_selectedLocation!.longitude.toStringAsFixed(4)}',
+                                        style: AppTextStyles.bodySmall.copyWith(
+                                          color: AppTheme.textWhite,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => Navigator.pop(context),
+                                child: Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.darkSurface
+                                        .withValues(alpha: 0.8),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppTheme.darkBorder
+                                          .withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'إلغاء',
+                                      style:
+                                          AppTextStyles.buttonMedium.copyWith(
+                                        color: AppTheme.textMuted,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: _selectedLocation != null
+                                    ? () {
+                                        widget.onLocationSelected(
+                                          _selectedLocation!,
+                                          _selectedAddress,
+                                        );
+                                        Navigator.pop(context);
+                                      }
+                                    : null,
+                                child: Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  decoration: BoxDecoration(
+                                    gradient: _selectedLocation != null
+                                        ? AppTheme.primaryGradient
+                                        : null,
+                                    color: _selectedLocation == null
+                                        ? AppTheme.darkSurface
+                                            .withValues(alpha: 0.5)
+                                        : null,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: _selectedLocation != null
+                                        ? [
+                                            BoxShadow(
+                                              color: AppTheme.primaryBlue
+                                                  .withValues(alpha: 0.3),
+                                              blurRadius: 12,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ]
+                                        : null,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'تأكيد الموقع',
+                                      style:
+                                          AppTextStyles.buttonMedium.copyWith(
+                                        color: _selectedLocation != null
+                                            ? Colors.white
+                                            : AppTheme.textMuted
+                                                .withValues(alpha: 0.5),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
