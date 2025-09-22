@@ -1234,6 +1234,18 @@ class _BookingsListPageState extends State<BookingsListPage>
                   ),
                 );
           },
+          onConfirm: (bookingId) {
+            context.read<BookingsListBloc>().add(ConfirmBookingEvent(bookingId: bookingId));
+          },
+          onCancel: (bookingId) {
+            _showCancelDialog(bookingId);
+          },
+          onCheckIn: (bookingId) {
+            context.read<BookingsListBloc>().add(CheckInBookingEvent(bookingId: bookingId));
+          },
+          onCheckOut: (bookingId) {
+            context.read<BookingsListBloc>().add(CheckOutBookingEvent(bookingId: bookingId));
+          },
         ),
       ),
     );

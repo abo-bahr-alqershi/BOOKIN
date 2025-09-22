@@ -16,6 +16,10 @@ class FuturisticBookingCard extends StatefulWidget {
   final VoidCallback? onLongPress;
   final bool showActions;
   final bool isCompact;
+  final VoidCallback? onConfirm;
+  final VoidCallback? onCancel;
+  final VoidCallback? onCheckIn;
+  final VoidCallback? onCheckOut;
 
   const FuturisticBookingCard({
     super.key,
@@ -25,6 +29,10 @@ class FuturisticBookingCard extends StatefulWidget {
     this.onLongPress,
     this.showActions = false,
     this.isCompact = false,
+    this.onConfirm,
+    this.onCancel,
+    this.onCheckIn,
+    this.onCheckOut,
   });
 
   @override
@@ -245,6 +253,11 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
               size: BadgeSize.medium,
             ),
           ),
+          Positioned(
+            top: 12,
+            left: 12,
+            child: _buildOverflowMenu(),
+          ),
           if (widget.isSelected)
             Positioned(
               top: 12,
@@ -309,6 +322,77 @@ class _FuturisticBookingCardState extends State<FuturisticBookingCard>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildOverflowMenu() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.darkBackground.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.darkBorder.withValues(alpha: 0.3)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _showCardActionsMenu,
+          borderRadius: BorderRadius.circular(10),
+          child: const Padding(
+            padding: EdgeInsets.all(6),
+            child: Icon(CupertinoIcons.ellipsis, color: Colors.white, size: 18),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCardActionsMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: AppTheme.darkCard,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(CupertinoIcons.eye, color: Colors.white),
+                title: Text('عرض التفاصيل', style: AppTextStyles.bodyMedium.copyWith(color: Colors.white)),
+                onTap: () { Navigator.pop(context); widget.onTap?.call(); },
+              ),
+              if (widget.booking.canConfirm)
+                ListTile(
+                  leading: Icon(CupertinoIcons.checkmark_circle, color: AppTheme.success),
+                  title: Text('تأكيد الحجز', style: AppTextStyles.bodyMedium.copyWith(color: Colors.white)),
+                  onTap: () { Navigator.pop(context); widget.onConfirm?.call(); },
+                ),
+              if (widget.booking.canCancel)
+                ListTile(
+                  leading: Icon(CupertinoIcons.xmark_circle, color: AppTheme.error),
+                  title: Text('إلغاء الحجز', style: AppTextStyles.bodyMedium.copyWith(color: Colors.white)),
+                  onTap: () { Navigator.pop(context); widget.onCancel?.call(); },
+                ),
+              if (widget.booking.canCheckIn)
+                ListTile(
+                  leading: Icon(CupertinoIcons.arrow_down_circle, color: AppTheme.success),
+                  title: Text('تسجيل وصول', style: AppTextStyles.bodyMedium.copyWith(color: Colors.white)),
+                  onTap: () { Navigator.pop(context); widget.onCheckIn?.call(); },
+                ),
+              if (widget.booking.canCheckOut)
+                ListTile(
+                  leading: Icon(CupertinoIcons.arrow_up_circle, color: AppTheme.warning),
+                  title: Text('تسجيل مغادرة', style: AppTextStyles.bodyMedium.copyWith(color: Colors.white)),
+                  onTap: () { Navigator.pop(context); widget.onCheckOut?.call(); },
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

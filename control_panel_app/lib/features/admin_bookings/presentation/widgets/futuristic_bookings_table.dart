@@ -13,6 +13,10 @@ class FuturisticBookingsTable extends StatefulWidget {
   final Function(String) onBookingTap;
   final Function(List<Booking>) onSelectionChanged;
   final bool showActions;
+  final void Function(String bookingId)? onConfirm;
+  final void Function(String bookingId)? onCancel;
+  final void Function(String bookingId)? onCheckIn;
+  final void Function(String bookingId)? onCheckOut;
 
   const FuturisticBookingsTable({
     super.key,
@@ -21,6 +25,10 @@ class FuturisticBookingsTable extends StatefulWidget {
     required this.onBookingTap,
     required this.onSelectionChanged,
     this.showActions = true,
+    this.onConfirm,
+    this.onCancel,
+    this.onCheckIn,
+    this.onCheckOut,
   });
 
   @override
@@ -539,24 +547,29 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
         if (booking.canCheckIn)
           _buildActionIcon(
             icon: CupertinoIcons.arrow_down_circle,
-            onTap: () {},
+            onTap: () => widget.onCheckIn?.call(booking.id),
             tooltip: 'تسجيل وصول',
             color: AppTheme.success,
           ),
         if (booking.canCheckOut)
           _buildActionIcon(
             icon: CupertinoIcons.arrow_up_circle,
-            onTap: () {},
+            onTap: () => widget.onCheckOut?.call(booking.id),
             tooltip: 'تسجيل مغادرة',
             color: AppTheme.warning,
           ),
         if (booking.canCancel)
           _buildActionIcon(
             icon: CupertinoIcons.xmark_circle,
-            onTap: () {},
+            onTap: () => widget.onCancel?.call(booking.id),
             tooltip: 'إلغاء',
             color: AppTheme.error,
           ),
+        _buildActionIcon(
+          icon: CupertinoIcons.ellipsis,
+          onTap: () => _showActionsMenu(booking),
+          tooltip: 'المزيد',
+        ),
       ],
     );
   }
@@ -568,7 +581,7 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
         if (booking.canCheckIn)
           _buildActionIcon(
             icon: CupertinoIcons.arrow_down_circle,
-            onTap: () {},
+            onTap: () => widget.onCheckIn?.call(booking.id),
             tooltip: 'تسجيل وصول',
             color: AppTheme.success,
             size: 14,
@@ -576,18 +589,103 @@ class _FuturisticBookingsTableState extends State<FuturisticBookingsTable> {
         if (booking.canCheckOut)
           _buildActionIcon(
             icon: CupertinoIcons.arrow_up_circle,
-            onTap: () {},
+            onTap: () => widget.onCheckOut?.call(booking.id),
             tooltip: 'تسجيل مغادرة',
             color: AppTheme.warning,
             size: 14,
           ),
         _buildActionIcon(
           icon: CupertinoIcons.ellipsis,
-          onTap: () => widget.onBookingTap(booking.id),
+          onTap: () => _showActionsMenu(booking),
           tooltip: 'المزيد',
           size: 14,
         ),
       ],
+    );
+  }
+
+  void _showActionsMenu(Booking booking) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: AppTheme.darkCard,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildSheetAction(
+                icon: CupertinoIcons.eye,
+                label: 'عرض التفاصيل',
+                onTap: () {
+                  Navigator.pop(context);
+                  widget.onBookingTap(booking.id);
+                },
+              ),
+              if (booking.canCheckIn)
+                _buildSheetAction(
+                  icon: CupertinoIcons.arrow_down_circle,
+                  label: 'تسجيل وصول',
+                  color: AppTheme.success,
+                  onTap: () {
+                    Navigator.pop(context);
+                    widget.onCheckIn?.call(booking.id);
+                  },
+                ),
+              if (booking.canCheckOut)
+                _buildSheetAction(
+                  icon: CupertinoIcons.arrow_up_circle,
+                  label: 'تسجيل مغادرة',
+                  color: AppTheme.warning,
+                  onTap: () {
+                    Navigator.pop(context);
+                    widget.onCheckOut?.call(booking.id);
+                  },
+                ),
+              if (booking.canConfirm)
+                _buildSheetAction(
+                  icon: CupertinoIcons.checkmark_circle,
+                  label: 'تأكيد الحجز',
+                  color: AppTheme.success,
+                  onTap: () {
+                    Navigator.pop(context);
+                    widget.onConfirm?.call(booking.id);
+                  },
+                ),
+              if (booking.canCancel)
+                _buildSheetAction(
+                  icon: CupertinoIcons.xmark_circle,
+                  label: 'إلغاء الحجز',
+                  color: AppTheme.error,
+                  onTap: () {
+                    Navigator.pop(context);
+                    widget.onCancel?.call(booking.id);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSheetAction({
+    required IconData icon,
+    required String label,
+    VoidCallback? onTap,
+    Color? color,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: color ?? AppTheme.textWhite),
+      title: Text(
+        label,
+        style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+      ),
+      onTap: onTap,
     );
   }
 
