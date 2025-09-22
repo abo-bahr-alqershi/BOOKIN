@@ -14,6 +14,7 @@ import 'package:bookn_cp_app/features/admin_bookings/domain/entities/booking.dar
 import 'package:bookn_cp_app/features/admin_bookings/presentation/widgets/futuristic_bookings_table.dart';
 import 'package:bookn_cp_app/features/admin_reviews/domain/usecases/get_all_reviews_usecase.dart';
 import 'package:bookn_cp_app/features/admin_reviews/domain/entities/review.dart';
+import 'package:bookn_cp_app/features/admin_reviews/presentation/widgets/futuristic_reviews_table.dart';
 import '../bloc/user_details/user_details_bloc.dart';
 import '../widgets/user_form_dialog.dart';
 import '../widgets/user_role_selector.dart';
@@ -1159,8 +1160,15 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       );
     }
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ..._userReviews.map((r) => _buildReviewRow(r)).toList(),
+        FuturisticReviewsTable(
+          reviews: _userReviews,
+          onReviewTap: (review) => context.push('/admin/reviews/details', extra: review.id),
+          onApproveTap: (_) {},
+          onDeleteTap: (_) {},
+          approvingReviewIds: const {},
+        ),
         const SizedBox(height: 12),
         if (_reviewsHasMore)
           Center(
@@ -1288,63 +1296,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
     }
   }
 
-  Widget _buildReviewRow(Review review) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.darkCard.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.darkBorder.withOpacity(0.2), width: 1),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: AppTheme.primaryGradient,
-            ),
-            child: Center(
-              child: Text(
-                review.userName.isNotEmpty ? review.userName.substring(0, 1).toUpperCase() : 'U',
-                style: AppTextStyles.caption.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        review.propertyName,
-                        style: AppTextStyles.bodySmall.copyWith(color: AppTheme.textWhite, fontWeight: FontWeight.w600),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(Icons.star_rounded, size: 14, color: AppTheme.warning),
-                    const SizedBox(width: 2),
-                    Text(review.averageRating.toStringAsFixed(1), style: AppTextStyles.caption.copyWith(color: AppTheme.warning)),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _formatDate(review.createdAt),
-                  style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // FuturisticReviewsTable used instead of manual rows
   
   Widget _buildSectionCard({
     required String title,
