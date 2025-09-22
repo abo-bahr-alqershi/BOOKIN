@@ -749,7 +749,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
         return Transform.scale(
           scale: _statsScaleAnimation.value,
           child: Container(
-            height: 120,
+            height: 132,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
@@ -851,8 +851,8 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                 overflowSpacing: 4,
                 children: [
                   Container(
-                    width: 32,
-                    height: 32,
+                    width: 28,
+                    height: 28,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -865,7 +865,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                     child: Icon(
                       icon,
                       color: color,
-                      size: 16,
+                      size: 14,
                     ),
                   ),
                   if (trend != null)
@@ -912,11 +912,11 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                 ],
               ),
               
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               
               Text(
                 value,
-                style: AppTextStyles.heading3.copyWith(
+                style: AppTextStyles.bodyLarge.copyWith(
                   color: AppTheme.textWhite,
                   fontWeight: FontWeight.bold,
                 ),
