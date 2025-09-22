@@ -912,7 +912,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                 ],
               ),
               
-              const Spacer(),
+              const SizedBox(height: 8),
               
               Text(
                 value,
@@ -1165,19 +1165,32 @@ class _UserDetailsPageState extends State<UserDetailsPage>
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppTheme.textMuted,
+          Flexible(
+            flex: 4,
+            child: Text(
+              label,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppTheme.textMuted,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          Text(
-            value,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppTheme.textWhite,
-              fontWeight: FontWeight.w600,
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 6,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                value,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppTheme.textWhite,
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.right,
+              ),
             ),
           ),
         ],
