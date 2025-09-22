@@ -8,6 +8,7 @@ using YemenBooking.Application.Queries.Analytics;
 using YemenBooking.Application.Queries.Bookings;
 using YemenBooking.Application.Queries.Dashboard;
 using YemenBooking.Application.Queries.ReportsAnalytics;
+using YemenBooking.Application.Commands.Bookings;
 
 namespace YemenBooking.Api.Controllers.Admin
 {
@@ -53,6 +54,50 @@ namespace YemenBooking.Api.Controllers.Admin
             return Ok(result);
         }
 
+        /// <summary>
+        /// تأكيد الحجز عبر المعرف في المسار
+        /// Confirm booking by id in route (alternative)
+        /// </summary>
+        [HttpPost("{bookingId}/confirm")]
+        public async Task<IActionResult> ConfirmBookingById(Guid bookingId)
+        {
+            var result = await _mediator.Send(new ConfirmBookingCommand { BookingId = bookingId });
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// تسجيل الوصول للحجز
+        /// Check-in booking
+        /// </summary>
+        [HttpPost("{bookingId}/check-in")]
+        public async Task<IActionResult> CheckIn(Guid bookingId)
+        {
+            var result = await _mediator.Send(new CheckInBookingCommand { BookingId = bookingId });
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// تسجيل المغادرة للحجز
+        /// Check-out booking
+        /// </summary>
+        [HttpPost("{bookingId}/check-out")]
+        public async Task<IActionResult> CheckOut(Guid bookingId)
+        {
+            var result = await _mediator.Send(new CheckOutBookingCommand { BookingId = bookingId });
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// إكمال الحجز
+        /// Complete booking
+        /// </summary>
+        [HttpPost("{bookingId}/complete")]
+        public async Task<IActionResult> Complete(Guid bookingId)
+        {
+            var result = await _mediator.Send(new CompleteBookingCommand { BookingId = bookingId });
+            return Ok(result);
+        }
+
 
         /// <summary>
         /// جلب بيانات حجز بواسطة المعرف
@@ -60,6 +105,18 @@ namespace YemenBooking.Api.Controllers.Admin
         /// </summary>
         [HttpGet("{bookingId}")]
         public async Task<IActionResult> GetBookingById(Guid bookingId)
+        {
+            var query = new GetBookingByIdQuery { BookingId = bookingId };
+            var result = await _mediator.Send(query);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// جلب تفاصيل الحجز الكاملة (كيانات وخدمات ومدفوعات)
+        /// Get full booking details
+        /// </summary>
+        [HttpGet("{bookingId}/details")]
+        public async Task<IActionResult> GetBookingDetails(Guid bookingId)
         {
             var query = new GetBookingByIdQuery { BookingId = bookingId };
             var result = await _mediator.Send(query);
