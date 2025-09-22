@@ -306,10 +306,12 @@ class _UserRoleSelectorState extends State<UserRoleSelector>
           duration: Duration(milliseconds: 300 + (index * 100)),
           curve: Curves.easeOutBack,
           builder: (context, value, child) {
+            final double clampedOpacity = value.clamp(0.0, 1.0) as double;
+            final double clampedScale = value < 0 ? 0 : value; // allow overshoot >1 for scale
             return Transform.scale(
-              scale: value,
+              scale: clampedScale,
               child: Opacity(
-                opacity: value,
+                opacity: clampedOpacity,
                 child: _buildRoleCard(role, isSelected),
               ),
             );
