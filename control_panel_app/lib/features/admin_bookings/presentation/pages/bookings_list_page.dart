@@ -758,16 +758,22 @@ class _BookingsListPageState extends State<BookingsListPage>
                 );
           },
           onConfirm: (bookingId) {
-            context.read<BookingsListBloc>().add(ConfirmBookingEvent(bookingId: bookingId));
+            context
+                .read<BookingsListBloc>()
+                .add(ConfirmBookingEvent(bookingId: bookingId));
           },
           onCancel: (bookingId) {
             _showCancelDialog(bookingId);
           },
           onCheckIn: (bookingId) {
-            context.read<BookingsListBloc>().add(CheckInBookingEvent(bookingId: bookingId));
+            context
+                .read<BookingsListBloc>()
+                .add(CheckInBookingEvent(bookingId: bookingId));
           },
           onCheckOut: (bookingId) {
-            context.read<BookingsListBloc>().add(CheckOutBookingEvent(bookingId: bookingId));
+            context
+                .read<BookingsListBloc>()
+                .add(CheckOutBookingEvent(bookingId: bookingId));
           },
         ),
       ),
@@ -828,7 +834,7 @@ class _BookingsListPageState extends State<BookingsListPage>
             ElevatedButton(
               style: ButtonStyle(
                 backgroundColor:
-                    MaterialStateProperty.all<Color>(AppTheme.primaryBlue),
+                    WidgetStateProperty.all<Color>(AppTheme.primaryBlue),
               ),
               onPressed: () {
                 final reason = reasonController.text.trim();
