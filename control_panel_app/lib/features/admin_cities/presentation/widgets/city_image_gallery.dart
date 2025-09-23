@@ -772,27 +772,30 @@ class _CityImageGalleryState extends State<CityImageGallery>
                   top: (_hoveredIndex == index) ? 8 : -40,
                   left: 8,
                   right: 8,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildQuickActionButton(
-                        icon: Icons.visibility_outlined,
-                        onTap: () => _previewImage(imagePath),
-                      ),
-                      if (!isPrimary) const SizedBox(width: 6),
-                      if (!isPrimary)
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                         _buildQuickActionButton(
-                          icon: Icons.star_outline_rounded,
-                          color: AppTheme.warning,
-                          onTap: () => _showImageOptions(index),
+                          icon: Icons.visibility_outlined,
+                          onTap: () => _previewImage(imagePath),
                         ),
-                      const SizedBox(width: 6),
-                      _buildQuickActionButton(
-                        icon: Icons.delete_outline_rounded,
-                        color: AppTheme.error,
-                        onTap: () => _deleteImage(index),
-                      ),
-                    ],
+                        if (!isPrimary) const SizedBox(width: 6),
+                        if (!isPrimary)
+                          _buildQuickActionButton(
+                            icon: Icons.star_outline_rounded,
+                            color: AppTheme.warning,
+                            onTap: () => _showImageOptions(index),
+                          ),
+                        const SizedBox(width: 6),
+                        _buildQuickActionButton(
+                          icon: Icons.delete_outline_rounded,
+                          color: AppTheme.error,
+                          onTap: () => _deleteImage(index),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
 
