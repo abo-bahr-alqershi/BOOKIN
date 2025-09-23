@@ -266,9 +266,10 @@ class _UnitsListPageState extends State<UnitsListPage>
       actions: [
         _buildActionButton(
           icon: CupertinoIcons.add,
-          onPressed: () {
-            Navigator.pop(context);
-            context.push('/admin/units/create');
+          onPressed: () async {
+            final res = await context.push('/admin/units/create');
+            if (!mounted) return;
+            context.read<UnitsListBloc>().add(RefreshUnitsEvent());
           },
         ),
         _buildGridViewButton(),

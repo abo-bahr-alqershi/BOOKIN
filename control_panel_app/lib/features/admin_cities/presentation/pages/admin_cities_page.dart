@@ -637,23 +637,14 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
         ? '/admin/cities/create'
         : '/admin/cities/${Uri.encodeComponent(city.name)}/edit';
 
-    final City? result = await context.push<City>(
+    await context.push<City>(
       path,
       extra: city,
     );
 
-    if (result == null) return;
-
-    if (city == null) {
-      context.read<CitiesBloc>().add(CreateCityEvent(city: result));
-    } else {
-      context.read<CitiesBloc>().add(
-            UpdateCityEvent(
-              oldName: city.name,
-              city: result,
-            ),
-          );
-    }
+    if (!mounted) return;
+    // عند الرجوع من صفحة الإنشاء/التعديل قم بتحديث القائمة مباشرةً
+    context.read<CitiesBloc>().add(const RefreshCitiesEvent());
   }
 
   void _showCityDetails(City city) {
