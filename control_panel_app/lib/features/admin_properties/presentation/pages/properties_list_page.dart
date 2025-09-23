@@ -320,7 +320,11 @@ class _PropertiesListPageState extends State<PropertiesListPage>
         ),
         _buildAppBarIconAction(
           icon: Icons.add_rounded,
-          onPressed: () => context.push('/admin/properties/create'),
+          onPressed: () async {
+            await context.push('/admin/properties/create');
+            if (!mounted) return;
+            context.read<PropertiesBloc>().add(const LoadPropertiesEvent());
+          },
         ),
         _buildOverflowMenu(),
         const SizedBox(width: 4),
@@ -346,7 +350,11 @@ class _PropertiesListPageState extends State<PropertiesListPage>
       ),
       _buildAppBarIconAction(
         icon: Icons.add_rounded,
-        onPressed: () => context.push('/admin/properties/create'),
+        onPressed: () async {
+          await context.push('/admin/properties/create');
+          if (!mounted) return;
+          context.read<PropertiesBloc>().add(const LoadPropertiesEvent());
+        },
       ),
       const SizedBox(width: 4),
     ];
@@ -949,7 +957,11 @@ class _PropertiesListPageState extends State<PropertiesListPage>
             ],
           ),
           child: FloatingActionButton(
-            onPressed: () => context.push('/admin/properties/create'),
+            onPressed: () async {
+              await context.push('/admin/properties/create');
+              if (!mounted) return;
+              context.read<PropertiesBloc>().add(const LoadPropertiesEvent());
+            },
             backgroundColor: AppTheme.primaryBlue,
             child: const Icon(
               Icons.add_rounded,
