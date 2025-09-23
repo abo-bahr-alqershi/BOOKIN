@@ -33,7 +33,7 @@ abstract class CitiesRepository {
   Future<Either<Failure, Map<String, dynamic>>> getCitiesStatistics();
 
   /// رفع صورة للمدينة مع دعم التقدم
-  Future<Either<Failure, String>> uploadCityImage(String imagePath, {ProgressCallback? onSendProgress});
+  Future<Either<Failure, String>> uploadCityImage(String cityName, String imagePath, {ProgressCallback? onSendProgress});
 
   /// حذف صورة من المدينة
   Future<Either<Failure, bool>> deleteCityImage(String imageUrl);

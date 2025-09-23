@@ -56,6 +56,12 @@ public interface IPropertyImageRepository : IRepository<PropertyImage>
     Task<IEnumerable<PropertyImage>> GetImagesByUnitAsync(Guid unitId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// الحصول على صور المدينة حسب الاسم
+    /// Get city images by city name
+    /// </summary>
+    Task<IEnumerable<PropertyImage>> GetImagesByCityAsync(string cityName, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// الحصول على الصورة الرئيسية للكيان
     /// Get main image for property
     /// </summary>
@@ -66,6 +72,12 @@ public interface IPropertyImageRepository : IRepository<PropertyImage>
     /// Get main image for unit
     /// </summary>
     Task<PropertyImage?> GetMainImageByUnitAsync(Guid unitId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// الحصول على الصورة الرئيسية للمدينة
+    /// Get main image for city
+    /// </summary>
+    Task<PropertyImage?> GetMainImageByCityAsync(string cityName, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// تعيين صورة إلى كيان

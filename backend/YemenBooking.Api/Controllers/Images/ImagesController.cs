@@ -50,9 +50,11 @@ namespace YemenBooking.Api.Controllers.Images
                 },
                 Name = Path.GetFileNameWithoutExtension(request.File.FileName),
                 Extension = Path.GetExtension(request.File.FileName),
+                    ImageType = ImageType.Management,
                 Category = Enum.TryParse<ImageCategory>(request.Category, true, out var cat) ? cat : ImageCategory.Gallery,
                 PropertyId = string.IsNullOrEmpty(request.PropertyId) ? (Guid?)null : Guid.Parse(request.PropertyId),
                 UnitId = string.IsNullOrEmpty(request.UnitId) ? (Guid?)null : Guid.Parse(request.UnitId),
+                    CityName = string.IsNullOrWhiteSpace(request.CityName) ? null : request.CityName,
                 Alt = request.Alt,
                 IsPrimary = request.IsPrimary,
                 Order = request.Order,
@@ -233,6 +235,11 @@ namespace YemenBooking.Api.Controllers.Images
             /// Temporary key to group images prior to binding
             /// </summary>
             public string? TempKey { get; set; }
+            /// <summary>
+            /// اسم المدينة (اختياري)
+            /// City name (optional)
+            /// </summary>
+            public string? CityName { get; set; }
 
         }
 

@@ -30,13 +30,24 @@ namespace YemenBooking.Infrastructure.Services
             var result = new List<CityDto>(rows.Count);
             foreach (var r in rows)
             {
-                var images = new List<string>();
-                try
+                // Prefer images from shared PropertyImages table to unify behavior with properties/units
+                var imageUrls = await _db.PropertyImages.AsNoTracking()
+                    .Where(pi => pi.CityName == r.Name && !pi.IsDeleted)
+                    .OrderBy(pi => pi.DisplayOrder)
+                    .ThenBy(pi => pi.UploadedAt)
+                    .Select(pi => pi.Url)
+                    .ToListAsync(cancellationToken);
+
+                if (imageUrls.Count == 0)
                 {
-                    images = System.Text.Json.JsonSerializer.Deserialize<List<string>>(r.ImagesJson) ?? new List<string>();
+                    try
+                    {
+                        imageUrls = System.Text.Json.JsonSerializer.Deserialize<List<string>>(r.ImagesJson) ?? new List<string>();
+                    }
+                    catch { imageUrls = new List<string>(); }
                 }
-                catch { /* ignore malformed json */ }
-                result.Add(new CityDto { Name = r.Name, Country = r.Country, Images = images });
+
+                result.Add(new CityDto { Name = r.Name, Country = r.Country, Images = imageUrls });
             }
             return result;
         }
@@ -74,6 +85,33 @@ namespace YemenBooking.Infrastructure.Services
                     entity.Country = dto.Country;
                     entity.ImagesJson = imagesJson;
                     _db.Cities.Update(entity);
+                }
+
+                // مزامنة ترتيب الصور مع جدول الصور الموحد وربطها بالمدينة
+                if (dto.Images != null && dto.Images.Count > 0)
+                {
+                    // اجلب كل صور المدينة الحالية
+                    var cityImages = await _db.PropertyImages
+                        .Where(pi => pi.CityName == dto.Name && !pi.IsDeleted)
+                        .ToListAsync(cancellationToken);
+
+                    // أنشئ فهرس URL -> صورة
+                    var map = cityImages.ToDictionary(i => (i.Url ?? string.Empty).Trim(), i => i, StringComparer.OrdinalIgnoreCase);
+
+                    for (int i = 0; i < dto.Images.Count; i++)
+                    {
+                        var url = (dto.Images[i] ?? string.Empty).Trim();
+                        if (string.IsNullOrWhiteSpace(url)) continue;
+                        if (map.TryGetValue(url, out var img))
+                        {
+                            img.CityName = dto.Name; // تأكيد الربط
+                            img.DisplayOrder = i + 1;
+                            img.IsMainImage = i == 0;
+                            img.IsMain = i == 0;
+                            img.UpdatedAt = DateTime.UtcNow;
+                            _db.PropertyImages.Update(img);
+                        }
+                    }
                 }
             }
 

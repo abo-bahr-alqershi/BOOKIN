@@ -108,6 +108,13 @@ public class PropertyImageRepository : BaseRepository<PropertyImage>, IPropertyI
             .ThenBy(pi => pi.CreatedAt)
             .ToListAsync(cancellationToken);
 
+    public async Task<IEnumerable<PropertyImage>> GetImagesByCityAsync(string cityName, CancellationToken cancellationToken = default)
+        => await _dbSet
+            .Where(pi => pi.CityName != null && pi.CityName == cityName && !pi.IsDeleted)
+            .OrderBy(pi => pi.DisplayOrder)
+            .ThenBy(pi => pi.CreatedAt)
+            .ToListAsync(cancellationToken);
+
     public async Task<PropertyImage?> GetMainImageByPropertyAsync(Guid propertyId, CancellationToken cancellationToken = default)
         => await _dbSet
             .FirstOrDefaultAsync(pi => pi.PropertyId == propertyId && pi.IsMainImage && !pi.IsDeleted, cancellationToken);
@@ -115,6 +122,10 @@ public class PropertyImageRepository : BaseRepository<PropertyImage>, IPropertyI
     public async Task<PropertyImage?> GetMainImageByUnitAsync(Guid unitId, CancellationToken cancellationToken = default)
         => await _dbSet
             .FirstOrDefaultAsync(pi => pi.UnitId == unitId && pi.IsMainImage && !pi.IsDeleted, cancellationToken);
+
+    public async Task<PropertyImage?> GetMainImageByCityAsync(string cityName, CancellationToken cancellationToken = default)
+        => await _dbSet
+            .FirstOrDefaultAsync(pi => pi.CityName == cityName && pi.IsMainImage && !pi.IsDeleted, cancellationToken);
 
     public async Task<bool> AssignImageToPropertyAsync(Guid imageId, Guid propertyId, CancellationToken cancellationToken = default)
     {
@@ -193,6 +204,20 @@ public class PropertyImageRepository : BaseRepository<PropertyImage>, IPropertyI
                     otherImage.UpdatedAt = DateTime.UtcNow;
                 }
             }
+
+            if (!string.IsNullOrWhiteSpace(image.CityName))
+            {
+                var otherMainImages = await _dbSet
+                    .Where(pi => pi.CityName == image.CityName && pi.Id != imageId && (pi.IsMainImage || pi.IsMain))
+                    .ToListAsync(cancellationToken);
+
+                foreach (var otherImage in otherMainImages)
+                {
+                    otherImage.IsMainImage = false;
+                    otherImage.IsMain = false;
+                    otherImage.UpdatedAt = DateTime.UtcNow;
+                }
+            }
         }
 
         image.IsMainImage = isMain;
@@ -223,6 +248,12 @@ public class PropertyImageRepository : BaseRepository<PropertyImage>, IPropertyI
                 await _context.Database.ExecuteSqlRawAsync(
                     "BEGIN TRY UPDATE Units SET MainImageUrl = {0} WHERE UnitId = {1} END TRY BEGIN CATCH END",
                     image.Url, image.UnitId.Value);
+            }
+            if (!string.IsNullOrWhiteSpace(image.CityName))
+            {
+                await _context.Database.ExecuteSqlRawAsync(
+                    "BEGIN TRY UPDATE Cities SET ImagesJson = ImagesJson WHERE Name = {0} END TRY BEGIN CATCH END",
+                    image.CityName);
             }
         }
         catch

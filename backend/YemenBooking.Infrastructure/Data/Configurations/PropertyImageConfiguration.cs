@@ -86,6 +86,15 @@ public class PropertyImageConfiguration : IEntityTypeConfiguration<PropertyImage
                .HasForeignKey(pi => pi.UnitId)
                .OnDelete(DeleteBehavior.SetNull);
         
+        // City linkage
+        builder.Property(pi => pi.CityName)
+            .HasMaxLength(100)
+            .HasComment("اسم المدينة المرتبطة بالصورة")
+            .IsRequired(false);
+
+        // العلاقة مع المدينة تم تكوينها أيضاً من جهة CityConfiguration
+        builder.HasIndex(pi => pi.CityName);
+
         // تكوين الفهرس
         builder.HasIndex(pi => pi.PropertyId);
         builder.HasIndex(pi => pi.UnitId);

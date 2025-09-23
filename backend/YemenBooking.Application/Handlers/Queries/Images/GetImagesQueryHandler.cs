@@ -38,6 +38,8 @@ namespace YemenBooking.Application.Handlers.Queries.Images
                 query = query.Where(i => i.PropertyId == request.PropertyId.Value);
             if (request.UnitId.HasValue)
                 query = query.Where(i => i.UnitId == request.UnitId.Value);
+            if (!string.IsNullOrWhiteSpace(request.CityName))
+                query = query.Where(i => i.CityName == request.CityName);
             if (request.Category.HasValue)
                 query = query.Where(i => i.Category == request.Category.Value);
             if (!string.IsNullOrWhiteSpace(request.Search))
@@ -46,7 +48,8 @@ namespace YemenBooking.Application.Handlers.Queries.Images
                 query = query.Where(i => i.Name.ToLower().Contains(term)
                     || i.Caption.ToLower().Contains(term)
                     || i.AltText.ToLower().Contains(term)
-                    || i.Tags.ToLower().Contains(term));
+                    || i.Tags.ToLower().Contains(term)
+                    || i.Url.ToLower().Contains(term));
             }
 
             // 2. تطبيق الفرز
