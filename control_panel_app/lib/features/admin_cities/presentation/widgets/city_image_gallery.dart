@@ -50,6 +50,7 @@ class _CityImageGalleryState extends State<CityImageGallery>
   bool _isReorderMode = false;
   final Set<int> _selectedIndices = {};
   int? _hoveredIndex;
+  bool _isDragging = false;
 
   @override
   void initState() {
@@ -98,9 +99,9 @@ class _CityImageGalleryState extends State<CityImageGallery>
 
         const SizedBox(height: 20),
 
-        // Upload area with glass morphism
+        // Upload Area (identical minimalist design to property widget)
         if (!widget.isReadOnly && _localImages.length < widget.maxImages)
-          _buildEnhancedUploadArea(),
+          _buildMinimalistUploadArea(),
 
         // Images grid with animations or reorder grid
         if (_localImages.isNotEmpty) ...[
@@ -395,97 +396,88 @@ class _CityImageGalleryState extends State<CityImageGallery>
     );
   }
 
-  Widget _buildEnhancedUploadArea() {
-    return AnimatedBuilder(
-      animation: _pulseController,
-      builder: (context, child) {
-        return GestureDetector(
-          onTap: _showImagePickerOptions,
-          child: Container(
-            height: 120,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryBlue.withValues(
-                    alpha: 0.1 * _pulseController.value,
-                  ),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: DottedBorder(
-                  borderType: BorderType.RRect,
-                  radius: const Radius.circular(20),
-                  color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                  strokeWidth: 1.5,
-                  dashPattern: const [8, 4],
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppTheme.primaryBlue.withValues(alpha: 0.05),
-                          AppTheme.primaryPurple.withValues(alpha: 0.03),
-                        ],
-                      ),
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              gradient: AppTheme.primaryGradient,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppTheme.primaryBlue
-                                      .withValues(alpha: 0.3),
-                                  blurRadius: 15,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.add_photo_alternate_outlined,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'إضافة صور',
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppTheme.textWhite,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'PNG, JPG • Max 10MB',
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppTheme.textMuted.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+  Widget _buildMinimalistUploadArea() {
+    return GestureDetector(
+      onTap: _showImagePickerOptions,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        height: 140,
+        decoration: BoxDecoration(
+          color: _isDragging
+              ? AppTheme.primaryBlue.withValues(alpha: 0.05)
+              : AppTheme.darkCard.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _isDragging
+                ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+                : AppTheme.darkBorder.withValues(alpha: 0.1),
+            width: 1,
           ),
-        );
-      },
+        ),
+        child: DragTarget<List<XFile>>(
+          onWillAcceptWithDetails: (details) {
+            setState(() => _isDragging = true);
+            return true;
+          },
+          onLeave: (data) {
+            setState(() => _isDragging = false);
+          },
+          onAcceptWithDetails: (details) {
+            setState(() => _isDragging = false);
+            _handleDroppedFiles(details.data);
+          },
+          builder: (context, candidateData, rejectedData) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    _isDragging
+                        ? Icons.file_download_outlined
+                        : Icons.add_photo_alternate_outlined,
+                    color: _isDragging
+                        ? AppTheme.primaryBlue.withValues(alpha: 0.8)
+                        : AppTheme.textMuted.withValues(alpha: 0.5),
+                    size: 32,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _isDragging ? 'أفلت الصور هنا' : 'اضغط أو اسحب لإضافة صور',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppTheme.textMuted.withValues(alpha: 0.7),
+                      fontWeight: FontWeight.w300,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'PNG, JPG, GIF • Max 10MB',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppTheme.textMuted.withValues(alpha: 0.5),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w300,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
     );
+  }
+
+  void _handleDroppedFiles(List<XFile> files) {
+    if (files.isEmpty) return;
+    final remainingSlots = widget.maxImages - _localImages.length;
+    final filesToAdd = files.take(remainingSlots).toList();
+    if (filesToAdd.isEmpty) return;
+    setState(() {
+      _localImages.addAll(filesToAdd.map((f) => f.path));
+      if (_primaryImageIndex == null && _localImages.isNotEmpty) {
+        _primaryImageIndex = 0;
+      }
+    });
+    widget.onImagesChanged(_localImages);
   }
 
   Widget _buildEnhancedImagesGrid() {
@@ -493,18 +485,18 @@ class _CityImageGalleryState extends State<CityImageGallery>
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: _getGridCrossAxisCount(context),
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
           childAspectRatio: 1,
         ),
         itemCount: _localImages.length,
         itemBuilder: (context, index) {
           return AnimationConfiguration.staggeredGrid(
             position: index,
-            duration: const Duration(milliseconds: 375),
-            columnCount: _getGridCrossAxisCount(context),
+            duration: const Duration(milliseconds: 275),
+            columnCount: 3,
             child: ScaleAnimation(
               scale: 0.95,
               child: FadeInAnimation(
@@ -682,44 +674,38 @@ class _CityImageGalleryState extends State<CityImageGallery>
                       },
                     ),
 
-              // Enhanced overlay gradient
-              Container(
+              // Overlay gradient (match property style with dynamic opacity)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withValues(alpha: 0.6),
+                      Colors.black.withValues(
+                        (_hoveredIndex == index || _isSelectionMode) ? 0.6 : 0.3,
+                      ),
                     ],
-                    stops: const [0.6, 1.0],
                   ),
                 ),
               ),
 
-              // Enhanced primary badge
+              // Primary badge (match property style)
               if (isPrimary)
                 Positioned(
-                  top: 8,
+                  bottom: 8,
                   left: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppTheme.warning,
-                          AppTheme.warning.withValues(alpha: 0.8),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(8),
+                      color: AppTheme.warning.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(6),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.warning.withValues(alpha: 0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                          color: AppTheme.warning.withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          spreadRadius: 1,
                         ),
                       ],
                     ),
@@ -728,8 +714,8 @@ class _CityImageGalleryState extends State<CityImageGallery>
                       children: [
                         const Icon(
                           Icons.star_rounded,
-                          color: Colors.white,
                           size: 12,
+                          color: Colors.white,
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -784,7 +770,7 @@ class _CityImageGalleryState extends State<CityImageGallery>
                   ),
                 ),
 
-              // Quick Actions (hover)
+              // Quick Actions (match property)
               if (!widget.isReadOnly && !_isSelectionMode && !_isReorderMode)
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 200),
@@ -793,8 +779,8 @@ class _CityImageGalleryState extends State<CityImageGallery>
                   right: 8,
                   child: Wrap(
                     alignment: WrapAlignment.center,
-                    spacing: 6,
-                    runSpacing: 6,
+                    spacing: 8,
+                    runSpacing: 4,
                     children: [
                       _buildQuickActionButton(
                         icon: Icons.visibility_outlined,
@@ -803,13 +789,13 @@ class _CityImageGalleryState extends State<CityImageGallery>
                       if (!isPrimary)
                         _buildQuickActionButton(
                           icon: Icons.star_outline_rounded,
-                          color: AppTheme.warning,
                           onTap: () => _showImageOptions(index),
+                          color: AppTheme.warning,
                         ),
                       _buildQuickActionButton(
                         icon: Icons.delete_outline_rounded,
-                        color: AppTheme.error,
                         onTap: () => _deleteImage(index),
+                        color: AppTheme.error,
                       ),
                     ],
                   ),
