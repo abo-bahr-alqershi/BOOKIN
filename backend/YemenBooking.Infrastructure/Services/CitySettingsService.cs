@@ -38,6 +38,14 @@ namespace YemenBooking.Infrastructure.Services
                     .Select(pi => pi.Url)
                     .ToListAsync(cancellationToken);
 
+                // Deduplicate and normalize URLs to avoid duplicates from encoding/casing/whitespace
+                imageUrls = imageUrls
+                    .Where(u => !string.IsNullOrWhiteSpace(u))
+                    .Select(u => Uri.UnescapeDataString(u.Trim()))
+                    .Select(u => u.StartsWith("/") ? u : "/" + u)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
                 if (imageUrls.Count == 0)
                 {
                     try
@@ -95,13 +103,46 @@ namespace YemenBooking.Infrastructure.Services
                         .Where(pi => pi.CityName == dto.Name && !pi.IsDeleted)
                         .ToListAsync(cancellationToken);
 
-                    // أنشئ فهرس URL -> صورة
-                    var map = cityImages.ToDictionary(i => (i.Url ?? string.Empty).Trim(), i => i, StringComparer.OrdinalIgnoreCase);
+                    // أنشئ فهرس URL -> صورة مع إلغاء الازدواجية والتوحيد
+                    string Normalize(string? url)
+                    {
+                        if (string.IsNullOrWhiteSpace(url)) return string.Empty;
+                        var unescaped = Uri.UnescapeDataString(url.Trim());
+                        return unescaped.StartsWith("/") ? unescaped : "/" + unescaped;
+                    }
 
+                    var map = new Dictionary<string, PropertyImage>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var i in cityImages)
+                    {
+                        var key = Normalize(i.Url);
+                        if (string.IsNullOrEmpty(key)) continue;
+                        if (!map.TryAdd(key, i))
+                        {
+                            // Prefer main image, otherwise keep existing
+                            var existing = map[key];
+                            if ((i.IsMainImage ?? false) && !(existing.IsMainImage ?? false))
+                            {
+                                map[key] = i;
+                            }
+                        }
+                    }
+
+                    // نظّف الصور القادمة من DTO وأزل التكرارات قبل التحديث
+                    var normalizedDtoImages = new List<string>(dto.Images.Count);
+                    var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                     for (int i = 0; i < dto.Images.Count; i++)
                     {
-                        var url = (dto.Images[i] ?? string.Empty).Trim();
+                        var url = Normalize(dto.Images[i]);
                         if (string.IsNullOrWhiteSpace(url)) continue;
+                        if (seen.Add(url))
+                        {
+                            normalizedDtoImages.Add(url);
+                        }
+                    }
+
+                    for (int i = 0; i < normalizedDtoImages.Count; i++)
+                    {
+                        var url = normalizedDtoImages[i];
                         if (map.TryGetValue(url, out var img))
                         {
                             img.CityName = dto.Name; // تأكيد الربط

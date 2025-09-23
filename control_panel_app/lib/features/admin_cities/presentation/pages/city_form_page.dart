@@ -1122,10 +1122,22 @@ class _CityFormPageState extends State<CityFormPage>
         }
       }
 
+      // Deduplicate and normalize URLs before sending to API (case-insensitive, preserve first occurrence order)
+      final List<String> dedupedImages = [];
+      final Set<String> seen = <String>{};
+      for (final url in finalImages) {
+        final trimmed = url.trim();
+        if (trimmed.isEmpty) continue;
+        final key = trimmed.toLowerCase();
+        if (seen.add(key)) {
+          dedupedImages.add(trimmed);
+        }
+      }
+
       final city = City(
         name: _nameController.text.trim(),
         country: _countryController.text.trim(),
-        images: finalImages,
+        images: dedupedImages,
         isActive: _isActive,
         propertiesCount: widget.city?.propertiesCount,
         createdAt: widget.city?.createdAt ?? DateTime.now(),
