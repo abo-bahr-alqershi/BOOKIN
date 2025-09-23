@@ -12,9 +12,18 @@ import 'package:bookn_cp_app/injection_container.dart' as di;
 import 'package:bookn_cp_app/features/admin_bookings/domain/usecases/bookings/get_bookings_by_user_usecase.dart';
 import 'package:bookn_cp_app/features/admin_bookings/domain/entities/booking.dart';
 import 'package:bookn_cp_app/features/admin_bookings/presentation/widgets/futuristic_bookings_table.dart';
+import 'package:bookn_cp_app/features/admin_bookings/presentation/widgets/booking_actions_dialog.dart';
 import 'package:bookn_cp_app/features/admin_reviews/domain/usecases/get_all_reviews_usecase.dart';
 import 'package:bookn_cp_app/features/admin_reviews/domain/entities/review.dart';
 import 'package:bookn_cp_app/features/admin_reviews/presentation/widgets/futuristic_reviews_table.dart';
+import 'package:bookn_cp_app/features/admin_audit_logs/domain/entities/audit_log.dart';
+import 'package:bookn_cp_app/features/admin_audit_logs/domain/usecases/get_audit_logs_usecase.dart';
+import 'package:bookn_cp_app/features/admin_audit_logs/presentation/widgets/futuristic_audit_log_card.dart';
+import 'package:bookn_cp_app/features/admin_audit_logs/presentation/widgets/audit_log_details_dialog.dart';
+import 'package:bookn_cp_app/features/admin_bookings/domain/usecases/bookings/confirm_booking_usecase.dart';
+import 'package:bookn_cp_app/features/admin_bookings/domain/usecases/bookings/cancel_booking_usecase.dart';
+import 'package:bookn_cp_app/features/admin_bookings/domain/usecases/bookings/check_in_usecase.dart';
+import 'package:bookn_cp_app/features/admin_bookings/domain/usecases/bookings/check_out_usecase.dart';
 import '../bloc/user_details/user_details_bloc.dart';
 import '../widgets/user_form_dialog.dart';
 import '../widgets/user_role_selector.dart';
@@ -65,6 +74,13 @@ class _UserDetailsPageState extends State<UserDetailsPage>
   String? _reviewsError;
   int _reviewsPage = 1;
   bool _reviewsHasMore = true;
+  // Activity state
+  final int _activityPageSize = 10;
+  List<AuditLog> _userActivityLogs = [];
+  bool _isLoadingActivity = false;
+  String? _activityError;
+  int _activityPage = 1;
+  bool _activityHasMore = true;
   
   @override
   void initState() {
@@ -1119,7 +1135,11 @@ class _UserDetailsPageState extends State<UserDetailsPage>
           selectedBookings: const [],
           onBookingTap: (bookingId) => context.push('/admin/bookings/$bookingId'),
           onSelectionChanged: (_) {},
-          showActions: false,
+          showActions: true,
+          onConfirm: (bookingId) => _handleConfirmBooking(bookingId),
+          onCancel: (bookingId) => _handleCancelBooking(bookingId),
+          onCheckIn: (bookingId) => _handleCheckIn(bookingId),
+          onCheckOut: (bookingId) => _handleCheckOut(bookingId),
         ),
         const SizedBox(height: 12),
         if (_bookingsHasMore)
@@ -1195,10 +1215,84 @@ class _UserDetailsPageState extends State<UserDetailsPage>
   }
   
   Widget _buildActivityTab(UserDetailsLoaded state) {
-    return _buildEmptyState(
-      icon: Icons.timeline_rounded,
-      title: 'سجل النشاط',
-      subtitle: 'سيتم عرض سجل نشاط المستخدم هنا',
+    if (_isLoadingActivity && _userActivityLogs.isEmpty) {
+      return _buildLoadingState();
+    }
+    if (_activityError != null) {
+      return _buildErrorState(_activityError!);
+    }
+    if (_userActivityLogs.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.timeline_rounded,
+        title: 'لا يوجد نشاط',
+        subtitle: 'لم يتم العثور على نشاط لهذا المستخدم',
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isGrid = constraints.maxWidth > 700;
+              if (isGrid) {
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.1,
+                  ),
+                  itemCount: _userActivityLogs.length,
+                  itemBuilder: (context, index) {
+                    final log = _userActivityLogs[index];
+                    return FuturisticAuditLogCard(
+                      auditLog: log,
+                      onTap: () => _showAuditLogDetails(log),
+                      isGridView: true,
+                    );
+                  },
+                );
+              }
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _userActivityLogs.length,
+                itemBuilder: (context, index) {
+                  final log = _userActivityLogs[index];
+                  return FuturisticAuditLogCard(
+                    auditLog: log,
+                    onTap: () => _showAuditLogDetails(log),
+                  );
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          if (_activityHasMore)
+            Center(
+              child: GestureDetector(
+                onTap: _isLoadingActivity
+                    ? null
+                    : () => _loadUserActivityLogs(state.userDetails.id, loadMore: true),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    _isLoadingActivity ? 'جاري التحميل...' : 'تحميل المزيد',
+                    style: AppTextStyles.buttonMedium.copyWith(color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -1208,6 +1302,8 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       _loadUserBookings(state.userDetails.id);
     } else if (_selectedTab == 'reviews' && _userReviews.isEmpty && !_isLoadingReviews) {
       _loadUserReviews(state.userDetails.id);
+    } else if (_selectedTab == 'activity' && _userActivityLogs.isEmpty && !_isLoadingActivity) {
+      _loadUserActivityLogs(state.userDetails.id);
     }
   }
 
@@ -1295,6 +1391,106 @@ class _UserDetailsPageState extends State<UserDetailsPage>
         setState(() => _isLoadingReviews = false);
       }
     }
+  }
+
+  Future<void> _loadUserActivityLogs(String userId, {bool loadMore = false}) async {
+    setState(() {
+      _isLoadingActivity = true;
+      _activityError = null;
+      if (!loadMore) {
+        _activityPage = 1;
+        _userActivityLogs = [];
+        _activityHasMore = true;
+      }
+    });
+    try {
+      final useCase = di.sl<GetAuditLogsUseCase>();
+      final result = await useCase(AuditLogsQuery(
+        userId: userId,
+        pageNumber: _activityPage,
+        pageSize: _activityPageSize,
+      ));
+      result.fold((failure) {
+        setState(() {
+          _activityError = failure.message;
+        });
+      }, (paginated) {
+        setState(() {
+          _userActivityLogs = [..._userActivityLogs, ...paginated.items];
+          final totalCount = paginated.totalCount;
+          final loadedCount = _userActivityLogs.length;
+          _activityHasMore = loadedCount < totalCount;
+          if (_activityHasMore) {
+            _activityPage += 1;
+          }
+        });
+      });
+    } catch (e) {
+      setState(() {
+        _activityError = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingActivity = false);
+      }
+    }
+  }
+
+  void _showAuditLogDetails(AuditLog log) {
+    showDialog(
+      context: context,
+      builder: (context) => AuditLogDetailsDialog(auditLog: log),
+    );
+  }
+
+  // Booking actions
+  Future<void> _handleConfirmBooking(String bookingId) async {
+    try {
+      final result = await di.sl<ConfirmBookingUseCase>()(ConfirmBookingParams(bookingId: bookingId));
+      result.fold((failure) {}, (_) {
+        // Refresh bookings
+        if (mounted) _loadUserBookings(widget.userId);
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _handleCancelBooking(String bookingId) async {
+    showDialog(
+      context: context,
+      builder: (context) => BookingActionsDialog(
+        bookingId: bookingId,
+        action: BookingAction.cancel,
+        onConfirm: (reason) async {
+          if (reason == null || reason.trim().isEmpty) return;
+          try {
+            final result = await di.sl<CancelBookingUseCase>()(
+              CancelBookingParams(bookingId: bookingId, cancellationReason: reason.trim()),
+            );
+            result.fold((failure) {}, (_) {
+              if (mounted) _loadUserBookings(widget.userId);
+            });
+          } catch (_) {}
+        },
+      ),
+    );
+  }
+
+  Future<void> _handleCheckIn(String bookingId) async {
+    try {
+      final result = await di.sl<CheckInUseCase>()(CheckInParams(bookingId: bookingId));
+      result.fold((failure) {}, (_) {
+        if (mounted) _loadUserBookings(widget.userId);
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _handleCheckOut(String bookingId) async {
+    try {
+      final result = await di.sl<CheckOutUseCase>()(CheckOutParams(bookingId: bookingId));
+      result.fold((failure) {}, (_) {
+        if (mounted) _loadUserBookings(widget.userId);
+      });
+    } catch (_) {}
   }
 
   // FuturisticReviewsTable used instead of manual rows
