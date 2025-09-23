@@ -3,24 +3,15 @@ import '../../domain/entities/city.dart';
 /// 🏙️ City Model for API communication
 class CityModel extends City {
   const CityModel({
-    required String name,
-    required String country,
-    required List<String> images,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-    int? propertiesCount,
-    bool? isActive,
-    Map<String, dynamic>? metadata,
-  }) : super(
-    name: name,
-    country: country,
-    images: images,
-    createdAt: createdAt,
-    updatedAt: updatedAt,
-    propertiesCount: propertiesCount,
-    isActive: isActive,
-    metadata: metadata,
-  );
+    required super.name,
+    required super.country,
+    required super.images,
+    super.createdAt,
+    super.updatedAt,
+    super.propertiesCount,
+    super.isActive = null,
+    super.metadata,
+  });
 
   /// تحويل من JSON
   factory CityModel.fromJson(Map<String, dynamic> json) {
@@ -35,12 +26,17 @@ class CityModel extends City {
       if (val.isEmpty) return false;
       final lower = val.toLowerCase();
       // Keep only web/relative server paths; drop android local cache paths
-      if (lower.startsWith('http://') || lower.startsWith('https://')) return true;
-      if (lower.startsWith('/uploads') || lower.startsWith('uploads/')) return true;
+      if (lower.startsWith('http://') || lower.startsWith('https://'))
+        return true;
+      if (lower.startsWith('/uploads') || lower.startsWith('uploads/'))
+        return true;
       // Also accept known public folders
-      if (lower.startsWith('/images') || lower.startsWith('images/')) return true;
+      if (lower.startsWith('/images') || lower.startsWith('images/'))
+        return true;
       // Drop local device paths like /data/user/0/... or file:// or content://
-      if (lower.startsWith('/data/') || lower.startsWith('file://') || lower.startsWith('content://')) return false;
+      if (lower.startsWith('/data/') ||
+          lower.startsWith('file://') ||
+          lower.startsWith('content://')) return false;
       // Fallback: drop anything else to avoid broken URLs
       return false;
     }).toList(growable: false);
@@ -49,12 +45,10 @@ class CityModel extends City {
       name: json['name'] ?? '',
       country: json['country'] ?? '',
       images: sanitized,
-      createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt']) 
-          : null,
-      updatedAt: json['updatedAt'] != null 
-          ? DateTime.parse(json['updatedAt']) 
-          : null,
+      createdAt:
+          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      updatedAt:
+          json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
       propertiesCount: json['propertiesCount'],
       isActive: json['isActive'] ?? true,
       metadata: json['metadata'],
