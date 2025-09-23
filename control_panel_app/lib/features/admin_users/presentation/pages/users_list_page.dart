@@ -1,6 +1,7 @@
 // lib/features/admin_users/presentation/pages/users_list_page.dart
 
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
+import 'package:bookn_cp_app/core/widgets/loading_widget.dart';
 import 'package:bookn_cp_app/features/admin_users/domain/entities/user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -29,19 +30,19 @@ class _UsersListPageState extends State<UsersListPage>
   late AnimationController _glowController;
   late AnimationController _particleController;
   late AnimationController _contentAnimationController;
-  
+
   // Animations
   late Animation<double> _backgroundRotation;
   late Animation<double> _glowAnimation;
   late Animation<double> _contentFadeAnimation;
   late Animation<Offset> _contentSlideAnimation;
-  
+
   // State
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   bool _showFilters = false;
   String _selectedView = 'table'; // table, grid, chart
-  
+
   @override
   void initState() {
     super.initState();
@@ -49,28 +50,28 @@ class _UsersListPageState extends State<UsersListPage>
     _loadUsers();
     _setupScrollListener();
   }
-  
+
   void _initializeAnimations() {
     _backgroundAnimationController = AnimationController(
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
-    
+
     _glowController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _particleController = AnimationController(
       duration: const Duration(seconds: 15),
       vsync: this,
     )..repeat();
-    
+
     _contentAnimationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _backgroundRotation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
@@ -78,7 +79,7 @@ class _UsersListPageState extends State<UsersListPage>
       parent: _backgroundAnimationController,
       curve: Curves.linear,
     ));
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.3,
       end: 1.0,
@@ -86,7 +87,7 @@ class _UsersListPageState extends State<UsersListPage>
       parent: _glowController,
       curve: Curves.easeInOut,
     ));
-    
+
     _contentFadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -94,7 +95,7 @@ class _UsersListPageState extends State<UsersListPage>
       parent: _contentAnimationController,
       curve: Curves.easeOut,
     ));
-    
+
     _contentSlideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.05),
       end: Offset.zero,
@@ -102,7 +103,7 @@ class _UsersListPageState extends State<UsersListPage>
       parent: _contentAnimationController,
       curve: Curves.easeOutQuart,
     ));
-    
+
     // Start animations
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
@@ -110,11 +111,11 @@ class _UsersListPageState extends State<UsersListPage>
       }
     });
   }
-  
+
   void _loadUsers() {
     context.read<UsersListBloc>().add(LoadUsersEvent());
   }
-  
+
   void _setupScrollListener() {
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
@@ -126,7 +127,7 @@ class _UsersListPageState extends State<UsersListPage>
       }
     });
   }
-  
+
   @override
   void dispose() {
     _backgroundAnimationController.dispose();
@@ -137,7 +138,7 @@ class _UsersListPageState extends State<UsersListPage>
     _scrollController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -193,10 +194,23 @@ class _UsersListPageState extends State<UsersListPage>
         ),
       ),
       actions: [
-        _buildHeaderAction(icon: Icons.grid_view_rounded, isActive: _selectedView == 'grid', onPressed: () => setState(() => _selectedView = 'grid')),
-        _buildHeaderAction(icon: Icons.table_chart_rounded, isActive: _selectedView == 'table', onPressed: () => setState(() => _selectedView = 'table')),
-        _buildHeaderAction(icon: Icons.analytics_rounded, isActive: _selectedView == 'chart', onPressed: () => setState(() => _selectedView = 'chart')),
-        _buildHeaderAction(icon: _showFilters ? Icons.close_rounded : Icons.filter_list_rounded, isActive: _showFilters, onPressed: () => setState(() => _showFilters = !_showFilters)),
+        _buildHeaderAction(
+            icon: Icons.grid_view_rounded,
+            isActive: _selectedView == 'grid',
+            onPressed: () => setState(() => _selectedView = 'grid')),
+        _buildHeaderAction(
+            icon: Icons.table_chart_rounded,
+            isActive: _selectedView == 'table',
+            onPressed: () => setState(() => _selectedView = 'table')),
+        _buildHeaderAction(
+            icon: Icons.analytics_rounded,
+            isActive: _selectedView == 'chart',
+            onPressed: () => setState(() => _selectedView = 'chart')),
+        _buildHeaderAction(
+            icon:
+                _showFilters ? Icons.close_rounded : Icons.filter_list_rounded,
+            isActive: _showFilters,
+            onPressed: () => setState(() => _showFilters = !_showFilters)),
         const SizedBox(width: 8),
       ],
     );
@@ -213,7 +227,8 @@ class _UsersListPageState extends State<UsersListPage>
         color: AppTheme.darkCard.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: (isActive ? AppTheme.primaryBlue : AppTheme.darkBorder).withOpacity(0.3),
+          color: (isActive ? AppTheme.primaryBlue : AppTheme.darkBorder)
+              .withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -243,18 +258,51 @@ class _UsersListPageState extends State<UsersListPage>
         child: BlocBuilder<UsersListBloc, UsersListState>(
           builder: (context, state) {
             final totalUsers = state is UsersListLoaded ? state.totalCount : 0;
-            final activeUsers = state is UsersListLoaded ? state.users.where((u) => u.isActive).length : 0;
-            final newUsers = state is UsersListLoaded ? _getNewUsersCount(state.users) : 0;
-            final inactiveUsers = state is UsersListLoaded ? state.users.where((u) => !u.isActive).length : 0;
+            final activeUsers = state is UsersListLoaded
+                ? state.users.where((u) => u.isActive).length
+                : 0;
+            final newUsers =
+                state is UsersListLoaded ? _getNewUsersCount(state.users) : 0;
+            final inactiveUsers = state is UsersListLoaded
+                ? state.users.where((u) => !u.isActive).length
+                : 0;
             return Row(
               children: [
-                Expanded(child: UserStatsCard(title: 'إجمالي المستخدمين', value: totalUsers.toString(), icon: Icons.people_rounded, color: AppTheme.primaryBlue, trend: '+15%', isPositive: true)),
+                Expanded(
+                    child: UserStatsCard(
+                        title: 'إجمالي المستخدمين',
+                        value: totalUsers.toString(),
+                        icon: Icons.people_rounded,
+                        color: AppTheme.primaryBlue,
+                        trend: '+15%',
+                        isPositive: true)),
                 const SizedBox(width: 12),
-                Expanded(child: UserStatsCard(title: 'المستخدمين النشطين', value: activeUsers.toString(), icon: Icons.verified_user_rounded, color: AppTheme.success, trend: '+8%', isPositive: true)),
+                Expanded(
+                    child: UserStatsCard(
+                        title: 'المستخدمين النشطين',
+                        value: activeUsers.toString(),
+                        icon: Icons.verified_user_rounded,
+                        color: AppTheme.success,
+                        trend: '+8%',
+                        isPositive: true)),
                 const SizedBox(width: 12),
-                Expanded(child: UserStatsCard(title: 'المستخدمين الجدد', value: newUsers.toString(), icon: Icons.person_add_rounded, color: AppTheme.warning, trend: '12', isPositive: true)),
+                Expanded(
+                    child: UserStatsCard(
+                        title: 'المستخدمين الجدد',
+                        value: newUsers.toString(),
+                        icon: Icons.person_add_rounded,
+                        color: AppTheme.warning,
+                        trend: '12',
+                        isPositive: true)),
                 const SizedBox(width: 12),
-                Expanded(child: UserStatsCard(title: 'غير النشطين', value: inactiveUsers.toString(), icon: Icons.person_off_rounded, color: AppTheme.error, trend: '-3%', isPositive: false)),
+                Expanded(
+                    child: UserStatsCard(
+                        title: 'غير النشطين',
+                        value: inactiveUsers.toString(),
+                        icon: Icons.person_off_rounded,
+                        color: AppTheme.error,
+                        trend: '-3%',
+                        isPositive: false)),
               ],
             );
           },
@@ -310,13 +358,15 @@ class _UsersListPageState extends State<UsersListPage>
             case 'table':
               return SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: FuturisticUsersTable(
                     users: state.users,
                     onUserTap: (userId) => _navigateToUserDetails(userId),
                     onStatusToggle: (userId, activate) {
                       context.read<UsersListBloc>().add(
-                            ToggleUserStatusEvent(userId: userId, activate: activate),
+                            ToggleUserStatusEvent(
+                                userId: userId, activate: activate),
                           );
                     },
                     onDelete: (userId) => _showDeleteConfirmation(userId),
@@ -366,7 +416,8 @@ class _UsersListPageState extends State<UsersListPage>
               onDelete: () => _showDeleteConfirmation(user.id),
               onStatusToggle: (activate) {
                 context.read<UsersListBloc>().add(
-                      ToggleUserStatusEvent(userId: user.id, activate: activate),
+                      ToggleUserStatusEvent(
+                          userId: user.id, activate: activate),
                     );
               },
             );
@@ -376,7 +427,7 @@ class _UsersListPageState extends State<UsersListPage>
       ),
     );
   }
-  
+
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
       animation: Listenable.merge([_backgroundRotation, _glowAnimation]),
@@ -404,7 +455,7 @@ class _UsersListPageState extends State<UsersListPage>
       },
     );
   }
-  
+
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -433,7 +484,8 @@ class _UsersListPageState extends State<UsersListPage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ShaderMask(
-                      shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                      shaderCallback: (bounds) =>
+                          AppTheme.primaryGradient.createShader(bounds),
                       child: Text(
                         'إدارة المستخدمين',
                         style: AppTextStyles.heading1.copyWith(
@@ -452,7 +504,7 @@ class _UsersListPageState extends State<UsersListPage>
                   ],
                 ),
               ),
-              
+
               // Action Buttons
               Flexible(
                 child: SingleChildScrollView(
@@ -462,7 +514,8 @@ class _UsersListPageState extends State<UsersListPage>
                       _buildActionButton(
                         icon: Icons.filter_list_rounded,
                         label: 'فلتر',
-                        onTap: () => setState(() => _showFilters = !_showFilters),
+                        onTap: () =>
+                            setState(() => _showFilters = !_showFilters),
                         isActive: _showFilters,
                       ),
                       const SizedBox(width: 8),
@@ -508,7 +561,7 @@ class _UsersListPageState extends State<UsersListPage>
       ),
     );
   }
-  
+
   Widget _buildActionButton({
     required IconData icon,
     required String label,
@@ -569,7 +622,7 @@ class _UsersListPageState extends State<UsersListPage>
       ),
     );
   }
-  
+
   Widget _buildPrimaryActionButton({
     required IconData icon,
     required String label,
@@ -608,7 +661,7 @@ class _UsersListPageState extends State<UsersListPage>
       ),
     );
   }
-  
+
   Widget _buildStatsSection() {
     return Container(
       height: 120,
@@ -616,13 +669,15 @@ class _UsersListPageState extends State<UsersListPage>
       child: BlocBuilder<UsersListBloc, UsersListState>(
         builder: (context, state) {
           final totalUsers = state is UsersListLoaded ? state.totalCount : 0;
-          final activeUsers = state is UsersListLoaded 
-              ? state.users.where((u) => u.isActive).length : 0;
-          final newUsers = state is UsersListLoaded 
-              ? _getNewUsersCount(state.users) : 0;
-          final inactiveUsers = state is UsersListLoaded 
-              ? state.users.where((u) => !u.isActive).length : 0;
-          
+          final activeUsers = state is UsersListLoaded
+              ? state.users.where((u) => u.isActive).length
+              : 0;
+          final newUsers =
+              state is UsersListLoaded ? _getNewUsersCount(state.users) : 0;
+          final inactiveUsers = state is UsersListLoaded
+              ? state.users.where((u) => !u.isActive).length
+              : 0;
+
           return Row(
             children: [
               Expanded(
@@ -674,7 +729,7 @@ class _UsersListPageState extends State<UsersListPage>
       ),
     );
   }
-  
+
   Widget _buildSearchBar() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -716,8 +771,8 @@ class _UsersListPageState extends State<UsersListPage>
               ),
               onSubmitted: (value) {
                 context.read<UsersListBloc>().add(
-                  SearchUsersEvent(searchTerm: value),
-                );
+                      SearchUsersEvent(searchTerm: value),
+                    );
               },
             ),
           ),
@@ -737,7 +792,7 @@ class _UsersListPageState extends State<UsersListPage>
       ),
     );
   }
-  
+
   Widget _buildFiltersSection() {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -746,35 +801,35 @@ class _UsersListPageState extends State<UsersListPage>
         child: UserFiltersWidget(
           onApplyFilters: (filters) {
             context.read<UsersListBloc>().add(
-              FilterUsersEvent(
-                roleId: filters['roleId'],
-                isActive: filters['isActive'],
-                createdAfter: filters['createdAfter'],
-                createdBefore: filters['createdBefore'],
-              ),
-            );
+                  FilterUsersEvent(
+                    roleId: filters['roleId'],
+                    isActive: filters['isActive'],
+                    createdAfter: filters['createdAfter'],
+                    createdBefore: filters['createdBefore'],
+                  ),
+                );
           },
         ),
       ),
     );
   }
-  
+
   Widget _buildContent() {
     return BlocBuilder<UsersListBloc, UsersListState>(
       builder: (context, state) {
         if (state is UsersListLoading) {
           return _buildLoadingState();
         }
-        
+
         if (state is UsersListError) {
           return _buildErrorState(state.message);
         }
-        
+
         if (state is UsersListLoaded) {
           if (state.users.isEmpty) {
             return _buildEmptyState();
           }
-          
+
           switch (_selectedView) {
             case 'grid':
               return _buildGridView(state);
@@ -784,11 +839,11 @@ class _UsersListPageState extends State<UsersListPage>
                 onUserTap: (userId) => _navigateToUserDetails(userId),
                 onStatusToggle: (userId, activate) {
                   context.read<UsersListBloc>().add(
-                    ToggleUserStatusEvent(
-                      userId: userId,
-                      activate: activate,
-                    ),
-                  );
+                        ToggleUserStatusEvent(
+                          userId: userId,
+                          activate: activate,
+                        ),
+                      );
                 },
                 onDelete: (userId) {
                   _showDeleteConfirmation(userId);
@@ -800,12 +855,12 @@ class _UsersListPageState extends State<UsersListPage>
               return _buildGridView(state);
           }
         }
-        
+
         return const SizedBox.shrink();
       },
     );
   }
-  
+
   Widget _buildGridView(UsersListLoaded state) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -820,7 +875,7 @@ class _UsersListPageState extends State<UsersListPage>
         if (constraints.maxWidth < 600) {
           crossAxisCount = 1;
         }
-        
+
         return RefreshIndicator(
           onRefresh: () async {
             context.read<UsersListBloc>().add(RefreshUsersEvent());
@@ -839,7 +894,7 @@ class _UsersListPageState extends State<UsersListPage>
               if (index >= state.users.length) {
                 return _buildLoadMoreIndicator();
               }
-              
+
               final user = state.users[index];
               return _UserGridCard(
                 user: user,
@@ -848,11 +903,11 @@ class _UsersListPageState extends State<UsersListPage>
                 onDelete: () => _showDeleteConfirmation(user.id),
                 onStatusToggle: (activate) {
                   context.read<UsersListBloc>().add(
-                    ToggleUserStatusEvent(
-                      userId: user.id,
-                      activate: activate,
-                    ),
-                  );
+                        ToggleUserStatusEvent(
+                          userId: user.id,
+                          activate: activate,
+                        ),
+                      );
                 },
               );
             },
@@ -861,14 +916,14 @@ class _UsersListPageState extends State<UsersListPage>
       },
     );
   }
-  
+
   Widget _buildChartView(UsersListLoaded state) {
     // TODO: Implement chart view
     return const Center(
       child: Text('Chart View - Coming Soon'),
     );
   }
-  
+
   Widget _buildLoadingState() {
     return Center(
       child: Column(
@@ -897,7 +952,7 @@ class _UsersListPageState extends State<UsersListPage>
       ),
     );
   }
-  
+
   Widget _buildErrorState(String message) {
     return Center(
       child: Column(
@@ -937,7 +992,7 @@ class _UsersListPageState extends State<UsersListPage>
       ),
     );
   }
-  
+
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -996,19 +1051,17 @@ class _UsersListPageState extends State<UsersListPage>
       ),
     );
   }
-  
+
   Widget _buildLoadMoreIndicator() {
     return Container(
       padding: const EdgeInsets.all(32),
-      child: Center(
+      child: const Center(
         child: LoadingWidget(
-          type: LoadingType.futuristic,
-          message: 'جاري التحميل...'
-        ),
+            type: LoadingType.futuristic, message: 'جاري التحميل...'),
       ),
     );
   }
-  
+
   Widget _buildFloatingActionButton() {
     return Positioned(
       bottom: 24,
@@ -1021,7 +1074,8 @@ class _UsersListPageState extends State<UsersListPage>
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primaryBlue.withOpacity(0.4 * _glowAnimation.value),
+                  color: AppTheme.primaryBlue
+                      .withOpacity(0.4 * _glowAnimation.value),
                   blurRadius: 20 + 10 * _glowAnimation.value,
                   spreadRadius: 2,
                 ),
@@ -1041,15 +1095,15 @@ class _UsersListPageState extends State<UsersListPage>
       ),
     );
   }
-  
+
   void _navigateToUserDetails(String userId) {
     context.push('/admin/users/$userId');
   }
-  
+
   void _navigateToEditUser(String userId) {
     context.push('/admin/users/$userId/edit');
   }
-  
+
   void _showDeleteConfirmation(String userId) {
     // showDialog(
     //   context: context,
@@ -1061,7 +1115,7 @@ class _UsersListPageState extends State<UsersListPage>
     //   ),
     // );
   }
-  
+
   int _getNewUsersCount(List<User> users) {
     final now = DateTime.now();
     final lastWeek = now.subtract(const Duration(days: 7));
@@ -1069,7 +1123,7 @@ class _UsersListPageState extends State<UsersListPage>
       return user.createdAt.isAfter(lastWeek);
     }).length;
   }
-  
+
   void _exportUsers() {
     // TODO: Implement export functionality
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1088,7 +1142,7 @@ class _UserGridCard extends StatefulWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final Function(bool) onStatusToggle;
-  
+
   const _UserGridCard({
     required this.user,
     required this.onTap,
@@ -1096,7 +1150,7 @@ class _UserGridCard extends StatefulWidget {
     required this.onDelete,
     required this.onStatusToggle,
   });
-  
+
   @override
   State<_UserGridCard> createState() => _UserGridCardState();
 }
@@ -1106,7 +1160,7 @@ class _UserGridCardState extends State<_UserGridCard>
   late AnimationController _hoverController;
   late Animation<double> _hoverAnimation;
   bool _isHovered = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -1122,13 +1176,13 @@ class _UserGridCardState extends State<_UserGridCard>
       curve: Curves.easeOut,
     ));
   }
-  
+
   @override
   void dispose() {
     _hoverController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -1209,22 +1263,27 @@ class _UserGridCardState extends State<_UserGridCard>
                                       width: 2,
                                     ),
                                   ),
-                                  child: widget.user.profileImage != null && widget.user.profileImage!.trim().isNotEmpty
+                                  child: widget.user.profileImage != null &&
+                                          widget.user.profileImage!
+                                              .trim()
+                                              .isNotEmpty
                                       ? ClipOval(
                                           child: Image.network(
                                             widget.user.profileImage!,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return _buildDefaultAvatar(widget.user.name);
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                              return _buildDefaultAvatar(
+                                                  widget.user.name);
                                             },
                                           ),
                                         )
                                       : _buildDefaultAvatar(widget.user.name),
                                 ),
                               ),
-                              
+
                               const SizedBox(height: 12),
-                              
+
                               // Name
                               Flexible(
                                 child: Text(
@@ -1238,9 +1297,9 @@ class _UserGridCardState extends State<_UserGridCard>
                                   textAlign: TextAlign.center,
                                 ),
                               ),
-                              
+
                               const SizedBox(height: 4),
-                              
+
                               // Email
                               Flexible(
                                 child: Text(
@@ -1253,9 +1312,9 @@ class _UserGridCardState extends State<_UserGridCard>
                                   textAlign: TextAlign.center,
                                 ),
                               ),
-                              
+
                               const Spacer(),
-                              
+
                               // Role Badge
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -1280,7 +1339,7 @@ class _UserGridCardState extends State<_UserGridCard>
                             ],
                           ),
                         ),
-                        
+
                         // Status Indicator
                         Positioned(
                           top: 8,
@@ -1296,7 +1355,8 @@ class _UserGridCardState extends State<_UserGridCard>
                               boxShadow: widget.user.isActive
                                   ? [
                                       BoxShadow(
-                                        color: AppTheme.success.withOpacity(0.5),
+                                        color:
+                                            AppTheme.success.withOpacity(0.5),
                                         blurRadius: 6,
                                         spreadRadius: 2,
                                       ),
@@ -1305,7 +1365,7 @@ class _UserGridCardState extends State<_UserGridCard>
                             ),
                           ),
                         ),
-                        
+
                         // Action Buttons (on hover)
                         if (_isHovered)
                           Positioned(
@@ -1316,10 +1376,11 @@ class _UserGridCardState extends State<_UserGridCard>
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
                                 _buildActionIcon(
-                                  widget.user.isActive 
+                                  widget.user.isActive
                                       ? Icons.toggle_off_rounded
                                       : Icons.toggle_on_rounded,
-                                  () => widget.onStatusToggle(!widget.user.isActive),
+                                  () => widget
+                                      .onStatusToggle(!widget.user.isActive),
                                   color: widget.user.isActive
                                       ? AppTheme.warning
                                       : AppTheme.success,
@@ -1347,10 +1408,10 @@ class _UserGridCardState extends State<_UserGridCard>
       ),
     );
   }
-  
+
   Widget _buildDefaultAvatar(String name) {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
-    
+
     return Center(
       child: Text(
         initial,
@@ -1361,7 +1422,7 @@ class _UserGridCardState extends State<_UserGridCard>
       ),
     );
   }
-  
+
   Widget _buildActionIcon(
     IconData icon,
     VoidCallback onTap, {
@@ -1391,7 +1452,7 @@ class _UserGridCardState extends State<_UserGridCard>
       ),
     );
   }
-  
+
   List<Color> _getRoleGradient(String role) {
     switch (role.toLowerCase()) {
       case 'admin':
@@ -1404,7 +1465,7 @@ class _UserGridCardState extends State<_UserGridCard>
         return [AppTheme.primaryCyan, AppTheme.neonGreen];
     }
   }
-  
+
   String _getRoleText(String role) {
     switch (role.toLowerCase()) {
       case 'admin':
@@ -1424,9 +1485,9 @@ class _UserGridCardState extends State<_UserGridCard>
 // Delete Confirmation Dialog
 class _DeleteConfirmationDialog extends StatelessWidget {
   final VoidCallback onConfirm;
-  
+
   const _DeleteConfirmationDialog({required this.onConfirm});
-  
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -1568,22 +1629,22 @@ class _DeleteConfirmationDialog extends StatelessWidget {
 class _FuturisticBackgroundPainter extends CustomPainter {
   final double rotation;
   final double glowIntensity;
-  
+
   _FuturisticBackgroundPainter({
     required this.rotation,
     required this.glowIntensity,
   });
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
-    
+
     // Draw grid
     paint.color = AppTheme.primaryBlue.withOpacity(0.05);
     const spacing = 50.0;
-    
+
     for (double x = 0; x < size.width; x += spacing) {
       canvas.drawLine(
         Offset(x, 0),
@@ -1591,7 +1652,7 @@ class _FuturisticBackgroundPainter extends CustomPainter {
         paint,
       );
     }
-    
+
     for (double y = 0; y < size.height; y += spacing) {
       canvas.drawLine(
         Offset(0, y),
@@ -1599,11 +1660,11 @@ class _FuturisticBackgroundPainter extends CustomPainter {
         paint,
       );
     }
-    
+
     // Draw rotating circles
     final center = Offset(size.width / 2, size.height / 2);
     paint.color = AppTheme.primaryBlue.withOpacity(0.03 * glowIntensity);
-    
+
     for (int i = 0; i < 3; i++) {
       final radius = 200.0 + i * 100;
       canvas.save();
@@ -1614,7 +1675,7 @@ class _FuturisticBackgroundPainter extends CustomPainter {
       canvas.restore();
     }
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

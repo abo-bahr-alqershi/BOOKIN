@@ -1,6 +1,7 @@
 // lib/features/admin_users/presentation/pages/user_details_page.dart
 
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
+import 'package:bookn_cp_app/core/widgets/loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -47,17 +48,17 @@ class _UserDetailsPageState extends State<UserDetailsPage>
   late AnimationController _glowController;
   late AnimationController _contentAnimationController;
   late AnimationController _statsAnimationController;
-  
+
   // Animations
   late Animation<double> _backgroundRotation;
   late Animation<double> _glowAnimation;
   late Animation<double> _contentFadeAnimation;
   late Animation<Offset> _contentSlideAnimation;
   late Animation<double> _statsScaleAnimation;
-  
+
   // Tab Controller
   late TabController _tabController;
-  
+
   // State
   String _selectedTab = 'overview';
   // Bookings state
@@ -81,35 +82,35 @@ class _UserDetailsPageState extends State<UserDetailsPage>
   String? _activityError;
   int _activityPage = 1;
   bool _activityHasMore = true;
-  
+
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _loadUserDetails();
   }
-  
+
   void _initializeAnimations() {
     _backgroundAnimationController = AnimationController(
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
-    
+
     _glowController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _contentAnimationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _statsAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    
+
     _backgroundRotation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
@@ -117,7 +118,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       parent: _backgroundAnimationController,
       curve: Curves.linear,
     ));
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.3,
       end: 1.0,
@@ -125,7 +126,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       parent: _glowController,
       curve: Curves.easeInOut,
     ));
-    
+
     _contentFadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -133,7 +134,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       parent: _contentAnimationController,
       curve: Curves.easeOut,
     ));
-    
+
     _contentSlideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.05),
       end: Offset.zero,
@@ -141,7 +142,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       parent: _contentAnimationController,
       curve: Curves.easeOutQuart,
     ));
-    
+
     _statsScaleAnimation = Tween<double>(
       begin: 0.8,
       end: 1.0,
@@ -149,9 +150,9 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       parent: _statsAnimationController,
       curve: Curves.elasticOut,
     ));
-    
+
     _tabController = TabController(length: 4, vsync: this);
-    
+
     // Start animations
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
@@ -160,13 +161,13 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       }
     });
   }
-  
+
   void _loadUserDetails() {
     context.read<UserDetailsBloc>().add(
-      LoadUserDetailsEvent(userId: widget.userId),
-    );
+          LoadUserDetailsEvent(userId: widget.userId),
+        );
   }
-  
+
   @override
   void dispose() {
     _backgroundAnimationController.dispose();
@@ -176,7 +177,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
     _tabController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -222,9 +223,8 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                   color: Colors.black.withOpacity(0.3),
                   child: const Center(
                     child: LoadingWidget(
-                      type: LoadingType.futuristic,
-                      message: 'جاري تنفيذ العملية...'
-                    ),
+                        type: LoadingType.futuristic,
+                        message: 'جاري تنفيذ العملية...'),
                   ),
                 );
               }
@@ -235,7 +235,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
       animation: Listenable.merge([_backgroundRotation, _glowAnimation]),
@@ -263,7 +263,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       },
     );
   }
-  
+
   SliverAppBar _buildSliverAppBar(UserDetailsLoaded state) {
     return SliverAppBar(
       expandedHeight: 120,
@@ -282,7 +282,8 @@ class _UserDetailsPageState extends State<UserDetailsPage>
               width: 1,
             ),
           ),
-          child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+          child: const Icon(Icons.arrow_back_rounded,
+              color: Colors.white, size: 20),
         ),
       ),
       flexibleSpace: FlexibleSpaceBar(
@@ -322,7 +323,9 @@ class _UserDetailsPageState extends State<UserDetailsPage>
           onPressed: () => _showRoleSelector(state),
         ),
         _buildHeaderAction(
-          icon: state.userDetails.isActive ? Icons.block_rounded : Icons.check_circle_rounded,
+          icon: state.userDetails.isActive
+              ? Icons.block_rounded
+              : Icons.check_circle_rounded,
           isActive: !state.userDetails.isActive,
           onPressed: () => _toggleUserStatus(state),
         ),
@@ -348,13 +351,12 @@ class _UserDetailsPageState extends State<UserDetailsPage>
         color: AppTheme.darkCard.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: (
-            isDanger
-                ? AppTheme.error
-                : isActive
-                    ? AppTheme.primaryBlue
-                    : AppTheme.darkBorder
-          ).withOpacity(0.3),
+          color: (isDanger
+                  ? AppTheme.error
+                  : isActive
+                      ? AppTheme.primaryBlue
+                      : AppTheme.darkBorder)
+              .withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -429,16 +431,17 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                   ),
                 ),
               ),
-              
+
               const SizedBox(width: 16),
-              
+
               // Title with gradient
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ShaderMask(
-                      shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                      shaderCallback: (bounds) =>
+                          AppTheme.primaryGradient.createShader(bounds),
                       child: Text(
                         'تفاصيل المستخدم',
                         style: AppTextStyles.heading1.copyWith(
@@ -457,7 +460,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                   ],
                 ),
               ),
-              
+
               // Action Buttons
               Flexible(
                 child: SingleChildScrollView(
@@ -501,7 +504,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildActionButton({
     required IconData icon,
     required String label,
@@ -580,10 +583,10 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildUserInfoCard(UserDetailsLoaded state) {
     final user = state.userDetails;
-    
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
@@ -627,14 +630,16 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                       boxShadow: user.isActive
                           ? [
                               BoxShadow(
-                                color: AppTheme.success.withOpacity(0.3 * _glowAnimation.value),
+                                color: AppTheme.success
+                                    .withOpacity(0.3 * _glowAnimation.value),
                                 blurRadius: 20,
                                 spreadRadius: 2,
                               ),
                             ]
                           : null,
                     ),
-                    child: user.avatarUrl != null && user.avatarUrl!.trim().isNotEmpty
+                    child: user.avatarUrl != null &&
+                            user.avatarUrl!.trim().isNotEmpty
                         ? ClipOval(
                             child: Image.network(
                               user.avatarUrl!,
@@ -648,9 +653,9 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                   );
                 },
               ),
-              
+
               const SizedBox(width: 20),
-              
+
               // User Info
               Expanded(
                 child: Column(
@@ -671,9 +676,9 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                         _buildStatusBadge(user.isActive),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     // Email
                     Row(
                       children: [
@@ -691,9 +696,9 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 4),
-                    
+
                     // Phone
                     Row(
                       children: [
@@ -711,9 +716,9 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     // Role Badge
                     if (user.role != null) _buildRoleBadge(user.role!),
                   ],
@@ -725,10 +730,10 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildDefaultAvatar(String name) {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
-    
+
     return Center(
       child: Text(
         initial,
@@ -739,7 +744,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildStatusBadge(bool isActive) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -778,7 +783,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildRoleBadge(String role) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -797,10 +802,10 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildStatsSection(UserDetailsLoaded state) {
     final user = state.userDetails;
-    
+
     return AnimatedBuilder(
       animation: _statsScaleAnimation,
       builder: (context, child) {
@@ -861,7 +866,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       },
     );
   }
-  
+
   Widget _buildStatCard({
     required String title,
     required String value,
@@ -930,48 +935,46 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isPositive
-                            ? AppTheme.success.withOpacity(0.1)
-                            : AppTheme.error.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isPositive
-                                ? Icons.trending_up_rounded
-                                : Icons.trending_down_rounded,
-                            size: 10,
-                            color: isPositive
-                                ? AppTheme.success
-                                : AppTheme.error,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            trend,
-                            style: TextStyle(
-                              fontSize: 10,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isPositive
+                              ? AppTheme.success.withOpacity(0.1)
+                              : AppTheme.error.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isPositive
+                                  ? Icons.trending_up_rounded
+                                  : Icons.trending_down_rounded,
+                              size: 10,
                               color: isPositive
                                   ? AppTheme.success
                                   : AppTheme.error,
-                              fontWeight: FontWeight.w600,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 2),
+                            Text(
+                              trend,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: isPositive
+                                    ? AppTheme.success
+                                    : AppTheme.error,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                 ],
               ),
-              
               const SizedBox(height: 4),
-              
               Text(
                 value,
                 style: AppTextStyles.bodyLarge.copyWith(
@@ -979,9 +982,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              
               const SizedBox(height: 4),
-              
               Text(
                 title,
                 style: AppTextStyles.caption.copyWith(
@@ -994,21 +995,25 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildTabNavigation(UserDetailsLoaded state) {
     final tabs = [
       {'id': 'overview', 'label': 'نظرة عامة', 'icon': Icons.dashboard_rounded},
-      {'id': 'bookings', 'label': 'الحجوزات', 'icon': Icons.book_online_rounded},
+      {
+        'id': 'bookings',
+        'label': 'الحجوزات',
+        'icon': Icons.book_online_rounded
+      },
       {'id': 'reviews', 'label': 'المراجعات', 'icon': Icons.star_rounded},
       {'id': 'activity', 'label': 'النشاط', 'icon': Icons.timeline_rounded},
     ];
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: tabs.map((tab) {
           final isActive = _selectedTab == tab['id'];
-          
+
           return Expanded(
             child: GestureDetector(
               onTap: () {
@@ -1022,12 +1027,8 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  gradient: isActive
-                      ? AppTheme.primaryGradient
-                      : null,
-                  color: !isActive
-                      ? AppTheme.darkCard.withOpacity(0.3)
-                      : null,
+                  gradient: isActive ? AppTheme.primaryGradient : null,
+                  color: !isActive ? AppTheme.darkCard.withOpacity(0.3) : null,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: isActive
@@ -1058,7 +1059,8 @@ class _UserDetailsPageState extends State<UserDetailsPage>
                       tab['label'] as String,
                       style: AppTextStyles.bodySmall.copyWith(
                         color: isActive ? Colors.white : AppTheme.textMuted,
-                        fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                        fontWeight:
+                            isActive ? FontWeight.w600 : FontWeight.normal,
                       ),
                     ),
                   ],
@@ -1070,7 +1072,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   SliverToBoxAdapter _buildTabContentSliver(UserDetailsLoaded state) {
     Widget child;
     switch (_selectedTab) {
@@ -1093,7 +1095,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
     }
     return SliverToBoxAdapter(child: child);
   }
-  
+
   Widget _buildOverviewTab(UserDetailsLoaded state) {
     final user = state.userDetails;
     return Column(
@@ -1117,8 +1119,10 @@ class _UserDetailsPageState extends State<UserDetailsPage>
           icon: Icons.analytics_rounded,
           children: [
             _buildDetailRow('إجمالي الحجوزات', user.bookingsCount.toString()),
-            _buildDetailRow('الحجوزات الملغاة', user.canceledBookingsCount.toString()),
-            _buildDetailRow('الحجوزات المعلقة', user.pendingBookingsCount.toString()),
+            _buildDetailRow(
+                'الحجوزات الملغاة', user.canceledBookingsCount.toString()),
+            _buildDetailRow(
+                'الحجوزات المعلقة', user.pendingBookingsCount.toString()),
           ],
         ),
         const SizedBox(height: 16),
@@ -1126,14 +1130,16 @@ class _UserDetailsPageState extends State<UserDetailsPage>
           title: 'المعاملات المالية',
           icon: Icons.account_balance_wallet_rounded,
           children: [
-            _buildDetailRow('إجمالي المدفوعات', '﷼${user.totalPayments.toStringAsFixed(2)}'),
-            _buildDetailRow('إجمالي المردودات', '﷼${user.totalRefunds.toStringAsFixed(2)}'),
+            _buildDetailRow('إجمالي المدفوعات',
+                '﷼${user.totalPayments.toStringAsFixed(2)}'),
+            _buildDetailRow(
+                'إجمالي المردودات', '﷼${user.totalRefunds.toStringAsFixed(2)}'),
           ],
         ),
       ],
     );
   }
-  
+
   Widget _buildBookingsTab(UserDetailsLoaded state) {
     if (_isLoadingBookings && _userBookings.isEmpty) {
       return const LoadingWidget(
@@ -1157,7 +1163,8 @@ class _UserDetailsPageState extends State<UserDetailsPage>
         FuturisticBookingsTable(
           bookings: _userBookings,
           selectedBookings: const [],
-          onBookingTap: (bookingId) => context.push('/admin/bookings/$bookingId'),
+          onBookingTap: (bookingId) =>
+              context.push('/admin/bookings/$bookingId'),
           onSelectionChanged: (_) {},
           showActions: true,
           onConfirm: (bookingId) => _handleConfirmBooking(bookingId),
@@ -1171,16 +1178,19 @@ class _UserDetailsPageState extends State<UserDetailsPage>
             child: GestureDetector(
               onTap: _isLoadingBookings
                   ? null
-                  : () => _loadUserBookings(state.userDetails.id, loadMore: true),
+                  : () =>
+                      _loadUserBookings(state.userDetails.id, loadMore: true),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   gradient: AppTheme.primaryGradient,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   _isLoadingBookings ? 'جاري التحميل...' : 'تحميل المزيد',
-                  style: AppTextStyles.buttonMedium.copyWith(color: Colors.white),
+                  style:
+                      AppTextStyles.buttonMedium.copyWith(color: Colors.white),
                 ),
               ),
             ),
@@ -1188,7 +1198,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ],
     );
   }
-  
+
   Widget _buildReviewsTab(UserDetailsLoaded state) {
     if (_isLoadingReviews && _userReviews.isEmpty) {
       return const LoadingWidget(
@@ -1211,7 +1221,8 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       children: [
         FuturisticReviewsTable(
           reviews: _userReviews,
-          onReviewTap: (review) => context.push('/admin/reviews/details', extra: review.id),
+          onReviewTap: (review) =>
+              context.push('/admin/reviews/details', extra: review.id),
           onApproveTap: (_) {},
           onDeleteTap: (_) {},
           approvingReviewIds: const {},
@@ -1223,16 +1234,19 @@ class _UserDetailsPageState extends State<UserDetailsPage>
             child: GestureDetector(
               onTap: _isLoadingReviews
                   ? null
-                  : () => _loadUserReviews(state.userDetails.id, loadMore: true),
+                  : () =>
+                      _loadUserReviews(state.userDetails.id, loadMore: true),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   gradient: AppTheme.primaryGradient,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   _isLoadingReviews ? 'جاري التحميل...' : 'تحميل المزيد',
-                  style: AppTextStyles.buttonMedium.copyWith(color: Colors.white),
+                  style:
+                      AppTextStyles.buttonMedium.copyWith(color: Colors.white),
                 ),
               ),
             ),
@@ -1240,7 +1254,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ],
     );
   }
-  
+
   Widget _buildActivityTab(UserDetailsLoaded state) {
     if (_isLoadingActivity && _userActivityLogs.isEmpty) {
       return const LoadingWidget(
@@ -1307,16 +1321,19 @@ class _UserDetailsPageState extends State<UserDetailsPage>
               child: GestureDetector(
                 onTap: _isLoadingActivity
                     ? null
-                    : () => _loadUserActivityLogs(state.userDetails.id, loadMore: true),
+                    : () => _loadUserActivityLogs(state.userDetails.id,
+                        loadMore: true),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
                     gradient: AppTheme.primaryGradient,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     _isLoadingActivity ? 'جاري التحميل...' : 'تحميل المزيد',
-                    style: AppTextStyles.buttonMedium.copyWith(color: Colors.white),
+                    style: AppTextStyles.buttonMedium
+                        .copyWith(color: Colors.white),
                   ),
                 ),
               ),
@@ -1328,11 +1345,17 @@ class _UserDetailsPageState extends State<UserDetailsPage>
 
   // Data loading helpers
   void _ensureTabDataLoaded(UserDetailsLoaded state) {
-    if (_selectedTab == 'bookings' && _userBookings.isEmpty && !_isLoadingBookings) {
+    if (_selectedTab == 'bookings' &&
+        _userBookings.isEmpty &&
+        !_isLoadingBookings) {
       _loadUserBookings(state.userDetails.id);
-    } else if (_selectedTab == 'reviews' && _userReviews.isEmpty && !_isLoadingReviews) {
+    } else if (_selectedTab == 'reviews' &&
+        _userReviews.isEmpty &&
+        !_isLoadingReviews) {
       _loadUserReviews(state.userDetails.id);
-    } else if (_selectedTab == 'activity' && _userActivityLogs.isEmpty && !_isLoadingActivity) {
+    } else if (_selectedTab == 'activity' &&
+        _userActivityLogs.isEmpty &&
+        !_isLoadingActivity) {
       _loadUserActivityLogs(state.userDetails.id);
     }
   }
@@ -1361,7 +1384,9 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       }, (paginated) {
         setState(() {
           final existingIds = _userBookings.map((b) => b.id).toSet();
-          final newItems = paginated.items.where((b) => !existingIds.contains(b.id)).toList();
+          final newItems = paginated.items
+              .where((b) => !existingIds.contains(b.id))
+              .toList();
           _userBookings = [..._userBookings, ...newItems];
           final totalCount = paginated.totalCount;
           final loadedCount = _userBookings.length;
@@ -1406,11 +1431,13 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       }, (list) {
         setState(() {
           final existingIds = _userReviews.map((r) => r.id).toSet();
-          final newItems = list.where((r) => !existingIds.contains(r.id)).toList();
+          final newItems =
+              list.where((r) => !existingIds.contains(r.id)).toList();
           _userReviews = [..._userReviews, ...newItems];
           // Infer hasMore by page size
           final fetchedCount = list.length;
-          _reviewsHasMore = fetchedCount >= _reviewsPageSize && newItems.isNotEmpty;
+          _reviewsHasMore =
+              fetchedCount >= _reviewsPageSize && newItems.isNotEmpty;
           if (_reviewsHasMore) {
             _reviewsPage += 1;
           }
@@ -1427,7 +1454,8 @@ class _UserDetailsPageState extends State<UserDetailsPage>
     }
   }
 
-  Future<void> _loadUserActivityLogs(String userId, {bool loadMore = false}) async {
+  Future<void> _loadUserActivityLogs(String userId,
+      {bool loadMore = false}) async {
     setState(() {
       _isLoadingActivity = true;
       _activityError = null;
@@ -1451,7 +1479,9 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       }, (paginated) {
         setState(() {
           final existingIds = _userActivityLogs.map((a) => a.id).toSet();
-          final newItems = paginated.items.where((a) => !existingIds.contains(a.id)).toList();
+          final newItems = paginated.items
+              .where((a) => !existingIds.contains(a.id))
+              .toList();
           _userActivityLogs = [..._userActivityLogs, ...newItems];
           final totalCount = paginated.totalCount;
           final loadedCount = _userActivityLogs.length;
@@ -1482,7 +1512,8 @@ class _UserDetailsPageState extends State<UserDetailsPage>
   // Booking actions
   Future<void> _handleConfirmBooking(String bookingId) async {
     try {
-      final result = await di.sl<ConfirmBookingUseCase>()(ConfirmBookingParams(bookingId: bookingId));
+      final result = await di.sl<ConfirmBookingUseCase>()(
+          ConfirmBookingParams(bookingId: bookingId));
       result.fold((failure) {}, (_) {
         // Refresh bookings
         if (mounted) _loadUserBookings(widget.userId);
@@ -1500,7 +1531,8 @@ class _UserDetailsPageState extends State<UserDetailsPage>
           if (reason == null || reason.trim().isEmpty) return;
           try {
             final result = await di.sl<CancelBookingUseCase>()(
-              CancelBookingParams(bookingId: bookingId, cancellationReason: reason.trim()),
+              CancelBookingParams(
+                  bookingId: bookingId, cancellationReason: reason.trim()),
             );
             result.fold((failure) {}, (_) {
               if (mounted) _loadUserBookings(widget.userId);
@@ -1513,7 +1545,8 @@ class _UserDetailsPageState extends State<UserDetailsPage>
 
   Future<void> _handleCheckIn(String bookingId) async {
     try {
-      final result = await di.sl<CheckInUseCase>()(CheckInParams(bookingId: bookingId));
+      final result =
+          await di.sl<CheckInUseCase>()(CheckInParams(bookingId: bookingId));
       result.fold((failure) {}, (_) {
         if (mounted) _loadUserBookings(widget.userId);
       });
@@ -1522,7 +1555,8 @@ class _UserDetailsPageState extends State<UserDetailsPage>
 
   Future<void> _handleCheckOut(String bookingId) async {
     try {
-      final result = await di.sl<CheckOutUseCase>()(CheckOutParams(bookingId: bookingId));
+      final result =
+          await di.sl<CheckOutUseCase>()(CheckOutParams(bookingId: bookingId));
       result.fold((failure) {}, (_) {
         if (mounted) _loadUserBookings(widget.userId);
       });
@@ -1530,7 +1564,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
   }
 
   // FuturisticReviewsTable used instead of manual rows
-  
+
   Widget _buildSectionCard({
     required String title,
     required IconData icon,
@@ -1592,7 +1626,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -1629,7 +1663,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildLoadingState() {
     return Center(
       child: Column(
@@ -1658,7 +1692,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildErrorState(String message) {
     return Center(
       child: Column(
@@ -1698,7 +1732,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildEmptyState({
     required IconData icon,
     required String title,
@@ -1744,7 +1778,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildFloatingActionButton() {
     return Positioned(
       bottom: 24,
@@ -1778,7 +1812,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildFAB({
     required IconData icon,
     required Color color,
@@ -1813,7 +1847,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       ),
     );
   }
-  
+
   // Helper Methods
   void _navigateToEditPage(UserDetailsLoaded state) {
     context.go(
@@ -1826,7 +1860,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       },
     );
   }
-  
+
   void _showRoleSelector(UserDetailsLoaded state) {
     showModalBottomSheet(
       context: context,
@@ -1835,52 +1869,52 @@ class _UserDetailsPageState extends State<UserDetailsPage>
         currentRole: state.userDetails.role,
         onRoleSelected: (roleId) {
           context.read<UserDetailsBloc>().add(
-            AssignUserRoleEvent(
-              userId: widget.userId,
-              roleId: roleId,
-            ),
-          );
+                AssignUserRoleEvent(
+                  userId: widget.userId,
+                  roleId: roleId,
+                ),
+              );
         },
       ),
     );
   }
-  
+
   void _toggleUserStatus(UserDetailsLoaded state) {
     context.read<UserDetailsBloc>().add(
-      ToggleUserStatusEvent(
-        userId: widget.userId,
-        activate: !state.userDetails.isActive,
-      ),
-    );
+          ToggleUserStatusEvent(
+            userId: widget.userId,
+            activate: !state.userDetails.isActive,
+          ),
+        );
   }
-  
+
   void _showDeleteConfirmation() {
     showDialog(
       context: context,
       builder: (context) => _DeleteConfirmationDialog(
         onConfirm: () {
           context.read<UserDetailsBloc>().add(
-            DeleteUserEvent(userId: widget.userId),
-          );
+                DeleteUserEvent(userId: widget.userId),
+              );
           Navigator.pop(context);
           context.pop();
         },
       ),
     );
   }
-  
+
   void _sendMessage() {
     // TODO: Implement send message
   }
-  
+
   void _sendEmail() {
     // TODO: Implement send email
   }
-  
+
   void _makeCall() {
     // TODO: Implement make call
   }
-  
+
   List<Color> _getRoleGradient(String role) {
     switch (role.toLowerCase()) {
       case 'admin':
@@ -1893,7 +1927,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
         return [AppTheme.primaryCyan, AppTheme.neonGreen];
     }
   }
-  
+
   String _getRoleText(String role) {
     switch (role.toLowerCase()) {
       case 'admin':
@@ -1908,7 +1942,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
         return role;
     }
   }
-  
+
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
@@ -1917,9 +1951,9 @@ class _UserDetailsPageState extends State<UserDetailsPage>
 // Delete Confirmation Dialog
 class _DeleteConfirmationDialog extends StatelessWidget {
   final VoidCallback onConfirm;
-  
+
   const _DeleteConfirmationDialog({required this.onConfirm});
-  
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -2061,22 +2095,22 @@ class _DeleteConfirmationDialog extends StatelessWidget {
 class _FuturisticBackgroundPainter extends CustomPainter {
   final double rotation;
   final double glowIntensity;
-  
+
   _FuturisticBackgroundPainter({
     required this.rotation,
     required this.glowIntensity,
   });
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
-    
+
     // Draw grid
     paint.color = AppTheme.primaryBlue.withOpacity(0.05);
     const spacing = 50.0;
-    
+
     for (double x = 0; x < size.width; x += spacing) {
       canvas.drawLine(
         Offset(x, 0),
@@ -2084,7 +2118,7 @@ class _FuturisticBackgroundPainter extends CustomPainter {
         paint,
       );
     }
-    
+
     for (double y = 0; y < size.height; y += spacing) {
       canvas.drawLine(
         Offset(0, y),
@@ -2092,11 +2126,11 @@ class _FuturisticBackgroundPainter extends CustomPainter {
         paint,
       );
     }
-    
+
     // Draw rotating circles
     final center = Offset(size.width / 2, size.height / 2);
     paint.color = AppTheme.primaryBlue.withOpacity(0.03 * glowIntensity);
-    
+
     for (int i = 0; i < 3; i++) {
       final radius = 200.0 + i * 100;
       canvas.save();
@@ -2107,7 +2141,7 @@ class _FuturisticBackgroundPainter extends CustomPainter {
       canvas.restore();
     }
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
