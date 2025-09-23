@@ -187,7 +187,10 @@ class _UserDetailsPageState extends State<UserDetailsPage>
           BlocBuilder<UserDetailsBloc, UserDetailsState>(
             builder: (context, state) {
               if (state is UserDetailsLoading) {
-                return _buildLoadingState();
+                return const LoadingWidget(
+                  type: LoadingType.futuristic,
+                  message: 'جاري تحميل بيانات المستخدم...',
+                );
               }
               if (state is UserDetailsError) {
                 return _buildErrorState(state.message);
@@ -210,6 +213,24 @@ class _UserDetailsPageState extends State<UserDetailsPage>
             },
           ),
           _buildFloatingActionButton(),
+
+          // Futuristic overlay during user actions (role/status/update)
+          BlocBuilder<UserDetailsBloc, UserDetailsState>(
+            builder: (context, state) {
+              if (state is UserDetailsLoaded && state.isUpdating) {
+                return Container(
+                  color: Colors.black.withOpacity(0.3),
+                  child: const Center(
+                    child: LoadingWidget(
+                      type: LoadingType.futuristic,
+                      message: 'جاري تنفيذ العملية...'
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
         ],
       ),
     );
@@ -1115,7 +1136,10 @@ class _UserDetailsPageState extends State<UserDetailsPage>
   
   Widget _buildBookingsTab(UserDetailsLoaded state) {
     if (_isLoadingBookings && _userBookings.isEmpty) {
-      return _buildLoadingState();
+      return const LoadingWidget(
+        type: LoadingType.futuristic,
+        message: 'جاري تحميل الحجوزات...',
+      );
     }
     if (_bookingsError != null) {
       return _buildErrorState(_bookingsError!);
@@ -1167,7 +1191,10 @@ class _UserDetailsPageState extends State<UserDetailsPage>
   
   Widget _buildReviewsTab(UserDetailsLoaded state) {
     if (_isLoadingReviews && _userReviews.isEmpty) {
-      return _buildLoadingState();
+      return const LoadingWidget(
+        type: LoadingType.futuristic,
+        message: 'جاري تحميل المراجعات...',
+      );
     }
     if (_reviewsError != null) {
       return _buildErrorState(_reviewsError!);
@@ -1216,7 +1243,10 @@ class _UserDetailsPageState extends State<UserDetailsPage>
   
   Widget _buildActivityTab(UserDetailsLoaded state) {
     if (_isLoadingActivity && _userActivityLogs.isEmpty) {
-      return _buildLoadingState();
+      return const LoadingWidget(
+        type: LoadingType.futuristic,
+        message: 'جاري تحميل النشاط...',
+      );
     }
     if (_activityError != null) {
       return _buildErrorState(_activityError!);

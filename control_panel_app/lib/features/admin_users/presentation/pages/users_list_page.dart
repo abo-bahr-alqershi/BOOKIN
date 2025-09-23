@@ -287,7 +287,10 @@ class _UsersListPageState extends State<UsersListPage>
       builder: (context, state) {
         if (state is UsersListLoading) {
           return const SliverFillRemaining(
-            child: Center(child: CircularProgressIndicator()),
+            child: LoadingWidget(
+              type: LoadingType.futuristic,
+              message: 'جاري تحميل المستخدمين...',
+            ),
           );
         }
         if (state is UsersListError) {
@@ -998,11 +1001,9 @@ class _UsersListPageState extends State<UsersListPage>
     return Container(
       padding: const EdgeInsets.all(32),
       child: Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(
-            AppTheme.primaryBlue,
-          ),
-          strokeWidth: 2,
+        child: LoadingWidget(
+          type: LoadingType.futuristic,
+          message: 'جاري التحميل...'
         ),
       ),
     );
