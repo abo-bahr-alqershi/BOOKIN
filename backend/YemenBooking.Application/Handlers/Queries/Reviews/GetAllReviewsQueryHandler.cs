@@ -86,7 +86,15 @@ namespace YemenBooking.Application.Handlers.Queries.Reviews
             if (request.ReviewedBefore.HasValue)
                 query = query.Where(r => r.CreatedAt <= request.ReviewedBefore.Value);
 
-            var reviews = await query.ToListAsync(cancellationToken);
+            // Pagination defaults
+            var pageNumber = (request.PageNumber ?? 1) < 1 ? 1 : (request.PageNumber ?? 1);
+            var pageSize = (request.PageSize ?? 20) < 1 ? 20 : (request.PageSize ?? 20);
+
+            var reviews = await query
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
 
             var reviewDtos = reviews.Select(r => new ReviewDto
             {

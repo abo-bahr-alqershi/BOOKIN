@@ -63,5 +63,15 @@ namespace YemenBooking.Application.Queries.Reviews
         /// Reviewed before date filter
         /// </summary>
         public DateTime? ReviewedBefore { get; set; }
+
+        /// <summary>
+        /// رقم الصفحة (اختياري) - Pagination page number
+        /// </summary>
+        public int? PageNumber { get; set; }
+
+        /// <summary>
+        /// حجم الصفحة (اختياري) - Pagination page size
+        /// </summary>
+        public int? PageSize { get; set; }
     }
 } 
