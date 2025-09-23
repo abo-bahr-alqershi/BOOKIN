@@ -1,5 +1,7 @@
 // lib/features/admin_reviews/presentation/pages/review_details_page.dart
 
+import 'package:bookn_cp_app/core/widgets/loading_widget.dart';
+
 import '../../../../injection_container.dart' as di;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,12 +20,12 @@ import '../../domain/usecases/approve_review_usecase.dart';
 
 class ReviewDetailsPage extends StatefulWidget {
   final String reviewId;
-  
+
   const ReviewDetailsPage({
     super.key,
     required this.reviewId,
   });
-  
+
   @override
   State<ReviewDetailsPage> createState() => _ReviewDetailsPageState();
 }
@@ -35,25 +37,25 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
-  
+
   final ScrollController _scrollController = ScrollController();
   bool _showFloatingHeader = false;
   bool _isApproving = false;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     _mainAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     _floatingAnimationController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -61,7 +63,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       parent: _mainAnimationController,
       curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
     ));
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.2),
       end: Offset.zero,
@@ -69,7 +71,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       parent: _mainAnimationController,
       curve: const Interval(0.2, 0.7, curve: Curves.easeOutCubic),
     ));
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.8,
       end: 1.0,
@@ -77,9 +79,9 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       parent: _mainAnimationController,
       curve: const Interval(0.3, 0.8, curve: Curves.easeOutBack),
     ));
-    
+
     _mainAnimationController.forward();
-    
+
     _scrollController.addListener(() {
       final shouldShow = _scrollController.offset > 200;
       if (shouldShow != _showFloatingHeader) {
@@ -88,10 +90,12 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
         });
       }
     });
-    
-    context.read<ReviewDetailsBloc>().add(LoadReviewDetailsEvent(widget.reviewId));
+
+    context
+        .read<ReviewDetailsBloc>()
+        .add(LoadReviewDetailsEvent(widget.reviewId));
   }
-  
+
   @override
   void dispose() {
     _mainAnimationController.dispose();
@@ -99,13 +103,13 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
     _scrollController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isTablet = size.width > 600;
     final isDesktop = size.width > 1200;
-    
+
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: BlocBuilder<ReviewDetailsBloc, ReviewDetailsState>(
@@ -116,17 +120,17 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
               message: 'جاري تحميل تفاصيل التقييم...',
             );
           }
-          
+
           if (state is ReviewDetailsError) {
             return _buildErrorState(state.message);
           }
-          
+
           if (state is ReviewDetailsLoaded) {
             return Stack(
               children: [
                 // خلفية متحركة
                 _buildAnimatedBackground(),
-                
+
                 // المحتوى الرئيسي
                 CustomScrollView(
                   controller: _scrollController,
@@ -134,7 +138,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                   slivers: [
                     // شريط التطبيق مع صورة البطل
                     _buildHeroAppBar(context, state.review, isDesktop),
-                    
+
                     // محتوى التقييم
                     SliverToBoxAdapter(
                       child: FadeTransition(
@@ -151,30 +155,30 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                         ),
                       ),
                     ),
-                    
+
                     // حشوة سفلية
                     const SliverToBoxAdapter(
                       child: SizedBox(height: 100),
                     ),
                   ],
                 ),
-                
+
                 // الرأس العائم
                 if (_showFloatingHeader)
                   _buildFloatingHeader(context, state.review),
-                
+
                 // الأزرار العائمة
                 _buildFloatingActions(context, state.review),
               ],
             );
           }
-          
+
           return const SizedBox();
         },
       ),
     );
   }
-  
+
   Widget _buildAnimatedBackground() {
     return Stack(
       children: [
@@ -191,7 +195,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
             ),
           ),
         ),
-        
+
         // كرات عائمة
         Positioned(
           top: 100,
@@ -221,7 +225,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
             },
           ),
         ),
-        
+
         Positioned(
           bottom: 200,
           right: -100,
@@ -253,7 +257,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       ],
     );
   }
-  
+
   Widget _buildHeroAppBar(
     BuildContext context,
     Review review,
@@ -284,7 +288,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
               )
             else
               _buildGradientBackground(),
-            
+
             // تدرج التراكب
             Container(
               decoration: BoxDecoration(
@@ -300,7 +304,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                 ),
               ),
             ),
-            
+
             // معلومات التقييم
             Positioned(
               bottom: 40,
@@ -362,7 +366,8 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                                     child: Text(
                                       review.propertyName,
                                       style: AppTextStyles.bodySmall.copyWith(
-                                        color: AppTheme.textLight.withOpacity(0.7),
+                                        color:
+                                            AppTheme.textLight.withOpacity(0.7),
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -372,14 +377,14 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                             ],
                           ),
                         ),
-                        
+
                         // شارة الحالة
                         _buildStatusBadge(review),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 20),
-                    
+
                     // التقييم
                     _buildRatingStars(review.averageRating),
                   ],
@@ -391,7 +396,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildGradientBackground() {
     return Container(
       decoration: BoxDecoration(
@@ -407,7 +412,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildBackButton(BuildContext context) {
     return Container(
       margin: const EdgeInsets.all(8),
@@ -432,20 +437,20 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildStatusBadge(Review review) {
-    final color = review.isPending 
-        ? AppTheme.warning 
-        : review.isApproved 
-            ? AppTheme.success 
+    final color = review.isPending
+        ? AppTheme.warning
+        : review.isApproved
+            ? AppTheme.success
             : AppTheme.error;
-    
-    final text = review.isPending 
-        ? 'قيد المراجعة' 
-        : review.isApproved 
-            ? 'مُعتمد' 
+
+    final text = review.isPending
+        ? 'قيد المراجعة'
+        : review.isApproved
+            ? 'مُعتمد'
             : 'مرفوض';
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -479,20 +484,20 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildRatingStars(double rating) {
     return Row(
       children: List.generate(5, (index) {
         final filled = index < rating.floor();
         final halfFilled = index == rating.floor() && rating % 1 != 0;
-        
+
         return Padding(
           padding: const EdgeInsets.only(right: 4),
           child: Icon(
-            halfFilled 
+            halfFilled
                 ? Icons.star_half_rounded
-                : filled 
-                    ? Icons.star_rounded 
+                : filled
+                    ? Icons.star_rounded
                     : Icons.star_outline_rounded,
             color: AppTheme.warning,
             size: 28,
@@ -501,7 +506,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       }),
     );
   }
-  
+
   Widget _buildReviewContent(
     BuildContext context,
     Review review,
@@ -510,14 +515,14 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
     bool isTablet,
   ) {
     final horizontalPadding = isDesktop ? 32.0 : 20.0;
-    
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 24),
-          
+
           // تفصيل التقييم
           ScaleTransition(
             scale: _scaleAnimation,
@@ -529,14 +534,14 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
               isDesktop: isDesktop,
             ),
           ),
-          
+
           const SizedBox(height: 32),
-          
+
           // قسم التعليق
           _buildCommentSection(review),
-          
+
           const SizedBox(height: 32),
-          
+
           // معرض الصور
           if (review.images.isNotEmpty) ...[
             _buildSectionTitle('صور التقييم'),
@@ -547,19 +552,19 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
             ),
             const SizedBox(height: 32),
           ],
-          
+
           // معلومات التقييم
           _buildInfoSection(review),
-          
+
           const SizedBox(height: 32),
-          
+
           // قسم الردود
           _buildResponsesSection(context, review, responses),
         ],
       ),
     );
   }
-  
+
   Widget _buildCommentSection(Review review) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -608,7 +613,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildInfoSection(Review review) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -645,7 +650,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildInfoRow({
     required IconData icon,
     required String label,
@@ -690,7 +695,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       ],
     );
   }
-  
+
   Widget _buildResponsesSection(
     BuildContext context,
     Review review,
@@ -721,7 +726,6 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
           ],
         ),
         const SizedBox(height: 16),
-        
         if (responses.isEmpty)
           Container(
             padding: const EdgeInsets.all(32),
@@ -775,8 +779,8 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
                       response: response,
                       onDelete: () {
                         context.read<ReviewDetailsBloc>().add(
-                          DeleteResponseEvent(response.id),
-                        );
+                              DeleteResponseEvent(response.id),
+                            );
                       },
                     ),
                   );
@@ -787,7 +791,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       ],
     );
   }
-  
+
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
@@ -796,7 +800,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildFloatingHeader(BuildContext context, Review review) {
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 300),
@@ -872,7 +876,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildFloatingActions(BuildContext context, Review review) {
     final bool isApproving = _isApproving;
     return Positioned(
@@ -914,7 +918,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildFloatingActionButton({
     required IconData icon,
     required Color color,
@@ -1120,7 +1124,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       }
     }
   }
-  
+
   Widget _buildLoadingState() {
     return Center(
       child: Column(
@@ -1158,7 +1162,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       ),
     );
   }
-  
+
   Widget _buildErrorState(String message) {
     return Center(
       child: Column(
@@ -1202,11 +1206,11 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
           ElevatedButton.icon(
             onPressed: () {
               context.read<ReviewDetailsBloc>().add(
-                LoadReviewDetailsEvent(widget.reviewId),
-              );
+                    LoadReviewDetailsEvent(widget.reviewId),
+                  );
             },
             icon: const Icon(Icons.refresh),
-            label: Text(
+            label: const Text(
               'حاول مرة أخرى',
               style: AppTextStyles.buttonMedium,
             ),
@@ -1229,10 +1233,10 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
 
   void _showAddResponseDialog(BuildContext context, String reviewId) {
     HapticFeedback.lightImpact();
-    
+
     // Capture the bloc from the current (correct) context
     final reviewDetailsBloc = context.read<ReviewDetailsBloc>();
-    
+
     showDialog(
       context: context,
       barrierColor: Colors.black87,
@@ -1269,8 +1273,18 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
 
   String _formatDate(DateTime date) {
     final months = [
-      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر'
     ];
     return '${date.day} ${months[date.month - 1]}، ${date.year}';
   }

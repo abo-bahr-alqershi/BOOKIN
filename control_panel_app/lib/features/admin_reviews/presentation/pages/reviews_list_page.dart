@@ -1,5 +1,6 @@
 // lib/features/admin_reviews/presentation/pages/reviews_list_page.dart
 
+import 'package:bookn_cp_app/core/widgets/loading_widget.dart';
 import 'package:bookn_cp_app/features/admin_reviews/presentation/bloc/review_details/review_details_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,16 +24,16 @@ class ReviewsListPage extends StatefulWidget {
   State<ReviewsListPage> createState() => _ReviewsListPageState();
 }
 
-class _ReviewsListPageState extends State<ReviewsListPage> 
+class _ReviewsListPageState extends State<ReviewsListPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  
+
   bool _isGridView = false;
   final ScrollController _scrollController = ScrollController();
   bool _showBackToTop = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -40,7 +41,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -48,7 +49,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       parent: _animationController,
       curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
     ));
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
@@ -56,31 +57,31 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       parent: _animationController,
       curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
     ));
-    
+
     _animationController.forward();
-    
+
     _scrollController.addListener(() {
       setState(() {
         _showBackToTop = _scrollController.offset > 200;
       });
     });
-    
+
     context.read<ReviewsListBloc>().add(const LoadReviewsEvent());
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isTablet = size.width > 600;
     final isDesktop = size.width > 1200;
-    
+
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: Stack(
@@ -102,10 +103,10 @@ class _ReviewsListPageState extends State<ReviewsListPage>
               ),
             ),
           ),
-          
+
           // كرات متوهجة متحركة
           ..._buildFloatingOrbs(),
-          
+
           // المحتوى الرئيسي
           CustomScrollView(
             controller: _scrollController,
@@ -113,7 +114,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
             slivers: [
               // شريط التطبيق الفاخر
               _buildPremiumAppBar(context, isDesktop),
-              
+
               // قسم الإحصائيات
               SliverToBoxAdapter(
                 child: FadeTransition(
@@ -124,7 +125,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                   ),
                 ),
               ),
-              
+
               // قسم الفلاتر
               SliverToBoxAdapter(
                 child: FadeTransition(
@@ -137,25 +138,25 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                     child: ReviewFiltersWidget(
                       onFilterChanged: (filters) {
                         context.read<ReviewsListBloc>().add(
-                          FilterReviewsEvent(
-                            searchQuery: filters['search'] ?? '',
-                            minRating: filters['minRating'],
-                            isPending: filters['isPending'],
-                            hasResponse: filters['hasResponse'],
-                          ),
-                        );
+                              FilterReviewsEvent(
+                                searchQuery: filters['search'] ?? '',
+                                minRating: filters['minRating'],
+                                isPending: filters['isPending'],
+                                hasResponse: filters['hasResponse'],
+                              ),
+                            );
                       },
                     ),
                   ),
                 ),
               ),
-              
+
               // تبديل العرض
               if (!isDesktop)
                 SliverToBoxAdapter(
                   child: _buildViewToggle(),
                 ),
-              
+
               // محتوى التقييمات
               BlocBuilder<ReviewsListBloc, ReviewsListState>(
                 builder: (context, state) {
@@ -167,20 +168,20 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                       ),
                     );
                   }
-                  
+
                   if (state is ReviewsListError) {
                     return SliverFillRemaining(
                       child: _buildErrorState(state.message),
                     );
                   }
-                  
+
                   if (state is ReviewsListLoaded) {
                     if (state.filteredReviews.isEmpty) {
                       return SliverFillRemaining(
                         child: _buildEmptyState(),
                       );
                     }
-                    
+
                     if (isDesktop || (!_isGridView && isTablet)) {
                       return SliverFillRemaining(
                         hasScrollBody: true,
@@ -198,9 +199,11 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                                 child: FuturisticReviewsTable(
                                   reviews: state.filteredReviews,
                                   approvingReviewIds: state.approvingReviewIds,
-                                  onReviewTap: (review) => _navigateToDetails(context, review.id),
+                                  onReviewTap: (review) =>
+                                      _navigateToDetails(context, review.id),
                                   onApproveTap: (review) {
-                                    _showApproveConfirmation(context, review.id);
+                                    _showApproveConfirmation(
+                                        context, review.id);
                                   },
                                   onDeleteTap: (review) {
                                     _showDeleteConfirmation(context, review.id);
@@ -212,7 +215,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                         ),
                       );
                     }
-                    
+
                     return SliverPadding(
                       padding: EdgeInsets.symmetric(
                         horizontal: isDesktop ? 32 : 20,
@@ -223,18 +226,18 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                       ),
                     );
                   }
-                  
+
                   return const SliverToBoxAdapter(child: SizedBox());
                 },
               ),
-              
+
               // حشوة سفلية
               const SliverToBoxAdapter(
                 child: SizedBox(height: 100),
               ),
             ],
           ),
-          
+
           // زر عائم
           if (_showBackToTop)
             Positioned(
@@ -246,7 +249,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       ),
     );
   }
-  
+
   List<Widget> _buildFloatingOrbs() {
     return [
       Positioned(
@@ -303,7 +306,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       ),
     ];
   }
-  
+
   Widget _buildPremiumAppBar(BuildContext context, bool isDesktop) {
     // محاذاة التصميم مع شريط تطبيق صفحة الحجوزات
     return SliverAppBar(
@@ -353,7 +356,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       ],
     );
   }
-  
+
   Widget _buildStatsSection(bool isDesktop, bool isTablet) {
     return BlocBuilder<ReviewsListBloc, ReviewsListState>(
       builder: (context, state) {
@@ -377,7 +380,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       },
     );
   }
-  
+
   Widget _buildViewToggle() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -420,7 +423,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       ),
     );
   }
-  
+
   Widget _buildToggleButton({
     required IconData icon,
     required bool isSelected,
@@ -433,27 +436,27 @@ class _ReviewsListPageState extends State<ReviewsListPage>
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          color: isSelected 
+          color: isSelected
               ? AppTheme.primaryBlue.withOpacity(0.2)
               : Colors.transparent,
         ),
         child: Icon(
           icon,
           size: 20,
-          color: isSelected 
+          color: isSelected
               ? AppTheme.glowBlue
               : AppTheme.textLight.withOpacity(0.5),
         ),
       ),
     );
   }
-  
+
   Widget _buildReviewsGrid(
     List<dynamic> reviews, {
     required bool isTablet,
   }) {
     final crossAxisCount = isTablet ? 2 : 1;
-    
+
     return SliverGrid(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
@@ -480,7 +483,8 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                   },
                   isApproving: (context.read<ReviewsListBloc>().state
                           is ReviewsListLoaded)
-                      ? (context.read<ReviewsListBloc>().state as ReviewsListLoaded)
+                      ? (context.read<ReviewsListBloc>().state
+                              as ReviewsListLoaded)
                           .approvingReviewIds
                           .contains(reviews[index].id)
                       : false,
@@ -493,7 +497,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       ),
     );
   }
-  
+
   Widget _buildLoadingState() {
     return Center(
       child: Column(
@@ -531,7 +535,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       ),
     );
   }
-  
+
   Widget _buildErrorState(String message) {
     return Center(
       child: Column(
@@ -577,7 +581,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
               context.read<ReviewsListBloc>().add(const LoadReviewsEvent());
             },
             icon: const Icon(Icons.refresh, size: 20),
-            label: Text(
+            label: const Text(
               'حاول مرة أخرى',
               style: AppTextStyles.buttonMedium,
             ),
@@ -594,7 +598,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       ),
     );
   }
-  
+
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -635,7 +639,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       ),
     );
   }
-  
+
   Widget _buildFloatingActionButton() {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
@@ -682,7 +686,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       },
     );
   }
-  
+
   void _navigateToDetails(BuildContext context, String reviewId) {
     HapticFeedback.lightImpact();
     Navigator.push(
@@ -690,9 +694,9 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
             BlocProvider<ReviewDetailsBloc>(
-              create: (_) => di.sl<ReviewDetailsBloc>(),
-              child: ReviewDetailsPage(reviewId: reviewId),
-            ),
+          create: (_) => di.sl<ReviewDetailsBloc>(),
+          child: ReviewDetailsPage(reviewId: reviewId),
+        ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,
@@ -712,7 +716,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
       ),
     );
   }
-  
+
   void _showDeleteConfirmation(BuildContext context, String reviewId) {
     HapticFeedback.mediumImpact();
     showDialog(
@@ -794,8 +798,8 @@ class _ReviewsListPageState extends State<ReviewsListPage>
                         onPressed: () {
                           Navigator.pop(context);
                           context.read<ReviewsListBloc>().add(
-                            DeleteReviewEvent(reviewId),
-                          );
+                                DeleteReviewEvent(reviewId),
+                              );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.error,
