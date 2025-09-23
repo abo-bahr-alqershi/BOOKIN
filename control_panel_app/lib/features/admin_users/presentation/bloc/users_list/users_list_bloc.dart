@@ -46,6 +46,7 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
     on<ToggleUserStatusEvent>(_onToggleUserStatus);
     on<SortUsersEvent>(_onSortUsers);
     on<CreateUserEvent>(_onCreateUser);
+    on<DeleteUserEvent>(_onDeleteUser);
   }
 
   Future<void> _onLoadUsers(
@@ -331,6 +332,33 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
           await _assignRoleUseCase(AssignRoleParams(userId: userId, roleId: event.roleId!));
         }
         add(RefreshUsersEvent());
+      },
+    );
+  }
+
+  Future<void> _onDeleteUser(
+    DeleteUserEvent event,
+    Emitter<UsersListState> emit,
+  ) async {
+    // Backend does not expose hard delete; emulate by deactivating and removing from current list
+    final result = await _deactivateUserUseCase(DeactivateUserParams(userId: event.userId));
+
+    result.fold(
+      (_) {},
+      (success) {
+        if (success) {
+          // Remove the user from the in-memory list and emit an updated state
+          _allUsers = _allUsers.where((u) => u.id != event.userId).toList();
+          if (state is UsersListLoaded) {
+            final currentState = state as UsersListLoaded;
+            emit(UsersListLoaded(
+              users: _allUsers,
+              hasMore: _hasMoreData,
+              totalCount: currentState.totalCount > 0 ? currentState.totalCount - 1 : 0,
+              isLoadingMore: false,
+            ));
+          }
+        }
       },
     );
   }
