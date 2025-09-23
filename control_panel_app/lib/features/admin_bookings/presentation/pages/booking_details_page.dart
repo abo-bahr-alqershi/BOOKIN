@@ -78,7 +78,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage>
         builder: (context, state) {
           if (state is BookingDetailsLoading) {
             return const LoadingWidget(
-              type: LoadingType.pulse,
+              type: LoadingType.futuristic,
               message: 'جاري تحميل تفاصيل الحجز...',
             );
           }

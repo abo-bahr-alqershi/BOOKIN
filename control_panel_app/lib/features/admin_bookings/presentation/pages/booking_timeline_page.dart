@@ -213,7 +213,7 @@ class _BookingTimelinePageState extends State<BookingTimelinePage>
         if (state is BookingsListLoading) {
           return const SliverFillRemaining(
             child: LoadingWidget(
-              type: LoadingType.pulse,
+              type: LoadingType.futuristic,
               message: 'جاري تحميل الخط الزمني...',
             ),
           );

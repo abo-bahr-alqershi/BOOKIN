@@ -85,7 +85,7 @@ class _BookingAnalyticsPageState extends State<BookingAnalyticsPage>
         builder: (context, state) {
           if (state is BookingAnalyticsLoading) {
             return const LoadingWidget(
-              type: LoadingType.pulse,
+              type: LoadingType.futuristic,
               message: 'جاري تحميل التحليلات...',
             );
           }

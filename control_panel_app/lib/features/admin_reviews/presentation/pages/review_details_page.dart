@@ -111,7 +111,10 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
       body: BlocBuilder<ReviewDetailsBloc, ReviewDetailsState>(
         builder: (context, state) {
           if (state is ReviewDetailsLoading) {
-            return _buildLoadingState();
+            return const LoadingWidget(
+              type: LoadingType.futuristic,
+              message: 'جاري تحميل تفاصيل التقييم...',
+            );
           }
           
           if (state is ReviewDetailsError) {
