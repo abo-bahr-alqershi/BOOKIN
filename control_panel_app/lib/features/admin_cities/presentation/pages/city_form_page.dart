@@ -10,6 +10,8 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/city.dart';
+import 'package:bookn_cp_app/injection_container.dart';
+import '../../domain/usecases/upload_city_image_usecase.dart';
 import '../widgets/city_image_gallery.dart';
 import '../bloc/cities_bloc.dart';
 import '../bloc/cities_event.dart';
@@ -1038,16 +1040,44 @@ class _CityFormPageState extends State<CityFormPage>
     return true;
   }
 
-  void _handleSave() {
+  Future<void> _handleSave() async {
     if (_formKey.currentState!.validate()) {
       HapticFeedback.mediumImpact();
 
       setState(() => _isLoading = true);
 
+      // Ensure all images are uploaded and replaced with proper URLs
+      final List<String> finalImages = [];
+      for (final img in _images) {
+        // Keep remote images as is (absolute or server-relative like /uploads/...)
+        if (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('/')) {
+          finalImages.add(img);
+          continue;
+        }
+        try {
+          final uploader = sl<UploadCityImageUseCase>();
+          final result = await uploader(
+            UploadCityImageParams(
+              cityName: _nameController.text.trim(),
+              imagePath: img,
+              onSendProgress: null,
+            ),
+          );
+          result.fold(
+            (_) {
+              // If upload fails, skip this image silently to avoid saving invalid local paths
+            },
+            (url) => finalImages.add(url),
+          );
+        } catch (_) {
+          // Skip on unexpected errors
+        }
+      }
+
       final city = City(
         name: _nameController.text.trim(),
         country: _countryController.text.trim(),
-        images: _images,
+        images: finalImages,
         isActive: _isActive,
         propertiesCount: widget.city?.propertiesCount,
         createdAt: widget.city?.createdAt ?? DateTime.now(),
