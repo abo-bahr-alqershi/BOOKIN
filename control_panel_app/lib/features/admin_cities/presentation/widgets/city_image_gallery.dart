@@ -772,21 +772,21 @@ class _CityImageGalleryState extends State<CityImageGallery>
                   top: (_hoveredIndex == index) ? 8 : -40,
                   left: 8,
                   right: 8,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 6,
+                    runSpacing: 6,
                     children: [
                       _buildQuickActionButton(
                         icon: Icons.visibility_outlined,
                         onTap: () => _previewImage(imagePath),
                       ),
-                      if (!isPrimary) const SizedBox(width: 6),
                       if (!isPrimary)
                         _buildQuickActionButton(
                           icon: Icons.star_outline_rounded,
                           color: AppTheme.warning,
                           onTap: () => _showImageOptions(index),
                         ),
-                      const SizedBox(width: 6),
                       _buildQuickActionButton(
                         icon: Icons.delete_outline_rounded,
                         color: AppTheme.error,
