@@ -39,6 +39,7 @@ class _CityFormPageState extends State<CityFormPage>
   late TextEditingController _countryController;
 
   List<String> _images = [];
+  final Map<String, double> _uploadProgress = {};
   bool _isActive = true;
   bool _isLoading = false;
   bool _hasChanges = false;
@@ -868,12 +869,24 @@ class _CityFormPageState extends State<CityFormPage>
                 final lower = path.toLowerCase();
                 final isRemote = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('/uploads') || lower.startsWith('uploads/') || lower.startsWith('/images') || lower.startsWith('images/');
                 if (!isRemote) {
+                  setState(() {
+                    _uploadProgress[path] = 0.0;
+                  });
                   final uploader = sl<UploadCityImageUseCase>();
                   uploader(
                     UploadCityImageParams(
                       cityName: _nameController.text.trim(),
                       imagePath: path,
-                      onSendProgress: null,
+                      onSendProgress: (sent, total) {
+                        if (total > 0) {
+                          final p = sent / total;
+                          if (mounted) {
+                            setState(() {
+                              _uploadProgress[path] = p;
+                            });
+                          }
+                        }
+                      },
                     ),
                   ).then((either) {
                     either.fold(
@@ -889,6 +902,7 @@ class _CityFormPageState extends State<CityFormPage>
                             if (idx != -1) _images[idx] = url;
                           }
                           _hasChanges = true;
+                          _uploadProgress.remove(path);
                         });
                       },
                     );
@@ -896,6 +910,7 @@ class _CityFormPageState extends State<CityFormPage>
                 }
               }
             },
+            uploadProgress: _uploadProgress,
             maxImages: 10,
           ),
         ],
