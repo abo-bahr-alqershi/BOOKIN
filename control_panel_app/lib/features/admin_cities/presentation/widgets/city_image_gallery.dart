@@ -13,6 +13,7 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:reorderables/reorderables.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/utils/image_utils.dart';
 
 class CityImageGallery extends StatefulWidget {
   final List<String> images;
@@ -562,7 +563,7 @@ class _CityImageGalleryState extends State<CityImageGallery>
     final isSelected = _selectedIndices.contains(index);
     final isPrimary = index == _primaryImageIndex;
     final imagePath = _localImages[index];
-    final isNetworkImage = imagePath.startsWith('http');
+    final isNetworkImage = imagePath.startsWith('http') || imagePath.startsWith('/');
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredIndex = index),
@@ -620,7 +621,7 @@ class _CityImageGalleryState extends State<CityImageGallery>
               // Enhanced image display
               isNetworkImage
                   ? CachedNetworkImage(
-                      imageUrl: imagePath,
+                      imageUrl: imagePath.startsWith('/') ? ImageUtils.resolveUrl(imagePath) : imagePath,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
                         decoration: BoxDecoration(
@@ -1354,7 +1355,7 @@ class _EnhancedImagePreview extends StatelessWidget {
               tag: imagePath,
               child: isNetworkImage
                   ? CachedNetworkImage(
-                      imageUrl: imagePath,
+                      imageUrl: imagePath.startsWith('/') ? ImageUtils.resolveUrl(imagePath) : imagePath,
                       fit: BoxFit.contain,
                     )
                   : Image.file(

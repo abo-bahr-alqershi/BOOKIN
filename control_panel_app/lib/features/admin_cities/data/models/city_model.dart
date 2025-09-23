@@ -24,12 +24,31 @@ class CityModel extends City {
 
   /// تحويل من JSON
   factory CityModel.fromJson(Map<String, dynamic> json) {
+    List<String> rawImages = [];
+    if (json['images'] != null) {
+      try {
+        rawImages = List<String>.from(json['images']);
+      } catch (_) {}
+    }
+    final sanitized = rawImages.where((u) {
+      final val = (u ?? '').toString().trim();
+      if (val.isEmpty) return false;
+      final lower = val.toLowerCase();
+      // Keep only web/relative server paths; drop android local cache paths
+      if (lower.startsWith('http://') || lower.startsWith('https://')) return true;
+      if (lower.startsWith('/uploads') || lower.startsWith('uploads/')) return true;
+      // Also accept known public folders
+      if (lower.startsWith('/images') || lower.startsWith('images/')) return true;
+      // Drop local device paths like /data/user/0/... or file:// or content://
+      if (lower.startsWith('/data/') || lower.startsWith('file://') || lower.startsWith('content://')) return false;
+      // Fallback: drop anything else to avoid broken URLs
+      return false;
+    }).toList(growable: false);
+
     return CityModel(
       name: json['name'] ?? '',
       country: json['country'] ?? '',
-      images: json['images'] != null 
-          ? List<String>.from(json['images']) 
-          : [],
+      images: sanitized,
       createdAt: json['createdAt'] != null 
           ? DateTime.parse(json['createdAt']) 
           : null,
