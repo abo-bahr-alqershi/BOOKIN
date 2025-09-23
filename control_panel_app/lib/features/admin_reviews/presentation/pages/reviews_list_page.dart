@@ -160,8 +160,11 @@ class _ReviewsListPageState extends State<ReviewsListPage>
               BlocBuilder<ReviewsListBloc, ReviewsListState>(
                 builder: (context, state) {
                   if (state is ReviewsListLoading) {
-                    return SliverFillRemaining(
-                      child: _buildLoadingState(),
+                    return const SliverFillRemaining(
+                      child: LoadingWidget(
+                        type: LoadingType.futuristic,
+                        message: 'جاري تحميل المراجعات...',
+                      ),
                     );
                   }
                   
