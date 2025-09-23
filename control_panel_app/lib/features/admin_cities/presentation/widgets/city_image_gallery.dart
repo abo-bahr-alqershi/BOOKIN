@@ -563,7 +563,17 @@ class _CityImageGalleryState extends State<CityImageGallery>
     final isSelected = _selectedIndices.contains(index);
     final isPrimary = index == _primaryImageIndex;
     final imagePath = _localImages[index];
-    final isNetworkImage = imagePath.startsWith('http') || imagePath.startsWith('/');
+    bool _isRemote(String p) {
+      if (p.isEmpty) return false;
+      final lower = p.toLowerCase();
+      if (lower.startsWith('http://') || lower.startsWith('https://')) return true;
+      // Treat only known server-relative paths as remote; local absolute paths like /home/... or /data/... are NOT remote
+      if (lower.startsWith('/uploads') || lower.startsWith('uploads/')) return true;
+      if (lower.startsWith('/images') || lower.startsWith('images/')) return true;
+      if (lower.startsWith('/client') || lower.startsWith('client/')) return true;
+      return false;
+    }
+    final isNetworkImage = _isRemote(imagePath);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredIndex = index),
