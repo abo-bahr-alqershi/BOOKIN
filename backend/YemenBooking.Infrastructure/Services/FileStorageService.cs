@@ -38,7 +38,13 @@ namespace YemenBooking.Infrastructure.Services
                 var fullPath = Path.Combine(folderPath, fileName);
                 await using var fs = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None);
                 await fileStream.CopyToAsync(fs, cancellationToken);
-                var fileUrl = $"{_settings.BaseUrl}/{(string.IsNullOrEmpty(folder) ? "" : folder + "/")}{fileName}";
+                // Build a safe URL by URL-encoding each path segment to support spaces/Arabic characters
+                var relativePath = string.IsNullOrEmpty(folder) ? fileName : ($"{folder}/{fileName}");
+                var encoded = string.Join('/', relativePath
+                    .Split(new[] {'/'}, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(seg => Uri.EscapeDataString(seg)));
+                var baseUrl = _settings.BaseUrl.TrimEnd('/');
+                var fileUrl = $"{baseUrl}/{encoded}";
                 return new FileUploadResult
                 {
                     IsSuccess = true,
@@ -68,7 +74,13 @@ namespace YemenBooking.Infrastructure.Services
                 if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
                 var fullPath = Path.Combine(folderPath, fileName);
                 await File.WriteAllBytesAsync(fullPath, fileBytes, cancellationToken);
-                var fileUrl = $"{_settings.BaseUrl}/{(string.IsNullOrEmpty(folder) ? "" : folder + "/")}{fileName}";
+                // Build a safe URL by URL-encoding each path segment to support spaces/Arabic characters
+                var relativePath = string.IsNullOrEmpty(folder) ? fileName : ($"{folder}/{fileName}");
+                var encoded = string.Join('/', relativePath
+                    .Split(new[] {'/'}, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(seg => Uri.EscapeDataString(seg)));
+                var baseUrl = _settings.BaseUrl.TrimEnd('/');
+                var fileUrl = $"{baseUrl}/{encoded}";
                 return new FileUploadResult
                 {
                     IsSuccess = true,
@@ -143,7 +155,11 @@ namespace YemenBooking.Infrastructure.Services
         public Task<string> GetFileUrlAsync(string filePath, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("الحصول على رابط الملف: {FilePath} لمدة: {Expiration}", filePath, expiration);
-            var url = $"{_settings.BaseUrl}/{filePath}";
+            var baseUrl = _settings.BaseUrl.TrimEnd('/');
+            var encoded = string.Join('/', filePath
+                .Split(new[] {'/'}, StringSplitOptions.RemoveEmptyEntries)
+                .Select(seg => Uri.EscapeDataString(seg)));
+            var url = $"{baseUrl}/{encoded}";
             return Task.FromResult(url);
         }
 
