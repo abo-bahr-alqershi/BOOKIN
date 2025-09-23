@@ -1330,7 +1330,9 @@ class _UserDetailsPageState extends State<UserDetailsPage>
         });
       }, (paginated) {
         setState(() {
-          _userBookings = [..._userBookings, ...paginated.items];
+          final existingIds = _userBookings.map((b) => b.id).toSet();
+          final newItems = paginated.items.where((b) => !existingIds.contains(b.id)).toList();
+          _userBookings = [..._userBookings, ...newItems];
           final totalCount = paginated.totalCount;
           final loadedCount = _userBookings.length;
           _bookingsHasMore = loadedCount < totalCount;
@@ -1373,10 +1375,12 @@ class _UserDetailsPageState extends State<UserDetailsPage>
         });
       }, (list) {
         setState(() {
-          _userReviews = [..._userReviews, ...list];
-          // Backend returns list; infer hasMore by page size
+          final existingIds = _userReviews.map((r) => r.id).toSet();
+          final newItems = list.where((r) => !existingIds.contains(r.id)).toList();
+          _userReviews = [..._userReviews, ...newItems];
+          // Infer hasMore by page size
           final fetchedCount = list.length;
-          _reviewsHasMore = fetchedCount >= _reviewsPageSize;
+          _reviewsHasMore = fetchedCount >= _reviewsPageSize && newItems.isNotEmpty;
           if (_reviewsHasMore) {
             _reviewsPage += 1;
           }
@@ -1416,7 +1420,9 @@ class _UserDetailsPageState extends State<UserDetailsPage>
         });
       }, (paginated) {
         setState(() {
-          _userActivityLogs = [..._userActivityLogs, ...paginated.items];
+          final existingIds = _userActivityLogs.map((a) => a.id).toSet();
+          final newItems = paginated.items.where((a) => !existingIds.contains(a.id)).toList();
+          _userActivityLogs = [..._userActivityLogs, ...newItems];
           final totalCount = paginated.totalCount;
           final loadedCount = _userActivityLogs.length;
           _activityHasMore = loadedCount < totalCount;
