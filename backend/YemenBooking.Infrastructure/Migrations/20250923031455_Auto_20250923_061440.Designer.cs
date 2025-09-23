@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using YemenBooking.Infrastructure.Data.Context;
 
@@ -11,9 +12,11 @@ using YemenBooking.Infrastructure.Data.Context;
 namespace YemenBooking.Infrastructure.Migrations
 {
     [DbContext(typeof(YemenBookingDbContext))]
-    partial class YemenBookingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250923031455_Auto_20250923_061440")]
+    partial class Auto_20250923_061440
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
