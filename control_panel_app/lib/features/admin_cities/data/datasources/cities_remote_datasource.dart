@@ -185,11 +185,14 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
   @override
   Future<String> uploadCityImage(String cityName, String imagePath, {ProgressCallback? onSendProgress}) async {
     try {
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(imagePath),
-        'category': 'Gallery',
-        'cityName': cityName,
-      });
+      // Build multipart form data explicitly to avoid filename inference issues
+      final formData = FormData();
+      formData.files.add(MapEntry(
+        'file', await MultipartFile.fromFile(imagePath),
+      ));
+      formData.fields
+        ..add(const MapEntry('category', 'Gallery'))
+        ..add(MapEntry('cityName', cityName));
 
       final response = await apiClient.post(
         '$_imagesPath/upload',
@@ -208,7 +211,7 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
           final data = map['image'] ?? map['data'];
           if (data is Map && data['url'] != null) {
             return data['url'] as String;
-        }
+          }
         }
       }
       

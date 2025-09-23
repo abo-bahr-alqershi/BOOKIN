@@ -865,7 +865,8 @@ class _CityFormPageState extends State<CityFormPage>
               // ارفع أي صور محلية فوراً مثل آلية العقارات ثم استبدلها بالرابط
               for (int i = 0; i < images.length; i++) {
                 final path = images[i];
-                final isRemote = path.startsWith('http://') || path.startsWith('https://') || path.startsWith('/');
+                final lower = path.toLowerCase();
+                final isRemote = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('/uploads') || lower.startsWith('uploads/') || lower.startsWith('/images') || lower.startsWith('images/');
                 if (!isRemote) {
                   final uploader = sl<UploadCityImageUseCase>();
                   uploader(
