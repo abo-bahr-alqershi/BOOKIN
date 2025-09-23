@@ -34,5 +34,11 @@ public class City
     /// Properties located in this city (reverse navigation)
     /// </summary>
     public virtual ICollection<Property> Properties { get; set; } = new List<Property>();
+
+    /// <summary>
+    /// الصور المرتبطة بالمدينة عبر جدول الصور الموحد
+    /// Images associated with this city via shared images table
+    /// </summary>
+    public virtual ICollection<PropertyImage> Images { get; set; } = new List<PropertyImage>();
 }
 

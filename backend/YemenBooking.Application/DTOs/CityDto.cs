@@ -16,5 +16,8 @@ namespace YemenBooking.Application.DTOs
 
         /// <summary>Image URLs for the city</summary>
         public List<string> Images { get; set; } = new List<string>();
+
+        /// <summary>Optional flag for active status used in CP UI</summary>
+        public bool? IsActive { get; set; }
     }
 } 

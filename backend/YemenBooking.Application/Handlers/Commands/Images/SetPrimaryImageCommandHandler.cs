@@ -40,7 +40,7 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                 }
 
                 // إذا كانت الصورة غير مرتبطة بعد (إنشاء سابق للحفظ) ويوجد TempKey، قم بتحديث مجموعة المفتاح المؤقت فقط
-                if (!image.PropertyId.HasValue && !image.UnitId.HasValue && !string.IsNullOrWhiteSpace(request.TempKey))
+                if (!image.PropertyId.HasValue && !image.UnitId.HasValue && string.IsNullOrWhiteSpace(image.CityName) && !string.IsNullOrWhiteSpace(request.TempKey))
                 {
                     var group = await _imageRepository.GetImagesByTempKeyAsync(request.TempKey!, cancellationToken);
                     foreach (var img in group)

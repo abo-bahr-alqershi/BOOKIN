@@ -68,6 +68,19 @@ namespace YemenBooking.Api.Controllers.Admin
         public async Task<ActionResult<ResultDto<List<CityDto>>>> GetCitiesAsync(CancellationToken cancellationToken)
         {
             var cities = await _citySettingsService.GetCitiesAsync(cancellationToken);
+            // Ensure image URLs are absolute for frontend cards, leverage same behavior as ImagesController
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            foreach (var c in cities)
+            {
+                for (int i = 0; i < c.Images.Count; i++)
+                {
+                    var url = c.Images[i] ?? string.Empty;
+                    if (!string.IsNullOrWhiteSpace(url) && !url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    {
+                        c.Images[i] = baseUrl + (url.StartsWith("/") ? url : "/" + url);
+                    }
+                }
+            }
             return Ok(ResultDto<List<CityDto>>.Succeeded(cities));
         }
 
@@ -111,6 +124,19 @@ namespace YemenBooking.Api.Controllers.Admin
         [HttpPut("cities")]
         public async Task<ActionResult<ResultDto<bool>>> SaveCitiesAsync([FromBody] List<CityDto> cities, CancellationToken cancellationToken)
         {
+            // Normalize URLs to server-relative paths to keep DB clean
+            var origin = $"{Request.Scheme}://{Request.Host}";
+            foreach (var c in cities)
+            {
+                for (int i = 0; i < c.Images.Count; i++)
+                {
+                    var url = c.Images[i] ?? string.Empty;
+                    if (!string.IsNullOrWhiteSpace(url) && url.StartsWith(origin, StringComparison.OrdinalIgnoreCase))
+                    {
+                        c.Images[i] = url.Substring(origin.Length);
+                    }
+                }
+            }
             await _citySettingsService.SaveCitiesAsync(cities, cancellationToken);
             return Ok(ResultDto<bool>.Succeeded(true));
         }

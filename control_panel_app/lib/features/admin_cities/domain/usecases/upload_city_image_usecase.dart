@@ -13,6 +13,7 @@ class UploadCityImageUseCase implements UseCase<String, UploadCityImageParams> {
   @override
   Future<Either<Failure, String>> call(UploadCityImageParams params) async {
     return await repository.uploadCityImage(
+      params.cityName,
       params.imagePath,
       onSendProgress: params.onSendProgress,
     );

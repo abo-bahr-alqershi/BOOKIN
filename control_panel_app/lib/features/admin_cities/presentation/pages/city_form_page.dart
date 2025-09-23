@@ -862,6 +862,38 @@ class _CityFormPageState extends State<CityFormPage>
                 _images = images;
                 _hasChanges = true;
               });
+              // ارفع أي صور محلية فوراً مثل آلية العقارات ثم استبدلها بالرابط
+              for (int i = 0; i < images.length; i++) {
+                final path = images[i];
+                final isRemote = path.startsWith('http://') || path.startsWith('https://') || path.startsWith('/');
+                if (!isRemote) {
+                  final uploader = sl<UploadCityImageUseCase>();
+                  uploader(
+                    UploadCityImageParams(
+                      cityName: _nameController.text.trim(),
+                      imagePath: path,
+                      onSendProgress: null,
+                    ),
+                  ).then((either) {
+                    either.fold(
+                      (_) => null,
+                      (url) {
+                        if (!mounted) return;
+                        setState(() {
+                          if (i >= 0 && i < _images.length && _images[i] == path) {
+                            _images[i] = url;
+                          } else {
+                            // fallback: replace first matching local occurrence
+                            final idx = _images.indexOf(path);
+                            if (idx != -1) _images[idx] = url;
+                          }
+                          _hasChanges = true;
+                        });
+                      },
+                    );
+                  });
+                }
+              }
             },
             maxImages: 10,
           ),

@@ -231,10 +231,10 @@ class CitiesRepositoryImpl implements CitiesRepository {
   }
 
   @override
-  Future<Either<Failure, String>> uploadCityImage(String imagePath, {ProgressCallback? onSendProgress}) async {
+  Future<Either<Failure, String>> uploadCityImage(String cityName, String imagePath, {ProgressCallback? onSendProgress}) async {
     if (await networkInfo.isConnected) {
       try {
-        final result = await remoteDataSource.uploadCityImage(imagePath, onSendProgress: onSendProgress);
+        final result = await remoteDataSource.uploadCityImage(cityName, imagePath, onSendProgress: onSendProgress);
         return Right(result);
       } on ApiException catch (e) {
         return Left(ServerFailure(e.message));

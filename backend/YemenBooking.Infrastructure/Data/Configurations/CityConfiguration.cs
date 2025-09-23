@@ -25,6 +25,13 @@ public class CityConfiguration : IEntityTypeConfiguration<City>
                .HasColumnType("NVARCHAR(MAX)")
                .HasDefaultValue("[]");
 
+        // لا نستخدم FK مباشر للصور لأن الجدول مشترك، لكن نضمن الطول للفهرس
+        builder.HasMany(c => c.Images)
+               .WithOne(i => i.City)
+               .HasForeignKey(i => i.CityName)
+               .HasPrincipalKey(c => c.Name)
+               .OnDelete(DeleteBehavior.SetNull);
+
         builder.HasIndex(c => new { c.Name, c.Country }).IsUnique();
     }
 }

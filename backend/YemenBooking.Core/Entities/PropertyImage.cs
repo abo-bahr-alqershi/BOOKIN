@@ -31,6 +31,13 @@ public class PropertyImage : BaseEntity<Guid>
     /// </summary>
     [Display(Name = "معرف الوحدة")]
     public Guid? UnitId { get; set; }
+        
+        /// <summary>
+        /// اسم المدينة المرتبطة (مفتاح نصي)
+        /// Associated city name (string key)
+        /// </summary>
+        [Display(Name = "اسم المدينة")]
+        public string? CityName { get; set; }
     
     /// <summary>
     /// اسم الصورة
@@ -164,4 +171,11 @@ public class PropertyImage : BaseEntity<Guid>
     /// </summary>
     [Display(Name = "الوحدة المرتبطة بالصورة")]
     public virtual Unit? Unit { get; set; }
+        
+        /// <summary>
+        /// المدينة المرتبطة بالصورة (اختياري)
+        /// City associated with the image (optional)
+        /// </summary>
+        [Display(Name = "المدينة المرتبطة بالصورة")]
+        public virtual City? City { get; set; }
 }

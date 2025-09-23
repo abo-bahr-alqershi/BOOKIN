@@ -28,7 +28,7 @@ abstract class CitiesRemoteDataSource {
   Future<Map<String, dynamic>> getCitiesStatistics();
   
   /// رفع صورة للمدينة
-  Future<String> uploadCityImage(String imagePath, {ProgressCallback? onSendProgress});
+  Future<String> uploadCityImage(String cityName, String imagePath, {ProgressCallback? onSendProgress});
   
   /// حذف صورة من المدينة
   Future<bool> deleteCityImage(String imageUrl);
@@ -183,11 +183,12 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
 
   /// 📤 رفع صورة للمدينة
   @override
-  Future<String> uploadCityImage(String imagePath, {ProgressCallback? onSendProgress}) async {
+  Future<String> uploadCityImage(String cityName, String imagePath, {ProgressCallback? onSendProgress}) async {
     try {
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(imagePath),
-        'category': 'city',
+        'category': 'Gallery',
+        'cityName': cityName,
       });
 
       final response = await apiClient.post(

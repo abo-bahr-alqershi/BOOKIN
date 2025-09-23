@@ -56,6 +56,18 @@ namespace YemenBooking.Api.Controllers.Common
         public async Task<ActionResult<ResultDto<List<CityDto>>>> GetCitiesAsync(CancellationToken cancellationToken)
         {
             var cities = await _citySettingsService.GetCitiesAsync(cancellationToken);
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            foreach (var c in cities)
+            {
+                for (int i = 0; i < c.Images.Count; i++)
+                {
+                    var url = c.Images[i] ?? string.Empty;
+                    if (!string.IsNullOrWhiteSpace(url) && !url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    {
+                        c.Images[i] = baseUrl + (url.StartsWith("/") ? url : "/" + url);
+                    }
+                }
+            }
             return Ok(ResultDto<List<CityDto>>.Succeeded(cities));
         }
     }

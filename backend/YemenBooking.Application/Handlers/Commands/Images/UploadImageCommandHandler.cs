@@ -81,6 +81,10 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                 {
                     folderPath = $"temp/{request.TempKey}";
                 }
+                else if (!string.IsNullOrWhiteSpace(request.CityName))
+                {
+                    folderPath = $"cities/{request.CityName}";
+                }
                 else if (effectivePropertyId == Guid.Empty)
                 {
                     folderPath = "temp";
@@ -234,6 +238,7 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     Id = imageDto.Id,
                     PropertyId = propertyAssociation,
                     UnitId = request.UnitId,
+                    CityName = string.IsNullOrWhiteSpace(request.CityName) ? null : request.CityName,
                     TempKey = string.IsNullOrWhiteSpace(request.TempKey) ? null : request.TempKey,
                     Name = fileName,
                     Url = uploadResult.FileUrl,

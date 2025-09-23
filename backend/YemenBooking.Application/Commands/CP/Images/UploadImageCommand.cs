@@ -79,6 +79,12 @@ namespace YemenBooking.Application.Commands.Images
         public Guid? UnitId { get; set; }
 
         /// <summary>
+        /// اسم المدينة (اختياري)
+        /// City name (optional)
+        /// </summary>
+        public string? CityName { get; set; }
+
+        /// <summary>
         /// النص البديل للصورة
         /// Alt text (optional)
         /// </summary>

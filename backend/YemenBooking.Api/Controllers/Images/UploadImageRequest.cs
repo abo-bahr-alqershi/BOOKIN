@@ -24,6 +24,9 @@ namespace YemenBooking.Api.Controllers.Images
         [FromForm(Name = "unitId")]
         public string? UnitId { get; set; }
 
+        [FromForm(Name = "cityName")]
+        public string? CityName { get; set; }
+
         [FromForm(Name = "alt")]
         public string? Alt { get; set; }
 
