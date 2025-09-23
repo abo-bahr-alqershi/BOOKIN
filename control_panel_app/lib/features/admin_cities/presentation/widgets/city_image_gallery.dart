@@ -20,6 +20,8 @@ class CityImageGallery extends StatefulWidget {
   final Function(List<String>) onImagesChanged;
   final bool isReadOnly;
   final int maxImages;
+  /// خارجي: خريطة تقدم الرفع للصور المحلية (path -> 0..1)
+  final Map<String, double>? uploadProgress;
 
   const CityImageGallery({
     super.key,
@@ -27,6 +29,7 @@ class CityImageGallery extends StatefulWidget {
     required this.onImagesChanged,
     this.isReadOnly = false,
     this.maxImages = 10,
+    this.uploadProgress,
   });
 
   @override
@@ -81,6 +84,12 @@ class _CityImageGalleryState extends State<CityImageGallery>
 
   @override
   Widget build(BuildContext context) {
+    // Sync external progress if provided
+    if (widget.uploadProgress != null) {
+      for (final entry in widget.uploadProgress!.entries) {
+        _uploadProgress[entry.key] = entry.value;
+      }
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
