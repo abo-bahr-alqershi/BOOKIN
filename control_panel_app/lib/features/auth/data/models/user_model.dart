@@ -24,14 +24,23 @@ class UserModel extends User {
       name: (json['name'] ?? json['userName'] ?? '').toString(),
       email: (json['email'] ?? '').toString(),
       phone: (json['phone'] ?? json['phoneNumber'] ?? '').toString(),
-      roles: json['roles'] != null 
-          ? List<String>.from(json['roles']) 
-          : json['role'] != null ? [json['role'].toString()] : <String>[],
-      accountRole: (json['accountRole'] ?? json['account_role'] ?? json['role'] ?? '').toString(),
+      roles: json['roles'] != null
+          ? List<String>.from(json['roles'])
+          : json['role'] != null
+              ? [json['role'].toString()]
+              : <String>[],
+      accountRole:
+          (json['accountRole'] ?? json['account_role'] ?? json['role'] ?? '')
+              .toString(),
       propertyId: (json['propertyId'] ?? json['property_id'])?.toString(),
       propertyName: (json['propertyName'] ?? json['property_name'])?.toString(),
-      propertyCurrency: (json['propertyCurrency'] ?? json['property_currency'] ?? json['currency'])?.toString(),
-      profileImage: json['profileImage'] ?? json['profile_image'] ?? json['profileImageUrl'],
+      propertyCurrency: (json['propertyCurrency'] ??
+              json['property_currency'] ??
+              json['currency'])
+          ?.toString(),
+      profileImage: json['profileImage'] ??
+          json['profile_image'] ??
+          json['profileImageUrl'],
       emailVerifiedAt: json['emailVerifiedAt'] != null
           ? DateTime.tryParse(json['emailVerifiedAt'])
           : json['email_verified_at'] != null

@@ -199,7 +199,7 @@ class _RegisterFormState extends State<RegisterForm>
             },
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Email field
           _buildUltraCompactField(
@@ -224,7 +224,7 @@ class _RegisterFormState extends State<RegisterForm>
             },
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Phone field
           _buildUltraCompactField(
@@ -253,7 +253,7 @@ class _RegisterFormState extends State<RegisterForm>
             },
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Password field
           _buildUltraCompactField(
@@ -284,14 +284,14 @@ class _RegisterFormState extends State<RegisterForm>
 
           // Password strength indicator
           if (_showPasswordStrength) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             PasswordStrengthIndicator(
               password: _passwordController.text,
               showRequirements: false,
             ),
           ],
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Confirm password field
           _buildUltraCompactField(
@@ -319,7 +319,7 @@ class _RegisterFormState extends State<RegisterForm>
             },
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
           // Property section header
           _buildSectionHeader('بيانات الكيان'),
@@ -327,7 +327,7 @@ class _RegisterFormState extends State<RegisterForm>
           // Property type dropdown
           _buildPropertyTypeDropdown(),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Property name
           _buildUltraCompactField(
@@ -348,12 +348,12 @@ class _RegisterFormState extends State<RegisterForm>
             },
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // City
           _buildCityDropdown(),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Address
           _buildUltraCompactField(
@@ -375,11 +375,11 @@ class _RegisterFormState extends State<RegisterForm>
 
           // Address suggestions
           if (_addressSuggestions.isNotEmpty) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             _buildAddressSuggestionsPanel(),
           ],
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Latitude & Longitude
           Row(
@@ -399,7 +399,7 @@ class _RegisterFormState extends State<RegisterForm>
                   },
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
                 child: _buildUltraCompactField(
                   controller: _longitudeController,
@@ -415,14 +415,14 @@ class _RegisterFormState extends State<RegisterForm>
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Star rating removed
 
           // Map picker button
           _buildMapPickerButton(),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Description (optional)
           _buildUltraTextarea(
@@ -432,12 +432,12 @@ class _RegisterFormState extends State<RegisterForm>
             icon: Icons.description_outlined,
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
           // Terms checkbox
           _buildUltraTermsCheckbox(),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
           // Submit button
           _buildUltraSubmitButton(),
@@ -448,13 +448,13 @@ class _RegisterFormState extends State<RegisterForm>
 
   Widget _buildSectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Text(
         title,
         style: AppTextStyles.caption.copyWith(
-          color: AppTheme.textWhite.withValues(alpha: 0.8),
+          color: AppTheme.textWhite.withValues(alpha: 0.9),
           fontWeight: FontWeight.w600,
-          fontSize: 12,
+          fontSize: 14,
         ),
       ),
     );
@@ -478,31 +478,40 @@ class _RegisterFormState extends State<RegisterForm>
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      height: 42,
+      height: 52, // زيادة الارتفاع من 42 إلى 52
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isFocused
               ? [
-                  AppTheme.primaryBlue.withValues(alpha: 0.05),
-                  AppTheme.primaryPurple.withValues(alpha: 0.03),
+                  AppTheme.primaryBlue.withValues(alpha: 0.08),
+                  AppTheme.primaryPurple.withValues(alpha: 0.05),
                 ]
               : [
+                  AppTheme.darkCard.withValues(alpha: 0.3),
                   AppTheme.darkCard.withValues(alpha: 0.2),
-                  AppTheme.darkCard.withValues(alpha: 0.1),
                 ],
         ),
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(14), // زيادة الانحناء من 11 إلى 14
         border: Border.all(
           color: isFocused
-              ? AppTheme.primaryBlue.withValues(alpha: 0.3)
-              : AppTheme.darkBorder.withValues(alpha: 0.1),
-          width: 0.5,
+              ? AppTheme.primaryBlue.withValues(alpha: 0.4)
+              : AppTheme.darkBorder.withValues(alpha: 0.15),
+          width: isFocused ? 1 : 0.5, // زيادة عرض الحدود عند التركيز
         ),
+        boxShadow: isFocused
+            ? [
+                BoxShadow(
+                  color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : [],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(14),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: TextFormField(
             controller: controller,
             focusNode: focusNode,
@@ -514,42 +523,44 @@ class _RegisterFormState extends State<RegisterForm>
             onChanged: onChanged,
             onFieldSubmitted: onFieldSubmitted,
             style: AppTextStyles.caption.copyWith(
-              color: AppTheme.textWhite.withValues(alpha: 0.9),
-              fontSize: 12,
+              color: AppTheme.textWhite,
+              fontSize: 14, // زيادة حجم الخط من 12 إلى 14
+              fontWeight: FontWeight.w500,
             ),
             decoration: InputDecoration(
               labelText: label,
               hintText: hint,
               labelStyle: AppTextStyles.caption.copyWith(
                 color: isFocused
-                    ? AppTheme.primaryBlue.withValues(alpha: 0.8)
-                    : AppTheme.textMuted.withValues(alpha: 0.5),
-                fontSize: 10,
+                    ? AppTheme.primaryBlue.withValues(alpha: 0.9)
+                    : AppTheme.textMuted.withValues(alpha: 0.6),
+                fontSize: 12, // زيادة حجم label من 10 إلى 12
+                fontWeight: isFocused ? FontWeight.w600 : FontWeight.w500,
               ),
               hintStyle: AppTextStyles.caption.copyWith(
-                color: AppTheme.textMuted.withValues(alpha: 0.3),
-                fontSize: 11,
+                color: AppTheme.textMuted.withValues(alpha: 0.4),
+                fontSize: 13, // زيادة حجم hint من 11 إلى 13
               ),
               prefixIcon: Container(
-                width: 32,
-                height: 42,
+                width: 40, // زيادة عرض الأيقونة من 32 إلى 40
+                height: 52,
                 alignment: Alignment.center,
                 child: Icon(
                   icon,
                   color: isFocused
-                      ? AppTheme.primaryBlue.withValues(alpha: 0.7)
-                      : AppTheme.textMuted.withValues(alpha: 0.4),
-                  size: 16,
+                      ? AppTheme.primaryBlue.withValues(alpha: 0.8)
+                      : AppTheme.textMuted.withValues(alpha: 0.5),
+                  size: 20, // زيادة حجم الأيقونة من 16 إلى 20
                 ),
               ),
               suffixIcon: suffixIcon,
               filled: false,
               border: InputBorder.none,
               contentPadding: const EdgeInsets.only(
-                left: 12,
+                left: 14,
                 right: 0,
-                top: 10,
-                bottom: 10,
+                top: 14,
+                bottom: 14,
               ),
               isDense: true,
             ),
@@ -565,41 +576,41 @@ class _RegisterFormState extends State<RegisterForm>
       color: Colors.transparent,
       child: InkWell(
         onTap: widget.isLoading ? null : _openMapPicker,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         child: Ink(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTheme.primaryBlue.withValues(alpha: 0.8),
-                AppTheme.primaryBlue.withValues(alpha: 0.6),
+                AppTheme.primaryBlue.withValues(alpha: 0.9),
+                AppTheme.primaryBlue.withValues(alpha: 0.7),
               ],
             ),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryBlue.withValues(alpha: 0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
                   Icons.map_rounded,
-                  size: 16,
+                  size: 20,
                   color: Colors.white,
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Text(
                   'تحديد على الخريطة',
                   style: AppTextStyles.caption.copyWith(
                     color: Colors.white,
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -621,13 +632,13 @@ class _RegisterFormState extends State<RegisterForm>
         onTap();
       },
       child: Container(
-        width: 32,
-        height: 42,
+        width: 40,
+        height: 52,
         alignment: Alignment.center,
         child: Icon(
           obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-          color: AppTheme.textMuted.withValues(alpha: 0.4),
-          size: 14,
+          color: AppTheme.textMuted.withValues(alpha: 0.5),
+          size: 18, // زيادة حجم الأيقونة من 14 إلى 18
         ),
       ),
     );
@@ -637,31 +648,31 @@ class _RegisterFormState extends State<RegisterForm>
     final isFocused = _propertyNameFocusNode.hasFocus; // reuse style cues
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      height: 42,
+      height: 52, // زيادة الارتفاع من 42 إلى 52
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isFocused
               ? [
-                  AppTheme.primaryBlue.withValues(alpha: 0.05),
-                  AppTheme.primaryPurple.withValues(alpha: 0.03),
+                  AppTheme.primaryBlue.withValues(alpha: 0.08),
+                  AppTheme.primaryPurple.withValues(alpha: 0.05),
                 ]
               : [
+                  AppTheme.darkCard.withValues(alpha: 0.3),
                   AppTheme.darkCard.withValues(alpha: 0.2),
-                  AppTheme.darkCard.withValues(alpha: 0.1),
                 ],
         ),
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isFocused
-              ? AppTheme.primaryBlue.withValues(alpha: 0.3)
-              : AppTheme.darkBorder.withValues(alpha: 0.1),
-          width: 0.5,
+              ? AppTheme.primaryBlue.withValues(alpha: 0.4)
+              : AppTheme.darkBorder.withValues(alpha: 0.15),
+          width: isFocused ? 1 : 0.5,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(14),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _selectedPropertyTypeId.isEmpty
@@ -673,8 +684,9 @@ class _RegisterFormState extends State<RegisterForm>
                         child: Text(
                           t.name,
                           style: AppTextStyles.caption.copyWith(
-                            color: AppTheme.textWhite.withValues(alpha: 0.9),
-                            fontSize: 12,
+                            color: AppTheme.textWhite,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ))
@@ -685,22 +697,22 @@ class _RegisterFormState extends State<RegisterForm>
                       setState(() => _selectedPropertyTypeId = v ?? '');
                     },
               hint: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Row(
                   children: [
                     Icon(
                       Icons.category_outlined,
-                      color: AppTheme.textMuted.withValues(alpha: 0.4),
-                      size: 16,
+                      color: AppTheme.textMuted.withValues(alpha: 0.5),
+                      size: 20,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Text(
                       _loadingPropertyTypes
                           ? 'جاري تحميل الأنواع...'
                           : 'نوع الكيان',
                       style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.textMuted.withValues(alpha: 0.5),
-                        fontSize: 11,
+                        color: AppTheme.textMuted.withValues(alpha: 0.6),
+                        fontSize: 13,
                       ),
                     ),
                   ],
@@ -725,58 +737,61 @@ class _RegisterFormState extends State<RegisterForm>
   }) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      height: 90,
+      height: 110, // زيادة الارتفاع من 90 إلى 110
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
+            AppTheme.darkCard.withValues(alpha: 0.3),
             AppTheme.darkCard.withValues(alpha: 0.2),
-            AppTheme.darkCard.withValues(alpha: 0.1),
           ],
         ),
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppTheme.darkBorder.withValues(alpha: 0.1),
+          color: AppTheme.darkBorder.withValues(alpha: 0.15),
           width: 0.5,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(14),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: TextFormField(
             controller: controller,
             maxLines: 4,
             style: AppTextStyles.caption.copyWith(
-              color: AppTheme.textWhite.withValues(alpha: 0.9),
-              fontSize: 12,
+              color: AppTheme.textWhite,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
             ),
             decoration: InputDecoration(
               labelText: label,
               hintText: hint,
               labelStyle: AppTextStyles.caption.copyWith(
-                color: AppTheme.textMuted.withValues(alpha: 0.5),
-                fontSize: 10,
+                color: AppTheme.textMuted.withValues(alpha: 0.6),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
               hintStyle: AppTextStyles.caption.copyWith(
-                color: AppTheme.textMuted.withValues(alpha: 0.3),
-                fontSize: 11,
+                color: AppTheme.textMuted.withValues(alpha: 0.4),
+                fontSize: 13,
               ),
               prefixIcon: Container(
-                width: 32,
+                width: 40,
                 alignment: Alignment.topCenter,
+                padding: const EdgeInsets.only(top: 14),
                 child: Icon(
                   icon,
-                  color: AppTheme.textMuted.withValues(alpha: 0.4),
-                  size: 16,
+                  color: AppTheme.textMuted.withValues(alpha: 0.5),
+                  size: 20,
                 ),
               ),
               filled: false,
               border: InputBorder.none,
               contentPadding: const EdgeInsets.only(
-                left: 12,
+                left: 14,
                 right: 0,
-                top: 8,
-                bottom: 8,
+                top: 14,
+                bottom: 14,
               ),
               isDense: true,
             ),
@@ -805,56 +820,67 @@ class _RegisterFormState extends State<RegisterForm>
         children: [
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            width: 18,
-            height: 18,
+            width: 22, // زيادة حجم checkbox من 18 إلى 22
+            height: 22,
             decoration: BoxDecoration(
               gradient: _acceptTerms ? AppTheme.primaryGradient : null,
               color: !_acceptTerms
-                  ? AppTheme.darkCard.withValues(alpha: 0.3)
+                  ? AppTheme.darkCard.withValues(alpha: 0.4)
                   : null,
-              borderRadius: BorderRadius.circular(5),
+              borderRadius: BorderRadius.circular(6),
               border: Border.all(
                 color: _acceptTerms
                     ? Colors.transparent
-                    : AppTheme.darkBorder.withValues(alpha: 0.2),
-                width: 0.5,
+                    : AppTheme.darkBorder.withValues(alpha: 0.3),
+                width: 1,
               ),
+              boxShadow: _acceptTerms
+                  ? [
+                      BoxShadow(
+                        color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : [],
             ),
             child: _acceptTerms
                 ? const Icon(
                     Icons.check_rounded,
-                    size: 12,
+                    size: 16,
                     color: Colors.white,
                   )
                 : null,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
             child: RichText(
               text: TextSpan(
                 style: AppTextStyles.caption.copyWith(
-                  color: AppTheme.textMuted.withValues(alpha: 0.5),
-                  fontSize: 10,
+                  color: AppTheme.textMuted.withValues(alpha: 0.6),
+                  fontSize: 12, // زيادة حجم الخط من 10 إلى 12
                 ),
                 children: [
                   const TextSpan(text: 'أوافق على '),
                   TextSpan(
                     text: 'الشروط',
                     style: TextStyle(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.7),
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.8),
                       decoration: TextDecoration.underline,
                       decorationColor:
-                          AppTheme.primaryBlue.withValues(alpha: 0.3),
+                          AppTheme.primaryBlue.withValues(alpha: 0.4),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const TextSpan(text: ' و'),
                   TextSpan(
                     text: 'الخصوصية',
                     style: TextStyle(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.7),
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.8),
                       decoration: TextDecoration.underline,
                       decorationColor:
-                          AppTheme.primaryBlue.withValues(alpha: 0.3),
+                          AppTheme.primaryBlue.withValues(alpha: 0.4),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -873,29 +899,29 @@ class _RegisterFormState extends State<RegisterForm>
       onTap: canSubmit ? _onSubmit : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 44,
+        height: 54, // زيادة الارتفاع من 44 إلى 54
         decoration: BoxDecoration(
           gradient: canSubmit
               ? AppTheme.primaryGradient
               : LinearGradient(
                   colors: [
+                    AppTheme.darkCard.withValues(alpha: 0.4),
                     AppTheme.darkCard.withValues(alpha: 0.3),
-                    AppTheme.darkCard.withValues(alpha: 0.2),
                   ],
                 ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: canSubmit
-                ? AppTheme.primaryBlue.withValues(alpha: 0.3)
-                : AppTheme.darkBorder.withValues(alpha: 0.1),
-            width: 0.5,
+                ? AppTheme.primaryBlue.withValues(alpha: 0.4)
+                : AppTheme.darkBorder.withValues(alpha: 0.15),
+            width: canSubmit ? 1 : 0.5,
           ),
           boxShadow: canSubmit
               ? [
                   BoxShadow(
-                    color: AppTheme.primaryBlue.withValues(alpha: 0.2),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
                   ),
                 ]
               : [],
@@ -906,21 +932,22 @@ class _RegisterFormState extends State<RegisterForm>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SizedBox(
-                      width: 14,
-                      height: 14,
+                      width: 18,
+                      height: 18,
                       child: CircularProgressIndicator(
-                        strokeWidth: 1.5,
+                        strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white.withValues(alpha: 0.8),
+                          Colors.white.withValues(alpha: 0.9),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Text(
                       'جاري التسجيل...',
                       style: AppTextStyles.caption.copyWith(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 12,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -931,15 +958,15 @@ class _RegisterFormState extends State<RegisterForm>
                     const Icon(
                       Icons.person_add_rounded,
                       color: Colors.white,
-                      size: 16,
+                      size: 20,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Text(
                       'إنشاء حساب',
                       style: AppTextStyles.buttonMedium.copyWith(
                         color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
@@ -1014,34 +1041,35 @@ class _RegisterFormState extends State<RegisterForm>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Container(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: [
               Container(
-                width: 28,
-                height: 28,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppTheme.warning.withValues(alpha: 0.8),
-                      AppTheme.warning.withValues(alpha: 0.6),
+                      AppTheme.warning.withValues(alpha: 0.9),
+                      AppTheme.warning.withValues(alpha: 0.7),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
                   Icons.info_outline_rounded,
                   color: Colors.white,
-                  size: 14,
+                  size: 18,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   'يجب الموافقة على الشروط',
                   style: AppTextStyles.caption.copyWith(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 11,
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -1051,7 +1079,7 @@ class _RegisterFormState extends State<RegisterForm>
         backgroundColor: AppTheme.darkCard.withValues(alpha: 0.95),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
         ),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         padding: EdgeInsets.zero,
@@ -1113,63 +1141,66 @@ class _RegisterFormState extends State<RegisterForm>
     final isFocused = _cityFocusNode.hasFocus;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      height: 42,
+      height: 52, // زيادة الارتفاع
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isFocused
               ? [
-                  AppTheme.primaryBlue.withValues(alpha: 0.05),
-                  AppTheme.primaryPurple.withValues(alpha: 0.03),
+                  AppTheme.primaryBlue.withValues(alpha: 0.08),
+                  AppTheme.primaryPurple.withValues(alpha: 0.05),
                 ]
               : [
+                  AppTheme.darkCard.withValues(alpha: 0.3),
                   AppTheme.darkCard.withValues(alpha: 0.2),
-                  AppTheme.darkCard.withValues(alpha: 0.1),
                 ],
         ),
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isFocused
-              ? AppTheme.primaryBlue.withValues(alpha: 0.3)
-              : AppTheme.darkBorder.withValues(alpha: 0.1),
-          width: 0.5,
+              ? AppTheme.primaryBlue.withValues(alpha: 0.4)
+              : AppTheme.darkBorder.withValues(alpha: 0.15),
+          width: isFocused ? 1 : 0.5,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(14),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             child: DropdownButtonFormField<String?>(
-              value: _cities.contains(_selectedCity) ? _selectedCity : null,
+              initialValue:
+                  _cities.contains(_selectedCity) ? _selectedCity : null,
               dropdownColor: AppTheme.darkCard,
               style: AppTextStyles.caption.copyWith(
-                color: AppTheme.textWhite.withValues(alpha: 0.9),
-                fontSize: 12,
+                color: AppTheme.textWhite,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
               icon: Icon(
                 Icons.keyboard_arrow_down_rounded,
-                size: 18,
-                color: AppTheme.textMuted.withValues(alpha: 0.5),
+                size: 22,
+                color: AppTheme.textMuted.withValues(alpha: 0.6),
               ),
               decoration: InputDecoration(
                 labelText: 'المدينة',
                 labelStyle: AppTextStyles.caption.copyWith(
                   color: isFocused
-                      ? AppTheme.primaryBlue.withValues(alpha: 0.8)
-                      : AppTheme.textMuted.withValues(alpha: 0.5),
-                  fontSize: 10,
+                      ? AppTheme.primaryBlue.withValues(alpha: 0.9)
+                      : AppTheme.textMuted.withValues(alpha: 0.6),
+                  fontSize: 12,
+                  fontWeight: isFocused ? FontWeight.w600 : FontWeight.w500,
                 ),
                 prefixIcon: Container(
-                  width: 32,
-                  height: 42,
+                  width: 40,
+                  height: 52,
                   alignment: Alignment.center,
                   child: Icon(
                     Icons.location_city_outlined,
                     color: isFocused
-                        ? AppTheme.primaryBlue.withValues(alpha: 0.7)
-                        : AppTheme.textMuted.withValues(alpha: 0.4),
-                    size: 16,
+                        ? AppTheme.primaryBlue.withValues(alpha: 0.8)
+                        : AppTheme.textMuted.withValues(alpha: 0.5),
+                    size: 20,
                   ),
                 ),
                 border: InputBorder.none,
@@ -1268,37 +1299,46 @@ class _RegisterFormState extends State<RegisterForm>
   Widget _buildAddressSuggestionsPanel() {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.darkCard.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(10),
+        color: AppTheme.darkCard.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.darkBorder.withValues(alpha: 0.2),
-          width: 0.5,
+          color: AppTheme.darkBorder.withValues(alpha: 0.3),
+          width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: _addressSuggestions
             .map(
               (s) => InkWell(
                 onTap: () => _selectPlaceSuggestion(s),
+                borderRadius: BorderRadius.circular(12),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 10,
+                    horizontal: 12,
+                    vertical: 12,
                   ),
                   child: Row(
                     children: [
                       Icon(
                         Icons.place_outlined,
                         color: AppTheme.textMuted.withValues(alpha: 0.7),
-                        size: 14,
+                        size: 18,
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           s.description,
                           style: AppTextStyles.caption.copyWith(
-                            color: AppTheme.textWhite.withValues(alpha: 0.9),
-                            fontSize: 11,
+                            color: AppTheme.textWhite,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -1506,11 +1546,11 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
                         GestureDetector(
                           onTap: () => Navigator.pop(context),
                           child: Container(
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               color:
-                                  AppTheme.darkSurface.withValues(alpha: 0.8),
-                              borderRadius: BorderRadius.circular(10),
+                                  AppTheme.darkSurface.withValues(alpha: 0.9),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color:
                                     AppTheme.darkBorder.withValues(alpha: 0.3),
@@ -1519,7 +1559,7 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
                             child: Icon(
                               Icons.close_rounded,
                               color: AppTheme.textWhite,
-                              size: 20,
+                              size: 22,
                             ),
                           ),
                         ),
@@ -1529,6 +1569,7 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
                             'تحديد الموقع على الخريطة',
                             style: AppTextStyles.heading3.copyWith(
                               color: AppTheme.textWhite,
+                              fontSize: 18,
                             ),
                           ),
                         ),
@@ -1541,7 +1582,7 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
                   left: 0,
                   right: 0,
                   child: Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.bottomCenter,
@@ -1559,11 +1600,11 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
                           child: GestureDetector(
                             onTap: () => Navigator.pop(context),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               decoration: BoxDecoration(
                                 color:
-                                    AppTheme.darkSurface.withValues(alpha: 0.8),
-                                borderRadius: BorderRadius.circular(12),
+                                    AppTheme.darkSurface.withValues(alpha: 0.9),
+                                borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
                                   color: AppTheme.darkBorder
                                       .withValues(alpha: 0.3),
@@ -1574,6 +1615,7 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
                                   'إلغاء',
                                   style: AppTextStyles.buttonMedium.copyWith(
                                     color: AppTheme.textMuted,
+                                    fontSize: 15,
                                   ),
                                 ),
                               ),
@@ -1593,7 +1635,7 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
                                   }
                                 : null,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               decoration: BoxDecoration(
                                 gradient: _selectedLocation != null
                                     ? AppTheme.primaryGradient
@@ -1602,14 +1644,14 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
                                     ? AppTheme.darkSurface
                                         .withValues(alpha: 0.5)
                                     : null,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(14),
                                 boxShadow: _selectedLocation != null
                                     ? [
                                         BoxShadow(
                                           color: AppTheme.primaryBlue
                                               .withValues(alpha: 0.3),
-                                          blurRadius: 12,
-                                          offset: const Offset(0, 4),
+                                          blurRadius: 16,
+                                          offset: const Offset(0, 6),
                                         ),
                                       ]
                                     : null,
@@ -1622,6 +1664,8 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
                                         ? Colors.white
                                         : AppTheme.textMuted
                                             .withValues(alpha: 0.5),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),

@@ -21,10 +21,13 @@ class AuthResponseModel extends AuthResponse {
       'email': json['email'],
       'phone': json['phone'] ?? json['phoneNumber'] ?? '',
       'roles': json['roles'] ?? (json['role'] != null ? [json['role']] : []),
-      'accountRole': json['accountRole'] ?? json['account_role'] ?? json['role'],
+      'accountRole':
+          json['accountRole'] ?? json['account_role'] ?? json['role'],
       'propertyId': json['propertyId'] ?? json['property_id'],
       'propertyName': json['propertyName'] ?? json['property_name'],
-      'propertyCurrency': json['propertyCurrency'] ?? json['property_currency'] ?? json['currency'],
+      'propertyCurrency': json['propertyCurrency'] ??
+          json['property_currency'] ??
+          json['currency'],
     };
 
     DateTime? expiresAt;
