@@ -354,8 +354,8 @@ class _RegisterFormState extends State<RegisterForm>
             onFieldSubmitted: (_) {
               FocusScope.of(context).requestFocus(_addressFocusNode);
             },
+            // المدينة اختيارية
             validator: (value) {
-              if (value == null || value.isEmpty) return 'مطلوب';
               return null;
             },
           ),
@@ -571,40 +571,51 @@ class _RegisterFormState extends State<RegisterForm>
   }
 
   Widget _buildMapPickerButton() {
-    return GestureDetector(
-      onTap: widget.isLoading ? null : _openMapPicker,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: 42,
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          borderRadius: BorderRadius.circular(11),
-          border: Border.all(
-            color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-            width: 0.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryBlue.withValues(alpha: 0.15),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: widget.isLoading ? null : _openMapPicker,
+        borderRadius: BorderRadius.circular(8),
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.primaryBlue.withValues(alpha: 0.8),
+                AppTheme.primaryBlue.withValues(alpha: 0.6),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.map_rounded, color: Colors.white, size: 16),
-            const SizedBox(width: 6),
-            Text(
-              'تحديد الموقع على الخريطة',
-              style: AppTextStyles.caption.copyWith(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
+            ],
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.map_rounded,
+                  size: 16,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'تحديد على الخريطة',
+                  style: AppTextStyles.caption.copyWith(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -1021,10 +1032,6 @@ class _RegisterFormState extends State<RegisterForm>
       }
       if (_propertyNameController.text.trim().isEmpty) {
         _showFieldError('اسم الكيان مطلوب');
-        return;
-      }
-      if (_cityController.text.trim().isEmpty) {
-        _showFieldError('المدينة مطلوبة');
         return;
       }
       if (_addressController.text.trim().isEmpty) {
