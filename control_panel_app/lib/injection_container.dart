@@ -63,6 +63,23 @@ import 'features/helpers/domain/usecases/search_cities_usecase.dart'
 import 'features/helpers/domain/usecases/search_bookings_usecase.dart'
     as helpers_uc_bookings;
 
+// Features - Settings
+import 'features/settings/presentation/bloc/settings_bloc.dart' as st_bloc;
+import 'features/settings/domain/repositories/settings_repository.dart'
+    as st_repo;
+import 'features/settings/data/repositories/settings_repository_impl.dart'
+    as st_repo_impl;
+import 'features/settings/data/datasources/settings_local_datasource.dart'
+    as st_ds_local;
+import 'features/settings/domain/usecases/get_settings_usecase.dart'
+    as st_uc_get;
+import 'features/settings/domain/usecases/update_language_usecase.dart'
+    as st_uc_lang;
+import 'features/settings/domain/usecases/update_theme_usecase.dart'
+    as st_uc_theme;
+import 'features/settings/domain/usecases/update_notification_settings_usecase.dart'
+    as st_uc_notif;
+
 // Features - Admin Currencies
 import 'features/admin_currencies/presentation/bloc/currencies_bloc.dart'
     as ac_bloc;
@@ -611,6 +628,9 @@ Future<void> init() async {
   // Features - Helpers (search/filter facades)
   _initHelpers();
 
+  // Features - Settings
+  _initSettings();
+
   // Features - Admin Bookings (repository + use cases)
   _initAdminBookings();
 
@@ -625,6 +645,36 @@ Future<void> init() async {
 
   // External
   await _initExternal();
+}
+
+void _initSettings() {
+  // Bloc
+  sl.registerFactory(() => st_bloc.SettingsBloc(
+        getSettingsUseCase: sl<st_uc_get.GetSettingsUseCase>(),
+        updateLanguageUseCase: sl<st_uc_lang.UpdateLanguageUseCase>(),
+        updateThemeUseCase: sl<st_uc_theme.UpdateThemeUseCase>(),
+        updateNotificationSettingsUseCase:
+            sl<st_uc_notif.UpdateNotificationSettingsUseCase>(),
+        localDataSource: sl(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton<st_uc_get.GetSettingsUseCase>(
+      () => st_uc_get.GetSettingsUseCase(sl()));
+  sl.registerLazySingleton<st_uc_lang.UpdateLanguageUseCase>(
+      () => st_uc_lang.UpdateLanguageUseCase(sl()));
+  sl.registerLazySingleton<st_uc_theme.UpdateThemeUseCase>(
+      () => st_uc_theme.UpdateThemeUseCase(sl()));
+  sl.registerLazySingleton<st_uc_notif.UpdateNotificationSettingsUseCase>(
+      () => st_uc_notif.UpdateNotificationSettingsUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<st_repo.SettingsRepository>(
+      () => st_repo_impl.SettingsRepositoryImpl(localDataSource: sl()));
+
+  // Data source
+  sl.registerLazySingleton<st_ds_local.SettingsLocalDataSource>(
+      () => st_ds_local.SettingsLocalDataSourceImpl(localStorage: sl()));
 }
 
 void _initAuth() {

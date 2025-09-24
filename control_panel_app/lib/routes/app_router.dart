@@ -112,6 +112,8 @@ import 'package:bookn_cp_app/features/onboarding/presentation/pages/select_city_
 import 'package:bookn_cp_app/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:bookn_cp_app/features/notifications/presentation/pages/notification_settings_page.dart';
 import 'package:bookn_cp_app/features/admin_hub/presentation/pages/admin_hub_page.dart';
+import 'package:bookn_cp_app/features/settings/presentation/pages/language_settings_page.dart';
+import 'package:bookn_cp_app/features/settings/presentation/bloc/settings_bloc.dart' as st_bloc;
 // Helpers search pages
 import 'package:bookn_cp_app/features/helpers/presentation/pages/user_search_page.dart';
 import 'package:bookn_cp_app/features/helpers/presentation/pages/property_search_page.dart';
@@ -279,6 +281,16 @@ class AppRouter {
             return BlocProvider<PaymentsListBloc>(
               create: (_) => di.sl<PaymentsListBloc>(),
               child: const PaymentsListPage(),
+            );
+          },
+        ),
+        // Settings - Language
+        GoRoute(
+          path: '/settings/language',
+          builder: (context, state) {
+            return BlocProvider<st_bloc.SettingsBloc>(
+              create: (_) => di.sl<st_bloc.SettingsBloc>(),
+              child: const LanguageSettingsPage(),
             );
           },
         ),
