@@ -17,6 +17,7 @@ import 'package:bookn_cp_app/presentation/screens/splash_screen.dart';
 // Removed unused imports
 import 'package:bookn_cp_app/features/auth/presentation/pages/register_page.dart';
 import 'package:bookn_cp_app/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:bookn_cp_app/features/auth/presentation/pages/verify_email_page.dart';
 // Removed imports for deleted features
 import 'package:bookn_cp_app/features/chat/presentation/pages/chat_page.dart';
 import 'package:bookn_cp_app/features/chat/presentation/pages/new_conversation_page.dart';
@@ -178,12 +179,22 @@ class AppRouter {
 
         if (authState is AuthAuthenticated &&
             (goingToLogin || goingToRegister || goingToForgot)) {
+          // إذا لم يتم التحقق من البريد الإلكتروني، اجبر على صفحة التحقق
+          if (!(authState.user.isEmailVerified)) {
+            return '/verify-email';
+          }
           return '/main';
         }
 
         // Optional: Admin guard (just redirect to main if not admin)
         if (guards.isAdminPath(path) && !guards.isAdmin(authState)) {
           return '/main';
+        }
+
+        // إذا المستخدم مصادق لكن بريده غير مؤكد، امنع الوصول للمسارات المحمية
+        if (authState is AuthAuthenticated && !authState.user.isEmailVerified) {
+          final goingToVerify = state.matchedLocation == '/verify-email';
+          if (!goingToVerify) return '/verify-email';
         }
 
         return null;
@@ -225,6 +236,12 @@ class AppRouter {
             return RegisterPage(
               isFirst: params["isFirst"] ?? false,
             );
+          },
+        ),
+        GoRoute(
+          path: '/verify-email',
+          builder: (BuildContext context, GoRouterState state) {
+            return const VerifyEmailPage();
           },
         ),
         GoRoute(

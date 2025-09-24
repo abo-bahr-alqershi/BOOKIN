@@ -55,4 +55,14 @@ abstract class AuthRepository {
   Future<Either<Failure, User>> uploadProfileImage({
     required String imagePath,
   });
+
+  // Email verification
+  Future<Either<Failure, bool>> verifyEmail({
+    required String userId,
+    required String code,
+  });
+  Future<Either<Failure, int?>> resendEmailVerification({
+    required String userId,
+    required String email,
+  });
 }

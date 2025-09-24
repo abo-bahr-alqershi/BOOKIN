@@ -653,9 +653,17 @@ class _RegisterPageState extends State<RegisterPage>
   }
   
   void _handleAuthState(BuildContext context, AuthState state) {
-    if (state is AuthRegistrationSuccess || state is AuthAuthenticated) {
+    if (state is AuthRegistrationSuccess) {
       HapticFeedback.mediumImpact();
-      context.go(RouteConstants.main);
+      // بعد التسجيل الناجح، انتقل لصفحة التحقق من البريد
+      context.go(RouteConstants.verifyEmail);
+    } else if (state is AuthAuthenticated) {
+      HapticFeedback.mediumImpact();
+      if (state.user.isEmailVerified) {
+        context.go(RouteConstants.main);
+      } else {
+        context.go(RouteConstants.verifyEmail);
+      }
     } else if (state is AuthError) {
       _showUltraErrorSnackBar(state.message);
     }

@@ -400,4 +400,44 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Left(NetworkFailure());
     }
   }
+
+  // Email verification
+  @override
+  Future<Either<Failure, bool>> verifyEmail({
+    required String userId,
+    required String code,
+  }) async {
+    if (await internetConnectionChecker.hasConnection) {
+      try {
+        final ok = await remoteDataSource.verifyEmail(userId: userId, code: code);
+        if (ok) {
+          // refresh current user to reflect verification status
+          final user = await remoteDataSource.getCurrentUser();
+          await localDataSource.cacheUser(user);
+        }
+        return Right(ok);
+      } catch (e) {
+        return ErrorHandler.handle(e);
+      }
+    } else {
+      return const Left(NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, int?>> resendEmailVerification({
+    required String userId,
+    required String email,
+  }) async {
+    if (await internetConnectionChecker.hasConnection) {
+      try {
+        final retryAfter = await remoteDataSource.resendEmailVerification(userId: userId, email: email);
+        return Right(retryAfter);
+      } catch (e) {
+        return ErrorHandler.handle(e);
+      }
+    } else {
+      return const Left(NetworkFailure());
+    }
+  }
 }
