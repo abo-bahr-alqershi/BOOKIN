@@ -7,6 +7,12 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/validators.dart';
 import 'password_strength_indicator.dart';
+import 'package:bookn_cp_app/injection_container.dart';
+import 'package:bookn_cp_app/core/models/paginated_result.dart';
+import 'package:bookn_cp_app/features/admin_properties/data/datasources/property_types_remote_datasource.dart'
+    as ap_ds_pt_remote;
+import 'package:bookn_cp_app/features/admin_properties/data/models/property_type_model.dart'
+    as ap_models;
 
 class RegisterForm extends StatefulWidget {
   final Function(
@@ -15,6 +21,15 @@ class RegisterForm extends StatefulWidget {
     String phone,
     String password,
     String passwordConfirmation,
+    // Owner/property fields
+    String propertyTypeId,
+    String propertyName,
+    String city,
+    String address,
+    int starRating,
+    double? latitude,
+    double? longitude,
+    String? description,
   ) onSubmit;
   final bool isLoading;
 
@@ -36,17 +51,33 @@ class _RegisterFormState extends State<RegisterForm>
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  // Property fields controllers
+  final _propertyNameController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _latitudeController = TextEditingController();
+  final _longitudeController = TextEditingController();
+  final _descriptionController = TextEditingController();
   
   final _nameFocusNode = FocusNode();
   final _emailFocusNode = FocusNode();
   final _phoneFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
   final _confirmPasswordFocusNode = FocusNode();
+  final _propertyNameFocusNode = FocusNode();
+  final _cityFocusNode = FocusNode();
+  final _addressFocusNode = FocusNode();
+  final _latitudeFocusNode = FocusNode();
+  final _longitudeFocusNode = FocusNode();
   
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
   bool _showPasswordStrength = false;
+  int _starRating = 3;
+  String _selectedPropertyTypeId = '';
+  List<ap_models.PropertyTypeModel> _propertyTypes = const [];
+  bool _loadingPropertyTypes = false;
   
   late AnimationController _fieldAnimationController;
   late AnimationController _checkboxAnimationController;
@@ -77,6 +108,13 @@ class _RegisterFormState extends State<RegisterForm>
     _phoneFocusNode.addListener(() => setState(() {}));
     _passwordFocusNode.addListener(() => setState(() {}));
     _confirmPasswordFocusNode.addListener(() => setState(() {}));
+    _propertyNameFocusNode.addListener(() => setState(() {}));
+    _cityFocusNode.addListener(() => setState(() {}));
+    _addressFocusNode.addListener(() => setState(() {}));
+    _latitudeFocusNode.addListener(() => setState(() {}));
+    _longitudeFocusNode.addListener(() => setState(() {}));
+
+    _loadPropertyTypes();
   }
 
   @override
@@ -86,11 +124,22 @@ class _RegisterFormState extends State<RegisterForm>
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _propertyNameController.dispose();
+    _cityController.dispose();
+    _addressController.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
+    _descriptionController.dispose();
     _nameFocusNode.dispose();
     _emailFocusNode.dispose();
     _phoneFocusNode.dispose();
     _passwordFocusNode.dispose();
     _confirmPasswordFocusNode.dispose();
+    _propertyNameFocusNode.dispose();
+    _cityFocusNode.dispose();
+    _addressFocusNode.dispose();
+    _latitudeFocusNode.dispose();
+    _longitudeFocusNode.dispose();
     _fieldAnimationController.dispose();
     _checkboxAnimationController.dispose();
     super.dispose();
@@ -247,6 +296,122 @@ class _RegisterFormState extends State<RegisterForm>
           
           const SizedBox(height: 16),
           
+          // Property section header
+          _buildSectionHeader('بيانات الكيان'),
+
+          // Property type dropdown
+          _buildPropertyTypeDropdown(),
+
+          const SizedBox(height: 12),
+
+          // Property name
+          _buildUltraCompactField(
+            controller: _propertyNameController,
+            focusNode: _propertyNameFocusNode,
+            label: 'اسم الكيان',
+            hint: 'مثل: فندق الراحة',
+            icon: Icons.apartment_rounded,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) {
+              FocusScope.of(context).requestFocus(_cityFocusNode);
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'مطلوب';
+              }
+              return null;
+            },
+          ),
+
+          const SizedBox(height: 12),
+
+          // City
+          _buildUltraCompactField(
+            controller: _cityController,
+            focusNode: _cityFocusNode,
+            label: 'المدينة',
+            hint: 'صنعاء',
+            icon: Icons.location_city_outlined,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) {
+              FocusScope.of(context).requestFocus(_addressFocusNode);
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) return 'مطلوب';
+              return null;
+            },
+          ),
+
+          const SizedBox(height: 12),
+
+          // Address
+          _buildUltraCompactField(
+            controller: _addressController,
+            focusNode: _addressFocusNode,
+            label: 'العنوان',
+            hint: 'مثل: الاصبحي شارع المقالح',
+            icon: Icons.map_outlined,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) {
+              FocusScope.of(context).requestFocus(_latitudeFocusNode);
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) return 'مطلوب';
+              return null;
+            },
+          ),
+
+          const SizedBox(height: 12),
+
+          // Latitude & Longitude
+          Row(
+            children: [
+              Expanded(
+                child: _buildUltraCompactField(
+                  controller: _latitudeController,
+                  focusNode: _latitudeFocusNode,
+                  label: 'خط العرض',
+                  hint: 'Latitude',
+                  icon: Icons.my_location_outlined,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) {
+                    FocusScope.of(context).requestFocus(_longitudeFocusNode);
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildUltraCompactField(
+                  controller: _longitudeController,
+                  focusNode: _longitudeFocusNode,
+                  label: 'خط الطول',
+                  hint: 'Longitude',
+                  icon: Icons.my_location_outlined,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                  textInputAction: TextInputAction.next,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Star rating (1-5)
+          _buildStarRatingPicker(),
+
+          const SizedBox(height: 12),
+
+          // Description (optional)
+          _buildUltraTextarea(
+            controller: _descriptionController,
+            label: 'وصف (اختياري)',
+            hint: 'وصف مختصر عن الكيان وخدماته',
+            icon: Icons.description_outlined,
+          ),
+
+          const SizedBox(height: 16),
+
           // Terms checkbox
           _buildUltraTermsCheckbox(),
           
@@ -255,6 +420,20 @@ class _RegisterFormState extends State<RegisterForm>
           // Submit button
           _buildUltraSubmitButton(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        title,
+        style: AppTextStyles.caption.copyWith(
+          color: AppTheme.textWhite.withValues(alpha: 0.8),
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
       ),
     );
   }
@@ -377,6 +556,211 @@ class _RegisterFormState extends State<RegisterForm>
               : Icons.visibility_outlined,
           color: AppTheme.textMuted.withValues(alpha: 0.4),
           size: 14,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPropertyTypeDropdown() {
+    final isFocused = _propertyNameFocusNode.hasFocus; // reuse style cues
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      height: 42,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isFocused
+              ? [
+                  AppTheme.primaryBlue.withValues(alpha: 0.05),
+                  AppTheme.primaryPurple.withValues(alpha: 0.03),
+                ]
+              : [
+                  AppTheme.darkCard.withValues(alpha: 0.2),
+                  AppTheme.darkCard.withValues(alpha: 0.1),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(
+          color: isFocused
+              ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+              : AppTheme.darkBorder.withValues(alpha: 0.1),
+          width: 0.5,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(11),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedPropertyTypeId.isEmpty ? null : _selectedPropertyTypeId,
+              items: _propertyTypes
+                  .map((t) => DropdownMenuItem<String>(
+                        value: t.id,
+                        child: Text(
+                          t.name,
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppTheme.textWhite.withValues(alpha: 0.9),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ))
+                  .toList(),
+              onChanged: widget.isLoading || _loadingPropertyTypes
+                  ? null
+                  : (v) {
+                      setState(() => _selectedPropertyTypeId = v ?? '');
+                    },
+              hint: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.category_outlined,
+                      color: AppTheme.textMuted.withValues(alpha: 0.4),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _loadingPropertyTypes ? 'جاري تحميل الأنواع...' : 'نوع الكيان',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppTheme.textMuted.withValues(alpha: 0.5),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              isExpanded: true,
+              dropdownColor: AppTheme.darkCard,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStarRatingPicker() {
+    return Container(
+      height: 42,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withValues(alpha: 0.2),
+            AppTheme.darkCard.withValues(alpha: 0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.1),
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 8),
+          Icon(
+            Icons.star_rate_rounded,
+            color: AppTheme.textMuted.withValues(alpha: 0.4),
+            size: 16,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: SliderTheme(
+              data: const SliderThemeData(
+                trackHeight: 2,
+              ),
+              child: Slider(
+                value: _starRating.toDouble(),
+                min: 1,
+                max: 5,
+                divisions: 4,
+                label: '$_starRating'
+                    ,
+                onChanged: widget.isLoading
+                    ? null
+                    : (v) => setState(() => _starRating = v.round()),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '$_starRating نجوم',
+              style: AppTextStyles.caption.copyWith(
+                color: AppTheme.textWhite.withValues(alpha: 0.7),
+                fontSize: 11,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUltraTextarea({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      height: 90,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withValues(alpha: 0.2),
+            AppTheme.darkCard.withValues(alpha: 0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.1),
+          width: 0.5,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(11),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: TextFormField(
+            controller: controller,
+            maxLines: 4,
+            style: AppTextStyles.caption.copyWith(
+              color: AppTheme.textWhite.withValues(alpha: 0.9),
+              fontSize: 12,
+            ),
+            decoration: InputDecoration(
+              labelText: label,
+              hintText: hint,
+              labelStyle: AppTextStyles.caption.copyWith(
+                color: AppTheme.textMuted.withValues(alpha: 0.5),
+                fontSize: 10,
+              ),
+              hintStyle: AppTextStyles.caption.copyWith(
+                color: AppTheme.textMuted.withValues(alpha: 0.3),
+                fontSize: 11,
+              ),
+              prefixIcon: Container(
+                width: 32,
+                alignment: Alignment.topCenter,
+                child: Icon(
+                  icon,
+                  color: AppTheme.textMuted.withValues(alpha: 0.4),
+                  size: 16,
+                ),
+              ),
+              filled: false,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.only(
+                left: 12,
+                right: 0,
+                top: 8,
+                bottom: 8,
+              ),
+              isDense: true,
+            ),
+          ),
         ),
       ),
     );
@@ -554,16 +938,57 @@ class _RegisterFormState extends State<RegisterForm>
       FocusScope.of(context).unfocus();
       HapticFeedback.mediumImpact();
       
+      // Validate property fields minimal requirements
+      if (_selectedPropertyTypeId.isEmpty) {
+        _showFieldError('نوع الكيان مطلوب');
+        return;
+      }
+      if (_propertyNameController.text.trim().isEmpty) {
+        _showFieldError('اسم الكيان مطلوب');
+        return;
+      }
+      if (_cityController.text.trim().isEmpty) {
+        _showFieldError('المدينة مطلوبة');
+        return;
+      }
+      if (_addressController.text.trim().isEmpty) {
+        _showFieldError('العنوان مطلوب');
+        return;
+      }
+
       widget.onSubmit(
         _nameController.text.trim(),
         _emailController.text.trim(),
         '+${_phoneController.text.trim()}',
         _passwordController.text,
         _confirmPasswordController.text,
+        _selectedPropertyTypeId,
+        _propertyNameController.text.trim(),
+        _cityController.text.trim(),
+        _addressController.text.trim(),
+        _starRating,
+        _tryParseDouble(_latitudeController.text.trim()),
+        _tryParseDouble(_longitudeController.text.trim()),
+        _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
       );
     }
   }
   
+  void _showFieldError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+      ),
+    );
+  }
+
+  double? _tryParseDouble(String v) {
+    if (v.isEmpty) return null;
+    return double.tryParse(v);
+  }
+
   void _showUltraWarning() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -612,5 +1037,21 @@ class _RegisterFormState extends State<RegisterForm>
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  Future<void> _loadPropertyTypes() async {
+    setState(() => _loadingPropertyTypes = true);
+    try {
+      final ds = sl<ap_ds_pt_remote.PropertyTypesRemoteDataSource>();
+      final PaginatedResult<ap_models.PropertyTypeModel> result =
+          await ds.getAllPropertyTypes(pageNumber: 1, pageSize: 1000);
+      setState(() {
+        _propertyTypes = result.items;
+      });
+    } catch (_) {
+      // ignore; dropdown will show empty
+    } finally {
+      setState(() => _loadingPropertyTypes = false);
+    }
   }
 }

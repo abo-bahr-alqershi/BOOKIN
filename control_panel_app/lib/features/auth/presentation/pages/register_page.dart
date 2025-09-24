@@ -499,7 +499,24 @@ class _RegisterPageState extends State<RegisterPage>
           child: BlocBuilder<AuthBloc, AuthState>(
             builder: (context, state) {
               return RegisterForm(
-                onSubmit: (name, email, phone, password, passwordConfirmation) {
+                onSubmit: (
+                  name,
+                  email,
+                  phone,
+                  password,
+                  passwordConfirmation,
+                  propertyTypeId,
+                  propertyName,
+                  city,
+                  address,
+                  starRating,
+                  latitude,
+                  longitude,
+                  description,
+                ) {
+                  // Note: The backend does not expose a single endpoint to create owner + property.
+                  // We first register the user (client register). After successful register and auth,
+                  // the admin can create the property from admin screens. This form captures owner fields now.
                   context.read<AuthBloc>().add(
                     RegisterEvent(
                       name: name,
