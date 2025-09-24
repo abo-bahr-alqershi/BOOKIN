@@ -21,6 +21,8 @@ import 'package:dio/dio.dart' as dio;
 import '../../../../core/constants/api_constants.dart';
 import '../../../../services/location_service.dart' as loc;
 import 'package:async/async.dart';
+import 'package:bookn_cp_app/features/admin_cities/domain/usecases/get_cities_usecase.dart'
+    as ci_uc;
 
 class RegisterForm extends StatefulWidget {
   final Function(
@@ -86,6 +88,11 @@ class _RegisterFormState extends State<RegisterForm>
   String _selectedPropertyTypeId = '';
   List<ap_models.PropertyTypeModel> _propertyTypes = const [];
   bool _loadingPropertyTypes = false;
+  // Cities dropdown state
+  List<String> _cities = const [];
+  bool _loadingCities = false;
+  String? _selectedCity;
+  String? _citiesError;
   // Places autocomplete
   List<_PlaceSuggestion> _addressSuggestions = const [];
   bool _loadingSuggestions = false;
@@ -132,6 +139,7 @@ class _RegisterFormState extends State<RegisterForm>
     _longitudeFocusNode.addListener(() => setState(() {}));
 
     _loadPropertyTypes();
+    _loadCities();
   }
 
   @override
@@ -344,21 +352,7 @@ class _RegisterFormState extends State<RegisterForm>
           const SizedBox(height: 12),
 
           // City
-          _buildUltraCompactField(
-            controller: _cityController,
-            focusNode: _cityFocusNode,
-            label: 'المدينة',
-            hint: 'صنعاء',
-            icon: Icons.location_city_outlined,
-            textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) {
-              FocusScope.of(context).requestFocus(_addressFocusNode);
-            },
-            // المدينة اختيارية
-            validator: (value) {
-              return null;
-            },
-          ),
+          _buildCityDropdown(),
 
           const SizedBox(height: 12),
 
@@ -1034,6 +1028,10 @@ class _RegisterFormState extends State<RegisterForm>
         _showFieldError('اسم الكيان مطلوب');
         return;
       }
+      if (_cityController.text.trim().isEmpty) {
+        _showFieldError('المدينة مطلوبة');
+        return;
+      }
       if (_addressController.text.trim().isEmpty) {
         _showFieldError('العنوان مطلوب');
         return;
@@ -1136,6 +1134,137 @@ class _RegisterFormState extends State<RegisterForm>
     } finally {
       setState(() => _loadingPropertyTypes = false);
     }
+  }
+
+  Future<void> _loadCities() async {
+    setState(() {
+      _loadingCities = true;
+      _citiesError = null;
+    });
+    try {
+      final usecase = sl<ci_uc.GetCitiesUseCase>();
+      final result = await usecase(const ci_uc.GetCitiesParams());
+      result.fold(
+        (_) => setState(() {
+          _citiesError = 'تعذر تحميل المدن';
+          _loadingCities = false;
+        }),
+        (list) => setState(() {
+          _cities = list.map((c) => c.name).toList();
+          _loadingCities = false;
+          // لا نعيّن قيمة تلقائياً لإجبار المستخدم على الاختيار والتصديق
+          if (_cities.contains(_cityController.text)) {
+            _selectedCity = _cityController.text;
+          } else {
+            _selectedCity = null;
+            _cityController.text = '';
+          }
+        }),
+      );
+    } catch (_) {
+      setState(() {
+        _citiesError = 'تعذر تحميل المدن';
+        _loadingCities = false;
+      });
+    }
+  }
+
+  Widget _buildCityDropdown() {
+    final isFocused = _cityFocusNode.hasFocus;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      height: 42,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isFocused
+              ? [
+                  AppTheme.primaryBlue.withValues(alpha: 0.05),
+                  AppTheme.primaryPurple.withValues(alpha: 0.03),
+                ]
+              : [
+                  AppTheme.darkCard.withValues(alpha: 0.2),
+                  AppTheme.darkCard.withValues(alpha: 0.1),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(
+          color: isFocused
+              ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+              : AppTheme.darkBorder.withValues(alpha: 0.1),
+          width: 0.5,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(11),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: DropdownButtonFormField<String?>(
+              value: _cities.contains(_selectedCity) ? _selectedCity : null,
+              dropdownColor: AppTheme.darkCard,
+              style: AppTextStyles.caption.copyWith(
+                color: AppTheme.textWhite.withValues(alpha: 0.9),
+                fontSize: 12,
+              ),
+              icon: Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 18,
+                color: AppTheme.textMuted.withValues(alpha: 0.5),
+              ),
+              decoration: InputDecoration(
+                labelText: 'المدينة',
+                labelStyle: AppTextStyles.caption.copyWith(
+                  color: isFocused
+                      ? AppTheme.primaryBlue.withValues(alpha: 0.8)
+                      : AppTheme.textMuted.withValues(alpha: 0.5),
+                  fontSize: 10,
+                ),
+                prefixIcon: Container(
+                  width: 32,
+                  height: 42,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.location_city_outlined,
+                    color: isFocused
+                        ? AppTheme.primaryBlue.withValues(alpha: 0.7)
+                        : AppTheme.textMuted.withValues(alpha: 0.4),
+                    size: 16,
+                  ),
+                ),
+                border: InputBorder.none,
+                isDense: true,
+              ),
+              items: _loadingCities
+                  ? [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('جاري تحميل المدن...'),
+                      )
+                    ]
+                  : _cities
+                      .map((c) => DropdownMenuItem<String?>(
+                            value: c,
+                            child: Text(c),
+                          ))
+                      .toList(),
+              onChanged: (v) {
+                setState(() {
+                  _selectedCity = v;
+                  _cityController.text = v ?? '';
+                });
+              },
+              validator: (v) {
+                if ((_cityController.text).trim().isEmpty) {
+                  return 'المدينة مطلوبة';
+                }
+                return null;
+              },
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   // Places autocomplete
