@@ -22,7 +22,10 @@ import '../widgets/booking_filters_widget.dart';
 import '../widgets/booking_stats_cards.dart';
 
 class BookingsListPage extends StatefulWidget {
-  const BookingsListPage({super.key});
+  final DateTime? initialStartDate;
+  final DateTime? initialEndDate;
+
+  const BookingsListPage({super.key, this.initialStartDate, this.initialEndDate});
 
   @override
   State<BookingsListPage> createState() => _BookingsListPageState();
@@ -59,11 +62,13 @@ class _BookingsListPageState extends State<BookingsListPage>
   }
 
   void _loadBookings() {
+    final start = widget.initialStartDate ?? DateTime.now().subtract(const Duration(days: 365));
+    final end = widget.initialEndDate ?? DateTime.now().add(const Duration(days: 1));
+
     context.read<BookingsListBloc>().add(
           LoadBookingsEvent(
-            // Expand default range to 1 year back to avoid missing older bookings
-            startDate: DateTime.now().subtract(const Duration(days: 365)),
-            endDate: DateTime.now().add(const Duration(days: 1)),
+            startDate: start,
+            endDate: end,
             pageNumber: 1,
             pageSize: 50,
           ),

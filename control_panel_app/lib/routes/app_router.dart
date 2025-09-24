@@ -343,6 +343,27 @@ class AppRouter {
           },
         ),
         GoRoute(
+          path: '/admin/bookings/upcoming',
+          builder: (context, state) {
+            final now = DateTime.now();
+            final start = DateTime(now.year, now.month, now.day);
+            final end = start.add(const Duration(days: 30));
+            return BlocProvider<ab_list_bloc.BookingsListBloc>(
+              create: (_) => di.sl<ab_list_bloc.BookingsListBloc>()
+                ..add(ab_list_event.LoadBookingsEvent(
+                  startDate: start,
+                  endDate: end,
+                  pageNumber: 1,
+                  pageSize: 50,
+                )),
+              child: BookingsListPage(
+                initialStartDate: start,
+                initialEndDate: end,
+              ),
+            );
+          },
+        ),
+        GoRoute(
           path: '/admin/bookings/calendar',
           builder: (context, state) {
             return BlocProvider<ab_cal_bloc.BookingCalendarBloc>(
