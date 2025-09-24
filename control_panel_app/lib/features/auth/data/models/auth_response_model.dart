@@ -25,6 +25,11 @@ class AuthResponseModel extends AuthResponse {
       'propertyId': json['propertyId'] ?? json['property_id'],
       'propertyName': json['propertyName'] ?? json['property_name'],
       'propertyCurrency': json['propertyCurrency'] ?? json['property_currency'] ?? json['currency'],
+      // include profile image if present in auth payload
+      'profileImage': json['profileImage'] ?? json['profile_image'] ?? json['profileImageUrl'],
+      // pass through timestamps when available
+      'createdAt': json['createdAt'] ?? json['created_at'],
+      'updatedAt': json['updatedAt'] ?? json['updated_at'],
     };
 
     DateTime? expiresAt;
