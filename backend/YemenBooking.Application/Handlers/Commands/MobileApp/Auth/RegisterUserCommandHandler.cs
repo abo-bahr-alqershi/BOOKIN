@@ -105,12 +105,25 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
             
             // Persist user to DB
             await _userRepository.CreateUserAsync(newUser, cancellationToken);
+
+            // Issue tokens for the newly registered user so the client can be authenticated immediately
+            YemenBooking.Core.DTOs.Common.AuthResultDto? authTokens = null;
+            try
+            {
+                authTokens = await _authService.LoginAsync(request.Email.Trim(), request.Password, cancellationToken);
+            }
+            catch
+            {
+                // If token issuance fails for any reason, continue without blocking registration
+            }
+
             var registerResult = new { 
                 Success = true, 
                 UserId = newUser.Id, 
                 Message = "تم تسجيل المستخدم بنجاح",
-                AccessToken = "",
-                RefreshToken = ""
+                AccessToken = authTokens?.AccessToken ?? string.Empty,
+                RefreshToken = authTokens?.RefreshToken ?? string.Empty,
+                AccessTokenExpiry = authTokens?.ExpiresAt
             };
 
             if (registerResult == null)
@@ -142,7 +155,11 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
                 UserId = registerResult.UserId,
                 AccessToken = registerResult.AccessToken,
                 RefreshToken = registerResult.RefreshToken,
-                Message = "تم تسجيل المستخدم بنجاح. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب"
+                Message = "تم تسجيل المستخدم بنجاح. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب",
+                AccessTokenExpiry = registerResult.AccessTokenExpiry ?? DateTime.UtcNow.AddHours(1),
+                UserName = newUser.Name,
+                Email = newUser.Email,
+                IsEmailVerified = newUser.IsEmailVerified
             };
 
             return ResultDto<RegisterUserResponse>.Ok(response, "تم تسجيل المستخدم بنجاح");
