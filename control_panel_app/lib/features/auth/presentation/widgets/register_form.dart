@@ -13,6 +13,10 @@ import 'package:bookn_cp_app/features/admin_properties/data/datasources/property
     as ap_ds_pt_remote;
 import 'package:bookn_cp_app/features/admin_properties/data/models/property_type_model.dart'
     as ap_models;
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:dio/dio.dart' as dio;
+import '../../../../core/constants/api_constants.dart';
+import '../../../../services/location_service.dart' as loc;
 
 class RegisterForm extends StatefulWidget {
   final Function(
@@ -78,6 +82,10 @@ class _RegisterFormState extends State<RegisterForm>
   String _selectedPropertyTypeId = '';
   List<ap_models.PropertyTypeModel> _propertyTypes = const [];
   bool _loadingPropertyTypes = false;
+  // Places autocomplete
+  List<_PlaceSuggestion> _addressSuggestions = const [];
+  bool _loadingSuggestions = false;
+  CancelableOperation? _pendingAutocomplete;
   
   late AnimationController _fieldAnimationController;
   late AnimationController _checkboxAnimationController;
@@ -361,6 +369,12 @@ class _RegisterFormState extends State<RegisterForm>
             },
           ),
 
+          // Address suggestions
+          if (_addressSuggestions.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            _buildAddressSuggestionsPanel(),
+          ],
+
           const SizedBox(height: 12),
 
           // Latitude & Longitude
@@ -399,6 +413,11 @@ class _RegisterFormState extends State<RegisterForm>
 
           // Star rating (1-5)
           _buildStarRatingPicker(),
+
+          const SizedBox(height: 12),
+
+          // Map picker button
+          _buildMapPickerButton(),
 
           const SizedBox(height: 12),
 
@@ -532,6 +551,46 @@ class _RegisterFormState extends State<RegisterForm>
             ),
             validator: validator,
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMapPickerButton() {
+    return GestureDetector(
+      onTap: widget.isLoading ? null : _openMapPicker,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 42,
+        decoration: BoxDecoration(
+          gradient: AppTheme.primaryGradient,
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(
+            color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+            width: 0.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryBlue.withValues(alpha: 0.15),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.map_rounded, color: Colors.white, size: 16),
+            const SizedBox(width: 6),
+            Text(
+              'تحديد الموقع على الخريطة',
+              style: AppTextStyles.caption.copyWith(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1054,4 +1113,413 @@ class _RegisterFormState extends State<RegisterForm>
       setState(() => _loadingPropertyTypes = false);
     }
   }
+
+  // Places autocomplete
+  void _onAddressChanged(String value) {
+    if (value.trim().isEmpty) {
+      setState(() => _addressSuggestions = const []);
+      return;
+    }
+    _fetchPlaceAutocomplete(value.trim());
+  }
+
+  Future<void> _fetchPlaceAutocomplete(String input) async {
+    if (ApiConstants.googlePlacesApiKey.isEmpty) return; // no key -> skip
+    setState(() => _loadingSuggestions = true);
+    try {
+      final client = dio.Dio();
+      final resp = await client.get(
+        '${ApiConstants.googlePlacesBaseUrl}/autocomplete/json',
+        queryParameters: {
+          'input': input,
+          'key': ApiConstants.googlePlacesApiKey,
+          'language': 'ar',
+          'components': 'country:ye',
+        },
+      );
+      final preds = (resp.data['predictions'] as List?) ?? [];
+      final list = preds
+          .map((e) => _PlaceSuggestion(
+                description: (e['description'] ?? '').toString(),
+                placeId: (e['place_id'] ?? '').toString(),
+              ))
+          .where((e) => e.description.isNotEmpty && e.placeId.isNotEmpty)
+          .toList();
+      setState(() => _addressSuggestions = list);
+    } catch (_) {
+      // ignore
+    } finally {
+      setState(() => _loadingSuggestions = false);
+    }
+  }
+
+  Widget _buildAddressSuggestionsPanel() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.2),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        children: _addressSuggestions
+            .map(
+              (s) => InkWell(
+                onTap: () => _selectPlaceSuggestion(s),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.place_outlined,
+                        color: AppTheme.textMuted.withValues(alpha: 0.7),
+                        size: 14,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          s.description,
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppTheme.textWhite.withValues(alpha: 0.9),
+                            fontSize: 11,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+
+  Future<void> _selectPlaceSuggestion(_PlaceSuggestion s) async {
+    _addressController.text = s.description;
+    setState(() => _addressSuggestions = const []);
+    if (ApiConstants.googlePlacesApiKey.isEmpty) return;
+    try {
+      final client = dio.Dio();
+      final resp = await client.get(
+        '${ApiConstants.googlePlacesBaseUrl}/details/json',
+        queryParameters: {
+          'place_id': s.placeId,
+          'key': ApiConstants.googlePlacesApiKey,
+          'language': 'ar',
+        },
+      );
+      final result = resp.data['result'];
+      final loc = result['geometry']?['location'];
+      if (loc != null) {
+        final lat = (loc['lat'] as num).toDouble();
+        final lng = (loc['lng'] as num).toDouble();
+        _latitudeController.text = lat.toStringAsFixed(6);
+        _longitudeController.text = lng.toStringAsFixed(6);
+        // Try to set city
+        final comps = (result['address_components'] as List?) ?? [];
+        final cityComp = comps.firstWhere(
+          (c) => ((c['types'] as List?) ?? []).contains('locality') ||
+                  ((c['types'] as List?) ?? []).contains('administrative_area_level_1'),
+          orElse: () => null,
+        );
+        if (cityComp != null) {
+          final cityName = (cityComp['long_name'] ?? '').toString();
+          if (cityName.isNotEmpty) {
+            _cityController.text = cityName;
+          }
+        }
+      }
+    } catch (_) {
+      // ignore
+    }
+  }
+
+  void _openMapPicker() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => _RegisterMapPickerDialog(
+        initialLocation: _tryParseDouble(_latitudeController.text) != null &&
+                _tryParseDouble(_longitudeController.text) != null
+            ? LatLng(
+                _tryParseDouble(_latitudeController.text)!,
+                _tryParseDouble(_longitudeController.text)!,
+              )
+            : null,
+        onLocationSelected: (location, address) async {
+          _latitudeController.text = location.latitude.toStringAsFixed(6);
+          _longitudeController.text = location.longitude.toStringAsFixed(6);
+          if (address != null && address.isNotEmpty) {
+            _addressController.text = address;
+          } else {
+            try {
+              final svc = sl<loc.LocationService>();
+              final addr = await svc.getAddressFromCoordinates(
+                location.latitude,
+                location.longitude,
+              );
+              if (addr != null) {
+                _addressController.text = addr.formattedAddress;
+                if ((addr.locality ?? '').isNotEmpty) {
+                  _cityController.text = addr.locality!;
+                }
+              }
+            } catch (_) {}
+          }
+          setState(() {});
+        },
+      ),
+    );
+  }
+}
+
+class _PlaceSuggestion {
+  final String description;
+  final String placeId;
+  _PlaceSuggestion({required this.description, required this.placeId});
+}
+
+class _RegisterMapPickerDialog extends StatefulWidget {
+  final LatLng? initialLocation;
+  final Function(LatLng, String?) onLocationSelected;
+
+  const _RegisterMapPickerDialog({
+    this.initialLocation,
+    required this.onLocationSelected,
+  });
+
+  @override
+  State<_RegisterMapPickerDialog> createState() => _RegisterMapPickerDialogState();
+}
+
+class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
+  GoogleMapController? _mapController;
+  LatLng? _selectedLocation;
+  String? _selectedAddress;
+  Set<Marker> _markers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedLocation = widget.initialLocation;
+    if (_selectedLocation != null) {
+      _updateMarker(_selectedLocation!);
+    }
+  }
+
+  void _updateMarker(LatLng location) {
+    setState(() {
+      _selectedLocation = location;
+      _markers = {
+        Marker(
+          markerId: const MarkerId('selected'),
+          position: location,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+        ),
+      };
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: EdgeInsets.zero,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.darkCard,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Stack(
+              children: [
+                GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: _selectedLocation ?? const LatLng(15.3694, 44.1910),
+                    zoom: 12,
+                  ),
+                  onMapCreated: (controller) {
+                    _mapController = controller;
+                  },
+                  markers: _markers,
+                  onTap: (location) {
+                    _updateMarker(location);
+                    _selectedAddress =
+                        'Lat: ${location.latitude.toStringAsFixed(4)}, Lng: ${location.longitude.toStringAsFixed(4)}';
+                  },
+                  myLocationButtonEnabled: true,
+                  myLocationEnabled: true,
+                ),
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: EdgeInsets.only(
+                      top: MediaQuery.of(context).padding.top + 16,
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppTheme.darkCard,
+                          AppTheme.darkCard.withValues(alpha: 0.95),
+                          AppTheme.darkCard.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.darkSurface.withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.close_rounded,
+                              color: AppTheme.textWhite,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'تحديد الموقع على الخريطة',
+                            style: AppTextStyles.heading3.copyWith(
+                              color: AppTheme.textWhite,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          AppTheme.darkCard,
+                          AppTheme.darkCard.withValues(alpha: 0.95),
+                          AppTheme.darkCard.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                color: AppTheme.darkSurface.withValues(alpha: 0.8),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'إلغاء',
+                                  style: AppTextStyles.buttonMedium.copyWith(
+                                    color: AppTheme.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: _selectedLocation != null
+                                ? () {
+                                    widget.onLocationSelected(
+                                      _selectedLocation!,
+                                      _selectedAddress,
+                                    );
+                                    Navigator.pop(context);
+                                  }
+                                : null,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                gradient: _selectedLocation != null
+                                    ? AppTheme.primaryGradient
+                                    : null,
+                                color: _selectedLocation == null
+                                    ? AppTheme.darkSurface.withValues(alpha: 0.5)
+                                    : null,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: _selectedLocation != null
+                                    ? [
+                                        BoxShadow(
+                                          color: AppTheme.primaryBlue
+                                              .withValues(alpha: 0.3),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'تأكيد الموقع',
+                                  style: AppTextStyles.buttonMedium.copyWith(
+                                    color: _selectedLocation != null
+                                        ? Colors.white
+                                        : AppTheme.textMuted.withValues(alpha: 0.5),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Simple cancellable op placeholder (no external dep)
+class CancelableOperation {
+  bool _isCanceled = false;
+  void cancel() => _isCanceled = true;
+  bool get isCanceled => _isCanceled;
 }
