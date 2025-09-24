@@ -2357,6 +2357,35 @@ class UnitImageGalleryState extends State<UnitImageGallery>
           Navigator.pop(context);
           _pickMultipleImages();
         },
+        onVideoSelected: () async {
+          Navigator.pop(context);
+          try {
+            final XFile? video = await _picker.pickVideo(source: ImageSource.gallery, maxDuration: const Duration(minutes: 2));
+            if (video == null) return;
+            final filePath = video.path;
+            if (_isLocalMode) {
+              setState(() {
+                _localImages.add(filePath);
+              });
+              widget.onLocalImagesChanged?.call(_localImages);
+              _showSuccessSnackBar('تم إضافة الفيديو (سيتم الرفع عند الحفظ)');
+            } else if (_imagesBloc != null && widget.unitId.isNotEmpty) {
+              final fileKey = DateTime.now().millisecondsSinceEpoch.toString();
+              setState(() {
+                _uploadingFiles[fileKey] = true;
+                _uploadingFileObjects[fileKey] = File(filePath);
+                _uploadProgress[fileKey] = 0.0;
+              });
+              _imagesBloc!.add(UploadUnitImageEvent(
+                unitId: widget.unitId,
+                filePath: filePath,
+                isPrimary: _displayImages.isEmpty,
+              ));
+            }
+          } catch (_) {
+            _showErrorSnackBar('فشل في اختيار الفيديو');
+          }
+        },
       ),
     );
   }
@@ -2853,11 +2882,13 @@ class _MinimalistImagePickerSheet extends StatelessWidget {
   final VoidCallback onCameraSelected;
   final VoidCallback onGallerySelected;
   final VoidCallback onMultipleSelected;
+  final VoidCallback? onVideoSelected;
   
   const _MinimalistImagePickerSheet({
     required this.onCameraSelected,
     required this.onGallerySelected,
     required this.onMultipleSelected,
+    this.onVideoSelected,
   });
   
   @override
@@ -2902,6 +2933,14 @@ class _MinimalistImagePickerSheet extends StatelessWidget {
             title: 'عدة صور',
             onTap: onMultipleSelected,
           ),
+      if (onVideoSelected != null) ...[
+        const SizedBox(height: 8),
+        _buildOption(
+          icon: Icons.video_library_outlined,
+          title: 'فيديو',
+          onTap: onVideoSelected!,
+        ),
+      ],
         ],
       ),
     );
