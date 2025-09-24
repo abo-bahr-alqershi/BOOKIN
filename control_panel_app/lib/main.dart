@@ -6,6 +6,8 @@ import 'package:bookn_cp_app/injection_container.dart' as di;
 import 'core/bloc/app_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'services/connectivity_service.dart';
+import 'core/localization/locale_manager.dart';
+import 'core/bloc/locale/locale_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +29,10 @@ void main() async {
   // Initialize AppBloc after dependency injection
   AppBloc.initialize();
   AppBloc.initializeEvents();
+
+  // Initialize locale from saved settings
+  final initialLocale = await LocaleManager.getInitialLocale();
+  AppBloc.locale.setLocale(initialLocale);
   
   // Services are initialized via dependency injection
   // await LocalStorageService.init();

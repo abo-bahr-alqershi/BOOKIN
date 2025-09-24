@@ -11,6 +11,8 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/settings_bloc.dart';
 import '../bloc/settings_event.dart';
 import '../bloc/settings_state.dart';
+import '../../../../core/bloc/app_bloc.dart';
+import '../../../../core/bloc/locale/locale_cubit.dart';
 
 class LanguageSettingsPage extends StatefulWidget {
   const LanguageSettingsPage({super.key});
@@ -569,6 +571,18 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage>
     context.read<SettingsBloc>().add(UpdateLanguageEvent(languageCode));
     
     _showUltraMinimalSnackBar(languageCode);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Listen to SettingsBloc updates to apply locale immediately
+    context.read<SettingsBloc>().stream.listen((state) {
+      if (state is SettingsUpdated) {
+        final lang = state.settings.preferredLanguage;
+        AppBloc.locale.setLocale(Locale(lang));
+      }
+    });
   }
   
   void _showUltraMinimalSnackBar(String languageCode) {

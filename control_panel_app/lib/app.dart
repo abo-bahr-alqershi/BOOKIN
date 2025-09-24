@@ -28,13 +28,16 @@ class YemenBookingApp extends StatelessWidget {
       child: BlocBuilder<ThemeBloc, ThemeState>(
             bloc: AppBloc.theme,
             builder: (context, themeState) {
-              return MaterialApp.router(
+              return BlocBuilder<LocaleCubit, Locale>(
+                bloc: AppBloc.locale,
+                builder: (context, localeState) {
+                  return MaterialApp.router(
                 title: 'Yemen Booking',
                 debugShowCheckedModeBanner: false,
                 theme: ThemeData.light(),
                 darkTheme: ThemeData.dark(),
                 themeMode: themeState.themeMode,
-                locale: LocaleManager.defaultLocale,
+                    locale: localeState,
                 localizationsDelegates: const [
                   AppLocalizations.delegate,
                   GlobalMaterialLocalizations.delegate,
@@ -46,6 +49,8 @@ class YemenBookingApp extends StatelessWidget {
                 builder: (context, child) {
                   AppTheme.init(context, mode: themeState.themeMode);
                   return child!;
+                },
+                  );
                 },
               );
             },
