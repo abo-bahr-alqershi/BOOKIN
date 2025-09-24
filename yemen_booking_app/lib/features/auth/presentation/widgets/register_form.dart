@@ -28,7 +28,7 @@ class RegisterForm extends StatefulWidget {
   State<RegisterForm> createState() => _RegisterFormState();
 }
 
-class _RegisterFormState extends State<RegisterForm> 
+class _RegisterFormState extends State<RegisterForm>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -36,41 +36,41 @@ class _RegisterFormState extends State<RegisterForm>
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   final _nameFocusNode = FocusNode();
   final _emailFocusNode = FocusNode();
   final _phoneFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
   final _confirmPasswordFocusNode = FocusNode();
-  
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
   bool _showPasswordStrength = false;
-  
+
   late AnimationController _fieldAnimationController;
   late AnimationController _checkboxAnimationController;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     _fieldAnimationController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    
+
     _checkboxAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _passwordController.addListener(() {
       setState(() {
         _showPasswordStrength = _passwordController.text.isNotEmpty;
       });
     });
-    
+
     // Add focus listeners for animations
     _nameFocusNode.addListener(() => setState(() {}));
     _emailFocusNode.addListener(() => setState(() {}));
@@ -124,9 +124,9 @@ class _RegisterFormState extends State<RegisterForm>
               return null;
             },
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Email field
           _buildUltraCompactField(
             controller: _emailController,
@@ -149,9 +149,9 @@ class _RegisterFormState extends State<RegisterForm>
               return null;
             },
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Phone field
           _buildUltraCompactField(
             controller: _phoneController,
@@ -178,9 +178,9 @@ class _RegisterFormState extends State<RegisterForm>
               return null;
             },
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Password field
           _buildUltraCompactField(
             controller: _passwordController,
@@ -207,7 +207,7 @@ class _RegisterFormState extends State<RegisterForm>
               return null;
             },
           ),
-          
+
           // Password strength indicator
           if (_showPasswordStrength) ...[
             const SizedBox(height: 8),
@@ -216,9 +216,9 @@ class _RegisterFormState extends State<RegisterForm>
               showRequirements: false,
             ),
           ],
-          
+
           const SizedBox(height: 12),
-          
+
           // Confirm password field
           _buildUltraCompactField(
             controller: _confirmPasswordController,
@@ -231,8 +231,8 @@ class _RegisterFormState extends State<RegisterForm>
             onFieldSubmitted: (_) => _onSubmit(),
             suffixIcon: _buildPasswordToggle(
               obscure: _obscureConfirmPassword,
-              onTap: () => setState(() => 
-                  _obscureConfirmPassword = !_obscureConfirmPassword),
+              onTap: () => setState(
+                  () => _obscureConfirmPassword = !_obscureConfirmPassword),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -244,21 +244,21 @@ class _RegisterFormState extends State<RegisterForm>
               return null;
             },
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Terms checkbox
           _buildUltraTermsCheckbox(),
-          
+
           const SizedBox(height: 20),
-          
+
           // Submit button
           _buildUltraSubmitButton(),
         ],
       ),
     );
   }
-  
+
   Widget _buildUltraCompactField({
     required TextEditingController controller,
     required FocusNode focusNode,
@@ -274,7 +274,7 @@ class _RegisterFormState extends State<RegisterForm>
     String? Function(String?)? validator,
   }) {
     final isFocused = focusNode.hasFocus;
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       height: 42,
@@ -357,7 +357,7 @@ class _RegisterFormState extends State<RegisterForm>
       ),
     );
   }
-  
+
   Widget _buildPasswordToggle({
     required bool obscure,
     required VoidCallback onTap,
@@ -372,16 +372,14 @@ class _RegisterFormState extends State<RegisterForm>
         height: 42,
         alignment: Alignment.center,
         child: Icon(
-          obscure 
-              ? Icons.visibility_off_outlined
-              : Icons.visibility_outlined,
+          obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
           color: AppTheme.textMuted.withOpacity(0.4),
           size: 14,
         ),
       ),
     );
   }
-  
+
   Widget _buildUltraTermsCheckbox() {
     return GestureDetector(
       onTap: widget.isLoading
@@ -405,9 +403,7 @@ class _RegisterFormState extends State<RegisterForm>
             height: 18,
             decoration: BoxDecoration(
               gradient: _acceptTerms ? AppTheme.primaryGradient : null,
-              color: !_acceptTerms
-                  ? AppTheme.darkCard.withOpacity(0.3)
-                  : null,
+              color: !_acceptTerms ? AppTheme.darkCard.withOpacity(0.3) : null,
               borderRadius: BorderRadius.circular(5),
               border: Border.all(
                 color: _acceptTerms
@@ -459,10 +455,10 @@ class _RegisterFormState extends State<RegisterForm>
       ),
     );
   }
-  
+
   Widget _buildUltraSubmitButton() {
     final canSubmit = !widget.isLoading;
-    
+
     return GestureDetector(
       onTap: canSubmit ? _onSubmit : null,
       child: AnimatedContainer(
@@ -542,7 +538,7 @@ class _RegisterFormState extends State<RegisterForm>
       ),
     );
   }
-  
+
   void _onSubmit() {
     if (!_acceptTerms) {
       HapticFeedback.lightImpact();
@@ -553,7 +549,7 @@ class _RegisterFormState extends State<RegisterForm>
     if (_formKey.currentState?.validate() ?? false) {
       FocusScope.of(context).unfocus();
       HapticFeedback.mediumImpact();
-      
+
       widget.onSubmit(
         _nameController.text.trim(),
         _emailController.text.trim(),
@@ -563,7 +559,7 @@ class _RegisterFormState extends State<RegisterForm>
       );
     }
   }
-  
+
   void _showUltraWarning() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -594,7 +590,7 @@ class _RegisterFormState extends State<RegisterForm>
                 child: Text(
                   'يجب الموافقة على الشروط',
                   style: AppTextStyles.caption.copyWith(
-                    color: Colors.white.withOpacity(0.9),
+                    color: AppTheme.textWhite.withOpacity(0.9),
                     fontSize: 11,
                   ),
                 ),

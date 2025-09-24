@@ -336,10 +336,10 @@ class _PropertiesListPageState extends State<PropertiesListPage>
         icon: Icons.filter_list_rounded,
         onPressed: () => setState(() => _showFilters = !_showFilters),
       ),
-      _buildAppBarIconAction(
-        icon: Icons.grid_view_rounded,
-        onPressed: () => setState(() => _selectedView = 'grid'),
-      ),
+      // _buildAppBarIconAction(
+      //   icon: Icons.grid_view_rounded,
+      //   onPressed: () => setState(() => _selectedView = 'grid'),
+      // ),
       _buildAppBarIconAction(
         icon: Icons.table_chart_rounded,
         onPressed: () => setState(() => _selectedView = 'table'),
@@ -377,16 +377,16 @@ class _PropertiesListPageState extends State<PropertiesListPage>
         }
       },
       itemBuilder: (context) => [
-        const PopupMenuItem(
-          value: 'grid',
-          child: Row(
-            children: [
-              Icon(Icons.grid_view_rounded, size: 18),
-              SizedBox(width: 8),
-              Text('شبكة'),
-            ],
-          ),
-        ),
+        // const PopupMenuItem(
+        //   value: 'grid',
+        //   child: Row(
+        //     children: [
+        //       Icon(Icons.grid_view_rounded, size: 18),
+        //       SizedBox(width: 8),
+        //       Text('شبكة'),
+        //     ],
+        //   ),
+        // ),
         const PopupMenuItem(
           value: 'table',
           child: Row(
@@ -759,6 +759,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
                 child: FuturisticPropertyTable(
                   properties: state.properties,
                   onPropertyTap: (property) => _navigateToProperty(property.id),
+                  onEdit: (property) => _navigateToEditProperty(property.id),
                   onApprove: (propertyId) {
                     _showApproveConfirmation(propertyId);
                   },
@@ -975,11 +976,13 @@ class _PropertiesListPageState extends State<PropertiesListPage>
   }
 
   void _navigateToProperty(String propertyId) {
-    context.push('/admin/properties/$propertyId');
+    final pid = Uri.encodeComponent(propertyId);
+    context.push('/admin/properties/$pid');
   }
 
   void _navigateToEditProperty(String propertyId) {
-    context.push('/admin/properties/$propertyId/edit');
+    final pid = Uri.encodeComponent(propertyId);
+    context.push('/admin/properties/$pid/edit');
   }
 
   void _openAssignAmenities({

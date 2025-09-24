@@ -20,6 +20,7 @@ class CityImageGallery extends StatefulWidget {
   final Function(List<String>) onImagesChanged;
   final bool isReadOnly;
   final int maxImages;
+
   /// خارجي: خريطة تقدم الرفع للصور المحلية (path -> 0..1)
   final Map<String, double>? uploadProgress;
 
@@ -206,7 +207,9 @@ class _CityImageGalleryState extends State<CityImageGallery>
                 children: [
                   if (!_isSelectionMode)
                     _buildActionChip(
-                      icon: _isReorderMode ? Icons.done_rounded : Icons.swap_vert_rounded,
+                      icon: _isReorderMode
+                          ? Icons.done_rounded
+                          : Icons.swap_vert_rounded,
                       label: _isReorderMode ? 'تم' : 'ترتيب',
                       onTap: () {
                         HapticFeedback.lightImpact();
@@ -223,7 +226,9 @@ class _CityImageGalleryState extends State<CityImageGallery>
                   const SizedBox(width: 8),
                   if (!_isReorderMode)
                     _buildActionChip(
-                      icon: _isSelectionMode ? Icons.done_rounded : Icons.check_circle_outline_rounded,
+                      icon: _isSelectionMode
+                          ? Icons.done_rounded
+                          : Icons.check_circle_outline_rounded,
                       label: _isSelectionMode ? 'تم' : 'تحديد',
                       onTap: () {
                         HapticFeedback.lightImpact();
@@ -252,7 +257,8 @@ class _CityImageGalleryState extends State<CityImageGallery>
               if (_isSelectionMode || _isReorderMode)
                 Container(
                   margin: const EdgeInsets.only(top: 12),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppTheme.darkCard.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
@@ -291,17 +297,22 @@ class _CityImageGalleryState extends State<CityImageGallery>
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           gradient: isActive
-              ? LinearGradient(colors: [baseColor.withValues(alpha: 0.2), baseColor.withValues(alpha: 0.1)])
+              ? LinearGradient(colors: [
+                  baseColor.withValues(alpha: 0.2),
+                  baseColor.withValues(alpha: 0.1)
+                ])
               : null,
           color: !isActive ? AppTheme.darkCard.withValues(alpha: 0.5) : null,
           border: Border.all(
-            color: (isActive ? baseColor : AppTheme.darkBorder).withValues(alpha: 0.3),
+            color: (isActive ? baseColor : AppTheme.darkBorder)
+                .withValues(alpha: 0.3),
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: isActive ? baseColor : AppTheme.textMuted),
+            Icon(icon,
+                size: 16, color: isActive ? baseColor : AppTheme.textMuted),
             const SizedBox(width: 6),
             Text(
               label,
@@ -514,7 +525,8 @@ class _CityImageGalleryState extends State<CityImageGallery>
     // Compute tile size to provide bounded constraints for children
     const spacing = 12.0;
     // Try to account for typical horizontal padding (20). If parent differs, Wrap will still layout fine
-    final availableWidth = MediaQuery.of(context).size.width - (2 * 20) - (spacing * (cross - 1));
+    final availableWidth =
+        MediaQuery.of(context).size.width - (2 * 20) - (spacing * (cross - 1));
     final tileSize = availableWidth / cross;
     // Build children with fixed size boxes so Wrap/ReorderableWrap can lay them out
     final children = <Widget>[];
@@ -540,9 +552,11 @@ class _CityImageGalleryState extends State<CityImageGallery>
           if (_primaryImageIndex != null) {
             if (oldIndex == _primaryImageIndex) {
               _primaryImageIndex = newIndex;
-            } else if (_primaryImageIndex! > oldIndex && _primaryImageIndex! <= newIndex) {
+            } else if (_primaryImageIndex! > oldIndex &&
+                _primaryImageIndex! <= newIndex) {
               _primaryImageIndex = _primaryImageIndex! - 1;
-            } else if (_primaryImageIndex! < oldIndex && _primaryImageIndex! >= newIndex) {
+            } else if (_primaryImageIndex! < oldIndex &&
+                _primaryImageIndex! >= newIndex) {
               _primaryImageIndex = _primaryImageIndex! + 1;
             }
           }
@@ -564,279 +578,292 @@ class _CityImageGalleryState extends State<CityImageGallery>
     final isSelected = _selectedIndices.contains(index);
     final isPrimary = index == _primaryImageIndex;
     final imagePath = _localImages[index];
-    bool _isRemote(String p) {
+    bool isRemote(String p) {
       if (p.isEmpty) return false;
       final lower = p.toLowerCase();
-      if (lower.startsWith('http://') || lower.startsWith('https://')) return true;
+      if (lower.startsWith('http://') || lower.startsWith('https://'))
+        return true;
       // Treat only known server-relative paths as remote; local absolute paths like /home/... or /data/... are NOT remote
-      if (lower.startsWith('/uploads') || lower.startsWith('uploads/')) return true;
-      if (lower.startsWith('/images') || lower.startsWith('images/')) return true;
-      if (lower.startsWith('/client') || lower.startsWith('client/')) return true;
+      if (lower.startsWith('/uploads') || lower.startsWith('uploads/'))
+        return true;
+      if (lower.startsWith('/images') || lower.startsWith('images/'))
+        return true;
+      if (lower.startsWith('/client') || lower.startsWith('client/'))
+        return true;
       return false;
     }
-    final isNetworkImage = _isRemote(imagePath);
+
+    final isNetworkImage = isRemote(imagePath);
 
     return MouseRegion(
-      onEnter: (_) => setState(() => _hoveredIndex = index),
-      onExit: (_) => setState(() => _hoveredIndex = null),
-      child: GestureDetector(
-        onTap: () {
-        HapticFeedback.lightImpact();
-        if (_isSelectionMode) {
-          setState(() {
-            if (isSelected) {
-              _selectedIndices.remove(index);
+        onEnter: (_) => setState(() => _hoveredIndex = index),
+        onExit: (_) => setState(() => _hoveredIndex = null),
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            if (_isSelectionMode) {
+              setState(() {
+                if (isSelected) {
+                  _selectedIndices.remove(index);
+                } else {
+                  _selectedIndices.add(index);
+                }
+              });
             } else {
-              _selectedIndices.add(index);
+              _previewImage(imagePath);
             }
-          });
-        } else {
-          _previewImage(imagePath);
-        }
-        },
-        onLongPress: () {
-        if (!widget.isReadOnly) {
-          HapticFeedback.mediumImpact();
-          _showImageOptions(index);
-        }
-        },
-        child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        transform: Matrix4.identity()..scale(isSelected ? 0.95 : 1.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? AppTheme.primaryBlue
-                : isPrimary
-                    ? AppTheme.warning.withValues(alpha: 0.6)
-                    : AppTheme.darkBorder.withValues(alpha: 0.2),
-            width: isSelected || isPrimary ? 2 : 1,
-          ),
-          boxShadow: [
-            if (isSelected || isPrimary)
-              BoxShadow(
+          },
+          onLongPress: () {
+            if (!widget.isReadOnly) {
+              HapticFeedback.mediumImpact();
+              _showImageOptions(index);
+            }
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            transform: Matrix4.identity()..scale(isSelected ? 0.95 : 1.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
                 color: isSelected
-                    ? AppTheme.primaryBlue.withValues(alpha: 0.3)
-                    : AppTheme.warning.withValues(alpha: 0.2),
-                blurRadius: 15,
-                spreadRadius: 1,
+                    ? AppTheme.primaryBlue
+                    : isPrimary
+                        ? AppTheme.warning.withValues(alpha: 0.6)
+                        : AppTheme.darkBorder.withValues(alpha: 0.2),
+                width: isSelected || isPrimary ? 2 : 1,
               ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Enhanced image display
-              isNetworkImage
-                  ? CachedNetworkImage(
-                      imageUrl: imagePath.startsWith('/') ? ImageUtils.resolveUrl(imagePath) : imagePath,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppTheme.darkCard,
-                              AppTheme.darkCard.withValues(alpha: 0.8),
-                            ],
-                          ),
-                        ),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppTheme.primaryBlue.withValues(alpha: 0.5),
+              boxShadow: [
+                if (isSelected || isPrimary)
+                  BoxShadow(
+                    color: isSelected
+                        ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+                        : AppTheme.warning.withValues(alpha: 0.2),
+                    blurRadius: 15,
+                    spreadRadius: 1,
+                  ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Enhanced image display
+                  isNetworkImage
+                      ? CachedNetworkImage(
+                          imageUrl: imagePath.startsWith('/')
+                              ? ImageUtils.resolveUrl(imagePath)
+                              : imagePath,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppTheme.darkCard,
+                                  AppTheme.darkCard.withValues(alpha: 0.8),
+                                ],
+                              ),
+                            ),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppTheme.primaryBlue.withValues(alpha: 0.5),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: AppTheme.darkCard,
-                        child: Icon(
-                          Icons.error_outline,
-                          color: AppTheme.error.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    )
-                  : Image.file(
-                      File(imagePath),
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: AppTheme.darkCard,
-                          child: Icon(
-                            Icons.error_outline,
-                            color: AppTheme.error.withValues(alpha: 0.5),
+                          errorWidget: (context, url, error) => Container(
+                            color: AppTheme.darkCard,
+                            child: Icon(
+                              Icons.error_outline,
+                              color: AppTheme.error.withValues(alpha: 0.5),
+                            ),
                           ),
-                        );
-                      },
-                    ),
-
-              // Overlay gradient (match property style with dynamic opacity)
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(
-                        (_hoveredIndex == index || _isSelectionMode) ? 0.6 : 0.3,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Primary badge (match property style)
-              if (isPrimary)
-                Positioned(
-                  bottom: 8,
-                  left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.warning.withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(6),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.warning.withValues(alpha: 0.3),
-                          blurRadius: 6,
-                          spreadRadius: 1,
+                        )
+                      : Image.file(
+                          File(imagePath),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: AppTheme.darkCard,
+                              child: Icon(
+                                Icons.error_outline,
+                                color: AppTheme.error.withValues(alpha: 0.5),
+                              ),
+                            );
+                          },
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          size: 12,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'رئيسية',
-                          style: AppTextStyles.caption.copyWith(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
 
-              // Enhanced selection checkbox
-              if (_isSelectionMode)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: AnimatedContainer(
+                  // Overlay gradient (match property style with dynamic opacity)
+                  AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    width: 24,
-                    height: 24,
                     decoration: BoxDecoration(
-                      gradient: isSelected ? AppTheme.primaryGradient : null,
-                      color: isSelected
-                          ? null
-                          : AppTheme.darkCard.withValues(alpha: 0.8),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isSelected
-                              ? AppTheme.primaryBlue.withValues(alpha: 0.4)
-                              : Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: isSelected
-                        ? const Icon(
-                            Icons.check_rounded,
-                            color: Colors.white,
-                            size: 14,
-                          )
-                        : null,
-                  ),
-                ),
-
-              // Quick Actions (match property)
-              if (!widget.isReadOnly && !_isSelectionMode && !_isReorderMode)
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 200),
-                  top: (_hoveredIndex == index) ? 8 : -40,
-                  left: 8,
-                  right: 8,
-                  child: Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: [
-                      _buildQuickActionButton(
-                        icon: Icons.visibility_outlined,
-                        onTap: () => _previewImage(imagePath),
-                      ),
-                      if (!isPrimary)
-                        _buildQuickActionButton(
-                          icon: Icons.star_outline_rounded,
-                          onTap: () => _showImageOptions(index),
-                          color: AppTheme.warning,
-                        ),
-                      _buildQuickActionButton(
-                        icon: Icons.delete_outline_rounded,
-                        onTap: () => _deleteImage(index),
-                        color: AppTheme.error,
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Upload progress with better design
-              if (_uploadProgress.containsKey(imagePath))
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.darkBackground.withValues(alpha: 0.8),
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(
-                            value: _uploadProgress[imagePath],
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppTheme.primaryBlue,
-                            ),
-                            strokeWidth: 3,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${(_uploadProgress[imagePath]! * 100).toInt()}%',
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppTheme.primaryBlue,
-                              fontWeight: FontWeight.bold,
-                            ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(
+                            alpha: (_hoveredIndex == index || _isSelectionMode)
+                                ? 0.6
+                                : 0.3,
                           ),
                         ],
                       ),
                     ),
                   ),
-                ),
-            ],
+
+                  // Primary badge (match property style)
+                  if (isPrimary)
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.warning.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.warning.withValues(alpha: 0.3),
+                              blurRadius: 6,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              size: 12,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'رئيسية',
+                              style: AppTextStyles.caption.copyWith(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  // Enhanced selection checkbox
+                  if (_isSelectionMode)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          gradient:
+                              isSelected ? AppTheme.primaryGradient : null,
+                          color: isSelected
+                              ? null
+                              : AppTheme.darkCard.withValues(alpha: 0.8),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: isSelected
+                                  ? AppTheme.primaryBlue.withValues(alpha: 0.4)
+                                  : Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: isSelected
+                            ? const Icon(
+                                Icons.check_rounded,
+                                color: Colors.white,
+                                size: 14,
+                              )
+                            : null,
+                      ),
+                    ),
+
+                  // Quick Actions (match property)
+                  if (!widget.isReadOnly &&
+                      !_isSelectionMode &&
+                      !_isReorderMode)
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 200),
+                      top: (_hoveredIndex == index) ? 8 : -40,
+                      left: 8,
+                      right: 8,
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          _buildQuickActionButton(
+                            icon: Icons.visibility_outlined,
+                            onTap: () => _previewImage(imagePath),
+                          ),
+                          if (!isPrimary)
+                            _buildQuickActionButton(
+                              icon: Icons.star_outline_rounded,
+                              onTap: () => _showImageOptions(index),
+                              color: AppTheme.warning,
+                            ),
+                          _buildQuickActionButton(
+                            icon: Icons.delete_outline_rounded,
+                            onTap: () => _deleteImage(index),
+                            color: AppTheme.error,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Upload progress with better design
+                  if (_uploadProgress.containsKey(imagePath))
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.darkBackground.withValues(alpha: 0.8),
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircularProgressIndicator(
+                                value: _uploadProgress[imagePath],
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppTheme.primaryBlue,
+                                ),
+                                strokeWidth: 3,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '${(_uploadProgress[imagePath]! * 100).toInt()}%',
+                                style: AppTextStyles.caption.copyWith(
+                                  color: AppTheme.primaryBlue,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
-    ));
+        ));
   }
 
   Widget _buildQuickActionButton({
@@ -1360,7 +1387,9 @@ class _EnhancedImagePreview extends StatelessWidget {
               tag: imagePath,
               child: isNetworkImage
                   ? CachedNetworkImage(
-                      imageUrl: imagePath.startsWith('/') ? ImageUtils.resolveUrl(imagePath) : imagePath,
+                      imageUrl: imagePath.startsWith('/')
+                          ? ImageUtils.resolveUrl(imagePath)
+                          : imagePath,
                       fit: BoxFit.contain,
                     )
                   : Image.file(

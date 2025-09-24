@@ -119,8 +119,8 @@ namespace YemenBooking.Infrastructure.Services
                         if (!map.TryAdd(key, i))
                         {
                             // Prefer main image, otherwise keep existing
-                            var existing = map[key];
-                            if ((i.IsMainImage ?? false) && !(existing.IsMainImage ?? false))
+                            var _existing = map[key];
+                            if (i.IsMainImage  && !_existing.IsMainImage)
                             {
                                 map[key] = i;
                             }

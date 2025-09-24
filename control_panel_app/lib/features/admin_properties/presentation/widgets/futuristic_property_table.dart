@@ -12,38 +12,41 @@ import '../../domain/entities/property.dart';
 class FuturisticPropertyTable extends StatefulWidget {
   final List<Property> properties;
   final Function(Property) onPropertyTap;
+  final Function(Property) onEdit;
   final Function(String) onApprove;
   final Function(String) onReject;
   final Function(String) onDelete;
   final Function(Property) onAssignAmenities;
-  
+
   const FuturisticPropertyTable({
     super.key,
     required this.properties,
     required this.onPropertyTap,
+    required this.onEdit,
     required this.onApprove,
     required this.onReject,
     required this.onDelete,
     required this.onAssignAmenities,
   });
-  
+
   @override
-  State<FuturisticPropertyTable> createState() => _FuturisticPropertyTableState();
+  State<FuturisticPropertyTable> createState() =>
+      _FuturisticPropertyTableState();
 }
 
 class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  
+
   String? _sortColumn;
   bool _isAscending = true;
   String? _hoveredRowId;
-  
+
   // Breakpoints
   static const double _mobileBreakpoint = 600;
   static const double _tabletBreakpoint = 1024;
-  
+
   @override
   void initState() {
     super.initState();
@@ -51,7 +54,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -59,16 +62,16 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       parent: _animationController,
       curve: Curves.easeOut,
     ));
-    
+
     _animationController.forward();
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -84,7 +87,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       },
     );
   }
-  
+
   // عرض الموبايل - بطاقات عمودية
   Widget _buildMobileView() {
     return FadeTransition(
@@ -101,7 +104,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       ),
     );
   }
-  
+
   Widget _buildMobileCard(Property property) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -191,7 +194,8 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+                                  color: AppTheme.primaryBlue
+                                      .withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -209,9 +213,9 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                         _buildStatusBadge(property.isApproved),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Property Details Grid
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -244,9 +248,9 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 12),
-                    
+
                     // Action Buttons (responsive)
                     LayoutBuilder(
                       builder: (context, box) {
@@ -271,9 +275,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                               label: 'تعديل',
                               icon: Icons.edit_rounded,
                               color: AppTheme.primaryBlue,
-                              onTap: () {
-                                // Navigate to edit
-                              },
+                              onTap: () => widget.onEdit(property),
                             ),
                           _buildMobileActionButton(
                             label: 'تعيين مرافق',
@@ -295,7 +297,8 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                             spacing: 8,
                             runSpacing: 8,
                             children: actions
-                                .map((w) => SizedBox(width: itemWidth, child: w))
+                                .map(
+                                    (w) => SizedBox(width: itemWidth, child: w))
                                 .toList(),
                           );
                         }
@@ -320,7 +323,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       ),
     );
   }
-  
+
   Widget _buildMobileDetailRow({
     required IconData icon,
     required String label,
@@ -355,7 +358,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       ],
     );
   }
-  
+
   Widget _buildMobileActionButton({
     required String label,
     required IconData icon,
@@ -402,7 +405,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       ),
     );
   }
-  
+
   // عرض التابلت - جدول مبسط قابل للتمرير
   Widget _buildTabletView() {
     return FadeTransition(
@@ -430,7 +433,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
               children: [
                 // Simplified Header
                 _buildTabletHeader(),
-                
+
                 // Scrollable Body
                 Expanded(
                   child: SingleChildScrollView(
@@ -455,7 +458,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       ),
     );
   }
-  
+
   Widget _buildTabletHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -523,10 +526,10 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       ),
     );
   }
-  
+
   Widget _buildTabletRow(Property property) {
     final isHovered = _hoveredRowId == property.id;
-    
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredRowId = property.id),
       onExit: (_) => setState(() => _hoveredRowId = null),
@@ -545,9 +548,8 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                     ],
                   )
                 : null,
-            color: !isHovered
-                ? AppTheme.darkSurface.withValues(alpha: 0.3)
-                : null,
+            color:
+                !isHovered ? AppTheme.darkSurface.withValues(alpha: 0.3) : null,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isHovered
@@ -632,7 +634,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                   ],
                 ),
               ),
-              
+
               // Location
               Expanded(
                 flex: 2,
@@ -656,7 +658,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                   ],
                 ),
               ),
-              
+
               // Status
               Expanded(
                 flex: 1,
@@ -664,7 +666,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                   child: _buildStatusBadge(property.isApproved),
                 ),
               ),
-              
+
               // Actions
               Expanded(
                 flex: 2,
@@ -712,7 +714,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       ),
     );
   }
-  
+
   // عرض سطح المكتب - الجدول الكامل
   Widget _buildDesktopView() {
     return FadeTransition(
@@ -756,7 +758,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       ),
     );
   }
-  
+
   Widget _buildDesktopHeader() {
     final headers = [
       {'label': 'العقار', 'key': 'name', 'flex': 3},
@@ -766,7 +768,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       {'label': 'الحالة', 'key': 'status', 'flex': 2},
       {'label': 'الإجراءات', 'key': 'actions', 'flex': 2},
     ];
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
@@ -825,7 +827,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       ),
     );
   }
-  
+
   Widget _buildDesktopBody() {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -836,10 +838,10 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       },
     );
   }
-  
+
   Widget _buildDesktopRow(Property property) {
     final isHovered = _hoveredRowId == property.id;
-    
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredRowId = property.id),
       onExit: (_) => setState(() => _hoveredRowId = null),
@@ -858,9 +860,8 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                     ],
                   )
                 : null,
-            color: !isHovered
-                ? AppTheme.darkSurface.withValues(alpha: 0.3)
-                : null,
+            color:
+                !isHovered ? AppTheme.darkSurface.withValues(alpha: 0.3) : null,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isHovered
@@ -930,7 +931,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                   ],
                 ),
               ),
-              
+
               // Type
               Expanded(
                 flex: 2,
@@ -941,7 +942,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                   ),
                 ),
               ),
-              
+
               // City
               Expanded(
                 flex: 2,
@@ -962,7 +963,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                   ],
                 ),
               ),
-              
+
               // Rating
               Expanded(
                 flex: 1,
@@ -984,13 +985,13 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
                   ],
                 ),
               ),
-              
+
               // Status
               Expanded(
                 flex: 2,
                 child: _buildStatusBadge(property.isApproved),
               ),
-              
+
               // Actions
               Expanded(
                 flex: 2,
@@ -1038,7 +1039,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       ),
     );
   }
-  
+
   Widget _buildStatusBadge(bool isApproved) {
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -1075,7 +1076,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       ),
     );
   }
-  
+
   Widget _buildActionButton({
     required IconData icon,
     required Color color,
@@ -1105,7 +1106,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
       ),
     );
   }
-  
+
   void _sort(String column) {
     setState(() {
       if (_sortColumn == column) {
@@ -1114,7 +1115,7 @@ class _FuturisticPropertyTableState extends State<FuturisticPropertyTable>
         _sortColumn = column;
         _isAscending = true;
       }
-      
+
       // TODO: Implement sorting logic
     });
   }

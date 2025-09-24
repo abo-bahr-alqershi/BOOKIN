@@ -218,7 +218,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
           icon: CupertinoIcons.arrow_clockwise,
           onPressed: () {
             HapticFeedback.mediumImpact();
-            context.read<CitiesBloc>().add(RefreshCitiesEvent());
+            context.read<CitiesBloc>().add(const RefreshCitiesEvent());
           },
         ),
         const SizedBox(width: 8),
@@ -613,9 +613,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
         elevation: 0,
         child: Center(
           child: LoadingWidget(
-            type: LoadingType.futuristic,
-            message: 'جاري حذف المدينة...'
-          ),
+              type: LoadingType.futuristic, message: 'جاري حذف المدينة...'),
         ),
       ),
     );

@@ -6,8 +6,8 @@ import 'dart:ui';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/cached_image_widget.dart';
 import '../../domain/entities/city.dart';
+import 'city_images_collage.dart';
 
 class FuturisticCityCard extends StatefulWidget {
   final City city;
@@ -56,7 +56,7 @@ class _FuturisticCityCardState extends State<FuturisticCityCard>
       duration: const Duration(milliseconds: 200),
       transform: Matrix4.identity()
         ..scale(_isHovered ? 0.98 : 1.0)
-        ..rotateZ(_isHovered ? 0.005 : 0),
+        ..rotateZ(_isHovered ? 0.002 : 0),
       child: GestureDetector(
         onTap: widget.onTap,
         onLongPress: () {
@@ -66,350 +66,388 @@ class _FuturisticCityCardState extends State<FuturisticCityCard>
         onTapDown: (_) => _setHovered(true),
         onTapUp: (_) => _setHovered(false),
         onTapCancel: () => _setHovered(false),
-        child: Stack(
-          children: [
-            Container(
-              height: widget.isCompact ? 120 : 200,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.shadowDark.withValues(alpha: 0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppTheme.darkCard.withValues(alpha: 0.9),
-                          AppTheme.darkCard.withValues(alpha: 0.7),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: widget.city.isActive == true
-                            ? AppTheme.success.withValues(alpha: 0.3)
-                            : AppTheme.darkBorder.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
-                    ),
-                    child: widget.isCompact
-                        ? _buildCompactContent()
-                        : _buildFullContent(),
-                  ),
-                ),
-              ),
-            ),
-            if (_showActions) _buildActionsOverlay(),
-          ],
-        ),
+        child: widget.isCompact ? _buildCompactCard() : _buildFullCard(),
       ),
     );
   }
 
-  Widget _buildFullContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Image section with gradient overlay
-        Expanded(
-          flex: 3,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (widget.city.images.isNotEmpty)
-                CachedImageWidget(
-                  imageUrl: widget.city.images.first,
-                  fit: BoxFit.cover,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      AppTheme.darkBackground.withValues(alpha: 0.8),
-                    ],
-                    stops: const [0.5, 1.0],
-                  ),
-                )
-              else
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppTheme.primaryBlue.withValues(alpha: 0.3),
-                        AppTheme.primaryPurple.withValues(alpha: 0.2),
-                      ],
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      CupertinoIcons.photo,
-                      size: 40,
-                      color: AppTheme.textMuted.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-
-              // Status badge
-              Positioned(
-                top: 12,
-                right: 12,
-                child: _buildStatusBadge(),
+  // الكارد الكامل - استخدام AspectRatio بدلاً من الارتفاع الثابت
+  Widget _buildFullCard() {
+    return AspectRatio(
+      aspectRatio: 1.0, // نسبة 1:1 للكارد المربع
+      child: Stack(
+        children: [
+          // الخلفية والإطار
+          Container(
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: widget.city.isActive == true
+                    ? AppTheme.success.withOpacity(0.3)
+                    : AppTheme.darkBorder.withOpacity(0.2),
+                width: 1,
               ),
-
-              // Image count badge
-              if (widget.city.images.length > 1)
-                Positioned(
-                  bottom: 12,
-                  right: 12,
-                  child: _buildImageCountBadge(),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.shadowDark.withOpacity(0.15),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
                 ),
-            ],
+              ],
+            ),
           ),
-        ),
 
-        // Content section
-        Expanded(
-          flex: 2,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          // المحتوى
+          ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final imageHeight = constraints.maxHeight * 0.65;
+                final contentHeight = constraints.maxHeight * 0.35;
+
+                return Stack(
                   children: [
-                    Text(
-                      widget.city.name,
-                      style: AppTextStyles.heading3.copyWith(
-                        color: AppTheme.textWhite,
-                        fontWeight: FontWeight.bold,
+                    // قسم الصور
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: imageHeight,
+                      child: CityImagesCollage(
+                        images: widget.city.images,
+                        height: imageHeight,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(15),
+                          topRight: Radius.circular(15),
+                        ),
+                        onTap: widget.onTap,
+                        showImageCount: widget.city.images.length > 1,
+                        enableHoverEffect: false,
+                      ),
+                    ),
+
+                    // شارة الحالة
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: _buildStatusBadge(),
+                    ),
+
+                    // قسم المحتوى
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: contentHeight,
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        child: _buildContentSection(),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+
+          // طبقة الإجراءات
+          if (_showActions)
+            Positioned.fill(
+              child: _buildActionsOverlay(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // الكارد المضغوط
+  Widget _buildCompactCard() {
+    return Container(
+      height: 100,
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: widget.city.isActive == true
+              ? AppTheme.success.withOpacity(0.3)
+              : AppTheme.darkBorder.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.shadowDark.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(11),
+            child: Row(
+              children: [
+                // قسم الصور
+                SizedBox(
+                  width: 100,
+                  child: CityImagesCollage(
+                    images: widget.city.images.take(2).toList(),
+                    height: 98, // نقص 2 بكسل للـ border
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(11),
+                      bottomRight: Radius.circular(11),
+                    ),
+                    onTap: widget.onTap,
+                    showImageCount: false,
+                    enableHoverEffect: false,
+                  ),
+                ),
+
+                // قسم المحتوى
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: _buildCompactContent(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // طبقة الإجراءات
+          if (_showActions)
+            Positioned.fill(
+              child: _buildActionsOverlay(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // محتوى القسم السفلي للكارد الكامل
+  Widget _buildContentSection() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // معلومات المدينة
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // اسم المدينة
+              Text(
+                widget.city.name,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppTheme.textWhite,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              // الموقع
+              Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.location_solid,
+                    size: 9,
+                    color: AppTheme.textMuted.withOpacity(0.7),
+                  ),
+                  const SizedBox(width: 3),
+                  Expanded(
+                    child: Text(
+                      widget.city.country,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppTheme.textMuted.withOpacity(0.7),
+                        fontSize: 10,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          CupertinoIcons.location_solid,
-                          size: 12,
-                          color: AppTheme.textMuted,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          widget.city.country,
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppTheme.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                if (widget.city.propertiesCount != null)
-                  _buildPropertiesCount(),
+                  ),
+                ],
+              ),
+              if (widget.city.propertiesCount != null) ...[
+                const SizedBox(height: 2),
+                _buildPropertiesCount(),
               ],
-            ),
+            ],
           ),
+        ),
+        // أزرار الإجراءات
+        Row(
+          children: [
+            _buildActionIcon(
+              icon: CupertinoIcons.pencil,
+              onTap: widget.onEdit,
+              color: AppTheme.primaryBlue,
+            ),
+            const SizedBox(width: 6),
+            _buildActionIcon(
+              icon: CupertinoIcons.trash,
+              onTap: widget.onDelete,
+              color: AppTheme.error,
+            ),
+          ],
         ),
       ],
     );
   }
 
+  // محتوى الكارد المضغوط
   Widget _buildCompactContent() {
     return Row(
       children: [
-        // Compact image
-        Container(
-          width: 100,
-          decoration: BoxDecoration(
-            borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(20),
-              bottomRight: Radius.circular(20),
-            ),
-            gradient: widget.city.images.isEmpty
-                ? LinearGradient(
-                    colors: [
-                      AppTheme.primaryBlue.withValues(alpha: 0.3),
-                      AppTheme.primaryPurple.withValues(alpha: 0.2),
-                    ],
-                  )
-                : null,
-          ),
-          child: widget.city.images.isNotEmpty
-              ? ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  ),
-                  child: CachedImageWidget(
-                    imageUrl: widget.city.images.first,
-                    fit: BoxFit.cover,
-                  ),
-                )
-              : Center(
-                  child: Icon(
-                    CupertinoIcons.building_2_fill,
-                    size: 30,
-                    color: AppTheme.textMuted.withValues(alpha: 0.5),
-                  ),
-                ),
-        ),
-
-        // Content
+        // معلومات المدينة
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        widget.city.name,
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          color: AppTheme.textWhite,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // الاسم والحالة
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.city.name,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppTheme.textWhite,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(width: 8),
-                    _buildStatusBadge(isSmall: true),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      CupertinoIcons.location,
-                      size: 14,
-                      color: AppTheme.textMuted,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
+                  ),
+                  const SizedBox(width: 4),
+                  _buildStatusBadge(isSmall: true),
+                ],
+              ),
+              const SizedBox(height: 3),
+              // الموقع
+              Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.location,
+                    size: 9,
+                    color: AppTheme.textMuted.withOpacity(0.7),
+                  ),
+                  const SizedBox(width: 2),
+                  Expanded(
+                    child: Text(
                       widget.city.country,
                       style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.textMuted,
+                        color: AppTheme.textMuted.withOpacity(0.7),
+                        fontSize: 9,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const Spacer(),
-                    if (widget.city.propertiesCount != null)
-                      _buildPropertiesCount(isCompact: true),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 3),
+              // المعلومات الإضافية
+              Row(
+                children: [
+                  if (widget.city.images.length > 2) ...[
+                    _buildImageBadge(),
+                    const SizedBox(width: 4),
                   ],
-                ),
-              ],
-            ),
+                  if (widget.city.propertiesCount != null)
+                    _buildPropertiesCount(isSmall: true),
+                ],
+              ),
+            ],
           ),
+        ),
+        // أزرار صغيرة
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildActionIcon(
+              icon: CupertinoIcons.pencil,
+              onTap: widget.onEdit,
+              color: AppTheme.primaryBlue,
+              size: 8,
+            ),
+            const SizedBox(height: 4),
+            _buildActionIcon(
+              icon: CupertinoIcons.trash,
+              onTap: widget.onDelete,
+              color: AppTheme.error,
+              size: 8,
+            ),
+          ],
         ),
       ],
     );
   }
 
+  // أيقونة الإجراء
+  Widget _buildActionIcon({
+    required IconData icon,
+    required VoidCallback? onTap,
+    required Color color,
+    double size = 10,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap?.call();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(5),
+          border: Border.all(
+            color: color.withOpacity(0.3),
+            width: 0.5,
+          ),
+        ),
+        child: Icon(icon, size: size, color: color),
+      ),
+    );
+  }
+
+  // شارة الحالة
   Widget _buildStatusBadge({bool isSmall = false}) {
     final isActive = widget.city.isActive == true;
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isSmall ? 8 : 12,
-        vertical: isSmall ? 4 : 6,
+        horizontal: isSmall ? 4 : 6,
+        vertical: isSmall ? 1 : 2,
       ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isActive
-              ? [
-                  AppTheme.success.withValues(alpha: 0.8),
-                  AppTheme.success.withValues(alpha: 0.6),
-                ]
-              : [
-                  AppTheme.textMuted.withValues(alpha: 0.6),
-                  AppTheme.textMuted.withValues(alpha: 0.4),
-                ],
-        ),
-        borderRadius: BorderRadius.circular(isSmall ? 8 : 12),
-        boxShadow: [
-          BoxShadow(
-            color: isActive
-                ? AppTheme.success.withValues(alpha: 0.3)
-                : Colors.transparent,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: isActive
+            ? AppTheme.success.withOpacity(0.8)
+            : AppTheme.textMuted.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: isSmall ? 6 : 8,
-            height: isSmall ? 6 : 8,
-            decoration: BoxDecoration(
+            width: 3,
+            height: 3,
+            decoration: const BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  blurRadius: 4,
-                ),
-              ],
             ),
           ),
-          SizedBox(width: isSmall ? 4 : 6),
+          const SizedBox(width: 2),
           Text(
-            isActive ? 'نشط' : 'غير نشط',
-            style: (isSmall ? AppTextStyles.caption : AppTextStyles.bodySmall)
-                .copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: isSmall ? 10 : null,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImageCountBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.darkBackground.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppTheme.darkBorder.withValues(alpha: 0.3),
-          width: 0.5,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            CupertinoIcons.photo_fill,
-            size: 12,
-            color: AppTheme.textLight,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '${widget.city.images.length}',
+            isActive ? 'نشط' : 'غير',
             style: AppTextStyles.caption.copyWith(
-              color: AppTheme.textLight,
+              color: Colors.white,
+              fontSize: isSmall ? 8 : 9,
               fontWeight: FontWeight.w600,
+              height: 1.0,
             ),
           ),
         ],
@@ -417,22 +455,15 @@ class _FuturisticCityCardState extends State<FuturisticCityCard>
     );
   }
 
-  Widget _buildPropertiesCount({bool isCompact = false}) {
+  // عداد العقارات
+  Widget _buildPropertiesCount({bool isSmall = false}) {
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isCompact ? 8 : 10,
-        vertical: isCompact ? 4 : 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primaryBlue.withValues(alpha: 0.1),
-            AppTheme.primaryPurple.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(isCompact ? 8 : 10),
+        color: AppTheme.primaryBlue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(3),
         border: Border.all(
-          color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+          color: AppTheme.primaryBlue.withOpacity(0.2),
           width: 0.5,
         ),
       ),
@@ -441,17 +472,17 @@ class _FuturisticCityCardState extends State<FuturisticCityCard>
         children: [
           Icon(
             CupertinoIcons.house_fill,
-            size: isCompact ? 10 : 12,
+            size: isSmall ? 8 : 9,
             color: AppTheme.primaryBlue,
           ),
-          SizedBox(width: isCompact ? 3 : 4),
+          const SizedBox(width: 2),
           Text(
             '${widget.city.propertiesCount ?? 0}',
-            style: (isCompact ? AppTextStyles.caption : AppTextStyles.bodySmall)
-                .copyWith(
+            style: AppTextStyles.caption.copyWith(
               color: AppTheme.primaryBlue,
+              fontSize: isSmall ? 8 : 9,
               fontWeight: FontWeight.bold,
-              fontSize: isCompact ? 10 : null,
+              height: 1.0,
             ),
           ),
         ],
@@ -459,43 +490,82 @@ class _FuturisticCityCardState extends State<FuturisticCityCard>
     );
   }
 
-  Widget _buildActionsOverlay() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+  // شارة عدد الصور
+  Widget _buildImageBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
       decoration: BoxDecoration(
-        color: AppTheme.darkBackground.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(20),
+        color: AppTheme.primaryPurple.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(
+          color: AppTheme.primaryPurple.withOpacity(0.2),
+          width: 0.5,
+        ),
       ),
-      child: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildActionButton(
-              icon: CupertinoIcons.pencil,
-              label: 'تعديل',
-              onTap: () {
-                setState(() => _showActions = false);
-                widget.onEdit?.call();
-              },
-              color: AppTheme.primaryBlue,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            CupertinoIcons.photo,
+            size: 8,
+            color: AppTheme.primaryPurple,
+          ),
+          const SizedBox(width: 2),
+          Text(
+            '${widget.city.images.length}',
+            style: AppTextStyles.caption.copyWith(
+              color: AppTheme.primaryPurple,
+              fontSize: 8,
+              fontWeight: FontWeight.bold,
+              height: 1.0,
             ),
-            const SizedBox(width: 16),
-            _buildActionButton(
-              icon: CupertinoIcons.trash,
-              label: 'حذف',
-              onTap: () {
-                setState(() => _showActions = false);
-                widget.onDelete?.call();
-              },
-              color: AppTheme.error,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // طبقة الإجراءات
+  Widget _buildActionsOverlay() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(widget.isCompact ? 11 : 15),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          color: AppTheme.darkBackground.withOpacity(0.85),
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildOverlayAction(
+                  icon: CupertinoIcons.pencil,
+                  label: 'تعديل',
+                  onTap: () {
+                    setState(() => _showActions = false);
+                    widget.onEdit?.call();
+                  },
+                  color: AppTheme.primaryBlue,
+                ),
+                const SizedBox(width: 12),
+                _buildOverlayAction(
+                  icon: CupertinoIcons.trash,
+                  label: 'حذف',
+                  onTap: () {
+                    setState(() => _showActions = false);
+                    widget.onDelete?.call();
+                  },
+                  color: AppTheme.error,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildActionButton({
+  // زر الإجراء في الطبقة العلوية
+  Widget _buildOverlayAction({
     required IconData icon,
     required String label,
     required VoidCallback onTap,
@@ -508,27 +578,29 @@ class _FuturisticCityCardState extends State<FuturisticCityCard>
           HapticFeedback.lightImpact();
           onTap();
         },
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: color.withValues(alpha: 0.3),
+              color: color.withOpacity(0.3),
               width: 1,
             ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: color, size: 24),
-              const SizedBox(height: 4),
+              Icon(icon, color: color, size: 18),
+              const SizedBox(height: 2),
               Text(
                 label,
                 style: AppTextStyles.caption.copyWith(
                   color: color,
+                  fontSize: 9,
                   fontWeight: FontWeight.w600,
+                  height: 1.0,
                 ),
               ),
             ],
