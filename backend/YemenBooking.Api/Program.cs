@@ -145,6 +145,8 @@ builder.Services.AddCors(options =>
 
 // تسجيل إعدادات JWT من ملفات التكوين
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+// تسجيل إعدادات البريد الإلكتروني من ملفات التكوين
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
 // إعداد المصادقة باستخدام JWT
 builder.Services.AddAuthentication(options =>
