@@ -34,6 +34,23 @@ abstract class UsersRemoteDataSource {
     String? profileImage,
   });
 
+  /// Register an Owner user and create a linked Property in one operation
+  Future<Map<String, String>> registerOwnerWithProperty({
+    required String name,
+    required String email,
+    required String password,
+    required String phone,
+    required String propertyTypeId,
+    required String propertyName,
+    required String city,
+    required String address,
+    double? latitude,
+    double? longitude,
+    int starRating = 3,
+    String? description,
+    String? currency,
+  });
+
   Future<bool> updateUser({
     required String userId,
     String? name,
@@ -158,6 +175,61 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
         return result.data!;
       } else {
         throw ApiException(message: result.message ?? 'Failed to create user');
+      }
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<Map<String, String>> registerOwnerWithProperty({
+    required String name,
+    required String email,
+    required String password,
+    required String phone,
+    required String propertyTypeId,
+    required String propertyName,
+    required String city,
+    required String address,
+    double? latitude,
+    double? longitude,
+    int starRating = 3,
+    String? description,
+    String? currency,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/api/admin/Users/register-owner',
+        data: {
+          'name': name,
+          'email': email,
+          'password': password,
+          'phone': phone,
+          'propertyTypeId': propertyTypeId,
+          'propertyName': propertyName,
+          'city': city,
+          'address': address,
+          if (latitude != null) 'latitude': latitude,
+          if (longitude != null) 'longitude': longitude,
+          'starRating': starRating,
+          if (description != null) 'description': description,
+          if (currency != null) 'currency': currency,
+        },
+      );
+
+      final result = ResultDto<Map<String, dynamic>>.fromJson(
+        response.data,
+        (json) => json as Map<String, dynamic>,
+      );
+
+      if (result.isSuccess && result.data != null) {
+        final data = result.data!;
+        return {
+          'userId': (data['userId'] ?? '').toString(),
+          'propertyId': (data['propertyId'] ?? '').toString(),
+        };
+      } else {
+        throw ApiException(message: result.message ?? 'Failed to register owner');
       }
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);

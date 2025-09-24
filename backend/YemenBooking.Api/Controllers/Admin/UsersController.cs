@@ -7,6 +7,7 @@ using YemenBooking.Application.Queries.Analytics;
 using YemenBooking.Application.Queries.Dashboard;
 using YemenBooking.Application.Queries.Notifications;
 using YemenBooking.Application.Queries.Users;
+using YemenBooking.Application.Commands.CP.Users;
 
 namespace YemenBooking.Api.Controllers.Admin
 {
@@ -58,6 +59,17 @@ namespace YemenBooking.Api.Controllers.Admin
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserCommand command)
+        {
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// تسجيل مالك كيان جديد وإنشاء العقار المرتبط (عملية واحدة)
+        /// Register new property owner and create the linked property (single operation)
+        /// </summary>
+        [HttpPost("register-owner")]
+        public async Task<IActionResult> RegisterPropertyOwner([FromBody] RegisterPropertyOwnerCommand command)
         {
             var result = await _mediator.Send(command);
             return Ok(result);
