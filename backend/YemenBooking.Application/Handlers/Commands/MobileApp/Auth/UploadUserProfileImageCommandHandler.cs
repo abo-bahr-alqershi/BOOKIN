@@ -57,7 +57,7 @@ namespace YemenBooking.Application.Handlers.Commands.MobileApp.Auth
 
                 user.ProfileImageUrl = imageUrl;
                 user.UpdatedAt = DateTime.UtcNow;
-                await _userRepository.UpdateAsync(user, cancellationToken);
+                await _userRepository.UpdateUserAsync(user, cancellationToken);
 
                 var response = new UploadUserProfileImageResponse
                 {
