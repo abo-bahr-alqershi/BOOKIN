@@ -144,3 +144,6 @@ build/
 /android/app/release
 /android-sdk/
 /flutter/
+
+appsettings.json
+appsettings.Development.json
