@@ -95,13 +95,14 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
                 IsEmailVerified = false
             };
             
-            await _userRepository.AddAsync(newUser, cancellationToken);
+            // Persist user to DB
+            await _userRepository.CreateUserAsync(newUser, cancellationToken);
             var registerResult = new { 
                 Success = true, 
                 UserId = newUser.Id, 
                 Message = "تم تسجيل المستخدم بنجاح",
-                AccessToken = "temp_access_token",
-                RefreshToken = "temp_refresh_token"
+                AccessToken = "",
+                RefreshToken = ""
             };
 
             if (registerResult == null)

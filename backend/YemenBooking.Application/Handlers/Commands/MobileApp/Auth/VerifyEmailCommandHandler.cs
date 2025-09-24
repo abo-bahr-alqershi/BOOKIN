@@ -87,7 +87,7 @@ public class VerifyEmailCommandHandler : IRequestHandler<VerifyEmailCommand, Res
             if (isExpired)
             {
                 _logger.LogWarning("رمز التأكيد منتهي الصلاحية للمستخدم: {UserId}", request.UserId);
-                return ResultDto<VerifyEmailResponse>.Failed("رمز التأكيد منتهي الصلاحية", "INVALID_VERIFICATION_TOKEN");
+                return ResultDto<VerifyEmailResponse>.Failed("رمز التأكيد منتهي الصلاحية", "VERIFICATION_TOKEN_EXPIRED");
             }
 
             var isValidToken = await _emailVerificationService.VerifyCodeAsync(user.Email, request.VerificationToken);
@@ -102,7 +102,7 @@ public class VerifyEmailCommandHandler : IRequestHandler<VerifyEmailCommand, Res
             user.EmailVerifiedAt = DateTime.UtcNow;
             user.UpdatedAt = DateTime.UtcNow;
 
-            await _userRepository.UpdateAsync(user, cancellationToken);
+            await _userRepository.UpdateUserAsync(user, cancellationToken);
             
             // تم حذف الرمز داخل خدمة التحقق عند نجاح التحقق
 

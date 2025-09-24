@@ -61,8 +61,10 @@ namespace YemenBooking.Infrastructure.Services
             var key = email.ToLowerInvariant();
             if (_codes.TryGetValue(key, out var entry))
             {
-                return Task.FromResult(DateTime.UtcNow > entry.ExpiresAt || !string.Equals(entry.Code, verificationCode, StringComparison.OrdinalIgnoreCase));
+                // Only consider time expiry here; token mismatch should be handled by VerifyCodeAsync
+                return Task.FromResult(DateTime.UtcNow > entry.ExpiresAt);
             }
+            // No code stored => treat as expired
             return Task.FromResult(true);
         }
 
