@@ -37,26 +37,51 @@ class AuthRepositoryImpl implements AuthRepository {
           password: password,
           rememberMe: rememberMe,
         );
+        // Since common login endpoint only succeeds for verified users,
+        // mark the user as email-verified locally to satisfy router guards.
+        final originalUser = authResponse.user as UserModel;
+        final verifiedUser = UserModel(
+          userId: originalUser.userId,
+          name: originalUser.name,
+          email: originalUser.email,
+          phone: originalUser.phone,
+          roles: originalUser.roles,
+          accountRole: originalUser.accountRole,
+          propertyId: originalUser.propertyId,
+          propertyName: originalUser.propertyName,
+          propertyCurrency: originalUser.propertyCurrency,
+          profileImage: originalUser.profileImage,
+          emailVerifiedAt: DateTime.now(),
+          phoneVerifiedAt: originalUser.phoneVerifiedAt,
+          createdAt: originalUser.createdAt,
+          updatedAt: DateTime.now(),
+        );
+        final fixedAuthResponse = AuthResponseModel(
+          user: verifiedUser,
+          accessToken: authResponse.accessToken,
+          refreshToken: authResponse.refreshToken,
+          expiresAt: authResponse.expiresAt,
+        );
         // persist tokens to LocalStorageService as well for interceptor
         final localStorage = sl<LocalStorageService>();
-        await localStorage.saveData(StorageConstants.accessToken, authResponse.accessToken);
-        await localStorage.saveData(StorageConstants.refreshToken, authResponse.refreshToken);
-        await localStorage.saveData(StorageConstants.userId, authResponse.user.userId);
-        await localStorage.saveData(StorageConstants.userEmail, authResponse.user.email);
-        await localStorage.saveData(StorageConstants.accountRole, (authResponse.user as UserModel).accountRole ?? '');
-        await localStorage.saveData(StorageConstants.propertyId, (authResponse.user as UserModel).propertyId ?? '');
-        await localStorage.saveData(StorageConstants.propertyName, (authResponse.user as UserModel).propertyName ?? '');
-        await localStorage.saveData(StorageConstants.propertyCurrency, (authResponse.user as UserModel).propertyCurrency ?? '');
+        await localStorage.saveData(StorageConstants.accessToken, fixedAuthResponse.accessToken);
+        await localStorage.saveData(StorageConstants.refreshToken, fixedAuthResponse.refreshToken);
+        await localStorage.saveData(StorageConstants.userId, fixedAuthResponse.user.userId);
+        await localStorage.saveData(StorageConstants.userEmail, fixedAuthResponse.user.email);
+        await localStorage.saveData(StorageConstants.accountRole, (fixedAuthResponse.user as UserModel).accountRole ?? '');
+        await localStorage.saveData(StorageConstants.propertyId, (fixedAuthResponse.user as UserModel).propertyId ?? '');
+        await localStorage.saveData(StorageConstants.propertyName, (fixedAuthResponse.user as UserModel).propertyName ?? '');
+        await localStorage.saveData(StorageConstants.propertyCurrency, (fixedAuthResponse.user as UserModel).propertyCurrency ?? '');
         
         if (rememberMe) {
-          await localDataSource.cacheAuthResponse(authResponse);
+          await localDataSource.cacheAuthResponse(fixedAuthResponse);
         } else {
-          await localDataSource.cacheAccessToken(authResponse.accessToken);
-          await localDataSource.cacheRefreshToken(authResponse.refreshToken);
-          await localDataSource.cacheUser(authResponse.user as UserModel);
+          await localDataSource.cacheAccessToken(fixedAuthResponse.accessToken);
+          await localDataSource.cacheRefreshToken(fixedAuthResponse.refreshToken);
+          await localDataSource.cacheUser(verifiedUser);
         }
         
-        return Right(authResponse);
+        return Right(fixedAuthResponse);
       } catch (e) {
         return ErrorHandler.handle(e);
       }

@@ -61,12 +61,27 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20),
-            child: BlocConsumer<EmailVerificationBloc, EmailVerificationState>(
+            child: MultiBlocListener(
+              listeners: [
+                BlocListener<AuthBloc, AuthState>(
+                  listener: (context, aState) {
+                    if (aState is AuthUnauthenticated) {
+                      // بعد اكتمال عملية تسجيل الخروج، انتقل لصفحة تسجيل الدخول
+                      context.go(RouteConstants.login);
+                    }
+                  },
+                ),
+              ],
+              child: BlocConsumer<EmailVerificationBloc, EmailVerificationState>(
               listener: (context, state) {
                 if (state is EmailVerificationSuccess) {
                   HapticFeedback.mediumImpact();
-                  // بعد التحقق، وجّه المستخدم مباشرة لصفحة تسجيل الدخول
-                  context.go(RouteConstants.login);
+                  // بعد التحقق: امسح الجلسة الحالية وأعد المستخدم لشاشة تسجيل الدخول
+                  // لتفادي بقاء توكن التسجيل الأولي وإجبار إعادة تسجيل الدخول بمستخدم مُفعّل
+                  context.read<AuthBloc>().add(const LogoutEvent());
+                  // انتظر تبدل الحالة إلى غير مصادق ثم انتقل
+                  // ملاحظة: لو لم يتغير فوراً، نستخدم Future.microtask لضمان تنفيذ التنقل بعد الإطار الحالي
+                  Future.microtask(() => context.go(RouteConstants.login));
                 } else if (state is EmailVerificationError) {
                   _showError(state.message);
                 } else if (state is EmailVerificationCodeResent) {
