@@ -2,6 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:bookn_cp_app/core/bloc/theme/theme_bloc.dart';
 import 'package:bookn_cp_app/injection_container.dart';
+import 'package:bookn_cp_app/core/localization/locale_manager.dart';
+import 'package:bookn_cp_app/core/bloc/locale/locale_cubit.dart';
 
 // Core Blocs
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
@@ -25,6 +27,7 @@ class AppBloc {
   static late final AuthBloc authBloc;
   // Removed settings, notifications, payment
   static late final ThemeBloc theme;
+  static late final LocaleCubit locale;
 
   // Feature Blocs
   static late final ChatBloc chatBloc;
@@ -37,6 +40,7 @@ class AppBloc {
     
     // Core Application Blocs
     theme = ThemeBloc(prefs:sl());
+    locale = LocaleCubit(LocaleManager.defaultLocale);
     
     authBloc = AuthBloc(
       loginUseCase: sl(),
@@ -86,6 +90,9 @@ class AppBloc {
   static final List<BlocProvider> providers = [
     BlocProvider(
       create: (_) => theme,
+    ),
+    BlocProvider<LocaleCubit>(
+      create: (context) => locale,
     ),
     BlocProvider<AuthBloc>(
       create: (context) => authBloc,
