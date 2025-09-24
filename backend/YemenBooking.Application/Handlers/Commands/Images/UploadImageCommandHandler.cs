@@ -96,6 +96,15 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                         folderPath = $"{folderPath}/{request.UnitId.Value}";
                 }
 
+            // السماح برفع الفيديوهات أيضاً: في حال كان نوع المحتوى Video نتجاوز عمليات التحقق الخاصة بالصور
+            var isVideo = request.File.ContentType?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) == true
+                          || request.Extension.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)
+                          || request.Extension.EndsWith(".mov", StringComparison.OrdinalIgnoreCase)
+                          || request.Extension.EndsWith(".webm", StringComparison.OrdinalIgnoreCase)
+                          || request.Extension.EndsWith(".mkv", StringComparison.OrdinalIgnoreCase);
+
+            if (!isVideo)
+            {
                 // التحقق من صلاحية الصورة
                 stream.Seek(0, SeekOrigin.Begin);
                 var validationOptions = new ImageValidationOptions
@@ -105,9 +114,10 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                 var validationResult = await _imageProcessingService.ValidateImageAsync(stream, validationOptions, cancellationToken);
                 if (!validationResult.IsValid)
                     return ResultDto<ImageDto>.Failed(validationResult.ValidationErrors, "فشل التحقق من صحة الصورة");
+            }
 
                 // تحسين الصورة إذا طُلب
-                if (request.OptimizeImage)
+                if (!isVideo && request.OptimizeImage)
                 {
                     stream.Seek(0, SeekOrigin.Begin);
                     var compressResult = await _imageProcessingService.CompressImageAsync(stream, request.Quality ?? 85, null, cancellationToken);
@@ -123,7 +133,7 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                 }
 
                 // إنشاء صورة مصغرة إذا طُلب
-                if (request.GenerateThumbnail)
+                if (!isVideo && request.GenerateThumbnail)
                 {
                     stream.Seek(0, SeekOrigin.Begin);
                     var thumbResult32 = await _imageProcessingService.GenerateThumbnailAsync(stream, maxHeight: 32, maxWidth: 32, cancellationToken: cancellationToken);
@@ -248,6 +258,7 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     Caption = request.Alt ?? string.Empty,
                     AltText = request.Alt ?? string.Empty,
                     Tags = JsonSerializer.Serialize(request.Tags ?? new List<string>()),
+                    // بالنسبة للفيديو لا توجد أحجام متعددة، نخزن الرابط كما هو
                     Sizes = uploadResult.FileUrl,
                     IsMainImage = request.IsPrimary ?? false,
                     DisplayOrder = request.Order ?? 0,

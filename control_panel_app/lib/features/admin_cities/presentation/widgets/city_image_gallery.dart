@@ -1089,11 +1089,13 @@ class _EnhancedImagePickerSheet extends StatelessWidget {
   final VoidCallback onCameraSelected;
   final VoidCallback onGallerySelected;
   final VoidCallback onMultipleSelected;
+  final VoidCallback? onVideoSelected;
 
   const _EnhancedImagePickerSheet({
     required this.onCameraSelected,
     required this.onGallerySelected,
     required this.onMultipleSelected,
+    this.onVideoSelected,
   });
 
   @override
@@ -1148,6 +1150,16 @@ class _EnhancedImagePickerSheet extends StatelessWidget {
                 gradient: [AppTheme.success, AppTheme.neonGreen],
                 onTap: onMultipleSelected,
               ),
+              if (onVideoSelected != null) ...[
+                const SizedBox(height: 12),
+                _buildEnhancedOption(
+                  icon: Icons.video_library_outlined,
+                  title: 'فيديو',
+                  subtitle: 'اختر فيديو من المعرض',
+                  gradient: [AppTheme.info, AppTheme.primaryCyan],
+                  onTap: onVideoSelected!,
+                ),
+              ],
             ],
           ),
         ),
