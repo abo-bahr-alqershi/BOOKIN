@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:ui';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -90,6 +91,10 @@ class _RegisterFormState extends State<RegisterForm>
   bool _loadingSuggestions = false;
   CancelableOperation? _pendingAutocomplete;
   Timer? _debounce;
+
+  // Google Places Autocomplete session management and race-guards
+  int _autocompleteRequestSeq = 0;
+  String _placesSessionToken = _generatePlacesSessionToken();
 
   late AnimationController _fieldAnimationController;
   late AnimationController _checkboxAnimationController;
@@ -1139,10 +1144,19 @@ class _RegisterFormState extends State<RegisterForm>
   }
 
   Future<void> _fetchPlaceAutocomplete(String input) async {
-    if (ApiConstants.googlePlacesApiKey.isEmpty) {
-      print('⚠️ Google Places API key is missing!');
+    if (ApiConstants.googlePlacesApiKey.trim().isEmpty) {
+      if (kDebugMode) {
+        print('⚠️ Google Places API key is missing!');
+      }
       return;
     }
+
+    // Ensure a session token exists for coherent billing/results
+    if (_placesSessionToken.isEmpty) {
+      _placesSessionToken = _generatePlacesSessionToken();
+    }
+
+    final int requestId = ++_autocompleteRequestSeq;
     setState(() => _loadingSuggestions = true);
     try {
       final client = dio.Dio();
@@ -1153,10 +1167,25 @@ class _RegisterFormState extends State<RegisterForm>
           'key': ApiConstants.googlePlacesApiKey,
           'language': 'ar',
           'components': 'country:ye',
-          'types': 'address', // أضف هذا
+          'region': 'ye',
+          'sessiontoken': _placesSessionToken,
         },
       );
-      final preds = (resp.data['predictions'] as List?) ?? [];
+
+      // If a newer request was fired, ignore this result
+      if (requestId != _autocompleteRequestSeq) return;
+
+      final data = resp.data as Map? ?? const {};
+      final status = (data['status'] ?? '').toString();
+      if (status.isNotEmpty && status != 'OK' && status != 'ZERO_RESULTS') {
+        if (kDebugMode) {
+          print('Places Autocomplete error: $status | ${data['error_message'] ?? ''}');
+        }
+        setState(() => _addressSuggestions = const []);
+        return;
+      }
+
+      final preds = (data['predictions'] as List?) ?? [];
       final list = preds
           .map((e) => _PlaceSuggestion(
                 description: (e['description'] ?? '').toString(),
@@ -1165,10 +1194,15 @@ class _RegisterFormState extends State<RegisterForm>
           .where((e) => e.description.isNotEmpty && e.placeId.isNotEmpty)
           .toList();
       setState(() => _addressSuggestions = list);
-    } catch (_) {
-      // ignore
+    } catch (err) {
+      if (kDebugMode) {
+        print('Places Autocomplete exception: $err');
+      }
+      setState(() => _addressSuggestions = const []);
     } finally {
-      setState(() => _loadingSuggestions = false);
+      if (requestId == _autocompleteRequestSeq) {
+        setState(() => _loadingSuggestions = false);
+      }
     }
   }
 
@@ -1233,6 +1267,7 @@ class _RegisterFormState extends State<RegisterForm>
           'place_id': s.placeId,
           'key': ApiConstants.googlePlacesApiKey,
           'language': 'ar',
+          'sessiontoken': _placesSessionToken,
         },
       );
       final result = resp.data['result'];
@@ -1261,6 +1296,8 @@ class _RegisterFormState extends State<RegisterForm>
     } catch (_) {
       // ignore
     }
+    // End the current autocomplete session after a successful selection
+    _placesSessionToken = _generatePlacesSessionToken();
   }
 
   void _openMapPicker() {
@@ -1546,3 +1583,6 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
 }
 
 // Simple cancellable op placeholder (no external dep)
+
+// Helpers
+String _generatePlacesSessionToken() => 'sess_${DateTime.now().microsecondsSinceEpoch}';
