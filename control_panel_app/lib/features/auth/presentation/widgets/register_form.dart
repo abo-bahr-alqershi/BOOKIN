@@ -1,11 +1,11 @@
 // lib/features/auth/presentation/widgets/ultra_register_form.dart
 
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:ui';
+import 'dart:math' as math;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/validators.dart';
@@ -31,7 +31,6 @@ class RegisterForm extends StatefulWidget {
     String phone,
     String password,
     String passwordConfirmation,
-    // Owner/property fields
     String propertyTypeId,
     String propertyName,
     String city,
@@ -55,12 +54,14 @@ class RegisterForm extends StatefulWidget {
 class _RegisterFormState extends State<RegisterForm>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+  final _scrollController = ScrollController();
+
+  // Controllers
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  // Property fields controllers
   final _propertyNameController = TextEditingController();
   final _cityController = TextEditingController();
   final _addressController = TextEditingController();
@@ -68,6 +69,7 @@ class _RegisterFormState extends State<RegisterForm>
   final _longitudeController = TextEditingController();
   final _descriptionController = TextEditingController();
 
+  // Focus Nodes
   final _nameFocusNode = FocusNode();
   final _emailFocusNode = FocusNode();
   final _phoneFocusNode = FocusNode();
@@ -79,45 +81,65 @@ class _RegisterFormState extends State<RegisterForm>
   final _latitudeFocusNode = FocusNode();
   final _longitudeFocusNode = FocusNode();
 
+  // State variables
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
   bool _showPasswordStrength = false;
-  // Removed star rating field
   String _selectedPropertyTypeId = '';
   List<ap_models.PropertyTypeModel> _propertyTypes = const [];
   bool _loadingPropertyTypes = false;
-  // Cities dropdown state
   List<String> _cities = const [];
   bool _loadingCities = false;
   String? _selectedCity;
   String? _citiesError;
-  // Places autocomplete
   List<_PlaceSuggestion> _addressSuggestions = const [];
   bool _loadingSuggestions = false;
-  CancelableOperation? _pendingAutocomplete;
   Timer? _debounce;
-
-  // Google Places Autocomplete session management and race-guards
-  final int _autocompleteRequestSeq = 0;
   String _placesSessionToken = _generatePlacesSessionToken();
 
+  // Animation Controllers
   late AnimationController _fieldAnimationController;
   late AnimationController _checkboxAnimationController;
+  late AnimationController _sectionAnimationController;
+  late AnimationController _floatingAnimationController;
+  late Animation<double> _floatingAnimation;
+
+  // Page tracking
+  int _currentStep = 0;
+  final int _totalSteps = 2;
 
   @override
   void initState() {
     super.initState();
 
     _fieldAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
 
     _checkboxAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
+
+    _sectionAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    )..forward();
+
+    _floatingAnimationController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _floatingAnimation = Tween<double>(
+      begin: -5,
+      end: 5,
+    ).animate(CurvedAnimation(
+      parent: _floatingAnimationController,
+      curve: Curves.easeInOut,
+    ));
 
     _passwordController.addListener(() {
       setState(() {
@@ -125,7 +147,7 @@ class _RegisterFormState extends State<RegisterForm>
       });
     });
 
-    // Add focus listeners for animations
+    // Add focus listeners
     _nameFocusNode.addListener(() => setState(() {}));
     _emailFocusNode.addListener(() => setState(() {}));
     _phoneFocusNode.addListener(() => setState(() {}));
@@ -134,8 +156,6 @@ class _RegisterFormState extends State<RegisterForm>
     _propertyNameFocusNode.addListener(() => setState(() {}));
     _cityFocusNode.addListener(() => setState(() {}));
     _addressFocusNode.addListener(() => setState(() {}));
-    _latitudeFocusNode.addListener(() => setState(() {}));
-    _longitudeFocusNode.addListener(() => setState(() {}));
 
     _loadPropertyTypes();
     _loadCities();
@@ -144,6 +164,7 @@ class _RegisterFormState extends State<RegisterForm>
   @override
   void dispose() {
     _debounce?.cancel();
+    _scrollController.dispose();
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
@@ -167,404 +188,787 @@ class _RegisterFormState extends State<RegisterForm>
     _longitudeFocusNode.dispose();
     _fieldAnimationController.dispose();
     _checkboxAnimationController.dispose();
+    _sectionAnimationController.dispose();
+    _floatingAnimationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Name field
-          _buildUltraCompactField(
-            controller: _nameController,
-            focusNode: _nameFocusNode,
-            label: 'الاسم',
-            hint: 'اسمك الكامل',
-            icon: Icons.person_outline_rounded,
-            textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) {
-              FocusScope.of(context).requestFocus(_emailFocusNode);
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'مطلوب';
-              }
-              if (value.length < 3) {
-                return '3 أحرف على الأقل';
-              }
-              return null;
-            },
-          ),
-
-          const SizedBox(height: 16),
-
-          // Email field
-          _buildUltraCompactField(
-            controller: _emailController,
-            focusNode: _emailFocusNode,
-            label: 'البريد',
-            hint: 'example@email.com',
-            icon: Icons.email_outlined,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) {
-              FocusScope.of(context).requestFocus(_phoneFocusNode);
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'مطلوب';
-              }
-              if (!Validators.isValidEmail(value)) {
-                return 'بريد غير صحيح';
-              }
-              return null;
-            },
-          ),
-
-          const SizedBox(height: 16),
-
-          // Phone field
-          _buildUltraCompactField(
-            controller: _phoneController,
-            focusNode: _phoneFocusNode,
-            label: 'الهاتف',
-            hint: '967XXXXXXXXX',
-            icon: Icons.phone_outlined,
-            keyboardType: TextInputType.phone,
-            textInputAction: TextInputAction.next,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(12),
-            ],
-            onFieldSubmitted: (_) {
-              FocusScope.of(context).requestFocus(_passwordFocusNode);
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'مطلوب';
-              }
-              if (!Validators.isValidPhoneNumber('+$value')) {
-                return 'رقم غير صحيح';
-              }
-              return null;
-            },
-          ),
-
-          const SizedBox(height: 16),
-
-          // Password field
-          _buildUltraCompactField(
-            controller: _passwordController,
-            focusNode: _passwordFocusNode,
-            label: 'كلمة المرور',
-            hint: '••••••••',
-            icon: Icons.lock_outline_rounded,
-            obscureText: _obscurePassword,
-            textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) {
-              FocusScope.of(context).requestFocus(_confirmPasswordFocusNode);
-            },
-            suffixIcon: _buildPasswordToggle(
-              obscure: _obscurePassword,
-              onTap: () => setState(() => _obscurePassword = !_obscurePassword),
+    return AnimatedBuilder(
+      animation: _floatingAnimation,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            // Background decoration
+            Positioned(
+              top: _floatingAnimation.value,
+              right: -50,
+              child: _buildFloatingShape(
+                color: AppTheme.primaryBlue.withValues(alpha: 0.05),
+                size: 150,
+              ),
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'مطلوب';
-              }
-              if (!Validators.isValidPassword(value, minLength: 8)) {
-                return '8 أحرف على الأقل';
-              }
-              return null;
-            },
-          ),
+            Positioned(
+              bottom: _floatingAnimation.value * -1,
+              left: -30,
+              child: _buildFloatingShape(
+                color: AppTheme.primaryPurple.withValues(alpha: 0.03),
+                size: 120,
+              ),
+            ),
 
-          // Password strength indicator
-          if (_showPasswordStrength) ...[
-            const SizedBox(height: 10),
-            PasswordStrengthIndicator(
-              password: _passwordController.text,
-              showRequirements: false,
+            // Main form
+            Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildStepIndicator(),
+                  const SizedBox(height: 24),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    switchInCurve: Curves.easeInOut,
+                    switchOutCurve: Curves.easeInOut,
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0.2, 0),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: _currentStep == 0
+                        ? _buildPersonalInfoStep()
+                        : _buildPropertyInfoStep(),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildNavigationButtons(),
+                ],
+              ),
             ),
           ],
+        );
+      },
+    );
+  }
 
-          const SizedBox(height: 16),
-
-          // Confirm password field
-          _buildUltraCompactField(
-            controller: _confirmPasswordController,
-            focusNode: _confirmPasswordFocusNode,
-            label: 'تأكيد المرور',
-            hint: '••••••••',
-            icon: Icons.lock_outline_rounded,
-            obscureText: _obscureConfirmPassword,
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => _onSubmit(),
-            suffixIcon: _buildPasswordToggle(
-              obscure: _obscureConfirmPassword,
-              onTap: () => setState(
-                  () => _obscureConfirmPassword = !_obscureConfirmPassword),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'مطلوب';
-              }
-              if (value != _passwordController.text) {
-                return 'كلمات المرور غير متطابقة';
-              }
-              return null;
-            },
+  Widget _buildFloatingShape({required Color color, required double size}) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.3),
+            blurRadius: 30,
+            spreadRadius: 10,
           ),
-
-          const SizedBox(height: 20),
-
-          // Property section header
-          _buildSectionHeader('بيانات الكيان'),
-
-          // Property type dropdown
-          _buildPropertyTypeDropdown(),
-
-          const SizedBox(height: 16),
-
-          // Property name
-          _buildUltraCompactField(
-            controller: _propertyNameController,
-            focusNode: _propertyNameFocusNode,
-            label: 'اسم الكيان',
-            hint: 'مثل: فندق الراحة',
-            icon: Icons.apartment_rounded,
-            textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) {
-              FocusScope.of(context).requestFocus(_cityFocusNode);
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'مطلوب';
-              }
-              return null;
-            },
-          ),
-
-          const SizedBox(height: 16),
-
-          // City
-          _buildCityDropdown(),
-
-          const SizedBox(height: 16),
-
-          // Address
-          _buildUltraCompactField(
-            controller: _addressController,
-            focusNode: _addressFocusNode,
-            onChanged: _onAddressChanged,
-            label: 'العنوان',
-            hint: 'مثل: الاصبحي شارع المقالح',
-            icon: Icons.map_outlined,
-            textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) {
-              FocusScope.of(context).requestFocus(_latitudeFocusNode);
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) return 'مطلوب';
-              return null;
-            },
-          ),
-
-          // Address suggestions
-          if (_addressSuggestions.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _buildAddressSuggestionsPanel(),
-          ],
-
-          const SizedBox(height: 16),
-
-          // Latitude & Longitude
-          Row(
-            children: [
-              Expanded(
-                child: _buildUltraCompactField(
-                  controller: _latitudeController,
-                  focusNode: _latitudeFocusNode,
-                  label: 'خط العرض',
-                  hint: 'Latitude',
-                  icon: Icons.my_location_outlined,
-                  keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true, signed: true),
-                  textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) {
-                    FocusScope.of(context).requestFocus(_longitudeFocusNode);
-                  },
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildUltraCompactField(
-                  controller: _longitudeController,
-                  focusNode: _longitudeFocusNode,
-                  label: 'خط الطول',
-                  hint: 'Longitude',
-                  icon: Icons.my_location_outlined,
-                  keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true, signed: true),
-                  textInputAction: TextInputAction.next,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Star rating removed
-
-          // Map picker button
-          _buildMapPickerButton(),
-
-          const SizedBox(height: 16),
-
-          // Description (optional)
-          _buildUltraTextarea(
-            controller: _descriptionController,
-            label: 'وصف (اختياري)',
-            hint: 'وصف مختصر عن الكيان وخدماته',
-            icon: Icons.description_outlined,
-          ),
-
-          const SizedBox(height: 20),
-
-          // Terms checkbox
-          _buildUltraTermsCheckbox(),
-
-          const SizedBox(height: 24),
-
-          // Submit button
-          _buildUltraSubmitButton(),
         ],
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        title,
-        style: AppTextStyles.caption.copyWith(
-          color: AppTheme.textWhite.withValues(alpha: 0.9),
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
+  Widget _buildStepIndicator() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withValues(alpha: 0.1),
+            AppTheme.darkCard.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.1),
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        children: List.generate(_totalSteps, (index) {
+          final isActive = index <= _currentStep;
+          final isCompleted = index < _currentStep;
+
+          return Expanded(
+            child: Row(
+              children: [
+                if (index > 0)
+                  Expanded(
+                    child: Container(
+                      height: 2,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      decoration: BoxDecoration(
+                        gradient: isActive ? AppTheme.primaryGradient : null,
+                        color: !isActive
+                            ? AppTheme.darkBorder.withValues(alpha: 0.2)
+                            : null,
+                        borderRadius: BorderRadius.circular(1),
+                      ),
+                    ),
+                  ),
+                _buildStepCircle(index, isActive, isCompleted),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildStepCircle(int index, bool isActive, bool isCompleted) {
+    final stepTitles = ['المعلومات الشخصية', 'بيانات الكيان'];
+
+    return Column(
+      children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            gradient: isActive ? AppTheme.primaryGradient : null,
+            color: !isActive ? AppTheme.darkCard.withValues(alpha: 0.3) : null,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isActive
+                  ? Colors.transparent
+                  : AppTheme.darkBorder.withValues(alpha: 0.2),
+              width: 2,
+            ),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Center(
+            child: isCompleted
+                ? const Icon(
+                    Icons.check_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  )
+                : Text(
+                    '${index + 1}',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: isActive
+                          ? Colors.white
+                          : AppTheme.textMuted.withValues(alpha: 0.5),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          stepTitles[index],
+          style: AppTextStyles.caption.copyWith(
+            color: isActive
+                ? AppTheme.primaryBlue
+                : AppTheme.textMuted.withValues(alpha: 0.5),
+            fontSize: 10,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPersonalInfoStep() {
+    return Column(
+      key: const ValueKey('personal_info'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSectionHeader('المعلومات الأساسية', Icons.person_outline_rounded),
+        const SizedBox(height: 16),
+        _buildEnhancedField(
+          controller: _nameController,
+          focusNode: _nameFocusNode,
+          label: 'الاسم الكامل',
+          hint: 'أدخل اسمك الكامل',
+          icon: Icons.person_outline_rounded,
+          textInputAction: TextInputAction.next,
+          onFieldSubmitted: (_) {
+            FocusScope.of(context).requestFocus(_emailFocusNode);
+          },
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'الاسم مطلوب';
+            }
+            if (value.length < 3) {
+              return 'يجب أن يحتوي على 3 أحرف على الأقل';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildEnhancedField(
+          controller: _emailController,
+          focusNode: _emailFocusNode,
+          label: 'البريد الإلكتروني',
+          hint: 'example@email.com',
+          icon: Icons.email_outlined,
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
+          onFieldSubmitted: (_) {
+            FocusScope.of(context).requestFocus(_phoneFocusNode);
+          },
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'البريد الإلكتروني مطلوب';
+            }
+            if (!Validators.isValidEmail(value)) {
+              return 'البريد الإلكتروني غير صحيح';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildEnhancedField(
+          controller: _phoneController,
+          focusNode: _phoneFocusNode,
+          label: 'رقم الهاتف',
+          hint: '+967XXXXXXXXX',
+          icon: Icons.phone_outlined,
+          keyboardType: TextInputType.phone,
+          textInputAction: TextInputAction.next,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(12),
+          ],
+          onFieldSubmitted: (_) {
+            FocusScope.of(context).requestFocus(_passwordFocusNode);
+          },
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'رقم الهاتف مطلوب';
+            }
+            if (!Validators.isValidPhoneNumber('+$value')) {
+              return 'رقم الهاتف غير صحيح';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 24),
+        _buildSectionHeader('كلمة المرور', Icons.lock_outline_rounded),
+        const SizedBox(height: 16),
+        _buildEnhancedField(
+          controller: _passwordController,
+          focusNode: _passwordFocusNode,
+          label: 'كلمة المرور',
+          hint: 'أدخل كلمة مرور قوية',
+          icon: Icons.lock_outline_rounded,
+          obscureText: _obscurePassword,
+          textInputAction: TextInputAction.next,
+          onFieldSubmitted: (_) {
+            FocusScope.of(context).requestFocus(_confirmPasswordFocusNode);
+          },
+          suffixIcon: _buildPasswordToggle(
+            obscure: _obscurePassword,
+            onTap: () => setState(() => _obscurePassword = !_obscurePassword),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'كلمة المرور مطلوبة';
+            }
+            if (!Validators.isValidPassword(value, minLength: 8)) {
+              return 'يجب أن تحتوي على 8 أحرف على الأقل';
+            }
+            return null;
+          },
+        ),
+        if (_showPasswordStrength) ...[
+          const SizedBox(height: 12),
+          AnimatedOpacity(
+            opacity: _showPasswordStrength ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 300),
+            child: PasswordStrengthIndicator(
+              password: _passwordController.text,
+              showRequirements: true,
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+        _buildEnhancedField(
+          controller: _confirmPasswordController,
+          focusNode: _confirmPasswordFocusNode,
+          label: 'تأكيد كلمة المرور',
+          hint: 'أعد إدخال كلمة المرور',
+          icon: Icons.lock_outline_rounded,
+          obscureText: _obscureConfirmPassword,
+          textInputAction: TextInputAction.done,
+          suffixIcon: _buildPasswordToggle(
+            obscure: _obscureConfirmPassword,
+            onTap: () => setState(
+                () => _obscureConfirmPassword = !_obscureConfirmPassword),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'تأكيد كلمة المرور مطلوب';
+            }
+            if (value != _passwordController.text) {
+              return 'كلمات المرور غير متطابقة';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPropertyInfoStep() {
+    return Column(
+      key: const ValueKey('property_info'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSectionHeader('معلومات الكيان', Icons.business_rounded),
+        const SizedBox(height: 16),
+        _buildEnhancedDropdown(
+          label: 'نوع الكيان',
+          icon: Icons.category_outlined,
+          value:
+              _selectedPropertyTypeId.isEmpty ? null : _selectedPropertyTypeId,
+          items: _propertyTypes
+              .map((t) => DropdownMenuItem<String>(
+                    value: t.id,
+                    child: Text(t.name),
+                  ))
+              .toList(),
+          onChanged: (v) => setState(() => _selectedPropertyTypeId = v ?? ''),
+          isLoading: _loadingPropertyTypes,
+          loadingText: 'جاري تحميل الأنواع...',
+        ),
+        const SizedBox(height: 16),
+        _buildEnhancedField(
+          controller: _propertyNameController,
+          focusNode: _propertyNameFocusNode,
+          label: 'اسم الكيان',
+          hint: 'مثل: فندق النجوم',
+          icon: Icons.apartment_rounded,
+          textInputAction: TextInputAction.next,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'اسم الكيان مطلوب';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildEnhancedDropdown(
+          label: 'المدينة',
+          icon: Icons.location_city_outlined,
+          value: _selectedCity,
+          items: _cities
+              .map((c) => DropdownMenuItem<String>(
+                    value: c,
+                    child: Text(c),
+                  ))
+              .toList(),
+          onChanged: (v) {
+            setState(() {
+              _selectedCity = v;
+              _cityController.text = v ?? '';
+            });
+          },
+          isLoading: _loadingCities,
+          loadingText: 'جاري تحميل المدن...',
+          error: _citiesError,
+        ),
+        const SizedBox(height: 16),
+        _buildEnhancedField(
+          controller: _addressController,
+          focusNode: _addressFocusNode,
+          onChanged: _onAddressChanged,
+          label: 'العنوان',
+          hint: 'مثل: شارع الحرية، جوار مول النور',
+          icon: Icons.map_outlined,
+          textInputAction: TextInputAction.next,
+          validator: (value) {
+            if (value == null || value.isEmpty) return 'العنوان مطلوب';
+            return null;
+          },
+        ),
+        if (_addressSuggestions.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _buildAddressSuggestionsPanel(),
+        ],
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildEnhancedField(
+                controller: _latitudeController,
+                focusNode: _latitudeFocusNode,
+                label: 'خط العرض',
+                hint: 'Latitude',
+                icon: Icons.explore_outlined,
+                keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true, signed: true),
+                textInputAction: TextInputAction.next,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildEnhancedField(
+                controller: _longitudeController,
+                focusNode: _longitudeFocusNode,
+                label: 'خط الطول',
+                hint: 'Longitude',
+                icon: Icons.explore_outlined,
+                keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true, signed: true),
+                textInputAction: TextInputAction.next,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildMapPickerButton(),
+        const SizedBox(height: 16),
+        _buildEnhancedTextarea(
+          controller: _descriptionController,
+          label: 'وصف الكيان (اختياري)',
+          hint: 'وصف مختصر عن الكيان وخدماته...',
+          icon: Icons.description_outlined,
+        ),
+        const SizedBox(height: 20),
+        _buildTermsCheckbox(),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(-0.2, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: _sectionAnimationController,
+        curve: Curves.easeOut,
+      )),
+      child: FadeTransition(
+        opacity: _sectionAnimationController,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.primaryBlue.withValues(alpha: 0.05),
+                AppTheme.primaryPurple.withValues(alpha: 0.03),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.darkBorder.withValues(alpha: 0.1),
+              width: 0.5,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppTheme.textWhite,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildUltraCompactField(
-      {required TextEditingController controller,
-      required FocusNode focusNode,
-      required String label,
-      required String hint,
-      required IconData icon,
-      bool obscureText = false,
-      TextInputType? keyboardType,
-      TextInputAction? textInputAction,
-      Widget? suffixIcon,
-      List<TextInputFormatter>? inputFormatters,
-      Function(String)? onFieldSubmitted,
-      String? Function(String?)? validator,
-      Function(String)? onChanged}) {
+  Widget _buildEnhancedField({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    TextInputAction? textInputAction,
+    Widget? suffixIcon,
+    List<TextInputFormatter>? inputFormatters,
+    Function(String)? onFieldSubmitted,
+    String? Function(String?)? validator,
+    Function(String)? onChanged,
+  }) {
     final isFocused = focusNode.hasFocus;
+    final hasText = controller.text.isNotEmpty;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      height: 52, // زيادة الارتفاع من 42 إلى 52
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isFocused
-              ? [
-                  AppTheme.primaryBlue.withValues(alpha: 0.08),
-                  AppTheme.primaryPurple.withValues(alpha: 0.05),
-                ]
-              : [
-                  AppTheme.darkCard.withValues(alpha: 0.3),
-                  AppTheme.darkCard.withValues(alpha: 0.2),
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: isFocused ? 1 : 0),
+      duration: const Duration(milliseconds: 300),
+      builder: (context, focusValue, _) {
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              if (isFocused)
+                BoxShadow(
+                  color:
+                      AppTheme.primaryBlue.withValues(alpha: 0.1 * focusValue),
+                  blurRadius: 20 * focusValue,
+                  offset: Offset(0, 4 * focusValue),
+                ),
+            ],
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  isFocused
+                      ? AppTheme.primaryBlue.withValues(alpha: 0.04)
+                      : AppTheme.darkCard.withValues(alpha: 0.15),
+                  isFocused
+                      ? AppTheme.primaryPurple.withValues(alpha: 0.03)
+                      : AppTheme.darkCard.withValues(alpha: 0.10),
                 ],
-        ),
-        borderRadius: BorderRadius.circular(14), // زيادة الانحناء من 11 إلى 14
-        border: Border.all(
-          color: isFocused
-              ? AppTheme.primaryBlue.withValues(alpha: 0.4)
-              : AppTheme.darkBorder.withValues(alpha: 0.15),
-          width: isFocused ? 1 : 0.5, // زيادة عرض الحدود عند التركيز
-        ),
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isFocused
+                    ? AppTheme.primaryBlue.withValues(alpha: 0.4)
+                    : AppTheme.darkBorder.withValues(alpha: 0.15),
+                width: isFocused ? 1.5 : 1,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: TextFormField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  obscureText: obscureText,
+                  keyboardType: keyboardType,
+                  textInputAction: textInputAction,
+                  inputFormatters: inputFormatters,
+                  enabled: !widget.isLoading,
+                  onChanged: onChanged,
+                  onFieldSubmitted: onFieldSubmitted,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textWhite,
+                    fontSize: 14,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: label,
+                    hintText: hint,
+                    labelStyle: AppTextStyles.caption.copyWith(
+                      color: isFocused
+                          ? AppTheme.primaryBlue
+                          : AppTheme.textMuted.withValues(alpha: 0.6),
+                      fontSize: hasText ? 11 : 13,
+                      fontWeight: isFocused ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                    hintStyle: AppTextStyles.bodySmall.copyWith(
+                      color: AppTheme.textMuted.withValues(alpha: 0.3),
+                      fontSize: 13,
+                    ),
+                    prefixIcon: _buildFieldIcon(icon, isFocused),
+                    suffixIcon: suffixIcon,
+                    filled: false,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                    errorStyle: AppTextStyles.caption.copyWith(
+                      color: AppTheme.error,
+                      fontSize: 11,
+                    ),
+                  ),
+                  validator: validator,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFieldIcon(IconData icon, bool isFocused) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.all(10),
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        gradient: isFocused ? AppTheme.primaryGradient : null,
+        color: !isFocused ? AppTheme.darkCard.withValues(alpha: 0.3) : null,
+        borderRadius: BorderRadius.circular(10),
         boxShadow: isFocused
             ? [
                 BoxShadow(
-                  color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                  color: AppTheme.primaryBlue.withValues(alpha: 0.2),
                   blurRadius: 8,
-                  offset: const Offset(0, 2),
                 ),
               ]
             : [],
       ),
+      child: Icon(
+        icon,
+        size: 18,
+        color: isFocused
+            ? Colors.white
+            : AppTheme.textMuted.withValues(alpha: 0.5),
+      ),
+    );
+  }
+
+  Widget _buildEnhancedDropdown({
+    required String label,
+    required IconData icon,
+    required String? value,
+    required List<DropdownMenuItem<String>> items,
+    required Function(String?) onChanged,
+    bool isLoading = false,
+    String? loadingText,
+    String? error,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withValues(alpha: 0.15),
+            AppTheme.darkCard.withValues(alpha: 0.10),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.15),
+          width: 1,
+        ),
+      ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: DropdownButtonFormField<String>(
+            initialValue: value,
+            decoration: InputDecoration(
+              labelText: label,
+              labelStyle: AppTextStyles.caption.copyWith(
+                color: AppTheme.textMuted.withValues(alpha: 0.6),
+                fontSize: 13,
+              ),
+              prefixIcon: _buildFieldIcon(icon, false),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+              errorText: error,
+            ),
+            dropdownColor: AppTheme.darkCard,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textWhite,
+              fontSize: 14,
+            ),
+            icon: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: AppTheme.textMuted.withValues(alpha: 0.5),
+            ),
+            items: isLoading
+                ? [
+                    DropdownMenuItem<String>(
+                      value: null,
+                      child: Text(loadingText ?? 'جاري التحميل...'),
+                    )
+                  ]
+                : items,
+            onChanged: widget.isLoading ? null : onChanged,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnhancedTextarea({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+  }) {
+    return Container(
+      height: 120,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withValues(alpha: 0.15),
+            AppTheme.darkCard.withValues(alpha: 0.10),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.15),
+          width: 1,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: TextFormField(
             controller: controller,
-            focusNode: focusNode,
-            obscureText: obscureText,
-            keyboardType: keyboardType,
-            textInputAction: textInputAction,
-            inputFormatters: inputFormatters,
-            enabled: !widget.isLoading,
-            onChanged: onChanged,
-            onFieldSubmitted: onFieldSubmitted,
-            style: AppTextStyles.caption.copyWith(
+            maxLines: 4,
+            style: AppTextStyles.bodyMedium.copyWith(
               color: AppTheme.textWhite,
-              fontSize: 14, // زيادة حجم الخط من 12 إلى 14
-              fontWeight: FontWeight.w500,
+              fontSize: 14,
             ),
             decoration: InputDecoration(
               labelText: label,
               hintText: hint,
               labelStyle: AppTextStyles.caption.copyWith(
-                color: isFocused
-                    ? AppTheme.primaryBlue.withValues(alpha: 0.9)
-                    : AppTheme.textMuted.withValues(alpha: 0.6),
-                fontSize: 12, // زيادة حجم label من 10 إلى 12
-                fontWeight: isFocused ? FontWeight.w600 : FontWeight.w500,
+                color: AppTheme.textMuted.withValues(alpha: 0.6),
+                fontSize: 13,
               ),
-              hintStyle: AppTextStyles.caption.copyWith(
-                color: AppTheme.textMuted.withValues(alpha: 0.4),
-                fontSize: 13, // زيادة حجم hint من 11 إلى 13
+              hintStyle: AppTextStyles.bodySmall.copyWith(
+                color: AppTheme.textMuted.withValues(alpha: 0.3),
+                fontSize: 13,
               ),
               prefixIcon: Container(
-                width: 40, // زيادة عرض الأيقونة من 32 إلى 40
-                height: 52,
-                alignment: Alignment.center,
-                child: Icon(
-                  icon,
-                  color: isFocused
-                      ? AppTheme.primaryBlue.withValues(alpha: 0.8)
-                      : AppTheme.textMuted.withValues(alpha: 0.5),
-                  size: 20, // زيادة حجم الأيقونة من 16 إلى 20
-                ),
+                width: 46,
+                alignment: Alignment.topCenter,
+                padding: const EdgeInsets.only(top: 10),
+                child: _buildFieldIcon(icon, false),
               ),
-              suffixIcon: suffixIcon,
               filled: false,
               border: InputBorder.none,
               contentPadding: const EdgeInsets.only(
-                left: 14,
-                right: 0,
-                top: 14,
-                bottom: 14,
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: 16,
               ),
-              isDense: true,
             ),
-            validator: validator,
           ),
         ),
       ),
@@ -581,36 +985,38 @@ class _RegisterFormState extends State<RegisterForm>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTheme.primaryBlue.withValues(alpha: 0.9),
-                AppTheme.primaryBlue.withValues(alpha: 0.7),
+                AppTheme.primaryBlue.withValues(alpha: 0.1),
+                AppTheme.primaryPurple.withValues(alpha: 0.08),
               ],
             ),
             borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 3),
-              ),
-            ],
+            border: Border.all(
+              color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+              width: 1,
+            ),
           ),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.map_rounded,
-                  size: 20,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'تحديد على الخريطة',
-                  style: AppTextStyles.caption.copyWith(
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.map_rounded,
+                    size: 18,
                     color: Colors.white,
-                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'تحديد الموقع على الخريطة',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.primaryBlue,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -632,176 +1038,27 @@ class _RegisterFormState extends State<RegisterForm>
         onTap();
       },
       child: Container(
-        width: 40,
-        height: 52,
-        alignment: Alignment.center,
+        margin: const EdgeInsets.all(8),
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: AppTheme.darkCard.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AppTheme.darkBorder.withValues(alpha: 0.1),
+            width: 0.5,
+          ),
+        ),
         child: Icon(
           obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-          color: AppTheme.textMuted.withValues(alpha: 0.5),
-          size: 18, // زيادة حجم الأيقونة من 14 إلى 18
+          color: AppTheme.textMuted.withValues(alpha: 0.6),
+          size: 18,
         ),
       ),
     );
   }
 
-  Widget _buildPropertyTypeDropdown() {
-    final isFocused = _propertyNameFocusNode.hasFocus; // reuse style cues
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      height: 52, // زيادة الارتفاع من 42 إلى 52
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isFocused
-              ? [
-                  AppTheme.primaryBlue.withValues(alpha: 0.08),
-                  AppTheme.primaryPurple.withValues(alpha: 0.05),
-                ]
-              : [
-                  AppTheme.darkCard.withValues(alpha: 0.3),
-                  AppTheme.darkCard.withValues(alpha: 0.2),
-                ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isFocused
-              ? AppTheme.primaryBlue.withValues(alpha: 0.4)
-              : AppTheme.darkBorder.withValues(alpha: 0.15),
-          width: isFocused ? 1 : 0.5,
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _selectedPropertyTypeId.isEmpty
-                  ? null
-                  : _selectedPropertyTypeId,
-              items: _propertyTypes
-                  .map((t) => DropdownMenuItem<String>(
-                        value: t.id,
-                        child: Text(
-                          t.name,
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppTheme.textWhite,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ))
-                  .toList(),
-              onChanged: widget.isLoading || _loadingPropertyTypes
-                  ? null
-                  : (v) {
-                      setState(() => _selectedPropertyTypeId = v ?? '');
-                    },
-              hint: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.category_outlined,
-                      color: AppTheme.textMuted.withValues(alpha: 0.5),
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _loadingPropertyTypes
-                          ? 'جاري تحميل الأنواع...'
-                          : 'نوع الكيان',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppTheme.textMuted.withValues(alpha: 0.6),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              isExpanded: true,
-              dropdownColor: AppTheme.darkCard,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Star rating picker removed
-
-  Widget _buildUltraTextarea({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-  }) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      height: 110, // زيادة الارتفاع من 90 إلى 110
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkCard.withValues(alpha: 0.3),
-            AppTheme.darkCard.withValues(alpha: 0.2),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppTheme.darkBorder.withValues(alpha: 0.15),
-          width: 0.5,
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: TextFormField(
-            controller: controller,
-            maxLines: 4,
-            style: AppTextStyles.caption.copyWith(
-              color: AppTheme.textWhite,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: InputDecoration(
-              labelText: label,
-              hintText: hint,
-              labelStyle: AppTextStyles.caption.copyWith(
-                color: AppTheme.textMuted.withValues(alpha: 0.6),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-              hintStyle: AppTextStyles.caption.copyWith(
-                color: AppTheme.textMuted.withValues(alpha: 0.4),
-                fontSize: 13,
-              ),
-              prefixIcon: Container(
-                width: 40,
-                alignment: Alignment.topCenter,
-                padding: const EdgeInsets.only(top: 14),
-                child: Icon(
-                  icon,
-                  color: AppTheme.textMuted.withValues(alpha: 0.5),
-                  size: 20,
-                ),
-              ),
-              filled: false,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.only(
-                left: 14,
-                right: 0,
-                top: 14,
-                bottom: 14,
-              ),
-              isDense: true,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUltraTermsCheckbox() {
+  Widget _buildTermsCheckbox() {
     return GestureDetector(
       onTap: widget.isLoading
           ? null
@@ -816,107 +1073,161 @@ class _RegisterFormState extends State<RegisterForm>
                 }
               });
             },
-      child: Row(
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 22, // زيادة حجم checkbox من 18 إلى 22
-            height: 22,
-            decoration: BoxDecoration(
-              gradient: _acceptTerms ? AppTheme.primaryGradient : null,
-              color: !_acceptTerms
-                  ? AppTheme.darkCard.withValues(alpha: 0.4)
-                  : null,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: _acceptTerms
-                    ? Colors.transparent
-                    : AppTheme.darkBorder.withValues(alpha: 0.3),
-                width: 1,
-              ),
-              boxShadow: _acceptTerms
-                  ? [
-                      BoxShadow(
-                        color: AppTheme.primaryBlue.withValues(alpha: 0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                  : [],
-            ),
-            child: _acceptTerms
-                ? const Icon(
-                    Icons.check_rounded,
-                    size: 16,
-                    color: Colors.white,
-                  )
-                : null,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              _acceptTerms
+                  ? AppTheme.primaryBlue.withValues(alpha: 0.05)
+                  : AppTheme.darkCard.withValues(alpha: 0.1),
+              _acceptTerms
+                  ? AppTheme.primaryPurple.withValues(alpha: 0.03)
+                  : AppTheme.darkCard.withValues(alpha: 0.05),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: AppTextStyles.caption.copyWith(
-                  color: AppTheme.textMuted.withValues(alpha: 0.6),
-                  fontSize: 12, // زيادة حجم الخط من 10 إلى 12
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _acceptTerms
+                ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+                : AppTheme.darkBorder.withValues(alpha: 0.15),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                gradient: _acceptTerms ? AppTheme.primaryGradient : null,
+                color: !_acceptTerms
+                    ? AppTheme.darkCard.withValues(alpha: 0.3)
+                    : null,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: _acceptTerms
+                      ? Colors.transparent
+                      : AppTheme.darkBorder.withValues(alpha: 0.3),
+                  width: 1.5,
                 ),
-                children: [
-                  const TextSpan(text: 'أوافق على '),
-                  TextSpan(
-                    text: 'الشروط',
-                    style: TextStyle(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.8),
-                      decoration: TextDecoration.underline,
-                      decorationColor:
-                          AppTheme.primaryBlue.withValues(alpha: 0.4),
-                      fontWeight: FontWeight.w600,
-                    ),
+                boxShadow: _acceptTerms
+                    ? [
+                        BoxShadow(
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                        ),
+                      ]
+                    : [],
+              ),
+              child: _acceptTerms
+                  ? const Icon(
+                      Icons.check_rounded,
+                      size: 16,
+                      color: Colors.white,
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: RichText(
+                text: TextSpan(
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppTheme.textMuted,
+                    fontSize: 13,
                   ),
-                  const TextSpan(text: ' و'),
-                  TextSpan(
-                    text: 'الخصوصية',
-                    style: TextStyle(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.8),
-                      decoration: TextDecoration.underline,
-                      decorationColor:
-                          AppTheme.primaryBlue.withValues(alpha: 0.4),
-                      fontWeight: FontWeight.w600,
+                  children: [
+                    const TextSpan(text: 'أوافق على '),
+                    TextSpan(
+                      text: 'الشروط والأحكام',
+                      style: TextStyle(
+                        color: AppTheme.primaryBlue,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationColor:
+                            AppTheme.primaryBlue.withValues(alpha: 0.3),
+                      ),
                     ),
-                  ),
-                ],
+                    const TextSpan(text: ' و'),
+                    TextSpan(
+                      text: 'سياسة الخصوصية',
+                      style: TextStyle(
+                        color: AppTheme.primaryBlue,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationColor:
+                            AppTheme.primaryBlue.withValues(alpha: 0.3),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildUltraSubmitButton() {
-    final canSubmit = !widget.isLoading;
-
-    return GestureDetector(
-      onTap: canSubmit ? _onSubmit : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: 54, // زيادة الارتفاع من 44 إلى 54
-        decoration: BoxDecoration(
-          gradient: canSubmit
-              ? AppTheme.primaryGradient
-              : LinearGradient(
-                  colors: [
-                    AppTheme.darkCard.withValues(alpha: 0.4),
-                    AppTheme.darkCard.withValues(alpha: 0.3),
-                  ],
-                ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: canSubmit
-                ? AppTheme.primaryBlue.withValues(alpha: 0.4)
-                : AppTheme.darkBorder.withValues(alpha: 0.15),
-            width: canSubmit ? 1 : 0.5,
+  Widget _buildNavigationButtons() {
+    return Row(
+      children: [
+        if (_currentStep > 0) ...[
+          Expanded(
+            child: _buildSecondaryButton(
+              onTap: () {
+                setState(() {
+                  _currentStep--;
+                });
+              },
+              label: 'السابق',
+              icon: Icons.arrow_back_rounded,
+            ),
           ),
-          boxShadow: canSubmit
+          const SizedBox(width: 12),
+        ],
+        Expanded(
+          child: _currentStep < _totalSteps - 1
+              ? _buildPrimaryButton(
+                  onTap: () {
+                    if (_validateCurrentStep()) {
+                      setState(() {
+                        _currentStep++;
+                      });
+                    }
+                  },
+                  label: 'التالي',
+                  icon: Icons.arrow_forward_rounded,
+                  iconAtEnd: true,
+                )
+              : _buildSubmitButton(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrimaryButton({
+    required VoidCallback onTap,
+    required String label,
+    required IconData icon,
+    bool iconAtEnd = false,
+  }) {
+    return GestureDetector(
+      onTap: widget.isLoading ? null : onTap,
+      child: Container(
+        height: 52,
+        decoration: BoxDecoration(
+          gradient: widget.isLoading
+              ? LinearGradient(
+                  colors: [
+                    AppTheme.darkCard.withValues(alpha: 0.3),
+                    AppTheme.darkCard.withValues(alpha: 0.2),
+                  ],
+                )
+              : AppTheme.primaryGradient,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: !widget.isLoading
               ? [
                   BoxShadow(
                     color: AppTheme.primaryBlue.withValues(alpha: 0.3),
@@ -927,27 +1238,119 @@ class _RegisterFormState extends State<RegisterForm>
               : [],
         ),
         child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (!iconAtEnd) ...[
+                Icon(icon, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                label,
+                style: AppTextStyles.buttonMedium.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (iconAtEnd) ...[
+                const SizedBox(width: 8),
+                Icon(icon, color: Colors.white, size: 20),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSecondaryButton({
+    required VoidCallback onTap,
+    required String label,
+    required IconData icon,
+  }) {
+    return GestureDetector(
+      onTap: widget.isLoading ? null : onTap,
+      child: Container(
+        height: 52,
+        decoration: BoxDecoration(
+          color: AppTheme.darkCard.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: AppTheme.darkBorder.withValues(alpha: 0.2),
+            width: 1,
+          ),
+        ),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: AppTheme.textMuted,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: AppTextStyles.buttonMedium.copyWith(
+                  color: AppTheme.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    final canSubmit = !widget.isLoading;
+
+    return GestureDetector(
+      onTap: canSubmit ? _onSubmit : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        height: 52,
+        decoration: BoxDecoration(
+          gradient: canSubmit
+              ? AppTheme.primaryGradient
+              : LinearGradient(
+                  colors: [
+                    AppTheme.darkCard.withValues(alpha: 0.3),
+                    AppTheme.darkCard.withValues(alpha: 0.2),
+                  ],
+                ),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: canSubmit
+              ? [
+                  BoxShadow(
+                    color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+              : [],
+        ),
+        child: Center(
           child: widget.isLoading
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SizedBox(
-                      width: 18,
-                      height: 18,
+                      width: 20,
+                      height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white.withValues(alpha: 0.9),
+                          Colors.white.withValues(alpha: 0.8),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Text(
-                      'جاري التسجيل...',
-                      style: AppTextStyles.caption.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                      'جاري إنشاء الحساب...',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: Colors.white.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
@@ -955,18 +1358,24 @@ class _RegisterFormState extends State<RegisterForm>
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.person_add_rounded,
-                      color: Colors.white,
-                      size: 20,
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.person_add_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     Text(
-                      'إنشاء حساب',
+                      'إنشاء الحساب',
                       style: AppTextStyles.buttonMedium.copyWith(
                         color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
@@ -976,10 +1385,34 @@ class _RegisterFormState extends State<RegisterForm>
     );
   }
 
+  bool _validateCurrentStep() {
+    if (_currentStep == 0) {
+      // Validate personal info
+      if (_nameController.text.isEmpty ||
+          _emailController.text.isEmpty ||
+          _phoneController.text.isEmpty ||
+          _passwordController.text.isEmpty ||
+          _confirmPasswordController.text.isEmpty) {
+        _showError('يرجى ملء جميع الحقول المطلوبة');
+        return false;
+      }
+      if (!Validators.isValidEmail(_emailController.text)) {
+        _showError('البريد الإلكتروني غير صحيح');
+        return false;
+      }
+      if (_passwordController.text != _confirmPasswordController.text) {
+        _showError('كلمات المرور غير متطابقة');
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
+
   void _onSubmit() {
     if (!_acceptTerms) {
       HapticFeedback.lightImpact();
-      _showUltraWarning();
+      _showError('يجب الموافقة على الشروط والأحكام');
       return;
     }
 
@@ -987,21 +1420,8 @@ class _RegisterFormState extends State<RegisterForm>
       FocusScope.of(context).unfocus();
       HapticFeedback.mediumImpact();
 
-      // Validate property fields minimal requirements
       if (_selectedPropertyTypeId.isEmpty) {
-        _showFieldError('نوع الكيان مطلوب');
-        return;
-      }
-      if (_propertyNameController.text.trim().isEmpty) {
-        _showFieldError('اسم الكيان مطلوب');
-        return;
-      }
-      if (_cityController.text.trim().isEmpty) {
-        _showFieldError('المدينة مطلوبة');
-        return;
-      }
-      if (_addressController.text.trim().isEmpty) {
-        _showFieldError('العنوان مطلوب');
+        _showError('نوع الكيان مطلوب');
         return;
       }
 
@@ -1024,10 +1444,52 @@ class _RegisterFormState extends State<RegisterForm>
     }
   }
 
-  void _showFieldError(String message) {
+  void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.error.withValues(alpha: 0.9),
+                AppTheme.error.withValues(alpha: 0.7),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.error_outline_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
+        duration: const Duration(seconds: 3),
       ),
     );
   }
@@ -1037,57 +1499,77 @@ class _RegisterFormState extends State<RegisterForm>
     return double.tryParse(v);
   }
 
-  void _showUltraWarning() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Container(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppTheme.warning.withValues(alpha: 0.9),
-                      AppTheme.warning.withValues(alpha: 0.7),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.info_outline_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'يجب الموافقة على الشروط',
-                  style: AppTextStyles.caption.copyWith(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+  Widget _buildAddressSuggestionsPanel() {
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 200),
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: ListView.separated(
+          shrinkWrap: true,
+          padding: const EdgeInsets.all(8),
+          itemCount: _addressSuggestions.length,
+          separatorBuilder: (context, index) => Divider(
+            color: AppTheme.darkBorder.withValues(alpha: 0.1),
+            height: 1,
+          ),
+          itemBuilder: (context, index) {
+            final suggestion = _addressSuggestions[index];
+            return InkWell(
+              onTap: () => _selectPlaceSuggestion(suggestion),
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.primaryGradient,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.place_outlined,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        suggestion.description,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppTheme.textWhite,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
-        backgroundColor: AppTheme.darkCard.withValues(alpha: 0.95),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        padding: EdgeInsets.zero,
-        duration: const Duration(seconds: 2),
       ),
     );
   }
 
+  // Helper methods remain the same
   Future<void> _loadPropertyTypes() async {
     setState(() => _loadingPropertyTypes = true);
     try {
@@ -1098,7 +1580,7 @@ class _RegisterFormState extends State<RegisterForm>
         _propertyTypes = result.items;
       });
     } catch (_) {
-      // ignore; dropdown will show empty
+      // ignore
     } finally {
       setState(() => _loadingPropertyTypes = false);
     }
@@ -1120,7 +1602,6 @@ class _RegisterFormState extends State<RegisterForm>
         (list) => setState(() {
           _cities = list.map((c) => c.name).toList();
           _loadingCities = false;
-          // لا نعيّن قيمة تلقائياً لإجبار المستخدم على الاختيار والتصديق
           if (_cities.contains(_cityController.text)) {
             _selectedCity = _cityController.text;
           } else {
@@ -1137,108 +1618,6 @@ class _RegisterFormState extends State<RegisterForm>
     }
   }
 
-  Widget _buildCityDropdown() {
-    final isFocused = _cityFocusNode.hasFocus;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      height: 52, // زيادة الارتفاع
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isFocused
-              ? [
-                  AppTheme.primaryBlue.withValues(alpha: 0.08),
-                  AppTheme.primaryPurple.withValues(alpha: 0.05),
-                ]
-              : [
-                  AppTheme.darkCard.withValues(alpha: 0.3),
-                  AppTheme.darkCard.withValues(alpha: 0.2),
-                ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isFocused
-              ? AppTheme.primaryBlue.withValues(alpha: 0.4)
-              : AppTheme.darkBorder.withValues(alpha: 0.15),
-          width: isFocused ? 1 : 0.5,
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: DropdownButtonFormField<String?>(
-              initialValue:
-                  _cities.contains(_selectedCity) ? _selectedCity : null,
-              dropdownColor: AppTheme.darkCard,
-              style: AppTextStyles.caption.copyWith(
-                color: AppTheme.textWhite,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-              icon: Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 22,
-                color: AppTheme.textMuted.withValues(alpha: 0.6),
-              ),
-              decoration: InputDecoration(
-                labelText: 'المدينة',
-                labelStyle: AppTextStyles.caption.copyWith(
-                  color: isFocused
-                      ? AppTheme.primaryBlue.withValues(alpha: 0.9)
-                      : AppTheme.textMuted.withValues(alpha: 0.6),
-                  fontSize: 12,
-                  fontWeight: isFocused ? FontWeight.w600 : FontWeight.w500,
-                ),
-                prefixIcon: Container(
-                  width: 40,
-                  height: 52,
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.location_city_outlined,
-                    color: isFocused
-                        ? AppTheme.primaryBlue.withValues(alpha: 0.8)
-                        : AppTheme.textMuted.withValues(alpha: 0.5),
-                    size: 20,
-                  ),
-                ),
-                border: InputBorder.none,
-                isDense: true,
-              ),
-              items: _loadingCities
-                  ? [
-                      const DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text('جاري تحميل المدن...'),
-                      )
-                    ]
-                  : _cities
-                      .map((c) => DropdownMenuItem<String?>(
-                            value: c,
-                            child: Text(c),
-                          ))
-                      .toList(),
-              onChanged: (v) {
-                setState(() {
-                  _selectedCity = v;
-                  _cityController.text = v ?? '';
-                });
-              },
-              validator: (v) {
-                if ((_cityController.text).trim().isEmpty) {
-                  return 'المدينة مطلوبة';
-                }
-                return null;
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Places autocomplete
   void _onAddressChanged(String value) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
@@ -1258,7 +1637,6 @@ class _RegisterFormState extends State<RegisterForm>
     try {
       final client = dio.Dio();
 
-      // 🆕 استخدم NEW Places API
       final response = await client.post(
         'https://places.googleapis.com/v1/places:autocomplete',
         data: {
@@ -1290,68 +1668,10 @@ class _RegisterFormState extends State<RegisterForm>
         });
       }
     } catch (e) {
-      print('❌ Error: $e');
+      print('Error: $e');
     } finally {
       setState(() => _loadingSuggestions = false);
     }
-  }
-
-  Widget _buildAddressSuggestionsPanel() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.darkCard.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppTheme.darkBorder.withValues(alpha: 0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: _addressSuggestions
-            .map(
-              (s) => InkWell(
-                onTap: () => _selectPlaceSuggestion(s),
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.place_outlined,
-                        color: AppTheme.textMuted.withValues(alpha: 0.7),
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          s.description,
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppTheme.textWhite,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            )
-            .toList(),
-      ),
-    );
   }
 
   Future<void> _selectPlaceSuggestion(_PlaceSuggestion s) async {
@@ -1376,7 +1696,6 @@ class _RegisterFormState extends State<RegisterForm>
         final lng = (loc['lng'] as num).toDouble();
         _latitudeController.text = lat.toStringAsFixed(6);
         _longitudeController.text = lng.toStringAsFixed(6);
-        // Try to set city
         final comps = (result['address_components'] as List?) ?? [];
         final cityComp = comps.firstWhere(
           (c) =>
@@ -1392,10 +1711,7 @@ class _RegisterFormState extends State<RegisterForm>
           }
         }
       }
-    } catch (_) {
-      // ignore
-    }
-    // End the current autocomplete session after a successful selection
+    } catch (_) {}
     _placesSessionToken = _generatePlacesSessionToken();
   }
 
@@ -1403,7 +1719,7 @@ class _RegisterFormState extends State<RegisterForm>
     showDialog(
       context: context,
       barrierColor: Colors.black87,
-      builder: (context) => _RegisterMapPickerDialog(
+      builder: (context) => _EnhancedMapPickerDialog(
         initialLocation: _tryParseDouble(_latitudeController.text) != null &&
                 _tryParseDouble(_longitudeController.text) != null
             ? LatLng(
@@ -1444,33 +1760,55 @@ class _PlaceSuggestion {
   _PlaceSuggestion({required this.description, required this.placeId});
 }
 
-class _RegisterMapPickerDialog extends StatefulWidget {
+class _EnhancedMapPickerDialog extends StatefulWidget {
   final LatLng? initialLocation;
   final Function(LatLng, String?) onLocationSelected;
 
-  const _RegisterMapPickerDialog({
+  const _EnhancedMapPickerDialog({
     this.initialLocation,
     required this.onLocationSelected,
   });
 
   @override
-  State<_RegisterMapPickerDialog> createState() =>
-      _RegisterMapPickerDialogState();
+  State<_EnhancedMapPickerDialog> createState() =>
+      _EnhancedMapPickerDialogState();
 }
 
-class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
+class _EnhancedMapPickerDialogState extends State<_EnhancedMapPickerDialog>
+    with SingleTickerProviderStateMixin {
   GoogleMapController? _mapController;
   LatLng? _selectedLocation;
   String? _selectedAddress;
   Set<Marker> _markers = {};
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+    _animationController.forward();
+
     _selectedLocation = widget.initialLocation;
     if (_selectedLocation != null) {
       _updateMarker(_selectedLocation!);
     }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   void _updateMarker(LatLng location) {
@@ -1488,195 +1826,209 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: EdgeInsets.zero,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.darkCard,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            body: Stack(
-              children: [
-                GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                    target: _selectedLocation ?? const LatLng(15.3694, 44.1910),
-                    zoom: 12,
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppTheme.darkCard,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Scaffold(
+              backgroundColor: Colors.transparent,
+              body: Stack(
+                children: [
+                  GoogleMap(
+                    initialCameraPosition: CameraPosition(
+                      target:
+                          _selectedLocation ?? const LatLng(15.3694, 44.1910),
+                      zoom: 12,
+                    ),
+                    onMapCreated: (controller) {
+                      _mapController = controller;
+                    },
+                    markers: _markers,
+                    onTap: (location) {
+                      _updateMarker(location);
+                      _selectedAddress =
+                          'Lat: ${location.latitude.toStringAsFixed(4)}, Lng: ${location.longitude.toStringAsFixed(4)}';
+                    },
+                    myLocationButtonEnabled: true,
+                    myLocationEnabled: true,
                   ),
-                  onMapCreated: (controller) {
-                    _mapController = controller;
-                  },
-                  markers: _markers,
-                  onTap: (location) {
-                    _updateMarker(location);
-                    _selectedAddress =
-                        'Lat: ${location.latitude.toStringAsFixed(4)}, Lng: ${location.longitude.toStringAsFixed(4)}';
-                  },
-                  myLocationButtonEnabled: true,
-                  myLocationEnabled: true,
-                ),
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    padding: EdgeInsets.only(
-                      top: MediaQuery.of(context).padding.top + 16,
-                      left: 16,
-                      right: 16,
-                      bottom: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          AppTheme.darkCard,
-                          AppTheme.darkCard.withValues(alpha: 0.95),
-                          AppTheme.darkCard.withValues(alpha: 0),
-                        ],
+
+                  // Header
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      padding: EdgeInsets.only(
+                        top: MediaQuery.of(context).padding.top + 16,
+                        left: 20,
+                        right: 20,
+                        bottom: 16,
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color:
-                                  AppTheme.darkSurface.withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color:
-                                    AppTheme.darkBorder.withValues(alpha: 0.3),
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.close_rounded,
-                              color: AppTheme.textWhite,
-                              size: 22,
-                            ),
-                          ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            AppTheme.darkCard,
+                            AppTheme.darkCard.withValues(alpha: 0.95),
+                            AppTheme.darkCard.withValues(alpha: 0),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'تحديد الموقع على الخريطة',
-                            style: AppTextStyles.heading3.copyWith(
-                              color: AppTheme.textWhite,
-                              fontSize: 18,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [
-                          AppTheme.darkCard,
-                          AppTheme.darkCard.withValues(alpha: 0.95),
-                          AppTheme.darkCard.withValues(alpha: 0),
-                        ],
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
+                      child: Row(
+                        children: [
+                          GestureDetector(
                             onTap: () => Navigator.pop(context),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color:
-                                    AppTheme.darkSurface.withValues(alpha: 0.9),
-                                borderRadius: BorderRadius.circular(14),
+                                    AppTheme.darkSurface.withValues(alpha: 0.8),
+                                borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: AppTheme.darkBorder
                                       .withValues(alpha: 0.3),
                                 ),
                               ),
-                              child: Center(
-                                child: Text(
-                                  'إلغاء',
-                                  style: AppTextStyles.buttonMedium.copyWith(
-                                    color: AppTheme.textMuted,
-                                    fontSize: 15,
-                                  ),
-                                ),
+                              child: Icon(
+                                Icons.close_rounded,
+                                color: AppTheme.textWhite,
+                                size: 20,
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: _selectedLocation != null
-                                ? () {
-                                    widget.onLocationSelected(
-                                      _selectedLocation!,
-                                      _selectedAddress,
-                                    );
-                                    Navigator.pop(context);
-                                  }
-                                : null,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              decoration: BoxDecoration(
-                                gradient: _selectedLocation != null
-                                    ? AppTheme.primaryGradient
-                                    : null,
-                                color: _selectedLocation == null
-                                    ? AppTheme.darkSurface
-                                        .withValues(alpha: 0.5)
-                                    : null,
-                                borderRadius: BorderRadius.circular(14),
-                                boxShadow: _selectedLocation != null
-                                    ? [
-                                        BoxShadow(
-                                          color: AppTheme.primaryBlue
-                                              .withValues(alpha: 0.3),
-                                          blurRadius: 16,
-                                          offset: const Offset(0, 6),
-                                        ),
-                                      ]
-                                    : null,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'تأكيد الموقع',
-                                  style: AppTextStyles.buttonMedium.copyWith(
-                                    color: _selectedLocation != null
-                                        ? Colors.white
-                                        : AppTheme.textMuted
-                                            .withValues(alpha: 0.5),
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              'تحديد الموقع على الخريطة',
+                              style: AppTextStyles.heading3.copyWith(
+                                color: AppTheme.textWhite,
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+
+                  // Bottom Actions
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [
+                            AppTheme.darkCard,
+                            AppTheme.darkCard.withValues(alpha: 0.95),
+                            AppTheme.darkCard.withValues(alpha: 0),
+                          ],
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.darkSurface
+                                      .withValues(alpha: 0.8),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: AppTheme.darkBorder
+                                        .withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'إلغاء',
+                                    style: AppTextStyles.buttonMedium.copyWith(
+                                      color: AppTheme.textMuted,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: _selectedLocation != null
+                                  ? () {
+                                      widget.onLocationSelected(
+                                        _selectedLocation!,
+                                        _selectedAddress,
+                                      );
+                                      Navigator.pop(context);
+                                    }
+                                  : null,
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                decoration: BoxDecoration(
+                                  gradient: _selectedLocation != null
+                                      ? AppTheme.primaryGradient
+                                      : null,
+                                  color: _selectedLocation == null
+                                      ? AppTheme.darkSurface
+                                          .withValues(alpha: 0.5)
+                                      : null,
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: _selectedLocation != null
+                                      ? [
+                                          BoxShadow(
+                                            color: AppTheme.primaryBlue
+                                                .withValues(alpha: 0.3),
+                                            blurRadius: 16,
+                                            offset: const Offset(0, 6),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'تأكيد الموقع',
+                                    style: AppTextStyles.buttonMedium.copyWith(
+                                      color: _selectedLocation != null
+                                          ? Colors.white
+                                          : AppTheme.textMuted
+                                              .withValues(alpha: 0.5),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1685,8 +2037,5 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
   }
 }
 
-// Simple cancellable op placeholder (no external dep)
-
-// Helpers
 String _generatePlacesSessionToken() =>
     'sess_${DateTime.now().microsecondsSinceEpoch}';

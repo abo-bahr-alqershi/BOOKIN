@@ -1,4 +1,7 @@
+// lib/features/auth/presentation/pages/forgot_password_page.dart
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:ui';
@@ -17,24 +20,24 @@ class ForgotPasswordPage extends StatefulWidget {
 }
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailOrPhoneController = TextEditingController();
   final _emailOrPhoneFocusNode = FocusNode();
-  
+
+  // Simplified animation - single controller for better performance
   late AnimationController _animationController;
-  late AnimationController _floatingAnimationController;
-  late AnimationController _successAnimationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  late Animation<double> _scaleAnimation;
-  
+  late Animation<double> _floatingAnimation;
+
   bool _isSubmitted = false;
 
   @override
   void initState() {
     super.initState();
     _setupAnimations();
+    _emailOrPhoneFocusNode.addListener(() => setState(() {}));
   }
 
   void _setupAnimations() {
@@ -42,42 +45,40 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    
-    _floatingAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    )..repeat(reverse: true);
-    
-    _successAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
 
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
+      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
     ));
-    
+
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
+      begin: const Offset(0, 0.2),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: const Interval(0.2, 0.8, curve: Curves.easeOutBack),
+      curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
     ));
-    
-    _scaleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
+
+    _floatingAnimation = Tween<double>(
+      begin: -10,
+      end: 10,
     ).animate(CurvedAnimation(
-      parent: _successAnimationController,
-      curve: Curves.elasticOut,
+      parent: _animationController,
+      curve: Curves.easeInOut,
     ));
 
     _animationController.forward();
+    // Simple repeat for floating effect
+    _animationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _animationController.reverse();
+      } else if (status == AnimationStatus.dismissed) {
+        _animationController.forward();
+      }
+    });
   }
 
   @override
@@ -85,8 +86,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
     _emailOrPhoneController.dispose();
     _emailOrPhoneFocusNode.dispose();
     _animationController.dispose();
-    _floatingAnimationController.dispose();
-    _successAnimationController.dispose();
     super.dispose();
   }
 
@@ -98,21 +97,34 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
         listener: _handleAuthState,
         child: Stack(
           children: [
-            // Animated Background
-            _buildAnimatedBackground(),
-            
+            // Simplified Background - same as LoginPage
+            _buildOptimizedBackground(),
+
             // Main Content
             SafeArea(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: SlideTransition(
                     position: _slideAnimation,
-                    child: _isSubmitted 
-                        ? _buildSuccessView() 
-                        : _buildResetForm(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 20),
+                        _buildBackButton(),
+                        const SizedBox(height: 40),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 600),
+                          switchInCurve: Curves.easeInOut,
+                          switchOutCurve: Curves.easeInOut,
+                          child: _isSubmitted
+                              ? _buildSuccessView()
+                              : _buildResetForm(),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -122,246 +134,281 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
       ),
     );
   }
-  
-  Widget _buildAnimatedBackground() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: AppTheme.darkGradient,
-      ),
-      child: CustomPaint(
-        painter: _FloatingCirclesPainter(
-          animation: _floatingAnimationController,
-        ),
-        size: Size.infinite,
-      ),
+
+  Widget _buildOptimizedBackground() {
+    return AnimatedBuilder(
+      animation: _floatingAnimation,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            // Base gradient - same as LoginPage
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.darkBackground,
+                    AppTheme.darkBackground2.withValues(alpha: 0.8),
+                    AppTheme.darkBackground3.withValues(alpha: 0.6),
+                  ],
+                ),
+              ),
+            ),
+
+            // Simple floating orbs - no CustomPaint
+            Positioned(
+              top: -100 + _floatingAnimation.value,
+              right: -100,
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppTheme.primaryBlue.withValues(alpha: 0.06),
+                      AppTheme.primaryBlue.withValues(alpha: 0.03),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            Positioned(
+              bottom: -150 - _floatingAnimation.value,
+              left: -100,
+              child: Container(
+                width: 250,
+                height: 250,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppTheme.primaryPurple.withValues(alpha: 0.05),
+                      AppTheme.primaryPurple.withValues(alpha: 0.02),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildResetForm() {
     return Column(
+      key: const ValueKey('reset_form'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildBackButton(),
-        const SizedBox(height: 40),
-        _buildAnimatedIcon(),
-        const SizedBox(height: 40),
         _buildHeader(),
         const SizedBox(height: 50),
-        _buildGlassForm(),
+        _buildFormCard(),
+        const SizedBox(height: 30),
+        _buildHelpText(),
       ],
     );
   }
 
   Widget _buildSuccessView() {
-    _successAnimationController.forward();
-    
     return Column(
+      key: const ValueKey('success_view'),
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const SizedBox(height: 100),
-        ScaleTransition(
-          scale: _scaleAnimation,
-          child: Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.success.withValues(alpha: 0.2),
-                  AppTheme.neonGreen.withValues(alpha: 0.1),
-                ],
-              ),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppTheme.success.withValues(alpha: 0.3),
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.success.withValues(alpha: 0.3),
-                  blurRadius: 30,
-                  spreadRadius: 10,
+        const SizedBox(height: 60),
+
+        // Success Icon with simple animation
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.elasticOut,
+          builder: (context, value, child) {
+            return Transform.scale(
+              scale: value,
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.success.withValues(alpha: 0.2),
+                      AppTheme.success.withValues(alpha: 0.1),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.success.withValues(alpha: 0.2),
+                      blurRadius: 30,
+                      spreadRadius: 10,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Center(
-              child: Icon(
-                Icons.mark_email_read_outlined,
-                size: 60,
-                color: AppTheme.success,
+                child: Icon(
+                  Icons.mark_email_read_outlined,
+                  size: 50,
+                  color: AppTheme.success,
+                ),
               ),
-            ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 32),
+
+        Text(
+          'تم الإرسال بنجاح',
+          style: AppTextStyles.heading2.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textWhite,
           ),
         ),
-        const SizedBox(height: 40),
-        ShaderMask(
-          shaderCallback: (bounds) => 
-              LinearGradient(
-                colors: [AppTheme.success, AppTheme.neonGreen],
-              ).createShader(bounds),
-          child: Text(
-            'تم الإرسال بنجاح',
-            style: AppTextStyles.heading1.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
+
+        const SizedBox(height: 16),
+
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
-            'تم إرسال تعليمات إعادة تعيين كلمة المرور إلى بريدك الإلكتروني أو رقم هاتفك',
+            'تم إرسال تعليمات إعادة تعيين كلمة المرور\nإلى ${_emailOrPhoneController.text}',
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppTheme.textMuted,
+              height: 1.5,
             ),
             textAlign: TextAlign.center,
           ),
         ),
-        const SizedBox(height: 60),
-        _buildGlassButton(
+
+        const SizedBox(height: 48),
+
+        _buildActionButton(
           onPressed: () => context.pop(),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.arrow_back_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'العودة لتسجيل الدخول',
-                style: AppTextStyles.buttonLarge.copyWith(
-                  color: Colors.white,
-                ),
-              ),
-            ],
+          icon: Icons.arrow_back_rounded,
+          label: 'العودة لتسجيل الدخول',
+        ),
+
+        const SizedBox(height: 16),
+
+        TextButton(
+          onPressed: () {
+            setState(() {
+              _isSubmitted = false;
+            });
+          },
+          child: Text(
+            'لم تستلم الرسالة؟ أعد الإرسال',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppTheme.primaryBlue,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
     );
   }
-  
+
   Widget _buildBackButton() {
     return Align(
       alignment: AlignmentDirectional.centerStart,
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.darkCard.withValues(alpha: 0.5),
-              AppTheme.darkCard.withValues(alpha: 0.3),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppTheme.primaryBlue.withValues(alpha: 0.2),
-            width: 1,
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => context.pop(),
-                borderRadius: BorderRadius.circular(16),
-                child: Icon(
-                  Icons.arrow_back_ios_rounded,
-                  color: AppTheme.textWhite,
-                  size: 20,
-                ),
-              ),
+      child: GestureDetector(
+        onTap: () => context.pop(),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: AppTheme.darkCard.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.darkBorder.withValues(alpha: 0.15),
+              width: 1,
             ),
+          ),
+          child: Icon(
+            Icons.arrow_back_ios_rounded,
+            color: AppTheme.textWhite,
+            size: 18,
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildAnimatedIcon() {
-    return AnimatedBuilder(
-      animation: _floatingAnimationController,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, _floatingAnimationController.value * 10 - 5),
-          child: Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                  blurRadius: 30,
-                  spreadRadius: 10,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.lock_reset_rounded,
-              size: 50,
-              color: Colors.white,
-            ),
-          ),
-        );
-      },
     );
   }
 
   Widget _buildHeader() {
     return Column(
       children: [
-        ShaderMask(
-          shaderCallback: (bounds) => 
-              AppTheme.primaryGradient.createShader(bounds),
-          child: Text(
-            'نسيت كلمة المرور؟',
-            style: AppTextStyles.heading1.copyWith(
-              fontWeight: FontWeight.w900,
-              fontSize: 28,
-              color: Colors.white,
-            ),
+        // Animated Icon
+        AnimatedBuilder(
+          animation: _floatingAnimation,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(0, _floatingAnimation.value * 0.5),
+              child: Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                      blurRadius: 25,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.lock_reset_rounded,
+                  size: 45,
+                  color: Colors.white,
+                ),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 32),
+
+        Text(
+          'نسيت كلمة المرور؟',
+          style: AppTextStyles.heading2.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textWhite,
           ),
         ),
+
         const SizedBox(height: 12),
-        Text(
-          'أدخل بريدك الإلكتروني أو رقم هاتفك وسنرسل لك تعليمات إعادة تعيين كلمة المرور',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppTheme.textMuted,
+
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            'لا تقلق، أدخل بريدك الإلكتروني أو رقم هاتفك\nوسنرسل لك رابط إعادة التعيين',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppTheme.textMuted,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
         ),
       ],
     );
   }
-  
-  Widget _buildGlassForm() {
+
+  Widget _buildFormCard() {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.darkCard.withValues(alpha: 0.5),
-            AppTheme.darkCard.withValues(alpha: 0.3),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
+        color: AppTheme.darkCard.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+          color: AppTheme.darkBorder.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Form(
@@ -370,7 +417,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildEmailField(),
-                const SizedBox(height: 30),
+                const SizedBox(height: 24),
                 _buildSubmitButton(),
               ],
             ),
@@ -382,70 +429,90 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
 
   Widget _buildEmailField() {
     final isFocused = _emailOrPhoneFocusNode.hasFocus;
-    
+    final hasText = _emailOrPhoneController.text.isNotEmpty;
+
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isFocused
-              ? [
-                  AppTheme.primaryBlue.withValues(alpha: 0.1),
-                  AppTheme.primaryPurple.withValues(alpha: 0.05),
-                ]
-              : [
-                  AppTheme.darkCard.withValues(alpha: 0.3),
-                  AppTheme.darkCard.withValues(alpha: 0.2),
-                ],
-        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isFocused
-              ? AppTheme.primaryBlue.withValues(alpha: 0.5)
-              : AppTheme.darkBorder.withValues(alpha: 0.3),
-          width: 1,
+              ? AppTheme.primaryBlue.withValues(alpha: 0.4)
+              : AppTheme.darkBorder.withValues(alpha: 0.15),
+          width: isFocused ? 1.5 : 1,
         ),
+        color: AppTheme.darkCard.withValues(alpha: 0.3),
       ),
-      child: TextFormField(
-        controller: _emailOrPhoneController,
-        focusNode: _emailOrPhoneFocusNode,
-        keyboardType: TextInputType.emailAddress,
-        textInputAction: TextInputAction.done,
-        style: AppTextStyles.bodyMedium.copyWith(
-          color: AppTheme.textWhite,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: TextFormField(
+            controller: _emailOrPhoneController,
+            focusNode: _emailOrPhoneFocusNode,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => _onSubmit(),
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textWhite,
+              fontSize: 14,
+            ),
+            decoration: InputDecoration(
+              labelText: 'البريد الإلكتروني أو رقم الهاتف',
+              hintText: 'أدخل بريدك أو رقمك',
+              floatingLabelBehavior: FloatingLabelBehavior.auto,
+              labelStyle: AppTextStyles.bodySmall.copyWith(
+                color: isFocused
+                    ? AppTheme.primaryBlue
+                    : AppTheme.textMuted.withValues(alpha: 0.7),
+                fontSize: hasText || isFocused ? 11 : 13,
+                fontWeight: isFocused ? FontWeight.w600 : FontWeight.w400,
+              ),
+              hintStyle: AppTextStyles.bodySmall.copyWith(
+                color: AppTheme.textMuted.withValues(alpha: 0.3),
+                fontSize: 13,
+              ),
+              prefixIcon: Container(
+                margin: const EdgeInsets.all(12),
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  gradient: isFocused ? AppTheme.primaryGradient : null,
+                  color: !isFocused
+                      ? AppTheme.darkCard.withValues(alpha: 0.5)
+                      : null,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.email_outlined,
+                  size: 18,
+                  color: isFocused
+                      ? Colors.white
+                      : AppTheme.textMuted.withValues(alpha: 0.6),
+                ),
+              ),
+              filled: false,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              errorStyle: AppTextStyles.caption.copyWith(
+                color: AppTheme.error,
+                fontSize: 11,
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'هذا الحقل مطلوب';
+              }
+              if (!Validators.isValidEmail(value) &&
+                  !Validators.isValidPhoneNumber(value)) {
+                return 'يرجى إدخال بريد إلكتروني أو رقم هاتف صحيح';
+              }
+              return null;
+            },
+          ),
         ),
-        decoration: InputDecoration(
-          labelText: 'البريد الإلكتروني أو رقم الهاتف',
-          hintText: 'أدخل بريدك الإلكتروني أو رقم هاتفك',
-          labelStyle: AppTextStyles.bodySmall.copyWith(
-            color: isFocused
-                ? AppTheme.primaryBlue
-                : AppTheme.textMuted,
-          ),
-          hintStyle: AppTextStyles.bodySmall.copyWith(
-            color: AppTheme.textMuted.withValues(alpha: 0.5),
-          ),
-          prefixIcon: Icon(
-            Icons.email_outlined,
-            color: isFocused
-                ? AppTheme.primaryBlue
-                : AppTheme.textMuted,
-          ),
-          filled: false,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'هذا الحقل مطلوب';
-          }
-          if (!Validators.isValidEmail(value) && 
-              !Validators.isValidPhoneNumber(value)) {
-            return 'يرجى إدخال بريد إلكتروني أو رقم هاتف صحيح';
-          }
-          return null;
-        },
       ),
     );
   }
@@ -454,29 +521,67 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         final isLoading = state is AuthLoading;
-        
-        return _buildGlassButton(
+
+        return _buildActionButton(
           onPressed: isLoading ? null : _onSubmit,
+          icon: Icons.send_rounded,
+          label: isLoading ? 'جاري الإرسال...' : 'إرسال رابط الاستعادة',
           isLoading: isLoading,
+        );
+      },
+    );
+  }
+
+  Widget _buildActionButton({
+    required VoidCallback? onPressed,
+    required IconData icon,
+    required String label,
+    bool isLoading = false,
+  }) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        height: 52,
+        decoration: BoxDecoration(
+          gradient: isLoading || onPressed == null
+              ? LinearGradient(
+                  colors: [
+                    AppTheme.primaryBlue.withValues(alpha: 0.3),
+                    AppTheme.primaryPurple.withValues(alpha: 0.3),
+                  ],
+                )
+              : AppTheme.primaryGradient,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: isLoading || onPressed == null
+              ? []
+              : [
+                  BoxShadow(
+                    color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+        ),
+        child: Center(
           child: isLoading
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SizedBox(
-                      width: 20,
-                      height: 20,
+                      width: 18,
+                      height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white.withValues(alpha: 0.9),
+                          Colors.white.withValues(alpha: 0.8),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Text(
-                      'جاري الإرسال...',
+                      label,
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
+                        color: Colors.white.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
@@ -484,122 +589,108 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.send_rounded,
+                    Icon(
+                      icon,
                       color: Colors.white,
                       size: 20,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Text(
-                      'إرسال تعليمات إعادة التعيين',
-                      style: AppTextStyles.buttonLarge.copyWith(
+                      label,
+                      style: AppTextStyles.buttonMedium.copyWith(
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-        );
-      },
-    );
-  }
-  
-  Widget _buildGlassButton({
-    required Widget child,
-    VoidCallback? onPressed,
-    bool isLoading = false,
-  }) {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: isLoading
-            ? LinearGradient(
-                colors: [
-                  AppTheme.primaryBlue.withValues(alpha: 0.5),
-                  AppTheme.primaryPurple.withValues(alpha: 0.5),
-                ],
-              )
-            : AppTheme.primaryGradient,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: isLoading
-            ? []
-            : [
-                BoxShadow(
-                  color: AppTheme.primaryBlue.withValues(alpha: 0.4),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(16),
-          child: Center(child: child),
         ),
       ),
+    );
+  }
+
+  Widget _buildHelpText() {
+    return Column(
+      children: [
+        Text(
+          'تذكرت كلمة المرور؟',
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppTheme.textMuted,
+          ),
+        ),
+        TextButton(
+          onPressed: () => context.pop(),
+          child: Text(
+            'العودة لتسجيل الدخول',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppTheme.primaryBlue,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   void _onSubmit() {
     if (_formKey.currentState?.validate() ?? false) {
+      HapticFeedback.mediumImpact();
       context.read<AuthBloc>().add(
-        ResetPasswordEvent(
-          emailOrPhone: _emailOrPhoneController.text.trim(),
-        ),
-      );
+            ResetPasswordEvent(
+              emailOrPhone: _emailOrPhoneController.text.trim(),
+            ),
+          );
     }
   }
 
   void _handleAuthState(BuildContext context, AuthState state) {
     if (state is AuthPasswordResetSent) {
+      HapticFeedback.heavyImpact();
       setState(() {
         _isSubmitted = true;
       });
     } else if (state is AuthError) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(state.message),
-          backgroundColor: AppTheme.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      HapticFeedback.heavyImpact();
+      _showErrorSnackBar(state.message);
     }
   }
-}
 
-// Floating Circles Painter
-class _FloatingCirclesPainter extends CustomPainter {
-  final Animation<double> animation;
-  
-  _FloatingCirclesPainter({required this.animation}) : super(repaint: animation);
-  
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.fill;
-    
-    // Draw floating circles
-    final circles = [
-      {'x': 0.2, 'y': 0.3, 'radius': 80.0, 'color': AppTheme.primaryBlue.withValues(alpha: 0.05)},
-      {'x': 0.8, 'y': 0.5, 'radius': 120.0, 'color': AppTheme.primaryPurple.withValues(alpha: 0.03)},
-      {'x': 0.5, 'y': 0.8, 'radius': 100.0, 'color': AppTheme.primaryCyan.withValues(alpha: 0.04)},
-    ];
-    
-    for (var circle in circles) {
-      final offset = Offset(
-        size.width * (circle['x'] as double),
-        size.height * (circle['y'] as double) + 
-            (animation.value * 20 - 10),
-      );
-      
-      paint.color = circle['color'] as Color;
-      canvas.drawCircle(offset, circle['radius'] as double, paint);
-    }
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.error.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.error_outline_rounded,
+                color: AppTheme.error,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppTheme.textWhite,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppTheme.darkCard,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
-  
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

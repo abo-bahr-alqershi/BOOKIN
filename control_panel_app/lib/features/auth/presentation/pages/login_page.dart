@@ -1,4 +1,7 @@
+// lib/features/auth/presentation/pages/login_page.dart
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:ui';
@@ -19,104 +22,86 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> 
-    with TickerProviderStateMixin {
-  // Animation Controllers
-  late AnimationController _backgroundAnimationController;
-  late AnimationController _formAnimationController;
-  late AnimationController _particleAnimationController;
-  late AnimationController _glowAnimationController;
-  
-  // Animations
+class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
+  // Optimized animation controllers
+  late AnimationController _mainAnimationController;
+  late AnimationController _floatingAnimationController;
+
+  // Simplified animations
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _rotationAnimation;
-  
-  // Particles
-  final List<_FloatingParticle> _particles = [];
+  late Animation<double> _floatingAnimation;
+
+  // Remove complex particle systems for performance
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
-    _generateParticles();
     _startAnimations();
   }
 
   void _initializeAnimations() {
-    // Background Animation
-    _backgroundAnimationController = AnimationController(
-      duration: const Duration(seconds: 20),
-      vsync: this,
-    )..repeat();
-    
-    _rotationAnimation = Tween<double>(
-      begin: 0,
-      end: 2 * math.pi,
-    ).animate(_backgroundAnimationController);
-    
-    // Form Animation
-    _formAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+    // Main animations
+    _mainAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _formAnimationController,
-      curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
+      parent: _mainAnimationController,
+      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
     ));
-    
+
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.5),
+      begin: const Offset(0, 0.3),
       end: Offset.zero,
     ).animate(CurvedAnimation(
-      parent: _formAnimationController,
-      curve: const Interval(0.2, 0.8, curve: Curves.easeOutBack),
+      parent: _mainAnimationController,
+      curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
     ));
-    
+
     _scaleAnimation = Tween<double>(
-      begin: 0.8,
+      begin: 0.9,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _formAnimationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
+      parent: _mainAnimationController,
+      curve: const Interval(0.0, 0.8, curve: Curves.easeOut),
     ));
-    
-    // Particle Animation
-    _particleAnimationController = AnimationController(
-      duration: const Duration(seconds: 10),
-      vsync: this,
-    )..repeat();
-    
-    // Glow Animation
-    _glowAnimationController = AnimationController(
-      duration: const Duration(seconds: 3),
+
+    // Simple floating animation
+    _floatingAnimationController = AnimationController(
+      duration: const Duration(seconds: 6),
       vsync: this,
     )..repeat(reverse: true);
+
+    _floatingAnimation = Tween<double>(
+      begin: -10,
+      end: 10,
+    ).animate(CurvedAnimation(
+      parent: _floatingAnimationController,
+      curve: Curves.easeInOut,
+    ));
   }
-  
-  void _generateParticles() {
-    for (int i = 0; i < 15; i++) {
-      _particles.add(_FloatingParticle());
-    }
-  }
-  
+
   void _startAnimations() {
     Future.delayed(const Duration(milliseconds: 100), () {
-      _formAnimationController.forward();
+      if (mounted) {
+        _mainAnimationController.forward();
+      }
     });
   }
 
   @override
   void dispose() {
-    _backgroundAnimationController.dispose();
-    _formAnimationController.dispose();
-    _particleAnimationController.dispose();
-    _glowAnimationController.dispose();
+    _scrollController.dispose();
+    _mainAnimationController.dispose();
+    _floatingAnimationController.dispose();
     super.dispose();
   }
 
@@ -128,51 +113,36 @@ class _LoginPageState extends State<LoginPage>
         listener: _handleAuthState,
         child: Stack(
           children: [
-            // Animated Background
-            _buildAnimatedBackground(),
-            
-            // Floating Particles
-            _buildParticles(),
-            
-            // Main Content
+            // Simplified background
+            _buildOptimizedBackground(),
+
+            // Main content
             SafeArea(
               child: SingleChildScrollView(
+                controller: _scrollController,
                 physics: const BouncingScrollPhysics(),
-                child: Padding(
-                  padding: const EdgeInsets.all(0),
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: Transform.scale(
-                        scale: _scaleAnimation.value,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const SizedBox(height: 40),
-                            Padding(
-                              padding: const EdgeInsets.all(24),
-                              child:_buildFuturisticHeader(),
-                            ),
-                            const SizedBox(height: 50),
-                            _buildGlassLoginForm(),
-                            const SizedBox(height: 30),
-                            Padding(
-                              padding: const EdgeInsets.all(24),
-                              child:_buildDivider(),
-                            ),
-                            const SizedBox(height: 30),
-                            Padding(
-                              padding: const EdgeInsets.all(24),
-                              child:_buildSocialLogin(),
-                            ),
-                            const SizedBox(height: 40),
-                            Padding(
-                              padding: const EdgeInsets.all(24),
-                              child:_buildRegisterLink(),
-                            ),
-                          ],
-                        ),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 60),
+                          _buildHeader(),
+                          const SizedBox(height: 50),
+                          _buildLoginCard(),
+                          const SizedBox(height: 30),
+                          _buildDivider(),
+                          const SizedBox(height: 30),
+                          const SocialLoginButtons(),
+                          const SizedBox(height: 40),
+                          _buildFooter(),
+                          const SizedBox(height: 40),
+                        ],
                       ),
                     ),
                   ),
@@ -184,237 +154,203 @@ class _LoginPageState extends State<LoginPage>
       ),
     );
   }
-  
-  Widget _buildAnimatedBackground() {
+
+  Widget _buildOptimizedBackground() {
     return AnimatedBuilder(
-      animation: _rotationAnimation,
+      animation: _floatingAnimation,
       builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.darkBackground,
-                AppTheme.darkBackground2,
-                AppTheme.darkBackground3,
-              ],
-            ),
-          ),
-          child: CustomPaint(
-            painter: _BackgroundPatternPainter(
-              rotation: _rotationAnimation.value,
-              glowIntensity: _glowAnimationController.value,
-            ),
-            size: Size.infinite,
-          ),
-        );
-      },
-    );
-  }
-  
-  Widget _buildParticles() {
-    return AnimatedBuilder(
-      animation: _particleAnimationController,
-      builder: (context, child) {
-        return CustomPaint(
-          painter: _ParticlePainter(
-            particles: _particles,
-            animationValue: _particleAnimationController.value,
-          ),
-          size: Size.infinite,
-        );
-      },
-    );
-  }
-  
-  Widget _buildFuturisticHeader() {
-    return Column(
-      children: [
-        // Logo Container
-        Stack(
-          alignment: Alignment.center,
+        return Stack(
           children: [
-            // Glow Effect
-            AnimatedBuilder(
-              animation: _glowAnimationController,
-              builder: (context, child) {
-                return Container(
-                  width: 150,
-                  height: 150,
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      colors: [
-                        AppTheme.primaryBlue.withValues(alpha: 0.2 + (_glowAnimationController.value * 0.3),
-                        ),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-            
-            // Glass Container
+            // Base gradient
             Container(
-              width: 120,
-              height: 120,
               decoration: BoxDecoration(
-                gradient: AppTheme.cardGradient,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(
-                  color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                  width: 1,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.darkBackground,
+                    AppTheme.darkBackground2.withValues(alpha: 0.8),
+                    AppTheme.darkBackground3.withValues(alpha: 0.6),
+                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                    blurRadius: 30,
-                    spreadRadius: 10,
-                  ),
-                ],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(30),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    color: AppTheme.darkCard.withValues(alpha: 0.3),
-                    child: Center(
-                      child: ShaderMask(
-                        shaderCallback: (bounds) => 
-                            AppTheme.primaryGradient.createShader(bounds),
-                        child: const Text(
-                          'B',
-                          style: TextStyle(
-                            fontSize: 60,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            fontFamily: 'SF Pro Display',
-                          ),
-                        ),
-                      ),
-                    ),
+            ),
+
+            // Simple floating orbs - no complex CustomPaint
+            Positioned(
+              top: -100 + _floatingAnimation.value,
+              right: -100,
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppTheme.primaryBlue.withValues(alpha: 0.08),
+                      AppTheme.primaryBlue.withValues(alpha: 0.04),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            Positioned(
+              bottom: -150 - _floatingAnimation.value,
+              left: -100,
+              child: Container(
+                width: 280,
+                height: 280,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppTheme.primaryPurple.withValues(alpha: 0.06),
+                      AppTheme.primaryPurple.withValues(alpha: 0.03),
+                      Colors.transparent,
+                    ],
                   ),
                 ),
               ),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        // Logo
+        Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            gradient: AppTheme.primaryGradient,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: const Center(
+            child: Text(
+              'B',
+              style: TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                fontFamily: 'SF Pro Display',
+              ),
+            ),
+          ),
         ),
-        
-        const SizedBox(height: 30),
-        
-        // App Name
+
+        const SizedBox(height: 24),
+
+        // App name
         ShaderMask(
-          shaderCallback: (bounds) => 
+          shaderCallback: (bounds) =>
               AppTheme.primaryGradient.createShader(bounds),
           child: Text(
             'bookn',
             style: AppTextStyles.displayLarge.copyWith(
               fontSize: 42,
               fontWeight: FontWeight.w900,
-              letterSpacing: -1,
-              color: AppTheme.textWhite,
-              fontFamily: 'SF Pro Display',
+              color: Colors.white,
             ),
           ),
         ),
-        
-        const SizedBox(height: 10),
-        
+
+        const SizedBox(height: 8),
+
         Text(
-          'مرحباً بعودتك',
-          style: AppTextStyles.heading2.copyWith(
-            color: AppTheme.textWhite,
-            fontWeight: FontWeight.w300,
-            letterSpacing: 1,
-          ),
-        ),
-        
-        const SizedBox(height: 5),
-        
-        Text(
-          'سجل دخولك للمتابعة',
+          'نظام إدارة الحجوزات',
           style: AppTextStyles.bodyMedium.copyWith(
             color: AppTheme.textMuted,
-            letterSpacing: 0.5,
           ),
         ),
       ],
     );
   }
-  
-  Widget _buildGlassLoginForm() {
+
+  Widget _buildLoginCard() {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.darkCard.withValues(alpha: 0.5),
-            AppTheme.darkCard.withValues(alpha: 0.3),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
+        color: AppTheme.darkCard.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+          color: AppTheme.darkBorder.withValues(alpha: 0.2),
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.shadowDark.withValues(alpha: 0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: BlocBuilder<AuthBloc, AuthState>(
-            builder: (context, state) {
-              return LoginForm(
-                onSubmit: (emailOrPhone, password, rememberMe) {
-                  context.read<AuthBloc>().add(
-                    LoginEvent(
-                      emailOrPhone: emailOrPhone,
-                      password: password,
-                      rememberMe: rememberMe,
-                    ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'تسجيل الدخول',
+                style: AppTextStyles.heading2.copyWith(
+                  color: AppTheme.textWhite,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'أدخل بياناتك للمتابعة',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppTheme.textMuted,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, state) {
+                  return LoginForm(
+                    onSubmit: (emailOrPhone, password, rememberMe) {
+                      context.read<AuthBloc>().add(
+                            LoginEvent(
+                              emailOrPhone: emailOrPhone,
+                              password: password,
+                              rememberMe: rememberMe,
+                            ),
+                          );
+                    },
+                    isLoading: state is AuthLoading,
                   );
                 },
-                isLoading: state is AuthLoading,
-              );
-            },
+              ),
+            ],
           ),
         ),
       ),
     );
   }
-  
+
   Widget _buildDivider() {
     return Row(
       children: [
         Expanded(
           child: Container(
             height: 1,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.transparent,
-                  AppTheme.primaryBlue.withValues(alpha: 0.3),
-                ],
-              ),
-            ),
+            color: AppTheme.darkBorder.withValues(alpha: 0.2),
           ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             'أو',
-            style: AppTextStyles.bodyMedium.copyWith(
+            style: AppTextStyles.caption.copyWith(
               color: AppTheme.textMuted,
             ),
           ),
@@ -422,239 +358,131 @@ class _LoginPageState extends State<LoginPage>
         Expanded(
           child: Container(
             height: 1,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.primaryBlue.withValues(alpha: 0.3),
-                  Colors.transparent,
-                ],
-              ),
-            ),
+            color: AppTheme.darkBorder.withValues(alpha: 0.2),
           ),
         ),
       ],
     );
   }
-  
-  Widget _buildSocialLogin() {
-    return const SocialLoginButtons();
-  }
-  
-  Widget _buildRegisterLink() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+
+  Widget _buildFooter() {
+    return Column(
       children: [
-        Text(
-          'ليس لديك حساب؟',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppTheme.textMuted,
-          ),
-        ),
-        const SizedBox(width: 8),
-        TextButton(
-          onPressed: () => context.push(RouteConstants.register),
-          child: ShaderMask(
-            shaderCallback: (bounds) => 
-                AppTheme.primaryGradient.createShader(bounds),
-            child: Text(
-              'سجل الآن',
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'ليس لديك حساب؟',
               style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: AppTheme.textMuted,
               ),
             ),
-          ),
+            TextButton(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                context.push(RouteConstants.register);
+              },
+              child: Text(
+                'سجل الآن',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppTheme.primaryBlue,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildFooterLink('الشروط والأحكام'),
+            _buildDot(),
+            _buildFooterLink('سياسة الخصوصية'),
+            _buildDot(),
+            _buildFooterLink('المساعدة'),
+          ],
         ),
       ],
     );
   }
-  
-  void _handleAuthState(BuildContext context, AuthState state) {
-    if (state is AuthLoginSuccess || state is AuthAuthenticated) {
-      context.go(RouteConstants.main);
-    } else if (state is AuthError) {
-      _showFuturisticSnackBar(state.message);
-    }
-  }
-  
-  void _showFuturisticSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppTheme.error.withValues(alpha: 0.8),
-                      AppTheme.error,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.error_outline,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'خطأ في تسجيل الدخول',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      message,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+
+  Widget _buildFooterLink(String text) {
+    return TextButton(
+      onPressed: () {},
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: Text(
+        text,
+        style: AppTextStyles.caption.copyWith(
+          color: AppTheme.textMuted.withValues(alpha: 0.7),
+          fontSize: 11,
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(20),
-        padding: EdgeInsets.zero,
-        duration: const Duration(seconds: 4),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        dismissDirection: DismissDirection.horizontal,
       ),
     );
   }
-}
 
-// Background Pattern Painter
-class _BackgroundPatternPainter extends CustomPainter {
-  final double rotation;
-  final double glowIntensity;
-  
-  _BackgroundPatternPainter({
-    required this.rotation,
-    required this.glowIntensity,
-  });
-  
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5;
-    
-    // Draw rotating circles
-    final center = Offset(size.width / 2, size.height / 2);
-    
-    for (int i = 0; i < 3; i++) {
-      paint.shader = RadialGradient(
-        colors: [
-          AppTheme.primaryBlue.withValues(alpha: 0.1 + (glowIntensity * 0.1)),
-          Colors.transparent,
-        ],
-      ).createShader(Rect.fromCircle(center: center, radius: 200));
-      
-      canvas.save();
-      canvas.translate(center.dx, center.dy);
-      canvas.rotate(rotation + (i * math.pi / 3));
-      canvas.translate(-center.dx, -center.dy);
-      
-      canvas.drawCircle(
-        Offset(center.dx + 100, center.dy),
-        50 + (i * 30),
-        paint,
-      );
-      
-      canvas.restore();
+  Widget _buildDot() {
+    return Container(
+      width: 3,
+      height: 3,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.textMuted.withValues(alpha: 0.3),
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+
+  void _handleAuthState(BuildContext context, AuthState state) {
+    if (state is AuthLoginSuccess || state is AuthAuthenticated) {
+      HapticFeedback.mediumImpact();
+      context.go(RouteConstants.main);
+    } else if (state is AuthError) {
+      HapticFeedback.heavyImpact();
+      _showErrorSnackBar(state.message);
     }
   }
-  
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
 
-// Floating Particle Model
-class _FloatingParticle {
-  late double x;
-  late double y;
-  late double vx;
-  late double vy;
-  late double radius;
-  late double opacity;
-  late Color color;
-  
-  _FloatingParticle() {
-    reset();
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.error.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.error_outline_rounded,
+                color: AppTheme.error,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppTheme.textWhite,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppTheme.darkCard,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
-  
-  void reset() {
-    x = math.Random().nextDouble();
-    y = math.Random().nextDouble();
-    vx = (math.Random().nextDouble() - 0.5) * 0.002;
-    vy = (math.Random().nextDouble() - 0.5) * 0.002;
-    radius = math.Random().nextDouble() * 3 + 1;
-    opacity = math.Random().nextDouble() * 0.5 + 0.1;
-    
-    final colors = [
-      AppTheme.primaryBlue,
-      AppTheme.primaryPurple,
-      AppTheme.primaryCyan,
-    ];
-    color = colors[math.Random().nextInt(colors.length)];
-  }
-  
-  void update() {
-    x += vx;
-    y += vy;
-    
-    if (x < 0 || x > 1) vx = -vx;
-    if (y < 0 || y > 1) vy = -vy;
-  }
-}
-
-// Particle Painter
-class _ParticlePainter extends CustomPainter {
-  final List<_FloatingParticle> particles;
-  final double animationValue;
-  
-  _ParticlePainter({
-    required this.particles,
-    required this.animationValue,
-  });
-  
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (var particle in particles) {
-      particle.update();
-      
-      final paint = Paint()
-        ..color = particle.color.withValues(alpha: particle.opacity)
-        ..style = PaintingStyle.fill;
-      
-      canvas.drawCircle(
-        Offset(particle.x * size.width, particle.y * size.height),
-        particle.radius,
-        paint,
-      );
-    }
-  }
-  
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

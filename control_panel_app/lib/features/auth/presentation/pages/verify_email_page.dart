@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bookn_cp_app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -72,97 +73,125 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                   },
                 ),
               ],
-              child: BlocConsumer<EmailVerificationBloc, EmailVerificationState>(
-              listener: (context, state) {
-                if (state is EmailVerificationSuccess) {
-                  HapticFeedback.mediumImpact();
-                  // بعد التحقق: امسح الجلسة الحالية وأعد المستخدم لشاشة تسجيل الدخول
-                  // لتفادي بقاء توكن التسجيل الأولي وإجبار إعادة تسجيل الدخول بمستخدم مُفعّل
-                  context.read<AuthBloc>().add(const LogoutEvent());
-                  // انتظر تبدل الحالة إلى غير مصادق ثم انتقل
-                  // ملاحظة: لو لم يتغير فوراً، نستخدم Future.microtask لضمان تنفيذ التنقل بعد الإطار الحالي
-                  Future.microtask(() => context.go(RouteConstants.login));
-                } else if (state is EmailVerificationError) {
-                  _showError(state.message);
-                } else if (state is EmailVerificationCodeResent) {
-                  _startTimer(state.retryAfterSeconds ?? 60);
-                }
-              },
-              builder: (context, state) {
-                final authState = context.watch<AuthBloc>().state;
-                final email = authState is AuthAuthenticated ? authState.user.email : '';
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 20),
-                    Text(
-                      'تأكيد البريد الإلكتروني',
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.heading2.copyWith(color: AppTheme.textWhite),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'أدخل رمز التحقق المرسل إلى: $email',
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted),
-                    ),
-                    const SizedBox(height: 24),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppTheme.darkCard.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.darkBorder.withValues(alpha: 0.2), width: 0.5),
+              child:
+                  BlocConsumer<EmailVerificationBloc, EmailVerificationState>(
+                listener: (context, state) {
+                  if (state is EmailVerificationSuccess) {
+                    HapticFeedback.mediumImpact();
+                    // بعد التحقق: امسح الجلسة الحالية وأعد المستخدم لشاشة تسجيل الدخول
+                    // لتفادي بقاء توكن التسجيل الأولي وإجبار إعادة تسجيل الدخول بمستخدم مُفعّل
+                    context.read<AuthBloc>().add(const LogoutEvent());
+                    // انتظر تبدل الحالة إلى غير مصادق ثم انتقل
+                    // ملاحظة: لو لم يتغير فوراً، نستخدم Future.microtask لضمان تنفيذ التنقل بعد الإطار الحالي
+                    Future.microtask(() => context.go(RouteConstants.login));
+                  } else if (state is EmailVerificationError) {
+                    _showError(state.message);
+                  } else if (state is EmailVerificationCodeResent) {
+                    _startTimer(state.retryAfterSeconds ?? 60);
+                  }
+                },
+                builder: (context, state) {
+                  final authState = context.watch<AuthBloc>().state;
+                  final email = authState is AuthAuthenticated
+                      ? authState.user.email
+                      : '';
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 20),
+                      Text(
+                        'تأكيد البريد الإلكتروني',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.heading2
+                            .copyWith(color: AppTheme.textWhite),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: TextField(
-                        controller: _codeController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        style: AppTextStyles.caption.copyWith(color: AppTheme.textWhite),
-                        decoration: InputDecoration(
-                          labelText: 'رمز التحقق',
-                          hintText: '######',
-                          border: InputBorder.none,
+                      const SizedBox(height: 8),
+                      Text(
+                        'أدخل رمز التحقق المرسل إلى: $email',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.caption
+                            .copyWith(color: AppTheme.textMuted),
+                      ),
+                      const SizedBox(height: 24),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.darkCard.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: AppTheme.darkBorder.withValues(alpha: 0.2),
+                              width: 0.5),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: TextField(
+                          controller: _codeController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly
+                          ],
+                          style: AppTextStyles.caption
+                              .copyWith(color: AppTheme.textWhite),
+                          decoration: const InputDecoration(
+                            labelText: 'رمز التحقق',
+                            hintText: '######',
+                            border: InputBorder.none,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: state is EmailVerificationLoading
-                          ? null
-                          : () {
-                              final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
-                              context.read<EmailVerificationBloc>().add(VerifyEmailSubmitted(
-                                    userId: user.userId,
-                                    email: user.email,
-                                    code: _codeController.text.trim(),
-                                  ));
-                            },
-                      child: state is EmailVerificationLoading
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Text('تأكيد'),
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: _seconds > 0 || state is EmailVerificationLoading
-                          ? null
-                          : () {
-                              final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
-                              context.read<EmailVerificationBloc>().add(ResendCodePressed(
-                                    userId: user.userId,
-                                    email: user.email,
-                                  ));
-                            },
-                      child: Text(
-                        _seconds > 0 ? 'أعد الإرسال بعد $_seconds ث' : 'إعادة إرسال الرمز',
-                        style: AppTextStyles.caption.copyWith(
-                          color: _seconds > 0 ? AppTheme.textMuted : AppTheme.primaryBlue,
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: state is EmailVerificationLoading
+                            ? null
+                            : () {
+                                final user = (context.read<AuthBloc>().state
+                                        as AuthAuthenticated)
+                                    .user;
+                                context
+                                    .read<EmailVerificationBloc>()
+                                    .add(VerifyEmailSubmitted(
+                                      userId: user.userId,
+                                      email: user.email,
+                                      code: _codeController.text.trim(),
+                                    ));
+                              },
+                        child: state is EmailVerificationLoading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2))
+                            : const Text('تأكيد'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextButton(
+                        onPressed:
+                            _seconds > 0 || state is EmailVerificationLoading
+                                ? null
+                                : () {
+                                    final user = (context.read<AuthBloc>().state
+                                            as AuthAuthenticated)
+                                        .user;
+                                    context
+                                        .read<EmailVerificationBloc>()
+                                        .add(ResendCodePressed(
+                                          userId: user.userId,
+                                          email: user.email,
+                                        ));
+                                  },
+                        child: Text(
+                          _seconds > 0
+                              ? 'أعد الإرسال بعد $_seconds ث'
+                              : 'إعادة إرسال الرمز',
+                          style: AppTextStyles.caption.copyWith(
+                            color: _seconds > 0
+                                ? AppTheme.textMuted
+                                : AppTheme.primaryBlue,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                );
-              },
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -176,4 +205,3 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     );
   }
 }
-
