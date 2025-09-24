@@ -48,7 +48,9 @@ namespace YemenBooking.Application.Handlers.Commands.Users
             var userEntity = await _userRepository.GetUserByEmailAsync(request.Email.Trim(), cancellationToken);
             if (userEntity == null)
                 return ResultDto<AuthResultDto>.Failed("المستخدم غير موجود");
-            if (!userEntity.EmailConfirmed)
+            // اعتبر البريد مؤكداً إذا تم تعيين أي من العلمين التاريخيين
+            var isVerified = userEntity.IsEmailVerified || userEntity.EmailConfirmed;
+            if (!isVerified)
                 return ResultDto<AuthResultDto>.Failed("يجب تأكيد البريد الإلكتروني قبل تسجيل الدخول");
             // التحقق من حالة الحساب
             // if (!userEntity.IsActive)
