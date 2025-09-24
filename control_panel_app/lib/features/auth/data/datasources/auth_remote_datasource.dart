@@ -56,6 +56,16 @@ abstract class AuthRemoteDataSource {
   Future<UserModel> uploadProfileImage({
     required String imagePath,
   });
+
+  // Email verification
+  Future<bool> verifyEmail({
+    required String userId,
+    required String code,
+  });
+  Future<int?> resendEmailVerification({
+    required String userId,
+    required String email,
+  });
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
