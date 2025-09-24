@@ -65,7 +65,8 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
               listener: (context, state) {
                 if (state is EmailVerificationSuccess) {
                   HapticFeedback.mediumImpact();
-                  context.go(RouteConstants.main);
+                  // بعد التحقق، وجّه المستخدم مباشرة لصفحة تسجيل الدخول
+                  context.go(RouteConstants.login);
                 } else if (state is EmailVerificationError) {
                   _showError(state.message);
                 } else if (state is EmailVerificationCodeResent) {
