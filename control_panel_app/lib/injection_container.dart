@@ -562,6 +562,7 @@ import 'features/admin_payments/domain/usecases/analytics/get_refund_statistics_
     as pay_uc_refund_stats;
 import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_analytics/payment_analytics_bloc.dart'
     as pay_an_bloc;
+import 'package:bookn_cp_app/features/auth/verification/bloc/email_verification_bloc.dart';
 
 final sl = GetIt.instance;
 
