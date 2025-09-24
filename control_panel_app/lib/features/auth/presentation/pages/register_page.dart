@@ -509,7 +509,6 @@ class _RegisterPageState extends State<RegisterPage>
                   propertyName,
                   city,
                   address,
-                  starRating,
                   latitude,
                   longitude,
                   description,

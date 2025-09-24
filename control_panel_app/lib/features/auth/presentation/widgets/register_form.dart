@@ -36,7 +36,6 @@ class RegisterForm extends StatefulWidget {
     String propertyName,
     String city,
     String address,
-    int starRating,
     double? latitude,
     double? longitude,
     String? description,
@@ -84,7 +83,7 @@ class _RegisterFormState extends State<RegisterForm>
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
   bool _showPasswordStrength = false;
-  int _starRating = 3;
+  // Removed star rating field
   String _selectedPropertyTypeId = '';
   List<ap_models.PropertyTypeModel> _propertyTypes = const [];
   bool _loadingPropertyTypes = false;
@@ -418,10 +417,7 @@ class _RegisterFormState extends State<RegisterForm>
 
           const SizedBox(height: 12),
 
-          // Star rating (1-5)
-          _buildStarRatingPicker(),
-
-          const SizedBox(height: 12),
+          // Star rating removed
 
           // Map picker button
           _buildMapPickerButton(),
@@ -719,62 +715,7 @@ class _RegisterFormState extends State<RegisterForm>
     );
   }
 
-  Widget _buildStarRatingPicker() {
-    return Container(
-      height: 42,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.darkCard.withValues(alpha: 0.2),
-            AppTheme.darkCard.withValues(alpha: 0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(11),
-        border: Border.all(
-          color: AppTheme.darkBorder.withValues(alpha: 0.1),
-          width: 0.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: 8),
-          Icon(
-            Icons.star_rate_rounded,
-            color: AppTheme.textMuted.withValues(alpha: 0.4),
-            size: 16,
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: SliderTheme(
-              data: const SliderThemeData(
-                trackHeight: 2,
-              ),
-              child: Slider(
-                value: _starRating.toDouble(),
-                min: 1,
-                max: 5,
-                divisions: 4,
-                label: '$_starRating',
-                onChanged: widget.isLoading
-                    ? null
-                    : (v) => setState(() => _starRating = v.round()),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              '$_starRating نجوم',
-              style: AppTextStyles.caption.copyWith(
-                color: AppTheme.textWhite.withValues(alpha: 0.7),
-                fontSize: 11,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Star rating picker removed
 
   Widget _buildUltraTextarea({
     required TextEditingController controller,
@@ -1047,7 +988,6 @@ class _RegisterFormState extends State<RegisterForm>
         _propertyNameController.text.trim(),
         _cityController.text.trim(),
         _addressController.text.trim(),
-        _starRating,
         _tryParseDouble(_latitudeController.text.trim()),
         _tryParseDouble(_longitudeController.text.trim()),
         _descriptionController.text.trim().isEmpty
