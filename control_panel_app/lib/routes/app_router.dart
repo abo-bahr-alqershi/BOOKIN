@@ -25,6 +25,7 @@ import 'package:bookn_cp_app/features/chat/presentation/pages/conversations_page
 import 'package:bookn_cp_app/features/chat/domain/entities/conversation.dart';
 import 'package:bookn_cp_app/features/auth/presentation/pages/change_password_page.dart';
 import 'package:bookn_cp_app/features/auth/presentation/pages/edit_profile_page.dart';
+import 'package:bookn_cp_app/features/auth/presentation/pages/profile_page.dart';
 // Removed settings pages imports
 // Admin Units pages
 import 'package:bookn_cp_app/features/admin_units/presentation/pages/units_list_page.dart';
@@ -253,11 +254,7 @@ class AppRouter {
         GoRoute(
           path: '/profile',
           builder: (BuildContext context, GoRouterState state) {
-            return const Scaffold(
-              body: Center(
-                child: Text('الملف الشخصي'),
-              ),
-            );
+            return const ProfilePage();
           },
         ),
         GoRoute(
