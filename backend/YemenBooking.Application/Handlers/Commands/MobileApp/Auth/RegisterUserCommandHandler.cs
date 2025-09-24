@@ -19,6 +19,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
     private readonly IAuthenticationService _authService;
     private readonly IUserRepository _userRepository;
     private readonly IEmailService _emailService;
+    private readonly IPasswordHashingService _passwordHashingService;
     private readonly IEmailVerificationService _emailVerificationService;
     private readonly ILogger<RegisterUserCommandHandler> _logger;
 
@@ -34,12 +35,14 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
         IAuthenticationService authService,
         IUserRepository userRepository,
         IEmailService emailService,
+        IPasswordHashingService passwordHashingService,
         IEmailVerificationService emailVerificationService,
         ILogger<RegisterUserCommandHandler> logger)
     {
         _authService = authService;
         _userRepository = userRepository;
         _emailService = emailService;
+        _passwordHashingService = passwordHashingService;
         _emailVerificationService = emailVerificationService;
         _logger = logger;
     }
@@ -85,14 +88,19 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
             }
 
             // إنشاء المستخدم الجديد - استخدام طريقة بديلة لأن RegisterAsync غير متوفرة
+            var hashedPassword = await _passwordHashingService.HashPasswordAsync(request.Password, cancellationToken);
+
             var newUser = new User
             {
                 Id = Guid.NewGuid(),
-                Name = request.Name,
-                Email = request.Email,
+                Name = request.Name.Trim(),
+                Email = request.Email.Trim(),
                 Phone = request.Phone,
+                Password = hashedPassword,
+                ProfileImage = string.Empty,
                 CreatedAt = DateTime.UtcNow,
-                IsEmailVerified = false
+                UpdatedAt = DateTime.UtcNow,
+                IsEmailVerified = false,
             };
             
             // Persist user to DB
