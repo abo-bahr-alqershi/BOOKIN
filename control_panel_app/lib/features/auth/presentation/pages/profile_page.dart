@@ -83,11 +83,25 @@ class _ProfilePageState extends State<ProfilePage>
       backgroundColor: AppTheme.darkBackground,
       body: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
-          if (state is! AuthAuthenticated) {
+          if (state is AuthUnauthenticated) {
             return _buildUnauthenticatedView(context);
           }
 
-          final user = state.user;
+          // Keep showing profile UI during transient loading to avoid flicker to unauth view
+          final user = (state is AuthAuthenticated)
+              ? state.user
+              : (state is AuthLoginSuccess)
+                  ? state.user
+                  : (state is AuthProfileUpdateSuccess)
+                      ? state.user
+                      : (state is AuthProfileImageUploadSuccess)
+                          ? state.user
+                          : null;
+
+          if (user == null) {
+            // Fallback minimal loader while determining state
+            return const Center(child: CircularProgressIndicator(strokeWidth: 1.5));
+          }
 
           return Stack(
             children: [
@@ -119,6 +133,19 @@ class _ProfilePageState extends State<ProfilePage>
               
               // زر تبديل الثيم العائم
               _buildFloatingThemeToggle(),
+              if (state is AuthLoading)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    child: const Center(
+                      child: SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 1.5),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           );
         },
