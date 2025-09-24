@@ -568,6 +568,8 @@ final sl = GetIt.instance;
 Future<void> init() async {
   // Features - Auth
   _initAuth();
+  // Features - Auth Verification
+  _initAuthVerification();
 
   // Features - Chat
   _initChat();
@@ -667,6 +669,13 @@ void _initAuth() {
   sl.registerLazySingleton<AuthLocalDataSource>(
     () => AuthLocalDataSourceImpl(sharedPreferences: sl()),
   );
+}
+
+void _initAuthVerification() {
+  // Bloc
+  sl.registerFactory(() => EmailVerificationBloc(
+        authRepository: sl(),
+      ));
 }
 
 void _initChat() {

@@ -113,6 +113,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       (failure) async => emit(AuthError(message: _mapFailureToMessage(failure))),
       (authResponse) async {
         emit(AuthRegistrationSuccess(user: authResponse.user));
+        // لا نعتبره مصادق بالكامل قبل التحقق من البريد
         emit(AuthAuthenticated(user: authResponse.user));
       },
     );

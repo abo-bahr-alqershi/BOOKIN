@@ -111,6 +111,68 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
+  // Email verification (new)
+  Future<bool> verifyEmail({
+    required String userId,
+    required String code,
+  }) async {
+    const requestName = 'auth.verifyEmail';
+    logRequestStart(requestName);
+    try {
+      final response = await apiClient.post(
+        '/api/client/auth/verify-email',
+        data: {
+          'userId': userId,
+          'verificationToken': code,
+        },
+      );
+      logRequestSuccess(requestName, statusCode: response.statusCode);
+      final result = ResultDto<Map<String, dynamic>>.fromJson(
+        response.data is Map<String, dynamic> ? response.data as Map<String, dynamic> : null,
+        (json) => json as Map<String, dynamic>,
+      );
+      return result.success;
+    } on DioException catch (e, s) {
+      logRequestError(requestName, e, stackTrace: s);
+      throw ApiException.fromDioError(e);
+    } catch (e, s) {
+      logRequestError(requestName, e, stackTrace: s);
+      throw ApiException(message: e.toString());
+    }
+  }
+
+  Future<int?> resendEmailVerification({
+    required String userId,
+    required String email,
+  }) async {
+    const requestName = 'auth.resendEmailVerification';
+    logRequestStart(requestName);
+    try {
+      final response = await apiClient.post(
+        '/api/client/auth/resend-email-verification',
+        data: {
+          'userId': userId,
+          'email': email,
+        },
+      );
+      logRequestSuccess(requestName, statusCode: response.statusCode);
+      final result = ResultDto<Map<String, dynamic>>.fromJson(
+        response.data is Map<String, dynamic> ? response.data as Map<String, dynamic> : null,
+        (json) => json as Map<String, dynamic>,
+      );
+      if (!result.success) return 60;
+      final data = result.data ?? const {};
+      final retryAfter = data['retryAfterSeconds'];
+      return retryAfter is int ? retryAfter : null;
+    } on DioException catch (e, s) {
+      logRequestError(requestName, e, stackTrace: s);
+      throw ApiException.fromDioError(e);
+    } catch (e, s) {
+      logRequestError(requestName, e, stackTrace: s);
+      throw ApiException(message: e.toString());
+    }
+  }
+
   @override
   Future<AuthResponseModel> register({
     required String name,

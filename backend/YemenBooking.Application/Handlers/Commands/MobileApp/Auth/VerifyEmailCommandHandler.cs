@@ -82,15 +82,19 @@ public class VerifyEmailCommandHandler : IRequestHandler<VerifyEmailCommand, Res
                 return ResultDto<VerifyEmailResponse>.Ok(alreadyVerifiedResponse, "البريد الإلكتروني مؤكد مسبقاً");
             }
 
-            // التحقق من صحة رمز التأكيد
-            // ملاحظة: يمكن إضافة التحقق من رمز التأكيد لاحقاً
-            // Note: Token validation can be added later
-            var isValidToken = !string.IsNullOrWhiteSpace(request.VerificationToken);
+            // التحقق من صلاحية الرمز من خدمة التحقق
+            var isExpired = await _emailVerificationService.IsCodeExpiredAsync(user.Email, request.VerificationToken);
+            if (isExpired)
+            {
+                _logger.LogWarning("رمز التأكيد منتهي الصلاحية للمستخدم: {UserId}", request.UserId);
+                return ResultDto<VerifyEmailResponse>.Failed("رمز التأكيد منتهي الصلاحية", "INVALID_VERIFICATION_TOKEN");
+            }
 
+            var isValidToken = await _emailVerificationService.VerifyCodeAsync(user.Email, request.VerificationToken);
             if (!isValidToken)
             {
-                _logger.LogWarning("رمز التأكيد غير صالح أو منتهي الصلاحية للمستخدم: {UserId}", request.UserId);
-                return ResultDto<VerifyEmailResponse>.Failed("رمز التأكيد غير صالح أو منتهي الصلاحية", "INVALID_VERIFICATION_TOKEN");
+                _logger.LogWarning("رمز التأكيد غير صحيح للمستخدم: {UserId}", request.UserId);
+                return ResultDto<VerifyEmailResponse>.Failed("رمز التأكيد غير صحيح", "INVALID_VERIFICATION_TOKEN");
             }
 
             // تأكيد البريد الإلكتروني
@@ -100,18 +104,7 @@ public class VerifyEmailCommandHandler : IRequestHandler<VerifyEmailCommand, Res
 
             await _userRepository.UpdateAsync(user, cancellationToken);
             
-            // إلغاء رمز التأكيد بعد الاستخدام
-            try
-            {
-                // ملاحظة: يمكن إضافة إلغاء رمز التأكيد لاحقاً
-                // Note: Token invalidation can be added later
-                _logger.LogInformation("تم إبطال رمز التحقق للمستخدم: {UserId}", user.Id);
-            }
-            catch (Exception tokenEx)
-            {
-                _logger.LogWarning(tokenEx, "فشل في إلغاء رمز التأكيد للمستخدم: {UserId}", request.UserId);
-                // لا نفشل العملية بسبب فشل إلغاء الرمز
-            }
+            // تم حذف الرمز داخل خدمة التحقق عند نجاح التحقق
 
             _logger.LogInformation("تم تأكيد البريد الإلكتروني بنجاح للمستخدم: {UserId}", request.UserId);
 

@@ -178,12 +178,22 @@ class AppRouter {
 
         if (authState is AuthAuthenticated &&
             (goingToLogin || goingToRegister || goingToForgot)) {
+          // إذا لم يتم التحقق من البريد الإلكتروني، اجبر على صفحة التحقق
+          if (!(authState.user.isEmailVerified)) {
+            return '/verify-email';
+          }
           return '/main';
         }
 
         // Optional: Admin guard (just redirect to main if not admin)
         if (guards.isAdminPath(path) && !guards.isAdmin(authState)) {
           return '/main';
+        }
+
+        // إذا المستخدم مصادق لكن بريده غير مؤكد، امنع الوصول للمسارات المحمية
+        if (authState is AuthAuthenticated && !authState.user.isEmailVerified) {
+          final goingToVerify = state.matchedLocation == '/verify-email';
+          if (!goingToVerify) return '/verify-email';
         }
 
         return null;
@@ -225,6 +235,12 @@ class AppRouter {
             return RegisterPage(
               isFirst: params["isFirst"] ?? false,
             );
+          },
+        ),
+        GoRoute(
+          path: '/verify-email',
+          builder: (BuildContext context, GoRouterState state) {
+            return const VerifyEmailPage();
           },
         ),
         GoRoute(

@@ -19,6 +19,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
     private readonly IAuthenticationService _authService;
     private readonly IUserRepository _userRepository;
     private readonly IEmailService _emailService;
+    private readonly IEmailVerificationService _emailVerificationService;
     private readonly ILogger<RegisterUserCommandHandler> _logger;
 
     /// <summary>
@@ -33,11 +34,13 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
         IAuthenticationService authService,
         IUserRepository userRepository,
         IEmailService emailService,
+        IEmailVerificationService emailVerificationService,
         ILogger<RegisterUserCommandHandler> logger)
     {
         _authService = authService;
         _userRepository = userRepository;
         _emailService = emailService;
+        _emailVerificationService = emailVerificationService;
         _logger = logger;
     }
 
@@ -107,13 +110,15 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
                 return ResultDto<RegisterUserResponse>.Failed("فشل في تسجيل المستخدم", "REGISTRATION_FAILED");
             }
 
-            // إرسال بريد التحقق
+            // إرسال رمز تحقق بالبريد
             try
             {
-                var user = await _userRepository.GetByIdAsync(Guid.NewGuid(), cancellationToken); // استخدام قيمة افتراضية للمستخدم
-                var verificationToken = Guid.NewGuid().ToString();
-                var emailSent = await _emailService.SendEmailAsync(user.Email, "تأكيد البريد الإلكتروني", $"رمز التحقق: {verificationToken}", true, cancellationToken);
-                _logger.LogInformation("تم إرسال بريد التحقق للمستخدم: {Email}", request.Email);
+                var code = _emailVerificationService.GenerateVerificationCode();
+                var sent = await _emailVerificationService.SendVerificationEmailAsync(request.Email, code);
+                if (!sent)
+                {
+                    _logger.LogWarning("فشل إرسال بريد رمز التحقق للمستخدم: {Email}", request.Email);
+                }
             }
             catch (Exception emailEx)
             {

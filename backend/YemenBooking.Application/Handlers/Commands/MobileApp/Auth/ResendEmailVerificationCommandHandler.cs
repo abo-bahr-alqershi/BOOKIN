@@ -121,13 +121,12 @@ namespace YemenBooking.Application.Handlers.Commands.MobileApp.Auth
                 // التحقق من الوقت المنقضي منذ آخر إرسال (تنفيذ مبسط)
                 _logger.LogInformation("التحقق من آخر وقت إرسال للمستخدم: {UserId}", request.UserId);
                 
-                // إنشاء رمز تأكيد جديد (تنفيذ مبسط)
-                var verificationToken = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 6).ToUpper();
+                // إنشاء رمز تأكيد جديد صالح لمدة 10 دقائق
+                var verificationToken = _emailVerificationService.GenerateVerificationCode();
                 _logger.LogInformation("تم إنشاء رمز تأكيد جديد للمستخدم: {UserId}", request.UserId);
 
                 // إرسال بريد التأكيد (تنفيذ مبسط)
-                var emailBody = $"رمز تأكيد البريد الإلكتروني: {verificationToken}";
-                var sendResult = await _emailService.SendEmailAsync(request.Email, "تأكيد البريد الإلكتروني", emailBody, true, cancellationToken);
+                var sendResult = await _emailVerificationService.SendVerificationEmailAsync(request.Email, verificationToken);
                 if (!sendResult)
                 {
                     _logger.LogError("فشل في إرسال بريد تأكيد البريد الإلكتروني للمستخدم: {UserId}", request.UserId);
@@ -143,7 +142,10 @@ namespace YemenBooking.Application.Handlers.Commands.MobileApp.Auth
                 var response = new ResendEmailVerificationResponse
                 {
                     Success = true,
-                    Message = "تم إرسال رمز التأكيد إلى بريدك الإلكتروني. يرجى التحقق من صندوق الوارد وصندوق الرسائل غير المرغوب فيها"
+                    Message = "تم إرسال رمز التأكيد إلى بريدك الإلكتروني. يرجى التحقق من صندوق الوارد وصندوق الرسائل غير المرغوب فيها",
+                    SentTo = request.Email,
+                    SentAt = DateTime.UtcNow,
+                    VerificationCode = verificationToken
                 };
 
                 return ResultDto<ResendEmailVerificationResponse>.Ok(response, "تم إرسال رمز التأكيد بنجاح");

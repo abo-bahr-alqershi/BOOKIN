@@ -93,7 +93,7 @@ class _RegisterFormState extends State<RegisterForm>
   Timer? _debounce;
 
   // Google Places Autocomplete session management and race-guards
-  int _autocompleteRequestSeq = 0;
+  final int _autocompleteRequestSeq = 0;
   String _placesSessionToken = _generatePlacesSessionToken();
 
   late AnimationController _fieldAnimationController;
@@ -1144,65 +1144,48 @@ class _RegisterFormState extends State<RegisterForm>
   }
 
   Future<void> _fetchPlaceAutocomplete(String input) async {
-    if (ApiConstants.googlePlacesApiKey.trim().isEmpty) {
-      if (kDebugMode) {
-        print('⚠️ Google Places API key is missing!');
-      }
-      return;
-    }
+    const apiKey = ApiConstants.googlePlacesApiKey;
 
-    // Ensure a session token exists for coherent billing/results
-    if (_placesSessionToken.isEmpty) {
-      _placesSessionToken = _generatePlacesSessionToken();
-    }
-
-    final int requestId = ++_autocompleteRequestSeq;
     setState(() => _loadingSuggestions = true);
+
     try {
       final client = dio.Dio();
-      final resp = await client.get(
-        '${ApiConstants.googlePlacesBaseUrl}/autocomplete/json',
-        queryParameters: {
+
+      // 🆕 استخدم NEW Places API
+      final response = await client.post(
+        'https://places.googleapis.com/v1/places:autocomplete',
+        data: {
           'input': input,
-          'key': ApiConstants.googlePlacesApiKey,
-          'language': 'ar',
-          'components': 'country:ye',
-          'region': 'ye',
-          'sessiontoken': _placesSessionToken,
+          'languageCode': 'ar',
+          'regionCode': 'YE',
         },
+        options: dio.Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': apiKey,
+            'X-Goog-FieldMask':
+                'suggestions.placePrediction.text,suggestions.placePrediction.placeId',
+          },
+        ),
       );
 
-      // If a newer request was fired, ignore this result
-      if (requestId != _autocompleteRequestSeq) return;
+      if (response.statusCode == 200) {
+        final suggestions = response.data['suggestions'] as List? ?? [];
 
-      final data = resp.data as Map? ?? const {};
-      final status = (data['status'] ?? '').toString();
-      if (status.isNotEmpty && status != 'OK' && status != 'ZERO_RESULTS') {
-        if (kDebugMode) {
-          print('Places Autocomplete error: $status | ${data['error_message'] ?? ''}');
-        }
-        setState(() => _addressSuggestions = const []);
-        return;
+        setState(() {
+          _addressSuggestions = suggestions.map((s) {
+            final prediction = s['placePrediction'];
+            return _PlaceSuggestion(
+              description: prediction?['text']?['text'] ?? '',
+              placeId: prediction?['placeId'] ?? '',
+            );
+          }).toList();
+        });
       }
-
-      final preds = (data['predictions'] as List?) ?? [];
-      final list = preds
-          .map((e) => _PlaceSuggestion(
-                description: (e['description'] ?? '').toString(),
-                placeId: (e['place_id'] ?? '').toString(),
-              ))
-          .where((e) => e.description.isNotEmpty && e.placeId.isNotEmpty)
-          .toList();
-      setState(() => _addressSuggestions = list);
-    } catch (err) {
-      if (kDebugMode) {
-        print('Places Autocomplete exception: $err');
-      }
-      setState(() => _addressSuggestions = const []);
+    } catch (e) {
+      print('❌ Error: $e');
     } finally {
-      if (requestId == _autocompleteRequestSeq) {
-        setState(() => _loadingSuggestions = false);
-      }
+      setState(() => _loadingSuggestions = false);
     }
   }
 
@@ -1585,4 +1568,5 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
 // Simple cancellable op placeholder (no external dep)
 
 // Helpers
-String _generatePlacesSessionToken() => 'sess_${DateTime.now().microsecondsSinceEpoch}';
+String _generatePlacesSessionToken() =>
+    'sess_${DateTime.now().microsecondsSinceEpoch}';
