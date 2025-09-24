@@ -30,9 +30,10 @@ class ApiConstants {
   // Google Places API
   static const String googlePlacesApiKey = String.fromEnvironment(
     'GOOGLE_PLACES_API_KEY',
-    defaultValue: '',
+    defaultValue: 'AIzaSyA3PbOyGhE-5zBfbpiRX10wp4gRVDYKI-c',
   );
-  static const String googlePlacesBaseUrl = 'https://maps.googleapis.com/maps/api/place';
+  static const String googlePlacesBaseUrl =
+      'https://maps.googleapis.com/maps/api/place';
 
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);

@@ -1,5 +1,7 @@
 // lib/features/auth/presentation/widgets/ultra_register_form.dart
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
@@ -17,6 +19,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:dio/dio.dart' as dio;
 import '../../../../core/constants/api_constants.dart';
 import '../../../../services/location_service.dart' as loc;
+import 'package:async/async.dart';
 
 class RegisterForm extends StatefulWidget {
   final Function(
@@ -47,7 +50,7 @@ class RegisterForm extends StatefulWidget {
   State<RegisterForm> createState() => _RegisterFormState();
 }
 
-class _RegisterFormState extends State<RegisterForm> 
+class _RegisterFormState extends State<RegisterForm>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -62,7 +65,7 @@ class _RegisterFormState extends State<RegisterForm>
   final _latitudeController = TextEditingController();
   final _longitudeController = TextEditingController();
   final _descriptionController = TextEditingController();
-  
+
   final _nameFocusNode = FocusNode();
   final _emailFocusNode = FocusNode();
   final _phoneFocusNode = FocusNode();
@@ -73,7 +76,7 @@ class _RegisterFormState extends State<RegisterForm>
   final _addressFocusNode = FocusNode();
   final _latitudeFocusNode = FocusNode();
   final _longitudeFocusNode = FocusNode();
-  
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
@@ -86,30 +89,31 @@ class _RegisterFormState extends State<RegisterForm>
   List<_PlaceSuggestion> _addressSuggestions = const [];
   bool _loadingSuggestions = false;
   CancelableOperation? _pendingAutocomplete;
-  
+  Timer? _debounce;
+
   late AnimationController _fieldAnimationController;
   late AnimationController _checkboxAnimationController;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     _fieldAnimationController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    
+
     _checkboxAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _passwordController.addListener(() {
       setState(() {
         _showPasswordStrength = _passwordController.text.isNotEmpty;
       });
     });
-    
+
     // Add focus listeners for animations
     _nameFocusNode.addListener(() => setState(() {}));
     _emailFocusNode.addListener(() => setState(() {}));
@@ -127,6 +131,7 @@ class _RegisterFormState extends State<RegisterForm>
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
@@ -181,9 +186,9 @@ class _RegisterFormState extends State<RegisterForm>
               return null;
             },
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Email field
           _buildUltraCompactField(
             controller: _emailController,
@@ -206,9 +211,9 @@ class _RegisterFormState extends State<RegisterForm>
               return null;
             },
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Phone field
           _buildUltraCompactField(
             controller: _phoneController,
@@ -235,9 +240,9 @@ class _RegisterFormState extends State<RegisterForm>
               return null;
             },
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Password field
           _buildUltraCompactField(
             controller: _passwordController,
@@ -264,7 +269,7 @@ class _RegisterFormState extends State<RegisterForm>
               return null;
             },
           ),
-          
+
           // Password strength indicator
           if (_showPasswordStrength) ...[
             const SizedBox(height: 8),
@@ -273,9 +278,9 @@ class _RegisterFormState extends State<RegisterForm>
               showRequirements: false,
             ),
           ],
-          
+
           const SizedBox(height: 12),
-          
+
           // Confirm password field
           _buildUltraCompactField(
             controller: _confirmPasswordController,
@@ -288,8 +293,8 @@ class _RegisterFormState extends State<RegisterForm>
             onFieldSubmitted: (_) => _onSubmit(),
             suffixIcon: _buildPasswordToggle(
               obscure: _obscureConfirmPassword,
-              onTap: () => setState(() => 
-                  _obscureConfirmPassword = !_obscureConfirmPassword),
+              onTap: () => setState(
+                  () => _obscureConfirmPassword = !_obscureConfirmPassword),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -301,9 +306,9 @@ class _RegisterFormState extends State<RegisterForm>
               return null;
             },
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Property section header
           _buildSectionHeader('بيانات الكيان'),
 
@@ -356,6 +361,7 @@ class _RegisterFormState extends State<RegisterForm>
           _buildUltraCompactField(
             controller: _addressController,
             focusNode: _addressFocusNode,
+            onChanged: _onAddressChanged,
             label: 'العنوان',
             hint: 'مثل: الاصبحي شارع المقالح',
             icon: Icons.map_outlined,
@@ -387,7 +393,8 @@ class _RegisterFormState extends State<RegisterForm>
                   label: 'خط العرض',
                   hint: 'Latitude',
                   icon: Icons.my_location_outlined,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true, signed: true),
                   textInputAction: TextInputAction.next,
                   onFieldSubmitted: (_) {
                     FocusScope.of(context).requestFocus(_longitudeFocusNode);
@@ -402,7 +409,8 @@ class _RegisterFormState extends State<RegisterForm>
                   label: 'خط الطول',
                   hint: 'Longitude',
                   icon: Icons.my_location_outlined,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true, signed: true),
                   textInputAction: TextInputAction.next,
                 ),
               ),
@@ -433,9 +441,9 @@ class _RegisterFormState extends State<RegisterForm>
 
           // Terms checkbox
           _buildUltraTermsCheckbox(),
-          
+
           const SizedBox(height: 20),
-          
+
           // Submit button
           _buildUltraSubmitButton(),
         ],
@@ -456,23 +464,23 @@ class _RegisterFormState extends State<RegisterForm>
       ),
     );
   }
-  
-  Widget _buildUltraCompactField({
-    required TextEditingController controller,
-    required FocusNode focusNode,
-    required String label,
-    required String hint,
-    required IconData icon,
-    bool obscureText = false,
-    TextInputType? keyboardType,
-    TextInputAction? textInputAction,
-    Widget? suffixIcon,
-    List<TextInputFormatter>? inputFormatters,
-    Function(String)? onFieldSubmitted,
-    String? Function(String?)? validator,
-  }) {
+
+  Widget _buildUltraCompactField(
+      {required TextEditingController controller,
+      required FocusNode focusNode,
+      required String label,
+      required String hint,
+      required IconData icon,
+      bool obscureText = false,
+      TextInputType? keyboardType,
+      TextInputAction? textInputAction,
+      Widget? suffixIcon,
+      List<TextInputFormatter>? inputFormatters,
+      Function(String)? onFieldSubmitted,
+      String? Function(String?)? validator,
+      Function(String)? onChanged}) {
     final isFocused = focusNode.hasFocus;
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       height: 42,
@@ -508,6 +516,7 @@ class _RegisterFormState extends State<RegisterForm>
             textInputAction: textInputAction,
             inputFormatters: inputFormatters,
             enabled: !widget.isLoading,
+            onChanged: onChanged,
             onFieldSubmitted: onFieldSubmitted,
             style: AppTextStyles.caption.copyWith(
               color: AppTheme.textWhite.withValues(alpha: 0.9),
@@ -595,7 +604,7 @@ class _RegisterFormState extends State<RegisterForm>
       ),
     );
   }
-  
+
   Widget _buildPasswordToggle({
     required bool obscure,
     required VoidCallback onTap,
@@ -610,9 +619,7 @@ class _RegisterFormState extends State<RegisterForm>
         height: 42,
         alignment: Alignment.center,
         child: Icon(
-          obscure 
-              ? Icons.visibility_off_outlined
-              : Icons.visibility_outlined,
+          obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
           color: AppTheme.textMuted.withValues(alpha: 0.4),
           size: 14,
         ),
@@ -651,7 +658,9 @@ class _RegisterFormState extends State<RegisterForm>
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
-              value: _selectedPropertyTypeId.isEmpty ? null : _selectedPropertyTypeId,
+              value: _selectedPropertyTypeId.isEmpty
+                  ? null
+                  : _selectedPropertyTypeId,
               items: _propertyTypes
                   .map((t) => DropdownMenuItem<String>(
                         value: t.id,
@@ -680,7 +689,9 @@ class _RegisterFormState extends State<RegisterForm>
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      _loadingPropertyTypes ? 'جاري تحميل الأنواع...' : 'نوع الكيان',
+                      _loadingPropertyTypes
+                          ? 'جاري تحميل الأنواع...'
+                          : 'نوع الكيان',
                       style: AppTextStyles.caption.copyWith(
                         color: AppTheme.textMuted.withValues(alpha: 0.5),
                         fontSize: 11,
@@ -733,8 +744,7 @@ class _RegisterFormState extends State<RegisterForm>
                 min: 1,
                 max: 5,
                 divisions: 4,
-                label: '$_starRating'
-                    ,
+                label: '$_starRating',
                 onChanged: widget.isLoading
                     ? null
                     : (v) => setState(() => _starRating = v.round()),
@@ -824,7 +834,7 @@ class _RegisterFormState extends State<RegisterForm>
       ),
     );
   }
-  
+
   Widget _buildUltraTermsCheckbox() {
     return GestureDetector(
       onTap: widget.isLoading
@@ -882,7 +892,8 @@ class _RegisterFormState extends State<RegisterForm>
                     style: TextStyle(
                       color: AppTheme.primaryBlue.withValues(alpha: 0.7),
                       decoration: TextDecoration.underline,
-                      decorationColor: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                      decorationColor:
+                          AppTheme.primaryBlue.withValues(alpha: 0.3),
                     ),
                   ),
                   const TextSpan(text: ' و'),
@@ -891,7 +902,8 @@ class _RegisterFormState extends State<RegisterForm>
                     style: TextStyle(
                       color: AppTheme.primaryBlue.withValues(alpha: 0.7),
                       decoration: TextDecoration.underline,
-                      decorationColor: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                      decorationColor:
+                          AppTheme.primaryBlue.withValues(alpha: 0.3),
                     ),
                   ),
                 ],
@@ -902,10 +914,10 @@ class _RegisterFormState extends State<RegisterForm>
       ),
     );
   }
-  
+
   Widget _buildUltraSubmitButton() {
     final canSubmit = !widget.isLoading;
-    
+
     return GestureDetector(
       onTap: canSubmit ? _onSubmit : null,
       child: AnimatedContainer(
@@ -985,7 +997,7 @@ class _RegisterFormState extends State<RegisterForm>
       ),
     );
   }
-  
+
   void _onSubmit() {
     if (!_acceptTerms) {
       HapticFeedback.lightImpact();
@@ -996,7 +1008,7 @@ class _RegisterFormState extends State<RegisterForm>
     if (_formKey.currentState?.validate() ?? false) {
       FocusScope.of(context).unfocus();
       HapticFeedback.mediumImpact();
-      
+
       // Validate property fields minimal requirements
       if (_selectedPropertyTypeId.isEmpty) {
         _showFieldError('نوع الكيان مطلوب');
@@ -1034,7 +1046,7 @@ class _RegisterFormState extends State<RegisterForm>
       );
     }
   }
-  
+
   void _showFieldError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1116,15 +1128,21 @@ class _RegisterFormState extends State<RegisterForm>
 
   // Places autocomplete
   void _onAddressChanged(String value) {
-    if (value.trim().isEmpty) {
-      setState(() => _addressSuggestions = const []);
-      return;
-    }
-    _fetchPlaceAutocomplete(value.trim());
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (value.trim().isEmpty) {
+        setState(() => _addressSuggestions = const []);
+        return;
+      }
+      _fetchPlaceAutocomplete(value.trim());
+    });
   }
 
   Future<void> _fetchPlaceAutocomplete(String input) async {
-    if (ApiConstants.googlePlacesApiKey.isEmpty) return; // no key -> skip
+    if (ApiConstants.googlePlacesApiKey.isEmpty) {
+      print('⚠️ Google Places API key is missing!');
+      return;
+    }
     setState(() => _loadingSuggestions = true);
     try {
       final client = dio.Dio();
@@ -1135,6 +1153,7 @@ class _RegisterFormState extends State<RegisterForm>
           'key': ApiConstants.googlePlacesApiKey,
           'language': 'ar',
           'components': 'country:ye',
+          'types': 'address', // أضف هذا
         },
       );
       final preds = (resp.data['predictions'] as List?) ?? [];
@@ -1226,8 +1245,10 @@ class _RegisterFormState extends State<RegisterForm>
         // Try to set city
         final comps = (result['address_components'] as List?) ?? [];
         final cityComp = comps.firstWhere(
-          (c) => ((c['types'] as List?) ?? []).contains('locality') ||
-                  ((c['types'] as List?) ?? []).contains('administrative_area_level_1'),
+          (c) =>
+              ((c['types'] as List?) ?? []).contains('locality') ||
+              ((c['types'] as List?) ?? [])
+                  .contains('administrative_area_level_1'),
           orElse: () => null,
         );
         if (cityComp != null) {
@@ -1297,7 +1318,8 @@ class _RegisterMapPickerDialog extends StatefulWidget {
   });
 
   @override
-  State<_RegisterMapPickerDialog> createState() => _RegisterMapPickerDialogState();
+  State<_RegisterMapPickerDialog> createState() =>
+      _RegisterMapPickerDialogState();
 }
 
 class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
@@ -1390,10 +1412,12 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: AppTheme.darkSurface.withValues(alpha: 0.8),
+                              color:
+                                  AppTheme.darkSurface.withValues(alpha: 0.8),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                                color:
+                                    AppTheme.darkBorder.withValues(alpha: 0.3),
                               ),
                             ),
                             child: Icon(
@@ -1441,10 +1465,12 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               decoration: BoxDecoration(
-                                color: AppTheme.darkSurface.withValues(alpha: 0.8),
+                                color:
+                                    AppTheme.darkSurface.withValues(alpha: 0.8),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                                  color: AppTheme.darkBorder
+                                      .withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Center(
@@ -1477,7 +1503,8 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
                                     ? AppTheme.primaryGradient
                                     : null,
                                 color: _selectedLocation == null
-                                    ? AppTheme.darkSurface.withValues(alpha: 0.5)
+                                    ? AppTheme.darkSurface
+                                        .withValues(alpha: 0.5)
                                     : null,
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: _selectedLocation != null
@@ -1497,7 +1524,8 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
                                   style: AppTextStyles.buttonMedium.copyWith(
                                     color: _selectedLocation != null
                                         ? Colors.white
-                                        : AppTheme.textMuted.withValues(alpha: 0.5),
+                                        : AppTheme.textMuted
+                                            .withValues(alpha: 0.5),
                                   ),
                                 ),
                               ),
@@ -1518,8 +1546,3 @@ class _RegisterMapPickerDialogState extends State<_RegisterMapPickerDialog> {
 }
 
 // Simple cancellable op placeholder (no external dep)
-class CancelableOperation {
-  bool _isCanceled = false;
-  void cancel() => _isCanceled = true;
-  bool get isCanceled => _isCanceled;
-}
