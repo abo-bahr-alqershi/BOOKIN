@@ -27,6 +27,13 @@ class ApiConstants {
     defaultValue: 'wss://192.168.0.220:5000',
   );
 
+  // Google Places API
+  static const String googlePlacesApiKey = String.fromEnvironment(
+    'GOOGLE_PLACES_API_KEY',
+    defaultValue: '',
+  );
+  static const String googlePlacesBaseUrl = 'https://maps.googleapis.com/maps/api/place';
+
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
