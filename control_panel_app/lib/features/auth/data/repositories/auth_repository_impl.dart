@@ -410,11 +410,7 @@ class AuthRepositoryImpl implements AuthRepository {
     if (await internetConnectionChecker.hasConnection) {
       try {
         final ok = await remoteDataSource.verifyEmail(userId: userId, code: code);
-        if (ok) {
-          // refresh current user to reflect verification status
-          final user = await remoteDataSource.getCurrentUser();
-          await localDataSource.cacheUser(user);
-        }
+        // بعد نجاح التحقق لا نحاول جلب المستخدم الحالي لتجنب 401 بلا توكن
         return Right(ok);
       } catch (e) {
         return ErrorHandler.handle(e);
