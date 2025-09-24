@@ -47,5 +47,17 @@ namespace YemenBooking.Infrastructure.Settings
         /// SMTP password
         /// </summary>
         public string Password { get; set; } = string.Empty;
+
+        /// <summary>
+        /// استخدام مجلد الاستلام بدلاً من الإرسال عبر الشبكة (وضع التطوير)
+        /// Use local pickup directory instead of network SMTP (development)
+        /// </summary>
+        public bool UsePickupDirectory { get; set; } = false;
+
+        /// <summary>
+        /// مسار مجلد الاستلام
+        /// Pickup directory location
+        /// </summary>
+        public string PickupDirectoryLocation { get; set; } = "Emails";
     }
 } 

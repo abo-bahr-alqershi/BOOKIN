@@ -34,17 +34,30 @@ namespace YemenBooking.Infrastructure.Services
             {
                 using var mail = new MailMessage
                 {
-                    From = new MailAddress(_settings.FromEmail, _settings.FromName),
+                    From = new MailAddress(string.IsNullOrWhiteSpace(_settings.FromEmail) ? "noreply@example.com" : _settings.FromEmail, string.IsNullOrWhiteSpace(_settings.FromName) ? "YemenBooking" : _settings.FromName),
                     Subject = subject,
                     Body = body,
                     IsBodyHtml = isHtml
                 };
                 mail.To.Add(to);
-                using var client = new SmtpClient(_settings.SmtpHost, _settings.SmtpPort)
+                using var client = new SmtpClient();
+                if (_settings.UsePickupDirectory)
                 {
-                    EnableSsl = _settings.EnableSsl,
-                    Credentials = new NetworkCredential(_settings.Username, _settings.Password)
-                };
+                    var pickupPath = string.IsNullOrWhiteSpace(_settings.PickupDirectoryLocation) ? "Emails" : _settings.PickupDirectoryLocation;
+                    Directory.CreateDirectory(pickupPath);
+                    client.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
+                    client.PickupDirectoryLocation = pickupPath;
+                }
+                else
+                {
+                    client.Host = _settings.SmtpHost;
+                    client.Port = _settings.SmtpPort;
+                    client.EnableSsl = _settings.EnableSsl;
+                    if (!string.IsNullOrWhiteSpace(_settings.Username))
+                    {
+                        client.Credentials = new NetworkCredential(_settings.Username, _settings.Password);
+                    }
+                }
                 await client.SendMailAsync(mail);
                 return true;
             }
