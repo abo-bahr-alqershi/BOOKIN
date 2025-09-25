@@ -6,8 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using YemenBooking.Application.Interfaces.Services;
-using FFMpegCore;
-using FFMpegCore.Pipes;
 
 namespace YemenBooking.Infrastructure.Services
 {
@@ -37,17 +35,17 @@ namespace YemenBooking.Infrastructure.Services
                 // Try FFMpegCore (wraps ffprobe)
                 try
                 {
-                    var mediaInfo = await FFProbe.AnalyseAsync(filePath, null);
-                    if (mediaInfo != null)
-                    {
-                        var totalSeconds = mediaInfo.Duration.TotalSeconds;
-                        if (totalSeconds > 0) return (int)Math.Round(totalSeconds);
-                        // Streams may contain duration too
-                        if (mediaInfo.PrimaryVideoStream?.Duration.TotalSeconds > 0)
-                            return (int)Math.Round(mediaInfo.PrimaryVideoStream.Duration.TotalSeconds);
-                        if (mediaInfo.PrimaryAudioStream?.Duration.TotalSeconds > 0)
-                            return (int)Math.Round(mediaInfo.PrimaryAudioStream.Duration.TotalSeconds);
-                    }
+                    // var mediaInfo = await FFProbe.AnalyseAsync(filePath, null);
+                    // if (mediaInfo != null)
+                    // {
+                    //     var totalSeconds = mediaInfo.Duration.TotalSeconds;
+                    //     if (totalSeconds > 0) return (int)Math.Round(totalSeconds);
+                    //     // Streams may contain duration too
+                    //     if (mediaInfo.PrimaryVideoStream?.Duration.TotalSeconds > 0)
+                    //         return (int)Math.Round(mediaInfo.PrimaryVideoStream.Duration.TotalSeconds);
+                    //     if (mediaInfo.PrimaryAudioStream?.Duration.TotalSeconds > 0)
+                    //         return (int)Math.Round(mediaInfo.PrimaryAudioStream.Duration.TotalSeconds);
+                    // }
                 }
                 catch (Exception ex)
                 {

@@ -66,7 +66,7 @@
         <false/>
         <key>NSExceptionDomains</key>
         <dict>
-            <key>192.168.0.128</key>
+            <key>ameenalqershi-001-site1.mtempurl.com</key>
             <dict>
                 <key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
                 <true/>

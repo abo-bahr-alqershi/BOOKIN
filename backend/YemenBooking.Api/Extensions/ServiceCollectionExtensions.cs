@@ -12,7 +12,6 @@ using YemenBooking.Infrastructure.UnitOfWork;
 using YemenBooking.Core.Interfaces;
 using FluentValidation;
 using MediatR;
-using FFMpegCore;
 
 namespace YemenBooking.Api.Extensions
 {
