@@ -2833,27 +2833,15 @@ class UnitImageGalleryState extends State<UnitImageGallery>
     final firstChoice = !isPlaceholder ? ImageUtils.resolveUrl(vt) : '';
     final secondChoice = ImageUtils.resolveUrl(video.thumbnails.hd.isNotEmpty ? video.thumbnails.hd : video.thumbnails.medium);
 
-<<<<<<< HEAD
-    // Guard against attempting to render a video URL as an image
-    final thumbUrl = ImageUtils.resolveUrl(video.thumbnails.medium);
-    final lower = thumbUrl.toLowerCase();
-    final looksLikeImage = lower.endsWith('.png') ||
-        lower.endsWith('.jpg') ||
-        lower.endsWith('.jpeg') ||
-        lower.endsWith('.webp') ||
-        lower.endsWith('.gif');
-    if (looksLikeImage) {
-      return CachedNetworkImage(
-        imageUrl: thumbUrl,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => buildVideoPlaceholder(),
-        errorWidget: (context, url, error) => buildVideoPlaceholder(),
-      );
+    // Guard against attempting to render a non-image URL as an image
+    final candidates = [firstChoice, secondChoice].where((u) => u.isNotEmpty).toList();
+    String displayUrl = '';
+    for (final u in candidates) {
+      final lower = u.toLowerCase();
+      final looksLikeImage = lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.webp') || lower.contains('image');
+      if (looksLikeImage) { displayUrl = u; break; }
     }
-=======
-    final displayUrl = firstChoice.isNotEmpty ? firstChoice : secondChoice;
     if (displayUrl.isEmpty) return buildVideoPlaceholder();
->>>>>>> f5df1384bc6442d2fe9e63e14676e5e3acc97515
 
     return CachedNetworkImage(
       imageUrl: displayUrl,
