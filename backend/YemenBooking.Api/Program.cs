@@ -126,6 +126,10 @@ builder.Services.AddControllers(options =>
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
 
+// Bind file storage settings so URLs are absolute and paths are correct
+builder.Services.Configure<YemenBooking.Infrastructure.Settings.FileStorageSettings>(
+    builder.Configuration.GetSection("FileStorageSettings"));
+
 // إضافة سياسة CORS للسماح بالاتصالات من الواجهة الأمامية
 builder.Services.AddCors(options =>
 {

@@ -76,6 +76,20 @@ namespace YemenBooking.Api.Controllers.Images
             {
                 image.Url = baseUrl + (image.Url.StartsWith("/") ? image.Url : "/" + image.Url);
             }
+            // Ensure absolute URLs for thumbnails and video thumbnail if present
+            if (image.Thumbnails != null)
+            {
+                image.Thumbnails.Small = string.IsNullOrWhiteSpace(image.Thumbnails.Small) ? image.Thumbnails.Small : (image.Thumbnails.Small.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? image.Thumbnails.Small : baseUrl + (image.Thumbnails.Small.StartsWith("/") ? image.Thumbnails.Small : "/" + image.Thumbnails.Small));
+                image.Thumbnails.Medium = string.IsNullOrWhiteSpace(image.Thumbnails.Medium) ? image.Thumbnails.Medium : (image.Thumbnails.Medium.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? image.Thumbnails.Medium : baseUrl + (image.Thumbnails.Medium.StartsWith("/") ? image.Thumbnails.Medium : "/" + image.Thumbnails.Medium));
+                image.Thumbnails.Large = string.IsNullOrWhiteSpace(image.Thumbnails.Large) ? image.Thumbnails.Large : (image.Thumbnails.Large.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? image.Thumbnails.Large : baseUrl + (image.Thumbnails.Large.StartsWith("/") ? image.Thumbnails.Large : "/" + image.Thumbnails.Large));
+                image.Thumbnails.Hd = string.IsNullOrWhiteSpace(image.Thumbnails.Hd) ? image.Thumbnails.Hd : (image.Thumbnails.Hd.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? image.Thumbnails.Hd : baseUrl + (image.Thumbnails.Hd.StartsWith("/") ? image.Thumbnails.Hd : "/" + image.Thumbnails.Hd));
+            }
+            if (!string.IsNullOrWhiteSpace(image.VideoThumbnail))
+            {
+                image.VideoThumbnail = image.VideoThumbnail!.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                    ? image.VideoThumbnail
+                    : baseUrl + (image.VideoThumbnail!.StartsWith("/") ? image.VideoThumbnail : "/" + image.VideoThumbnail);
+            }
             
             return Ok(new { success = true, taskId = image.Id, image });
         }
@@ -98,6 +112,11 @@ namespace YemenBooking.Api.Controllers.Images
                 // Ensure absolute Url for the main image
                 if (!img.Url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                     img.Url = baseUrl + (img.Url.StartsWith("/") ? img.Url : "/" + img.Url);
+                // Ensure absolute Url for video thumbnail if present
+                if (!string.IsNullOrWhiteSpace(img.VideoThumbnail) && !img.VideoThumbnail!.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                {
+                    img.VideoThumbnail = baseUrl + (img.VideoThumbnail!.StartsWith("/") ? img.VideoThumbnail : "/" + img.VideoThumbnail);
+                }
                 // Only generate thumbnails if the DTO provided a thumbnail path
                 if (img.Thumbnails != null && !string.IsNullOrEmpty(img.Thumbnails.Small))
                 {
@@ -109,10 +128,10 @@ namespace YemenBooking.Api.Controllers.Images
                     var ext = Path.GetExtension(path);
                     var thumbRelative = folder + "/" + fileName + "_thumb" + ext;
                     var thumbUrl = baseUrl + (thumbRelative.StartsWith("/") ? thumbRelative : "/" + thumbRelative);
-                    img.Thumbnails.Small = baseUrl + (img.Thumbnails.Small.StartsWith("/") ? img.Thumbnails.Small : "/" + img.Thumbnails.Small);
-                    img.Thumbnails.Medium = baseUrl + (img.Thumbnails.Medium.StartsWith("/") ? img.Thumbnails.Medium : "/" + img.Thumbnails.Medium);
-                    img.Thumbnails.Large = baseUrl + (img.Thumbnails.Large.StartsWith("/") ? img.Thumbnails.Large : "/" + img.Thumbnails.Large);
-                    img.Thumbnails.Hd = baseUrl + (img.Thumbnails.Hd.StartsWith("/") ? img.Thumbnails.Hd : "/" + img.Thumbnails.Hd);
+                    img.Thumbnails.Small = string.IsNullOrWhiteSpace(img.Thumbnails.Small) ? img.Thumbnails.Small : (img.Thumbnails.Small.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? img.Thumbnails.Small : baseUrl + (img.Thumbnails.Small.StartsWith("/") ? img.Thumbnails.Small : "/" + img.Thumbnails.Small));
+                    img.Thumbnails.Medium = string.IsNullOrWhiteSpace(img.Thumbnails.Medium) ? img.Thumbnails.Medium : (img.Thumbnails.Medium.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? img.Thumbnails.Medium : baseUrl + (img.Thumbnails.Medium.StartsWith("/") ? img.Thumbnails.Medium : "/" + img.Thumbnails.Medium));
+                    img.Thumbnails.Large = string.IsNullOrWhiteSpace(img.Thumbnails.Large) ? img.Thumbnails.Large : (img.Thumbnails.Large.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? img.Thumbnails.Large : baseUrl + (img.Thumbnails.Large.StartsWith("/") ? img.Thumbnails.Large : "/" + img.Thumbnails.Large));
+                    img.Thumbnails.Hd = string.IsNullOrWhiteSpace(img.Thumbnails.Hd) ? img.Thumbnails.Hd : (img.Thumbnails.Hd.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? img.Thumbnails.Hd : baseUrl + (img.Thumbnails.Hd.StartsWith("/") ? img.Thumbnails.Hd : "/" + img.Thumbnails.Hd));
                 }
             }
             return Ok(new
