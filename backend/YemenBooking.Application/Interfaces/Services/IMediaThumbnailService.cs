@@ -7,13 +7,12 @@ namespace YemenBooking.Application.Interfaces.Services;
 public interface IMediaThumbnailService
 {
     /// <summary>
-    /// يحاول توليد صورة مصغرة من ملف فيديو محدد
-    /// Try to generate a thumbnail image from a given video file
+    /// يحاول توليد صورة مصغرة من ملف فيديو محدد ويعيد البايتات أو null عند الفشل
+    /// Try to generate a thumbnail image from a given video file and return bytes or null
     /// </summary>
     /// <param name="videoFilePath">المسار الكامل لملف الفيديو</param>
-    /// <param name="outputJpegBytes">النتيجة كصورة JPEG في الذاكرة</param>
     /// <param name="cancellationToken">رمز الإلغاء</param>
-    /// <returns>True if success, and sets output bytes; otherwise false</returns>
-    Task<bool> TryGenerateThumbnailAsync(string videoFilePath, CancellationToken cancellationToken, out byte[]? outputJpegBytes);
+    /// <returns>بايتات JPEG للمصغّرة أو null</returns>
+    Task<byte[]?> TryGenerateThumbnailAsync(string videoFilePath, CancellationToken cancellationToken);
 }
 
