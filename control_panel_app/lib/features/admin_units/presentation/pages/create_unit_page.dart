@@ -571,6 +571,7 @@ class _CreateUnitPageState extends State<CreateUnitPage>
           Row(
             children: [
               Switch(
+                activeThumbColor: AppTheme.success,
                 value: _allowsCancellation,
                 onChanged: (v) {
                   setState(() {

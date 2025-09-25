@@ -1146,7 +1146,8 @@ class _EditUnitPageState extends State<EditUnitPage>
                 'value': _allowsCancellation ? 'نعم' : 'لا',
                 'changed': _originalUnit == null
                     ? false
-                    : (_allowsCancellation != _originalUnit!.allowsCancellation),
+                    : (_allowsCancellation !=
+                        _originalUnit!.allowsCancellation),
               },
               {
                 'label': 'نافذة الإلغاء (أيام)',
@@ -1157,7 +1158,8 @@ class _EditUnitPageState extends State<EditUnitPage>
                     : 'غير متاح',
                 'changed': _originalUnit == null
                     ? false
-                    : ((_originalUnit!.cancellationWindowDays ?? -1).toString() !=
+                    : ((_originalUnit!.cancellationWindowDays ?? -1)
+                            .toString() !=
                         (_cancellationDaysController.text.isEmpty
                             ? '-1'
                             : _cancellationDaysController.text)),
