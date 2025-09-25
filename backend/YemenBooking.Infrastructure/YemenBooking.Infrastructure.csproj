@@ -24,6 +24,7 @@
     <PackageReference Include="CsvHelper" Version="30.0.1" />
     <PackageReference Include="QuestPDF" Version="2023.12.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
+    <PackageReference Include="FFMpegCore" Version="5.1.0" />
   </ItemGroup>
 
   <PropertyGroup>

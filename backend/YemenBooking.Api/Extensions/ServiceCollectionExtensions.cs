@@ -12,6 +12,7 @@ using YemenBooking.Infrastructure.UnitOfWork;
 using YemenBooking.Core.Interfaces;
 using FluentValidation;
 using MediatR;
+using FFMpegCore;
 
 namespace YemenBooking.Api.Extensions
 {
@@ -39,6 +40,23 @@ namespace YemenBooking.Api.Extensions
             // Register media metadata and thumbnail services
             services.AddScoped<IMediaMetadataService, MediaMetadataService>();
             services.AddScoped<IMediaThumbnailService, MediaThumbnailService>();
+            // Configure FFMpegCore global options (optional: set custom binaries path from env)
+            var ffmpegPath = Environment.GetEnvironmentVariable("FFMPEG_PATH");
+            var ffprobePath = Environment.GetEnvironmentVariable("FFPROBE_PATH");
+            if (!string.IsNullOrWhiteSpace(ffmpegPath))
+            {
+                GlobalFFOptions.Configure(options =>
+                {
+                    options.BinaryFolder = System.IO.Path.GetDirectoryName(ffmpegPath);
+                    options.TemporaryFilesFolder = System.IO.Path.GetTempPath();
+                });
+                FFmpeg.SetExecutablesPath(System.IO.Path.GetDirectoryName(ffmpegPath)!);
+            }
+            else if (!string.IsNullOrWhiteSpace(ffprobePath))
+            {
+                GlobalFFOptions.Configure(options => { options.TemporaryFilesFolder = System.IO.Path.GetTempPath(); });
+                FFmpeg.SetExecutablesPath(System.IO.Path.GetDirectoryName(ffprobePath)!);
+            }
             // Register currency ensure service
             services.AddScoped<ICurrencyEnsureService, CurrencyEnsureService>();
 

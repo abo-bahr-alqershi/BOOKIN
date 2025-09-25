@@ -1,13 +1,13 @@
 using System;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using YemenBooking.Application.Interfaces.Services;
+using FFMpegCore;
+using FFMpegCore.Pipes;
 
 namespace YemenBooking.Infrastructure.Services
 {
@@ -18,13 +18,9 @@ namespace YemenBooking.Infrastructure.Services
     public class MediaMetadataService : IMediaMetadataService
     {
         private readonly ILogger<MediaMetadataService> _logger;
-        private readonly string _ffprobePath;
-
         public MediaMetadataService(ILogger<MediaMetadataService> logger)
         {
             _logger = logger;
-            // Allow overriding ffprobe path via environment variable (FFPROBE_PATH), fallback to PATH
-            _ffprobePath = Environment.GetEnvironmentVariable("FFPROBE_PATH")?.Trim() ?? "ffprobe";
         }
 
         public async Task<int?> TryGetDurationSecondsAsync(string filePath, string? contentType, CancellationToken cancellationToken = default)
@@ -38,9 +34,25 @@ namespace YemenBooking.Infrastructure.Services
                               || Regex.IsMatch(Path.GetExtension(filePath), @"\.(mp3|wav|m4a|aac|flac|ogg|mp4|mov|mkv|webm)$", RegexOptions.IgnoreCase);
                 if (!isMedia) return null;
 
-                // Try ffprobe
-                var duration = await ProbeWithFfprobeAsync(filePath, cancellationToken);
-                if (duration != null && duration > 0) return duration;
+                // Try FFMpegCore (wraps ffprobe)
+                try
+                {
+                    var mediaInfo = await FFProbe.AnalyseAsync(filePath, cancellationToken);
+                    if (mediaInfo != null)
+                    {
+                        var totalSeconds = mediaInfo.Duration.TotalSeconds;
+                        if (totalSeconds > 0) return (int)Math.Round(totalSeconds);
+                        // Streams may contain duration too
+                        if (mediaInfo.PrimaryVideoStream?.Duration.TotalSeconds > 0)
+                            return (int)Math.Round(mediaInfo.PrimaryVideoStream.Duration.TotalSeconds);
+                        if (mediaInfo.PrimaryAudioStream?.Duration.TotalSeconds > 0)
+                            return (int)Math.Round(mediaInfo.PrimaryAudioStream.Duration.TotalSeconds);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "FFMpegCore duration analyse failed");
+                }
 
                 // Fallbacks: lightweight parsers for specific formats (WAV)
                 var ext = Path.GetExtension(filePath).ToLowerInvariant();
@@ -59,107 +71,7 @@ namespace YemenBooking.Infrastructure.Services
             }
         }
 
-        private async Task<int?> ProbeWithFfprobeAsync(string filePath, CancellationToken cancellationToken)
-        {
-            try
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = _ffprobePath,
-                    // Query duration from format, tags and streams to increase chances
-                    Arguments = $"-v error -show_entries format=duration:format_tags=duration:stream=duration -of json \"{filePath}\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
-                process.Start();
-                var stdout = await process.StandardOutput.ReadToEndAsync();
-                var stderr = await process.StandardError.ReadToEndAsync();
-                await process.WaitForExitAsync(cancellationToken);
-
-                if (process.ExitCode != 0)
-                {
-                    _logger.LogDebug("ffprobe exited with code {Code}: {Err}", process.ExitCode, stderr);
-                    return null;
-                }
-
-                using var doc = JsonDocument.Parse(stdout);
-                // format.duration
-                if (doc.RootElement.TryGetProperty("format", out var format))
-                {
-                    if (format.TryGetProperty("duration", out var durationEl))
-                    {
-                        var d = ParseDurationValue(durationEl);
-                        if (d != null) return d;
-                    }
-                    // format.tags.duration (may be HH:MM:SS.ms)
-                    if (format.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Object)
-                    {
-                        if (tags.TryGetProperty("duration", out var tagDur))
-                        {
-                            var d = ParseDurationValue(tagDur);
-                            if (d != null) return d;
-                        }
-                        // Some files store DURATION in uppercase
-                        if (tags.TryGetProperty("DURATION", out var tagDur2))
-                        {
-                            var d = ParseDurationValue(tagDur2);
-                            if (d != null) return d;
-                        }
-                    }
-                }
-
-                // streams[i].duration
-                if (doc.RootElement.TryGetProperty("streams", out var streams) && streams.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var s in streams.EnumerateArray())
-                    {
-                        if (s.TryGetProperty("duration", out var sd))
-                        {
-                            var d = ParseDurationValue(sd);
-                            if (d != null) return d;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogDebug(ex, "Error running ffprobe");
-            }
-            return null;
-        }
-
-        private static int? ParseDurationValue(JsonElement el)
-        {
-            try
-            {
-                if (el.ValueKind == JsonValueKind.Number)
-                {
-                    if (el.TryGetDouble(out var secondsNum))
-                        return (int)Math.Round(secondsNum);
-                }
-                else if (el.ValueKind == JsonValueKind.String)
-                {
-                    var s = el.GetString();
-                    if (string.IsNullOrWhiteSpace(s)) return null;
-                    // Numeric string
-                    if (double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var seconds))
-                        return (int)Math.Round(seconds);
-
-                    // Try HH:MM:SS(.ms) format
-                    if (TimeSpanTryParseFlexible(s, out var ts))
-                        return (int)Math.Round(ts.TotalSeconds);
-                }
-            }
-            catch
-            {
-                // ignore
-            }
-            return null;
-        }
+        // Parse helpers remain for WAV fallback
 
         private static bool TimeSpanTryParseFlexible(string input, out TimeSpan ts)
         {
