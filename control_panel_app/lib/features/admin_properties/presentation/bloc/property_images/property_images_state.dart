@@ -51,7 +51,8 @@ class PropertyImagesLoaded extends PropertyImagesState {
   }
 
   @override
-  List<Object?> get props => [images, selectedImageIds, currentPropertyId, isSelectionMode];
+  List<Object?> get props =>
+      [images, selectedImageIds, currentPropertyId, isSelectionMode];
 }
 
 class PropertyImagesError extends PropertyImagesState {

@@ -1,93 +1,100 @@
 // lib/features/admin_properties/data/models/property_image_model.dart
 
 import 'package:bookn_cp_app/core/constants/api_constants.dart';
-
+import 'package:bookn_cp_app/core/constants/app_constants.dart';
 import '../../domain/entities/property_image.dart';
 
 class PropertyImageModel extends PropertyImage {
   const PropertyImageModel({
-    required String id,
-    required String url,
-    required String filename,
-    required int size,
-    required String mimeType,
-    required int width,
-    required int height,
-    String? alt,
-    required DateTime uploadedAt,
-    required String uploadedBy,
-    required int order,
-    required bool isPrimary,
-    String? propertyId,
-    required ImageCategory category,
-    List<String> tags = const [],
-    required ProcessingStatus processingStatus,
-    required ImageThumbnails thumbnails,
-  }) : super(
-    id: id,
-    url: url,
-    filename: filename,
-    size: size,
-    mimeType: mimeType,
-    width: width,
-    height: height,
-    alt: alt,
-    uploadedAt: uploadedAt,
-    uploadedBy: uploadedBy,
-    order: order,
-    isPrimary: isPrimary,
-    propertyId: propertyId,
-    category: category,
-    tags: tags,
-    processingStatus: processingStatus,
-    thumbnails: thumbnails,
-  );
-  
-  // دالة للتحقق من صحة URL
+    required super.id,
+    required super.url,
+    required super.filename,
+    required super.size,
+    required super.mimeType,
+    required super.width,
+    required super.height,
+    super.alt,
+    required super.uploadedAt,
+    required super.uploadedBy,
+    required super.order,
+    required super.isPrimary,
+    super.propertyId,
+    required super.category,
+    super.tags,
+    required super.processingStatus,
+    required super.thumbnails,
+    super.mediaType,
+    super.duration,
+    super.videoThumbnail,
+  });
+
   static String _validateUrl(String? url) {
     if (url == null || url.isEmpty) {
       return 'https://via.placeholder.com/400x300?text=No+Image';
     }
-    
-    // التحقق من أن URL يبدأ بـ http أو https
+
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      // إذا كان URL نسبي، أضف البروتوكول والدومين
       if (url.startsWith('/')) {
-        // استبدل هذا بـ base URL الخاص بك
         return '${ApiConstants.imageBaseUrl}$url';
       }
-      // إذا كان مجرد اسم ملف أو placeholder
       return 'https://via.placeholder.com/400x300?text=$url';
     }
-    
+
     return url;
   }
-  
+
+  static MediaType _detectMediaType(Map<String, dynamic> json) {
+    // التحقق من mediaType المباشر
+    if (json['mediaType'] != null) {
+      return _parseMediaType(json['mediaType'].toString());
+    }
+
+    // التحقق من mimeType
+    final mimeType = json['mimeType']?.toString() ?? '';
+    if (mimeType.startsWith('video/')) {
+      return MediaType.video;
+    }
+
+    // التحقق من الملف
+    final filename = json['filename']?.toString() ?? '';
+    if (AppConstants.isVideoFile(filename)) {
+      return MediaType.video;
+    }
+
+    return MediaType.image;
+  }
+
   factory PropertyImageModel.fromJson(Map<String, dynamic> json) {
-    // معالجة آمنة للـ tags
     List<String> parsedTags = [];
     if (json['tags'] != null) {
       if (json['tags'] is List) {
         parsedTags = (json['tags'] as List).map((e) => e.toString()).toList();
       } else if (json['tags'] is String) {
-        // إذا كان tags عبارة عن string، نحاول تحويله إلى قائمة
         final tagsString = json['tags'] as String;
         if (tagsString.isNotEmpty) {
-          // نحاول فصل الـ tags بفاصلة أو مسافة
-          parsedTags = tagsString.split(RegExp(r'[,\s]+'))
+          parsedTags = tagsString
+              .split(RegExp(r'[,\s]+'))
               .where((tag) => tag.isNotEmpty)
               .toList();
         }
       }
     }
-    
-    // معالجة آمنة للـ URL
-    final url = _validateUrl(json['url'] ?? json['imageUrl']);
-    
+
+    final url =
+        _validateUrl(json['url'] ?? json['imageUrl'] ?? json['videoUrl']);
+    final mediaType = _detectMediaType(json);
+    final videoThumbnail = mediaType == MediaType.video
+        ? _validateUrl(
+            json['videoThumbnail'] ?? json['thumbnail'] ?? json['poster'])
+        : null;
+
     return PropertyImageModel(
-      id: (json['id'] ?? json['imageId'] ?? DateTime.now().millisecondsSinceEpoch.toString()) as String,
+      id: (json['id'] ??
+          json['imageId'] ??
+          json['videoId'] ??
+          DateTime.now().millisecondsSinceEpoch.toString()) as String,
       url: url,
-      filename: (json['filename'] ?? json['name'] ?? 'image.jpg') as String,
+      filename: (json['filename'] ?? json['name'] ?? 'media.jpg') as String,
       size: (json['size'] as num?)?.toInt() ?? 0,
       mimeType: (json['mimeType'] ?? json['type'] ?? 'image/jpeg') as String,
       width: (json['width'] as num?)?.toInt() ?? 0,
@@ -102,12 +109,17 @@ class PropertyImageModel extends PropertyImage {
       propertyId: json['propertyId'] as String?,
       category: _parseImageCategory((json['category'] ?? 'gallery').toString()),
       tags: parsedTags,
-      processingStatus: _parseProcessingStatus((json['processingStatus'] ?? 'ready').toString()),
-      thumbnails: _parseThumbnails(json['thumbnails'], url),
+      processingStatus: _parseProcessingStatus(
+          (json['processingStatus'] ?? 'ready').toString()),
+      thumbnails: _parseThumbnails(json['thumbnails'], videoThumbnail ?? url),
+      mediaType: mediaType,
+      duration: (json['duration'] as num?)?.toInt(),
+      videoThumbnail: videoThumbnail,
     );
   }
-  
-  static ImageThumbnails _parseThumbnails(dynamic thumbnailsData, String fallbackUrl) {
+
+  static ImageThumbnails _parseThumbnails(
+      dynamic thumbnailsData, String fallbackUrl) {
     if (thumbnailsData == null) {
       return ImageThumbnailsModel(
         small: fallbackUrl,
@@ -116,13 +128,12 @@ class PropertyImageModel extends PropertyImage {
         hd: fallbackUrl,
       );
     }
-    
+
     if (thumbnailsData is Map<String, dynamic>) {
       return ImageThumbnailsModel.fromJson(thumbnailsData, fallbackUrl);
     }
-    
+
     if (thumbnailsData is String) {
-      // إذا كانت thumbnails عبارة عن URL واحد، نستخدمه لكل الأحجام
       final validUrl = _validateUrl(thumbnailsData);
       return ImageThumbnailsModel(
         small: validUrl,
@@ -131,7 +142,7 @@ class PropertyImageModel extends PropertyImage {
         hd: validUrl,
       );
     }
-    
+
     return ImageThumbnailsModel(
       small: fallbackUrl,
       medium: fallbackUrl,
@@ -139,7 +150,7 @@ class PropertyImageModel extends PropertyImage {
       hd: fallbackUrl,
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -159,9 +170,12 @@ class PropertyImageModel extends PropertyImage {
       'tags': tags,
       'processingStatus': _processingStatusToString(processingStatus),
       'thumbnails': (thumbnails as ImageThumbnailsModel).toJson(),
+      'mediaType': _mediaTypeToString(mediaType),
+      if (duration != null) 'duration': duration,
+      if (videoThumbnail != null) 'videoThumbnail': videoThumbnail,
     };
   }
-  
+
   static ImageCategory _parseImageCategory(String value) {
     switch (value.toLowerCase()) {
       case 'exterior':
@@ -179,11 +193,13 @@ class PropertyImageModel extends PropertyImage {
         return ImageCategory.avatar;
       case 'cover':
         return ImageCategory.cover;
+      case 'video':
+        return ImageCategory.video;
       default:
         return ImageCategory.gallery;
     }
   }
-  
+
   static String _imageCategoryToString(ImageCategory category) {
     switch (category) {
       case ImageCategory.exterior:
@@ -202,9 +218,11 @@ class PropertyImageModel extends PropertyImage {
         return 'cover';
       case ImageCategory.gallery:
         return 'gallery';
+      case ImageCategory.video:
+        return 'video';
     }
   }
-  
+
   static ProcessingStatus _parseProcessingStatus(String value) {
     switch (value.toLowerCase()) {
       case 'uploading':
@@ -221,7 +239,7 @@ class PropertyImageModel extends PropertyImage {
         return ProcessingStatus.processing;
     }
   }
-  
+
   static String _processingStatusToString(ProcessingStatus status) {
     switch (status) {
       case ProcessingStatus.uploading:
@@ -236,31 +254,50 @@ class PropertyImageModel extends PropertyImage {
         return 'deleted';
     }
   }
+
+  static MediaType _parseMediaType(String value) {
+    switch (value.toLowerCase()) {
+      case 'video':
+        return MediaType.video;
+      case 'image':
+      default:
+        return MediaType.image;
+    }
+  }
+
+  static String _mediaTypeToString(MediaType type) {
+    switch (type) {
+      case MediaType.video:
+        return 'video';
+      case MediaType.image:
+        return 'image';
+    }
+  }
 }
 
 class ImageThumbnailsModel extends ImageThumbnails {
   const ImageThumbnailsModel({
-    required String small,
-    required String medium,
-    required String large,
-    required String hd,
-  }) : super(
-    small: small,
-    medium: medium,
-    large: large,
-    hd: hd,
-  );
-  
-  factory ImageThumbnailsModel.fromJson(Map<String, dynamic> json, [String? fallbackUrl]) {
-    final fallback = fallbackUrl ?? 'https://via.placeholder.com/400x300?text=No+Image';
+    required super.small,
+    required super.medium,
+    required super.large,
+    required super.hd,
+  });
+
+  factory ImageThumbnailsModel.fromJson(Map<String, dynamic> json,
+      [String? fallbackUrl]) {
+    final fallback =
+        fallbackUrl ?? 'https://via.placeholder.com/400x300?text=No+Image';
     return ImageThumbnailsModel(
-      small: PropertyImageModel._validateUrl(json['small'] ?? json['s'] ?? fallback),
-      medium: PropertyImageModel._validateUrl(json['medium'] ?? json['m'] ?? fallback),
-      large: PropertyImageModel._validateUrl(json['large'] ?? json['l'] ?? fallback),
+      small: PropertyImageModel._validateUrl(
+          json['small'] ?? json['s'] ?? fallback),
+      medium: PropertyImageModel._validateUrl(
+          json['medium'] ?? json['m'] ?? fallback),
+      large: PropertyImageModel._validateUrl(
+          json['large'] ?? json['l'] ?? fallback),
       hd: PropertyImageModel._validateUrl(json['hd'] ?? json['xl'] ?? fallback),
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     return {
       'small': small,

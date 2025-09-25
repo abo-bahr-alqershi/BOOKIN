@@ -16,7 +16,8 @@ import '../../../domain/usecases/property_images/set_primary_image_usecase.dart'
 import 'property_images_event.dart';
 import 'property_images_state.dart';
 
-class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> {
+class PropertyImagesBloc
+    extends Bloc<PropertyImagesEvent, PropertyImagesState> {
   final UploadPropertyImageUseCase uploadPropertyImage;
   final UploadMultipleImagesUseCase uploadMultipleImages;
   final GetPropertyImagesUseCase getPropertyImages;
@@ -59,16 +60,17 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
     Emitter<PropertyImagesState> emit,
   ) async {
     // منع جلب الصور إذا لم يكن هناك propertyId أو tempKey
-    if ((event.propertyId == null || event.propertyId!.isEmpty) && (event.tempKey == null || event.tempKey!.isEmpty)) {
+    if ((event.propertyId == null || event.propertyId!.isEmpty) &&
+        (event.tempKey == null || event.tempKey!.isEmpty)) {
       emit(const PropertyImagesLoaded(images: []));
       return;
     }
-    
+
     emit(const PropertyImagesLoading(message: 'Loading images...'));
-    
-    final Either<Failure, List<PropertyImage>> result = 
-        await getPropertyImages(GetImagesParams(propertyId: event.propertyId, tempKey: event.tempKey));
-    
+
+    final Either<Failure, List<PropertyImage>> result = await getPropertyImages(
+        GetImagesParams(propertyId: event.propertyId, tempKey: event.tempKey));
+
     result.fold(
       (failure) => emit(PropertyImagesError(
         message: _mapFailureToMessage(failure),
@@ -90,7 +92,8 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
     Emitter<PropertyImagesState> emit,
   ) async {
     // require propertyId or tempKey
-    if ((event.propertyId == null || event.propertyId!.isEmpty) && (event.tempKey == null || event.tempKey!.isEmpty)) {
+    if ((event.propertyId == null || event.propertyId!.isEmpty) &&
+        (event.tempKey == null || event.tempKey!.isEmpty)) {
       emit(PropertyImagesError(
         message: 'لا يمكن رفع الصور بدون معرف العقار أو tempKey',
         previousImages: _currentImages,
@@ -102,7 +105,7 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
       currentImages: _currentImages,
       uploadingFileName: event.filePath.split('/').last,
     ));
-    
+
     final params = UploadImageParams(
       propertyId: event.propertyId,
       tempKey: event.tempKey,
@@ -123,9 +126,10 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
         }
       },
     );
-    
-    final Either<Failure, PropertyImage> result = await uploadPropertyImage(params);
-    
+
+    final Either<Failure, PropertyImage> result =
+        await uploadPropertyImage(params);
+
     result.fold(
       (failure) => emit(PropertyImagesError(
         message: _mapFailureToMessage(failure),
@@ -154,7 +158,7 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
       totalFiles: event.filePaths.length,
       currentFileIndex: 0,
     ));
-    
+
     final params = UploadMultipleImagesParams(
       propertyId: event.propertyId,
       tempKey: event.tempKey,
@@ -173,10 +177,10 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
         }
       },
     );
-    
-    final Either<Failure, List<PropertyImage>> result = 
+
+    final Either<Failure, List<PropertyImage>> result =
         await uploadMultipleImages(params);
-    
+
     result.fold(
       (failure) => emit(PropertyImagesError(
         message: _mapFailureToMessage(failure),
@@ -192,7 +196,8 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
         ));
         // بعد ثانية واحدة، عرض قائمة الصور المحدثة
         Future.delayed(const Duration(seconds: 1), () {
-          add(LoadPropertyImagesEvent(propertyId: event.propertyId, tempKey: event.tempKey));
+          add(LoadPropertyImagesEvent(
+              propertyId: event.propertyId, tempKey: event.tempKey));
         });
       },
     );
@@ -206,14 +211,14 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
       currentImages: _currentImages,
       imageId: event.imageId,
     ));
-    
+
     final params = UpdateImageParams(
       imageId: event.imageId,
       data: event.data,
     );
-    
+
     final Either<Failure, bool> result = await updatePropertyImage(params);
-    
+
     result.fold(
       (failure) => emit(PropertyImagesError(
         message: _mapFailureToMessage(failure),
@@ -240,9 +245,10 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
       currentImages: _currentImages,
       imageId: event.imageId,
     ));
-    
-    final Either<Failure, bool> result = await deletePropertyImage(event.imageId);
-    
+
+    final Either<Failure, bool> result =
+        await deletePropertyImage(event.imageId);
+
     result.fold(
       (failure) => emit(PropertyImagesError(
         message: _mapFailureToMessage(failure),
@@ -264,10 +270,11 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
     DeleteMultipleImagesEvent event,
     Emitter<PropertyImagesState> emit,
   ) async {
-    emit(PropertyImagesLoading(message: 'Deleting selected images...'));
-    
-    final Either<Failure, bool> result = await deleteMultipleImages(event.imageIds);
-    
+    emit(const PropertyImagesLoading(message: 'Deleting selected images...'));
+
+    final Either<Failure, bool> result =
+        await deleteMultipleImages(event.imageIds);
+
     result.fold(
       (failure) => emit(PropertyImagesError(
         message: _mapFailureToMessage(failure),
@@ -275,7 +282,8 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
       )),
       (success) {
         if (success) {
-          _currentImages.removeWhere((image) => event.imageIds.contains(image.id));
+          _currentImages
+              .removeWhere((image) => event.imageIds.contains(image.id));
           _selectedImageIds.clear();
           emit(MultipleImagesDeleted(
             remainingImages: List.from(_currentImages),
@@ -291,15 +299,15 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
     Emitter<PropertyImagesState> emit,
   ) async {
     emit(ImagesReordering(currentImages: _currentImages));
-    
+
     final params = ReorderImagesParams(
       propertyId: event.propertyId,
       tempKey: event.tempKey,
       imageIds: event.imageIds,
     );
-    
+
     final Either<Failure, bool> result = await reorderImages(params);
-    
+
     result.fold(
       (failure) => emit(PropertyImagesError(
         message: _mapFailureToMessage(failure),
@@ -315,7 +323,7 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
               .map((id) => imageMap[id])
               .whereType<PropertyImage>()
               .toList();
-          
+
           emit(ImagesReordered(
             reorderedImages: List.from(_currentImages),
           ));
@@ -328,16 +336,16 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
     SetPrimaryImageEvent event,
     Emitter<PropertyImagesState> emit,
   ) async {
-    emit(PropertyImagesLoading(message: 'Setting primary image...'));
-    
+    emit(const PropertyImagesLoading(message: 'Setting primary image...'));
+
     final params = SetPrimaryImageParams(
       propertyId: event.propertyId,
       tempKey: event.tempKey,
       imageId: event.imageId,
     );
-    
+
     final Either<Failure, bool> result = await setPrimaryImage(params);
-    
+
     result.fold(
       (failure) => emit(PropertyImagesError(
         message: _mapFailureToMessage(failure),
@@ -352,9 +360,10 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
               // قد نحتاج لإعادة تحميل الصور من الخادم
             }
           }
-          
+
           // إعادة تحميل الصور للحصول على البيانات المحدثة (يجب تمرير tempKey إن وُجد)
-          add(LoadPropertyImagesEvent(propertyId: event.propertyId, tempKey: event.tempKey));
+          add(LoadPropertyImagesEvent(
+              propertyId: event.propertyId, tempKey: event.tempKey));
         }
       },
     );
@@ -375,9 +384,9 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
     Emitter<PropertyImagesState> emit,
   ) async {
     // لا نظهر loading state عند التحديث
-    final Either<Failure, List<PropertyImage>> result = 
-        await getPropertyImages(GetImagesParams(propertyId: event.propertyId, tempKey: event.tempKey));
-    
+    final Either<Failure, List<PropertyImage>> result = await getPropertyImages(
+        GetImagesParams(propertyId: event.propertyId, tempKey: event.tempKey));
+
     result.fold(
       (failure) => emit(PropertyImagesError(
         message: _mapFailureToMessage(failure),
@@ -405,7 +414,7 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
     } else {
       _selectedImageIds.add(event.imageId);
     }
-    
+
     emit(PropertyImagesLoaded(
       images: _currentImages,
       currentPropertyId: _currentPropertyId,
@@ -419,7 +428,7 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
     Emitter<PropertyImagesState> emit,
   ) {
     _selectedImageIds = _currentImages.map((image) => image.id).toSet();
-    
+
     emit(PropertyImagesLoaded(
       images: _currentImages,
       currentPropertyId: _currentPropertyId,
@@ -433,7 +442,7 @@ class PropertyImagesBloc extends Bloc<PropertyImagesEvent, PropertyImagesState> 
     Emitter<PropertyImagesState> emit,
   ) {
     _selectedImageIds.clear();
-    
+
     emit(PropertyImagesLoaded(
       images: _currentImages,
       currentPropertyId: _currentPropertyId,

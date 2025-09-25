@@ -28,7 +28,7 @@ class UnitImageGallery extends StatefulWidget {
   final Function(List<String>)? onLocalImagesChanged;
   final List<UnitImage>? initialImages;
   final List<String>? initialLocalImages;
-  
+
   const UnitImageGallery({
     super.key,
     this.unitId,
@@ -40,7 +40,7 @@ class UnitImageGallery extends StatefulWidget {
     this.initialImages,
     this.initialLocalImages,
   });
-  
+
   @override
   State<UnitImageGallery> createState() => UnitImageGalleryState();
 }
@@ -53,17 +53,17 @@ class UnitImageGalleryState extends State<UnitImageGallery>
   late AnimationController _selectionController;
   late AnimationController _uploadAnimationController;
   UnitImagesBloc? _imagesBloc;
-  
+
   // Local state management
   List<String> _localImages = [];
   List<UnitImage> _remoteImages = [];
   List<UnitImage> _displayImages = [];
-  
+
   // Upload tracking - تم تحسين التتبع
-  Map<String, double> _uploadProgress = {};
-  Map<String, bool> _uploadingFiles = {};
-  Map<String, File?> _uploadingFileObjects = {};
-  
+  final Map<String, double> _uploadProgress = {};
+  final Map<String, bool> _uploadingFiles = {};
+  final Map<String, File?> _uploadingFileObjects = {};
+
   int? _hoveredIndex;
   bool _isDragging = false;
   bool _isSelectionMode = false;
@@ -74,11 +74,13 @@ class UnitImageGalleryState extends State<UnitImageGallery>
   final Set<int> _selectedLocalIndices = {};
   int? _primaryImageIndex = 0;
   int? _primaryLocalImageIndex = 0;
-  
+
   // تحديد الوضع المحلي بناءً على وجود unitId
-  bool get _isLocalMode => (widget.unitId == null || widget.unitId!.isEmpty) && (widget.tempKey == null || widget.tempKey!.isEmpty);
+  bool get _isLocalMode =>
+      (widget.unitId == null || widget.unitId!.isEmpty) &&
+      (widget.tempKey == null || widget.tempKey!.isEmpty);
   bool _isInitialLoadDone = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -90,43 +92,47 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _selectionController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _uploadAnimationController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    
+
     _animationController.forward();
-    
+
     // Initialize local images if provided
     if (widget.initialLocalImages != null) {
       _localImages = List.from(widget.initialLocalImages!);
     }
-    
+
     // Initialize remote images if provided (for edit mode)
     if (widget.initialImages != null && !_isLocalMode) {
       _remoteImages = List.from(widget.initialImages!);
       _displayImages = List.from(widget.initialImages!);
-      _primaryImageIndex = _displayImages.indexWhere((img) => img.isPrimary == true);
+      _primaryImageIndex =
+          _displayImages.indexWhere((img) => img.isPrimary == true);
       if (_primaryImageIndex == -1) _primaryImageIndex = 0;
     }
   }
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    
+
     // فقط تحميل الصور إذا كان هناك unitId صالح
     if (!_isLocalMode && !_isInitialLoadDone) {
       try {
         _imagesBloc = context.read<UnitImagesBloc?>();
-        if (_imagesBloc != null && ((widget.unitId != null && widget.unitId!.isNotEmpty) || (widget.tempKey != null && widget.tempKey!.isNotEmpty))) {
-          _imagesBloc!.add(LoadUnitImagesEvent(unitId: widget.unitId, tempKey: widget.tempKey));
+        if (_imagesBloc != null &&
+            ((widget.unitId != null && widget.unitId!.isNotEmpty) ||
+                (widget.tempKey != null && widget.tempKey!.isNotEmpty))) {
+          _imagesBloc!.add(LoadUnitImagesEvent(
+              unitId: widget.unitId, tempKey: widget.tempKey));
           _isInitialLoadDone = true;
         }
       } catch (e) {
@@ -134,7 +140,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       }
     }
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -143,19 +149,19 @@ class UnitImageGalleryState extends State<UnitImageGallery>
     _uploadAnimationController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     // العمل في الوضع المحلي إذا لم يكن هناك unitId
     if (_isLocalMode) {
       return _buildLocalModeContent();
     }
-    
+
     // العمل مع Bloc إذا كان هناك unitId
     if (_imagesBloc == null) {
       return _buildLocalModeContent();
     }
-    
+
     return BlocConsumer<UnitImagesBloc, UnitImagesState>(
       bloc: _imagesBloc,
       listener: (context, state) {
@@ -166,37 +172,37 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       },
     );
   }
-  
+
   // دالة لرفع الصور المحلية بعد إنشاء العقار
   Future<void> uploadLocalImages(String newUnitId) async {
     if (_localImages.isEmpty || _imagesBloc == null) return;
-    
+
     // رفع جميع الصور المحلية
     _imagesBloc!.add(UploadMultipleUnitImagesEvent(
       unitId: newUnitId,
       tempKey: widget.tempKey,
       filePaths: _localImages,
     ));
-    
+
     // مسح القائمة المحلية
     setState(() {
       _localImages.clear();
     });
   }
-  
+
   Widget _buildContent(UnitImagesState state) {
-    final images = _displayImages.isNotEmpty ? _displayImages : _getImagesFromState(state);
-    
+    final images =
+        _displayImages.isNotEmpty ? _displayImages : _getImagesFromState(state);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildEnhancedHeader(images.length, state),
         const SizedBox(height: 20),
-        
+
         // Upload Progress Cards - محسّن
-        if (_uploadingFiles.isNotEmpty)
-          _buildEnhancedUploadProgressCards(),
-        
+        if (_uploadingFiles.isNotEmpty) _buildEnhancedUploadProgressCards(),
+
         // Main Content Area
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
@@ -205,37 +211,34 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ],
     );
   }
-  
+
   Widget _buildLocalModeContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildLocalHeaderSection(_localImages.length),
         const SizedBox(height: 20),
-        
-        if (!widget.isReadOnly && 
-            _localImages.length < widget.maxImages && 
-            !_isLocalSelectionMode && 
+        if (!widget.isReadOnly &&
+            _localImages.length < widget.maxImages &&
+            !_isLocalSelectionMode &&
             !_isLocalReorderMode)
           _buildMinimalistUploadArea(),
-        
         if (_localImages.isNotEmpty) ...[
-          if (!widget.isReadOnly && 
-              _localImages.length < widget.maxImages && 
-              !_isLocalSelectionMode && 
+          if (!widget.isReadOnly &&
+              _localImages.length < widget.maxImages &&
+              !_isLocalSelectionMode &&
               !_isLocalReorderMode)
             const SizedBox(height: 24),
           _isLocalReorderMode
-            ? _buildLocalReorderableGrid(_localImages)
-            : _buildLocalImagesGrid(_localImages),
+              ? _buildLocalReorderableGrid(_localImages)
+              : _buildLocalImagesGrid(_localImages),
         ],
-        
         if (_localImages.isEmpty && widget.isReadOnly)
           _buildMinimalistEmptyState(),
       ],
     );
   }
-  
+
   Widget _buildLocalHeaderSection(int imageCount) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -249,11 +252,11 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _isLocalSelectionMode 
-                      ? 'تم تحديد ${_selectedLocalIndices.length}'
-                      : _isLocalReorderMode
-                        ? 'ترتيب الصور'
-                        : 'معرض الصور (محلي)',
+                    _isLocalSelectionMode
+                        ? 'تم تحديد ${_selectedLocalIndices.length}'
+                        : _isLocalReorderMode
+                            ? 'ترتيب الصور'
+                            : 'معرض الصور (محلي)',
                     style: AppTextStyles.heading3.copyWith(
                       color: AppTheme.textWhite,
                       fontWeight: FontWeight.w300,
@@ -270,13 +273,13 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                   ),
                 ],
               ),
-              
+
               // Action Buttons for Local Mode
               if (!widget.isReadOnly && imageCount > 0)
                 _buildLocalHeaderActions(),
             ],
           ),
-          
+
           // Mode Instructions
           if (_isLocalSelectionMode || _isLocalReorderMode)
             Container(
@@ -292,17 +295,17 @@ class UnitImageGalleryState extends State<UnitImageGallery>
               child: Row(
                 children: [
                   Icon(
-                    _isLocalSelectionMode 
-                      ? Icons.info_outline_rounded
-                      : Icons.drag_indicator_rounded,
+                    _isLocalSelectionMode
+                        ? Icons.info_outline_rounded
+                        : Icons.drag_indicator_rounded,
                     size: 14,
                     color: AppTheme.primaryBlue.withOpacity(0.7),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     _isLocalSelectionMode
-                      ? 'اضغط على الصور لتحديدها'
-                      : 'اسحب الصور لإعادة ترتيبها',
+                        ? 'اضغط على الصور لتحديدها'
+                        : 'اسحب الصور لإعادة ترتيبها',
                     style: AppTextStyles.caption.copyWith(
                       color: AppTheme.primaryBlue.withOpacity(0.8),
                       fontSize: 11,
@@ -311,7 +314,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                 ],
               ),
             ),
-          
+
           // Local mode indicator
           if (!_isLocalSelectionMode && !_isLocalReorderMode)
             Container(
@@ -347,16 +350,16 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   Widget _buildLocalHeaderActions() {
     return Row(
       children: [
         // Selection Mode Toggle
         if (!_isLocalReorderMode)
           _buildActionChip(
-            icon: _isLocalSelectionMode 
-              ? Icons.close_rounded 
-              : Icons.check_circle_outline_rounded,
+            icon: _isLocalSelectionMode
+                ? Icons.close_rounded
+                : Icons.check_circle_outline_rounded,
             label: _isLocalSelectionMode ? 'إلغاء' : 'تحديد',
             onTap: () {
               HapticFeedback.lightImpact();
@@ -364,15 +367,15 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             },
             isActive: _isLocalSelectionMode,
           ),
-        
+
         const SizedBox(width: 8),
-        
+
         // Reorder Mode Toggle
         if (!_isLocalSelectionMode && _localImages.length > 1)
           _buildActionChip(
-            icon: _isLocalReorderMode 
-              ? Icons.done_rounded 
-              : Icons.swap_vert_rounded,
+            icon: _isLocalReorderMode
+                ? Icons.done_rounded
+                : Icons.swap_vert_rounded,
             label: _isLocalReorderMode ? 'تم' : 'ترتيب',
             onTap: () {
               HapticFeedback.lightImpact();
@@ -380,7 +383,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             },
             isActive: _isLocalReorderMode,
           ),
-        
+
         // Delete Selected Button
         if (_isLocalSelectionMode && _selectedLocalIndices.isNotEmpty)
           Padding(
@@ -395,7 +398,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ],
     );
   }
-  
+
   void _toggleLocalSelectionMode() {
     setState(() {
       _isLocalSelectionMode = !_isLocalSelectionMode;
@@ -406,7 +409,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       }
     });
   }
-  
+
   void _toggleLocalReorderMode() {
     setState(() {
       _isLocalReorderMode = !_isLocalReorderMode;
@@ -416,42 +419,44 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       }
     });
   }
-  
+
   void _deleteSelectedLocalImages() {
     if (_selectedLocalIndices.isEmpty) return;
-    
+
     showDialog(
       context: context,
       builder: (context) => _DeleteConfirmationDialog(
         count: _selectedLocalIndices.length,
         onConfirm: () {
           Navigator.pop(context);
-          
+
           // حذف الصور المحددة بترتيب عكسي لتجنب مشاكل الفهرسة
-          final sortedIndices = _selectedLocalIndices.toList()..sort((a, b) => b.compareTo(a));
+          final sortedIndices = _selectedLocalIndices.toList()
+            ..sort((a, b) => b.compareTo(a));
           for (var index in sortedIndices) {
             _localImages.removeAt(index);
           }
-          
+
           setState(() {
             _selectedLocalIndices.clear();
             _isLocalSelectionMode = false;
             // تحديث الـ primary index
-            if (_primaryLocalImageIndex != null && _primaryLocalImageIndex! >= _localImages.length) {
+            if (_primaryLocalImageIndex != null &&
+                _primaryLocalImageIndex! >= _localImages.length) {
               _primaryLocalImageIndex = _localImages.isEmpty ? null : 0;
             }
           });
-          
+
           if (widget.onLocalImagesChanged != null) {
             widget.onLocalImagesChanged!(_localImages);
           }
-          
+
           _showSuccessSnackBar('تم حذف الصور المحددة');
         },
       ),
     );
   }
-  
+
   Widget _buildLocalReorderableGrid(List<String> images) {
     return ReorderableWrap(
       spacing: 8,
@@ -467,10 +472,10 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       },
     );
   }
-  
+
   Widget _buildReorderableLocalImageItem(String imagePath, int index) {
     final isPrimary = index == _primaryLocalImageIndex;
-    
+
     return Container(
       key: ValueKey('local_$index'),
       width: (MediaQuery.of(context).size.width - 56) / 3,
@@ -489,7 +494,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             borderRadius: BorderRadius.circular(10),
             child: _buildImageFromPath(imagePath),
           ),
-          
+
           // Drag Handle
           Positioned(
             top: 8,
@@ -507,7 +512,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
               ),
             ),
           ),
-          
+
           // Order Number
           Positioned(
             top: 8,
@@ -531,7 +536,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
               ),
             ),
           ),
-          
+
           // Primary Badge
           if (isPrimary)
             Positioned(
@@ -546,7 +551,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.star_rounded,
                       size: 12,
                       color: Colors.white,
@@ -568,27 +573,29 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   void _reorderLocalImages(int oldIndex, int newIndex) {
     setState(() {
       final image = _localImages.removeAt(oldIndex);
       _localImages.insert(newIndex, image);
-      
+
       // Update primary image index if needed
       if (_primaryLocalImageIndex == oldIndex) {
         _primaryLocalImageIndex = newIndex;
-      } else if (oldIndex < _primaryLocalImageIndex! && newIndex >= _primaryLocalImageIndex!) {
+      } else if (oldIndex < _primaryLocalImageIndex! &&
+          newIndex >= _primaryLocalImageIndex!) {
         _primaryLocalImageIndex = _primaryLocalImageIndex! - 1;
-      } else if (oldIndex > _primaryLocalImageIndex! && newIndex <= _primaryLocalImageIndex!) {
+      } else if (oldIndex > _primaryLocalImageIndex! &&
+          newIndex <= _primaryLocalImageIndex!) {
         _primaryLocalImageIndex = _primaryLocalImageIndex! + 1;
       }
     });
-    
+
     if (widget.onLocalImagesChanged != null) {
       widget.onLocalImagesChanged!(_localImages);
     }
   }
-  
+
   Widget _buildLocalImagesGrid(List<String> images) {
     return AnimationLimiter(
       child: GridView.builder(
@@ -621,11 +628,11 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   Widget _buildLocalImageItem(String imagePath, int index, bool isSelected) {
     final bool isHovered = _hoveredIndex == index;
     final bool isPrimary = index == _primaryLocalImageIndex;
-    
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredIndex = index),
       onExit: (_) => setState(() => _hoveredIndex = null),
@@ -657,17 +664,19 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
-                ? AppTheme.primaryBlue.withOpacity(0.6)
-                : AppTheme.darkBorder.withOpacity(0.1),
+                  ? AppTheme.primaryBlue.withOpacity(0.6)
+                  : AppTheme.darkBorder.withOpacity(0.1),
               width: isSelected ? 2.5 : 1,
             ),
-            boxShadow: isSelected ? [
-              BoxShadow(
-                color: AppTheme.primaryBlue.withOpacity(0.2),
-                blurRadius: 8,
-                spreadRadius: 1,
-              ),
-            ] : null,
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppTheme.primaryBlue.withOpacity(0.2),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(11),
@@ -675,7 +684,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
               fit: StackFit.expand,
               children: [
                 _buildImageFromPath(imagePath),
-                
+
                 // Gradient overlay
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
@@ -686,13 +695,12 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                       colors: [
                         Colors.transparent,
                         Colors.black.withOpacity(
-                          isHovered || _isLocalSelectionMode ? 0.6 : 0.3
-                        ),
+                            isHovered || _isLocalSelectionMode ? 0.6 : 0.3),
                       ],
                     ),
                   ),
                 ),
-                
+
                 // Quick Actions
                 if (!widget.isReadOnly && !_isLocalSelectionMode)
                   AnimatedPositioned(
@@ -730,14 +738,15 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                       },
                     ),
                   ),
-                
+
                 // Primary badge
                 if (isPrimary)
                   Positioned(
                     bottom: 8,
                     left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: AppTheme.warning.withOpacity(0.9),
                         borderRadius: BorderRadius.circular(6),
@@ -752,7 +761,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.star,
                             size: 12,
                             color: Colors.white,
@@ -769,7 +778,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                       ),
                     ),
                   ),
-                
+
                 // Selection Checkbox
                 if (_isLocalSelectionMode)
                   Positioned(
@@ -780,9 +789,9 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: isSelected 
-                          ? AppTheme.primaryBlue
-                          : AppTheme.darkCard.withOpacity(0.8),
+                        color: isSelected
+                            ? AppTheme.primaryBlue
+                            : AppTheme.darkCard.withOpacity(0.8),
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: Colors.white.withOpacity(0.9),
@@ -796,22 +805,23 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                         ],
                       ),
                       child: isSelected
-                        ? Icon(
-                            Icons.check_rounded,
-                            color: Colors.white,
-                            size: 16,
-                          )
-                        : null,
+                          ? const Icon(
+                              Icons.check_rounded,
+                              color: Colors.white,
+                              size: 16,
+                            )
+                          : null,
                     ),
                   ),
-                
+
                 // Image Number
                 if (!_isLocalSelectionMode)
                   Positioned(
                     top: 8,
                     left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: AppTheme.darkCard.withOpacity(0.8),
                         borderRadius: BorderRadius.circular(4),
@@ -826,7 +836,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                       ),
                     ),
                   ),
-                
+
                 // Local indicator
                 if (!_isLocalSelectionMode)
                   Positioned(
@@ -838,7 +848,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                         color: AppTheme.warning.withOpacity(0.8),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.schedule,
                         size: 12,
                         color: Colors.white,
@@ -852,14 +862,14 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   void _setLocalPrimaryImage(int index) {
     setState(() {
       _primaryLocalImageIndex = index;
     });
     _showSuccessSnackBar('تم تعيين الصورة كرئيسية');
   }
-  
+
   void _confirmDeleteLocalImage(int index) {
     showDialog(
       context: context,
@@ -872,7 +882,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   void _showLocalImageOptionsMenu(String imagePath, int index) {
     showModalBottomSheet(
       context: context,
@@ -896,7 +906,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   void _deleteLocalImage(int index) {
     setState(() {
       _localImages.removeAt(index);
@@ -912,29 +922,30 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       }
       _selectedLocalIndices.clear();
       _selectedLocalIndices.addAll(updatedIndices);
-      
+
       // تحديث الـ primary index
       if (_primaryLocalImageIndex == index) {
         _primaryLocalImageIndex = _localImages.isEmpty ? null : 0;
-      } else if (_primaryLocalImageIndex != null && _primaryLocalImageIndex! > index) {
+      } else if (_primaryLocalImageIndex != null &&
+          _primaryLocalImageIndex! > index) {
         _primaryLocalImageIndex = _primaryLocalImageIndex! - 1;
       }
     });
-    
+
     if (widget.onLocalImagesChanged != null) {
       widget.onLocalImagesChanged!(_localImages);
     }
-    
+
     _showSuccessSnackBar('تم حذف الصورة');
   }
-  
+
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
         imageQuality: 85,
       );
-      
+
       if (image != null) {
         if (_isLocalMode) {
           // في الوضع المحلي، احفظ المسار فقط
@@ -948,7 +959,9 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             widget.onLocalImagesChanged!(_localImages);
           }
           _showSuccessSnackBar('تم إضافة الصورة (سيتم الرفع عند الحفظ)');
-        } else if (_imagesBloc != null && (widget.unitId != null || (widget.tempKey != null && widget.tempKey!.isNotEmpty))) {
+        } else if (_imagesBloc != null &&
+            (widget.unitId != null ||
+                (widget.tempKey != null && widget.tempKey!.isNotEmpty))) {
           // في وضع التعديل، ارفع مباشرة - إصلاح المشكلة
           final fileKey = DateTime.now().millisecondsSinceEpoch.toString();
           setState(() {
@@ -956,14 +969,14 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             _uploadingFileObjects[fileKey] = File(image.path);
             _uploadProgress[fileKey] = 0.0;
           });
-          
+
           _imagesBloc!.add(UploadUnitImageEvent(
             unitId: widget.unitId,
             tempKey: widget.tempKey,
             filePath: image.path,
             isPrimary: _displayImages.isEmpty,
           ));
-          
+
           // سيتم تحديث مؤشر التقدم من خلال onSendProgress عبر Bloc
         }
       }
@@ -971,17 +984,18 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       _showErrorSnackBar('فشل في اختيار الصورة');
     }
   }
-  
+
   Future<void> _pickMultipleImages() async {
     try {
       final List<XFile> images = await _picker.pickMultiImage(
         imageQuality: 85,
       );
-      
+
       if (images.isNotEmpty) {
-        final remainingSlots = widget.maxImages - (_isLocalMode ? _localImages.length : _displayImages.length);
+        final remainingSlots = widget.maxImages -
+            (_isLocalMode ? _localImages.length : _displayImages.length);
         final imagesToAdd = images.take(remainingSlots).toList();
-        
+
         if (imagesToAdd.isNotEmpty) {
           if (_isLocalMode) {
             // في الوضع المحلي
@@ -994,18 +1008,21 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             if (widget.onLocalImagesChanged != null) {
               widget.onLocalImagesChanged!(_localImages);
             }
-            _showSuccessSnackBar('تم إضافة ${imagesToAdd.length} صورة (سيتم الرفع عند الحفظ)');
-          } else if (_imagesBloc != null && (widget.unitId != null || widget.tempKey != null)) {
+            _showSuccessSnackBar(
+                'تم إضافة ${imagesToAdd.length} صورة (سيتم الرفع عند الحفظ)');
+          } else if (_imagesBloc != null &&
+              (widget.unitId != null || widget.tempKey != null)) {
             // في وضع التعديل - إصلاح رفع الصور المتعددة
             setState(() {
               for (var img in imagesToAdd) {
-                final fileKey = '${DateTime.now().millisecondsSinceEpoch}_${img.name}';
+                final fileKey =
+                    '${DateTime.now().millisecondsSinceEpoch}_${img.name}';
                 _uploadingFiles[fileKey] = true;
                 _uploadingFileObjects[fileKey] = File(img.path);
                 _uploadProgress[fileKey] = 0.0;
               }
             });
-            
+
             _imagesBloc!.add(UploadMultipleUnitImagesEvent(
               unitId: widget.unitId,
               tempKey: widget.tempKey,
@@ -1018,11 +1035,14 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       _showErrorSnackBar('فشل في اختيار الصور');
     }
   }
-  
+
   Widget _buildEnhancedHeader(int imageCount, UnitImagesState state) {
-    final isSelectionMode = state is UnitImagesLoaded ? state.isSelectionMode : _isSelectionMode;
-    final selectedCount = state is UnitImagesLoaded ? state.selectedImageIds.length : _selectedImageIds.length;
-    
+    final isSelectionMode =
+        state is UnitImagesLoaded ? state.isSelectionMode : _isSelectionMode;
+    final selectedCount = state is UnitImagesLoaded
+        ? state.selectedImageIds.length
+        : _selectedImageIds.length;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
@@ -1036,11 +1056,11 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isSelectionMode 
-                      ? 'تم تحديد $selectedCount'
-                      : _isReorderMode
-                        ? 'ترتيب الصور'
-                        : 'معرض الصور',
+                    isSelectionMode
+                        ? 'تم تحديد $selectedCount'
+                        : _isReorderMode
+                            ? 'ترتيب الصور'
+                            : 'معرض الصور',
                     style: AppTextStyles.heading3.copyWith(
                       color: AppTheme.textWhite,
                       fontWeight: FontWeight.w300,
@@ -1057,13 +1077,13 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                   ),
                 ],
               ),
-              
+
               // Action Buttons
               if (!widget.isReadOnly && imageCount > 0)
                 _buildHeaderActions(isSelectionMode),
             ],
           ),
-          
+
           // Mode Instructions
           if (_isSelectionMode || _isReorderMode)
             Container(
@@ -1079,17 +1099,17 @@ class UnitImageGalleryState extends State<UnitImageGallery>
               child: Row(
                 children: [
                   Icon(
-                    _isSelectionMode 
-                      ? Icons.info_outline_rounded
-                      : Icons.drag_indicator_rounded,
+                    _isSelectionMode
+                        ? Icons.info_outline_rounded
+                        : Icons.drag_indicator_rounded,
                     size: 14,
                     color: AppTheme.primaryBlue.withOpacity(0.7),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     _isSelectionMode
-                      ? 'اضغط على الصور لتحديدها'
-                      : 'اسحب الصور لإعادة ترتيبها',
+                        ? 'اضغط على الصور لتحديدها'
+                        : 'اسحب الصور لإعادة ترتيبها',
                     style: AppTextStyles.caption.copyWith(
                       color: AppTheme.primaryBlue.withOpacity(0.8),
                       fontSize: 11,
@@ -1102,16 +1122,16 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   Widget _buildHeaderActions(bool isSelectionMode) {
     return Row(
       children: [
         // Selection Mode Toggle
         if (!_isReorderMode)
           _buildActionChip(
-            icon: isSelectionMode 
-              ? Icons.close_rounded 
-              : Icons.check_circle_outline_rounded,
+            icon: isSelectionMode
+                ? Icons.close_rounded
+                : Icons.check_circle_outline_rounded,
             label: isSelectionMode ? 'إلغاء' : 'تحديد',
             onTap: () {
               HapticFeedback.lightImpact();
@@ -1119,15 +1139,13 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             },
             isActive: isSelectionMode,
           ),
-        
+
         const SizedBox(width: 8),
-        
+
         // Reorder Mode Toggle
         if (!isSelectionMode && _displayImages.length > 1)
           _buildActionChip(
-            icon: _isReorderMode 
-              ? Icons.done_rounded 
-              : Icons.swap_vert_rounded,
+            icon: _isReorderMode ? Icons.done_rounded : Icons.swap_vert_rounded,
             label: _isReorderMode ? 'تم' : 'ترتيب',
             onTap: () {
               HapticFeedback.lightImpact();
@@ -1135,7 +1153,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             },
             isActive: _isReorderMode,
           ),
-        
+
         // Delete Selected Button
         if (isSelectionMode && _selectedImageIds.isNotEmpty)
           Padding(
@@ -1150,7 +1168,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ],
     );
   }
-  
+
   Widget _buildActionChip({
     required IconData icon,
     required String label,
@@ -1165,17 +1183,17 @@ class UnitImageGalleryState extends State<UnitImageGallery>
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isDestructive
-            ? AppTheme.error.withOpacity(0.1)
-            : isActive
-              ? AppTheme.primaryBlue.withOpacity(0.15)
-              : AppTheme.textWhite.withOpacity(0.05),
+              ? AppTheme.error.withOpacity(0.1)
+              : isActive
+                  ? AppTheme.primaryBlue.withOpacity(0.15)
+                  : AppTheme.textWhite.withOpacity(0.05),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isDestructive
-              ? AppTheme.error.withOpacity(0.3)
-              : isActive
-                ? AppTheme.primaryBlue.withOpacity(0.3)
-                : AppTheme.textWhite.withOpacity(0.1),
+                ? AppTheme.error.withOpacity(0.3)
+                : isActive
+                    ? AppTheme.primaryBlue.withOpacity(0.3)
+                    : AppTheme.textWhite.withOpacity(0.1),
           ),
         ),
         child: Row(
@@ -1185,20 +1203,20 @@ class UnitImageGalleryState extends State<UnitImageGallery>
               icon,
               size: 14,
               color: isDestructive
-                ? AppTheme.error
-                : isActive
-                  ? AppTheme.primaryBlue
-                  : AppTheme.textWhite.withOpacity(0.6),
+                  ? AppTheme.error
+                  : isActive
+                      ? AppTheme.primaryBlue
+                      : AppTheme.textWhite.withOpacity(0.6),
             ),
             const SizedBox(width: 4),
             Text(
               label,
               style: AppTextStyles.caption.copyWith(
                 color: isDestructive
-                  ? AppTheme.error
-                  : isActive
-                    ? AppTheme.primaryBlue
-                    : AppTheme.textWhite.withOpacity(0.7),
+                    ? AppTheme.error
+                    : isActive
+                        ? AppTheme.primaryBlue
+                        : AppTheme.textWhite.withOpacity(0.7),
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -1208,35 +1226,37 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   Widget _buildMainContent(List<UnitImage> images, UnitImagesState state) {
     if (state is UnitImagesLoading && images.isEmpty) {
       return _buildMinimalistLoadingState();
     }
-    
+
     return Column(
       key: ValueKey('content-${images.length}-$_isReorderMode'),
       children: [
         // Upload Area
-        if (!widget.isReadOnly && 
-            images.length < widget.maxImages && 
+        if (!widget.isReadOnly &&
+            images.length < widget.maxImages &&
             _uploadingFiles.isEmpty &&
             !_isSelectionMode &&
             !_isReorderMode)
           _buildMinimalistUploadArea(),
-        
+
         // Images Grid
         if (images.isNotEmpty) ...[
-          if (!widget.isReadOnly && images.length < widget.maxImages && !_isSelectionMode && !_isReorderMode)
+          if (!widget.isReadOnly &&
+              images.length < widget.maxImages &&
+              !_isSelectionMode &&
+              !_isReorderMode)
             const SizedBox(height: 24),
           _isReorderMode
-            ? _buildReorderableGrid(images)
-            : _buildEnhancedImagesGrid(images, state),
+              ? _buildReorderableGrid(images)
+              : _buildEnhancedImagesGrid(images, state),
         ],
-        
+
         // Empty State
-        if (images.isEmpty && widget.isReadOnly)
-          _buildMinimalistEmptyState(),
+        if (images.isEmpty && widget.isReadOnly) _buildMinimalistEmptyState(),
       ],
     );
   }
@@ -1256,10 +1276,10 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       },
     );
   }
-  
+
   Widget _buildReorderableImageItem(UnitImage image, int index) {
     final isPrimary = index == _primaryImageIndex;
-    
+
     return Container(
       key: ValueKey(image.id),
       width: (MediaQuery.of(context).size.width - 56) / 3,
@@ -1278,7 +1298,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             borderRadius: BorderRadius.circular(10),
             child: _buildOptimizedImage(image),
           ),
-          
+
           // Drag Handle
           Positioned(
             top: 8,
@@ -1296,7 +1316,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
               ),
             ),
           ),
-          
+
           // Order Number
           Positioned(
             top: 8,
@@ -1320,7 +1340,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
               ),
             ),
           ),
-          
+
           // Primary Badge
           if (isPrimary)
             Positioned(
@@ -1335,7 +1355,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.star_rounded,
                       size: 12,
                       color: Colors.white,
@@ -1357,15 +1377,14 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
-  Widget _buildEnhancedImagesGrid(List<UnitImage> images, UnitImagesState state) {
-    final selectedImageIds = state is UnitImagesLoaded 
-      ? state.selectedImageIds 
-      : _selectedImageIds;
-    final isSelectionMode = state is UnitImagesLoaded 
-      ? state.isSelectionMode 
-      : _isSelectionMode;
-    
+
+  Widget _buildEnhancedImagesGrid(
+      List<UnitImage> images, UnitImagesState state) {
+    final selectedImageIds =
+        state is UnitImagesLoaded ? state.selectedImageIds : _selectedImageIds;
+    final isSelectionMode =
+        state is UnitImagesLoaded ? state.isSelectionMode : _isSelectionMode;
+
     return AnimationLimiter(
       child: GridView.builder(
         shrinkWrap: true,
@@ -1386,7 +1405,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
               scale: 0.95,
               child: FadeInAnimation(
                 child: _buildEnhancedImageItem(
-                  images[index], 
+                  images[index],
                   index,
                   selectedImageIds.contains(images[index].id),
                   isSelectionMode,
@@ -1398,16 +1417,16 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   Widget _buildEnhancedImageItem(
-    UnitImage image, 
+    UnitImage image,
     int index,
     bool isSelected,
     bool isSelectionMode,
   ) {
     final bool isHovered = _hoveredIndex == index;
     final bool isPrimary = index == _primaryImageIndex;
-    
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredIndex = index),
       onExit: (_) => setState(() => _hoveredIndex = null),
@@ -1416,7 +1435,8 @@ class UnitImageGalleryState extends State<UnitImageGallery>
           if (isSelectionMode) {
             HapticFeedback.lightImpact();
             if (_imagesBloc != null) {
-              _imagesBloc!.add(ToggleUnitImageSelectionEvent(imageId: image.id));
+              _imagesBloc!
+                  .add(ToggleUnitImageSelectionEvent(imageId: image.id));
             } else {
               setState(() {
                 if (_selectedImageIds.contains(image.id)) {
@@ -1444,17 +1464,19 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
-                ? AppTheme.primaryBlue.withOpacity(0.6)
-                : AppTheme.darkBorder.withOpacity(0.1),
+                  ? AppTheme.primaryBlue.withOpacity(0.6)
+                  : AppTheme.darkBorder.withOpacity(0.1),
               width: isSelected ? 2.5 : 1,
             ),
-            boxShadow: isSelected ? [
-              BoxShadow(
-                color: AppTheme.primaryBlue.withOpacity(0.2),
-                blurRadius: 8,
-                spreadRadius: 1,
-              ),
-            ] : null,
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppTheme.primaryBlue.withOpacity(0.2),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(11),
@@ -1463,7 +1485,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
               children: [
                 // Image
                 _buildOptimizedImage(image),
-                
+
                 // Gradient Overlay
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
@@ -1474,13 +1496,12 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                       colors: [
                         Colors.transparent,
                         Colors.black.withOpacity(
-                          isHovered || isSelectionMode ? 0.6 : 0.3
-                        ),
+                            isHovered || isSelectionMode ? 0.6 : 0.3),
                       ],
                     ),
                   ),
                 ),
-                
+
                 // Quick Actions (visible on hover or mobile long press)
                 if (!widget.isReadOnly && !isSelectionMode)
                   AnimatedPositioned(
@@ -1518,14 +1539,15 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                       },
                     ),
                   ),
-                
+
                 // Primary Badge
                 if (isPrimary)
                   Positioned(
                     bottom: 8,
                     left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: AppTheme.warning.withOpacity(0.9),
                         borderRadius: BorderRadius.circular(6),
@@ -1540,7 +1562,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.star_rounded,
                             size: 12,
                             color: Colors.white,
@@ -1558,7 +1580,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                       ),
                     ),
                   ),
-                
+
                 // Selection Checkbox
                 if (isSelectionMode)
                   Positioned(
@@ -1569,9 +1591,9 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: isSelected 
-                          ? AppTheme.primaryBlue
-                          : AppTheme.darkCard.withOpacity(0.8),
+                        color: isSelected
+                            ? AppTheme.primaryBlue
+                            : AppTheme.darkCard.withOpacity(0.8),
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: Colors.white.withOpacity(0.9),
@@ -1585,22 +1607,23 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                         ],
                       ),
                       child: isSelected
-                        ? Icon(
-                            Icons.check_rounded,
-                            color: Colors.white,
-                            size: 16,
-                          )
-                        : null,
+                          ? const Icon(
+                              Icons.check_rounded,
+                              color: Colors.white,
+                              size: 16,
+                            )
+                          : null,
                     ),
                   ),
-                
+
                 // Image Number (top-left corner)
                 if (!isSelectionMode)
                   Positioned(
                     top: 8,
                     left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: AppTheme.darkCard.withOpacity(0.8),
                         borderRadius: BorderRadius.circular(4),
@@ -1622,7 +1645,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   Widget _buildQuickActionButton({
     required IconData icon,
     required VoidCallback onTap,
@@ -1637,7 +1660,8 @@ class UnitImageGalleryState extends State<UnitImageGallery>
           color: AppTheme.darkCard.withOpacity(0.95),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: color?.withOpacity(0.3) ?? AppTheme.darkBorder.withOpacity(0.2),
+            color:
+                color?.withOpacity(0.3) ?? AppTheme.darkBorder.withOpacity(0.2),
             width: 0.5,
           ),
         ),
@@ -1649,7 +1673,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   void _showImageOptionsMenu(UnitImage image, int index) {
     showModalBottomSheet(
       context: context,
@@ -1673,7 +1697,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   Widget _buildMinimalistUploadArea() {
     return GestureDetector(
       onTap: _showImagePickerOptions,
@@ -1681,14 +1705,14 @@ class UnitImageGalleryState extends State<UnitImageGallery>
         duration: const Duration(milliseconds: 300),
         height: 140,
         decoration: BoxDecoration(
-          color: _isDragging 
-            ? AppTheme.primaryBlue.withOpacity(0.05)
-            : AppTheme.darkCard.withOpacity(0.1),
+          color: _isDragging
+              ? AppTheme.primaryBlue.withOpacity(0.05)
+              : AppTheme.darkCard.withOpacity(0.1),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: _isDragging
-              ? AppTheme.primaryBlue.withOpacity(0.3)
-              : AppTheme.darkBorder.withOpacity(0.1),
+                ? AppTheme.primaryBlue.withOpacity(0.3)
+                : AppTheme.darkBorder.withOpacity(0.1),
             width: 1,
           ),
         ),
@@ -1710,19 +1734,17 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    _isDragging 
-                      ? Icons.file_download_outlined
-                      : Icons.add_photo_alternate_outlined,
+                    _isDragging
+                        ? Icons.file_download_outlined
+                        : Icons.add_photo_alternate_outlined,
                     color: _isDragging
-                      ? AppTheme.primaryBlue.withOpacity(0.8)
-                      : AppTheme.textMuted.withOpacity(0.5),
+                        ? AppTheme.primaryBlue.withOpacity(0.8)
+                        : AppTheme.textMuted.withOpacity(0.5),
                     size: 32,
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    _isDragging
-                      ? 'أفلت الصور هنا'
-                      : 'اضغط أو اسحب لإضافة صور',
+                    _isDragging ? 'أفلت الصور هنا' : 'اضغط أو اسحب لإضافة صور',
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppTheme.textMuted.withOpacity(0.7),
                       fontWeight: FontWeight.w300,
@@ -1745,7 +1767,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   // كارت رفع محسن وأجمل
   Widget _buildEnhancedUploadProgressCards() {
     return Column(
@@ -1756,11 +1778,12 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       }).toList(),
     );
   }
-  
-  Widget _buildEnhancedUploadProgressCard(String fileKey, double progress, File? file) {
+
+  Widget _buildEnhancedUploadProgressCard(
+      String fileKey, double progress, File? file) {
     final fileName = file?.path.split('/').last ?? 'صورة';
     final isComplete = progress >= 1.0;
-    
+
     return AnimatedBuilder(
       animation: _uploadAnimationController,
       builder: (context, child) {
@@ -1777,16 +1800,16 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isComplete 
-                ? AppTheme.success.withOpacity(0.3)
-                : AppTheme.primaryBlue.withOpacity(0.2),
+              color: isComplete
+                  ? AppTheme.success.withOpacity(0.3)
+                  : AppTheme.primaryBlue.withOpacity(0.2),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
                 color: isComplete
-                  ? AppTheme.success.withOpacity(0.1)
-                  : AppTheme.primaryBlue.withOpacity(0.1),
+                    ? AppTheme.success.withOpacity(0.1)
+                    : AppTheme.primaryBlue.withOpacity(0.1),
                 blurRadius: 10,
                 spreadRadius: 2,
               ),
@@ -1813,32 +1836,33 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(9),
                         child: file != null
-                          ? Image.file(
-                              file,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: AppTheme.darkCard.withOpacity(0.5),
-                                  child: Icon(
-                                    Icons.image_outlined,
-                                    color: AppTheme.textMuted.withOpacity(0.5),
-                                    size: 24,
-                                  ),
-                                );
-                              },
-                            )
-                          : Container(
-                              color: AppTheme.darkCard.withOpacity(0.5),
-                              child: Icon(
-                                Icons.image_outlined,
-                                color: AppTheme.textMuted.withOpacity(0.5),
-                                size: 24,
+                            ? Image.file(
+                                file,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: AppTheme.darkCard.withOpacity(0.5),
+                                    child: Icon(
+                                      Icons.image_outlined,
+                                      color:
+                                          AppTheme.textMuted.withOpacity(0.5),
+                                      size: 24,
+                                    ),
+                                  );
+                                },
+                              )
+                            : Container(
+                                color: AppTheme.darkCard.withOpacity(0.5),
+                                child: Icon(
+                                  Icons.image_outlined,
+                                  color: AppTheme.textMuted.withOpacity(0.5),
+                                  size: 24,
+                                ),
                               ),
-                            ),
                       ),
                     ),
                     const SizedBox(width: 12),
-                    
+
                     // Content
                     Expanded(
                       child: Column(
@@ -1861,44 +1885,46 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                               AnimatedSwitcher(
                                 duration: const Duration(milliseconds: 300),
                                 child: isComplete
-                                  ? Container(
-                                      key: const ValueKey('complete'),
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.success.withOpacity(0.2),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        Icons.check_rounded,
-                                        size: 14,
-                                        color: AppTheme.success,
-                                      ),
-                                    )
-                                  : AnimatedBuilder(
-                                      key: const ValueKey('uploading'),
-                                      animation: _pulseController,
-                                      builder: (context, child) {
-                                        return Container(
-                                          padding: const EdgeInsets.all(4),
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: AppTheme.primaryBlue.withOpacity(
-                                              0.1 + (_pulseController.value * 0.1)
+                                    ? Container(
+                                        key: const ValueKey('complete'),
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color:
+                                              AppTheme.success.withOpacity(0.2),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.check_rounded,
+                                          size: 14,
+                                          color: AppTheme.success,
+                                        ),
+                                      )
+                                    : AnimatedBuilder(
+                                        key: const ValueKey('uploading'),
+                                        animation: _pulseController,
+                                        builder: (context, child) {
+                                          return Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: AppTheme.primaryBlue
+                                                  .withOpacity(0.1 +
+                                                      (_pulseController.value *
+                                                          0.1)),
                                             ),
-                                          ),
-                                          child: Icon(
-                                            Icons.cloud_upload_outlined,
-                                            size: 14,
-                                            color: AppTheme.primaryBlue,
-                                          ),
-                                        );
-                                      },
-                                    ),
+                                            child: Icon(
+                                              Icons.cloud_upload_outlined,
+                                              size: 14,
+                                              color: AppTheme.primaryBlue,
+                                            ),
+                                          );
+                                        },
+                                      ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 8),
-                          
+
                           // Progress Bar
                           Stack(
                             children: [
@@ -1912,19 +1938,29 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                               AnimatedContainer(
                                 duration: const Duration(milliseconds: 300),
                                 height: 4,
-                                width: MediaQuery.of(context).size.width * progress * 0.65,
+                                width: MediaQuery.of(context).size.width *
+                                    progress *
+                                    0.65,
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     colors: isComplete
-                                      ? [AppTheme.success, AppTheme.success.withOpacity(0.7)]
-                                      : [AppTheme.primaryBlue, AppTheme.primaryBlue.withOpacity(0.7)],
+                                        ? [
+                                            AppTheme.success,
+                                            AppTheme.success.withOpacity(0.7)
+                                          ]
+                                        : [
+                                            AppTheme.primaryBlue,
+                                            AppTheme.primaryBlue
+                                                .withOpacity(0.7)
+                                          ],
                                   ),
                                   borderRadius: BorderRadius.circular(2),
                                   boxShadow: [
                                     BoxShadow(
                                       color: isComplete
-                                        ? AppTheme.success.withOpacity(0.3)
-                                        : AppTheme.primaryBlue.withOpacity(0.3),
+                                          ? AppTheme.success.withOpacity(0.3)
+                                          : AppTheme.primaryBlue
+                                              .withOpacity(0.3),
                                       blurRadius: 4,
                                       spreadRadius: 0,
                                     ),
@@ -1933,16 +1969,16 @@ class UnitImageGalleryState extends State<UnitImageGallery>
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 4),
                           Text(
-                            isComplete 
-                              ? 'اكتمل الرفع'
-                              : 'جاري الرفع... ${(progress * 100).toInt()}%',
+                            isComplete
+                                ? 'اكتمل الرفع'
+                                : 'جاري الرفع... ${(progress * 100).toInt()}%',
                             style: AppTextStyles.caption.copyWith(
                               color: isComplete
-                                ? AppTheme.success.withOpacity(0.8)
-                                : AppTheme.textMuted.withOpacity(0.7),
+                                  ? AppTheme.success.withOpacity(0.8)
+                                  : AppTheme.textMuted.withOpacity(0.7),
                               fontSize: 11,
                             ),
                           ),
@@ -1958,7 +1994,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       },
     );
   }
-  
+
   Widget _buildOptimizedImage(UnitImage image) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1972,7 +2008,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
           imageUrl: image.url,
           fadeInDuration: const Duration(milliseconds: 0),
           imageBuilder: (ctx, provider) => Image(
-            image: ResizeImage(provider as ImageProvider, width: targetWidth),
+            image: ResizeImage(provider, width: targetWidth),
             fit: BoxFit.cover,
             filterQuality: FilterQuality.low,
           ),
@@ -1991,7 +2027,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       },
     );
   }
-  
+
   Widget _buildImageFromPath(String path) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -2006,7 +2042,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
             imageUrl: path,
             fadeInDuration: const Duration(milliseconds: 0),
             imageBuilder: (ctx, provider) => Image(
-              image: ResizeImage(provider as ImageProvider, width: targetWidth),
+              image: ResizeImage(provider, width: targetWidth),
               fit: BoxFit.cover,
               filterQuality: FilterQuality.low,
             ),
@@ -2043,7 +2079,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       },
     );
   }
-  
+
   Widget _buildMinimalistLoadingState() {
     return Container(
       height: 180,
@@ -2061,8 +2097,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
               child: CircularProgressIndicator(
                 strokeWidth: 2,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  AppTheme.primaryBlue.withOpacity(0.5)
-                ),
+                    AppTheme.primaryBlue.withOpacity(0.5)),
               ),
             ),
             const SizedBox(height: 16),
@@ -2078,7 +2113,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   Widget _buildMinimalistEmptyState() {
     return Container(
       height: 180,
@@ -2112,7 +2147,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   // Helper Methods
   void _toggleSelectionMode() {
     setState(() {
@@ -2130,7 +2165,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       }
     });
   }
-  
+
   void _toggleReorderMode() {
     setState(() {
       _isReorderMode = !_isReorderMode;
@@ -2140,79 +2175,85 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       }
     });
   }
-  
+
   void _setPrimaryImage(int index) {
     setState(() {
       _primaryImageIndex = index;
     });
 
-    if (_imagesBloc != null && (widget.unitId != null || widget.tempKey != null) && index < _displayImages.length) {
+    if (_imagesBloc != null &&
+        (widget.unitId != null || widget.tempKey != null) &&
+        index < _displayImages.length) {
       _imagesBloc!.add(SetPrimaryUnitImageEvent(
         unitId: widget.unitId,
         tempKey: widget.tempKey,
         imageId: _displayImages[index].id,
       ));
     }
-    
+
     _showSuccessSnackBar('تم تعيين الصورة كرئيسية');
   }
-  
+
   void _reorderImages(int oldIndex, int newIndex) {
     setState(() {
       final image = _displayImages.removeAt(oldIndex);
       _displayImages.insert(newIndex, image);
-      
+
       // Update primary image index if needed
       if (_primaryImageIndex == oldIndex) {
         _primaryImageIndex = newIndex;
-      } else if (oldIndex < _primaryImageIndex! && newIndex >= _primaryImageIndex!) {
+      } else if (oldIndex < _primaryImageIndex! &&
+          newIndex >= _primaryImageIndex!) {
         _primaryImageIndex = _primaryImageIndex! - 1;
-      } else if (oldIndex > _primaryImageIndex! && newIndex <= _primaryImageIndex!) {
+      } else if (oldIndex > _primaryImageIndex! &&
+          newIndex <= _primaryImageIndex!) {
         _primaryImageIndex = _primaryImageIndex! + 1;
       }
     });
 
-    if (_imagesBloc != null && (widget.unitId != null || widget.tempKey != null)) {
+    if (_imagesBloc != null &&
+        (widget.unitId != null || widget.tempKey != null)) {
       _imagesBloc!.add(ReorderUnitImagesEvent(
         unitId: widget.unitId,
         tempKey: widget.tempKey,
         imageIds: _displayImages.map((img) => img.id).toList(),
       ));
     }
-    
+
     if (widget.onImagesChanged != null) {
       widget.onImagesChanged!(_displayImages);
     }
   }
-  
+
   void _deleteSelectedImages() {
     if (_selectedImageIds.isEmpty) return;
-    
+
     showDialog(
       context: context,
       builder: (context) => _DeleteConfirmationDialog(
         count: _selectedImageIds.length,
         onConfirm: () {
           Navigator.pop(context);
-          
+
           if (_imagesBloc != null) {
             _imagesBloc!.add(DeleteMultipleUnitImagesEvent(
               imageIds: _selectedImageIds.toList(),
             ));
           }
-          
+
           setState(() {
-            _displayImages.removeWhere((img) => _selectedImageIds.contains(img.id));
+            _displayImages
+                .removeWhere((img) => _selectedImageIds.contains(img.id));
             _selectedImageIds.clear();
             _isSelectionMode = false;
           });
-          
+
           _showSuccessSnackBar('تم حذف الصور المحددة');
         },
       ),
     );
   }
-  
+
   void _confirmDeleteImage(UnitImage image) {
     showDialog(
       context: context,
@@ -2220,14 +2261,15 @@ class UnitImageGalleryState extends State<UnitImageGallery>
         count: 1,
         onConfirm: () {
           Navigator.pop(context);
-          
+
           if (_imagesBloc != null) {
             HapticFeedback.lightImpact();
             _imagesBloc!.add(DeleteUnitImageEvent(imageId: image.id));
           }
-          
+
           setState(() {
-            final index = _displayImages.indexWhere((img) => img.id == image.id);
+            final index =
+                _displayImages.indexWhere((img) => img.id == image.id);
             if (index != -1) {
               _displayImages.removeAt(index);
               if (_primaryImageIndex == index) {
@@ -2237,18 +2279,19 @@ class UnitImageGalleryState extends State<UnitImageGallery>
               }
             }
           });
-          
+
           _showSuccessSnackBar('تم حذف الصورة');
         },
       ),
     );
   }
-  
+
   void _handleStateChanges(UnitImagesState state) {
     if (state is UnitImagesLoaded) {
       setState(() {
         _displayImages = state.images;
-        _primaryImageIndex = state.images.indexWhere((img) => img.isPrimary == true);
+        _primaryImageIndex =
+            state.images.indexWhere((img) => img.isPrimary == true);
         if (_primaryImageIndex == -1) _primaryImageIndex = 0;
       });
       if (widget.onImagesChanged != null) {
@@ -2300,7 +2343,10 @@ class UnitImageGalleryState extends State<UnitImageGallery>
         setState(() {
           // تحديث التقدم فقط للملفات الموجودة
           _uploadingFiles.forEach((key, value) {
-            if (_uploadingFileObjects[key]?.path.endsWith(state.uploadingFileName!) ?? false) {
+            if (_uploadingFileObjects[key]
+                    ?.path
+                    .endsWith(state.uploadingFileName!) ??
+                false) {
               _uploadProgress[key] = state.uploadProgress!;
             }
           });
@@ -2308,20 +2354,20 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       }
     }
   }
-  
+
   void _simulateUploadProgress(String fileKey) {
     Timer.periodic(const Duration(milliseconds: 50), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
-      
+
       setState(() {
         final currentProgress = _uploadProgress[fileKey] ?? 0.0;
         if (currentProgress >= 0.95) {
           _uploadProgress[fileKey] = 1.0;
           timer.cancel();
-          
+
           // إزالة الملف بعد ثانيتين من اكتمال الرفع
           Future.delayed(const Duration(seconds: 2), () {
             if (mounted) {
@@ -2338,7 +2384,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       });
     });
   }
-  
+
   void _showImagePickerOptions() {
     showModalBottomSheet(
       context: context,
@@ -2360,7 +2406,9 @@ class UnitImageGalleryState extends State<UnitImageGallery>
         onVideoSelected: () async {
           Navigator.pop(context);
           try {
-            final XFile? video = await _picker.pickVideo(source: ImageSource.gallery, maxDuration: const Duration(minutes: 2));
+            final XFile? video = await _picker.pickVideo(
+                source: ImageSource.gallery,
+                maxDuration: const Duration(minutes: 2));
             if (video == null) return;
             final filePath = video.path;
             if (_isLocalMode) {
@@ -2369,7 +2417,8 @@ class UnitImageGalleryState extends State<UnitImageGallery>
               });
               widget.onLocalImagesChanged?.call(_localImages);
               _showSuccessSnackBar('تم إضافة الفيديو (سيتم الرفع عند الحفظ)');
-            } else if (_imagesBloc != null && widget.unitId.isNotEmpty) {
+            } else if (_imagesBloc != null &&
+                widget.unitId?.isNotEmpty == true) {
               final fileKey = DateTime.now().millisecondsSinceEpoch.toString();
               setState(() {
                 _uploadingFiles[fileKey] = true;
@@ -2389,12 +2438,13 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   void _handleDroppedFiles(List<XFile> files) {
     if (files.isNotEmpty) {
-      final remainingSlots = widget.maxImages - (_isLocalMode ? _localImages.length : _displayImages.length);
+      final remainingSlots = widget.maxImages -
+          (_isLocalMode ? _localImages.length : _displayImages.length);
       final filesToAdd = files.take(remainingSlots).toList();
-      
+
       if (filesToAdd.isNotEmpty) {
         if (_isLocalMode) {
           setState(() {
@@ -2406,17 +2456,20 @@ class UnitImageGalleryState extends State<UnitImageGallery>
           if (widget.onLocalImagesChanged != null) {
             widget.onLocalImagesChanged!(_localImages);
           }
-          _showSuccessSnackBar('تم إضافة ${filesToAdd.length} صورة (سيتم الرفع عند الحفظ)');
-        } else if (_imagesBloc != null && (widget.unitId != null || widget.tempKey != null)) {
+          _showSuccessSnackBar(
+              'تم إضافة ${filesToAdd.length} صورة (سيتم الرفع عند الحفظ)');
+        } else if (_imagesBloc != null &&
+            (widget.unitId != null || widget.tempKey != null)) {
           setState(() {
             for (var file in filesToAdd) {
-              final fileKey = '${DateTime.now().millisecondsSinceEpoch}_${file.name}';
+              final fileKey =
+                  '${DateTime.now().millisecondsSinceEpoch}_${file.name}';
               _uploadingFiles[fileKey] = true;
               _uploadingFileObjects[fileKey] = File(file.path);
               _uploadProgress[fileKey] = 0.0;
             }
           });
-          
+
           _imagesBloc!.add(UploadMultipleUnitImagesEvent(
             unitId: widget.unitId,
             tempKey: widget.tempKey,
@@ -2426,7 +2479,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       }
     }
   }
-  
+
   void _previewImage(UnitImage image) {
     Navigator.of(context).push(
       PageRouteBuilder(
@@ -2440,7 +2493,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   void _previewLocalImage(String imagePath) {
     Navigator.of(context).push(
       PageRouteBuilder(
@@ -2454,7 +2507,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   List<UnitImage> _getImagesFromState(UnitImagesState state) {
     if (state is UnitImagesLoaded) return state.images;
     if (state is UnitImageUploaded) return state.allImages;
@@ -2471,7 +2524,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
     if (state is UnitImagesError) return state.previousImages ?? [];
     return widget.initialImages ?? _remoteImages;
   }
-  
+
   void _showSuccessSnackBar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -2492,7 +2545,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
       ),
     );
   }
-  
+
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -2524,7 +2577,7 @@ class _ImageOptionsSheet extends StatelessWidget {
   final VoidCallback onSetPrimary;
   final VoidCallback onDelete;
   final VoidCallback onView;
-  
+
   const _ImageOptionsSheet({
     required this.image,
     required this.index,
@@ -2533,7 +2586,7 @@ class _ImageOptionsSheet extends StatelessWidget {
     required this.onDelete,
     required this.onView,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -2559,7 +2612,6 @@ class _ImageOptionsSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          
           Text(
             'خيارات الصورة',
             style: AppTextStyles.heading3.copyWith(
@@ -2568,13 +2620,11 @@ class _ImageOptionsSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          
           _buildOption(
             icon: Icons.visibility_outlined,
             title: 'عرض الصورة',
             onTap: onView,
           ),
-          
           if (!isPrimary) ...[
             const SizedBox(height: 8),
             _buildOption(
@@ -2584,7 +2634,6 @@ class _ImageOptionsSheet extends StatelessWidget {
               color: AppTheme.warning,
             ),
           ],
-          
           const SizedBox(height: 8),
           _buildOption(
             icon: Icons.delete_outline_rounded,
@@ -2596,7 +2645,7 @@ class _ImageOptionsSheet extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildOption({
     required IconData icon,
     required String title,
@@ -2615,7 +2664,8 @@ class _ImageOptionsSheet extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: color?.withOpacity(0.8) ?? AppTheme.primaryBlue.withOpacity(0.8),
+              color: color?.withOpacity(0.8) ??
+                  AppTheme.primaryBlue.withOpacity(0.8),
               size: 20,
             ),
             const SizedBox(width: 12),
@@ -2646,7 +2696,7 @@ class _LocalImageOptionsSheet extends StatelessWidget {
   final VoidCallback onSetPrimary;
   final VoidCallback onDelete;
   final VoidCallback onView;
-  
+
   const _LocalImageOptionsSheet({
     required this.imagePath,
     required this.index,
@@ -2655,7 +2705,7 @@ class _LocalImageOptionsSheet extends StatelessWidget {
     required this.onDelete,
     required this.onView,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -2681,7 +2731,6 @@ class _LocalImageOptionsSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          
           Text(
             'خيارات الصورة',
             style: AppTextStyles.heading3.copyWith(
@@ -2690,13 +2739,11 @@ class _LocalImageOptionsSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          
           _buildOption(
             icon: Icons.visibility_outlined,
             title: 'عرض الصورة',
             onTap: onView,
           ),
-          
           if (!isPrimary) ...[
             const SizedBox(height: 8),
             _buildOption(
@@ -2706,7 +2753,6 @@ class _LocalImageOptionsSheet extends StatelessWidget {
               color: AppTheme.warning,
             ),
           ],
-          
           const SizedBox(height: 8),
           _buildOption(
             icon: Icons.delete_outline_rounded,
@@ -2718,7 +2764,7 @@ class _LocalImageOptionsSheet extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildOption({
     required IconData icon,
     required String title,
@@ -2737,7 +2783,8 @@ class _LocalImageOptionsSheet extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: color?.withOpacity(0.8) ?? AppTheme.primaryBlue.withOpacity(0.8),
+              color: color?.withOpacity(0.8) ??
+                  AppTheme.primaryBlue.withOpacity(0.8),
               size: 20,
             ),
             const SizedBox(width: 12),
@@ -2764,12 +2811,12 @@ class _LocalImageOptionsSheet extends StatelessWidget {
 class _DeleteConfirmationDialog extends StatelessWidget {
   final int count;
   final VoidCallback onConfirm;
-  
+
   const _DeleteConfirmationDialog({
     required this.count,
     required this.onConfirm,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return BackdropFilter(
@@ -2813,8 +2860,8 @@ class _DeleteConfirmationDialog extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 count > 1
-                  ? 'هل أنت متأكد من حذف $count صور؟'
-                  : 'هل أنت متأكد من حذف هذه الصورة؟',
+                    ? 'هل أنت متأكد من حذف $count صور؟'
+                    : 'هل أنت متأكد من حذف هذه الصورة؟',
                 style: AppTextStyles.bodyMedium.copyWith(
                   color: AppTheme.textLight,
                 ),
@@ -2883,14 +2930,14 @@ class _MinimalistImagePickerSheet extends StatelessWidget {
   final VoidCallback onGallerySelected;
   final VoidCallback onMultipleSelected;
   final VoidCallback? onVideoSelected;
-  
+
   const _MinimalistImagePickerSheet({
     required this.onCameraSelected,
     required this.onGallerySelected,
     required this.onMultipleSelected,
     this.onVideoSelected,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -2933,19 +2980,19 @@ class _MinimalistImagePickerSheet extends StatelessWidget {
             title: 'عدة صور',
             onTap: onMultipleSelected,
           ),
-      if (onVideoSelected != null) ...[
-        const SizedBox(height: 8),
-        _buildOption(
-          icon: Icons.video_library_outlined,
-          title: 'فيديو',
-          onTap: onVideoSelected!,
-        ),
-      ],
+          if (onVideoSelected != null) ...[
+            const SizedBox(height: 8),
+            _buildOption(
+              icon: Icons.video_library_outlined,
+              title: 'فيديو',
+              onTap: onVideoSelected!,
+            ),
+          ],
         ],
       ),
     );
   }
-  
+
   Widget _buildOption({
     required IconData icon,
     required String title,
@@ -2989,9 +3036,9 @@ class _MinimalistImagePickerSheet extends StatelessWidget {
 
 class _MinimalistImagePreview extends StatelessWidget {
   final UnitImage image;
-  
+
   const _MinimalistImagePreview({required this.image});
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -3032,9 +3079,9 @@ class _MinimalistImagePreview extends StatelessWidget {
 
 class _MinimalistLocalImagePreview extends StatelessWidget {
   final String imagePath;
-  
+
   const _MinimalistLocalImagePreview({required this.imagePath});
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -1,3 +1,4 @@
+import 'package:bookn_cp_app/core/bloc/locale/locale_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -26,18 +27,18 @@ class YemenBookingApp extends StatelessWidget {
         ...AppBloc.providers,
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
-            bloc: AppBloc.theme,
-            builder: (context, themeState) {
-              return BlocBuilder<LocaleCubit, Locale>(
-                bloc: AppBloc.locale,
-                builder: (context, localeState) {
-                  return MaterialApp.router(
+        bloc: AppBloc.theme,
+        builder: (context, themeState) {
+          return BlocBuilder<LocaleCubit, Locale>(
+            bloc: AppBloc.locale,
+            builder: (context, localeState) {
+              return MaterialApp.router(
                 title: 'Yemen Booking',
                 debugShowCheckedModeBanner: false,
                 theme: ThemeData.light(),
                 darkTheme: ThemeData.dark(),
                 themeMode: themeState.themeMode,
-                    locale: localeState,
+                locale: localeState,
                 localizationsDelegates: const [
                   AppLocalizations.delegate,
                   GlobalMaterialLocalizations.delegate,
@@ -50,13 +51,12 @@ class YemenBookingApp extends StatelessWidget {
                   AppTheme.init(context, mode: themeState.themeMode);
                   return child!;
                 },
-                  );
-                },
               );
             },
+          );
+        },
       ),
     );
-      
   }
 }
 

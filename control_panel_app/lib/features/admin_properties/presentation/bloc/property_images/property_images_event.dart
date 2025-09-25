@@ -41,7 +41,8 @@ class UploadPropertyImageEvent extends PropertyImagesEvent {
   });
 
   @override
-  List<Object?> get props => [propertyId, tempKey, filePath, category, alt, isPrimary, order, tags];
+  List<Object?> get props =>
+      [propertyId, tempKey, filePath, category, alt, isPrimary, order, tags];
 }
 
 class UploadMultipleImagesEvent extends PropertyImagesEvent {
