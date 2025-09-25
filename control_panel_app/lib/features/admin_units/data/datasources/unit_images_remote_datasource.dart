@@ -10,6 +10,7 @@ abstract class UnitImagesRemoteDataSource {
     String? unitId,
     String? tempKey,
     required String filePath,
+    String? videoThumbnailPath,
     String? category,
     String? alt,
     bool isPrimary = false,
@@ -53,6 +54,8 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
         'isPrimary': isPrimary,
         if (order != null) 'order': order,
         if (tags != null && tags.isNotEmpty) 'tags': tags.join(','),
+        if (videoThumbnailPath != null)
+          'videoThumbnail': await MultipartFile.fromFile(videoThumbnailPath),
       });
       
       final response = await apiClient.post(

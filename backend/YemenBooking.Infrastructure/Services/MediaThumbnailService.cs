@@ -9,48 +9,10 @@ using FFMpegCore.Pipes;
 
 namespace YemenBooking.Infrastructure.Services
 {
-    /// <summary>
-    /// تنفيذ خدمة توليد مصغرات للفيديو باستخدام ffmpeg
-    /// </summary>
+    // الإبقاء على فئة الخدمة للتوافق، لكن بدون أي منطق لأن توليد المصغرات أصبح على العميل
     public class MediaThumbnailService : IMediaThumbnailService
     {
-        private readonly ILogger<MediaThumbnailService> _logger;
-        public MediaThumbnailService(ILogger<MediaThumbnailService> logger)
-        {
-            _logger = logger;
-        }
-
-        public Task<byte[]?> TryGenerateThumbnailAsync(string videoFilePath, CancellationToken cancellationToken)
-        {
-            try
-            {
-                if (!File.Exists(videoFilePath)) return Task.FromResult<byte[]?>(null);
-
-                // جرّب عدة نقاط زمنية لاستخراج إطار صالح باستخدام FFMpegCore
-                var probeOffsets = new[] { 0.1, 1.0, 3.0 };
-                foreach (var seconds in probeOffsets)
-                {
-                    try
-                    {
-                        var frame = FFMpeg.Snapshot(videoFilePath, TimeSpan.FromSeconds(seconds));
-                        if (frame != null && frame.Length > 0)
-                        {
-                            return Task.FromResult<byte[]?>(frame);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogDebug(ex, "FFMpegCore snapshot failed at {Offset}s", seconds);
-                    }
-                }
-                return Task.FromResult<byte[]?>(null);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogDebug(ex, "Error generating thumbnail using ffmpeg");
-                return Task.FromResult<byte[]?>(null);
-            }
-        }
+        public MediaThumbnailService(ILogger<MediaThumbnailService> logger) { }
     }
 }
 

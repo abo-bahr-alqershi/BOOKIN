@@ -29,7 +29,7 @@ namespace YemenBooking.Application.Handlers.Commands.Images
         private readonly IPropertyImageRepository _imageRepository;
         private readonly IUnitRepository _unitRepository;
         private readonly IMediaMetadataService _mediaMetadataService;
-        private readonly IMediaThumbnailService _mediaThumbnailService;
+        // حذف خدمة توليد المصغرات من الخادم والاعتماد على العميل
 
         public UploadImageCommandHandler(
             IFileStorageService fileStorageService,
@@ -39,8 +39,7 @@ namespace YemenBooking.Application.Handlers.Commands.Images
             ILogger<UploadImageCommandHandler> logger,
             IPropertyImageRepository imageRepository,
             IUnitRepository unitRepository,
-            IMediaMetadataService mediaMetadataService,
-            IMediaThumbnailService mediaThumbnailService)
+            IMediaMetadataService mediaMetadataService)
         {
             _fileStorageService = fileStorageService;
             _imageProcessingService = imageProcessingService;
@@ -50,7 +49,6 @@ namespace YemenBooking.Application.Handlers.Commands.Images
             _imageRepository = imageRepository;
             _unitRepository = unitRepository;
             _mediaMetadataService = mediaMetadataService;
-            _mediaThumbnailService = mediaThumbnailService;
         }
 
         /// <inheritdoc />
@@ -138,7 +136,7 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     }
                 }
 
-                // إنشاء صورة مصغرة إذا طُلب
+                // إنشاء صورة مصغرة إذا طُلب (للصور فقط)
                 if (!isVideo && request.GenerateThumbnail)
                 {
                     stream.Seek(0, SeekOrigin.Begin);
@@ -218,7 +216,7 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     cancellationToken);
 
                 _logger.LogInformation("اكتمل رفع الصورة بنجاح: Url={Url}", uploadResult.FileUrl);
-                // معالجة الفيديو (مدة ومصغرة) إن كان فيديو
+                // معالجة الفيديو (مدة فقط) + قبول مصغرة من العميل إن وردت
                 int? videoDurationSeconds = null;
                 string? videoThumbUrl = null;
                 if (isVideo && !string.IsNullOrWhiteSpace(uploadResult.FilePath))
@@ -226,20 +224,34 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     try
                     {
                         videoDurationSeconds = await _mediaMetadataService.TryGetDurationSecondsAsync(uploadResult.FilePath!, request.File.ContentType, cancellationToken);
-                        var thumbBytes = await _mediaThumbnailService.TryGenerateThumbnailAsync(uploadResult.FilePath!, cancellationToken);
-                        if (thumbBytes != null)
-                        {
-                            var thumbName = Path.GetFileNameWithoutExtension(fileName) + "_poster.jpg";
-                            var thumbUpload = await _fileStorageService.UploadFileAsync(thumbBytes, thumbName, "image/jpeg", folderPath, cancellationToken);
-                            if (thumbUpload.IsSuccess && !string.IsNullOrWhiteSpace(thumbUpload.FileUrl))
-                            {
-                                videoThumbUrl = thumbUpload.FileUrl;
-                            }
-                        }
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogDebug(ex, "Video processing failed (duration/thumbnail)");
+                        _logger.LogDebug(ex, "Video duration extraction failed");
+                    }
+
+                    // إن أرسل العميل صورة مصغّرة للفيديو، ارفعها وخزّن رابطها
+                    if (request.VideoThumbnail != null && request.VideoThumbnail.FileContent?.Length > 0)
+                    {
+                        try
+                        {
+                            var posterName = Path.GetFileNameWithoutExtension(fileName) + "_poster" + (request.VideoThumbnail.FileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ? ".png" : ".jpg");
+                            var posterUpload = await _fileStorageService.UploadFileAsync(
+                                new MemoryStream(request.VideoThumbnail.FileContent),
+                                posterName,
+                                request.VideoThumbnail.ContentType ?? "image/jpeg",
+                                folderPath,
+                                cancellationToken
+                            );
+                            if (posterUpload.IsSuccess && !string.IsNullOrWhiteSpace(posterUpload.FileUrl))
+                            {
+                                videoThumbUrl = posterUpload.FileUrl;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogDebug(ex, "Client-provided video thumbnail upload failed");
+                        }
                     }
                 }
 
@@ -308,7 +320,7 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     Caption = request.Alt ?? string.Empty,
                     AltText = request.Alt ?? string.Empty,
                     Tags = JsonSerializer.Serialize(request.Tags ?? new List<string>()),
-                    // بالنسبة للفيديو نخزن رابط المصغّر كأساس للأحجام
+                    // بالنسبة للفيديو نخزن رابط المصغّر كأساس للأحجام إن توفّر
                     Sizes = thumbnailsBase,
                     IsMainImage = request.IsPrimary ?? false,
                     DisplayOrder = request.Order ?? 0,

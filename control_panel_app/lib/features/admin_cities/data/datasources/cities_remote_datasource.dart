@@ -3,6 +3,8 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exceptions.dart';
 import '../../../../core/models/paginated_result.dart';
 import '../models/city_model.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../../../core/utils/video_utils.dart';
 
 /// 🌐 Remote Data Source للمدن
 abstract class CitiesRemoteDataSource {
@@ -193,6 +195,16 @@ class CitiesRemoteDataSourceImpl implements CitiesRemoteDataSource {
       formData.fields
         ..add(const MapEntry('category', 'Gallery'))
         ..add(MapEntry('cityName', cityName));
+
+      // If uploading a video, attach a generated poster too
+      if (AppConstants.isVideoFile(imagePath)) {
+        final posterPath = await VideoUtils.generateVideoThumbnail(imagePath);
+        if (posterPath != null) {
+          formData.files.add(MapEntry(
+            'videoThumbnail', await MultipartFile.fromFile(posterPath),
+          ));
+        }
+      }
 
       final response = await apiClient.post(
         '$_imagesPath/upload',

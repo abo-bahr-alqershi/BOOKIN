@@ -10,6 +10,7 @@ abstract class UnitImagesRepository {
     String? unitId,
     String? tempKey,
     required String filePath,
+    String? videoThumbnailPath,
     String? category,
     String? alt,
     bool isPrimary = false,

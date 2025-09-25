@@ -3,6 +3,8 @@
 import 'package:dio/dio.dart';
 import 'package:bookn_cp_app/core/network/api_client.dart';
 import 'package:bookn_cp_app/core/error/exceptions.dart';
+import 'package:bookn_cp_app/core/constants/app_constants.dart';
+import 'package:bookn_cp_app/core/utils/video_utils.dart';
 import '../models/property_image_model.dart';
 
 abstract class PropertyImagesRemoteDataSource {
@@ -44,6 +46,10 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
     ProgressCallback? onSendProgress,
   }) async {
     try {
+      String? posterPath;
+      if (AppConstants.isVideoFile(filePath)) {
+        posterPath = await VideoUtils.generateVideoThumbnail(filePath);
+      }
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath),
         'propertyId': propertyId,
@@ -53,6 +59,8 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
         'isPrimary': isPrimary,
         if (order != null) 'order': order,
         if (tags != null && tags.isNotEmpty) 'tags': tags.join(','),
+        if (posterPath != null)
+          'videoThumbnail': await MultipartFile.fromFile(posterPath),
       });
       
       final response = await apiClient.post(

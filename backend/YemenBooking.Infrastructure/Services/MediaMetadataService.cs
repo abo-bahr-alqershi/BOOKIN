@@ -37,7 +37,7 @@ namespace YemenBooking.Infrastructure.Services
                 // Try FFMpegCore (wraps ffprobe)
                 try
                 {
-                    var mediaInfo = await FFProbe.AnalyseAsync(filePath, cancellationToken);
+                    var mediaInfo = await FFProbe.AnalyseAsync(filePath, null);
                     if (mediaInfo != null)
                     {
                         var totalSeconds = mediaInfo.Duration.TotalSeconds;

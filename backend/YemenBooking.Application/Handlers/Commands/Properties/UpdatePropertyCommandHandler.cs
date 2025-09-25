@@ -174,7 +174,7 @@ namespace YemenBooking.Application.Handlers.Commands.Properties
                     // Move thumbnail files if exist
                     var nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
                     var ext = Path.GetExtension(fileName);
-                    var thumbnailSuffixes = new[] { "_thumb", "_thumb48", "_thumb64" };
+                    var thumbnailSuffixes = new[] { "_thumb", "_thumb48", "_thumb64", "_poster" };
                     foreach (var suffix in thumbnailSuffixes)
                     {
                         var thumbSource = $"{tempFolder}/{nameWithoutExt}{suffix}{ext}";

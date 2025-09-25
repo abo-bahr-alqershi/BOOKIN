@@ -38,6 +38,18 @@ namespace YemenBooking.Api.Controllers.Images
             using var ms = new MemoryStream();
             await request.File.CopyToAsync(ms);
             var fileBytes = ms.ToArray();
+            FileUploadRequest? clientPoster = null;
+            if (request.VideoThumbnail != null)
+            {
+                using var ps = new MemoryStream();
+                await request.VideoThumbnail.CopyToAsync(ps);
+                clientPoster = new FileUploadRequest
+                {
+                    FileName = request.VideoThumbnail.FileName,
+                    FileContent = ps.ToArray(),
+                    ContentType = request.VideoThumbnail.ContentType
+                };
+            }
 
             var command = new UploadImageCommand
             {
@@ -48,6 +60,7 @@ namespace YemenBooking.Api.Controllers.Images
                     FileContent = fileBytes,
                     ContentType = request.File.ContentType
                 },
+                VideoThumbnail = clientPoster,
                 Name = Path.GetFileNameWithoutExtension(request.File.FileName),
                 Extension = Path.GetExtension(request.File.FileName),
                     ImageType = ImageType.Management,
