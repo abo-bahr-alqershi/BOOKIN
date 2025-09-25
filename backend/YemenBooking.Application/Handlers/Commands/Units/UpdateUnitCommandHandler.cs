@@ -129,9 +129,23 @@ namespace YemenBooking.Application.Handlers.Commands.Units
                 if (request.PricingMethod.HasValue)
                     unit.PricingMethod = request.PricingMethod.Value;
                 if (request.AllowsCancellation.HasValue)
+                {
                     unit.AllowsCancellation = request.AllowsCancellation.Value;
-                if (request.CancellationWindowDays.HasValue)
+                    if (!unit.AllowsCancellation)
+                    {
+                        // إذا تم إيقاف الإلغاء، نظف نافذة الإلغاء
+                        unit.CancellationWindowDays = null;
+                    }
+                    else if (request.CancellationWindowDays.HasValue)
+                    {
+                        unit.CancellationWindowDays = request.CancellationWindowDays;
+                    }
+                }
+                else if (request.CancellationWindowDays.HasValue)
+                {
+                    // تحديث نافذة الإلغاء عند عدم تغيير سماحية الإلغاء
                     unit.CancellationWindowDays = request.CancellationWindowDays;
+                }
 
                 unit.UpdatedBy = _currentUserService.UserId;
                 unit.UpdatedAt = DateTime.UtcNow;
