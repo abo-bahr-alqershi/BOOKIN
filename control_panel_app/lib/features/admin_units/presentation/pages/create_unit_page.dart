@@ -736,6 +736,27 @@ class _CreateUnitPageState extends State<CreateUnitPage>
 
           const SizedBox(height: 16),
 
+          // Cancellation policy review
+          _buildReviewCard(
+            title: 'سياسة الإلغاء',
+            items: [
+              {
+                'label': 'السماح بإلغاء الحجز',
+                'value': _allowsCancellation ? 'نعم' : 'لا',
+              },
+              {
+                'label': 'نافذة الإلغاء (أيام)',
+                'value': _allowsCancellation
+                    ? (_cancellationDaysController.text.isEmpty
+                        ? 'غير محدد'
+                        : _cancellationDaysController.text)
+                    : 'غير متاح',
+              },
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
           _buildReviewCard(
             title: 'المميزات',
             items: [
