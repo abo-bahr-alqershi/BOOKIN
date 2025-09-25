@@ -1137,6 +1137,36 @@ class _EditUnitPageState extends State<EditUnitPage>
 
           const SizedBox(height: 16),
 
+          // Cancellation policy review with change highlighting
+          _buildReviewCard(
+            title: 'سياسة الإلغاء',
+            items: [
+              {
+                'label': 'السماح بإلغاء الحجز',
+                'value': _allowsCancellation ? 'نعم' : 'لا',
+                'changed': _originalUnit == null
+                    ? false
+                    : (_allowsCancellation != _originalUnit!.allowsCancellation),
+              },
+              {
+                'label': 'نافذة الإلغاء (أيام)',
+                'value': _allowsCancellation
+                    ? (_cancellationDaysController.text.isEmpty
+                        ? 'غير محدد'
+                        : _cancellationDaysController.text)
+                    : 'غير متاح',
+                'changed': _originalUnit == null
+                    ? false
+                    : ((_originalUnit!.cancellationWindowDays ?? -1).toString() !=
+                        (_cancellationDaysController.text.isEmpty
+                            ? '-1'
+                            : _cancellationDaysController.text)),
+              },
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
           _buildReviewCard(
             title: 'الوصف',
             items: [
