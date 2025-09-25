@@ -244,9 +244,14 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                 }
 
                 // حدد قيمة thumbnails الأساسية
-                var thumbnailsBase = (isVideo && !string.IsNullOrWhiteSpace(videoThumbUrl))
-                    ? videoThumbUrl!
-                    : uploadResult.FileUrl;
+                // لا تضع رابط ملف الفيديو داخل Thumbnails حتى لا تحاول الواجهة عرضه كصورة
+                string? thumbnailsBase = uploadResult.FileUrl;
+                if (isVideo)
+                {
+                    thumbnailsBase = !string.IsNullOrWhiteSpace(videoThumbUrl)
+                        ? videoThumbUrl!
+                        : string.Empty; // اتركها فارغة إن لم يتوفر بوستر
+                }
 
                 // بناء DTO للصورة للرد
                 var imageDto = new ImageDto
@@ -270,10 +275,10 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     ProcessingStatus = "ready",
                     Thumbnails = new ImageThumbnailsDto
                     {
-                        Small = thumbnailsBase,
-                        Medium = thumbnailsBase,
-                        Large = thumbnailsBase,
-                        Hd = thumbnailsBase
+                        Small = thumbnailsBase ?? string.Empty,
+                        Medium = thumbnailsBase ?? string.Empty,
+                        Large = thumbnailsBase ?? string.Empty,
+                        Hd = thumbnailsBase ?? string.Empty
                     },
                     MediaType = isVideo ? "video" : "image",
                     Duration = videoDurationSeconds,

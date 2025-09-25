@@ -102,10 +102,11 @@ namespace YemenBooking.Application.Handlers.Queries.Images
                 ProcessingStatus = i.Status.ToString(),
                 Thumbnails = new ImageThumbnailsDto
                 {
-                    Small = i.Sizes,
-                    Medium = i.Sizes,
-                    Large = i.Sizes,
-                    Hd = i.Sizes
+                    // إذا كان فيديو، لا ترجع روابط الـ thumbnails كـ mp4؛ استخدم VideoThumbnail إن توفر وإلا اتركها فارغة
+                    Small = ResolveThumbnail(i, preferHd:false),
+                    Medium = ResolveThumbnail(i, preferHd:false),
+                    Large = ResolveThumbnail(i, preferHd:true),
+                    Hd = ResolveThumbnail(i, preferHd:true)
                 },
                 MediaType = string.IsNullOrWhiteSpace(i.MediaType)
                     ? ((i.Type?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) ?? false) ? "video" : "image")
@@ -126,6 +127,23 @@ namespace YemenBooking.Application.Handlers.Queries.Images
             };
 
             return ResultDto<PaginatedResultDto<ImageDto>>.Ok(paged);
+        }
+
+        private static string ResolveThumbnail(Core.Entities.PropertyImage i, bool preferHd)
+        {
+            var isVideo = string.Equals(i.MediaType, "video", StringComparison.OrdinalIgnoreCase)
+                          || (i.Type?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) ?? false)
+                          || i.Url.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)
+                          || i.Url.EndsWith(".webm", StringComparison.OrdinalIgnoreCase)
+                          || i.Url.EndsWith(".mov", StringComparison.OrdinalIgnoreCase)
+                          || i.Url.EndsWith(".mkv", StringComparison.OrdinalIgnoreCase);
+
+            if (isVideo)
+            {
+                // استخدم VideoThumbnail إن توفر؛ وإلا اترك الحقل فارغاً كي تتعامل الواجهة مع Placeholder
+                return string.IsNullOrWhiteSpace(i.VideoThumbnailUrl) ? string.Empty : i.VideoThumbnailUrl!;
+            }
+            return i.Sizes ?? string.Empty;
         }
     }
 } 

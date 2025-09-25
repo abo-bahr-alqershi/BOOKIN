@@ -118,16 +118,9 @@ namespace YemenBooking.Api.Controllers.Images
                     img.VideoThumbnail = baseUrl + (img.VideoThumbnail!.StartsWith("/") ? img.VideoThumbnail : "/" + img.VideoThumbnail);
                 }
                 // Only generate thumbnails if the DTO provided a thumbnail path
-                if (img.Thumbnails != null && !string.IsNullOrEmpty(img.Thumbnails.Small))
+                if (img.Thumbnails != null)
                 {
-                    // Generate thumbnail URL by appending _thumb before extension
-                    var uri = new Uri(img.Url);
-                    var path = uri.AbsolutePath; // e.g. "/uploads/.../file.png"
-                    var folder = Path.GetDirectoryName(path)?.Replace("\\", "/") ?? string.Empty;
-                    var fileName = Path.GetFileNameWithoutExtension(path);
-                    var ext = Path.GetExtension(path);
-                    var thumbRelative = folder + "/" + fileName + "_thumb" + ext;
-                    var thumbUrl = baseUrl + (thumbRelative.StartsWith("/") ? thumbRelative : "/" + thumbRelative);
+                    // Normalize absolute URLs only; لا تحاول اشتقاق Thumbnail من رابط الفيديو
                     img.Thumbnails.Small = string.IsNullOrWhiteSpace(img.Thumbnails.Small) ? img.Thumbnails.Small : (img.Thumbnails.Small.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? img.Thumbnails.Small : baseUrl + (img.Thumbnails.Small.StartsWith("/") ? img.Thumbnails.Small : "/" + img.Thumbnails.Small));
                     img.Thumbnails.Medium = string.IsNullOrWhiteSpace(img.Thumbnails.Medium) ? img.Thumbnails.Medium : (img.Thumbnails.Medium.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? img.Thumbnails.Medium : baseUrl + (img.Thumbnails.Medium.StartsWith("/") ? img.Thumbnails.Medium : "/" + img.Thumbnails.Medium));
                     img.Thumbnails.Large = string.IsNullOrWhiteSpace(img.Thumbnails.Large) ? img.Thumbnails.Large : (img.Thumbnails.Large.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? img.Thumbnails.Large : baseUrl + (img.Thumbnails.Large.StartsWith("/") ? img.Thumbnails.Large : "/" + img.Thumbnails.Large));
