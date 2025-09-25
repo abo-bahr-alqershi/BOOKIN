@@ -268,7 +268,10 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     Status = ImageStatus.Approved,
                     UploadedAt = imageDto.UploadedAt,
                     CreatedBy = _currentUserService.UserId,
-                    UpdatedAt = imageDto.UploadedAt
+                    UpdatedAt = imageDto.UploadedAt,
+                    MediaType = isVideo ? "video" : "image",
+                    DurationSeconds = null,
+                    VideoThumbnailUrl = null
                 };
                 await _imageRepository.CreatePropertyImageAsync(imageEntity, cancellationToken);
                 

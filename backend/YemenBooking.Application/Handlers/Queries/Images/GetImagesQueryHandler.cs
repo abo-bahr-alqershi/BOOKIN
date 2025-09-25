@@ -107,9 +107,11 @@ namespace YemenBooking.Application.Handlers.Queries.Images
                     Large = i.Sizes,
                     Hd = i.Sizes
                 },
-                MediaType = (i.Type?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) ?? false) ? "video" : "image",
-                Duration = null,
-                VideoThumbnail = null
+                MediaType = string.IsNullOrWhiteSpace(i.MediaType)
+                    ? ((i.Type?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) ?? false) ? "video" : "image")
+                    : i.MediaType,
+                Duration = i.DurationSeconds,
+                VideoThumbnail = string.IsNullOrWhiteSpace(i.VideoThumbnailUrl) ? null : i.VideoThumbnailUrl
             }).ToList();
 
             // 5. إعداد نتيجة الترقيم

@@ -75,6 +75,19 @@ public class PropertyImageConfiguration : IEntityTypeConfiguration<PropertyImage
         builder.Property(pi => pi.Status).IsRequired();
         builder.Property(pi => pi.IsMainImage).HasDefaultValue(false);
         
+        // Media fields
+        builder.Property(pi => pi.MediaType)
+               .HasMaxLength(20)
+               .HasDefaultValue("image")
+               .HasComment("نوع الوسائط image/video");
+        builder.Property(pi => pi.DurationSeconds)
+               .IsRequired(false)
+               .HasComment("مدة الفيديو بالثواني");
+        builder.Property(pi => pi.VideoThumbnailUrl)
+               .HasMaxLength(500)
+               .IsRequired(false)
+               .HasComment("رابط المصغرة للفيديو");
+        
         // تكوين العلاقات
         builder.HasOne(pi => pi.Property)
                .WithMany(p => p.Images)
