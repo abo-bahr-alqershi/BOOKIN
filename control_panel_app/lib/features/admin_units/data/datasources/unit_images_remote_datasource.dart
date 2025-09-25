@@ -3,6 +3,8 @@
 import 'package:dio/dio.dart';
 import 'package:bookn_cp_app/core/network/api_client.dart';
 import 'package:bookn_cp_app/core/error/exceptions.dart';
+import 'package:bookn_cp_app/core/constants/app_constants.dart';
+import 'package:bookn_cp_app/core/utils/video_utils.dart';
 import '../models/unit_image_model.dart';
 
 abstract class UnitImagesRemoteDataSource {
@@ -37,6 +39,7 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
     String? unitId,
     String? tempKey,
     required String filePath,
+    String? videoThumbnailPath,
     String? category,
     String? alt,
     bool isPrimary = false,
@@ -45,6 +48,11 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
     ProgressCallback? onSendProgress,
   }) async {
     try {
+      // Auto-generate a poster if not provided and it's a video file
+      String? posterPath = videoThumbnailPath;
+      if (posterPath == null && AppConstants.isVideoFile(filePath)) {
+        posterPath = await VideoUtils.generateVideoThumbnail(filePath);
+      }
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath),
         'unitId': unitId,
@@ -54,8 +62,8 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
         'isPrimary': isPrimary,
         if (order != null) 'order': order,
         if (tags != null && tags.isNotEmpty) 'tags': tags.join(','),
-        if (videoThumbnailPath != null)
-          'videoThumbnail': await MultipartFile.fromFile(videoThumbnailPath),
+        if (posterPath != null)
+          'videoThumbnail': await MultipartFile.fromFile(posterPath),
       });
       
       final response = await apiClient.post(
