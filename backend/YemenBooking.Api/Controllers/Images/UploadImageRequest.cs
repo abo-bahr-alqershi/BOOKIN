@@ -12,6 +12,13 @@ namespace YemenBooking.Api.Controllers.Images
         [FromForm(Name = "file")]
         public IFormFile File { get; set; } = null!;
 
+        /// <summary>
+        /// صورة مصغرة للفيديو يرسلها العميل (اختياري)
+        /// Optional client-provided video thumbnail image
+        /// </summary>
+        [FromForm(Name = "videoThumbnail")]
+        public IFormFile? VideoThumbnail { get; set; }
+
         [FromForm(Name = "tempKey")]
         public string? TempKey { get; set; }
 

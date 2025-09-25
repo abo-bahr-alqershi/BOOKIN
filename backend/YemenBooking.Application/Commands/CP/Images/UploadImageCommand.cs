@@ -25,6 +25,12 @@ namespace YemenBooking.Application.Commands.Images
         public FileUploadRequest File { get; set; } = null!;
 
         /// <summary>
+        /// صورة مصغرة للفيديو يرسلها العميل (اختياري)
+        /// Client-provided video thumbnail (optional)
+        /// </summary>
+        public FileUploadRequest? VideoThumbnail { get; set; }
+
+        /// <summary>
         /// اسم الملف بدون امتداد
         /// File name without extension
         /// </summary>

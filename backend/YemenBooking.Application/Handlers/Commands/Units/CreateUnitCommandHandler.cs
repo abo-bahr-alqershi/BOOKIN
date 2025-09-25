@@ -213,7 +213,7 @@ namespace YemenBooking.Application.Handlers.Commands.Units
                     // Move thumbnail files if exist
                     var nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
                     var ext = Path.GetExtension(fileName);
-                    var thumbnailSuffixes = new[] { "_thumb", "_thumb48", "_thumb64" };
+                    var thumbnailSuffixes = new[] { "_thumb", "_thumb48", "_thumb64", "_poster" };
                     foreach (var suffix in thumbnailSuffixes)
                     {
                         var thumbSource = $"{tempFolder}/{nameWithoutExt}{suffix}{ext}";
@@ -264,7 +264,7 @@ namespace YemenBooking.Application.Handlers.Commands.Units
 
                     var nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
                     var ext = Path.GetExtension(fileName);
-                    var thumbnailSuffixes = new[] { "_thumb", "_thumb48", "_thumb64" };
+                    var thumbnailSuffixes = new[] { "_thumb", "_thumb48", "_thumb64", "_poster" };
                     foreach (var suffix in thumbnailSuffixes)
                     {
                         await _fileStorageService.MoveFileAsync($"temp/{request.TempKey}/{nameWithoutExt}{suffix}{ext}", $"{destFolderPath}/{nameWithoutExt}{suffix}{ext}", cancellationToken);

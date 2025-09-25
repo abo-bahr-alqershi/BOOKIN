@@ -35,13 +35,43 @@ namespace YemenBooking.Application.Handlers.Commands.Images
 
         public async Task<ResultDto<ImageDto>> Handle(GenerateThumbnailsCommand request, CancellationToken cancellationToken)
         {
-            // جلب بيانات الصورة من المستودع
+            // تم إلغاء توليد المصغرات من الخادم. احتفظنا بمعالج الأمر فقط للتماشي مع الواجهة القديمة.
+            // أعد بيانات الصورة دون تعديل.
             var image = await _imageRepository.GetPropertyImageByIdAsync(request.ImageId, cancellationToken);
             if (image == null)
                 return ResultDto<ImageDto>.Failure("الصورة غير موجودة");
 
-            // TODO: تنفيذ منطق توليد المصغرات الإضافية باستخدام _imageProcessingService و _fileStorageService
-            throw new NotImplementedException("منطق توليد المصغرات لم يتم تنفيذه بعد");
+            var dto = new ImageDto
+            {
+                Id = image.Id,
+                Url = image.Url,
+                Filename = image.Name,
+                Size = image.SizeBytes,
+                MimeType = image.Type,
+                UploadedAt = image.UploadedAt,
+                UploadedBy = image.CreatedBy ?? Guid.Empty,
+                Order = image.DisplayOrder,
+                IsPrimary = image.IsMain || image.IsMainImage,
+                PropertyId = image.PropertyId,
+                UnitId = image.UnitId,
+                Category = image.Category,
+                Alt = image.AltText,
+                ProcessingStatus = image.Status.ToString(),
+                Thumbnails = new ImageThumbnailsDto
+                {
+                    Small = image.Sizes,
+                    Medium = image.Sizes,
+                    Large = image.Sizes,
+                    Hd = image.Sizes
+                },
+                MediaType = string.IsNullOrWhiteSpace(image.MediaType)
+                    ? ((image.Type?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) ?? false) ? "video" : "image")
+                    : image.MediaType,
+                Duration = image.DurationSeconds,
+                VideoThumbnail = string.IsNullOrWhiteSpace(image.VideoThumbnailUrl) ? null : image.VideoThumbnailUrl
+            };
+
+            return ResultDto<ImageDto>.Succeeded(dto, "تم تجاوز توليد المصغرات في الخادم؛ المصغرات تُولّد في العميل");
         }
     }
 } 

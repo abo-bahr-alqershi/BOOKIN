@@ -17,6 +17,7 @@ class UploadUnitImageUseCase implements UseCase<UnitImage, UploadImageParams> {
       unitId: params.unitId,
       tempKey: params.tempKey,
       filePath: params.filePath,
+      videoThumbnailPath: params.videoThumbnailPath,
       category: params.category,
       alt: params.alt,
       isPrimary: params.isPrimary,
@@ -31,6 +32,7 @@ class UploadImageParams {
   final String? unitId;
   final String? tempKey;
   final String filePath;
+  final String? videoThumbnailPath;
   final String? category;
   final String? alt;
   final bool isPrimary;
@@ -42,6 +44,7 @@ class UploadImageParams {
     this.unitId,
     this.tempKey,
     required this.filePath,
+    this.videoThumbnailPath,
     this.category,
     this.alt,
     this.isPrimary = false,
