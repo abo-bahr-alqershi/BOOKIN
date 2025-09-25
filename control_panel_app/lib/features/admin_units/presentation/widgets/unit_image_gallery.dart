@@ -3,6 +3,7 @@
 
 import 'dart:async';
 import 'package:bookn_cp_app/core/constants/app_constants.dart';
+import 'package:bookn_cp_app/core/utils/image_utils.dart';
 import 'package:bookn_cp_app/core/utils/video_utils.dart';
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:bookn_cp_app/core/widgets/video_player_widget.dart';
@@ -2838,7 +2839,11 @@ class UnitImageGalleryState extends State<UnitImageGallery>
     // Guard against attempting to render a video URL as an image
     final thumbUrl = ImageUtils.resolveUrl(video.thumbnails.medium);
     final lower = thumbUrl.toLowerCase();
-    final looksLikeImage = lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.webp') || lower.endsWith('.gif');
+    final looksLikeImage = lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.gif');
     if (looksLikeImage) {
       return CachedNetworkImage(
         imageUrl: thumbUrl,
