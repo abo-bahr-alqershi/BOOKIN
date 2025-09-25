@@ -22,12 +22,11 @@ namespace YemenBooking.Infrastructure.Services
             _ffmpegPath = Environment.GetEnvironmentVariable("FFMPEG_PATH")?.Trim() ?? "ffmpeg";
         }
 
-        public Task<bool> TryGenerateThumbnailAsync(string videoFilePath, CancellationToken cancellationToken, out byte[]? outputJpegBytes)
+        public Task<byte[]?> TryGenerateThumbnailAsync(string videoFilePath, CancellationToken cancellationToken)
         {
-            outputJpegBytes = null;
             try
             {
-                if (!File.Exists(videoFilePath)) return Task.FromResult(false);
+                if (!File.Exists(videoFilePath)) return Task.FromResult<byte[]?>(null);
 
                 // استخدم ffmpeg لاستخراج إطار عند ثانية 1 (أغلب الفيديوهات تحتوي إطار مبكر)
                 var tempPng = Path.Combine(Path.GetTempPath(), $"thumb_{Guid.NewGuid():N}.jpg");
@@ -48,17 +47,16 @@ namespace YemenBooking.Infrastructure.Services
                 {
                     var err = proc.StandardError.ReadToEnd();
                     _logger.LogDebug("ffmpeg failed to generate thumbnail: {Err}", err);
-                    return Task.FromResult(false);
+                    return Task.FromResult<byte[]?>(null);
                 }
-                outputJpegBytes = File.ReadAllBytes(tempPng);
+                var bytes = File.ReadAllBytes(tempPng);
                 try { File.Delete(tempPng); } catch { /* ignore */ }
-                return Task.FromResult(true);
+                return Task.FromResult<byte[]?>(bytes);
             }
             catch (Exception ex)
             {
                 _logger.LogDebug(ex, "Error generating thumbnail using ffmpeg");
-                outputJpegBytes = null;
-                return Task.FromResult(false);
+                return Task.FromResult<byte[]?>(null);
             }
         }
     }

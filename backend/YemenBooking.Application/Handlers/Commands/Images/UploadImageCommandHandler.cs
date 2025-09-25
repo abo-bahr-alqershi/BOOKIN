@@ -226,7 +226,8 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     try
                     {
                         videoDurationSeconds = await _mediaMetadataService.TryGetDurationSecondsAsync(uploadResult.FilePath!, request.File.ContentType, cancellationToken);
-                        if (_mediaThumbnailService.TryGenerateThumbnailAsync(uploadResult.FilePath!, cancellationToken, out var thumbBytes).Result && thumbBytes != null)
+                        var thumbBytes = await _mediaThumbnailService.TryGenerateThumbnailAsync(uploadResult.FilePath!, cancellationToken);
+                        if (thumbBytes != null)
                         {
                             var thumbName = Path.GetFileNameWithoutExtension(fileName) + "_poster.jpg";
                             var thumbUpload = await _fileStorageService.UploadFileAsync(thumbBytes, thumbName, "image/jpeg", folderPath, cancellationToken);
