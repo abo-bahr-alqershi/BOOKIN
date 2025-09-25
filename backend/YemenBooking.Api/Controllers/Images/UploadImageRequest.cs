@@ -27,6 +27,12 @@ namespace YemenBooking.Api.Controllers.Images
         [FromForm(Name = "cityName")]
         public string? CityName { get; set; }
 
+        /// <summary>
+        /// Alias to accept cityId from app; mapped to CityName for backend
+        /// </summary>
+        [FromForm(Name = "cityId")]
+        public string? CityId { get; set; }
+
         [FromForm(Name = "alt")]
         public string? Alt { get; set; }
 

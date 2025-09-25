@@ -40,6 +40,7 @@ namespace YemenBooking.Application.Handlers.Queries.Images
                 query = query.Where(i => i.UnitId == request.UnitId.Value);
             if (!string.IsNullOrWhiteSpace(request.CityName))
                 query = query.Where(i => i.CityName == request.CityName);
+            // Backward compatibility: allow cityId alias mapped at API level
             if (request.Category.HasValue)
                 query = query.Where(i => i.Category == request.Category.Value);
             if (!string.IsNullOrWhiteSpace(request.Search))
@@ -105,7 +106,10 @@ namespace YemenBooking.Application.Handlers.Queries.Images
                     Medium = i.Sizes,
                     Large = i.Sizes,
                     Hd = i.Sizes
-                }
+                },
+                MediaType = (i.Type?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) ?? false) ? "video" : "image",
+                Duration = null,
+                VideoThumbnail = null
             }).ToList();
 
             // 5. إعداد نتيجة الترقيم

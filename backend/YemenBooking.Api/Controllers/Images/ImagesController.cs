@@ -54,11 +54,15 @@ namespace YemenBooking.Api.Controllers.Images
                 Category = Enum.TryParse<ImageCategory>(request.Category, true, out var cat) ? cat : ImageCategory.Gallery,
                 PropertyId = string.IsNullOrEmpty(request.PropertyId) ? (Guid?)null : Guid.Parse(request.PropertyId),
                 UnitId = string.IsNullOrEmpty(request.UnitId) ? (Guid?)null : Guid.Parse(request.UnitId),
-                    CityName = string.IsNullOrWhiteSpace(request.CityName) ? null : request.CityName,
+                    CityName = !string.IsNullOrWhiteSpace(request.CityName) ? request.CityName : (!string.IsNullOrWhiteSpace(request.CityId) ? request.CityId : null),
                 Alt = request.Alt,
                 IsPrimary = request.IsPrimary,
                 Order = request.Order,
-                Tags = string.IsNullOrEmpty(request.Tags) ? null : System.Text.Json.JsonSerializer.Deserialize<List<string>>(request.Tags)
+                Tags = string.IsNullOrEmpty(request.Tags)
+                    ? null
+                    : (request.Tags.TrimStart().StartsWith("[")
+                        ? System.Text.Json.JsonSerializer.Deserialize<List<string>>(request.Tags)
+                        : new List<string>(request.Tags.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)))
             };
 
             var result = await _mediator.Send(command);

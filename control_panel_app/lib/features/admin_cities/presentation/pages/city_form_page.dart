@@ -857,15 +857,15 @@ class _CityFormPageState extends State<CityFormPage>
           ),
           const SizedBox(height: 20),
           CityImageGallery(
-            images: _images,
-            onImagesChanged: (images) {
+            initialLocalImages: _images,
+            onLocalImagesChanged: (paths) {
               setState(() {
-                _images = images;
+                _images = List.from(paths);
                 _hasChanges = true;
               });
               // ارفع أي صور محلية فوراً مثل آلية العقارات ثم استبدلها بالرابط
-              for (int i = 0; i < images.length; i++) {
-                final path = images[i];
+              for (int i = 0; i < paths.length; i++) {
+                final path = paths[i];
                 final lower = path.toLowerCase();
                 final isRemote = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('/uploads') || lower.startsWith('uploads/') || lower.startsWith('/images') || lower.startsWith('images/');
                 if (!isRemote) {
@@ -910,7 +910,6 @@ class _CityFormPageState extends State<CityFormPage>
                 }
               }
             },
-            uploadProgress: _uploadProgress,
             maxImages: 10,
           ),
         ],

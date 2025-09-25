@@ -34,5 +34,10 @@ namespace YemenBooking.Application.Commands.Images
         /// </summary>
         public string? TempKey { get; set; }
 
+        /// <summary>
+        /// اسم المدينة (اختياري)
+        /// City name (optional)
+        /// </summary>
+        public string? CityName { get; set; }
     }
 } 
