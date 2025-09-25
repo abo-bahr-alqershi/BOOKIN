@@ -2828,7 +2828,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
     // Prefer explicit video poster if provided by backend
     if (video.videoThumbnail != null && video.videoThumbnail!.isNotEmpty) {
       return CachedNetworkImage(
-        imageUrl: video.videoThumbnail!,
+        imageUrl: ImageUtils.resolveUrl(video.videoThumbnail!),
         fit: BoxFit.cover,
         placeholder: (context, url) => buildVideoPlaceholder(),
         errorWidget: (context, url, error) => buildVideoPlaceholder(),
@@ -2836,7 +2836,7 @@ class UnitImageGalleryState extends State<UnitImageGallery>
     }
 
     // Guard against attempting to render a video URL as an image
-    final thumbUrl = video.thumbnails.medium;
+    final thumbUrl = ImageUtils.resolveUrl(video.thumbnails.medium);
     final lower = thumbUrl.toLowerCase();
     final looksLikeImage = lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.webp') || lower.endsWith('.gif');
     if (looksLikeImage) {
