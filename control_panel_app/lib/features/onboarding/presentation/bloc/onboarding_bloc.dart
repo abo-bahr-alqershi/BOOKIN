@@ -1,16 +1,17 @@
+import 'package:bookn_cp_app/features/reference/domain/usecases/get_cities_usecase.dart'
+    as ref_cities;
+import 'package:bookn_cp_app/features/reference/domain/usecases/get_currencies_usecase.dart'
+    as ref_currencies;
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:bookn_cp_app/features/onboarding/presentation/bloc/onboarding_event.dart';
 import 'package:bookn_cp_app/features/onboarding/presentation/bloc/onboarding_state.dart';
 import 'package:bookn_cp_app/services/local_storage_service.dart';
-import 'package:bookn_cp_app/features/reference/domain/usecases/get_cities_usecase.dart';
-import 'package:bookn_cp_app/features/reference/domain/usecases/get_currencies_usecase.dart';
 import 'package:bookn_cp_app/core/usecases/usecase.dart';
 
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   final LocalStorageService localStorage;
-  final GetCitiesUseCase getCitiesUseCase;
-  final GetCurrenciesUseCase getCurrenciesUseCase;
+  final ref_cities.GetCitiesUseCase getCitiesUseCase;
+  final ref_currencies.GetCurrenciesUseCase getCurrenciesUseCase;
 
   OnboardingBloc({
     required this.localStorage,

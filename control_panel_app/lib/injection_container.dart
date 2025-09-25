@@ -80,6 +80,25 @@ import 'features/settings/domain/usecases/update_theme_usecase.dart'
 import 'features/settings/domain/usecases/update_notification_settings_usecase.dart'
     as st_uc_notif;
 
+// Features - Onboarding
+import 'features/onboarding/presentation/bloc/onboarding_bloc.dart'
+    as onboarding_bloc;
+
+// Features - Reference
+import 'features/reference/presentation/bloc/reference_bloc.dart' as ref_bloc;
+import 'features/reference/domain/repositories/reference_repository.dart'
+    as ref_repo;
+import 'features/reference/data/repositories/reference_repository_impl.dart'
+    as ref_repo_impl;
+import 'features/reference/data/datasources/reference_remote_datasource.dart'
+    as ref_ds_remote;
+import 'features/reference/data/datasources/reference_local_datasource.dart'
+    as ref_ds_local;
+import 'features/reference/domain/usecases/get_cities_usecase.dart'
+    as ref_uc_cities;
+import 'features/reference/domain/usecases/get_currencies_usecase.dart'
+    as ref_uc_currencies;
+
 // Features - Admin Currencies
 import 'features/admin_currencies/presentation/bloc/currencies_bloc.dart'
     as ac_bloc;
@@ -630,6 +649,12 @@ Future<void> init() async {
 
   // Features - Settings
   _initSettings();
+
+  // Features - Reference
+  _initReference();
+
+  // Features - Onboarding
+  _initOnboarding();
 
   // Features - Admin Bookings (repository + use cases)
   _initAdminBookings();
@@ -1687,6 +1712,42 @@ void _initTheme() {
       prefs: sl(),
     ),
   );
+}
+
+void _initOnboarding() {
+  sl.registerFactory(() => onboarding_bloc.OnboardingBloc(
+        localStorage: sl(),
+        getCitiesUseCase: sl<ref_uc_cities.GetCitiesUseCase>(),
+        getCurrenciesUseCase: sl<ref_uc_currencies.GetCurrenciesUseCase>(),
+      ));
+}
+
+void _initReference() {
+  // Bloc
+  sl.registerFactory(() => ref_bloc.ReferenceBloc(
+        getCitiesUseCase: sl<ref_uc_cities.GetCitiesUseCase>(),
+        getCurrenciesUseCase: sl<ref_uc_currencies.GetCurrenciesUseCase>(),
+        localStorage: sl(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton<ref_uc_cities.GetCitiesUseCase>(
+      () => ref_uc_cities.GetCitiesUseCase(sl()));
+  sl.registerLazySingleton<ref_uc_currencies.GetCurrenciesUseCase>(
+      () => ref_uc_currencies.GetCurrenciesUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<ref_repo.ReferenceRepository>(
+      () => ref_repo_impl.ReferenceRepositoryImpl(
+            remote: sl(),
+            local: sl(),
+          ));
+
+  // Data sources
+  sl.registerLazySingleton<ref_ds_remote.ReferenceRemoteDataSource>(
+      () => ref_ds_remote.ReferenceRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<ref_ds_local.ReferenceLocalDataSource>(
+      () => ref_ds_local.ReferenceLocalDataSourceImpl(localStorage: sl()));
 }
 
 void _initCore() {

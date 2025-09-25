@@ -1,7 +1,7 @@
 // lib/features/onboarding/presentation/pages/select_city_currency_page.dart
 
-import 'package:bookn_cp_app/features/admin_cities/domain/entities/city.dart';
-import 'package:bookn_cp_app/features/admin_currencies/domain/entities/currency.dart';
+import 'package:bookn_cp_app/features/reference/domain/entities/city.dart';
+import 'package:bookn_cp_app/features/reference/domain/entities/currency.dart';
 import 'package:bookn_cp_app/features/reference/presentation/bloc/reference_bloc.dart';
 import 'package:bookn_cp_app/features/reference/presentation/bloc/reference_event.dart';
 import 'package:bookn_cp_app/features/reference/presentation/bloc/reference_state.dart';

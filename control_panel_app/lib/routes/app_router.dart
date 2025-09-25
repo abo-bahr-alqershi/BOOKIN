@@ -113,7 +113,14 @@ import 'package:bookn_cp_app/features/notifications/presentation/pages/notificat
 import 'package:bookn_cp_app/features/notifications/presentation/pages/notification_settings_page.dart';
 import 'package:bookn_cp_app/features/admin_hub/presentation/pages/admin_hub_page.dart';
 import 'package:bookn_cp_app/features/settings/presentation/pages/language_settings_page.dart';
-import 'package:bookn_cp_app/features/settings/presentation/bloc/settings_bloc.dart' as st_bloc;
+import 'package:bookn_cp_app/features/settings/presentation/bloc/settings_bloc.dart'
+    as st_bloc;
+import 'package:bookn_cp_app/features/onboarding/presentation/bloc/onboarding_bloc.dart'
+    as onboarding_bloc;
+import 'package:bookn_cp_app/features/onboarding/presentation/bloc/onboarding_event.dart'
+    as onboarding_event;
+import 'package:bookn_cp_app/features/reference/presentation/bloc/reference_bloc.dart'
+    as ref_bloc;
 // Helpers search pages
 import 'package:bookn_cp_app/features/helpers/presentation/pages/user_search_page.dart';
 import 'package:bookn_cp_app/features/helpers/presentation/pages/property_search_page.dart';
@@ -212,8 +219,20 @@ class AppRouter {
         // Onboarding
         GoRoute(
           path: '/onboarding/select-city-currency',
-          pageBuilder: (context, state) =>
-              slideUpTransitionPage(child: const SelectCityCurrencyPage()),
+          pageBuilder: (context, state) => slideUpTransitionPage(
+            child: MultiBlocProvider(
+              providers: [
+                BlocProvider<onboarding_bloc.OnboardingBloc>(
+                  create: (_) => di.sl<onboarding_bloc.OnboardingBloc>()
+                    ..add(const onboarding_event.CheckFirstRunEvent()),
+                ),
+                BlocProvider<ref_bloc.ReferenceBloc>(
+                  create: (_) => di.sl<ref_bloc.ReferenceBloc>(),
+                ),
+              ],
+              child: const SelectCityCurrencyPage(),
+            ),
+          ),
         ),
         GoRoute(
           path: '/main',
