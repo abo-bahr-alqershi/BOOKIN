@@ -242,6 +242,11 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     }
                 }
 
+                // حدد قيمة thumbnails الأساسية
+                var thumbnailsBase = (isVideo && !string.IsNullOrWhiteSpace(videoThumbUrl))
+                    ? videoThumbUrl!
+                    : uploadResult.FileUrl;
+
                 // بناء DTO للصورة للرد
                 var imageDto = new ImageDto
                 {
@@ -262,7 +267,13 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     Category = request.Category,
                     Tags = request.Tags ?? new List<string>(),
                     ProcessingStatus = "ready",
-                    Thumbnails = new ImageThumbnailsDto(),
+                    Thumbnails = new ImageThumbnailsDto
+                    {
+                        Small = thumbnailsBase,
+                        Medium = thumbnailsBase,
+                        Large = thumbnailsBase,
+                        Hd = thumbnailsBase
+                    },
                     MediaType = isVideo ? "video" : "image",
                     Duration = videoDurationSeconds,
                     VideoThumbnail = videoThumbUrl
@@ -291,8 +302,8 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     Caption = request.Alt ?? string.Empty,
                     AltText = request.Alt ?? string.Empty,
                     Tags = JsonSerializer.Serialize(request.Tags ?? new List<string>()),
-                    // بالنسبة للفيديو لا توجد أحجام متعددة، نخزن الرابط كما هو
-                    Sizes = uploadResult.FileUrl,
+                    // بالنسبة للفيديو نخزن رابط المصغّر كأساس للأحجام
+                    Sizes = thumbnailsBase,
                     IsMainImage = request.IsPrimary ?? false,
                     DisplayOrder = request.Order ?? 0,
                     Status = ImageStatus.Approved,
