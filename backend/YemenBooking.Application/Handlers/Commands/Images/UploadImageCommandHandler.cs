@@ -232,7 +232,10 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     Category = request.Category,
                     Tags = request.Tags ?? new List<string>(),
                     ProcessingStatus = "ready",
-                    Thumbnails = new ImageThumbnailsDto()
+                    Thumbnails = new ImageThumbnailsDto(),
+                    MediaType = isVideo ? "video" : "image",
+                    Duration = null,
+                    VideoThumbnail = null
                 };
                 // Determine PropertyId association: maintain null if none
                 Guid? propertyAssociation = request.PropertyId;

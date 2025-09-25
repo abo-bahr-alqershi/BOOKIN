@@ -13,5 +13,6 @@ public enum ImageCategory
   Documents,
   Avatar,
   Cover,
-  Gallery
+  Gallery,
+  Video
 } 

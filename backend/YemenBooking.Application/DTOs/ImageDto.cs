@@ -117,6 +117,24 @@ namespace YemenBooking.Application.DTOs
         /// Image thumbnails in various sizes
         /// </summary>
         public ImageThumbnailsDto Thumbnails { get; set; } = new ImageThumbnailsDto();
+
+        /// <summary>
+        /// نوع الوسائط (image أو video)
+        /// Media type (image or video)
+        /// </summary>
+        public string MediaType { get; set; } = "image";
+
+        /// <summary>
+        /// مدة الفيديو بالثواني (اختياري)
+        /// Video duration in seconds (optional)
+        /// </summary>
+        public int? Duration { get; set; }
+
+        /// <summary>
+        /// صورة مصغرة للفيديو (اختياري)
+        /// Video thumbnail/poster (optional)
+        /// </summary>
+        public string? VideoThumbnail { get; set; }
     }
 
     /// <summary>
