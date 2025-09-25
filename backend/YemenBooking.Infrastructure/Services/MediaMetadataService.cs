@@ -6,14 +6,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using YemenBooking.Application.Interfaces.Services;
-using FFMpegCore;
-using FFMpegCore.Pipes;
+using MediaInfoLib;
 
 namespace YemenBooking.Infrastructure.Services
 {
     /// <summary>
-    /// خدمة استخراج بيانات الوسائط باستخدام ffprobe إن توفر، أو محاولات احتياطية بسيطة
-    /// Media metadata service using ffprobe when available
+    /// خدمة استخراج بيانات الوسائط باستخدام MediaInfo مع محاولات احتياطية بسيطة لبعض الصيغ
+    /// Media metadata service using MediaInfo with simple fallbacks for specific formats
     /// </summary>
     public class MediaMetadataService : IMediaMetadataService
     {
@@ -34,24 +33,26 @@ namespace YemenBooking.Infrastructure.Services
                               || Regex.IsMatch(Path.GetExtension(filePath), @"\.(mp3|wav|m4a|aac|flac|ogg|mp4|mov|mkv|webm)$", RegexOptions.IgnoreCase);
                 if (!isMedia) return null;
 
-                // Try FFMpegCore (wraps ffprobe)
+                // Use MediaInfo.DotNetWrapper to read duration (milliseconds)
                 try
                 {
-                    var mediaInfo = await FFProbe.AnalyseAsync(filePath, null);
-                    if (mediaInfo != null)
-                    {
-                        var totalSeconds = mediaInfo.Duration.TotalSeconds;
-                        if (totalSeconds > 0) return (int)Math.Round(totalSeconds);
-                        // Streams may contain duration too
-                        if (mediaInfo.PrimaryVideoStream?.Duration.TotalSeconds > 0)
-                            return (int)Math.Round(mediaInfo.PrimaryVideoStream.Duration.TotalSeconds);
-                        if (mediaInfo.PrimaryAudioStream?.Duration.TotalSeconds > 0)
-                            return (int)Math.Round(mediaInfo.PrimaryAudioStream.Duration.TotalSeconds);
-                    }
+                    using var mi = new MediaInfo();
+                    mi.Open(filePath);
+                    // Prefer General duration; fallback to Video then Audio
+                    var generalDurMs = mi.Get(StreamKind.General, 0, "Duration");
+                    var videoDurMs = mi.Get(StreamKind.Video, 0, "Duration");
+                    var audioDurMs = mi.Get(StreamKind.Audio, 0, "Duration");
+
+                    if (TryParseMilliseconds(generalDurMs, out var ms) && ms > 0)
+                        return (int)Math.Round(ms / 1000.0);
+                    if (TryParseMilliseconds(videoDurMs, out ms) && ms > 0)
+                        return (int)Math.Round(ms / 1000.0);
+                    if (TryParseMilliseconds(audioDurMs, out ms) && ms > 0)
+                        return (int)Math.Round(ms / 1000.0);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogDebug(ex, "FFMpegCore duration analyse failed");
+                    _logger.LogDebug(ex, "MediaInfo duration extraction failed");
                 }
 
                 // Fallbacks: lightweight parsers for specific formats (WAV)
@@ -72,6 +73,26 @@ namespace YemenBooking.Infrastructure.Services
         }
 
         // Parse helpers remain for WAV fallback
+
+        private static bool TryParseMilliseconds(string? value, out long milliseconds)
+        {
+            milliseconds = 0;
+            if (string.IsNullOrWhiteSpace(value)) return false;
+            // MediaInfo returns milliseconds as plain number string
+            if (long.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var ms))
+            {
+                milliseconds = ms;
+                return true;
+            }
+
+            // Sometimes duration may come as formatted string; attempt flexible parse
+            if (TimeSpanTryParseFlexible(value, out var ts))
+            {
+                milliseconds = (long)ts.TotalMilliseconds;
+                return true;
+            }
+            return false;
+        }
 
         private static bool TimeSpanTryParseFlexible(string input, out TimeSpan ts)
         {

@@ -12,7 +12,7 @@ using YemenBooking.Infrastructure.UnitOfWork;
 using YemenBooking.Core.Interfaces;
 using FluentValidation;
 using MediatR;
-using FFMpegCore;
+using MediaInfoLib;
 
 namespace YemenBooking.Api.Extensions
 {
@@ -39,8 +39,7 @@ namespace YemenBooking.Api.Extensions
             
             // Register media metadata service only (thumbnail generation handled in client)
             services.AddScoped<IMediaMetadataService, MediaMetadataService>();
-            // Configure FFMpegCore global options (optional: set custom binaries path from env)
-            // Remove ffmpeg binaries configuration as server-side thumbnailing is disabled
+            // No FFmpeg/ffprobe configuration is needed; MediaInfo.DotNetWrapper is used for metadata
             // Register currency ensure service
             services.AddScoped<ICurrencyEnsureService, CurrencyEnsureService>();
 

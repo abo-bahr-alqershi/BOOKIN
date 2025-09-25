@@ -1,9 +1,13 @@
 namespace YemenBooking.Core.Settings;
 
 /// <summary>
-/// إعدادات أدوات الوسائط (مثل ffprobe)
+/// إعدادات أدوات الوسائط (MediaInfo)
 /// </summary>
 public class MediaToolsSettings
 {
-    public string? FfprobePath { get; set; } // optional override
+    /// <summary>
+    /// مسار مكتبة MediaInfo الأصلية إن لزم (اختياري)
+    /// Optional override path for native MediaInfo library if needed
+    /// </summary>
+    public string? MediaInfoLibraryPath { get; set; }
 }
