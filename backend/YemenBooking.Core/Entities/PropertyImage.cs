@@ -157,6 +157,27 @@ public class PropertyImage : BaseEntity<Guid>
     /// </summary>
     [Display(Name = "هل هي الصورة الرئيسية")]
     public bool IsMainImage { get; set; }
+
+    /// <summary>
+    /// نوع الوسائط (image/video)
+    /// Media type (image/video)
+    /// </summary>
+    [Display(Name = "نوع الوسائط")]
+    public string MediaType { get; set; } = "image";
+
+    /// <summary>
+    /// مدة الفيديو بالثواني
+    /// Video duration in seconds
+    /// </summary>
+    [Display(Name = "مدة الفيديو بالثواني")]
+    public int? DurationSeconds { get; set; }
+
+    /// <summary>
+    /// رابط صورة مصغرة للفيديو
+    /// Video thumbnail URL
+    /// </summary>
+    [Display(Name = "مصغرة الفيديو")]
+    public string? VideoThumbnailUrl { get; set; }
     
     /// <summary>
     /// الكيان المرتبط بالصورة (قابل للتمرير إلى NULL)

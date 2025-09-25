@@ -81,9 +81,11 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     Large = image.Sizes,
                     Hd = image.Sizes
                 },
-                MediaType = (image.Type?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) ?? false) ? "video" : "image",
-                Duration = null,
-                VideoThumbnail = null
+                MediaType = string.IsNullOrWhiteSpace(image.MediaType)
+                    ? ((image.Type?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) ?? false) ? "video" : "image")
+                    : image.MediaType,
+                Duration = image.DurationSeconds,
+                VideoThumbnail = string.IsNullOrWhiteSpace(image.VideoThumbnailUrl) ? null : image.VideoThumbnailUrl
             };
 
             return ResultDto<ImageDto>.Ok(dto);
