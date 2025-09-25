@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:bookn_cp_app/core/constants/app_constants.dart';
 import 'package:bookn_cp_app/core/utils/image_utils.dart';
 import 'package:bookn_cp_app/core/utils/video_utils.dart';
+import 'package:bookn_cp_app/core/utils/image_utils.dart';
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:bookn_cp_app/core/widgets/video_player_widget.dart';
 import 'package:flutter/material.dart';
@@ -2826,16 +2827,13 @@ class UnitImageGalleryState extends State<UnitImageGallery>
   }
 
   Widget buildRemoteVideoThumbnail(UnitImage video) {
-    // Prefer explicit video poster if provided by backend
-    if (video.videoThumbnail != null && video.videoThumbnail!.isNotEmpty) {
-      return CachedNetworkImage(
-        imageUrl: ImageUtils.resolveUrl(video.videoThumbnail!),
-        fit: BoxFit.cover,
-        placeholder: (context, url) => buildVideoPlaceholder(),
-        errorWidget: (context, url, error) => buildVideoPlaceholder(),
-      );
-    }
+    // Try backend-provided poster unless it's an explicit placeholder
+    final vt = (video.videoThumbnail ?? '').trim();
+    final isPlaceholder = vt.isEmpty || vt.contains('via.placeholder.com');
+    final firstChoice = !isPlaceholder ? ImageUtils.resolveUrl(vt) : '';
+    final secondChoice = ImageUtils.resolveUrl(video.thumbnails.hd.isNotEmpty ? video.thumbnails.hd : video.thumbnails.medium);
 
+<<<<<<< HEAD
     // Guard against attempting to render a video URL as an image
     final thumbUrl = ImageUtils.resolveUrl(video.thumbnails.medium);
     final lower = thumbUrl.toLowerCase();
@@ -2852,9 +2850,17 @@ class UnitImageGalleryState extends State<UnitImageGallery>
         errorWidget: (context, url, error) => buildVideoPlaceholder(),
       );
     }
+=======
+    final displayUrl = firstChoice.isNotEmpty ? firstChoice : secondChoice;
+    if (displayUrl.isEmpty) return buildVideoPlaceholder();
+>>>>>>> f5df1384bc6442d2fe9e63e14676e5e3acc97515
 
-    // Fallback: show placeholder if we don't have a safe image URL
-    return buildVideoPlaceholder();
+    return CachedNetworkImage(
+      imageUrl: displayUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => buildVideoPlaceholder(),
+      errorWidget: (context, url, error) => buildVideoPlaceholder(),
+    );
   }
 
   Widget buildMinimalistUploadArea() {
