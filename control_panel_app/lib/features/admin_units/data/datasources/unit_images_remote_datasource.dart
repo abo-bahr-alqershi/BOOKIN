@@ -20,20 +20,22 @@ abstract class UnitImagesRemoteDataSource {
     List<String>? tags,
     ProgressCallback? onSendProgress,
   });
-  
+
   Future<List<UnitImageModel>> getUnitImages(String? unitId, {String? tempKey});
   Future<bool> updateImage(String imageId, Map<String, dynamic> data);
   Future<bool> deleteImage(String imageId);
-  Future<bool> reorderImages(String? unitId, String? tempKey, List<String> imageIds);
-  Future<bool> setAsPrimaryImage(String? unitId, String? tempKey, String imageId);
+  Future<bool> reorderImages(
+      String? unitId, String? tempKey, List<String> imageIds);
+  Future<bool> setAsPrimaryImage(
+      String? unitId, String? tempKey, String imageId);
 }
 
 class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
   final ApiClient apiClient;
   static const String _imagesEndpoint = '/api/images';
-  
+
   UnitImagesRemoteDataSourceImpl({required this.apiClient});
-  
+
   @override
   Future<UnitImageModel> uploadImage({
     String? unitId,
@@ -65,7 +67,7 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
         if (posterPath != null)
           'videoThumbnail': await MultipartFile.fromFile(posterPath),
       });
-      
+
       final response = await apiClient.post(
         '$_imagesEndpoint/upload',
         data: formData,
@@ -76,7 +78,7 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
         ),
         onSendProgress: onSendProgress,
       );
-      
+
       if (response.data is Map<String, dynamic>) {
         final map = response.data as Map<String, dynamic>;
         if (map['success'] == true && map['image'] != null) {
@@ -90,14 +92,17 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
           }
         }
       }
-        throw ServerException(response.data['message'] ?? 'Failed to upload image');
+      throw ServerException(
+          response.data['message'] ?? 'Failed to upload image');
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to upload image');
+      throw ServerException(
+          e.response?.data['message'] ?? 'Failed to upload image');
     }
   }
-  
+
   @override
-  Future<List<UnitImageModel>> getUnitImages(String? unitId, {String? tempKey}) async {
+  Future<List<UnitImageModel>> getUnitImages(String? unitId,
+      {String? tempKey}) async {
     try {
       final qp = <String, dynamic>{
         'unitId': unitId,
@@ -105,19 +110,22 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
         'sortOrder': 'asc',
       };
       if (tempKey != null) qp['tempKey'] = tempKey;
-      final response = await apiClient.get('$_imagesEndpoint', queryParameters: qp);
-      
+      final response =
+          await apiClient.get(_imagesEndpoint, queryParameters: qp);
+
       if (response.data is Map<String, dynamic>) {
         final map = response.data as Map<String, dynamic>;
-        final List<dynamic> list = (map['images'] as List?) ?? (map['items'] as List?) ?? const [];
+        final List<dynamic> list =
+            (map['images'] as List?) ?? (map['items'] as List?) ?? const [];
         return list.map((json) => UnitImageModel.fromJson(json)).toList();
       }
-      throw ServerException('Invalid response when fetching images');
+      throw const ServerException('Invalid response when fetching images');
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to fetch unit images');
+      throw ServerException(
+          e.response?.data['message'] ?? 'Failed to fetch unit images');
     }
   }
-  
+
   @override
   Future<bool> updateImage(String imageId, Map<String, dynamic> data) async {
     try {
@@ -125,49 +133,59 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
         '$_imagesEndpoint/$imageId',
         data: data,
       );
-      
+
       return response.data['success'] == true;
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to update image');
+      throw ServerException(
+          e.response?.data['message'] ?? 'Failed to update image');
     }
   }
-  
+
   @override
   Future<bool> deleteImage(String imageId) async {
     try {
       final response = await apiClient.delete('$_imagesEndpoint/$imageId');
       return response.data['success'] == true;
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to delete image');
+      throw ServerException(
+          e.response?.data['message'] ?? 'Failed to delete image');
     }
   }
-  
+
   @override
-  Future<bool> reorderImages(String? unitId, String? tempKey, List<String> imageIds) async {
+  Future<bool> reorderImages(
+      String? unitId, String? tempKey, List<String> imageIds) async {
     try {
       final payload = {
         'imageIds': imageIds,
         if (unitId != null) 'unitId': unitId,
         if (tempKey != null) 'tempKey': tempKey,
       };
-      final response = await apiClient.post('$_imagesEndpoint/reorder', data: payload);
-      return response.statusCode == 204 || (response.data is Map && response.data['success'] == true);
+      final response =
+          await apiClient.post('$_imagesEndpoint/reorder', data: payload);
+      return response.statusCode == 204 ||
+          (response.data is Map && response.data['success'] == true);
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to reorder images');
+      throw ServerException(
+          e.response?.data['message'] ?? 'Failed to reorder images');
     }
   }
-  
+
   @override
-  Future<bool> setAsPrimaryImage(String? unitId, String? tempKey, String imageId) async {
+  Future<bool> setAsPrimaryImage(
+      String? unitId, String? tempKey, String imageId) async {
     try {
       final body = {
         if (unitId != null) 'unitId': unitId,
         if (tempKey != null) 'tempKey': tempKey,
       };
-      final response = await apiClient.post('$_imagesEndpoint/$imageId/set-primary', data: body);
-      return response.statusCode == 204 || (response.data is Map && response.data['success'] == true);
+      final response = await apiClient
+          .post('$_imagesEndpoint/$imageId/set-primary', data: body);
+      return response.statusCode == 204 ||
+          (response.data is Map && response.data['success'] == true);
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to set primary image');
+      throw ServerException(
+          e.response?.data['message'] ?? 'Failed to set primary image');
     }
   }
 }

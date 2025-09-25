@@ -54,13 +54,8 @@ namespace YemenBooking.Infrastructure.Services
                     _logger.LogDebug(ex, "FFMpegCore duration analyse failed");
                 }
 
-                // Fallbacks: lightweight parsers for specific formats
+                // Fallbacks: lightweight parsers for specific formats (WAV)
                 var ext = Path.GetExtension(filePath).ToLowerInvariant();
-                if (ext == ".mp4" || ext == ".mov" || ext == ".m4v")
-                {
-                    var mp4Dur = TryGetMp4DurationSeconds(filePath);
-                    if (mp4Dur.HasValue && mp4Dur.Value > 0) return mp4Dur.Value;
-                }
                 if (ext == ".wav" || string.Equals(contentType, "audio/wav", StringComparison.OrdinalIgnoreCase) || string.Equals(contentType, "audio/x-wav", StringComparison.OrdinalIgnoreCase))
                 {
                     var wavDur = TryGetWavDuration(filePath);
@@ -167,79 +162,6 @@ namespace YemenBooking.Infrastructure.Services
                 // ignore
             }
             return null;
-        }
-
-        // Minimal MP4/MOV duration parser: reads mvhd timescale/duration
-        private static int? TryGetMp4DurationSeconds(string filePath)
-        {
-            try
-            {
-                using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                using var br = new BinaryReader(fs);
-                while (br.BaseStream.Position + 8 <= br.BaseStream.Length)
-                {
-                    long start = br.BaseStream.Position;
-                    uint size = ReadUInt32BE(br);
-                    string type = new string(br.ReadChars(4));
-                    if (size < 8) break;
-                    long next = start + size;
-                    if (type == "moov")
-                    {
-                        long moovEnd = next;
-                        while (br.BaseStream.Position + 8 <= moovEnd)
-                        {
-                            long st = br.BaseStream.Position;
-                            uint sz = ReadUInt32BE(br);
-                            string tp = new string(br.ReadChars(4));
-                            if (sz < 8) break;
-                            long nx = st + sz;
-                            if (tp == "mvhd")
-                            {
-                                byte version = br.ReadByte();
-                                br.ReadBytes(3); // flags
-                                if (version == 1)
-                                {
-                                    br.ReadBytes(8 + 8); // creation/modification
-                                    uint timescale = ReadUInt32BE(br);
-                                    ulong duration = ReadUInt64BE(br);
-                                    if (timescale > 0 && duration > 0)
-                                        return (int)Math.Round((double)duration / timescale);
-                                }
-                                else
-                                {
-                                    br.ReadBytes(4 + 4);
-                                    uint timescale = ReadUInt32BE(br);
-                                    uint duration = ReadUInt32BE(br);
-                                    if (timescale > 0 && duration > 0)
-                                        return (int)Math.Round((double)duration / timescale);
-                                }
-                                return null;
-                            }
-                            br.BaseStream.Position = nx;
-                        }
-                        return null;
-                    }
-                    br.BaseStream.Position = next;
-                }
-            }
-            catch { }
-            return null;
-        }
-
-        private static uint ReadUInt32BE(BinaryReader br)
-        {
-            var data = br.ReadBytes(4);
-            if (data.Length < 4) return 0;
-            if (BitConverter.IsLittleEndian) Array.Reverse(data);
-            return BitConverter.ToUInt32(data, 0);
-        }
-
-        private static ulong ReadUInt64BE(BinaryReader br)
-        {
-            var data = br.ReadBytes(8);
-            if (data.Length < 8) return 0;
-            if (BitConverter.IsLittleEndian) Array.Reverse(data);
-            return BitConverter.ToUInt64(data, 0);
         }
     }
 }

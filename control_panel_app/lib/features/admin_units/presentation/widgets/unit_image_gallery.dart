@@ -2831,15 +2831,25 @@ class UnitImageGalleryState extends State<UnitImageGallery>
     final vt = (video.videoThumbnail ?? '').trim();
     final isPlaceholder = vt.isEmpty || vt.contains('via.placeholder.com');
     final firstChoice = !isPlaceholder ? ImageUtils.resolveUrl(vt) : '';
-    final secondChoice = ImageUtils.resolveUrl(video.thumbnails.hd.isNotEmpty ? video.thumbnails.hd : video.thumbnails.medium);
+    final secondChoice = ImageUtils.resolveUrl(video.thumbnails.hd.isNotEmpty
+        ? video.thumbnails.hd
+        : video.thumbnails.medium);
 
     // Guard against attempting to render a non-image URL as an image
-    final candidates = [firstChoice, secondChoice].where((u) => u.isNotEmpty).toList();
+    final candidates =
+        [firstChoice, secondChoice].where((u) => u.isNotEmpty).toList();
     String displayUrl = '';
     for (final u in candidates) {
       final lower = u.toLowerCase();
-      final looksLikeImage = lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.webp') || lower.contains('image');
-      if (looksLikeImage) { displayUrl = u; break; }
+      final looksLikeImage = lower.endsWith('.png') ||
+          lower.endsWith('.jpg') ||
+          lower.endsWith('.jpeg') ||
+          lower.endsWith('.webp') ||
+          lower.contains('image');
+      if (looksLikeImage) {
+        displayUrl = u;
+        break;
+      }
     }
     if (displayUrl.isEmpty) return buildVideoPlaceholder();
 

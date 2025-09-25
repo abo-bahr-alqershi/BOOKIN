@@ -13,7 +13,6 @@ using YemenBooking.Core.Interfaces;
 using FluentValidation;
 using MediatR;
 using FFMpegCore;
-using FFMpegCore.Enums;
 
 namespace YemenBooking.Api.Extensions
 {
@@ -41,21 +40,7 @@ namespace YemenBooking.Api.Extensions
             // Register media metadata service only (thumbnail generation handled in client)
             services.AddScoped<IMediaMetadataService, MediaMetadataService>();
             // Configure FFMpegCore global options (optional: set custom binaries path from env)
-            // Configure ffprobe/ffmpeg for metadata extraction (duration); thumbnailing is client-side
-            var ffmpegPath = Environment.GetEnvironmentVariable("FFMPEG_PATH");
-            var ffprobePath = Environment.GetEnvironmentVariable("FFPROBE_PATH");
-            if (!string.IsNullOrWhiteSpace(ffmpegPath))
-            {
-                GlobalFFOptions.Configure(options =>
-                {
-                    options.BinaryFolder = System.IO.Path.GetDirectoryName(ffmpegPath);
-                    options.TemporaryFilesFolder = System.IO.Path.GetTempPath();
-                });
-            }
-            else if (!string.IsNullOrWhiteSpace(ffprobePath))
-            {
-                GlobalFFOptions.Configure(options => { options.TemporaryFilesFolder = System.IO.Path.GetTempPath(); });
-            }
+            // Remove ffmpeg binaries configuration as server-side thumbnailing is disabled
             // Register currency ensure service
             services.AddScoped<ICurrencyEnsureService, CurrencyEnsureService>();
 
