@@ -1,4 +1,4 @@
-// lib/features/admin_properties/domain/entities/unit_image.dart
+// lib/features/admin_properties/domain/entities/city_image.dart
 
 import 'package:equatable/equatable.dart';
 
@@ -27,7 +27,7 @@ enum MediaType {
   video,
 }
 
-class UnitImage extends Equatable {
+class CityImage extends Equatable {
   final String id;
   final String url;
   final String filename;
@@ -40,7 +40,7 @@ class UnitImage extends Equatable {
   final String uploadedBy;
   final int order;
   final bool isPrimary;
-  final String? unitId;
+  final String? cityId;
   final ImageCategory category;
   final List<String> tags;
   final ProcessingStatus processingStatus;
@@ -49,7 +49,7 @@ class UnitImage extends Equatable {
   final String? videoThumbnail; // إضافة thumbnail للفيديو
   final int? duration; // مدة الفيديو بالثواني
 
-  const UnitImage({
+  const CityImage({
     required this.id,
     required this.url,
     required this.filename,
@@ -62,7 +62,7 @@ class UnitImage extends Equatable {
     required this.uploadedBy,
     required this.order,
     required this.isPrimary,
-    this.unitId,
+    this.cityId,
     required this.category,
     this.tags = const [],
     required this.processingStatus,
@@ -103,7 +103,7 @@ class UnitImage extends Equatable {
         uploadedBy,
         order,
         isPrimary,
-        unitId,
+        cityId,
         category,
         tags,
         processingStatus,

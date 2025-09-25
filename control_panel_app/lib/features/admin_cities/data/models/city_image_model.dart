@@ -1,11 +1,11 @@
-// lib/features/admin_properties/data/models/unit_image_model.dart
+// lib/features/admin_properties/data/models/city_image_model.dart
 
 import 'package:bookn_cp_app/core/constants/api_constants.dart';
 import 'package:bookn_cp_app/core/constants/app_constants.dart';
-import '../../domain/entities/unit_image.dart';
+import '../../domain/entities/city_image.dart';
 
-class UnitImageModel extends UnitImage {
-  const UnitImageModel({
+class CityImageModel extends CityImage {
+  const CityImageModel({
     required super.id,
     required super.url,
     required super.filename,
@@ -18,7 +18,7 @@ class UnitImageModel extends UnitImage {
     required super.uploadedBy,
     required super.order,
     required super.isPrimary,
-    super.unitId,
+    super.cityId,
     required super.category,
     super.tags,
     required super.processingStatus,
@@ -64,7 +64,7 @@ class UnitImageModel extends UnitImage {
     return MediaType.image;
   }
 
-  factory UnitImageModel.fromJson(Map<String, dynamic> json) {
+  factory CityImageModel.fromJson(Map<String, dynamic> json) {
     List<String> parsedTags = [];
     if (json['tags'] != null) {
       if (json['tags'] is List) {
@@ -88,7 +88,7 @@ class UnitImageModel extends UnitImage {
             json['videoThumbnail'] ?? json['thumbnail'] ?? json['poster'])
         : null;
 
-    return UnitImageModel(
+    return CityImageModel(
       id: (json['id'] ??
           json['imageId'] ??
           json['videoId'] ??
@@ -106,7 +106,7 @@ class UnitImageModel extends UnitImage {
       uploadedBy: (json['uploadedBy'] ?? json['ownerId'] ?? '') as String,
       order: (json['order'] as num?)?.toInt() ?? 0,
       isPrimary: (json['isPrimary'] as bool?) ?? false,
-      unitId: json['unitId'] as String?,
+      cityId: json['cityId'] as String?,
       category: _parseImageCategory((json['category'] ?? 'gallery').toString()),
       tags: parsedTags,
       processingStatus: _parseProcessingStatus(
@@ -165,7 +165,7 @@ class UnitImageModel extends UnitImage {
       'uploadedBy': uploadedBy,
       'order': order,
       'isPrimary': isPrimary,
-      'unitId': unitId,
+      'cityId': cityId,
       'category': _imageCategoryToString(category),
       'tags': tags,
       'processingStatus': _processingStatusToString(processingStatus),
@@ -289,12 +289,12 @@ class ImageThumbnailsModel extends ImageThumbnails {
         fallbackUrl ?? 'https://via.placeholder.com/400x300?text=No+Image';
     return ImageThumbnailsModel(
       small:
-          UnitImageModel._validateUrl(json['small'] ?? json['s'] ?? fallback),
+          CityImageModel._validateUrl(json['small'] ?? json['s'] ?? fallback),
       medium:
-          UnitImageModel._validateUrl(json['medium'] ?? json['m'] ?? fallback),
+          CityImageModel._validateUrl(json['medium'] ?? json['m'] ?? fallback),
       large:
-          UnitImageModel._validateUrl(json['large'] ?? json['l'] ?? fallback),
-      hd: UnitImageModel._validateUrl(json['hd'] ?? json['xl'] ?? fallback),
+          CityImageModel._validateUrl(json['large'] ?? json['l'] ?? fallback),
+      hd: CityImageModel._validateUrl(json['hd'] ?? json['xl'] ?? fallback),
     );
   }
 
