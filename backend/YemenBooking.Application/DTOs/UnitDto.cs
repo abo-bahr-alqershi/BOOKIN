@@ -94,5 +94,17 @@ namespace YemenBooking.Application.DTOs
         /// </summary>
         public IEnumerable<PropertyImageDto> Images { get; set; } = new List<PropertyImageDto>();
 
+        /// <summary>
+        /// هل تقبل الوحدة الإلغاء
+        /// Allows cancellation
+        /// </summary>
+        public bool AllowsCancellation { get; set; }
+
+        /// <summary>
+        /// نافذة الإلغاء بالأيام
+        /// Cancellation window in days
+        /// </summary>
+        public int? CancellationWindowDays { get; set; }
+
     }
 } 

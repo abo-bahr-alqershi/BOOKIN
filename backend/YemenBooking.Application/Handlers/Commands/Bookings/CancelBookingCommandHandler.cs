@@ -300,18 +300,31 @@ public class CancelBookingCommandHandler : IRequestHandler<CancelBookingCommand,
     {
         var errors = new List<string>();
 
-        // التحقق من سياسة الإلغاء للكيان
-        // Check property cancellation policy
+        // التحقق من سياسة الإلغاء: أولوية للوحدة ثم سياسة الكيان
         var unit = await _unitRepository.GetByIdAsync(booking.UnitId, cancellationToken);
         if (unit != null)
         {
-            var propertyPolicy = await _propertyRepository.GetCancellationPolicyAsync(unit.PropertyId, cancellationToken);
-            if (propertyPolicy != null)
+            // إذا كانت الوحدة لا تسمح بالإلغاء على الإطلاق
+            if (!unit.AllowsCancellation)
             {
-                var daysBeforeCheckIn = (booking.CheckIn - DateTime.UtcNow).TotalDays;
-                if (daysBeforeCheckIn < propertyPolicy.CancellationWindowDays)
+                errors.Add("هذه الوحدة لا تسمح بإلغاء الحجز / This unit does not allow cancellations");
+            }
+            else
+            {
+                // إذا حددت الوحدة نافذة إلغاء، استخدمها، وإلا استخدم سياسة العقار
+                int? windowDays = unit.CancellationWindowDays;
+                if (!windowDays.HasValue)
                 {
-                    errors.Add($"لا يمكن الإلغاء. يجب الإلغاء قبل {propertyPolicy.CancellationWindowDays} أيام من تاريخ الوصول / Cannot cancel. Must cancel {propertyPolicy.CancellationWindowDays} days before check-in date");
+                    var propertyPolicy = await _propertyRepository.GetCancellationPolicyAsync(unit.PropertyId, cancellationToken);
+                    windowDays = propertyPolicy?.CancellationWindowDays;
+                }
+                if (windowDays.HasValue)
+                {
+                    var daysBeforeCheckIn = (booking.CheckIn - DateTime.UtcNow).TotalDays;
+                    if (daysBeforeCheckIn < windowDays.Value)
+                    {
+                        errors.Add($"لا يمكن الإلغاء. يجب الإلغاء قبل {windowDays.Value} أيام من تاريخ الوصول / Cannot cancel. Must cancel {windowDays.Value} days before check-in date");
+                    }
                 }
             }
         }

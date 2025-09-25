@@ -125,6 +125,18 @@ public class UnitDetailsDto
     /// Calculated price for specified period
     /// </summary>
     public CalculatedPriceDto? CalculatedPrice { get; set; }
+
+    /// <summary>
+    /// هل تقبل الوحدة الإلغاء
+    /// Allows cancellation
+    /// </summary>
+    public bool AllowsCancellation { get; set; }
+
+    /// <summary>
+    /// نافذة الإلغاء بالأيام
+    /// Cancellation window in days
+    /// </summary>
+    public int? CancellationWindowDays { get; set; }
 }
 
 /// <summary>

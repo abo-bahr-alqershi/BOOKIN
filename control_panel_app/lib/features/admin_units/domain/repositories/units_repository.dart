@@ -40,6 +40,8 @@ abstract class UnitsRepository {
     List<String>? images,
     int? adultCapacity,
     int? childrenCapacity,
+    bool? allowsCancellation,
+    int? cancellationWindowDays,
     String? tempKey,
   });
 
@@ -54,6 +56,8 @@ abstract class UnitsRepository {
     List<String>? images,
     int? adultCapacity,
     int? childrenCapacity,
+    bool? allowsCancellation,
+    int? cancellationWindowDays,
   });
 
   Future<Either<Failure, bool>> deleteUnit(String unitId);

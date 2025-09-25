@@ -52,6 +52,7 @@ class _EditUnitPageState extends State<EditUnitPage>
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
   final _featuresController = TextEditingController();
+  final _cancellationDaysController = TextEditingController();
 
   // State
   String? _selectedPropertyId;
@@ -75,6 +76,8 @@ class _EditUnitPageState extends State<EditUnitPage>
   List<String> _existingImages = [];
   List<String> _originalImages = []; // حفظ الصور الأصلية
   bool _imagesChanged = false; // تتبع تغييرات الصور
+  bool _allowsCancellation = true;
+  int? _cancellationWindowDays;
 
   @override
   void initState() {
@@ -175,6 +178,11 @@ class _EditUnitPageState extends State<EditUnitPage>
       // Set existing images
       _existingImages = List<String>.from(unit.images ?? []);
       _originalImages = List<String>.from(unit.images ?? []);
+      // Cancellation
+      _allowsCancellation = unit.allowsCancellation;
+      _cancellationWindowDays = unit.cancellationWindowDays;
+      _cancellationDaysController.text =
+          _cancellationWindowDays != null ? _cancellationWindowDays.toString() : '';
     });
 
     // تحديث UnitFormBloc بجميع البيانات
@@ -220,6 +228,7 @@ class _EditUnitPageState extends State<EditUnitPage>
     _updateCapacity();
     _updateUnitImage();
     _updateDynamicFields();
+    _updateCancellationPolicy();
   }
 
   String _getPricingMethodString(PricingMethod method) {
@@ -246,6 +255,7 @@ class _EditUnitPageState extends State<EditUnitPage>
     _descriptionController.dispose();
     _priceController.dispose();
     _featuresController.dispose();
+    _cancellationDaysController.dispose();
     super.dispose();
   }
 
@@ -863,6 +873,69 @@ class _EditUnitPageState extends State<EditUnitPage>
 
           // Pricing Method Selector
           _buildPricingMethodSelector(),
+
+          const SizedBox(height: 24),
+          // Cancellation Policy
+          Text(
+            'سياسة الإلغاء',
+            style: AppTextStyles.heading3.copyWith(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Switch(
+                value: _allowsCancellation,
+                onChanged: (v) {
+                  setState(() {
+                    _allowsCancellation = v;
+                    if (!v) {
+                      _cancellationWindowDays = null;
+                      _cancellationDaysController.text = '';
+                    }
+                  });
+                  _updateCancellationPolicy();
+                },
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'السماح بإلغاء الحجز',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppTheme.textWhite,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: _allowsCancellation ? 1 : 0.4,
+            child: IgnorePointer(
+              ignoring: !_allowsCancellation,
+              child: _buildInputField(
+                controller: _cancellationDaysController,
+                label: 'أيام نافذة الإلغاء قبل الوصول',
+                hint: 'مثال: 2',
+                icon: Icons.event_busy,
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (!_allowsCancellation) return null;
+                  if (value == null || value.isEmpty) return null;
+                  final v = int.tryParse(value);
+                  if (v == null || v < 0) return 'أدخل رقم صالح (0 أو أكثر)';
+                  return null;
+                },
+                onChanged: (value) {
+                  setState(() {
+                    _cancellationWindowDays = int.tryParse(value);
+                  });
+                  _updateCancellationPolicy();
+                },
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -2483,6 +2556,15 @@ class _EditUnitPageState extends State<EditUnitPage>
         ),
       ),
     );
+  }
+
+  void _updateCancellationPolicy() {
+    context.read<UnitFormBloc>().add(
+          UpdateCancellationPolicyEvent(
+            allowsCancellation: _allowsCancellation,
+            cancellationWindowDays: _cancellationWindowDays,
+          ),
+        );
   }
 }
 

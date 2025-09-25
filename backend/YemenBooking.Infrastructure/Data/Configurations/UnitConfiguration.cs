@@ -27,6 +27,11 @@ public class UnitConfiguration : IEntityTypeConfiguration<Unit>
         // builder.Property(u => u.BasePrice).IsRequired();
         builder.Property(u => u.CustomFeatures).HasColumnType("NVARCHAR(MAX)");
         builder.Property(u => u.IsAvailable).HasDefaultValue(true);
+        builder.Property(u => u.AllowsCancellation)
+            .HasDefaultValue(true)
+            .HasComment("هل تقبل الوحدة إلغاء الحجز");
+        builder.Property(u => u.CancellationWindowDays)
+            .HasComment("عدد أيام نافذة الإلغاء قبل الوصول");
 
         // طريقة حساب السعر
         builder.Property(u => u.PricingMethod)
@@ -84,6 +89,9 @@ public class UnitConfiguration : IEntityTypeConfiguration<Unit>
 
         builder.HasIndex(u => u.IsDeleted)
             .HasDatabaseName("IX_Units_IsDeleted");
+
+        builder.HasIndex(u => u.AllowsCancellation)
+            .HasDatabaseName("IX_Units_AllowsCancellation");
 
         builder.HasQueryFilter(u => !u.IsDeleted);
     }

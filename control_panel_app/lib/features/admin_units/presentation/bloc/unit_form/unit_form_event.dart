@@ -110,3 +110,16 @@ class UpdateDescriptionEvent extends UnitFormEvent {
 }
 
 class SubmitFormEvent extends UnitFormEvent {}
+
+class UpdateCancellationPolicyEvent extends UnitFormEvent {
+  final bool allowsCancellation;
+  final int? cancellationWindowDays;
+
+  const UpdateCancellationPolicyEvent({
+    required this.allowsCancellation,
+    this.cancellationWindowDays,
+  });
+
+  @override
+  List<Object?> get props => [allowsCancellation, cancellationWindowDays];
+}

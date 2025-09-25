@@ -77,6 +77,12 @@ namespace YemenBooking.Application.Handlers.Commands.Units
             if (request.BasePrice != null && request.BasePrice.Amount <= 0)
                 return ResultDto<bool>.Failed("السعر الأساسي يجب أن يكون أكبر من صفر");
 
+            // التحقق المنطقي لنافذة الإلغاء
+            if (request.AllowsCancellation.HasValue && request.AllowsCancellation.Value == false && request.CancellationWindowDays.HasValue)
+                return ResultDto<bool>.Failed("لا يمكن تحديد نافذة إلغاء إذا كانت الإلغاء غير مسموح");
+            if (request.CancellationWindowDays.HasValue && request.CancellationWindowDays.Value < 0)
+                return ResultDto<bool>.Failed("نافذة الإلغاء يجب أن تكون صفر أو أكثر");
+
             // التحقق من الوجود
             var unit = await _unitRepository.GetUnitByIdAsync(request.UnitId, cancellationToken);
             if (unit == null)
@@ -122,6 +128,10 @@ namespace YemenBooking.Application.Handlers.Commands.Units
                     unit.CustomFeatures = request.CustomFeatures.Trim();
                 if (request.PricingMethod.HasValue)
                     unit.PricingMethod = request.PricingMethod.Value;
+                if (request.AllowsCancellation.HasValue)
+                    unit.AllowsCancellation = request.AllowsCancellation.Value;
+                if (request.CancellationWindowDays.HasValue)
+                    unit.CancellationWindowDays = request.CancellationWindowDays;
 
                 unit.UpdatedBy = _currentUserService.UserId;
                 unit.UpdatedAt = DateTime.UtcNow;

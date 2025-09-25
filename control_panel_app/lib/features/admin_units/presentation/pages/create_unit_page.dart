@@ -58,6 +58,8 @@ class _CreateUnitPageState extends State<CreateUnitPage>
   final GlobalKey<UnitImageGalleryState> _galleryKey = GlobalKey();
   List<String> _selectedLocalImages = [];
   String? _tempKey;
+  bool _allowsCancellation = true;
+  final _cancellationDaysController = TextEditingController();
 
   @override
   void initState() {
@@ -125,6 +127,7 @@ class _CreateUnitPageState extends State<CreateUnitPage>
     _descriptionController.dispose();
     _priceController.dispose();
     _featuresController.dispose();
+    _cancellationDaysController.dispose();
     super.dispose();
   }
 
@@ -554,6 +557,61 @@ class _CreateUnitPageState extends State<CreateUnitPage>
 
           // Pricing Method Selector
           _buildPricingMethodSelector(),
+
+          const SizedBox(height: 24),
+          // Cancellation Policy
+          Text(
+            'سياسة الإلغاء',
+            style: AppTextStyles.heading3.copyWith(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Switch(
+                value: _allowsCancellation,
+                onChanged: (v) {
+                  setState(() {
+                    _allowsCancellation = v;
+                    if (!v) _cancellationDaysController.text = '';
+                  });
+                  _updateCancellationPolicy();
+                },
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'السماح بإلغاء الحجز',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppTheme.textWhite,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: _allowsCancellation ? 1 : 0.4,
+            child: IgnorePointer(
+              ignoring: !_allowsCancellation,
+              child: _buildInputField(
+                controller: _cancellationDaysController,
+                label: 'أيام نافذة الإلغاء قبل الوصول',
+                hint: 'مثال: 2',
+                icon: Icons.event_busy,
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (!_allowsCancellation) return null;
+                  if (value == null || value.isEmpty) return null; // optional
+                  final v = int.tryParse(value);
+                  if (v == null || v < 0) return 'أدخل رقم صالح (0 أو أكثر)';
+                  return null;
+                },
+                onChanged: (_) => _updateCancellationPolicy(),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1906,12 +1964,24 @@ class _CreateUnitPageState extends State<CreateUnitPage>
       _updateFeatures();
       _updateCapacity();
       _updateUnitImage();
+      _updateCancellationPolicy();
 
       // انتظر قليلاً للتأكد من تحديث البلوك
       Future.delayed(const Duration(milliseconds: 100), () {
         context.read<UnitFormBloc>().add(SubmitFormEvent());
       });
     }
+  }
+
+  void _updateCancellationPolicy() {
+    final daysText = _cancellationDaysController.text.trim();
+    final days = daysText.isEmpty ? null : int.tryParse(daysText);
+    context.read<UnitFormBloc>().add(
+          UpdateCancellationPolicyEvent(
+            allowsCancellation: _allowsCancellation,
+            cancellationWindowDays: days,
+          ),
+        );
   }
 
   void _showSuccessMessage(String message) {

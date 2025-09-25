@@ -50,4 +50,14 @@ public class UpdateUnitCommand : IRequest<ResultDto<bool>>
     /// الصور المرسلة مؤقتاً للوحدة
     /// </summary>
     public List<string> Images { get; set; } = new List<string>();
+
+    /// <summary>
+    /// هل تقبل الوحدة إلغاء الحجز (تحديث اختياري)
+    /// </summary>
+    public bool? AllowsCancellation { get; set; }
+
+    /// <summary>
+    /// عدد أيام نافذة الإلغاء قبل الوصول (تحديث اختياري)
+    /// </summary>
+    public int? CancellationWindowDays { get; set; }
 } 

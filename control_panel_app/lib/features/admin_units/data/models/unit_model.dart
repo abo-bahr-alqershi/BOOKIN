@@ -28,6 +28,8 @@ class UnitModel extends Unit {
     List<FieldGroupWithValues> dynamicFields = const [],
     double? distanceKm,
     List<String>? images,
+    bool allowsCancellation = true,
+    int? cancellationWindowDays,
   }) : super(
           id: id,
           propertyId: propertyId,
@@ -49,6 +51,8 @@ class UnitModel extends Unit {
           dynamicFields: dynamicFields,
           distanceKm: distanceKm,
           images: images,
+          allowsCancellation: allowsCancellation,
+          cancellationWindowDays: cancellationWindowDays,
         );
 
   factory UnitModel.fromJson(Map<String, dynamic> json) {
@@ -82,6 +86,8 @@ class UnitModel extends Unit {
               ?.map((e) => e['url'] as String)
               .toList() ??
           [],
+      allowsCancellation: json['allowsCancellation'] as bool? ?? true,
+      cancellationWindowDays: json['cancellationWindowDays'] as int?,
     );
   }
 
@@ -111,6 +117,8 @@ class UnitModel extends Unit {
           .toList(),
       if (distanceKm != null) 'distanceKm': distanceKm,
       if (images != null) 'images': images,
+      'allowsCancellation': allowsCancellation,
+      if (cancellationWindowDays != null) 'cancellationWindowDays': cancellationWindowDays,
     };
   }
 }

@@ -71,6 +71,8 @@ namespace YemenBooking.Application.Mappings
                 .ForMember(dest => dest.PropertyName, opt => opt.MapFrom(src => src.Property.Name))
                 .ForMember(dest => dest.UnitTypeName, opt => opt.MapFrom(src => src.UnitType.Name))
                 .ForMember(dest => dest.PricingMethod, opt => opt.MapFrom(src => src.PricingMethod))
+                .ForMember(dest => dest.AllowsCancellation, opt => opt.MapFrom(src => src.AllowsCancellation))
+                .ForMember(dest => dest.CancellationWindowDays, opt => opt.MapFrom(src => src.CancellationWindowDays))
                 // include dynamic field values
                 .ForMember(dest => dest.FieldValues, opt => opt.MapFrom(src => src.FieldValues));
 

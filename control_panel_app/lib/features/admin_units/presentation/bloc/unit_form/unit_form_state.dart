@@ -30,6 +30,8 @@ class UnitFormReady extends UnitFormState {
   final int? childrenCapacity;
   final bool isLoadingUnitTypes;
   final bool isLoadingFields;
+  final bool allowsCancellation;
+  final int? cancellationWindowDays;
 
   const UnitFormReady({
     this.isEditMode = false,
@@ -50,6 +52,8 @@ class UnitFormReady extends UnitFormState {
     this.childrenCapacity,
     this.isLoadingUnitTypes = false,
     this.isLoadingFields = false,
+    this.allowsCancellation = true,
+    this.cancellationWindowDays,
   });
 
   UnitFormReady copyWith({
@@ -71,6 +75,8 @@ class UnitFormReady extends UnitFormState {
     int? childrenCapacity,
     bool? isLoadingUnitTypes,
     bool? isLoadingFields,
+    bool? allowsCancellation,
+    int? cancellationWindowDays,
   }) {
     return UnitFormReady(
       isEditMode: isEditMode ?? this.isEditMode,
@@ -91,6 +97,8 @@ class UnitFormReady extends UnitFormState {
       childrenCapacity: childrenCapacity ?? this.childrenCapacity,
       isLoadingUnitTypes: isLoadingUnitTypes ?? this.isLoadingUnitTypes,
       isLoadingFields: isLoadingFields ?? this.isLoadingFields,
+      allowsCancellation: allowsCancellation ?? this.allowsCancellation,
+      cancellationWindowDays: cancellationWindowDays ?? this.cancellationWindowDays,
     );
   }
 
@@ -114,6 +122,8 @@ class UnitFormReady extends UnitFormState {
         childrenCapacity,
         isLoadingUnitTypes,
         isLoadingFields,
+        allowsCancellation,
+        cancellationWindowDays,
       ];
 }
 
