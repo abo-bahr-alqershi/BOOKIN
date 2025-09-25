@@ -23,6 +23,8 @@ class CreateUnitUseCase implements UseCase<String, CreateUnitParams> {
       images: params.images,
       adultCapacity: params.adultCapacity,
       childrenCapacity: params.childrenCapacity,
+      allowsCancellation: params.allowsCancellation,
+      cancellationWindowDays: params.cancellationWindowDays,
       tempKey: params.tempKey,
     );
   }
@@ -41,6 +43,8 @@ class CreateUnitParams extends Equatable {
   final int? adultCapacity;
   final int? childrenCapacity;
   final String? tempKey;
+  final bool? allowsCancellation;
+  final int? cancellationWindowDays;
 
   const CreateUnitParams({
     required this.propertyId,
@@ -55,6 +59,8 @@ class CreateUnitParams extends Equatable {
     this.adultCapacity,
     this.childrenCapacity,
     this.tempKey,
+    this.allowsCancellation,
+    this.cancellationWindowDays,
   });
 
   // إضافة toJson للـ debugging
@@ -71,6 +77,8 @@ class CreateUnitParams extends Equatable {
     'adultCapacity': adultCapacity,
     'childrenCapacity': childrenCapacity,
     'tempKey': tempKey,
+    'allowsCancellation': allowsCancellation,
+    'cancellationWindowDays': cancellationWindowDays,
   };
 
   @override

@@ -24,6 +24,8 @@ class Unit extends Equatable {
   final List<FieldGroupWithValues> dynamicFields;
   final double? distanceKm;
   final List<String>? images;
+  final bool allowsCancellation;
+  final int? cancellationWindowDays;
 
   const Unit({
     required this.id,
@@ -46,6 +48,8 @@ class Unit extends Equatable {
     this.dynamicFields = const [],
     this.distanceKm,
     this.images,
+    this.allowsCancellation = true,
+    this.cancellationWindowDays,
   });
 
   List<String> get featuresList {
@@ -82,5 +86,7 @@ class Unit extends Equatable {
         dynamicFields,
         distanceKm,
         images,
+        allowsCancellation,
+        cancellationWindowDays,
       ];
 }

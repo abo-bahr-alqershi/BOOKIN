@@ -83,6 +83,20 @@ public class Unit : BaseEntity<Guid>
     public int BookingCount { get; set; } = 0;
     
     /// <summary>
+    /// هل تقبل الوحدة إلغاء الحجز
+    /// Whether the unit allows booking cancellation
+    /// </summary>
+    [Display(Name = "تقبل إلغاء الحجز")]
+    public bool AllowsCancellation { get; set; } = true;
+
+    /// <summary>
+    /// عدد أيام السماح بالإلغاء قبل موعد الوصول (إن وجد)
+    /// Number of days before check-in when cancellation is allowed (optional)
+    /// </summary>
+    [Display(Name = "أيام نافذة الإلغاء قبل الوصول")]
+    public int? CancellationWindowDays { get; set; }
+
+    /// <summary>
     /// سعة البالغين
     /// Adults capacity
     /// </summary>

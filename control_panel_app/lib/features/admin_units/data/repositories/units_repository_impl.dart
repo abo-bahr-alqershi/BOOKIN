@@ -119,6 +119,8 @@ class UnitsRepositoryImpl implements UnitsRepository {
     List<String>? images,
     int? adultCapacity,
     int? childrenCapacity,
+    bool? allowsCancellation,
+    int? cancellationWindowDays,
     String? tempKey,
   }) async {
     if (await networkInfo.isConnected) {
@@ -136,6 +138,8 @@ class UnitsRepositoryImpl implements UnitsRepository {
           if (tempKey != null && tempKey.isNotEmpty) 'tempKey': tempKey,
           if (adultCapacity != null) 'adultCapacity': adultCapacity,
           if (childrenCapacity != null) 'childrenCapacity': childrenCapacity,
+          if (allowsCancellation != null) 'allowsCancellation': allowsCancellation,
+          if (cancellationWindowDays != null) 'cancellationWindowDays': cancellationWindowDays,
         };
         final unitId = await remoteDataSource.createUnit(unitData);
         return Right(unitId);
@@ -159,6 +163,8 @@ class UnitsRepositoryImpl implements UnitsRepository {
     List<String>? images,
     int? adultCapacity,
     int? childrenCapacity,
+    bool? allowsCancellation,
+    int? cancellationWindowDays,
   }) async {
     if (await networkInfo.isConnected) {
       try {
@@ -170,6 +176,8 @@ class UnitsRepositoryImpl implements UnitsRepository {
           if (fieldValues != null)
             'fieldValues': _convertFieldValuesToString(fieldValues),
           if (images != null) 'images': images,
+          if (allowsCancellation != null) 'allowsCancellation': allowsCancellation,
+          if (cancellationWindowDays != null) 'cancellationWindowDays': cancellationWindowDays,
         };
         final result = await remoteDataSource.updateUnit(unitId, unitData);
         return Right(result);

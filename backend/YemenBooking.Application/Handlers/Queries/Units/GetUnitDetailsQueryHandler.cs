@@ -112,6 +112,8 @@ namespace YemenBooking.Application.Handlers.Queries.Units
                 PropertyName = unit.Property.Name,
                 UnitTypeName = unit.UnitType.Name,
                 PricingMethod = unit.PricingMethod.ToString(),
+                AllowsCancellation = unit.AllowsCancellation,
+                CancellationWindowDays = unit.CancellationWindowDays,
                 FieldValues = unit.FieldValues.Select(fv => new UnitFieldValueDto
                 {
                     ValueId = fv.Id,

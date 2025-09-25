@@ -62,4 +62,14 @@ public class CreateUnitCommand : IRequest<ResultDto<Guid>>
     /// الصور المرسلة مؤقتاً للوحدة
     /// </summary>
     public List<string> Images { get; set; } = new List<string>();
+
+    /// <summary>
+    /// هل تقبل الوحدة إلغاء الحجز
+    /// </summary>
+    public bool AllowsCancellation { get; set; } = true;
+
+    /// <summary>
+    /// عدد أيام نافذة الإلغاء قبل الوصول
+    /// </summary>
+    public int? CancellationWindowDays { get; set; }
 } 

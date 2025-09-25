@@ -35,6 +35,7 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
     on<UpdateFeaturesEvent>(_onUpdateFeatures);
     on<UpdateDynamicFieldsEvent>(_onUpdateDynamicFields);
     on<SubmitFormEvent>(_onSubmitForm);
+    on<UpdateCancellationPolicyEvent>(_onUpdateCancellationPolicy);
   }
 
   Future<void> _onInitializeForm(
@@ -193,6 +194,19 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
     }
   }
 
+  Future<void> _onUpdateCancellationPolicy(
+    UpdateCancellationPolicyEvent event,
+    Emitter<UnitFormState> emit,
+  ) async {
+    if (state is UnitFormReady) {
+      final currentState = state as UnitFormReady;
+      emit(currentState.copyWith(
+        allowsCancellation: event.allowsCancellation,
+        cancellationWindowDays: event.cancellationWindowDays,
+      ));
+    }
+  }
+
   Future<void> _onSubmitForm(
     SubmitFormEvent event,
     Emitter<UnitFormState> emit,
@@ -221,6 +235,8 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
           images: currentState.images,
           adultCapacity: currentState.adultCapacity,
           childrenCapacity: currentState.childrenCapacity,
+          allowsCancellation: currentState.allowsCancellation,
+          cancellationWindowDays: currentState.cancellationWindowDays,
         ));
         
         result.fold(
@@ -242,6 +258,8 @@ class UnitFormBloc extends Bloc<UnitFormEvent, UnitFormState> {
           adultCapacity: currentState.adultCapacity ?? 0,
           childrenCapacity: currentState.childrenCapacity ?? 0,
           tempKey: currentState.tempKey,
+          allowsCancellation: currentState.allowsCancellation,
+          cancellationWindowDays: currentState.cancellationWindowDays,
         ));
         
         result.fold(

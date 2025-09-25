@@ -22,6 +22,8 @@ class UpdateUnitUseCase implements UseCase<bool, UpdateUnitParams> {
       images: params.images,
       adultCapacity: params.adultCapacity,
       childrenCapacity: params.childrenCapacity,
+      allowsCancellation: params.allowsCancellation,
+      cancellationWindowDays: params.cancellationWindowDays,
     );
   }
 }
@@ -37,6 +39,8 @@ class UpdateUnitParams extends Equatable {
   final List<String>? images;
   final int? adultCapacity;
   final int? childrenCapacity;
+  final bool? allowsCancellation;
+  final int? cancellationWindowDays;
 
   const UpdateUnitParams({
     required this.unitId,
@@ -49,6 +53,8 @@ class UpdateUnitParams extends Equatable {
     this.images,
     this.adultCapacity,
     this.childrenCapacity,
+    this.allowsCancellation,
+    this.cancellationWindowDays,
   });
 
   @override
@@ -63,5 +69,7 @@ class UpdateUnitParams extends Equatable {
         images,
         adultCapacity,
         childrenCapacity,
+        allowsCancellation,
+        cancellationWindowDays,
       ];
 }
