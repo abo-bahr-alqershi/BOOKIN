@@ -28,6 +28,8 @@ namespace YemenBooking.Application.Handlers.Commands.Images
         private readonly ILogger<UploadImageCommandHandler> _logger;
         private readonly IPropertyImageRepository _imageRepository;
         private readonly IUnitRepository _unitRepository;
+        private readonly IMediaMetadataService _mediaMetadataService;
+        private readonly IMediaThumbnailService _mediaThumbnailService;
 
         public UploadImageCommandHandler(
             IFileStorageService fileStorageService,
@@ -36,7 +38,9 @@ namespace YemenBooking.Application.Handlers.Commands.Images
             IAuditService auditService,
             ILogger<UploadImageCommandHandler> logger,
             IPropertyImageRepository imageRepository,
-            IUnitRepository unitRepository)
+            IUnitRepository unitRepository,
+            IMediaMetadataService mediaMetadataService,
+            IMediaThumbnailService mediaThumbnailService)
         {
             _fileStorageService = fileStorageService;
             _imageProcessingService = imageProcessingService;
@@ -45,6 +49,8 @@ namespace YemenBooking.Application.Handlers.Commands.Images
             _logger = logger;
             _imageRepository = imageRepository;
             _unitRepository = unitRepository;
+            _mediaMetadataService = mediaMetadataService;
+            _mediaThumbnailService = mediaThumbnailService;
         }
 
         /// <inheritdoc />
@@ -212,6 +218,30 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     cancellationToken);
 
                 _logger.LogInformation("اكتمل رفع الصورة بنجاح: Url={Url}", uploadResult.FileUrl);
+                // معالجة الفيديو (مدة ومصغرة) إن كان فيديو
+                int? videoDurationSeconds = null;
+                string? videoThumbUrl = null;
+                if (isVideo && !string.IsNullOrWhiteSpace(uploadResult.FilePath))
+                {
+                    try
+                    {
+                        videoDurationSeconds = await _mediaMetadataService.TryGetDurationSecondsAsync(uploadResult.FilePath!, request.File.ContentType, cancellationToken);
+                        if (_mediaThumbnailService.TryGenerateThumbnailAsync(uploadResult.FilePath!, cancellationToken, out var thumbBytes).Result && thumbBytes != null)
+                        {
+                            var thumbName = Path.GetFileNameWithoutExtension(fileName) + "_poster.jpg";
+                            var thumbUpload = await _fileStorageService.UploadFileAsync(thumbBytes, thumbName, "image/jpeg", folderPath, cancellationToken);
+                            if (thumbUpload.IsSuccess && !string.IsNullOrWhiteSpace(thumbUpload.FileUrl))
+                            {
+                                videoThumbUrl = thumbUpload.FileUrl;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Video processing failed (duration/thumbnail)");
+                    }
+                }
+
                 // بناء DTO للصورة للرد
                 var imageDto = new ImageDto
                 {
@@ -234,8 +264,8 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     ProcessingStatus = "ready",
                     Thumbnails = new ImageThumbnailsDto(),
                     MediaType = isVideo ? "video" : "image",
-                    Duration = null,
-                    VideoThumbnail = null
+                    Duration = videoDurationSeconds,
+                    VideoThumbnail = videoThumbUrl
                 };
                 // Determine PropertyId association: maintain null if none
                 Guid? propertyAssociation = request.PropertyId;
@@ -270,8 +300,8 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     CreatedBy = _currentUserService.UserId,
                     UpdatedAt = imageDto.UploadedAt,
                     MediaType = isVideo ? "video" : "image",
-                    DurationSeconds = null,
-                    VideoThumbnailUrl = null
+                    DurationSeconds = videoDurationSeconds,
+                    VideoThumbnailUrl = videoThumbUrl
                 };
                 await _imageRepository.CreatePropertyImageAsync(imageEntity, cancellationToken);
                 

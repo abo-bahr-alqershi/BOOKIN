@@ -36,8 +36,9 @@ namespace YemenBooking.Api.Extensions
             // تسجيل خدمات البنية التحتية
             RegisterInfrastructureServices(services);
             
-            // Register media metadata service explicitly (not following *Service naming convention)
+            // Register media metadata and thumbnail services
             services.AddScoped<IMediaMetadataService, MediaMetadataService>();
+            services.AddScoped<IMediaThumbnailService, MediaThumbnailService>();
             // Register currency ensure service
             services.AddScoped<ICurrencyEnsureService, CurrencyEnsureService>();
 
