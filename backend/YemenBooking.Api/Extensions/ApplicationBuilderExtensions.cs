@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.FileProviders;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.StaticFiles;
 
 namespace YemenBooking.Api.Extensions
 {
@@ -33,13 +34,22 @@ namespace YemenBooking.Api.Extensions
 
             // خدمة ملفات الستاتيك: مسار wwwroot الافتراضي
             app.UseStaticFiles();
-            // خدمة رفع الصور من مجلد Uploads
+            // خدمة رفع الصور/الفيديو من مجلد Uploads
             var uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
             if (!Directory.Exists(uploadsRoot)) Directory.CreateDirectory(uploadsRoot);
+
+            var provider = new FileExtensionContentTypeProvider();
+            // Ensure mp4 served with video/mp4
+            provider.Mappings[".mp4"] = "video/mp4";
+            provider.Mappings[".webm"] = "video/webm";
+            provider.Mappings[".mov"] = "video/quicktime";
+            provider.Mappings[".mkv"] = "video/x-matroska";
+
             app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(uploadsRoot),
-                RequestPath = "/uploads"
+                RequestPath = "/uploads",
+                ContentTypeProvider = provider
             });
 
             // إعادة التوجيه إلى HTTPS (تجاوز في بيئة التطوير)
