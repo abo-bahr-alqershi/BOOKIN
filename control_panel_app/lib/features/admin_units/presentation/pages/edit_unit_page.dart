@@ -181,8 +181,9 @@ class _EditUnitPageState extends State<EditUnitPage>
       // Cancellation
       _allowsCancellation = unit.allowsCancellation;
       _cancellationWindowDays = unit.cancellationWindowDays;
-      _cancellationDaysController.text =
-          _cancellationWindowDays != null ? _cancellationWindowDays.toString() : '';
+      _cancellationDaysController.text = _cancellationWindowDays != null
+          ? _cancellationWindowDays.toString()
+          : '';
     });
 
     // تحديث UnitFormBloc بجميع البيانات
@@ -887,6 +888,7 @@ class _EditUnitPageState extends State<EditUnitPage>
           Row(
             children: [
               Switch(
+                activeThumbColor: AppTheme.success,
                 value: _allowsCancellation,
                 onChanged: (v) {
                   setState(() {
