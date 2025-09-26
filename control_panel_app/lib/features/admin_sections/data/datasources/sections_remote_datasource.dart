@@ -19,6 +19,8 @@ abstract class SectionsRemoteDataSource {
     String? contentType,
   });
 
+  Future<SectionModel> getSectionById(String sectionId);
+
   Future<SectionModel> createSection(Map<String, dynamic> payload);
   Future<SectionModel> updateSection(String sectionId, Map<String, dynamic> payload);
   Future<bool> deleteSection(String sectionId);
@@ -63,6 +65,15 @@ class SectionsRemoteDataSourceImpl implements SectionsRemoteDataSource {
       resp.data,
       (json) => SectionModel.fromJson(json),
     );
+  }
+
+  @override
+  Future<SectionModel> getSectionById(String sectionId) async {
+    final resp = await apiClient.get('$_adminBase/$sectionId');
+    final data = (resp.data is Map && resp.data['data'] != null)
+        ? resp.data['data']
+        : resp.data;
+    return SectionModel.fromJson(Map<String, dynamic>.from(data));
   }
 
   @override
