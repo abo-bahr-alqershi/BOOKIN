@@ -10,18 +10,21 @@ namespace YemenBooking.Application.Handlers.Queries.MobileApp.Sections
 {
 	public class GetSectionItemsQueryHandler : IRequestHandler<GetSectionItemsQuery, PaginatedResult<object>>
 	{
-		private readonly ISectionRepository _sections;
+    	private readonly ISectionRepository _sections;
 		private readonly IPropertyRepository _properties;
 		private readonly IUnitRepository _units;
+		private readonly IPropertyImageRepository _images;
 
 		public GetSectionItemsQueryHandler(
 			ISectionRepository sections,
 			IPropertyRepository properties,
-			IUnitRepository units)
+			IUnitRepository units,
+			IPropertyImageRepository images)
 		{
 			_sections = sections;
 			_properties = properties;
 			_units = units;
+			_images = images;
 		}
 
 		public async Task<PaginatedResult<object>> Handle(GetSectionItemsQuery request, CancellationToken cancellationToken)
@@ -47,32 +50,64 @@ namespace YemenBooking.Application.Handlers.Queries.MobileApp.Sections
                     .Take(request.PageSize)
                     .ToList();
 
-                // Map to existing property search dto for client compatibility
-                var resultItems = pagedItems.Select(p => new PropertySearchItemDto
+                var resultObjects = new List<object>();
+                foreach (var p in pagedItems)
                 {
-                    Id = p.PropertyId,
-                    Name = p.PropertyName,
-                    Description = p.ShortDescription ?? string.Empty,
-                    City = p.City,
-                    Address = p.Address,
-                    StarRating = p.StarRating,
-                    AverageRating = p.AverageRating,
-                    ReviewCount = p.ReviewsCount,
-                    MinPrice = p.BasePrice,
-                    Currency = p.Currency,
-                    MainImageUrl = p.MainImageUrl,
-                    ImageUrls = string.IsNullOrWhiteSpace(p.AdditionalImages) ? new List<string>() : System.Text.Json.JsonSerializer.Deserialize<List<string>>(p.AdditionalImages) ?? new List<string>(),
-                    Amenities = new List<string>(),
-                    PropertyType = p.PropertyType,
-                    DistanceKm = null,
-                    IsAvailable = true,
-                    AvailableUnitsCount = 0,
-                    MaxCapacity = 0,
-                    IsFeatured = p.IsFeatured,
-                    LastUpdated = DateTime.UtcNow
-                }).Cast<object>().ToList();
+                    var imgs = (await _images.GetImagesByPropertyAsync(p.PropertyId, cancellationToken))
+                        .OrderBy(i => i.DisplayOrder)
+                        .ToList();
+                    var mainImage = string.IsNullOrWhiteSpace(p.MainImageUrl)
+                        ? (imgs.FirstOrDefault(i => i.IsMainImage)?.Url ?? imgs.FirstOrDefault()?.Url)
+                        : p.MainImageUrl;
+                    var mainImageId = p.MainImageId ?? imgs.FirstOrDefault(i => i.IsMainImage)?.Id;
+                    var additional = imgs.Select(i => new PropertyImageDto
+                    {
+                        Id = i.Id,
+                        PropertyId = i.PropertyId,
+                        UnitId = i.UnitId,
+                        Name = i.Name,
+                        Url = i.Url,
+                        SizeBytes = i.SizeBytes,
+                        Type = i.Type,
+                        Category = i.Category,
+                        Caption = i.Caption,
+                        AltText = i.AltText,
+                        Tags = i.Tags,
+                        Sizes = i.Sizes,
+                        IsMain = i.IsMainImage,
+                        DisplayOrder = i.DisplayOrder,
+                        UploadedAt = i.UploadedAt,
+                        Status = i.Status,
+                        AssociationType = i.UnitId.HasValue ? "Unit" : "Property"
+                    }).ToList();
 
-                return PaginatedResult<object>.Create(resultItems, request.PageNumber, request.PageSize, total);
+                    resultObjects.Add(new
+                    {
+                        Id = p.PropertyId,
+                        Name = p.PropertyName,
+                        Description = p.ShortDescription ?? string.Empty,
+                        City = p.City,
+                        Address = p.Address,
+                        StarRating = p.StarRating,
+                        AverageRating = p.AverageRating,
+                        ReviewCount = p.ReviewsCount,
+                        MinPrice = p.BasePrice,
+                        Currency = p.Currency,
+                        MainImageUrl = mainImage,
+                        MainImageId = mainImageId,
+                        ImageUrls = additional.Select(a => a.Url).ToList(),
+                        AdditionalImages = additional,
+                        Amenities = new List<string>(),
+                        PropertyType = p.PropertyType,
+                        DistanceKm = (decimal?)null,
+                        IsAvailable = true,
+                        AvailableUnitsCount = 0,
+                        MaxCapacity = 0,
+                        IsFeatured = p.IsFeatured,
+                        LastUpdated = DateTime.UtcNow
+                    });
+                }
+                return PaginatedResult<object>.Create(resultObjects, request.PageNumber, request.PageSize, total);
             }
             else
             {
@@ -87,21 +122,55 @@ namespace YemenBooking.Application.Handlers.Queries.MobileApp.Sections
                     .Take(request.PageSize)
                     .ToList();
 
-                var resultItems = pagedItems.Select(u => new
+                var resultItems = new List<object>();
+                foreach (var u in pagedItems)
                 {
-                    Id = u.UnitId,
-                    Name = u.UnitName,
-                    PropertyId = u.PropertyId,
-                    UnitTypeId = u.UnitTypeId,
-                    IsAvailable = u.IsAvailable,
-                    MaxCapacity = u.MaxCapacity,
-                    MainImageUrl = u.MainImageUrl,
-                    ImageUrls = string.IsNullOrWhiteSpace(u.AdditionalImages) ? new List<string>() : System.Text.Json.JsonSerializer.Deserialize<List<string>>(u.AdditionalImages) ?? new List<string>(),
-                    Badge = u.Badge,
-                    BadgeColor = u.BadgeColor,
-                    DiscountPercentage = u.DiscountPercentage,
-                    DiscountedPrice = u.DiscountedPrice
-                }).Cast<object>().ToList();
+                    var imgs = (await _images.GetImagesByUnitAsync(u.UnitId, cancellationToken))
+                        .OrderBy(i => i.DisplayOrder)
+                        .ToList();
+                    var mainImage = string.IsNullOrWhiteSpace(u.MainImageUrl)
+                        ? (imgs.FirstOrDefault(i => i.IsMainImage)?.Url ?? imgs.FirstOrDefault()?.Url)
+                        : u.MainImageUrl;
+                    var mainImageId = u.MainImageId ?? imgs.FirstOrDefault(i => i.IsMainImage)?.Id;
+                    var additional = imgs.Select(i => new PropertyImageDto
+                    {
+                        Id = i.Id,
+                        PropertyId = i.PropertyId,
+                        UnitId = i.UnitId,
+                        Name = i.Name,
+                        Url = i.Url,
+                        SizeBytes = i.SizeBytes,
+                        Type = i.Type,
+                        Category = i.Category,
+                        Caption = i.Caption,
+                        AltText = i.AltText,
+                        Tags = i.Tags,
+                        Sizes = i.Sizes,
+                        IsMain = i.IsMainImage,
+                        DisplayOrder = i.DisplayOrder,
+                        UploadedAt = i.UploadedAt,
+                        Status = i.Status,
+                        AssociationType = i.UnitId.HasValue ? "Unit" : "Property"
+                    }).ToList();
+
+                    resultItems.Add(new
+                    {
+                        Id = u.UnitId,
+                        Name = u.UnitName,
+                        PropertyId = u.PropertyId,
+                        UnitTypeId = u.UnitTypeId,
+                        IsAvailable = u.IsAvailable,
+                        MaxCapacity = u.MaxCapacity,
+                        MainImageUrl = mainImage,
+                        MainImageId = mainImageId,
+                        ImageUrls = additional.Select(a => a.Url).ToList(),
+                        AdditionalImages = additional,
+                        Badge = u.Badge,
+                        BadgeColor = u.BadgeColor,
+                        DiscountPercentage = u.DiscountPercentage,
+                        DiscountedPrice = u.DiscountedPrice
+                    });
+                }
 
                 return PaginatedResult<object>.Create(resultItems, request.PageNumber, request.PageSize, total);
             }

@@ -70,6 +70,35 @@ class SectionsRepositoryImpl implements SectionsRepository {
   }
 
   @override
+  Future<Either<Failure, domain.Section>> getSectionById(String sectionId) async {
+    try {
+      final model = await remoteDataSource.getSectionById(sectionId);
+      return Right(model.toEntity());
+    } catch (e) {
+      // try from cache
+      final cached = localDataSource.getCachedSections();
+      final hit = cached.firstWhere(
+        (m) => m.id == sectionId,
+        orElse: () => SectionModel(
+          id: '',
+          type: SectionTypeEnum.featured,
+          contentType: SectionContentType.properties,
+          displayStyle: SectionDisplayStyle.grid,
+          displayOrder: 0,
+          target: SectionTarget.properties,
+          isActive: true,
+          columnsCount: 2,
+          itemsToShow: 10,
+        ),
+      );
+      if (hit.id.isNotEmpty) {
+        return Right(hit.toEntity());
+      }
+      return ErrorHandler.handle(e);
+    }
+  }
+
+  @override
   Future<Either<Failure, domain.Section>> createSection(domain.Section section) async {
     try {
       final model = await remoteDataSource.createSection(SectionModel(

@@ -1,4 +1,6 @@
 import '../../domain/entities/unit_in_section.dart' as domain;
+import '../../../admin_properties/data/models/property_image_model.dart';
+import '../../../admin_properties/domain/entities/property_image.dart' as img_domain;
 
 class UnitInSectionModel {
   final String id;
@@ -17,7 +19,8 @@ class UnitInSectionModel {
   final int? adultsCapacity;
   final int? childrenCapacity;
   final String? mainImageUrl;
-  final List<String> additionalImages;
+  final String? mainImageId;
+  final List<img_domain.PropertyImage> additionalImages;
   final Map<String, dynamic>? primaryFieldValues;
   final String propertyAddress;
   final String propertyCity;
@@ -55,6 +58,7 @@ class UnitInSectionModel {
     this.childrenCapacity,
     this.mainImageUrl,
     this.additionalImages = const [],
+    this.mainImageId,
     this.primaryFieldValues,
     required this.propertyAddress,
     required this.propertyCity,
@@ -81,9 +85,14 @@ class UnitInSectionModel {
     return double.tryParse(v.toString()) ?? fallback;
   }
 
-  static List<String>? _toStringList(dynamic v) {
+  static List<img_domain.PropertyImage>? _toImageList(dynamic v) {
     if (v == null) return null;
-    if (v is List) return v.whereType<String>().toList();
+    if (v is List) {
+      return v
+          .whereType<Map<String, dynamic>>()
+          .map((m) => PropertyImageModel.fromJson(m))
+          .toList();
+    }
     return null;
   }
 
@@ -108,7 +117,8 @@ class UnitInSectionModel {
       childrenCapacity:
           json['childrenCapacity'] is int ? json['childrenCapacity'] : null,
       mainImageUrl: json['mainImageUrl']?.toString(),
-      additionalImages: _toStringList(json['additionalImages']) ?? const [],
+      mainImageId: json['mainImageId']?.toString(),
+      additionalImages: _toImageList(json['additionalImages']) ?? const [],
       primaryFieldValues: json['primaryFieldValues'] is Map<String, dynamic>
           ? Map<String, dynamic>.from(json['primaryFieldValues'])
           : null,
@@ -158,7 +168,8 @@ class UnitInSectionModel {
         'adultsCapacity': adultsCapacity,
         'childrenCapacity': childrenCapacity,
         'mainImageUrl': mainImageUrl,
-        'additionalImages': additionalImages,
+        'additionalImages': additionalImages.map((e) => (e is PropertyImageModel) ? e.toJson() : PropertyImageModel.fromJson({'id': e.id, 'url': e.url, 'filename': e.filename, 'size': e.size, 'mimeType': e.mimeType, 'width': e.width, 'height': e.height, 'uploadedAt': e.uploadedAt.toIso8601String(), 'uploadedBy': e.uploadedBy, 'order': e.order, 'isPrimary': e.isPrimary, 'category': e.category.name, 'tags': e.tags, 'processingStatus': e.processingStatus.name, 'thumbnails': (e.thumbnails)}).toJson()).toList(),
+        'mainImageId': mainImageId,
         'primaryFieldValues': primaryFieldValues,
         'propertyAddress': propertyAddress,
         'propertyCity': propertyCity,

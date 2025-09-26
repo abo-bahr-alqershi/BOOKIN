@@ -18,6 +18,8 @@ abstract class SectionsRepository {
     SectionContentType? contentType,
   });
 
+  Future<Either<Failure, Section>> getSectionById(String sectionId);
+
   Future<Either<Failure, Section>> createSection(Section section);
   Future<Either<Failure, Section>> updateSection(String sectionId, Section section);
   Future<Either<Failure, bool>> deleteSection(String sectionId);

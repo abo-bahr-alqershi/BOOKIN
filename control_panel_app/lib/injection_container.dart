@@ -1756,6 +1756,7 @@ void _initReference() {
 void _initAdminSections() {
   // Use cases
   sl.registerLazySingleton(() => GetAllSectionsUseCase(sl()));
+  sl.registerLazySingleton(() => GetSectionByIdUseCase(sl()));
   sl.registerLazySingleton(() => CreateSectionUseCase(sl()));
   sl.registerLazySingleton(() => UpdateSectionUseCase(sl()));
   sl.registerLazySingleton(() => DeleteSectionUseCase(sl()));

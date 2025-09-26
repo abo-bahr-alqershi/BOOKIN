@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../admin_properties/domain/entities/property_image.dart';
 
 class PropertyInSection extends Equatable {
   final String id;
@@ -16,7 +17,7 @@ class PropertyInSection extends Equatable {
   final double basePrice;
   final String currency;
   final String? mainImageUrl;
-  final List<String> additionalImages;
+  final List<PropertyImage> additionalImages;
   final String? shortDescription;
   final int displayOrder;
   final bool isFeatured;

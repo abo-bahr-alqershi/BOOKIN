@@ -7,6 +7,7 @@ import 'package:bookn_cp_app/features/admin_sections/domain/usecases/sections/cr
 import 'package:bookn_cp_app/features/admin_sections/domain/usecases/sections/delete_section_usecase.dart';
 import 'package:bookn_cp_app/features/admin_sections/domain/usecases/sections/get_all_sections_usecase.dart';
 import 'package:bookn_cp_app/features/admin_sections/domain/usecases/sections/toggle_section_status_usecase.dart';
+import 'package:bookn_cp_app/features/admin_sections/domain/usecases/sections/get_section_by_id_usecase.dart';
 import 'package:bookn_cp_app/features/admin_sections/domain/usecases/sections/update_section_usecase.dart';
 
 class SectionService {
@@ -15,6 +16,7 @@ class SectionService {
   final UpdateSectionUseCase updateSection;
   final DeleteSectionUseCase deleteSection;
   final ToggleSectionStatusUseCase toggleStatus;
+  final GetSectionByIdUseCase getById;
 
   const SectionService({
     required this.getAllSections,
@@ -22,6 +24,7 @@ class SectionService {
     required this.updateSection,
     required this.deleteSection,
     required this.toggleStatus,
+    required this.getById,
   });
 
   Future<PaginatedResult<Section>> fetchSections({
@@ -59,6 +62,11 @@ class SectionService {
   Future<bool> setActive(String sectionId, bool isActive) async {
     final result = await toggleStatus(ToggleSectionStatusParams(sectionId: sectionId, isActive: isActive));
     return result.fold((l) => false, (r) => r);
+  }
+
+  Future<Section?> fetchById(String sectionId) async {
+    final result = await getById(GetSectionByIdParams(sectionId));
+    return result.fold((l) => null, (r) => r);
   }
 }
 

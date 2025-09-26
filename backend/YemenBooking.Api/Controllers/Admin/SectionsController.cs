@@ -16,6 +16,13 @@ namespace YemenBooking.Api.Controllers.Admin
 			return Ok(result);
 		}
 
+		[HttpGet("{sectionId}")]
+		public async Task<IActionResult> GetSectionById(Guid sectionId)
+		{
+			var result = await _mediator.Send(new GetSectionByIdQuery { SectionId = sectionId });
+			return Ok(result);
+		}
+
 		[HttpPost]
 		public async Task<IActionResult> CreateSection([FromBody] CreateSectionCommand command)
 		{

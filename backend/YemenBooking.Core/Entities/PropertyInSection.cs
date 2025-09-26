@@ -54,6 +54,20 @@ public class PropertyInSection : BaseEntity<Guid>
     [Display(Name = "الصورة الرئيسية")]
     public string? MainImageUrl { get; set; }
 
+    /// <summary>
+    /// معرف الصورة الرئيسية المرتبطة من كيان الصور
+    /// Linked main image id from PropertyImage entity
+    /// </summary>
+    [Display(Name = "معرف الصورة الرئيسية")]
+    public Guid? MainImageId { get; set; }
+
+    /// <summary>
+    /// الصورة الرئيسية المرتبطة (تنقل)
+    /// Navigation to linked main image
+    /// </summary>
+    [Display(Name = "الصورة الرئيسية (تنقل)")]
+    public virtual PropertyImage? MainImage { get; set; }
+
 	/// <summary>
 	/// صور إضافية (JSON)
 	/// Additional images for the property card within the section as JSON array of strings
