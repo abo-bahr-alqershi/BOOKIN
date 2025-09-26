@@ -13,6 +13,7 @@ class UploadPropertyInSectionImageParams {
   final int? order;
   final List<String>? tags;
   final ProgressCallback? onSendProgress;
+  final String? tempKey;
   UploadPropertyInSectionImageParams({
     required this.propertyInSectionId,
     required this.filePath,
@@ -22,6 +23,7 @@ class UploadPropertyInSectionImageParams {
     this.order,
     this.tags,
     this.onSendProgress,
+    this.tempKey,
   });
 }
 
@@ -38,6 +40,7 @@ class UploadPropertyInSectionImageUseCase {
         order: p.order,
         tags: p.tags,
         onSendProgress: p.onSendProgress,
+        tempKey: p.tempKey,
       );
 }
 

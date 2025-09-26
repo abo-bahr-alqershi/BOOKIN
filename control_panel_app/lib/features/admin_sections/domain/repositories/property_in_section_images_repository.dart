@@ -13,6 +13,7 @@ abstract class PropertyInSectionImagesRepository {
     int? order,
     List<String>? tags,
     ProgressCallback? onSendProgress,
+    String? tempKey,
   });
 
   Future<Either<Failure, List<SectionImage>>> getImages(String propertyInSectionId, {int? page, int? limit});

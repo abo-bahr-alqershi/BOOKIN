@@ -56,7 +56,7 @@ class UnitInSectionImagesBloc extends Bloc<UnitInSectionImagesEvent, UnitInSecti
 
   Future<void> _onUpload(UploadUnitInSectionImageEvent e, Emitter<UnitInSectionImagesState> emit) async {
     emit(UnitInSectionImageUploading(current: _current, fileName: e.filePath.split('/').last));
-    final res = await uploadImage(UploadUnitInSectionImageParams(unitInSectionId: e.unitInSectionId, filePath: e.filePath, category: e.category, alt: e.alt, isPrimary: e.isPrimary, order: e.order, tags: e.tags, onSendProgress: (sent,total){ if(total>0) add(_ProgressEvent(e.unitInSectionId, sent/total)); }));
+    final res = await uploadImage(UploadUnitInSectionImageParams(unitInSectionId: e.unitInSectionId, filePath: e.filePath, category: e.category, alt: e.alt, isPrimary: e.isPrimary, order: e.order, tags: e.tags, tempKey: e.tempKey, onSendProgress: (sent,total){ if(total>0) add(_ProgressEvent(e.unitInSectionId, sent/total)); }));
     res.fold((f)=>emit(UnitInSectionImagesError(_msg(f))), (img){ _current.add(img); emit(UnitInSectionImageUploaded(uploaded: img, all: List.from(_current))); });
   }
 
