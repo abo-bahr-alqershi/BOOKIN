@@ -56,7 +56,7 @@ class SectionImagesBloc extends Bloc<SectionImagesEvent, SectionImagesState> {
 
   Future<void> _onUpload(UploadSectionImageEvent e, Emitter<SectionImagesState> emit) async {
     emit(SectionImageUploading(current: _current, fileName: e.filePath.split('/').last));
-    final res = await uploadImage(UploadSectionImageParams(sectionId: e.sectionId, filePath: e.filePath, category: e.category, alt: e.alt, isPrimary: e.isPrimary, order: e.order, tags: e.tags, onSendProgress: (sent,total){ if(total>0) add(_ProgressEvent(e.sectionId, sent/total)); }));
+    final res = await uploadImage(UploadSectionImageParams(sectionId: e.sectionId, filePath: e.filePath, category: e.category, alt: e.alt, isPrimary: e.isPrimary, order: e.order, tags: e.tags, tempKey: e.tempKey, onSendProgress: (sent,total){ if(total>0) add(_ProgressEvent(e.sectionId, sent/total)); }));
     res.fold((f)=>emit(SectionImagesError(_msg(f))), (img){ _current.add(img); emit(SectionImageUploaded(uploaded: img, all: List.from(_current))); });
   }
 

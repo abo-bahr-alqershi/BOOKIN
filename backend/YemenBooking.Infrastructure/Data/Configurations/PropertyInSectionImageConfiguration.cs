@@ -23,10 +23,11 @@ public class PropertyInSectionImageConfiguration : IEntityTypeConfiguration<Prop
         builder.Property(x => x.MediaType).HasMaxLength(20).HasDefaultValue("image");
         builder.Property(x => x.VideoThumbnailUrl).HasMaxLength(500);
 
+        builder.Property(x => x.PropertyInSectionId).IsRequired(false);
         builder.HasOne(x => x.PropertyInSection)
             .WithMany(p => p.AdditionalImages)
             .HasForeignKey(x => x.PropertyInSectionId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasIndex(x => x.PropertyInSectionId);
         builder.HasIndex(x => x.TempKey);

@@ -14,10 +14,10 @@ public class PropertyInSectionImage : BaseEntity<Guid>
     public string? TempKey { get; set; }
 
     [Display(Name = "معرف عقار في قسم")]
-    public Guid PropertyInSectionId { get; set; }
+    public Guid? PropertyInSectionId { get; set; }
 
     [Display(Name = "عقار في قسم")]
-    public virtual PropertyInSection PropertyInSection { get; set; }
+    public virtual PropertyInSection? PropertyInSection { get; set; }
 
     // Common fields
     [Display(Name = "اسم الصورة")]

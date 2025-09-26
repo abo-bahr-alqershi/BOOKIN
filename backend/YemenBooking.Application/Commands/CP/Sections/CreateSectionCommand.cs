@@ -39,5 +39,6 @@ namespace YemenBooking.Application.Commands.CP.Sections
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     public string? Metadata { get; set; }
+		public string? TempKey { get; set; }
 	}
 }

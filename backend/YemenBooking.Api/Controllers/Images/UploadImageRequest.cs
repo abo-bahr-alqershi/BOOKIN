@@ -61,6 +61,12 @@ namespace YemenBooking.Api.Controllers.Images
         [FromForm(Name = "alt")]
         public string? Alt { get; set; }
 
+        /// <summary>
+        /// سياق الحفظ: section | property-in-section | unit-in-section | property
+        /// </summary>
+        [FromForm(Name = "context")]
+        public string? Context { get; set; }
+
         [FromForm(Name = "isPrimary")]
         public bool? IsPrimary { get; set; }
 

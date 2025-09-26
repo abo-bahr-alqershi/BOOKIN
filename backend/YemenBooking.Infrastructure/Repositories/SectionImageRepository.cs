@@ -67,5 +67,10 @@ public class SectionImageRepository : BaseRepository<SectionImage>, ISectionImag
         await _context.SaveChangesAsync(cancellationToken);
         return true;
     }
+
+    public async Task<IEnumerable<SectionImage>> GetByTempKeyAsync(string tempKey, CancellationToken cancellationToken = default)
+        => await _dbSet.Where(x => x.TempKey == tempKey && !x.IsDeleted)
+            .OrderBy(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
 }
 

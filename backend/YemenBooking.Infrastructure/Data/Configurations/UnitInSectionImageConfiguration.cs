@@ -23,10 +23,11 @@ public class UnitInSectionImageConfiguration : IEntityTypeConfiguration<UnitInSe
         builder.Property(x => x.MediaType).HasMaxLength(20).HasDefaultValue("image");
         builder.Property(x => x.VideoThumbnailUrl).HasMaxLength(500);
 
+        builder.Property(x => x.UnitInSectionId).IsRequired(false);
         builder.HasOne(x => x.UnitInSection)
             .WithMany(u => u.AdditionalImages)
             .HasForeignKey(x => x.UnitInSectionId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasIndex(x => x.UnitInSectionId);
         builder.HasIndex(x => x.TempKey);

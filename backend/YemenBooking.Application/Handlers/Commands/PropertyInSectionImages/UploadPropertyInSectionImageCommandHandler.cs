@@ -39,7 +39,7 @@ namespace YemenBooking.Application.Handlers.Commands.PropertyInSectionImages
         public async Task<ResultDto<ImageDto>> Handle(UploadPropertyInSectionImageCommand request, CancellationToken cancellationToken)
         {
             var folderPath = string.IsNullOrWhiteSpace(request.TempKey)
-                ? $"section-items/{request.PropertyInSectionId}"
+                ? (request.PropertyInSectionId.HasValue ? $"section-items/{request.PropertyInSectionId}" : "temp")
                 : $"temp/{request.TempKey}";
             var stream = new MemoryStream(request.File.FileContent);
             var fileName = request.Name + request.Extension;
@@ -50,7 +50,7 @@ namespace YemenBooking.Application.Handlers.Commands.PropertyInSectionImages
             await _auditService.LogBusinessOperationAsync(
                 operationType: "UploadPropertyInSectionImage",
                 operationDescription: "رفع صورة عنصر قسم",
-                entityId: request.PropertyInSectionId,
+                entityId: request.PropertyInSectionId ?? Guid.Empty,
                 entityType: nameof(PropertyInSectionImage),
                 performedBy: _currentUserService.UserId,
                 metadata: new System.Collections.Generic.Dictionary<string, object>

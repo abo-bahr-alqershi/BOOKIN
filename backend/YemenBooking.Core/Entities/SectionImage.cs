@@ -15,10 +15,10 @@ public class SectionImage : BaseEntity<Guid>
     public string? TempKey { get; set; }
 
     [Display(Name = "معرف القسم")]
-    public Guid SectionId { get; set; }
+    public Guid? SectionId { get; set; }
 
     [Display(Name = "القسم")]
-    public virtual Section Section { get; set; }
+    public virtual Section? Section { get; set; }
 
     // Common media fields (mirrors PropertyImage where applicable)
     [Display(Name = "اسم الصورة")]

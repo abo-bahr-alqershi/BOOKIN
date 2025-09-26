@@ -23,10 +23,11 @@ public class SectionImageConfiguration : IEntityTypeConfiguration<SectionImage>
         builder.Property(x => x.MediaType).HasMaxLength(20).HasDefaultValue("image");
         builder.Property(x => x.VideoThumbnailUrl).HasMaxLength(500);
 
+        builder.Property(x => x.SectionId).IsRequired(false);
         builder.HasOne(x => x.Section)
             .WithMany(s => s.Images)
             .HasForeignKey(x => x.SectionId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasIndex(x => x.SectionId);
         builder.HasIndex(x => x.TempKey);

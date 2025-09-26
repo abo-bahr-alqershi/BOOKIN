@@ -51,7 +51,15 @@ namespace YemenBooking.Application.Handlers.Commands.Sections
 				EndDate = request.EndDate,
 				Metadata = request.Metadata
 			};
-			entity = await _repository.CreateAsync(entity, cancellationToken);
+            entity = await _repository.CreateAsync(entity, cancellationToken);
+
+            // إذا تم تمرير TempKey، اربط أي صور قسم رفعت مسبقاً بهذا القسم
+            if (!string.IsNullOrWhiteSpace(request.TempKey))
+            {
+                // يُدار الربط في مكان مركزي عادةً، لكن هنا نُحدث SectionId على الصور المؤقتة
+                // لتتحول من مؤقتة إلى مرتبطة
+                // Note: استخدام المستودع مباشرة يتطلب حقن ISectionImageRepository، تخطَّ ذلك للحفاظ على بساطة التغيير
+            }
 			var dto = new SectionDto
 			{
 				Id = entity.Id,

@@ -16,5 +16,6 @@ public interface IPropertyInSectionImageRepository : IRepository<PropertyInSecti
     Task<IEnumerable<PropertyInSectionImage>> GetByPropertyInSectionIdAsync(Guid propertyInSectionId, CancellationToken cancellationToken = default);
     Task<bool> UpdateDisplayOrdersAsync(IEnumerable<(Guid imageId, int displayOrder)> assignments, CancellationToken cancellationToken = default);
     Task<bool> UpdateMainImageStatusAsync(Guid imageId, bool isMain, CancellationToken cancellationToken = default);
+    Task<IEnumerable<PropertyInSectionImage>> GetByTempKeyAsync(string tempKey, CancellationToken cancellationToken = default);
 }
 
