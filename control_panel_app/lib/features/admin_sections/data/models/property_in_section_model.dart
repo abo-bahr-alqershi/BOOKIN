@@ -1,6 +1,6 @@
 import '../../domain/entities/property_in_section.dart' as domain;
-import '../../../admin_properties/data/models/property_image_model.dart';
-import '../../../admin_properties/domain/entities/property_image.dart' as img_domain;
+import 'section_image_model.dart';
+import '../../domain/entities/section_image.dart' as section_img;
 
 class PropertyInSectionModel {
   final String id;
@@ -19,7 +19,7 @@ class PropertyInSectionModel {
   final String currency;
   final String? mainImageUrl;
   final String? mainImageId;
-  final List<img_domain.PropertyImage> additionalImages;
+  final List<section_img.SectionImage> additionalImages;
   final String? shortDescription;
   final int displayOrder;
   final bool isFeatured;
@@ -81,12 +81,12 @@ class PropertyInSectionModel {
   }
 
   factory PropertyInSectionModel.fromJson(Map<String, dynamic> json) {
-    List<img_domain.PropertyImage> _images = [];
+    List<section_img.SectionImage> _images = [];
     final additional = json['additionalImages'];
     if (additional is List) {
       _images = additional
           .whereType<Map<String, dynamic>>()
-          .map((m) => PropertyImageModel.fromJson(m))
+          .map((m) => SectionImageModel.fromJson(m))
           .toList();
     }
     return PropertyInSectionModel(

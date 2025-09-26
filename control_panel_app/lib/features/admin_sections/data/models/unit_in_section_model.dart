@@ -1,6 +1,6 @@
 import '../../domain/entities/unit_in_section.dart' as domain;
-import '../../../admin_properties/data/models/property_image_model.dart';
-import '../../../admin_properties/domain/entities/property_image.dart' as img_domain;
+import 'section_image_model.dart';
+import '../../domain/entities/section_image.dart' as section_img;
 
 class UnitInSectionModel {
   final String id;
@@ -20,7 +20,7 @@ class UnitInSectionModel {
   final int? childrenCapacity;
   final String? mainImageUrl;
   final String? mainImageId;
-  final List<img_domain.PropertyImage> additionalImages;
+  final List<section_img.SectionImage> additionalImages;
   final Map<String, dynamic>? primaryFieldValues;
   final String propertyAddress;
   final String propertyCity;
@@ -85,12 +85,12 @@ class UnitInSectionModel {
     return double.tryParse(v.toString()) ?? fallback;
   }
 
-  static List<img_domain.PropertyImage>? _toImageList(dynamic v) {
+  static List<section_img.SectionImage>? _toImageList(dynamic v) {
     if (v == null) return null;
     if (v is List) {
       return v
           .whereType<Map<String, dynamic>>()
-          .map((m) => PropertyImageModel.fromJson(m))
+          .map((m) => SectionImageModel.fromJson(m))
           .toList();
     }
     return null;
