@@ -41,6 +41,9 @@ import 'package:bookn_cp_app/features/admin_units/domain/usecases/unit_images/up
 import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_bloc.dart';
 import 'package:bookn_cp_app/services/section_content_service.dart';
 import 'package:bookn_cp_app/services/section_service.dart';
+import 'features/admin_sections/data/datasources/section_images_remote_datasource.dart';
+import 'features/admin_sections/data/datasources/property_in_section_images_remote_datasource.dart';
+import 'features/admin_sections/data/datasources/unit_in_section_images_remote_datasource.dart';
 
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
@@ -1809,6 +1812,38 @@ void _initAdminSections() {
         addItems: sl(),
         removeItems: sl(),
         reorderItems: sl(),
+      ));
+
+  // Section images remote datasources (DI only; repositories can be added if needed by BLoC)
+  sl.registerLazySingleton<SectionImagesRemoteDataSource>(
+      () => SectionImagesRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<PropertyInSectionImagesRemoteDataSource>(
+      () => PropertyInSectionImagesRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<UnitInSectionImagesRemoteDataSource>(
+      () => UnitInSectionImagesRemoteDataSourceImpl(apiClient: sl()));
+
+  // Section Images Repository + UseCases + Bloc
+  sl.registerLazySingleton<SectionImagesRepository>(() => SectionImagesRepositoryImpl(
+        remoteDataSource: sl(),
+        networkInfo: sl(),
+      ));
+  sl.registerLazySingleton(() => UploadSectionImageUseCase(sl()));
+  sl.registerLazySingleton(() => UploadMultipleSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => GetSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateSectionImageUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteSectionImageUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteMultipleSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => ReorderSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => SetPrimarySectionImageUseCase(sl()));
+  sl.registerFactory(() => SectionImagesBloc(
+        uploadImage: sl(),
+        uploadMultipleImages: sl(),
+        getImages: sl(),
+        updateImage: sl(),
+        deleteImage: sl(),
+        deleteMultipleImages: sl(),
+        reorderImages: sl(),
+        setPrimaryImage: sl(),
       ));
 }
 
