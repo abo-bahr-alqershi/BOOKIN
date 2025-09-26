@@ -38,8 +38,6 @@ class SectionImage extends Equatable {
   final String uploadedBy;
   final int order;
   final bool isPrimary;
-  final String? propertyId;
-  final String? unitId;
   final String? sectionId;
   final String? propertyInSectionId;
   final String? unitInSectionId;
@@ -64,8 +62,6 @@ class SectionImage extends Equatable {
     required this.uploadedBy,
     required this.order,
     required this.isPrimary,
-    this.propertyId,
-    this.unitId,
     this.sectionId,
     this.propertyInSectionId,
     this.unitInSectionId,
@@ -109,8 +105,6 @@ class SectionImage extends Equatable {
         uploadedBy,
         order,
         isPrimary,
-        propertyId,
-        unitId,
         sectionId,
         propertyInSectionId,
         unitInSectionId,

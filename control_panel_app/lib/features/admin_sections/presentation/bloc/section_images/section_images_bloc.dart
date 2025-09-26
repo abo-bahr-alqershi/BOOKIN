@@ -1,108 +1,466 @@
+// lib/features/admin_sections/presentation/bloc/section_images/section_images_bloc.dart
+
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
+import 'package:bookn_cp_app/core/error/failures.dart';
 import '../../../domain/entities/section_image.dart';
 import '../../../domain/usecases/section_images/usecases.dart';
 import 'section_images_event.dart';
 import 'section_images_state.dart';
 
 class SectionImagesBloc extends Bloc<SectionImagesEvent, SectionImagesState> {
-  final UploadSectionImageUseCase uploadImage;
+  final UploadSectionImageUseCase uploadSectionImage;
   final UploadMultipleSectionImagesUseCase uploadMultipleImages;
-  final GetSectionImagesUseCase getImages;
-  final UpdateSectionImageUseCase updateImage;
-  final DeleteSectionImageUseCase deleteImage;
+  final GetSectionImagesUseCase getSectionImages;
+  final UpdateSectionImageUseCase updateSectionImage;
+  final DeleteSectionImageUseCase deleteSectionImage;
   final DeleteMultipleSectionImagesUseCase deleteMultipleImages;
   final ReorderSectionImagesUseCase reorderImages;
   final SetPrimarySectionImageUseCase setPrimaryImage;
 
-  List<SectionImage> _current = [];
-  Set<String> _selected = {};
-  String? _sectionId;
+  List<SectionImage> _currentImages = [];
+  Set<String> _selectedImageIds = {};
+  String? _currentSectionId;
 
   SectionImagesBloc({
-    required this.uploadImage,
+    required this.uploadSectionImage,
     required this.uploadMultipleImages,
-    required this.getImages,
-    required this.updateImage,
-    required this.deleteImage,
+    required this.getSectionImages,
+    required this.updateSectionImage,
+    required this.deleteSectionImage,
     required this.deleteMultipleImages,
     required this.reorderImages,
     required this.setPrimaryImage,
   }) : super(const SectionImagesInitial()) {
-    on<LoadSectionImagesEvent>(_onLoad);
-    on<UploadSectionImageEvent>(_onUpload);
-    on<UploadMultipleSectionImagesEvent>(_onUploadMultiple);
-    on<UpdateSectionImageEvent>(_onUpdate);
-    on<DeleteSectionImageEvent>(_onDelete);
-    on<DeleteMultipleSectionImagesEvent>(_onDeleteMultiple);
-    on<ReorderSectionImagesEvent>(_onReorder);
-    on<SetPrimarySectionImageEvent>(_onSetPrimary);
-    on<ToggleSelectSectionImageEvent>(_onToggleSelect);
-    on<SelectAllSectionImagesEvent>(_onSelectAll);
-    on<ClearSectionSelectionEvent>(_onClearSelection);
+    on<LoadSectionImagesEvent>(_onLoadSectionImages);
+    on<UploadSectionImageEvent>(_onUploadSectionImage);
+    on<UploadMultipleSectionImagesEvent>(_onUploadMultipleImages);
+    on<UpdateSectionImageEvent>(_onUpdateSectionImage);
+    on<DeleteSectionImageEvent>(_onDeleteSectionImage);
+    on<DeleteMultipleSectionImagesEvent>(_onDeleteMultipleImages);
+    on<ReorderSectionImagesEvent>(_onReorderImages);
+    on<SetPrimarySectionImageEvent>(_onSetPrimaryImage);
+    on<ClearSectionImagesEvent>(_onClearSectionImages);
+    on<RefreshSectionImagesEvent>(_onRefreshSectionImages);
+    on<ToggleSelectSectionImageEvent>(_onToggleImageSelection);
+    on<SelectAllSectionImagesEvent>(_onSelectAllImages);
+    on<DeselectAllSectionImagesEvent>(_onDeselectAllImages);
   }
 
-  Future<void> _onLoad(LoadSectionImagesEvent e, Emitter<SectionImagesState> emit) async {
-    _sectionId = e.sectionId;
-    emit(const SectionImagesLoading());
-    final Either<Failure, List<SectionImage>> res = await getImages(GetSectionImagesParams(sectionId: e.sectionId, page: e.page, limit: e.limit));
-    res.fold(
-      (f) => emit(SectionImagesError(_msg(f))),
-      (list) { _current = list; emit(SectionImagesLoaded(images: list, sectionId: e.sectionId)); },
+  Future<void> _onLoadSectionImages(
+    LoadSectionImagesEvent event,
+    Emitter<SectionImagesState> emit,
+  ) async {
+    // منع جلب الصور إذا لم يكن هناك sectionId أو tempKey
+    if ((event.sectionId == null || event.sectionId!.isEmpty) &&
+        (event.tempKey == null || event.tempKey!.isEmpty)) {
+      emit(const SectionImagesLoaded(images: []));
+      return;
+    }
+
+    emit(const SectionImagesLoading(message: 'Loading images...'));
+
+    final Either<Failure, List<SectionImage>> result = await getSectionImages(
+      GetSectionImagesParams(
+        sectionId: event.sectionId,
+        tempKey: event.tempKey,
+      ),
+    );
+
+    result.fold(
+      (failure) => emit(SectionImagesError(
+        message: _mapFailureToMessage(failure),
+        previousImages: _currentImages,
+      )),
+      (images) {
+        _currentImages = images;
+        _currentSectionId = event.sectionId;
+        emit(SectionImagesLoaded(
+          images: images,
+          currentSectionId: event.sectionId,
+        ));
+      },
     );
   }
 
-  Future<void> _onUpload(UploadSectionImageEvent e, Emitter<SectionImagesState> emit) async {
-    emit(SectionImageUploading(current: _current, fileName: e.filePath.split('/').last));
-    final res = await uploadImage(UploadSectionImageParams(sectionId: e.sectionId, filePath: e.filePath, category: e.category, alt: e.alt, isPrimary: e.isPrimary, order: e.order, tags: e.tags, tempKey: e.tempKey, onSendProgress: (sent,total){ if(total>0) add(_ProgressEvent(e.sectionId, sent/total)); }));
-    res.fold((f)=>emit(SectionImagesError(_msg(f))), (img){ _current.add(img); emit(SectionImageUploaded(uploaded: img, all: List.from(_current))); });
+  Future<void> _onUploadSectionImage(
+    UploadSectionImageEvent event,
+    Emitter<SectionImagesState> emit,
+  ) async {
+    // require sectionId or tempKey
+    if ((event.sectionId == null || event.sectionId!.isEmpty) &&
+        (event.tempKey == null || event.tempKey!.isEmpty)) {
+      emit(SectionImagesError(
+        message: 'لا يمكن رفع الصور بدون معرف القسم أو tempKey',
+        previousImages: _currentImages,
+      ));
+      return;
+    }
+
+    emit(SectionImageUploading(
+      currentImages: _currentImages,
+      uploadingFileName: event.filePath.split('/').last,
+    ));
+
+    final params = UploadSectionImageParams(
+      sectionId: event.sectionId,
+      tempKey: event.tempKey,
+      filePath: event.filePath,
+      category: event.category,
+      alt: event.alt,
+      isPrimary: event.isPrimary,
+      order: event.order,
+      tags: event.tags,
+      onSendProgress: (sent, total) {
+        if (total > 0) {
+          final progress = sent / total;
+          emit(SectionImageUploading(
+            currentImages: _currentImages,
+            uploadingFileName: event.filePath.split('/').last,
+            uploadProgress: progress,
+          ));
+        }
+      },
+    );
+
+    final Either<Failure, SectionImage> result =
+        await uploadSectionImage(params);
+
+    result.fold(
+      (failure) => emit(SectionImagesError(
+        message: _mapFailureToMessage(failure),
+        previousImages: _currentImages,
+      )),
+      (image) {
+        _currentImages.add(image);
+        emit(SectionImageUploaded(
+          uploadedImage: image,
+          allImages: List.from(_currentImages),
+        ));
+      },
+    );
   }
 
-  Future<void> _onUploadMultiple(UploadMultipleSectionImagesEvent e, Emitter<SectionImagesState> emit) async {
-    emit(SectionImageUploading(current: _current, total: e.filePaths.length, index: 0));
-    final res = await uploadMultipleImages(UploadMultipleSectionImagesParams(sectionId: e.sectionId, filePaths: e.filePaths, category: e.category, tags: e.tags, onProgress: (path,sent,total){ if(total>0) add(_ProgressEvent(e.sectionId, sent/total)); }));
-    res.fold((f)=>emit(SectionImagesError(_msg(f))), (list){ _current.addAll(list); emit(MultipleSectionImagesUploaded(uploaded: list, all: List.from(_current))); });
+  Future<void> _onUploadMultipleImages(
+    UploadMultipleSectionImagesEvent event,
+    Emitter<SectionImagesState> emit,
+  ) async {
+    emit(SectionImageUploading(
+      currentImages: _currentImages,
+      totalFiles: event.filePaths.length,
+      currentFileIndex: 0,
+    ));
+
+    final params = UploadMultipleSectionImagesParams(
+      sectionId: event.sectionId,
+      tempKey: event.tempKey,
+      filePaths: event.filePaths,
+      category: event.category,
+      tags: event.tags,
+      onProgress: (filePath, sent, total) {
+        if (total > 0) {
+          final progress = sent / total;
+          emit(SectionImageUploading(
+            currentImages: _currentImages,
+            uploadingFileName: filePath.split('/').last,
+            uploadProgress: progress,
+            totalFiles: event.filePaths.length,
+          ));
+        }
+      },
+    );
+
+    final Either<Failure, List<SectionImage>> result =
+        await uploadMultipleImages(params);
+
+    result.fold(
+      (failure) => emit(SectionImagesError(
+        message: _mapFailureToMessage(failure),
+        previousImages: _currentImages,
+      )),
+      (images) {
+        _currentImages.addAll(images);
+        emit(MultipleSectionImagesUploaded(
+          uploadedImages: images,
+          allImages: List.from(_currentImages),
+          successCount: images.length,
+          failedCount: event.filePaths.length - images.length,
+        ));
+        // بعد ثانية واحدة، عرض قائمة الصور المحدثة
+        Future.delayed(const Duration(seconds: 1), () {
+          add(LoadSectionImagesEvent(
+            sectionId: event.sectionId,
+            tempKey: event.tempKey,
+          ));
+        });
+      },
+    );
   }
 
-  Future<void> _onUpdate(UpdateSectionImageEvent e, Emitter<SectionImagesState> emit) async {
-    emit(SectionImageUpdating(current: _current, imageId: e.imageId));
-    final res = await updateImage(UpdateSectionImageParams(e.imageId, e.data));
-    res.fold((f)=>emit(SectionImagesError(_msg(f))), (_){ add(LoadSectionImagesEvent(sectionId: _sectionId!)); });
+  Future<void> _onUpdateSectionImage(
+    UpdateSectionImageEvent event,
+    Emitter<SectionImagesState> emit,
+  ) async {
+    emit(SectionImageUpdating(
+      currentImages: _currentImages,
+      imageId: event.imageId,
+    ));
+
+    final params = UpdateSectionImageParams(
+      imageId: event.imageId,
+      data: event.data,
+    );
+
+    final Either<Failure, bool> result = await updateSectionImage(params);
+
+    result.fold(
+      (failure) => emit(SectionImagesError(
+        message: _mapFailureToMessage(failure),
+        previousImages: _currentImages,
+      )),
+      (success) {
+        if (success && _currentSectionId != null) {
+          // إعادة تحميل الصور للحصول على البيانات المحدثة
+          add(LoadSectionImagesEvent(sectionId: _currentSectionId!));
+        } else {
+          emit(SectionImageUpdated(
+            updatedImages: _currentImages,
+          ));
+        }
+      },
+    );
   }
 
-  Future<void> _onDelete(DeleteSectionImageEvent e, Emitter<SectionImagesState> emit) async {
-    emit(SectionImageDeleting(current: _current, imageId: e.imageId));
-    final res = await deleteImage(_sectionId!, e.imageId, permanent: e.permanent);
-    res.fold((f)=>emit(SectionImagesError(_msg(f))), (ok){ if(ok){ _current.removeWhere((x)=>x.id==e.imageId); emit(SectionImageDeleted(remaining: List.from(_current))); } });
+  Future<void> _onDeleteSectionImage(
+    DeleteSectionImageEvent event,
+    Emitter<SectionImagesState> emit,
+  ) async {
+    emit(SectionImageDeleting(
+      currentImages: _currentImages,
+      imageId: event.imageId,
+    ));
+
+    final Either<Failure, bool> result =
+        await deleteSectionImage(event.imageId);
+
+    result.fold(
+      (failure) => emit(SectionImagesError(
+        message: _mapFailureToMessage(failure),
+        previousImages: _currentImages,
+      )),
+      (success) {
+        if (success) {
+          _currentImages.removeWhere((image) => image.id == event.imageId);
+          _selectedImageIds.remove(event.imageId);
+          emit(SectionImageDeleted(
+            remainingImages: List.from(_currentImages),
+          ));
+        }
+      },
+    );
   }
 
-  Future<void> _onDeleteMultiple(DeleteMultipleSectionImagesEvent e, Emitter<SectionImagesState> emit) async {
-    emit(const SectionImagesLoading());
-    final res = await deleteMultipleImages(_sectionId!, e.imageIds);
-    res.fold((f)=>emit(SectionImagesError(_msg(f))), (ok){ if(ok){ _current.removeWhere((x)=> e.imageIds.contains(x.id)); _selected.clear(); emit(MultipleSectionImagesDeleted(remaining: List.from(_current))); } });
+  Future<void> _onDeleteMultipleImages(
+    DeleteMultipleSectionImagesEvent event,
+    Emitter<SectionImagesState> emit,
+  ) async {
+    emit(const SectionImagesLoading(message: 'Deleting selected images...'));
+
+    final Either<Failure, bool> result =
+        await deleteMultipleImages(event.imageIds);
+
+    result.fold(
+      (failure) => emit(SectionImagesError(
+        message: _mapFailureToMessage(failure),
+        previousImages: _currentImages,
+      )),
+      (success) {
+        if (success) {
+          _currentImages
+              .removeWhere((image) => event.imageIds.contains(image.id));
+          _selectedImageIds.clear();
+          emit(MultipleSectionImagesDeleted(
+            remainingImages: List.from(_currentImages),
+            deletedCount: event.imageIds.length,
+          ));
+        }
+      },
+    );
   }
 
-  Future<void> _onReorder(ReorderSectionImagesEvent e, Emitter<SectionImagesState> emit) async {
-    emit(SectionImagesReordering(current: _current));
-    final res = await reorderImages(ReorderSectionImagesParams(_sectionId!, e.imageIds));
-    res.fold((f)=>emit(SectionImagesError(_msg(f))), (ok){ if(ok){ final map={for(final i in _current) i.id:i}; _current=e.imageIds.map((id)=>map[id]).whereType<SectionImage>().toList(); emit(SectionImagesReordered(reordered: List.from(_current))); } });
+  Future<void> _onReorderImages(
+    ReorderSectionImagesEvent event,
+    Emitter<SectionImagesState> emit,
+  ) async {
+    emit(SectionImagesReordering(currentImages: _currentImages));
+
+    final params = ReorderSectionImagesParams(
+      sectionId: event.sectionId,
+      tempKey: event.tempKey,
+      imageIds: event.imageIds,
+    );
+
+    final Either<Failure, bool> result = await reorderImages(params);
+
+    result.fold(
+      (failure) => emit(SectionImagesError(
+        message: _mapFailureToMessage(failure),
+        previousImages: _currentImages,
+      )),
+      (success) {
+        if (success) {
+          // إعادة ترتيب الصور محلياً
+          final Map<String, SectionImage> imageMap = {
+            for (var image in _currentImages) image.id: image
+          };
+          _currentImages = event.imageIds
+              .map((id) => imageMap[id])
+              .whereType<SectionImage>()
+              .toList();
+
+          emit(SectionImagesReordered(
+            reorderedImages: List.from(_currentImages),
+          ));
+        }
+      },
+    );
   }
 
-  Future<void> _onSetPrimary(SetPrimarySectionImageEvent e, Emitter<SectionImagesState> emit) async {
-    emit(const SectionImagesLoading());
-    final res = await setPrimaryImage(SetPrimarySectionImageParams(_sectionId!, e.imageId));
-    res.fold((f)=>emit(SectionImagesError(_msg(f))), (_){ add(LoadSectionImagesEvent(sectionId: _sectionId!)); });
+  Future<void> _onSetPrimaryImage(
+    SetPrimarySectionImageEvent event,
+    Emitter<SectionImagesState> emit,
+  ) async {
+    emit(const SectionImagesLoading(message: 'Setting primary image...'));
+
+    final params = SetPrimarySectionImageParams(
+      sectionId: event.sectionId,
+      tempKey: event.tempKey,
+      imageId: event.imageId,
+    );
+
+    final Either<Failure, bool> result = await setPrimaryImage(params);
+
+    result.fold(
+      (failure) => emit(SectionImagesError(
+        message: _mapFailureToMessage(failure),
+        previousImages: _currentImages,
+      )),
+      (success) {
+        if (success) {
+          // إعادة تحميل الصور للحصول على البيانات المحدثة
+          add(LoadSectionImagesEvent(
+            sectionId: event.sectionId,
+            tempKey: event.tempKey,
+          ));
+        }
+      },
+    );
   }
 
-  void _onToggleSelect(ToggleSelectSectionImageEvent e, Emitter<SectionImagesState> emit){ if(_selected.contains(e.imageId)) _selected.remove(e.imageId); else _selected.add(e.imageId); emit(SectionImagesLoaded(images:_current, sectionId:_sectionId, selected:Set.from(_selected), isSelectionMode:_selected.isNotEmpty)); }
-  void _onSelectAll(SelectAllSectionImagesEvent e, Emitter<SectionImagesState> emit){ _selected=_current.map((x)=>x.id).toSet(); emit(SectionImagesLoaded(images:_current, sectionId:_sectionId, selected:Set.from(_selected), isSelectionMode:true)); }
-  void _onClearSelection(ClearSectionSelectionEvent e, Emitter<SectionImagesState> emit){ _selected.clear(); emit(SectionImagesLoaded(images:_current, sectionId:_sectionId, selected:Set.from(_selected), isSelectionMode:false)); }
+  void _onClearSectionImages(
+    ClearSectionImagesEvent event,
+    Emitter<SectionImagesState> emit,
+  ) {
+    _currentImages = [];
+    _selectedImageIds = {};
+    _currentSectionId = null;
+    emit(const SectionImagesInitial());
+  }
 
-  void _onProgress(_ProgressEvent e, Emitter<SectionImagesState> emit){ emit(SectionImageUploading(current: _current, progress: e.progress)); }
-  String _msg(Failure f){ if(f is ServerFailure) return f.message ?? 'Server Error'; if(f is NetworkFailure) return 'Network error'; return 'Unexpected error'; }
+  Future<void> _onRefreshSectionImages(
+    RefreshSectionImagesEvent event,
+    Emitter<SectionImagesState> emit,
+  ) async {
+    final Either<Failure, List<SectionImage>> result = await getSectionImages(
+      GetSectionImagesParams(
+        sectionId: event.sectionId,
+        tempKey: event.tempKey,
+      ),
+    );
+
+    result.fold(
+      (failure) => emit(SectionImagesError(
+        message: _mapFailureToMessage(failure),
+        previousImages: _currentImages,
+      )),
+      (images) {
+        _currentImages = images;
+        _currentSectionId = event.sectionId;
+        emit(SectionImagesLoaded(
+          images: images,
+          currentSectionId: event.sectionId,
+          selectedImageIds: _selectedImageIds,
+          isSelectionMode: _selectedImageIds.isNotEmpty,
+        ));
+      },
+    );
+  }
+
+  void _onToggleImageSelection(
+    ToggleSelectSectionImageEvent event,
+    Emitter<SectionImagesState> emit,
+  ) {
+    if (_selectedImageIds.contains(event.imageId)) {
+      _selectedImageIds.remove(event.imageId);
+    } else {
+      _selectedImageIds.add(event.imageId);
+    }
+
+    emit(SectionImagesLoaded(
+      images: _currentImages,
+      currentSectionId: _currentSectionId,
+      selectedImageIds: Set.from(_selectedImageIds),
+      isSelectionMode: _selectedImageIds.isNotEmpty,
+    ));
+  }
+
+  void _onSelectAllImages(
+    SelectAllSectionImagesEvent event,
+    Emitter<SectionImagesState> emit,
+  ) {
+    _selectedImageIds = _currentImages.map((image) => image.id).toSet();
+
+    emit(SectionImagesLoaded(
+      images: _currentImages,
+      currentSectionId: _currentSectionId,
+      selectedImageIds: Set.from(_selectedImageIds),
+      isSelectionMode: true,
+    ));
+  }
+
+  void _onDeselectAllImages(
+    DeselectAllSectionImagesEvent event,
+    Emitter<SectionImagesState> emit,
+  ) {
+    _selectedImageIds.clear();
+
+    emit(SectionImagesLoaded(
+      images: _currentImages,
+      currentSectionId: _currentSectionId,
+      selectedImageIds: Set.from(_selectedImageIds),
+      isSelectionMode: false,
+    ));
+  }
+
+  String _mapFailureToMessage(Failure failure) {
+    switch (failure.runtimeType) {
+      case ServerFailure:
+        return (failure as ServerFailure).message ?? 'Server Error';
+      case NetworkFailure:
+        return 'Network connection error. Please check your internet connection.';
+      case CacheFailure:
+        return 'Cache Error';
+      default:
+        return 'Unexpected error occurred';
+    }
+  }
+
+  @override
+  Future<void> close() {
+    _currentImages = [];
+    _selectedImageIds = {};
+    _currentSectionId = null;
+    return super.close();
+  }
 }
-
-class _ProgressEvent extends SectionImagesEvent{ final String sectionId; final double progress; _ProgressEvent(this.sectionId,this.progress); }
-

@@ -10,9 +10,6 @@ import '../models/property_image_model.dart';
 abstract class PropertyImagesRemoteDataSource {
   Future<PropertyImageModel> uploadImage({
     String? propertyId,
-    String? sectionId,
-    String? propertyInSectionId,
-    String? unitInSectionId,
     String? tempKey,
     required String filePath,
     String? category,
@@ -22,26 +19,27 @@ abstract class PropertyImagesRemoteDataSource {
     List<String>? tags,
     ProgressCallback? onSendProgress,
   });
-  
-  Future<List<PropertyImageModel>> getPropertyImages(String? propertyId, {String? tempKey});
+
+  Future<List<PropertyImageModel>> getPropertyImages(String? propertyId,
+      {String? tempKey});
   Future<bool> updateImage(String imageId, Map<String, dynamic> data);
   Future<bool> deleteImage(String imageId);
-  Future<bool> reorderImages(String? propertyId,String? tempKey, List<String> imageIds);
-  Future<bool> setAsPrimaryImage(String? propertyId,String? tempKey, String imageId);
+  Future<bool> reorderImages(
+      String? propertyId, String? tempKey, List<String> imageIds);
+  Future<bool> setAsPrimaryImage(
+      String? propertyId, String? tempKey, String imageId);
 }
 
-class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSource {
+class PropertyImagesRemoteDataSourceImpl
+    implements PropertyImagesRemoteDataSource {
   final ApiClient apiClient;
   static const String _imagesEndpoint = '/api/images';
-  
+
   PropertyImagesRemoteDataSourceImpl({required this.apiClient});
-  
+
   @override
   Future<PropertyImageModel> uploadImage({
     String? propertyId,
-    String? sectionId,
-    String? propertyInSectionId,
-    String? unitInSectionId,
     String? tempKey,
     required String filePath,
     String? category,
@@ -59,9 +57,6 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath),
         'propertyId': propertyId,
-        if (sectionId != null) 'sectionId': sectionId,
-        if (propertyInSectionId != null) 'propertyInSectionId': propertyInSectionId,
-        if (unitInSectionId != null) 'unitInSectionId': unitInSectionId,
         if (tempKey != null) 'tempKey': tempKey,
         if (category != null) 'category': category,
         if (alt != null) 'alt': alt,
@@ -71,7 +66,7 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
         if (posterPath != null)
           'videoThumbnail': await MultipartFile.fromFile(posterPath),
       });
-      
+
       final response = await apiClient.post(
         '$_imagesEndpoint/upload',
         data: formData,
@@ -82,7 +77,7 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
         ),
         onSendProgress: onSendProgress,
       );
-      
+
       if (response.data is Map<String, dynamic>) {
         final map = response.data as Map<String, dynamic>;
         if (map['success'] == true && map['image'] != null) {
@@ -96,14 +91,17 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
           }
         }
       }
-        throw ServerException(response.data['message'] ?? 'Failed to upload image');
+      throw ServerException(
+          response.data['message'] ?? 'Failed to upload image');
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to upload image');
+      throw ServerException(
+          e.response?.data['message'] ?? 'Failed to upload image');
     }
   }
-  
+
   @override
-  Future<List<PropertyImageModel>> getPropertyImages(String? propertyId, {String? tempKey}) async {
+  Future<List<PropertyImageModel>> getPropertyImages(String? propertyId,
+      {String? tempKey}) async {
     try {
       final qp = <String, dynamic>{
         'propertyId': propertyId,
@@ -112,19 +110,22 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
         'sortOrder': 'asc',
       };
       if (tempKey != null) qp['tempKey'] = tempKey;
-      final response = await apiClient.get('$_imagesEndpoint', queryParameters: qp);
-      
+      final response =
+          await apiClient.get(_imagesEndpoint, queryParameters: qp);
+
       if (response.data is Map<String, dynamic>) {
         final map = response.data as Map<String, dynamic>;
-        final List<dynamic> list = (map['images'] as List?) ?? (map['items'] as List?) ?? const [];
+        final List<dynamic> list =
+            (map['images'] as List?) ?? (map['items'] as List?) ?? const [];
         return list.map((json) => PropertyImageModel.fromJson(json)).toList();
       }
-      throw ServerException('Invalid response when fetching images');
+      throw const ServerException('Invalid response when fetching images');
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to fetch property images');
+      throw ServerException(
+          e.response?.data['message'] ?? 'Failed to fetch property images');
     }
   }
-  
+
   @override
   Future<bool> updateImage(String imageId, Map<String, dynamic> data) async {
     try {
@@ -132,49 +133,59 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
         '$_imagesEndpoint/$imageId',
         data: data,
       );
-      
+
       return response.data['success'] == true;
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to update image');
+      throw ServerException(
+          e.response?.data['message'] ?? 'Failed to update image');
     }
   }
-  
+
   @override
   Future<bool> deleteImage(String imageId) async {
     try {
       final response = await apiClient.delete('$_imagesEndpoint/$imageId');
       return response.data['success'] == true;
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to delete image');
+      throw ServerException(
+          e.response?.data['message'] ?? 'Failed to delete image');
     }
   }
-  
+
   @override
-  Future<bool> reorderImages(String? propertyId,String? tempKey, List<String> imageIds) async {
+  Future<bool> reorderImages(
+      String? propertyId, String? tempKey, List<String> imageIds) async {
     try {
       final payload = {
         'imageIds': imageIds,
         if (propertyId != null) 'propertyId': propertyId,
         if (tempKey != null) 'tempKey': tempKey,
       };
-      final response = await apiClient.post('$_imagesEndpoint/reorder', data: payload);
-      return response.statusCode == 204 || (response.data is Map && response.data['success'] == true);
+      final response =
+          await apiClient.post('$_imagesEndpoint/reorder', data: payload);
+      return response.statusCode == 204 ||
+          (response.data is Map && response.data['success'] == true);
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to reorder images');
+      throw ServerException(
+          e.response?.data['message'] ?? 'Failed to reorder images');
     }
   }
-  
+
   @override
-  Future<bool> setAsPrimaryImage(String? propertyId,String? tempKey, String imageId) async {
+  Future<bool> setAsPrimaryImage(
+      String? propertyId, String? tempKey, String imageId) async {
     try {
       final body = {
         if (propertyId != null) 'propertyId': propertyId,
         if (tempKey != null) 'tempKey': tempKey,
       };
-      final response = await apiClient.post('$_imagesEndpoint/$imageId/set-primary', data: body);
-      return response.statusCode == 204 || (response.data is Map && response.data['success'] == true);
+      final response = await apiClient
+          .post('$_imagesEndpoint/$imageId/set-primary', data: body);
+      return response.statusCode == 204 ||
+          (response.data is Map && response.data['success'] == true);
     } on DioException catch (e) {
-      throw ServerException(e.response?.data['message'] ?? 'Failed to set primary image');
+      throw ServerException(
+          e.response?.data['message'] ?? 'Failed to set primary image');
     }
   }
 }

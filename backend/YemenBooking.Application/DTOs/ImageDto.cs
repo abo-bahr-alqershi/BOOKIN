@@ -95,6 +95,24 @@ namespace YemenBooking.Application.DTOs
         public Guid? UnitId { get; set; }
 
         /// <summary>
+        /// معرف القسم المرتبط (اختياري)
+        /// Associated section ID (optional)
+        /// </summary>
+        public Guid? SectionId { get; set; }
+
+        /// <summary>
+        /// معرف سجل العقار في القسم (اختياري)
+        /// Associated PropertyInSection ID (optional)
+        /// </summary>
+        public Guid? PropertyInSectionId { get; set; }
+
+        /// <summary>
+        /// معرف سجل الوحدة في القسم (اختياري)
+        /// Associated UnitInSection ID (optional)
+        /// </summary>
+        public Guid? UnitInSectionId { get; set; }
+
+        /// <summary>
         /// فئة الصورة
         /// Image category
         /// </summary>

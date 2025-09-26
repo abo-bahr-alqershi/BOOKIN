@@ -22,9 +22,6 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
   @override
   Future<Either<Failure, PropertyImage>> uploadImage({
     String? propertyId,
-    String? sectionId,
-    String? propertyInSectionId,
-    String? unitInSectionId,
     String? tempKey,
     required String filePath,
     String? category,
@@ -38,9 +35,6 @@ class PropertyImagesRepositoryImpl implements PropertyImagesRepository {
       try {
         final PropertyImageModel result = await remoteDataSource.uploadImage(
           propertyId: propertyId,
-          sectionId: sectionId,
-          propertyInSectionId: propertyInSectionId,
-          unitInSectionId: unitInSectionId,
           tempKey: tempKey,
           filePath: filePath,
           category: category,

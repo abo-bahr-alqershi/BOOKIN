@@ -4,14 +4,13 @@ using YemenBooking.Application.DTOs;
 
 namespace YemenBooking.Application.Queries.CP.SectionImages
 {
-    /// <summary>
-    /// استعلام للحصول على صور قسم محدد (مع ترقيم صفحات اختياري)
-    /// </summary>
     public class GetSectionImagesQuery : IRequest<ResultDto<PaginatedResultDto<ImageDto>>>
     {
-        public Guid SectionId { get; set; }
-        public int? Page { get; set; }
-        public int? Limit { get; set; }
+        public Guid? SectionId { get; set; }
+        public string? TempKey { get; set; }
+        public string? SortBy { get; set; } = "order";
+        public string? SortOrder { get; set; } = "asc";
+        public int Page { get; set; } = 1;
+        public int Limit { get; set; } = 50;
     }
 }
-

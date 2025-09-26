@@ -6,9 +6,11 @@ namespace YemenBooking.Application.Queries.CP.UnitInSectionImages
 {
     public class GetUnitInSectionImagesQuery : IRequest<ResultDto<PaginatedResultDto<ImageDto>>>
     {
-        public Guid UnitInSectionId { get; set; }
-        public int? Page { get; set; }
-        public int? Limit { get; set; }
+        public Guid? UnitInSectionId { get; set; }
+        public string? TempKey { get; set; }
+        public string? SortBy { get; set; } = "order";
+        public string? SortOrder { get; set; } = "asc";
+        public int Page { get; set; } = 1;
+        public int Limit { get; set; } = 50;
     }
 }
-

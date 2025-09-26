@@ -1,11 +1,15 @@
+// lib/features/admin_sections/domain/usecases/section_images/usecases.dart
+
+import 'package:bookn_cp_app/core/error/failures.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../entities/section_image.dart';
 import '../../repositories/section_images_repository.dart';
-import '../../../../core/error/failures.dart';
 
+// Upload Section Image
 class UploadSectionImageParams {
-  final String sectionId;
+  final String? sectionId;
+  final String? tempKey;
   final String filePath;
   final String? category;
   final String? alt;
@@ -13,9 +17,10 @@ class UploadSectionImageParams {
   final int? order;
   final List<String>? tags;
   final ProgressCallback? onSendProgress;
-  final String? tempKey;
+
   UploadSectionImageParams({
-    required this.sectionId,
+    this.sectionId,
+    this.tempKey,
     required this.filePath,
     this.category,
     this.alt,
@@ -23,43 +28,180 @@ class UploadSectionImageParams {
     this.order,
     this.tags,
     this.onSendProgress,
-    this.tempKey,
   });
 }
 
 class UploadSectionImageUseCase {
-  final SectionImagesRepository repo;
-  UploadSectionImageUseCase(this.repo);
-  Future<Either<Failure, SectionImage>> call(UploadSectionImageParams p) =>
-      repo.uploadImage(
-        sectionId: p.sectionId,
-        filePath: p.filePath,
-        category: p.category,
-        alt: p.alt,
-        isPrimary: p.isPrimary,
-        order: p.order,
-        tags: p.tags,
-        onSendProgress: p.onSendProgress,
-        tempKey: p.tempKey,
-      );
+  final SectionImagesRepository repository;
+
+  UploadSectionImageUseCase(this.repository);
+
+  Future<Either<Failure, SectionImage>> call(UploadSectionImageParams params) {
+    return repository.uploadImage(
+      sectionId: params.sectionId,
+      tempKey: params.tempKey,
+      filePath: params.filePath,
+      category: params.category,
+      alt: params.alt,
+      isPrimary: params.isPrimary,
+      order: params.order,
+      tags: params.tags,
+      onSendProgress: params.onSendProgress,
+    );
+  }
 }
 
-class GetSectionImagesParams { final String sectionId; final int? page; final int? limit; GetSectionImagesParams({required this.sectionId, this.page, this.limit}); }
-class GetSectionImagesUseCase { final SectionImagesRepository repo; GetSectionImagesUseCase(this.repo); Future<Either<Failure, List<SectionImage>>> call(GetSectionImagesParams p)=> repo.getImages(p.sectionId, page: p.page, limit: p.limit); }
+// Get Section Images
+class GetSectionImagesParams {
+  final String? sectionId;
+  final String? tempKey;
 
-class UpdateSectionImageParams { final String imageId; final Map<String,dynamic> data; UpdateSectionImageParams(this.imageId, this.data); }
-class UpdateSectionImageUseCase { final SectionImagesRepository repo; UpdateSectionImageUseCase(this.repo); Future<Either<Failure,bool>> call(UpdateSectionImageParams p)=> repo.updateImage(p.imageId, p.data); }
+  GetSectionImagesParams({this.sectionId, this.tempKey});
+}
 
-class DeleteSectionImageUseCase { final SectionImagesRepository repo; DeleteSectionImageUseCase(this.repo); Future<Either<Failure,bool>> call(String sectionId,String imageId,{bool permanent=false})=> repo.deleteImage(sectionId, imageId, permanent: permanent); }
+class GetSectionImagesUseCase {
+  final SectionImagesRepository repository;
 
-class ReorderSectionImagesParams { final String sectionId; final List<String> imageIds; ReorderSectionImagesParams(this.sectionId, this.imageIds); }
-class ReorderSectionImagesUseCase { final SectionImagesRepository repo; ReorderSectionImagesUseCase(this.repo); Future<Either<Failure,bool>> call(ReorderSectionImagesParams p)=> repo.reorderImages(p.sectionId, p.imageIds); }
+  GetSectionImagesUseCase(this.repository);
 
-class SetPrimarySectionImageParams { final String sectionId; final String imageId; SetPrimarySectionImageParams(this.sectionId, this.imageId); }
-class SetPrimarySectionImageUseCase { final SectionImagesRepository repo; SetPrimarySectionImageUseCase(this.repo); Future<Either<Failure,bool>> call(SetPrimarySectionImageParams p)=> repo.setAsPrimaryImage(p.sectionId, p.imageId); }
+  Future<Either<Failure, List<SectionImage>>> call(
+      GetSectionImagesParams params) {
+    return repository.getSectionImages(params.sectionId,
+        tempKey: params.tempKey);
+  }
+}
 
-class UploadMultipleSectionImagesParams { final String sectionId; final List<String> filePaths; final String? category; final List<String>? tags; final void Function(String,int,int)? onProgress; UploadMultipleSectionImagesParams({required this.sectionId, required this.filePaths, this.category, this.tags, this.onProgress}); }
-class UploadMultipleSectionImagesUseCase { final SectionImagesRepository repo; UploadMultipleSectionImagesUseCase(this.repo); Future<Either<Failure,List<SectionImage>>> call(UploadMultipleSectionImagesParams p)=> repo.uploadMultipleImages(sectionId: p.sectionId, filePaths: p.filePaths, category: p.category, tags: p.tags, onProgress: p.onProgress); }
+// Update Section Image
+class UpdateSectionImageParams {
+  final String imageId;
+  final Map<String, dynamic> data;
 
-class DeleteMultipleSectionImagesUseCase { final SectionImagesRepository repo; DeleteMultipleSectionImagesUseCase(this.repo); Future<Either<Failure,bool>> call(String sectionId,List<String> imageIds)=> repo.deleteMultipleImages(sectionId, imageIds); }
+  UpdateSectionImageParams({
+    required this.imageId,
+    required this.data,
+  });
+}
 
+class UpdateSectionImageUseCase {
+  final SectionImagesRepository repository;
+
+  UpdateSectionImageUseCase(this.repository);
+
+  Future<Either<Failure, bool>> call(UpdateSectionImageParams params) {
+    return repository.updateImage(params.imageId, params.data);
+  }
+}
+
+// Delete Section Image
+class DeleteSectionImageUseCase {
+  final SectionImagesRepository repository;
+
+  DeleteSectionImageUseCase(this.repository);
+
+  Future<Either<Failure, bool>> call(String imageId) {
+    return repository.deleteImage(imageId);
+  }
+}
+
+// Delete Multiple Section Images
+class DeleteMultipleSectionImagesUseCase {
+  final SectionImagesRepository repository;
+
+  DeleteMultipleSectionImagesUseCase(this.repository);
+
+  Future<Either<Failure, bool>> call(List<String> imageIds) {
+    return repository.deleteMultipleImages(imageIds);
+  }
+}
+
+// Reorder Section Images
+class ReorderSectionImagesParams {
+  final String? sectionId;
+  final String? tempKey;
+  final List<String> imageIds;
+
+  ReorderSectionImagesParams({
+    this.sectionId,
+    this.tempKey,
+    required this.imageIds,
+  });
+}
+
+class ReorderSectionImagesUseCase {
+  final SectionImagesRepository repository;
+
+  ReorderSectionImagesUseCase(this.repository);
+
+  Future<Either<Failure, bool>> call(ReorderSectionImagesParams params) {
+    return repository.reorderImages(
+      params.sectionId,
+      params.tempKey,
+      params.imageIds,
+    );
+  }
+}
+
+// Set Primary Section Image
+class SetPrimarySectionImageParams {
+  final String? sectionId;
+  final String? tempKey;
+  final String imageId;
+
+  SetPrimarySectionImageParams({
+    this.sectionId,
+    this.tempKey,
+    required this.imageId,
+  });
+}
+
+class SetPrimarySectionImageUseCase {
+  final SectionImagesRepository repository;
+
+  SetPrimarySectionImageUseCase(this.repository);
+
+  Future<Either<Failure, bool>> call(SetPrimarySectionImageParams params) {
+    return repository.setAsPrimaryImage(
+      params.sectionId,
+      params.tempKey,
+      params.imageId,
+    );
+  }
+}
+
+// Upload Multiple Section Images
+class UploadMultipleSectionImagesParams {
+  final String? sectionId;
+  final String? tempKey;
+  final List<String> filePaths;
+  final String? category;
+  final List<String>? tags;
+  final void Function(String filePath, int sent, int total)? onProgress;
+
+  UploadMultipleSectionImagesParams({
+    this.sectionId,
+    this.tempKey,
+    required this.filePaths,
+    this.category,
+    this.tags,
+    this.onProgress,
+  });
+}
+
+class UploadMultipleSectionImagesUseCase {
+  final SectionImagesRepository repository;
+
+  UploadMultipleSectionImagesUseCase(this.repository);
+
+  Future<Either<Failure, List<SectionImage>>> call(
+    UploadMultipleSectionImagesParams params,
+  ) {
+    return repository.uploadMultipleImages(
+      sectionId: params.sectionId,
+      tempKey: params.tempKey,
+      filePaths: params.filePaths,
+      category: params.category,
+      tags: params.tags,
+      onProgress: params.onProgress,
+    );
+  }
+}

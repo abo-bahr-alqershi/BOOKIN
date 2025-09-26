@@ -1,3 +1,5 @@
+// lib/features/admin_sections/data/repositories/section_images_repository_impl.dart
+
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/error/failures.dart';
@@ -12,11 +14,15 @@ class SectionImagesRepositoryImpl implements SectionImagesRepository {
   final SectionImagesRemoteDataSource remoteDataSource;
   final NetworkInfo networkInfo;
 
-  SectionImagesRepositoryImpl({required this.remoteDataSource, required this.networkInfo});
+  SectionImagesRepositoryImpl({
+    required this.remoteDataSource,
+    required this.networkInfo,
+  });
 
   @override
   Future<Either<Failure, SectionImage>> uploadImage({
-    required String sectionId,
+    String? sectionId,
+    String? tempKey,
     required String filePath,
     String? category,
     String? alt,
@@ -24,26 +30,26 @@ class SectionImagesRepositoryImpl implements SectionImagesRepository {
     int? order,
     List<String>? tags,
     ProgressCallback? onSendProgress,
-    String? tempKey,
   }) async {
     if (await networkInfo.isConnected) {
       try {
         final SectionImageModel result = await remoteDataSource.uploadImage(
           sectionId: sectionId,
+          tempKey: tempKey,
           filePath: filePath,
           category: category,
           alt: alt,
           isPrimary: isPrimary,
           order: order,
           tags: tags,
-          tempKey: tempKey,
           onSendProgress: onSendProgress,
         );
         return Right(result);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
       return const Left(NetworkFailure());
@@ -51,15 +57,20 @@ class SectionImagesRepositoryImpl implements SectionImagesRepository {
   }
 
   @override
-  Future<Either<Failure, List<SectionImage>>> getImages(String sectionId, {int? page, int? limit}) async {
+  Future<Either<Failure, List<SectionImage>>> getSectionImages(
+    String? sectionId, {
+    String? tempKey,
+  }) async {
     if (await networkInfo.isConnected) {
       try {
-        final List<SectionImageModel> result = await remoteDataSource.getImages(sectionId, page: page, limit: limit);
+        final List<SectionImageModel> result = await remoteDataSource
+            .getSectionImages(sectionId, tempKey: tempKey);
         return Right(result);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
       return const Left(NetworkFailure());
@@ -67,23 +78,10 @@ class SectionImagesRepositoryImpl implements SectionImagesRepository {
   }
 
   @override
-  Future<Either<Failure, List<SectionImage>>> getImagesByTempKey(String tempKey, {int? page, int? limit}) async {
-    if (await networkInfo.isConnected) {
-      try {
-        final List<SectionImageModel> result = await remoteDataSource.getImagesByTempKey(tempKey, page: page, limit: limit);
-        return Right(result);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
-      }
-    } else {
-      return const Left(NetworkFailure());
-    }
-  }
-
-  @override
-  Future<Either<Failure, bool>> updateImage(String imageId, Map<String, dynamic> data) async {
+  Future<Either<Failure, bool>> updateImage(
+    String imageId,
+    Map<String, dynamic> data,
+  ) async {
     if (await networkInfo.isConnected) {
       try {
         final bool result = await remoteDataSource.updateImage(imageId, data);
@@ -91,7 +89,8 @@ class SectionImagesRepositoryImpl implements SectionImagesRepository {
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
       return const Left(NetworkFailure());
@@ -99,15 +98,16 @@ class SectionImagesRepositoryImpl implements SectionImagesRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> deleteImage(String sectionId, String imageId, {bool permanent = false}) async {
+  Future<Either<Failure, bool>> deleteImage(String imageId) async {
     if (await networkInfo.isConnected) {
       try {
-        final bool result = await remoteDataSource.deleteImage(imageId, permanent: permanent);
+        final bool result = await remoteDataSource.deleteImage(imageId);
         return Right(result);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
       return const Left(NetworkFailure());
@@ -115,15 +115,21 @@ class SectionImagesRepositoryImpl implements SectionImagesRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> deleteImageById(String imageId, {bool permanent = false}) async {
+  Future<Either<Failure, bool>> reorderImages(
+    String? sectionId,
+    String? tempKey,
+    List<String> imageIds,
+  ) async {
     if (await networkInfo.isConnected) {
       try {
-        final bool result = await remoteDataSource.deleteImage(imageId, permanent: permanent);
+        final bool result =
+            await remoteDataSource.reorderImages(sectionId, tempKey, imageIds);
         return Right(result);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
       return const Left(NetworkFailure());
@@ -131,15 +137,21 @@ class SectionImagesRepositoryImpl implements SectionImagesRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> reorderImages(String sectionId, List<String> imageIds) async {
+  Future<Either<Failure, bool>> setAsPrimaryImage(
+    String? sectionId,
+    String? tempKey,
+    String imageId,
+  ) async {
     if (await networkInfo.isConnected) {
       try {
-        final bool result = await remoteDataSource.reorderImages(imageIds, tempKey: null);
+        final bool result = await remoteDataSource.setAsPrimaryImage(
+            sectionId, tempKey, imageId);
         return Right(result);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
       return const Left(NetworkFailure());
@@ -147,47 +159,24 @@ class SectionImagesRepositoryImpl implements SectionImagesRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> reorderImagesByTempKey(String tempKey, List<String> imageIds) async {
+  Future<Either<Failure, bool>> deleteMultipleImages(
+      List<String> imageIds) async {
     if (await networkInfo.isConnected) {
       try {
-        final bool result = await remoteDataSource.reorderImages(imageIds, tempKey: tempKey);
-        return Right(result);
+        bool allDeleted = true;
+        for (final imageId in imageIds) {
+          final result = await remoteDataSource.deleteImage(imageId);
+          if (!result) {
+            allDeleted = false;
+            break;
+          }
+        }
+        return Right(allDeleted);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
-      }
-    } else {
-      return const Left(NetworkFailure());
-    }
-  }
-
-  @override
-  Future<Either<Failure, bool>> setAsPrimaryImage(String sectionId, String imageId) async {
-    if (await networkInfo.isConnected) {
-      try {
-        final bool result = await remoteDataSource.setAsPrimaryImage(imageId, tempKey: null);
-        return Right(result);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
-      }
-    } else {
-      return const Left(NetworkFailure());
-    }
-  }
-
-  @override
-  Future<Either<Failure, bool>> setAsPrimaryImageByTempKey(String imageId, String tempKey) async {
-    if (await networkInfo.isConnected) {
-      try {
-        final bool result = await remoteDataSource.setAsPrimaryImage(imageId, tempKey: tempKey);
-        return Right(result);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
       return const Left(NetworkFailure());
@@ -196,48 +185,52 @@ class SectionImagesRepositoryImpl implements SectionImagesRepository {
 
   @override
   Future<Either<Failure, List<SectionImage>>> uploadMultipleImages({
-    required String sectionId,
+    String? sectionId,
+    String? tempKey,
     required List<String> filePaths,
     String? category,
     List<String>? tags,
     void Function(String filePath, int sent, int total)? onProgress,
   }) async {
     if (await networkInfo.isConnected) {
-      final uploaded = <SectionImage>[];
-      for (final path in filePaths) {
-        final res = await uploadImage(
-          sectionId: sectionId,
-          filePath: path,
-          category: category,
-          tags: tags,
-          onSendProgress: (sent, total) => onProgress?.call(path, sent, total),
-        );
-        res.fold((_) {}, (img) => uploaded.add(img));
-      }
-      return Right(uploaded);
-    } else {
-      return const Left(NetworkFailure());
-    }
-  }
-
-  @override
-  Future<Either<Failure, bool>> deleteMultipleImages(String sectionId, List<String> imageIds) async {
-    if (await networkInfo.isConnected) {
       try {
-        var ok = true;
-        for (final id in imageIds) {
-          final res = await deleteImage(sectionId, id);
-          res.fold((_) => ok = false, (_) {});
+        final List<SectionImageModel> uploadedImages = [];
+        int order = 0;
+
+        for (final filePath in filePaths) {
+          try {
+            final result = await remoteDataSource.uploadImage(
+              sectionId: sectionId,
+              tempKey: tempKey,
+              filePath: filePath,
+              category: category,
+              isPrimary: order == 0,
+              order: order,
+              tags: tags,
+              onSendProgress: onProgress != null
+                  ? (sent, total) => onProgress(filePath, sent, total)
+                  : null,
+            );
+            uploadedImages.add(result);
+            order++;
+          } catch (e) {
+            continue;
+          }
         }
-        return Right(ok);
+
+        if (uploadedImages.isEmpty) {
+          return const Left(ServerFailure('Failed to upload any images'));
+        }
+
+        return Right(uploadedImages);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } catch (e) {
-        return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+        return Left(
+            ServerFailure('An unexpected error occurred: ${e.toString()}'));
       }
     } else {
       return const Left(NetworkFailure());
     }
   }
 }
-

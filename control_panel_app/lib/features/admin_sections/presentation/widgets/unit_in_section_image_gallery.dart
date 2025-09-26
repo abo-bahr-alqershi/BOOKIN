@@ -8,6 +8,8 @@ import 'package:bookn_cp_app/core/utils/video_utils.dart';
 import 'package:bookn_cp_app/core/utils/image_utils.dart';
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:bookn_cp_app/core/widgets/video_player_widget.dart';
+import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/unit_in_section_images/unit_in_section_images_bloc.dart';
+import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/unit_in_section_images/unit_in_section_images_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,11 +23,11 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:reorderables/reorderables.dart';
 import '../../domain/entities/section_image.dart';
-import '../bloc/section_images/section_images_bloc.dart';
-import '../bloc/section_images/section_images_event.dart';
-import '../bloc/section_images/section_images_state.dart';
+import '../bloc/unit_in_section_images/unit_in_section_images_bloc.dart';
+import '../bloc/unit_in_section_images/unit_in_section_images_event.dart';
+import '../bloc/unit_in_section_images/unit_in_section_images_state.dart';
 
-class SectionImageGallery extends StatefulWidget {
+class UnitInSectionGallery extends StatefulWidget {
   final String? sectionId;
   final String? tempKey;
   final bool isReadOnly;
@@ -36,7 +38,7 @@ class SectionImageGallery extends StatefulWidget {
   final List<SectionImage>? initialImages;
   final List<String>? initialLocalImages;
 
-  const SectionImageGallery({
+  const UnitInSectionGallery({
     super.key,
     this.sectionId,
     this.tempKey,
@@ -50,17 +52,17 @@ class SectionImageGallery extends StatefulWidget {
   });
 
   @override
-  State<SectionImageGallery> createState() => SectionImageGalleryState();
+  State<UnitInSectionGallery> createState() => UnitInSectionGalleryState();
 }
 
-class SectionImageGalleryState extends State<SectionImageGallery>
+class UnitInSectionGalleryState extends State<UnitInSectionGallery>
     with TickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
   late AnimationController _animationController;
   late AnimationController _pulseController;
   late AnimationController _selectionController;
   late AnimationController _uploadAnimationController;
-  SectionImagesBloc? _imagesBloc;
+  UnitInSectionImagesBloc? _imagesBloc;
 
   // Local state management
   List<String> _localImages = [];
@@ -166,16 +168,17 @@ class SectionImageGalleryState extends State<SectionImageGallery>
 
     if (!_isLocalMode && !_isInitialLoadDone) {
       try {
-        _imagesBloc = context.read<SectionImagesBloc?>();
+        _imagesBloc = context.read<UnitInSectionImagesBloc?>();
         if (_imagesBloc != null &&
             ((widget.sectionId != null && widget.sectionId!.isNotEmpty) ||
                 (widget.tempKey != null && widget.tempKey!.isNotEmpty))) {
-          _imagesBloc!.add(LoadSectionImagesEvent(
-              sectionId: widget.sectionId, tempKey: widget.tempKey));
+          _imagesBloc!.add(LoadUnitInSectionImagesEvent(
+              unitInSectionId: widget.sectionId, tempKey: widget.tempKey));
           _isInitialLoadDone = true;
         }
       } catch (e) {
-        debugPrint('SectionImagesBloc not available, working in local mode');
+        debugPrint(
+            'UnitInSectionImagesBloc not available, working in local mode');
       }
     }
   }
@@ -199,7 +202,7 @@ class SectionImageGalleryState extends State<SectionImageGallery>
       return _buildLocalModeContent();
     }
 
-    return BlocConsumer<SectionImagesBloc, SectionImagesState>(
+    return BlocConsumer<UnitInSectionImagesBloc, UnitInSectionImagesState>(
       bloc: _imagesBloc,
       listener: (context, state) {
         handleStateChanges(state);
@@ -213,8 +216,8 @@ class SectionImageGalleryState extends State<SectionImageGallery>
   Future<void> uploadLocalImages(String newSectionId) async {
     if (_localImages.isEmpty || _imagesBloc == null) return;
 
-    _imagesBloc!.add(UploadMultipleSectionImagesEvent(
-      sectionId: newSectionId,
+    _imagesBloc!.add(UploadMultipleUnitInSectionImagesEvent(
+      unitInSectionId: newSectionId,
       tempKey: widget.tempKey,
       filePaths: _localImages,
     ));
@@ -225,7 +228,7 @@ class SectionImageGalleryState extends State<SectionImageGallery>
     });
   }
 
-  Widget _buildContent(SectionImagesState state) {
+  Widget _buildContent(UnitInSectionImagesState state) {
     final images =
         _displayImages.isNotEmpty ? _displayImages : getImagesFromState(state);
 
@@ -1139,8 +1142,8 @@ class SectionImageGalleryState extends State<SectionImageGallery>
         _uploadingFileTypes[fileKey] = isVideo ? 'video' : 'image';
       });
 
-      _imagesBloc!.add(UploadSectionImageEvent(
-        sectionId: widget.sectionId,
+      _imagesBloc!.add(UploadUnitInSectionImageEvent(
+        unitInSectionId: widget.sectionId,
         tempKey: widget.tempKey,
         filePath: filePath,
         isPrimary: _displayImages.isEmpty && !isVideo,
@@ -1201,8 +1204,8 @@ class SectionImageGalleryState extends State<SectionImageGallery>
               }
             });
 
-            _imagesBloc!.add(UploadMultipleSectionImagesEvent(
-              sectionId: widget.sectionId,
+            _imagesBloc!.add(UploadMultipleUnitInSectionImagesEvent(
+              unitInSectionId: widget.sectionId,
               tempKey: widget.tempKey,
               filePaths: imagesToAdd.map((img) => img.path).toList(),
             ));
@@ -1573,7 +1576,7 @@ class SectionImageGalleryState extends State<SectionImageGallery>
         _selectedImageIds.clear();
         _selectedLocalIndices.clear();
         if (_imagesBloc != null) {
-          _imagesBloc!.add(const DeselectAllSectionImagesEvent());
+          _imagesBloc!.add(const DeselectAllUnitInSectionImagesEvent());
         }
         _selectionController.reverse();
       } else {
@@ -1799,8 +1802,8 @@ class SectionImageGalleryState extends State<SectionImageGallery>
 
     if (_imagesBloc != null &&
         (widget.sectionId != null || widget.tempKey != null)) {
-      _imagesBloc!.add(ReorderSectionImagesEvent(
-        sectionId: widget.sectionId,
+      _imagesBloc!.add(ReorderUnitInSectionImagesEvent(
+        unitInSectionId: widget.sectionId,
         tempKey: widget.tempKey,
         imageIds: _displayImages.map((img) => img.id).toList(),
       ));
@@ -1852,8 +1855,8 @@ class SectionImageGalleryState extends State<SectionImageGallery>
     if (_imagesBloc != null &&
         (widget.sectionId != null || widget.tempKey != null) &&
         index < _displayImages.length) {
-      _imagesBloc!.add(SetPrimarySectionImageEvent(
-        sectionId: widget.sectionId,
+      _imagesBloc!.add(SetPrimaryUnitInSectionImageEvent(
+        unitInSectionId: widget.sectionId,
         tempKey: widget.tempKey,
         imageId: _displayImages[index].id,
       ));
@@ -1873,7 +1876,7 @@ class SectionImageGalleryState extends State<SectionImageGallery>
 
           if (_imagesBloc != null) {
             HapticFeedback.lightImpact();
-            _imagesBloc!.add(DeleteSectionImageEvent(imageId: media.id));
+            _imagesBloc!.add(DeleteUnitInSectionImageEvent(imageId: media.id));
           }
 
           setState(() {
@@ -1908,7 +1911,7 @@ class SectionImageGalleryState extends State<SectionImageGallery>
           Navigator.pop(context);
 
           if (_imagesBloc != null) {
-            _imagesBloc!.add(DeleteMultipleSectionImagesEvent(
+            _imagesBloc!.add(DeleteMultipleUnitInSectionImagesEvent(
               imageIds: _selectedImageIds.toList(),
             ));
           }
@@ -2043,8 +2046,8 @@ class SectionImageGalleryState extends State<SectionImageGallery>
   }
 
   // 25. _handleStateChanges
-  void handleStateChanges(SectionImagesState state) {
-    if (state is SectionImagesLoaded) {
+  void handleStateChanges(UnitInSectionImagesState state) {
+    if (state is UnitInSectionImagesLoaded) {
       setState(() {
         _displayImages = state.images;
         _primaryImageIndex =
@@ -2054,18 +2057,18 @@ class SectionImageGalleryState extends State<SectionImageGallery>
       if (widget.onImagesChanged != null) {
         widget.onImagesChanged!(state.images);
       }
-    } else if (state is SectionImageUploaded) {
+    } else if (state is UnitInSectionImageUploaded) {
       setState(() {
-        _displayImages = state.allImages;
+        _displayImages = state.all;
         _uploadingFiles.clear();
         _uploadingFileObjects.clear();
         _uploadProgress.clear();
       });
       showSuccessSnackBar('تم رفع الوسائط بنجاح');
       if (widget.onImagesChanged != null) {
-        widget.onImagesChanged!(state.allImages);
+        widget.onImagesChanged!(state.all);
       }
-    } else if (state is MultipleSectionImagesUploaded) {
+    } else if (state is MultipleUnitInSectionImagesUploaded) {
       setState(() {
         _displayImages = state.allImages;
         _uploadingFiles.clear();
@@ -2078,30 +2081,28 @@ class SectionImageGalleryState extends State<SectionImageGallery>
       if (widget.onImagesChanged != null) {
         widget.onImagesChanged!(state.allImages);
       }
-    } else if (state is SectionImageDeleted) {
+    } else if (state is UnitInSectionImageDeleted) {
       setState(() {
-        _displayImages = state.remainingImages;
+        _displayImages = state.remaining;
       });
       showSuccessSnackBar('تم حذف الوسائط');
       if (widget.onImagesChanged != null) {
-        widget.onImagesChanged!(state.remainingImages);
+        widget.onImagesChanged!(state.remaining);
       }
-    } else if (state is SectionImagesError) {
+    } else if (state is UnitInSectionImagesError) {
       setState(() {
         _uploadingFiles.clear();
         _uploadingFileObjects.clear();
         _uploadProgress.clear();
       });
       showErrorSnackBar(state.message);
-    } else if (state is SectionImageUploading) {
-      if (state.uploadingFileName != null && state.uploadProgress != null) {
+    } else if (state is UnitInSectionImageUploading) {
+      if (state.fileName != null && state.progress != null) {
         setState(() {
           _uploadingFiles.forEach((key, value) {
-            if (_uploadingFileObjects[key]
-                    ?.path
-                    .endsWith(state.uploadingFileName!) ??
+            if (_uploadingFileObjects[key]?.path.endsWith(state.fileName!) ??
                 false) {
-              _uploadProgress[key] = state.uploadProgress!;
+              _uploadProgress[key] = state.progress!;
             }
           });
         });
@@ -2110,20 +2111,24 @@ class SectionImageGalleryState extends State<SectionImageGallery>
   }
 
   // 26. _getImagesFromState
-  List<SectionImage> getImagesFromState(SectionImagesState state) {
-    if (state is SectionImagesLoaded) return state.images;
-    if (state is SectionImageUploaded) return state.allImages;
-    if (state is MultipleSectionImagesUploaded) return state.allImages;
-    if (state is SectionImageDeleted) return state.remainingImages;
-    if (state is MultipleSectionImagesDeleted) return state.remainingImages;
-    if (state is SectionImagesReordered) return state.reorderedImages;
-    if (state is PrimarySectionImageSet) return state.updatedImages;
-    if (state is SectionImageUpdated) return state.updatedImages;
-    if (state is SectionImageUploading) return state.currentImages;
-    if (state is SectionImageDeleting) return state.currentImages;
-    if (state is SectionImageUpdating) return state.currentImages;
-    if (state is SectionImagesReordering) return state.currentImages;
-    if (state is SectionImagesError) return state.previousImages ?? [];
+  List<SectionImage> getImagesFromState(UnitInSectionImagesState state) {
+    if (state is UnitInSectionImagesLoaded) return state.images;
+    if (state is UnitInSectionImageUploaded) return state.all;
+    if (state is MultipleUnitInSectionImagesUploaded) {
+      return state.allImages;
+    }
+    if (state is UnitInSectionImageDeleted) return state.remaining;
+    if (state is MultipleUnitInSectionImagesDeleted) {
+      return state.remaining;
+    }
+    if (state is UnitInSectionImagesReordered) return state.reordered;
+    if (state is PrimaryUnitInSectionImageSet) return state.updatedImages;
+    if (state is UnitInSectionImageUpdated) return state.updatedImages;
+    if (state is UnitInSectionImageUploading) return state.current;
+    if (state is UnitInSectionImageDeleting) return state.current;
+    if (state is UnitInSectionImageUpdating) return state.current;
+    if (state is UnitInSectionImagesReordering) return state.current;
+    if (state is UnitInSectionImagesError) return state.previousImages ?? [];
     return widget.initialImages ?? _remoteImages;
   }
 
@@ -2171,11 +2176,12 @@ class SectionImageGalleryState extends State<SectionImageGallery>
     );
   }
 
-  Widget buildEnhancedHeader(int totalCount, SectionImagesState state) {
-    final isSelectionMode =
-        state is SectionImagesLoaded ? state.isSelectionMode : _isSelectionMode;
-    final selectedCount = state is SectionImagesLoaded
-        ? state.selectedImageIds.length
+  Widget buildEnhancedHeader(int totalCount, UnitInSectionImagesState state) {
+    final isSelectionMode = state is UnitInSectionImagesLoaded
+        ? state.isSelectionMode
+        : _isSelectionMode;
+    final selectedCount = state is UnitInSectionImagesLoaded
+        ? state.selected.length
         : _selectedImageIds.length;
 
     return Container(
@@ -2505,8 +2511,9 @@ class SectionImageGalleryState extends State<SectionImageGallery>
     );
   }
 
-  Widget buildMainContent(List<SectionImage> images, SectionImagesState state) {
-    if (state is SectionImagesLoading && images.isEmpty) {
+  Widget buildMainContent(
+      List<SectionImage> images, UnitInSectionImagesState state) {
+    if (state is UnitInSectionImagesLoading && images.isEmpty) {
       return buildMinimalistLoadingState();
     }
 
@@ -2543,12 +2550,12 @@ class SectionImageGalleryState extends State<SectionImageGallery>
   }
 
   Widget buildEnhancedImagesGrid(
-      List<SectionImage> images, SectionImagesState state) {
-    final selectedImageIds = state is SectionImagesLoaded
-        ? state.selectedImageIds
-        : _selectedImageIds;
-    final isSelectionMode =
-        state is SectionImagesLoaded ? state.isSelectionMode : _isSelectionMode;
+      List<SectionImage> images, UnitInSectionImagesState state) {
+    final selectedImageIds =
+        state is UnitInSectionImagesLoaded ? state.selected : _selectedImageIds;
+    final isSelectionMode = state is UnitInSectionImagesLoaded
+        ? state.isSelectionMode
+        : _isSelectionMode;
 
     return AnimationLimiter(
       child: GridView.builder(
@@ -2602,7 +2609,7 @@ class SectionImageGalleryState extends State<SectionImageGallery>
             HapticFeedback.lightImpact();
             if (_imagesBloc != null) {
               _imagesBloc!
-                  .add(ToggleSelectSectionImageEvent(imageId: media.id));
+                  .add(ToggleSelectUnitInSectionImageEvent(imageId: media.id));
             } else {
               setState(() {
                 if (_selectedImageIds.contains(media.id)) {
@@ -3139,8 +3146,8 @@ class SectionImageGalleryState extends State<SectionImageGallery>
             }
           });
 
-          _imagesBloc!.add(UploadMultipleSectionImagesEvent(
-            sectionId: widget.sectionId,
+          _imagesBloc!.add(UploadMultipleUnitInSectionImagesEvent(
+            unitInSectionId: widget.sectionId,
             tempKey: widget.tempKey,
             filePaths: allFilesToAdd.map((file) => file.path).toList(),
           ));

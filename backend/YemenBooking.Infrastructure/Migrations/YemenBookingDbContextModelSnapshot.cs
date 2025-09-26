@@ -180,90 +180,90 @@ namespace YemenBooking.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6479),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5940),
                             Description = "إنترنت لاسلكي مجاني",
                             Icon = "",
                             IsActive = true,
                             IsDeleted = false,
                             Name = "واي فاي",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6480)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5941)
                         },
                         new
                         {
                             Id = new Guid("22222222-2222-2222-2222-222222222222"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6490),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5953),
                             Description = "مسبح للسباحة",
                             Icon = "",
                             IsActive = true,
                             IsDeleted = false,
                             Name = "مسبح",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6490)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5953)
                         },
                         new
                         {
                             Id = new Guid("33333333-3333-3333-3333-333333333333"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6494),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5955),
                             Description = "صالة رياضية",
                             Icon = "",
                             IsActive = true,
                             IsDeleted = false,
                             Name = "جيم",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6495)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5955)
                         },
                         new
                         {
                             Id = new Guid("44444444-4444-4444-4444-444444444444"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6498),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5957),
                             Description = "خدمة المطعم",
                             Icon = "",
                             IsActive = true,
                             IsDeleted = false,
                             Name = "مطعم",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6499)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5957)
                         },
                         new
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555555"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6502),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5958),
                             Description = "موقف سيارات مجاني",
                             Icon = "",
                             IsActive = true,
                             IsDeleted = false,
                             Name = "موقف سيارات",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6503)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5959)
                         },
                         new
                         {
                             Id = new Guid("66666666-6666-6666-6666-666666666666"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6508),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5961),
                             Description = "تكييف الهواء",
                             Icon = "",
                             IsActive = true,
                             IsDeleted = false,
                             Name = "تكييف",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6520)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5969)
                         },
                         new
                         {
                             Id = new Guid("77777777-7777-7777-7777-777777777777"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6523),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(6026),
                             Description = "تلفزيون بشاشة مسطحة",
                             Icon = "",
                             IsActive = true,
                             IsDeleted = false,
                             Name = "تلفزيون",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6524)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(6026)
                         },
                         new
                         {
                             Id = new Guid("88888888-8888-8888-8888-888888888888"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6528),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(6028),
                             Description = "وجبة إفطار مجانية",
                             Icon = "",
                             IsActive = true,
                             IsDeleted = false,
                             Name = "إفطار",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6528)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(6028)
                         });
                 });
 
@@ -1000,7 +1000,7 @@ namespace YemenBooking.Infrastructure.Migrations
                             ArabicName = "الدولار الأمريكي",
                             ExchangeRate = 0.004m,
                             IsDefault = false,
-                            LastUpdated = new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2190),
+                            LastUpdated = new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3855),
                             Name = "US Dollar"
                         });
                 });
@@ -1985,12 +1985,10 @@ namespace YemenBooking.Infrastructure.Migrations
                         .HasComment("معرف الكيان");
 
                     b.Property<Guid?>("PropertyInSectionId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasComment("ربط الصورة بسجل عقار في قسم");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("SectionId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasComment("القسم المرتبط بالصورة (اختياري)");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<long>("SizeBytes")
                         .HasColumnType("bigint");
@@ -2025,8 +2023,7 @@ namespace YemenBooking.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("UnitInSectionId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasComment("ربط الصورة بسجل وحدة في قسم");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -2208,6 +2205,116 @@ namespace YemenBooking.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("PropertyInSections", (string)null);
+                });
+
+            modelBuilder.Entity("YemenBooking.Core.Entities.PropertyInSectionImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AltText")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Caption")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DurationSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsMainImage")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MediaType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("image");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid?>("PropertyInSectionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Sizes")
+                        .HasColumnType("NVARCHAR(MAX)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasColumnType("NVARCHAR(MAX)");
+
+                    b.Property<string>("TempKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("VideoThumbnailUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyInSectionId");
+
+                    b.HasIndex("TempKey");
+
+                    b.ToTable("PropertyInSectionImages", (string)null);
                 });
 
             modelBuilder.Entity("YemenBooking.Core.Entities.PropertyPolicy", b =>
@@ -2420,62 +2527,62 @@ namespace YemenBooking.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6304),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5372),
                             DefaultAmenities = "[]",
                             Description = "فندق تقليدي بغرف وخدمات فندقية",
                             Icon = "",
                             IsActive = true,
                             IsDeleted = false,
                             Name = "فندق",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6304)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5373)
                         },
                         new
                         {
                             Id = new Guid("22222222-2222-2222-2222-222222222222"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6319),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5381),
                             DefaultAmenities = "[]",
                             Description = "شاليه للعائلات والمجموعات",
                             Icon = "",
                             IsActive = true,
                             IsDeleted = false,
                             Name = "شاليه",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6319)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5381)
                         },
                         new
                         {
                             Id = new Guid("33333333-3333-3333-3333-333333333333"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6322),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5383),
                             DefaultAmenities = "[]",
                             Description = "استراحة للإقامة المؤقتة",
                             Icon = "",
                             IsActive = true,
                             IsDeleted = false,
                             Name = "استراحة",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6322)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5383)
                         },
                         new
                         {
                             Id = new Guid("44444444-4444-4444-4444-444444444444"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6324),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5385),
                             DefaultAmenities = "[]",
                             Description = "فيلا خاصة للإقامة الفاخرة",
                             Icon = "",
                             IsActive = true,
                             IsDeleted = false,
                             Name = "فيلا",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6324)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5385)
                         },
                         new
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555555"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6326),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5387),
                             DefaultAmenities = "[]",
                             Description = "شقة مفروشة للإقامة قصيرة أو طويلة المدى",
                             Icon = "",
                             IsActive = true,
                             IsDeleted = false,
                             Name = "شقة",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6326)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5387)
                         });
                 });
 
@@ -2937,38 +3044,38 @@ namespace YemenBooking.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8645),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2065),
                             IsActive = true,
                             IsDeleted = false,
                             Name = "Admin",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8646)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2065)
                         },
                         new
                         {
                             Id = new Guid("22222222-2222-2222-2222-222222222222"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8660),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2076),
                             IsActive = true,
                             IsDeleted = false,
                             Name = "Owner",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8661)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2077)
                         },
                         new
                         {
                             Id = new Guid("33333333-3333-3333-3333-333333333333"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8662),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2078),
                             IsActive = true,
                             IsDeleted = false,
                             Name = "Manager",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8662)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2078)
                         },
                         new
                         {
                             Id = new Guid("44444444-4444-4444-4444-444444444444"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8664),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2080),
                             IsActive = true,
                             IsDeleted = false,
                             Name = "Customer",
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8664)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2080)
                         });
                 });
 
@@ -3231,6 +3338,116 @@ namespace YemenBooking.Infrastructure.Migrations
                     b.HasIndex("BackgroundImageId");
 
                     b.ToTable("Sections", (string)null);
+                });
+
+            modelBuilder.Entity("YemenBooking.Core.Entities.SectionImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AltText")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Caption")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DurationSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsMainImage")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MediaType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("image");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid?>("SectionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Sizes")
+                        .HasColumnType("NVARCHAR(MAX)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasColumnType("NVARCHAR(MAX)");
+
+                    b.Property<string>("TempKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("VideoThumbnailUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SectionId");
+
+                    b.HasIndex("TempKey");
+
+                    b.ToTable("SectionImages", (string)null);
                 });
 
             modelBuilder.Entity("YemenBooking.Core.Entities.Staff", b =>
@@ -3727,6 +3944,116 @@ namespace YemenBooking.Infrastructure.Migrations
                     b.ToTable("UnitInSections", (string)null);
                 });
 
+            modelBuilder.Entity("YemenBooking.Core.Entities.UnitInSectionImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AltText")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Caption")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DurationSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsMainImage")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MediaType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("image");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Sizes")
+                        .HasColumnType("NVARCHAR(MAX)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasColumnType("NVARCHAR(MAX)");
+
+                    b.Property<string>("TempKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid?>("UnitInSectionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("VideoThumbnailUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TempKey");
+
+                    b.HasIndex("UnitInSectionId");
+
+                    b.ToTable("UnitInSectionImages", (string)null);
+                });
+
             modelBuilder.Entity("YemenBooking.Core.Entities.UnitType", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4060,14 +4387,14 @@ namespace YemenBooking.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2088),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3780),
                             Email = "admin@example.com",
                             EmailConfirmed = true,
                             FavoritesJson = "[]",
                             IsActive = true,
                             IsDeleted = false,
                             IsEmailVerified = false,
-                            LastLoginDate = new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2089),
+                            LastLoginDate = new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3781),
                             LoyaltyTier = "Gold",
                             Name = "Admin User",
                             Password = "Admin@123",
@@ -4076,19 +4403,19 @@ namespace YemenBooking.Infrastructure.Migrations
                             ProfileImageUrl = "",
                             SettingsJson = "{}",
                             TotalSpent = 0m,
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2071)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3768)
                         },
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2104),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3792),
                             Email = "owner@example.com",
                             EmailConfirmed = true,
                             FavoritesJson = "[]",
                             IsActive = true,
                             IsDeleted = false,
                             IsEmailVerified = false,
-                            LastLoginDate = new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2105),
+                            LastLoginDate = new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3793),
                             LoyaltyTier = "Silver",
                             Name = "Property Owner User",
                             Password = "Owner@123",
@@ -4097,7 +4424,7 @@ namespace YemenBooking.Infrastructure.Migrations
                             ProfileImageUrl = "",
                             SettingsJson = "{}",
                             TotalSpent = 0m,
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2102)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3790)
                         });
                 });
 
@@ -4160,23 +4487,23 @@ namespace YemenBooking.Infrastructure.Migrations
                         {
                             UserId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                             RoleId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            AssignedAt = new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2272),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2272),
+                            AssignedAt = new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3926),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3926),
                             Id = new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"),
                             IsActive = true,
                             IsDeleted = false,
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2273)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3926)
                         },
                         new
                         {
                             UserId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                             RoleId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            AssignedAt = new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2276),
-                            CreatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2276),
+                            AssignedAt = new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3929),
+                            CreatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3930),
                             Id = new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"),
                             IsActive = true,
                             IsDeleted = false,
-                            UpdatedAt = new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2276)
+                            UpdatedAt = new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3930)
                         });
                 });
 
@@ -4614,14 +4941,12 @@ namespace YemenBooking.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("YemenBooking.Core.Entities.PropertyInSection", "PropertyInSection")
-                        .WithMany("AdditionalImages")
-                        .HasForeignKey("PropertyInSectionId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .WithMany()
+                        .HasForeignKey("PropertyInSectionId");
 
                     b.HasOne("YemenBooking.Core.Entities.Section", "Section")
-                        .WithMany("Images")
-                        .HasForeignKey("SectionId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .WithMany()
+                        .HasForeignKey("SectionId");
 
                     b.HasOne("YemenBooking.Core.Entities.Unit", "Unit")
                         .WithMany("Images")
@@ -4629,9 +4954,8 @@ namespace YemenBooking.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("YemenBooking.Core.Entities.UnitInSection", "UnitInSection")
-                        .WithMany("AdditionalImages")
-                        .HasForeignKey("UnitInSectionId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .WithMany()
+                        .HasForeignKey("UnitInSectionId");
 
                     b.Navigation("City");
 
@@ -4663,6 +4987,16 @@ namespace YemenBooking.Infrastructure.Migrations
                     b.Navigation("Property");
 
                     b.Navigation("Section");
+                });
+
+            modelBuilder.Entity("YemenBooking.Core.Entities.PropertyInSectionImage", b =>
+                {
+                    b.HasOne("YemenBooking.Core.Entities.PropertyInSection", "PropertyInSection")
+                        .WithMany("AdditionalImages")
+                        .HasForeignKey("PropertyInSectionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("PropertyInSection");
                 });
 
             modelBuilder.Entity("YemenBooking.Core.Entities.PropertyPolicy", b =>
@@ -4821,10 +5155,20 @@ namespace YemenBooking.Infrastructure.Migrations
 
             modelBuilder.Entity("YemenBooking.Core.Entities.Section", b =>
                 {
-                    b.HasOne("YemenBooking.Core.Entities.PropertyImage", null)
+                    b.HasOne("YemenBooking.Core.Entities.SectionImage", null)
                         .WithMany()
                         .HasForeignKey("BackgroundImageId")
                         .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("YemenBooking.Core.Entities.SectionImage", b =>
+                {
+                    b.HasOne("YemenBooking.Core.Entities.Section", "Section")
+                        .WithMany("Images")
+                        .HasForeignKey("SectionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Section");
                 });
 
             modelBuilder.Entity("YemenBooking.Core.Entities.Staff", b =>
@@ -4959,6 +5303,16 @@ namespace YemenBooking.Infrastructure.Migrations
                     b.Navigation("Section");
 
                     b.Navigation("Unit");
+                });
+
+            modelBuilder.Entity("YemenBooking.Core.Entities.UnitInSectionImage", b =>
+                {
+                    b.HasOne("YemenBooking.Core.Entities.UnitInSection", "UnitInSection")
+                        .WithMany("AdditionalImages")
+                        .HasForeignKey("UnitInSectionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("UnitInSection");
                 });
 
             modelBuilder.Entity("YemenBooking.Core.Entities.UnitType", b =>

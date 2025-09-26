@@ -194,22 +194,19 @@ namespace YemenBooking.Infrastructure.Migrations
                 name: "PropertyInSectionId",
                 table: "PropertyImages",
                 type: "uniqueidentifier",
-                nullable: true,
-                comment: "ربط الصورة بسجل عقار في قسم");
+                nullable: true);
 
             migrationBuilder.AddColumn<Guid>(
                 name: "SectionId",
                 table: "PropertyImages",
                 type: "uniqueidentifier",
-                nullable: true,
-                comment: "القسم المرتبط بالصورة (اختياري)");
+                nullable: true);
 
             migrationBuilder.AddColumn<Guid>(
                 name: "UnitInSectionId",
                 table: "PropertyImages",
                 type: "uniqueidentifier",
-                nullable: true,
-                comment: "ربط الصورة بسجل وحدة في قسم");
+                nullable: true);
 
             migrationBuilder.CreateTable(
                 name: "PropertyInSections",
@@ -268,6 +265,49 @@ namespace YemenBooking.Infrastructure.Migrations
                         principalTable: "Sections",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SectionImages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TempKey = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    SectionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Url = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    SizeBytes = table.Column<long>(type: "bigint", nullable: false),
+                    Type = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Category = table.Column<int>(type: "int", nullable: false),
+                    Caption = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    AltText = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    Sizes = table.Column<string>(type: "NVARCHAR(MAX)", nullable: true),
+                    IsMainImage = table.Column<bool>(type: "bit", nullable: false),
+                    DisplayOrder = table.Column<int>(type: "int", nullable: false),
+                    UploadedAt = table.Column<DateTime>(type: "datetime", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    MediaType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "image"),
+                    DurationSeconds = table.Column<int>(type: "int", nullable: true),
+                    VideoThumbnailUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Tags = table.Column<string>(type: "NVARCHAR(MAX)", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SectionImages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SectionImages_Sections_SectionId",
+                        column: x => x.SectionId,
+                        principalTable: "Sections",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -353,159 +393,245 @@ namespace YemenBooking.Infrastructure.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "PropertyInSectionImages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TempKey = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    PropertyInSectionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Url = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    SizeBytes = table.Column<long>(type: "bigint", nullable: false),
+                    Type = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Category = table.Column<int>(type: "int", nullable: false),
+                    Caption = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    AltText = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    Sizes = table.Column<string>(type: "NVARCHAR(MAX)", nullable: true),
+                    IsMainImage = table.Column<bool>(type: "bit", nullable: false),
+                    DisplayOrder = table.Column<int>(type: "int", nullable: false),
+                    UploadedAt = table.Column<DateTime>(type: "datetime", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    MediaType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "image"),
+                    DurationSeconds = table.Column<int>(type: "int", nullable: true),
+                    VideoThumbnailUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Tags = table.Column<string>(type: "NVARCHAR(MAX)", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PropertyInSectionImages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PropertyInSectionImages_PropertyInSections_PropertyInSectionId",
+                        column: x => x.PropertyInSectionId,
+                        principalTable: "PropertyInSections",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UnitInSectionImages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TempKey = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    UnitInSectionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Url = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    SizeBytes = table.Column<long>(type: "bigint", nullable: false),
+                    Type = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Category = table.Column<int>(type: "int", nullable: false),
+                    Caption = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    AltText = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    Sizes = table.Column<string>(type: "NVARCHAR(MAX)", nullable: true),
+                    IsMainImage = table.Column<bool>(type: "bit", nullable: false),
+                    DisplayOrder = table.Column<int>(type: "int", nullable: false),
+                    UploadedAt = table.Column<DateTime>(type: "datetime", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    MediaType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "image"),
+                    DurationSeconds = table.Column<int>(type: "int", nullable: true),
+                    VideoThumbnailUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Tags = table.Column<string>(type: "NVARCHAR(MAX)", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UnitInSectionImages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UnitInSectionImages_UnitInSections_UnitInSectionId",
+                        column: x => x.UnitInSectionId,
+                        principalTable: "UnitInSections",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
             migrationBuilder.UpdateData(
                 table: "Amenities",
                 keyColumn: "AmenityId",
                 keyValue: new Guid("11111111-1111-1111-1111-111111111111"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6479), new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6480) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5940), new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5941) });
 
             migrationBuilder.UpdateData(
                 table: "Amenities",
                 keyColumn: "AmenityId",
                 keyValue: new Guid("22222222-2222-2222-2222-222222222222"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6490), new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6490) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5953), new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5953) });
 
             migrationBuilder.UpdateData(
                 table: "Amenities",
                 keyColumn: "AmenityId",
                 keyValue: new Guid("33333333-3333-3333-3333-333333333333"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6494), new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6495) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5955), new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5955) });
 
             migrationBuilder.UpdateData(
                 table: "Amenities",
                 keyColumn: "AmenityId",
                 keyValue: new Guid("44444444-4444-4444-4444-444444444444"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6498), new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6499) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5957), new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5957) });
 
             migrationBuilder.UpdateData(
                 table: "Amenities",
                 keyColumn: "AmenityId",
                 keyValue: new Guid("55555555-5555-5555-5555-555555555555"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6502), new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6503) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5958), new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5959) });
 
             migrationBuilder.UpdateData(
                 table: "Amenities",
                 keyColumn: "AmenityId",
                 keyValue: new Guid("66666666-6666-6666-6666-666666666666"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6508), new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6520) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5961), new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(5969) });
 
             migrationBuilder.UpdateData(
                 table: "Amenities",
                 keyColumn: "AmenityId",
                 keyValue: new Guid("77777777-7777-7777-7777-777777777777"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6523), new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6524) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(6026), new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(6026) });
 
             migrationBuilder.UpdateData(
                 table: "Amenities",
                 keyColumn: "AmenityId",
                 keyValue: new Guid("88888888-8888-8888-8888-888888888888"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6528), new DateTime(2025, 9, 26, 5, 25, 22, 119, DateTimeKind.Utc).AddTicks(6528) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(6028), new DateTime(2025, 9, 26, 11, 10, 54, 372, DateTimeKind.Utc).AddTicks(6028) });
 
             migrationBuilder.UpdateData(
                 table: "Currencies",
                 keyColumn: "Code",
                 keyValue: "USD",
                 column: "LastUpdated",
-                value: new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2190));
+                value: new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3855));
 
             migrationBuilder.UpdateData(
                 table: "PropertyTypes",
                 keyColumn: "TypeId",
                 keyValue: new Guid("11111111-1111-1111-1111-111111111111"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6304), new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6304) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5372), new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5373) });
 
             migrationBuilder.UpdateData(
                 table: "PropertyTypes",
                 keyColumn: "TypeId",
                 keyValue: new Guid("22222222-2222-2222-2222-222222222222"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6319), new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6319) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5381), new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5381) });
 
             migrationBuilder.UpdateData(
                 table: "PropertyTypes",
                 keyColumn: "TypeId",
                 keyValue: new Guid("33333333-3333-3333-3333-333333333333"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6322), new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6322) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5383), new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5383) });
 
             migrationBuilder.UpdateData(
                 table: "PropertyTypes",
                 keyColumn: "TypeId",
                 keyValue: new Guid("44444444-4444-4444-4444-444444444444"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6324), new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6324) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5385), new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5385) });
 
             migrationBuilder.UpdateData(
                 table: "PropertyTypes",
                 keyColumn: "TypeId",
                 keyValue: new Guid("55555555-5555-5555-5555-555555555555"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6326), new DateTime(2025, 9, 26, 5, 25, 22, 45, DateTimeKind.Utc).AddTicks(6326) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5387), new DateTime(2025, 9, 26, 11, 10, 54, 312, DateTimeKind.Utc).AddTicks(5387) });
 
             migrationBuilder.UpdateData(
                 table: "Roles",
                 keyColumn: "RoleId",
                 keyValue: new Guid("11111111-1111-1111-1111-111111111111"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8645), new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8646) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2065), new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2065) });
 
             migrationBuilder.UpdateData(
                 table: "Roles",
                 keyColumn: "RoleId",
                 keyValue: new Guid("22222222-2222-2222-2222-222222222222"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8660), new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8661) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2076), new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2077) });
 
             migrationBuilder.UpdateData(
                 table: "Roles",
                 keyColumn: "RoleId",
                 keyValue: new Guid("33333333-3333-3333-3333-333333333333"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8662), new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8662) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2078), new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2078) });
 
             migrationBuilder.UpdateData(
                 table: "Roles",
                 keyColumn: "RoleId",
                 keyValue: new Guid("44444444-4444-4444-4444-444444444444"),
                 columns: new[] { "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8664), new DateTime(2025, 9, 26, 5, 25, 22, 42, DateTimeKind.Utc).AddTicks(8664) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2080), new DateTime(2025, 9, 26, 11, 10, 54, 310, DateTimeKind.Utc).AddTicks(2080) });
 
             migrationBuilder.UpdateData(
                 table: "UserRoles",
                 keyColumns: new[] { "RoleId", "UserId" },
                 keyValues: new object[] { new Guid("11111111-1111-1111-1111-111111111111"), new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa") },
                 columns: new[] { "AssignedAt", "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2272), new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2272), new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2273) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3926), new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3926), new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3926) });
 
             migrationBuilder.UpdateData(
                 table: "UserRoles",
                 keyColumns: new[] { "RoleId", "UserId" },
                 keyValues: new object[] { new Guid("22222222-2222-2222-2222-222222222222"), new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb") },
                 columns: new[] { "AssignedAt", "CreatedAt", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2276), new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2276), new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2276) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3929), new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3930), new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3930) });
 
             migrationBuilder.UpdateData(
                 table: "Users",
                 keyColumn: "UserId",
                 keyValue: new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                 columns: new[] { "CreatedAt", "LastLoginDate", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2088), new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2089), new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2071) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3780), new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3781), new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3768) });
 
             migrationBuilder.UpdateData(
                 table: "Users",
                 keyColumn: "UserId",
                 keyValue: new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                 columns: new[] { "CreatedAt", "LastLoginDate", "UpdatedAt" },
-                values: new object[] { new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2104), new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2105), new DateTime(2025, 9, 26, 5, 25, 22, 168, DateTimeKind.Utc).AddTicks(2102) });
+                values: new object[] { new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3792), new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3793), new DateTime(2025, 9, 26, 11, 10, 54, 417, DateTimeKind.Utc).AddTicks(3790) });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Sections_BackgroundImageId",
@@ -528,6 +654,16 @@ namespace YemenBooking.Infrastructure.Migrations
                 column: "UnitInSectionId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PropertyInSectionImages_PropertyInSectionId",
+                table: "PropertyInSectionImages",
+                column: "PropertyInSectionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PropertyInSectionImages_TempKey",
+                table: "PropertyInSectionImages",
+                column: "TempKey");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PropertyInSections_PropertyId",
                 table: "PropertyInSections",
                 column: "PropertyId");
@@ -537,6 +673,26 @@ namespace YemenBooking.Infrastructure.Migrations
                 table: "PropertyInSections",
                 columns: new[] { "SectionId", "PropertyId" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SectionImages_SectionId",
+                table: "SectionImages",
+                column: "SectionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SectionImages_TempKey",
+                table: "SectionImages",
+                column: "TempKey");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UnitInSectionImages_TempKey",
+                table: "UnitInSectionImages",
+                column: "TempKey");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UnitInSectionImages_UnitInSectionId",
+                table: "UnitInSectionImages",
+                column: "UnitInSectionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UnitInSections_PropertyId",
@@ -559,31 +715,28 @@ namespace YemenBooking.Infrastructure.Migrations
                 table: "PropertyImages",
                 column: "PropertyInSectionId",
                 principalTable: "PropertyInSections",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.SetNull);
+                principalColumn: "Id");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_PropertyImages_Sections_SectionId",
                 table: "PropertyImages",
                 column: "SectionId",
                 principalTable: "Sections",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
+                principalColumn: "Id");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_PropertyImages_UnitInSections_UnitInSectionId",
                 table: "PropertyImages",
                 column: "UnitInSectionId",
                 principalTable: "UnitInSections",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.SetNull);
+                principalColumn: "Id");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_Sections_PropertyImages_BackgroundImageId",
+                name: "FK_Sections_SectionImages_BackgroundImageId",
                 table: "Sections",
                 column: "BackgroundImageId",
-                principalTable: "PropertyImages",
-                principalColumn: "ImageId",
+                principalTable: "SectionImages",
+                principalColumn: "Id",
                 onDelete: ReferentialAction.SetNull);
         }
 
@@ -603,8 +756,17 @@ namespace YemenBooking.Infrastructure.Migrations
                 table: "PropertyImages");
 
             migrationBuilder.DropForeignKey(
-                name: "FK_Sections_PropertyImages_BackgroundImageId",
+                name: "FK_Sections_SectionImages_BackgroundImageId",
                 table: "Sections");
+
+            migrationBuilder.DropTable(
+                name: "PropertyInSectionImages");
+
+            migrationBuilder.DropTable(
+                name: "SectionImages");
+
+            migrationBuilder.DropTable(
+                name: "UnitInSectionImages");
 
             migrationBuilder.DropTable(
                 name: "PropertyInSections");

@@ -16,86 +16,189 @@ namespace YemenBooking.Api.Controllers.Admin
     /// <summary>
     /// إدارة صور "عقار في قسم"
     /// </summary>
+    [Route("api/admin/property-in-section-images")]
+    [ApiController]
+    [Authorize]
     public class PropertyInSectionImagesController : BaseAdminController
     {
         public PropertyInSectionImagesController(IMediator mediator) : base(mediator) { }
 
-        [HttpPost("section-items/{propertyInSectionId}/images/upload")]
+        /// <summary>
+        /// رفع صورة لعقار في قسم
+        /// </summary>
+        [HttpPost("upload")]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> Upload(Guid propertyInSectionId, IFormFile file, IFormFile? videoThumbnail, [FromForm] string? category, [FromForm] string? alt, [FromForm] bool? isPrimary, [FromForm] int? order, [FromForm] string? tags, [FromForm] string? tempKey)
+        public async Task<IActionResult> Upload(
+            IFormFile file, 
+            IFormFile? videoThumbnail,
+            [FromForm] Guid? propertyInSectionId,
+            [FromForm] string? tempKey,
+            [FromForm] string? category, 
+            [FromForm] string? alt, 
+            [FromForm] bool? isPrimary, 
+            [FromForm] int? order, 
+            [FromForm] string? tags)
         {
-            if (file == null || file.Length == 0) return BadRequest("file is required");
+            if (file == null || file.Length == 0) 
+                return BadRequest(new { success = false, message = "file is required" });
+
             using var ms = new MemoryStream();
             await file.CopyToAsync(ms);
+            
             FileUploadRequest? poster = null;
             if (videoThumbnail != null)
             {
                 using var ps = new MemoryStream();
                 await videoThumbnail.CopyToAsync(ps);
-                poster = new FileUploadRequest { FileName = videoThumbnail.FileName, FileContent = ps.ToArray(), ContentType = videoThumbnail.ContentType };
+                poster = new FileUploadRequest 
+                { 
+                    FileName = videoThumbnail.FileName, 
+                    FileContent = ps.ToArray(), 
+                    ContentType = videoThumbnail.ContentType 
+                };
             }
+
             var cmd = new UploadPropertyInSectionImageCommand
             {
                 PropertyInSectionId = propertyInSectionId,
                 TempKey = string.IsNullOrWhiteSpace(tempKey) ? null : tempKey,
-                File = new FileUploadRequest { FileName = file.FileName, FileContent = ms.ToArray(), ContentType = file.ContentType },
+                File = new FileUploadRequest 
+                { 
+                    FileName = file.FileName, 
+                    FileContent = ms.ToArray(), 
+                    ContentType = file.ContentType 
+                },
                 VideoThumbnail = poster,
                 Name = Path.GetFileNameWithoutExtension(file.FileName),
                 Extension = Path.GetExtension(file.FileName),
                 Category = Enum.TryParse<ImageCategory>(category, true, out var cat) ? cat : ImageCategory.Gallery,
                 Alt = alt,
-                IsPrimary = isPrimary,
+                IsPrimary = isPrimary ?? false,
                 Order = order,
                 Tags = string.IsNullOrWhiteSpace(tags) ? null : new System.Collections.Generic.List<string>(tags.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries))
             };
+
             var result = await _mediator.Send(cmd);
-            if (!result.Success) return BadRequest(result.Message);
-            return Ok(result);
+            return Ok(new { success = result.Success, message = result.Message, data = result.Data });
         }
 
-        [HttpGet("section-items/{propertyInSectionId}/images")]
-        public async Task<IActionResult> Get(Guid propertyInSectionId, [FromQuery] int? page, [FromQuery] int? limit)
+        /// <summary>
+        /// الحصول على صور عقار في قسم
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> Get(
+            [FromQuery] Guid? propertyInSectionId,
+            [FromQuery] string? tempKey,
+            [FromQuery] string? sortBy = "order",
+            [FromQuery] string? sortOrder = "asc",
+            [FromQuery] int? page = 1, 
+            [FromQuery] int? limit = 50)
         {
-            var q = new GetPropertyInSectionImagesQuery { PropertyInSectionId = propertyInSectionId, Page = page, Limit = limit };
+            var q = new GetPropertyInSectionImagesQuery 
+            { 
+                PropertyInSectionId = propertyInSectionId,
+                TempKey = tempKey,
+                SortBy = sortBy,
+                SortOrder = sortOrder,
+                Page = page ?? 1, 
+                Limit = limit ?? 50 
+            };
+
             var result = await _mediator.Send(q);
-            if (!result.Success) return BadRequest(result.Message);
-            return Ok(result.Data);
+            if (!result.Success) 
+                return BadRequest(new { success = false, message = result.Message });
+
+            return Ok(new { 
+                success = true, 
+                images = result.Data,
+                items = result.Data // للتوافقية
+            });
         }
 
-        [HttpPut("section-items/{propertyInSectionId}/images/{imageId}")]
-        public async Task<IActionResult> Update(Guid propertyInSectionId, Guid imageId, [FromBody] YemenBooking.Application.Commands.CP.PropertyInSectionImages.UpdatePropertyInSectionImageCommand command)
+        /// <summary>
+        /// تحديث بيانات صورة
+        /// </summary>
+        [HttpPut("{imageId}")]
+        public async Task<IActionResult> Update(Guid imageId, [FromBody] UpdatePropertyInSectionImageCommand command)
         {
             command.ImageId = imageId;
             var result = await _mediator.Send(command);
-            if (!result.Success) return BadRequest(result.Message);
-            return Ok(result.Data);
+            return Ok(new { success = result.Success, message = result.Message, data = result.Data });
         }
 
-        [HttpDelete("section-items/{propertyInSectionId}/images/{imageId}")]
-        public async Task<IActionResult> Delete(Guid propertyInSectionId, Guid imageId, [FromQuery] bool permanent = false)
+        /// <summary>
+        /// حذف صورة
+        /// </summary>
+        [HttpDelete("{imageId}")]
+        public async Task<IActionResult> Delete(Guid imageId, [FromQuery] bool permanent = false)
         {
-            var result = await _mediator.Send(new YemenBooking.Application.Commands.CP.PropertyInSectionImages.DeletePropertyInSectionImageCommand { ImageId = imageId, Permanent = permanent });
-            if (!result.Success) return BadRequest(result.Message);
-            return NoContent();
+            var result = await _mediator.Send(new DeletePropertyInSectionImageCommand 
+            { 
+                ImageId = imageId, 
+                Permanent = permanent 
+            });
+            
+            return Ok(new { success = result.Success, message = result.Message });
         }
 
-        [HttpPost("section-items/{propertyInSectionId}/images/reorder")]
-        public async Task<IActionResult> Reorder(Guid propertyInSectionId, [FromBody] YemenBooking.Api.Controllers.Images.ImagesController.ReorderImagesRequest request)
+        /// <summary>
+        /// إعادة ترتيب الصور
+        /// </summary>
+        [HttpPost("reorder")]
+        public async Task<IActionResult> Reorder([FromBody] ReorderImagesRequest request)
         {
             var assignments = request.ImageIds
-                .ConvertAll(id => new ImageOrderAssignment { ImageId = Guid.Parse(id), DisplayOrder = request.ImageIds.IndexOf(id) + 1 });
-            var result = await _mediator.Send(new YemenBooking.Application.Commands.CP.PropertyInSectionImages.ReorderPropertyInSectionImagesCommand { Assignments = assignments });
-            if (!result.Success) return BadRequest(result.Message);
+                .Select((id, index) => new ImageOrderAssignment 
+                { 
+                    ImageId = Guid.Parse(id), 
+                    DisplayOrder = index + 1 
+                })
+                .ToList();
+
+            var result = await _mediator.Send(new ReorderPropertyInSectionImagesCommand 
+            { 
+                Assignments = assignments 
+            });
+
+            if (!result.Success) 
+                return BadRequest(new { success = false, message = result.Message });
+
             return NoContent();
         }
 
-        [HttpPost("section-items/{propertyInSectionId}/images/{imageId}/set-primary")]
-        public async Task<IActionResult> SetPrimary(Guid propertyInSectionId, Guid imageId)
+        /// <summary>
+        /// تعيين صورة كرئيسية
+        /// </summary>
+        [HttpPost("{imageId}/set-primary")]
+        public async Task<IActionResult> SetPrimary(
+            Guid imageId,
+            [FromBody] SetPrimaryRequest? request = null)
         {
-            var result = await _mediator.Send(new YemenBooking.Application.Commands.CP.PropertyInSectionImages.UpdatePropertyInSectionImageCommand { ImageId = imageId, IsPrimary = true });
-            if (!result.Success) return BadRequest(result.Message);
+            var result = await _mediator.Send(new UpdatePropertyInSectionImageCommand 
+            { 
+                ImageId = imageId, 
+                IsPrimary = true,
+                PropertyInSectionId = request?.PropertyInSectionId,
+                TempKey = request?.TempKey
+            });
+
+            if (!result.Success) 
+                return BadRequest(new { success = false, message = result.Message });
+
             return NoContent();
+        }
+
+        public class ReorderImagesRequest
+        {
+            public List<string> ImageIds { get; set; } = new();
+            public Guid? PropertyInSectionId { get; set; }
+            public string? TempKey { get; set; }
+        }
+
+        public class SetPrimaryRequest
+        {
+            public Guid? PropertyInSectionId { get; set; }
+            public string? TempKey { get; set; }
         }
     }
 }
-
