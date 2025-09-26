@@ -14,6 +14,7 @@ import '../bloc/section_form/section_form_bloc.dart';
 import '../bloc/section_form/section_form_event.dart';
 import '../bloc/section_form/section_form_state.dart';
 import '../widgets/section_form_widget.dart';
+import '../widgets/section_image_gallery.dart';
 
 class CreateSectionPage extends StatefulWidget {
   const CreateSectionPage({super.key});
@@ -29,10 +30,16 @@ class _CreateSectionPageState extends State<CreateSectionPage>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
+  // Media gallery integration
+  final GlobalKey<SectionImageGalleryState> _galleryKey = GlobalKey();
+  String? _tempKey;
+
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
+    // Generate a temp key to allow pre-save media uploads
+    _tempKey = DateTime.now().millisecondsSinceEpoch.toString();
     context.read<SectionFormBloc>().add(const InitializeSectionFormEvent());
   }
 
@@ -83,6 +90,12 @@ class _CreateSectionPageState extends State<CreateSectionPage>
       listener: (context, state) {
         if (state is SectionFormSubmitted) {
           _showSuccessMessage('تم إنشاء القسم بنجاح');
+          // Upload any locally staged media to the newly created section
+          try {
+            _galleryKey.currentState?.uploadLocalImages(state.sectionId);
+          } catch (_) {}
+          // Clear tempKey after successful save
+          _tempKey = null;
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) {
               context.pop();
@@ -218,8 +231,79 @@ class _CreateSectionPageState extends State<CreateSectionPage>
               ],
             ),
           ),
+          const SizedBox(width: 12),
+          // Open Section media gallery dialog
+          GestureDetector(
+            onTap: _openSectionMediaDialog,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primaryPurple.withValues(alpha: 0.3),
+                    AppTheme.primaryViolet.withValues(alpha: 0.2),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.primaryPurple.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.collections,
+                    size: 18,
+                    color: AppTheme.primaryPurple,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'وسائط القسم',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppTheme.primaryPurple,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  void _openSectionMediaDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard.withValues(alpha: 0.98),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppTheme.darkBorder.withValues(alpha: 0.2),
+              ),
+            ),
+            padding: const EdgeInsets.all(12),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: SectionImageGallery(
+                key: _galleryKey,
+                sectionId: null,
+                tempKey: _tempKey,
+                isReadOnly: false,
+                maxImages: 20,
+                maxVideos: 5,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

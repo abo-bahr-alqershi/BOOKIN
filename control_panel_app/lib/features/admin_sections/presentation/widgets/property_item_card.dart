@@ -5,6 +5,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/cached_image_widget.dart';
 import '../../domain/entities/property_in_section.dart';
+import 'property_in_section_image_gallery.dart';
 
 class PropertyItemCard extends StatelessWidget {
   final PropertyInSection property;
@@ -196,6 +197,30 @@ class PropertyItemCard extends StatelessWidget {
                               ),
                             ),
                             const Spacer(),
+                            // Media button
+                            if (!isReordering)
+                              GestureDetector(
+                                onTap: () => _openPropertyMediaDialog(context),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryBlue
+                                        .withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: AppTheme.primaryBlue
+                                          .withValues(alpha: 0.3),
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    CupertinoIcons.photo_on_rectangle,
+                                    size: 14,
+                                    color: AppTheme.primaryBlue,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(width: 6),
                             // Remove button
                             if (onRemove != null && !isReordering)
                               GestureDetector(
@@ -230,6 +255,40 @@ class PropertyItemCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  void _openPropertyMediaDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard.withValues(alpha: 0.98),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppTheme.darkBorder.withValues(alpha: 0.2),
+              ),
+            ),
+            padding: const EdgeInsets.all(12),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: PropertyInSectionGallery(
+                sectionId: property.id,
+                tempKey: null,
+                isReadOnly: false,
+                maxImages: 20,
+                maxVideos: 5,
+                initialImages: property.additionalImages,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
