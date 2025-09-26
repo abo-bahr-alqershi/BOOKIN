@@ -10,5 +10,6 @@ namespace YemenBooking.Application.Queries.CP.Sections
 	{
 		public SectionTarget? Target { get; set; }
 		public SectionType? Type { get; set; }
+		public ContentType? ContentType { get; set; }
 	}
 }

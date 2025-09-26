@@ -219,4 +219,16 @@ public class Property : BaseEntity<Guid>
     [Display(Name = "عناصر الأقسام المرتبطة بالكيان")]
     public virtual ICollection<SectionItem> SectionItems { get; set; } = new List<SectionItem>();
 
+    /// <summary>
+    /// سجلات الغنية لعقار في الأقسام
+    /// Rich section-property records
+    /// </summary>
+    public virtual ICollection<PropertyInSection> PropertyInSections { get; set; } = new List<PropertyInSection>();
+
+    /// <summary>
+    /// سجلات الغنية لوحدات في الأقسام التابعة لهذا العقار
+    /// Rich section-unit records for this property's units
+    /// </summary>
+    public virtual ICollection<UnitInSection> UnitInSections { get; set; } = new List<UnitInSection>();
+
 } 
