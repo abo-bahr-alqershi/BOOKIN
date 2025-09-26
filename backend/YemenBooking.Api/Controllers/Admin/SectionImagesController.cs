@@ -111,7 +111,7 @@ namespace YemenBooking.Api.Controllers.Admin
         {
             var assignments = request.ImageIds
                 .ConvertAll(id => new ImageOrderAssignment { ImageId = Guid.Parse(id), DisplayOrder = request.ImageIds.IndexOf(id) + 1 });
-            var result = await _mediator.Send(new ReorderImagesCommand { Assignments = assignments });
+            var result = await _mediator.Send(new YemenBooking.Application.Commands.CP.SectionImages.ReorderSectionImagesCommand { Assignments = assignments });
             if (!result.Success) return BadRequest(result.Message);
             return NoContent();
         }
@@ -122,7 +122,8 @@ namespace YemenBooking.Api.Controllers.Admin
         [HttpPost("{sectionId}/{imageId}/set-primary")]
         public async Task<IActionResult> SetPrimary(Guid sectionId, Guid imageId)
         {
-            var result = await _mediator.Send(new SetPrimaryImageCommand { ImageId = imageId });
+            // استخدام أمر التحديث المتخصص لتفعيل الرئيسية
+            var result = await _mediator.Send(new YemenBooking.Application.Commands.CP.SectionImages.UpdateSectionImageCommand { ImageId = imageId, IsPrimary = true });
             if (!result.Success) return BadRequest(result.Message);
             return NoContent();
         }
