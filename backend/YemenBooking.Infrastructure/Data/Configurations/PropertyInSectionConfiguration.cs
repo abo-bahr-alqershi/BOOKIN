@@ -43,6 +43,9 @@ namespace YemenBooking.Infrastructure.Data.Configurations
                 .HasForeignKey(x => x.MainImageId)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            // Allow additional images to be linked via PropertyImages table
+            // using the PropertyInSectionId FK configured in PropertyImageConfiguration
+
             builder.HasIndex(x => new { x.SectionId, x.PropertyId }).IsUnique();
         }
     }

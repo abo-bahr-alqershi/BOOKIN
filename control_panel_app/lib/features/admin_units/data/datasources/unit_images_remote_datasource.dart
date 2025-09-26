@@ -10,6 +10,8 @@ import '../models/unit_image_model.dart';
 abstract class UnitImagesRemoteDataSource {
   Future<UnitImageModel> uploadImage({
     String? unitId,
+    String? sectionId,
+    String? unitInSectionId,
     String? tempKey,
     required String filePath,
     String? videoThumbnailPath,
@@ -58,6 +60,8 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath),
         'unitId': unitId,
+        if (sectionId != null) 'sectionId': sectionId,
+        if (unitInSectionId != null) 'unitInSectionId': unitInSectionId,
         if (tempKey != null) 'tempKey': tempKey,
         if (category != null) 'category': category,
         if (alt != null) 'alt': alt,

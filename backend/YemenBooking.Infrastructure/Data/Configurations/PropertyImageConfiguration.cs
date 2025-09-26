@@ -108,9 +108,37 @@ public class PropertyImageConfiguration : IEntityTypeConfiguration<PropertyImage
         // العلاقة مع المدينة تم تكوينها أيضاً من جهة CityConfiguration
         builder.HasIndex(pi => pi.CityName);
 
+        // Section linkage (optional)
+        builder.Property(pi => pi.SectionId)
+            .IsRequired(false)
+            .HasComment("القسم المرتبط بالصورة (اختياري)");
+        builder.HasOne(pi => pi.Section)
+            .WithMany(s => s.Images)
+            .HasForeignKey(pi => pi.SectionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Link to PropertyInSection and UnitInSection (optional additional images)
+        builder.Property(pi => pi.PropertyInSectionId)
+            .IsRequired(false)
+            .HasComment("ربط الصورة بسجل عقار في قسم");
+        builder.Property(pi => pi.UnitInSectionId)
+            .IsRequired(false)
+            .HasComment("ربط الصورة بسجل وحدة في قسم");
+        builder.HasOne(pi => pi.PropertyInSection)
+            .WithMany()
+            .HasForeignKey(pi => pi.PropertyInSectionId)
+            .OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne(pi => pi.UnitInSection)
+            .WithMany()
+            .HasForeignKey(pi => pi.UnitInSectionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // تكوين الفهرس
         builder.HasIndex(pi => pi.PropertyId);
         builder.HasIndex(pi => pi.UnitId);
+        builder.HasIndex(pi => pi.SectionId);
+        builder.HasIndex(pi => pi.PropertyInSectionId);
+        builder.HasIndex(pi => pi.UnitInSectionId);
         builder.HasIndex(pi => pi.TempKey);
 
         builder.HasQueryFilter(pi => !pi.IsDeleted);

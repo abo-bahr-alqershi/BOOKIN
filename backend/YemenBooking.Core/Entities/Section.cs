@@ -103,6 +103,12 @@ public class Section : BaseEntity<Guid>
 	public string? BackgroundImage { get; set; }
 
 	/// <summary>
+	/// معرف صورة الخلفية من جدول الصور الموحد (اختياري)
+	/// </summary>
+	[Display(Name = "معرف صورة الخلفية")]
+	public Guid? BackgroundImageId { get; set; }
+
+	/// <summary>
 	/// معايير الفلترة (JSON)
 	/// </summary>
 	[Display(Name = "معايير الفلترة (JSON)")]
@@ -197,4 +203,10 @@ public class Section : BaseEntity<Guid>
 	/// </summary>
     [Display(Name = "قائمة الوحدات في القسم")]
 	public virtual ICollection<UnitInSection> UnitItems { get; set; } = new List<UnitInSection>();
+
+	/// <summary>
+	/// صور القسم المرتبطة من جدول الصور (خلفيات، أغلفة، إلخ)
+	/// </summary>
+	[Display(Name = "صور القسم")]
+	public virtual ICollection<PropertyImage> Images { get; set; } = new List<PropertyImage>();
 }

@@ -56,6 +56,18 @@ namespace YemenBooking.Application.Handlers.Queries.MobileApp.Sections
                     var imgs = (await _images.GetImagesByPropertyAsync(p.PropertyId, cancellationToken))
                         .OrderBy(i => i.DisplayOrder)
                         .ToList();
+                    // Append additional images linked specifically to this PropertyInSection record
+                    // using the new PropertyInSectionId linkage
+                    var extra = imgs.Where(i => i.PropertyInSectionId == p.Id).ToList();
+                    if (extra.Count > 0)
+                    {
+                        // merge but keep order; extra already part of imgs if repository returns by property only
+                        // If repository does not include relation filter, ensure union distinct by Id
+                        var map = imgs.ToDictionary(i => i.Id, i => i);
+                        foreach (var e in extra)
+                            map[e.Id] = e;
+                        imgs = map.Values.OrderBy(i => i.DisplayOrder).ToList();
+                    }
                     var mainImage = string.IsNullOrWhiteSpace(p.MainImageUrl)
                         ? (imgs.FirstOrDefault(i => i.IsMainImage)?.Url ?? imgs.FirstOrDefault()?.Url)
                         : p.MainImageUrl;
@@ -128,6 +140,15 @@ namespace YemenBooking.Application.Handlers.Queries.MobileApp.Sections
                     var imgs = (await _images.GetImagesByUnitAsync(u.UnitId, cancellationToken))
                         .OrderBy(i => i.DisplayOrder)
                         .ToList();
+                    // Append additional images linked to UnitInSection record
+                    var extra = imgs.Where(i => i.UnitInSectionId == u.Id).ToList();
+                    if (extra.Count > 0)
+                    {
+                        var map = imgs.ToDictionary(i => i.Id, i => i);
+                        foreach (var e in extra)
+                            map[e.Id] = e;
+                        imgs = map.Values.OrderBy(i => i.DisplayOrder).ToList();
+                    }
                     var mainImage = string.IsNullOrWhiteSpace(u.MainImageUrl)
                         ? (imgs.FirstOrDefault(i => i.IsMainImage)?.Url ?? imgs.FirstOrDefault()?.Url)
                         : u.MainImageUrl;

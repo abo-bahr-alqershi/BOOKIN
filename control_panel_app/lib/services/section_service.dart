@@ -54,6 +54,9 @@ class SectionService {
     return result.fold((l) => null, (r) => r);
   }
 
+  // Note: Background image for Section is textual (URL). Use the unified images API to upload media
+  // and then set the `backgroundImage` string on the Section via update().
+
   Future<bool> remove(String sectionId) async {
     final result = await deleteSection(DeleteSectionParams(sectionId));
     return result.fold((l) => false, (r) => r);

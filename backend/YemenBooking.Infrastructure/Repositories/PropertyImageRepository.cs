@@ -108,6 +108,27 @@ public class PropertyImageRepository : BaseRepository<PropertyImage>, IPropertyI
             .ThenBy(pi => pi.CreatedAt)
             .ToListAsync(cancellationToken);
 
+    public async Task<IEnumerable<PropertyImage>> GetImagesBySectionAsync(Guid sectionId, CancellationToken cancellationToken = default)
+        => await _dbSet
+            .Where(pi => pi.SectionId.HasValue && pi.SectionId.Value == sectionId && !pi.IsDeleted)
+            .OrderBy(pi => pi.DisplayOrder)
+            .ThenBy(pi => pi.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IEnumerable<PropertyImage>> GetImagesByPropertyInSectionAsync(Guid propertyInSectionId, CancellationToken cancellationToken = default)
+        => await _dbSet
+            .Where(pi => pi.PropertyInSectionId.HasValue && pi.PropertyInSectionId.Value == propertyInSectionId && !pi.IsDeleted)
+            .OrderBy(pi => pi.DisplayOrder)
+            .ThenBy(pi => pi.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IEnumerable<PropertyImage>> GetImagesByUnitInSectionAsync(Guid unitInSectionId, CancellationToken cancellationToken = default)
+        => await _dbSet
+            .Where(pi => pi.UnitInSectionId.HasValue && pi.UnitInSectionId.Value == unitInSectionId && !pi.IsDeleted)
+            .OrderBy(pi => pi.DisplayOrder)
+            .ThenBy(pi => pi.CreatedAt)
+            .ToListAsync(cancellationToken);
+
     public async Task<IEnumerable<PropertyImage>> GetImagesByCityAsync(string cityName, CancellationToken cancellationToken = default)
         => await _dbSet
             .Where(pi => pi.CityName != null && pi.CityName == cityName && !pi.IsDeleted)

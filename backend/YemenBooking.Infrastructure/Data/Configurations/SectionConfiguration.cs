@@ -23,6 +23,7 @@ namespace YemenBooking.Infrastructure.Data.Configurations
 			builder.Property(s => s.Icon).HasMaxLength(100);
 			builder.Property(s => s.ColorTheme).HasMaxLength(50);
 			builder.Property(s => s.BackgroundImage).HasMaxLength(500);
+			builder.Property(s => s.BackgroundImageId).IsRequired(false);
 			builder.Property(s => s.FilterCriteria).HasColumnType("NVARCHAR(MAX)");
 			builder.Property(s => s.SortCriteria).HasColumnType("NVARCHAR(MAX)");
 			builder.Property(s => s.CityName).HasMaxLength(100);
@@ -40,6 +41,14 @@ namespace YemenBooking.Infrastructure.Data.Configurations
 				.WithOne(ui => ui.Section)
 				.HasForeignKey(ui => ui.SectionId)
 				.OnDelete(DeleteBehavior.Cascade);
+
+			// Optional link to background image via PropertyImages
+			builder.HasOne<PropertyImage>()
+				.WithMany()
+				.HasForeignKey(s => s.BackgroundImageId)
+				.OnDelete(DeleteBehavior.SetNull);
+
+			// Images collection mapped via PropertyImageConfiguration (SectionId FK)
 		}
 	}
 }

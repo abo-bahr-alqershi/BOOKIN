@@ -56,6 +56,24 @@ public interface IPropertyImageRepository : IRepository<PropertyImage>
     Task<IEnumerable<PropertyImage>> GetImagesByUnitAsync(Guid unitId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// الحصول على الصور المرتبطة بقسم محدد
+    /// Get section images by section ID
+    /// </summary>
+    Task<IEnumerable<PropertyImage>> GetImagesBySectionAsync(Guid sectionId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// الحصول على الصور المرتبطة بسجل عقار في قسم
+    /// Get images by PropertyInSection ID
+    /// </summary>
+    Task<IEnumerable<PropertyImage>> GetImagesByPropertyInSectionAsync(Guid propertyInSectionId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// الحصول على الصور المرتبطة بسجل وحدة في قسم
+    /// Get images by UnitInSection ID
+    /// </summary>
+    Task<IEnumerable<PropertyImage>> GetImagesByUnitInSectionAsync(Guid unitInSectionId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// الحصول على صور المدينة حسب الاسم
     /// Get city images by city name
     /// </summary>

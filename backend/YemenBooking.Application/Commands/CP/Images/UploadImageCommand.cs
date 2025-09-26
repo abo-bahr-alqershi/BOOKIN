@@ -85,6 +85,21 @@ namespace YemenBooking.Application.Commands.Images
         public Guid? UnitId { get; set; }
 
         /// <summary>
+        /// معرف القسم (اختياري) لربط الصورة بقسم
+        /// </summary>
+        public Guid? SectionId { get; set; }
+
+        /// <summary>
+        /// معرف سجل عقار في قسم (اختياري)
+        /// </summary>
+        public Guid? PropertyInSectionId { get; set; }
+
+        /// <summary>
+        /// معرف سجل وحدة في قسم (اختياري)
+        /// </summary>
+        public Guid? UnitInSectionId { get; set; }
+
+        /// <summary>
         /// اسم المدينة (اختياري)
         /// City name (optional)
         /// </summary>

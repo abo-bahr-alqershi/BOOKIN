@@ -33,6 +33,27 @@ public class PropertyImage : BaseEntity<Guid>
     public Guid? UnitId { get; set; }
         
         /// <summary>
+        /// معرف القسم (اختياري) لصور الأقسام والخلفيات
+        /// Section identifier (optional) for section/background images
+        /// </summary>
+        [Display(Name = "معرف القسم")]
+        public Guid? SectionId { get; set; }
+
+        /// <summary>
+        /// معرف سجل "عقار في قسم" لربط الصور الإضافية الخاصة بالعنصر داخل القسم
+        /// PropertyInSection identifier (optional)
+        /// </summary>
+        [Display(Name = "معرف عقار في قسم")]
+        public Guid? PropertyInSectionId { get; set; }
+
+        /// <summary>
+        /// معرف سجل "وحدة في قسم" لربط الصور الإضافية الخاصة بالعنصر داخل القسم
+        /// UnitInSection identifier (optional)
+        /// </summary>
+        [Display(Name = "معرف وحدة في قسم")]
+        public Guid? UnitInSectionId { get; set; }
+
+        /// <summary>
         /// اسم المدينة المرتبطة (مفتاح نصي)
         /// Associated city name (string key)
         /// </summary>
@@ -199,4 +220,25 @@ public class PropertyImage : BaseEntity<Guid>
         /// </summary>
         [Display(Name = "المدينة المرتبطة بالصورة")]
         public virtual City? City { get; set; }
+
+        /// <summary>
+        /// القسم المرتبط بالصورة (اختياري)
+        /// Section associated with the image (optional)
+        /// </summary>
+        [Display(Name = "القسم المرتبط بالصورة")]
+        public virtual Section? Section { get; set; }
+
+        /// <summary>
+        /// سجّل "عقار في قسم" المرتبط بالصورة (اختياري)
+        /// PropertyInSection associated with the image (optional)
+        /// </summary>
+        [Display(Name = "عقار في قسم المرتبط بالصورة")]
+        public virtual PropertyInSection? PropertyInSection { get; set; }
+
+        /// <summary>
+        /// سجّل "وحدة في قسم" المرتبط بالصورة (اختياري)
+        /// UnitInSection associated with the image (optional)
+        /// </summary>
+        [Display(Name = "وحدة في قسم المرتبطة بالصورة")]
+        public virtual UnitInSection? UnitInSection { get; set; }
 }

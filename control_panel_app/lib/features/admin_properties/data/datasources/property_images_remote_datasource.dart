@@ -10,6 +10,9 @@ import '../models/property_image_model.dart';
 abstract class PropertyImagesRemoteDataSource {
   Future<PropertyImageModel> uploadImage({
     String? propertyId,
+    String? sectionId,
+    String? propertyInSectionId,
+    String? unitInSectionId,
     String? tempKey,
     required String filePath,
     String? category,
@@ -53,6 +56,9 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath),
         'propertyId': propertyId,
+        if (sectionId != null) 'sectionId': sectionId,
+        if (propertyInSectionId != null) 'propertyInSectionId': propertyInSectionId,
+        if (unitInSectionId != null) 'unitInSectionId': unitInSectionId,
         if (tempKey != null) 'tempKey': tempKey,
         if (category != null) 'category': category,
         if (alt != null) 'alt': alt,

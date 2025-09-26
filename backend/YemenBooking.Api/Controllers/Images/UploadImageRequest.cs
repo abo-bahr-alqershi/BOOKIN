@@ -31,6 +31,24 @@ namespace YemenBooking.Api.Controllers.Images
         [FromForm(Name = "unitId")]
         public string? UnitId { get; set; }
 
+        /// <summary>
+        /// للربط مع كيان القسم مباشرة (صور الخلفية/الغلاف)
+        /// </summary>
+        [FromForm(Name = "sectionId")]
+        public string? SectionId { get; set; }
+
+        /// <summary>
+        /// ربط الصور الإضافية بسجل عقار في قسم
+        /// </summary>
+        [FromForm(Name = "propertyInSectionId")]
+        public string? PropertyInSectionId { get; set; }
+
+        /// <summary>
+        /// ربط الصور الإضافية بسجل وحدة في قسم
+        /// </summary>
+        [FromForm(Name = "unitInSectionId")]
+        public string? UnitInSectionId { get; set; }
+
         [FromForm(Name = "cityName")]
         public string? CityName { get; set; }
 

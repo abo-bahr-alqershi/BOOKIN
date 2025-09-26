@@ -53,6 +53,7 @@ lib/
 │   │   ├── request_logger.dart
 │   │   └── validators.dart
 │   ├── models/
+│   │   ├── section_item_dto.dart
 │   │   ├── paginated_result.dart
 │   │   └── result_dto.dart
 │   └── widgets/

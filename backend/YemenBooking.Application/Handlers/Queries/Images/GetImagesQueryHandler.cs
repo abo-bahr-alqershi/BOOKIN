@@ -38,8 +38,15 @@ namespace YemenBooking.Application.Handlers.Queries.Images
                 query = query.Where(i => i.PropertyId == request.PropertyId.Value);
             if (request.UnitId.HasValue)
                 query = query.Where(i => i.UnitId == request.UnitId.Value);
+            if (request.SectionId.HasValue)
+                query = query.Where(i => i.SectionId == request.SectionId.Value);
+            if (request.PropertyInSectionId.HasValue)
+                query = query.Where(i => i.PropertyInSectionId == request.PropertyInSectionId.Value);
+            if (request.UnitInSectionId.HasValue)
+                query = query.Where(i => i.UnitInSectionId == request.UnitInSectionId.Value);
             if (!string.IsNullOrWhiteSpace(request.CityName))
                 query = query.Where(i => i.CityName == request.CityName);
+            // Optional: support section-level images via SectionId when sent through TempKey/PropertyId alias at API layer
             // Backward compatibility: allow cityId alias mapped at API level
             if (request.Category.HasValue)
                 query = query.Where(i => i.Category == request.Category.Value);
