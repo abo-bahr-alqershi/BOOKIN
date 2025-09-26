@@ -1,6 +1,7 @@
 namespace YemenBooking.Core.Entities;
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using YemenBooking.Core.Enums;
 
@@ -55,24 +56,13 @@ public class UnitInSection : BaseEntity<Guid>
     public int? ChildrenCapacity { get; set; }
 
     [Display(Name = "الصورة الرئيسية")]
-    public string? MainImageUrl { get; set; }
+    public virtual string? MainImage { get; set; }
 
     /// <summary>
-    /// معرف الصورة الرئيسية المرتبطة من كيان الصور
-    /// Linked main image id from PropertyImage entity
+    /// صور إضافية مرتبطة مباشرة بسجل الوحدة في القسم
     /// </summary>
-    [Display(Name = "معرف الصورة الرئيسية")]
-    public Guid? MainImageId { get; set; }
-
-    /// <summary>
-    /// الصورة الرئيسية المرتبطة (تنقل)
-    /// Navigation to linked main image
-    /// </summary>
-    [Display(Name = "الصورة الرئيسية (تنقل)")]
-    public virtual PropertyImage? MainImage { get; set; }
-
-    [Display(Name = "صور إضافية (JSON)")]
-    public string? AdditionalImages { get; set; }
+    [Display(Name = "صور إضافية")]
+    public virtual ICollection<PropertyImage> AdditionalImages { get; set; } = new List<PropertyImage>();
 
     // الحقول الديناميكية المهمة للعرض
     [Display(Name = "قيم الحقول الأساسية (JSON)")]

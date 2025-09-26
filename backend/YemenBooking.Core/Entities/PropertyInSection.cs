@@ -3,6 +3,7 @@ namespace YemenBooking.Core.Entities;
 using System;
 using System.ComponentModel.DataAnnotations;
 using YemenBooking.Core.Enums;
+using System.Collections.Generic;
 
 /// <summary>
 /// كيان العقار داخل القسم بمعلومات مخزنة للأداء
@@ -52,28 +53,13 @@ public class PropertyInSection : BaseEntity<Guid>
     public string Currency { get; set; } = string.Empty;
 
     [Display(Name = "الصورة الرئيسية")]
-    public string? MainImageUrl { get; set; }
-
-    /// <summary>
-    /// معرف الصورة الرئيسية المرتبطة من كيان الصور
-    /// Linked main image id from PropertyImage entity
-    /// </summary>
-    [Display(Name = "معرف الصورة الرئيسية")]
-    public Guid? MainImageId { get; set; }
-
-    /// <summary>
-    /// الصورة الرئيسية المرتبطة (تنقل)
-    /// Navigation to linked main image
-    /// </summary>
-    [Display(Name = "الصورة الرئيسية (تنقل)")]
-    public virtual PropertyImage? MainImage { get; set; }
+    public virtual string? MainImage { get; set; }
 
 	/// <summary>
-	/// صور إضافية (JSON)
-	/// Additional images for the property card within the section as JSON array of strings
+	/// صور إضافية مرتبطة مباشرة بسجل العقار في القسم
 	/// </summary>
-	[Display(Name = "صور إضافية (JSON)")]
-	public string? AdditionalImages { get; set; }
+	[Display(Name = "صور إضافية")]
+	public virtual ICollection<PropertyImage> AdditionalImages { get; set; } = new List<PropertyImage>();
 
     [Display(Name = "الوصف المختصر")]
     public string? ShortDescription { get; set; }

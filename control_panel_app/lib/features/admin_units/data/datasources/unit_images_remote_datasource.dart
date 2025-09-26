@@ -41,6 +41,8 @@ class UnitImagesRemoteDataSourceImpl implements UnitImagesRemoteDataSource {
   @override
   Future<UnitImageModel> uploadImage({
     String? unitId,
+    String? sectionId,
+    String? unitInSectionId,
     String? tempKey,
     required String filePath,
     String? videoThumbnailPath,

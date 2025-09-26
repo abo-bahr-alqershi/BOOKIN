@@ -20,9 +20,7 @@ namespace YemenBooking.Infrastructure.Data.Configurations
             builder.Property(x => x.City).HasMaxLength(100);
             builder.Property(x => x.PropertyType).HasMaxLength(100);
             builder.Property(x => x.Currency).HasMaxLength(10);
-            builder.Property(x => x.MainImageUrl).HasMaxLength(500);
-            builder.Property(x => x.MainImageId);
-            builder.Property(x => x.AdditionalImages).HasColumnType("NVARCHAR(MAX)");
+            builder.Property(x => x.MainImage).HasMaxLength(500);
             builder.Property(x => x.ShortDescription).HasMaxLength(500);
             builder.Property(x => x.PromotionalText).HasMaxLength(300);
             builder.Property(x => x.BadgeColor).HasMaxLength(50);
@@ -37,11 +35,6 @@ namespace YemenBooking.Infrastructure.Data.Configurations
                 .WithMany(p => p.PropertyInSections)
                 .HasForeignKey(x => x.PropertyId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            builder.HasOne<PropertyImage>(x => x.MainImage)
-                .WithMany()
-                .HasForeignKey(x => x.MainImageId)
-                .OnDelete(DeleteBehavior.SetNull);
 
             // Allow additional images to be linked via PropertyImages table
             // using the PropertyInSectionId FK configured in PropertyImageConfiguration

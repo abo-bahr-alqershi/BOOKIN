@@ -68,10 +68,10 @@ namespace YemenBooking.Application.Handlers.Queries.MobileApp.Sections
                             map[e.Id] = e;
                         imgs = map.Values.OrderBy(i => i.DisplayOrder).ToList();
                     }
-                    var mainImage = string.IsNullOrWhiteSpace(p.MainImageUrl)
+                    var mainImage = string.IsNullOrWhiteSpace(p.MainImage)
                         ? (imgs.FirstOrDefault(i => i.IsMainImage)?.Url ?? imgs.FirstOrDefault()?.Url)
-                        : p.MainImageUrl;
-                    var mainImageId = p.MainImageId ?? imgs.FirstOrDefault(i => i.IsMainImage)?.Id;
+                        : p.MainImage;
+                    var mainImageId = imgs.FirstOrDefault(i => i.IsMainImage)?.Id;
                     var additional = imgs.Select(i => new PropertyImageDto
                     {
                         Id = i.Id,
@@ -149,10 +149,10 @@ namespace YemenBooking.Application.Handlers.Queries.MobileApp.Sections
                             map[e.Id] = e;
                         imgs = map.Values.OrderBy(i => i.DisplayOrder).ToList();
                     }
-                    var mainImage = string.IsNullOrWhiteSpace(u.MainImageUrl)
+                    var mainImage = string.IsNullOrWhiteSpace(u.MainImage)
                         ? (imgs.FirstOrDefault(i => i.IsMainImage)?.Url ?? imgs.FirstOrDefault()?.Url)
-                        : u.MainImageUrl;
-                    var mainImageId = u.MainImageId ?? imgs.FirstOrDefault(i => i.IsMainImage)?.Id;
+                        : u.MainImage;
+                    var mainImageId = imgs.FirstOrDefault(i => i.IsMainImage)?.Id;
                     var additional = imgs.Select(i => new PropertyImageDto
                     {
                         Id = i.Id,

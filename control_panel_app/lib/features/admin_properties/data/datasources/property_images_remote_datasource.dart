@@ -39,6 +39,9 @@ class PropertyImagesRemoteDataSourceImpl implements PropertyImagesRemoteDataSour
   @override
   Future<PropertyImageModel> uploadImage({
     String? propertyId,
+    String? sectionId,
+    String? propertyInSectionId,
+    String? unitInSectionId,
     String? tempKey,
     required String filePath,
     String? category,

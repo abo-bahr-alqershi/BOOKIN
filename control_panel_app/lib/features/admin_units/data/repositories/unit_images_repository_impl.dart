@@ -22,6 +22,8 @@ class UnitImagesRepositoryImpl implements UnitImagesRepository {
   @override
   Future<Either<Failure, UnitImage>> uploadImage({
     String? unitId,
+    String? sectionId,
+    String? unitInSectionId,
     String? tempKey,
     required String filePath,
     String? videoThumbnailPath,
@@ -36,6 +38,8 @@ class UnitImagesRepositoryImpl implements UnitImagesRepository {
       try {
         final UnitImageModel result = await remoteDataSource.uploadImage(
           unitId: unitId,
+          sectionId: sectionId,
+          unitInSectionId: unitInSectionId,
           tempKey: tempKey,
           filePath: filePath,
           videoThumbnailPath: videoThumbnailPath,
