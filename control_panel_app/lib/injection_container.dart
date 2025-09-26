@@ -662,6 +662,9 @@ Future<void> init() async {
   // Features - Admin Payments
   _initAdminPayments();
 
+  // Features - Admin Sections
+  _initAdminSections();
+
   // Theme
   _initTheme();
 
@@ -1748,6 +1751,47 @@ void _initReference() {
       () => ref_ds_remote.ReferenceRemoteDataSourceImpl(apiClient: sl()));
   sl.registerLazySingleton<ref_ds_local.ReferenceLocalDataSource>(
       () => ref_ds_local.ReferenceLocalDataSourceImpl(localStorage: sl()));
+}
+
+void _initAdminSections() {
+  // Use cases
+  sl.registerLazySingleton(() => GetAllSectionsUseCase(sl()));
+  sl.registerLazySingleton(() => CreateSectionUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateSectionUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteSectionUseCase(sl()));
+  sl.registerLazySingleton(() => ToggleSectionStatusUseCase(sl()));
+
+  sl.registerLazySingleton(() => GetSectionItemsUseCase(sl()));
+  sl.registerLazySingleton(() => AddItemsToSectionUseCase(sl()));
+  sl.registerLazySingleton(() => RemoveItemsFromSectionUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateItemOrderUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<SectionsRepository>(() => SectionsRepositoryImpl(
+        remoteDataSource: sl(),
+        localDataSource: sl(),
+      ));
+
+  // Data sources
+  sl.registerLazySingleton<SectionsRemoteDataSource>(
+      () => SectionsRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<SectionsLocalDataSource>(
+      () => SectionsLocalDataSourceImpl(sharedPreferences: sl()));
+
+  // Services facade
+  sl.registerLazySingleton(() => SectionService(
+        getAllSections: sl(),
+        createSection: sl(),
+        updateSection: sl(),
+        deleteSection: sl(),
+        toggleStatus: sl(),
+      ));
+  sl.registerLazySingleton(() => SectionContentService(
+        getItems: sl(),
+        addItems: sl(),
+        removeItems: sl(),
+        reorderItems: sl(),
+      ));
 }
 
 void _initCore() {
