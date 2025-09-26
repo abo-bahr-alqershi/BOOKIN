@@ -1568,6 +1568,13 @@ class _AdminHubPageState extends State<AdminHubPage>
           onTap: () => context.push('/admin/currencies'),
         ),
         _AdminFeature(
+          title: 'الأقسام',
+          description: 'إدارة أقسام الواجهة والمحتوى',
+          icon: Icons.view_quilt_rounded,
+          gradient: [AppTheme.primaryCyan, AppTheme.primaryPurple],
+          onTap: () => context.push('/admin/sections'),
+        ),
+        _AdminFeature(
           title: 'المدفوعات',
           description: 'إدارة المعاملات المالية والاستردادات',
           icon: Icons.account_balance_wallet_rounded,

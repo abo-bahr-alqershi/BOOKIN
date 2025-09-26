@@ -163,6 +163,22 @@ import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_d
 import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_analytics/payment_analytics_bloc.dart'
     as pay_an_bloc;
 import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_refund/payment_refund_bloc.dart';
+// Admin Sections pages & blocs
+import 'package:bookn_cp_app/features/admin_sections/presentation/pages/sections_list_page.dart'
+    as sec_pages;
+import 'package:bookn_cp_app/features/admin_sections/presentation/pages/create_section_page.dart'
+    as sec_pages;
+import 'package:bookn_cp_app/features/admin_sections/presentation/pages/edit_section_page.dart'
+    as sec_pages;
+import 'package:bookn_cp_app/features/admin_sections/presentation/pages/section_items_management_page.dart'
+    as sec_pages;
+import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/sections_list/sections_list_bloc.dart'
+    as sec_list_bloc;
+import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/section_form/section_form_bloc.dart'
+    as sec_form_bloc;
+import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/section_items/section_items_bloc.dart'
+    as sec_items_bloc;
+import 'package:bookn_cp_app/core/enums/section_target.dart' as sec_enums;
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
@@ -608,6 +624,58 @@ class AppRouter {
                 ),
               ],
               child: const ap_pages.PropertiesListPage(),
+            );
+          },
+        ),
+
+        // Admin Sections - list
+        GoRoute(
+          path: '/admin/sections',
+          builder: (context, state) {
+            return BlocProvider<sec_list_bloc.SectionsListBloc>(
+              create: (_) => di.sl<sec_list_bloc.SectionsListBloc>(),
+              child: const sec_pages.SectionsListPage(),
+            );
+          },
+        ),
+
+        // Admin Sections - create
+        GoRoute(
+          path: '/admin/sections/create',
+          builder: (context, state) {
+            return BlocProvider<sec_form_bloc.SectionFormBloc>(
+              create: (_) => di.sl<sec_form_bloc.SectionFormBloc>()
+                ..add(const sec_form_bloc.InitializeSectionFormEvent()),
+              child: const sec_pages.CreateSectionPage(),
+            );
+          },
+        ),
+
+        // Admin Sections - edit
+        GoRoute(
+          path: '/admin/sections/:sectionId/edit',
+          builder: (context, state) {
+            final sectionId = state.pathParameters['sectionId']!;
+            return BlocProvider<sec_form_bloc.SectionFormBloc>(
+              create: (_) => di.sl<sec_form_bloc.SectionFormBloc>()
+                ..add(sec_form_bloc.InitializeSectionFormEvent(sectionId: sectionId)),
+              child: sec_pages.EditSectionPage(sectionId: sectionId),
+            );
+          },
+        ),
+
+        // Admin Sections - manage items
+        GoRoute(
+          path: '/admin/sections/:sectionId/items',
+          builder: (context, state) {
+            final sectionId = state.pathParameters['sectionId']!;
+            final target = state.extra as sec_enums.SectionTarget? ?? sec_enums.SectionTarget.properties;
+            return BlocProvider<sec_items_bloc.SectionItemsBloc>(
+              create: (_) => di.sl<sec_items_bloc.SectionItemsBloc>(),
+              child: sec_pages.SectionItemsManagementPage(
+                sectionId: sectionId,
+                target: target,
+              ),
             );
           },
         ),
