@@ -22,6 +22,7 @@ namespace YemenBooking.Infrastructure.Data.Configurations
             builder.Property(x => x.UnitTypeIcon).HasMaxLength(100);
             builder.Property(x => x.Currency).HasMaxLength(10);
             builder.Property(x => x.MainImageUrl).HasMaxLength(500);
+            builder.Property(x => x.MainImageId);
             builder.Property(x => x.AdditionalImages).HasColumnType("NVARCHAR(MAX)");
             builder.Property(x => x.PrimaryFieldValues).HasColumnType("NVARCHAR(MAX)");
             builder.Property(x => x.PropertyAddress).HasMaxLength(500);
@@ -48,6 +49,11 @@ namespace YemenBooking.Infrastructure.Data.Configurations
                 .WithMany(p => p.UnitInSections)
                 .HasForeignKey(x => x.PropertyId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne<PropertyImage>(x => x.MainImage)
+                .WithMany()
+                .HasForeignKey(x => x.MainImageId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             builder.HasIndex(x => new { x.SectionId, x.UnitId }).IsUnique();
         }

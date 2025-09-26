@@ -16,6 +16,7 @@ class PropertyInSectionModel {
   final double basePrice;
   final String currency;
   final String? mainImageUrl;
+  final String? mainImageId;
   final List<String> additionalImages;
   final String? shortDescription;
   final int displayOrder;
@@ -49,6 +50,7 @@ class PropertyInSectionModel {
     required this.currency,
     this.mainImageUrl,
     this.additionalImages = const [],
+    this.mainImageId,
     this.shortDescription,
     required this.displayOrder,
     this.isFeatured = false,
@@ -113,6 +115,7 @@ class PropertyInSectionModel {
       basePrice: _toDouble(json['minPrice'] ?? json['basePrice']) ?? 0,
       currency: json['currency']?.toString() ?? '',
       mainImageUrl: json['mainImageUrl']?.toString(),
+      mainImageId: json['mainImageId']?.toString(),
       additionalImages: _images,
       shortDescription: json['shortDescription']?.toString(),
       displayOrder: (json['displayOrder'] is int)
@@ -158,6 +161,7 @@ class PropertyInSectionModel {
         'currency': currency,
         'mainImageUrl': mainImageUrl,
         'additionalImages': additionalImages,
+        'mainImageId': mainImageId,
         'shortDescription': shortDescription,
         'displayOrder': displayOrder,
         'isFeatured': isFeatured,

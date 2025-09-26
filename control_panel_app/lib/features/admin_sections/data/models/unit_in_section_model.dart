@@ -17,6 +17,7 @@ class UnitInSectionModel {
   final int? adultsCapacity;
   final int? childrenCapacity;
   final String? mainImageUrl;
+  final String? mainImageId;
   final List<String> additionalImages;
   final Map<String, dynamic>? primaryFieldValues;
   final String propertyAddress;
@@ -55,6 +56,7 @@ class UnitInSectionModel {
     this.childrenCapacity,
     this.mainImageUrl,
     this.additionalImages = const [],
+    this.mainImageId,
     this.primaryFieldValues,
     required this.propertyAddress,
     required this.propertyCity,
@@ -108,6 +110,7 @@ class UnitInSectionModel {
       childrenCapacity:
           json['childrenCapacity'] is int ? json['childrenCapacity'] : null,
       mainImageUrl: json['mainImageUrl']?.toString(),
+      mainImageId: json['mainImageId']?.toString(),
       additionalImages: _toStringList(json['additionalImages']) ?? const [],
       primaryFieldValues: json['primaryFieldValues'] is Map<String, dynamic>
           ? Map<String, dynamic>.from(json['primaryFieldValues'])
@@ -159,6 +162,7 @@ class UnitInSectionModel {
         'childrenCapacity': childrenCapacity,
         'mainImageUrl': mainImageUrl,
         'additionalImages': additionalImages,
+        'mainImageId': mainImageId,
         'primaryFieldValues': primaryFieldValues,
         'propertyAddress': propertyAddress,
         'propertyCity': propertyCity,
