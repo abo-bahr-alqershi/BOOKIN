@@ -41,7 +41,7 @@ namespace YemenBooking.Infrastructure.Data.Configurations
             builder.HasOne(x => x.Unit)
                 .WithMany(u => u.UnitInSections)
                 .HasForeignKey(x => x.UnitId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(x => x.Property)
                 .WithMany(p => p.UnitInSections)

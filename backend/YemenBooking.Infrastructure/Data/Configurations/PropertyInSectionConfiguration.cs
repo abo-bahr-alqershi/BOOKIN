@@ -34,7 +34,7 @@ namespace YemenBooking.Infrastructure.Data.Configurations
             builder.HasOne(x => x.Property)
                 .WithMany(p => p.PropertyInSections)
                 .HasForeignKey(x => x.PropertyId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Allow additional images to be linked via PropertyImages table
             // using the PropertyInSectionId FK configured in PropertyImageConfiguration
