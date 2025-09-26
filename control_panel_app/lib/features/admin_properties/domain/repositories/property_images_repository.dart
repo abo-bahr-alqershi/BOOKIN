@@ -8,11 +8,14 @@ import 'package:dio/dio.dart';
 abstract class PropertyImagesRepository {
   Future<Either<Failure, PropertyImage>> uploadImage({
     String? propertyId,
+    String? sectionId,
+    String? propertyInSectionId,
+    String? unitInSectionId,
     String? tempKey,
     required String filePath,
     String? category,
     String? alt,
-    bool isPrimary = false,
+    bool isPrimary,
     int? order,
     List<String>? tags,
     ProgressCallback? onSendProgress,

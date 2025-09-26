@@ -125,11 +125,11 @@ public class PropertyImageConfiguration : IEntityTypeConfiguration<PropertyImage
             .IsRequired(false)
             .HasComment("ربط الصورة بسجل وحدة في قسم");
         builder.HasOne(pi => pi.PropertyInSection)
-            .WithMany()
+            .WithMany(pis => pis.AdditionalImages)
             .HasForeignKey(pi => pi.PropertyInSectionId)
             .OnDelete(DeleteBehavior.SetNull);
         builder.HasOne(pi => pi.UnitInSection)
-            .WithMany()
+            .WithMany(uis => uis.AdditionalImages)
             .HasForeignKey(pi => pi.UnitInSectionId)
             .OnDelete(DeleteBehavior.SetNull);
 

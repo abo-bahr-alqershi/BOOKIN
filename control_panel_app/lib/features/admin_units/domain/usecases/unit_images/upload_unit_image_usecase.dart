@@ -15,6 +15,8 @@ class UploadUnitImageUseCase implements UseCase<UnitImage, UploadImageParams> {
   Future<Either<Failure, UnitImage>> call(UploadImageParams params) async {
     return await repository.uploadImage(
       unitId: params.unitId,
+      sectionId: params.sectionId,
+      unitInSectionId: params.unitInSectionId,
       tempKey: params.tempKey,
       filePath: params.filePath,
       videoThumbnailPath: params.videoThumbnailPath,
@@ -30,6 +32,8 @@ class UploadUnitImageUseCase implements UseCase<UnitImage, UploadImageParams> {
 
 class UploadImageParams {
   final String? unitId;
+  final String? sectionId;
+  final String? unitInSectionId;
   final String? tempKey;
   final String filePath;
   final String? videoThumbnailPath;
@@ -42,6 +46,8 @@ class UploadImageParams {
 
   UploadImageParams({
     this.unitId,
+    this.sectionId,
+    this.unitInSectionId,
     this.tempKey,
     required this.filePath,
     this.videoThumbnailPath,

@@ -8,12 +8,14 @@ import 'package:dio/dio.dart';
 abstract class UnitImagesRepository {
   Future<Either<Failure, UnitImage>> uploadImage({
     String? unitId,
+    String? sectionId,
+    String? unitInSectionId,
     String? tempKey,
     required String filePath,
     String? videoThumbnailPath,
     String? category,
     String? alt,
-    bool isPrimary = false,
+    bool isPrimary,
     int? order,
     List<String>? tags,
     ProgressCallback? onSendProgress,
