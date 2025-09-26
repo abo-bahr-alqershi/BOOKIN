@@ -138,8 +138,9 @@ lib/
 |   |            ├── section_schedule_picker.dart
 |   |            ├── section_items_list.dart
 |   |            ├── add_items_dialog.dart
-|   |            ├── property_item_card.dart
 |   |            ├── unit_item_card.dart
+|   |            ├── property_item_card.dart
+|   |            ├── image_gallery.dart
 |   |            ├── item_order_drag_handle.dart
 |   |            ├── section_preview_widget.dart
 |   |            ├── section_stats_card.dart
