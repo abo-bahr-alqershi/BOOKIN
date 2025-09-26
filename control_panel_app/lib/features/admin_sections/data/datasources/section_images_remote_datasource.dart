@@ -19,17 +19,18 @@ abstract class SectionImagesRemoteDataSource {
   });
 
   Future<List<SectionImageModel>> getImages(String sectionId, {int? page, int? limit});
+  Future<List<SectionImageModel>> getImagesByTempKey(String tempKey, {int? page, int? limit});
   Future<bool> updateImage(String imageId, Map<String, dynamic> data);
-  Future<bool> deleteImage(String sectionId, String imageId, {bool permanent});
-  Future<bool> reorderImages(String sectionId, List<String> imageIds);
-  Future<bool> setAsPrimaryImage(String sectionId, String imageId);
+  Future<bool> deleteImage(String imageId, {bool permanent});
+  Future<bool> reorderImages(List<String> imageIds, {String? tempKey});
+  Future<bool> setAsPrimaryImage(String imageId, {String? tempKey});
 }
 
 class SectionImagesRemoteDataSourceImpl implements SectionImagesRemoteDataSource {
   final ApiClient apiClient;
   SectionImagesRemoteDataSourceImpl({required this.apiClient});
 
-  static String _endpoint(String sectionId) => '/api/admin/section-images/$sectionId';
+  static const String _imagesEndpoint = '/api/images';
 
   @override
   Future<SectionImageModel> uploadImage({
@@ -56,10 +57,11 @@ class SectionImagesRemoteDataSourceImpl implements SectionImagesRemoteDataSource
         if (order != null) 'order': order,
         if (tags != null && tags.isNotEmpty) 'tags': tags.join(','),
         if (tempKey != null) 'tempKey': tempKey,
+        if (sectionId.isNotEmpty) 'sectionId': sectionId,
         if (posterPath != null) 'videoThumbnail': await MultipartFile.fromFile(posterPath),
       });
       final response = await apiClient.post(
-        '${_endpoint(sectionId)}/upload',
+        '$_imagesEndpoint/upload',
         data: formData,
         options: Options(headers: {'Content-Type': 'multipart/form-data'}),
         onSendProgress: onSendProgress,
@@ -78,7 +80,27 @@ class SectionImagesRemoteDataSourceImpl implements SectionImagesRemoteDataSource
   @override
   Future<List<SectionImageModel>> getImages(String sectionId, {int? page, int? limit}) async {
     try {
-      final response = await apiClient.get(_endpoint(sectionId), queryParameters: {
+      final response = await apiClient.get(_imagesEndpoint, queryParameters: {
+        'sectionId': sectionId,
+        if (page != null) 'page': page,
+        if (limit != null) 'limit': limit,
+      });
+      final data = response.data is Map<String, dynamic> ? response.data : null;
+      if (data != null) {
+        final items = (data['items'] as List?) ?? (data['images'] as List?) ?? const [];
+        return items.map((e) => SectionImageModel.fromJson(Map<String, dynamic>.from(e))).toList();
+      }
+      throw ServerException('Invalid response');
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Failed to load section images');
+    }
+  }
+
+  @override
+  Future<List<SectionImageModel>> getImagesByTempKey(String tempKey, {int? page, int? limit}) async {
+    try {
+      final response = await apiClient.get(_imagesEndpoint, queryParameters: {
+        'tempKey': tempKey,
         if (page != null) 'page': page,
         if (limit != null) 'limit': limit,
       });
@@ -104,9 +126,9 @@ class SectionImagesRemoteDataSourceImpl implements SectionImagesRemoteDataSource
   }
 
   @override
-  Future<bool> deleteImage(String sectionId, String imageId, {bool permanent = false}) async {
+  Future<bool> deleteImage(String imageId, {bool permanent = false}) async {
     try {
-      final response = await apiClient.delete('${_endpoint(sectionId)}/$imageId', queryParameters: {'permanent': permanent});
+      final response = await apiClient.delete('/api/images/$imageId', queryParameters: {'permanent': permanent});
       return response.statusCode == 204 || (response.data is Map && response.data['success'] == true);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to delete section image');
@@ -114,9 +136,13 @@ class SectionImagesRemoteDataSourceImpl implements SectionImagesRemoteDataSource
   }
 
   @override
-  Future<bool> reorderImages(String sectionId, List<String> imageIds) async {
+  Future<bool> reorderImages(List<String> imageIds, {String? tempKey}) async {
     try {
-      final response = await apiClient.post('${_endpoint(sectionId)}/reorder', data: {'imageIds': imageIds});
+      final payload = {
+        'imageIds': imageIds,
+        if (tempKey != null) 'tempKey': tempKey,
+      };
+      final response = await apiClient.post('$_imagesEndpoint/reorder', data: payload);
       return response.statusCode == 204 || (response.data is Map && response.data['success'] == true);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to reorder section images');
@@ -124,9 +150,12 @@ class SectionImagesRemoteDataSourceImpl implements SectionImagesRemoteDataSource
   }
 
   @override
-  Future<bool> setAsPrimaryImage(String sectionId, String imageId) async {
+  Future<bool> setAsPrimaryImage(String imageId, {String? tempKey}) async {
     try {
-      final response = await apiClient.post('${_endpoint(sectionId)}/$imageId/set-primary');
+      final body = {
+        if (tempKey != null) 'tempKey': tempKey,
+      };
+      final response = await apiClient.post('$_imagesEndpoint/$imageId/set-primary', data: body);
       return response.statusCode == 204 || (response.data is Map && response.data['success'] == true);
     } on DioException catch (e) {
       throw ServerException(e.response?.data['message'] ?? 'Failed to set primary section image');
