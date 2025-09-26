@@ -42,6 +42,8 @@ namespace YemenBooking.Api.Extensions
             // Remove ffmpeg binaries configuration as server-side thumbnailing is disabled
             // Register currency ensure service
             services.AddScoped<ICurrencyEnsureService, CurrencyEnsureService>();
+            services.AddScoped<ISectionService, SectionService>();
+            services.AddScoped<ISectionContentService, SectionContentService>();
 
             // Explicitly map interfaces that don't follow the "I" + ImplementationName convention
             // IEventPublisher is implemented by EventPublisherService (not IEventPublisherService)

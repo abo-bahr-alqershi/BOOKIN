@@ -97,6 +97,16 @@ public class YemenBookingDbContext : DbContext
     /// Section items table
     /// </summary>
     public DbSet<SectionItem> SectionItems { get; set; }
+    
+    /// <summary>
+    /// جدول عقارات الأقسام (سجل غني)
+    /// </summary>
+    public DbSet<PropertyInSection> PropertyInSections { get; set; }
+
+    /// <summary>
+    /// جدول وحدات الأقسام (سجل غني)
+    /// </summary>
+    public DbSet<UnitInSection> UnitInSections { get; set; }
 
     /// <summary>
     /// جدول الحجوزات
@@ -345,6 +355,8 @@ public class YemenBookingDbContext : DbContext
         modelBuilder.ApplyConfiguration(new AdminActionConfiguration());
         modelBuilder.ApplyConfiguration(new SectionConfiguration());
         modelBuilder.ApplyConfiguration(new SectionItemConfiguration());
+        modelBuilder.ApplyConfiguration(new PropertyInSectionConfiguration());
+        modelBuilder.ApplyConfiguration(new UnitInSectionConfiguration());
 
         // تكوين سجل البحث
         modelBuilder.ApplyConfiguration(new SearchLogConfiguration());

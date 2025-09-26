@@ -57,6 +57,22 @@ namespace YemenBooking.Infrastructure.Repositories
 				.ToListAsync(cancellationToken);
 		}
 
+		public async Task<IEnumerable<PropertyInSection>> GetPropertyItemsAsync(Guid sectionId, CancellationToken cancellationToken = default)
+		{
+			return await _context.PropertyInSections
+				.Where(i => i.SectionId == sectionId)
+				.OrderBy(i => i.DisplayOrder)
+				.ToListAsync(cancellationToken);
+		}
+
+		public async Task<IEnumerable<UnitInSection>> GetUnitItemsAsync(Guid sectionId, CancellationToken cancellationToken = default)
+		{
+			return await _context.UnitInSections
+				.Where(i => i.SectionId == sectionId)
+				.OrderBy(i => i.DisplayOrder)
+				.ToListAsync(cancellationToken);
+		}
+
 		public async Task AssignPropertiesAsync(Guid sectionId, IEnumerable<Guid> propertyIds, CancellationToken cancellationToken = default)
 		{
 			var existing = await _context.SectionItems.Where(i => i.SectionId == sectionId).ToListAsync(cancellationToken);
@@ -72,6 +88,30 @@ namespace YemenBooking.Infrastructure.Repositories
 			_context.SectionItems.RemoveRange(existing);
 			var toAdd = unitIds.Distinct().Select(uid => new SectionItem { SectionId = sectionId, UnitId = uid }).ToList();
 			await _context.SectionItems.AddRangeAsync(toAdd, cancellationToken);
+			await _context.SaveChangesAsync(cancellationToken);
+		}
+
+		public async Task AssignPropertyItemsAsync(Guid sectionId, IEnumerable<PropertyInSection> items, CancellationToken cancellationToken = default)
+		{
+			var existing = await _context.PropertyInSections.Where(i => i.SectionId == sectionId).ToListAsync(cancellationToken);
+			_context.PropertyInSections.RemoveRange(existing);
+			foreach (var item in items)
+			{
+				item.SectionId = sectionId;
+			}
+			await _context.PropertyInSections.AddRangeAsync(items, cancellationToken);
+			await _context.SaveChangesAsync(cancellationToken);
+		}
+
+		public async Task AssignUnitItemsAsync(Guid sectionId, IEnumerable<UnitInSection> items, CancellationToken cancellationToken = default)
+		{
+			var existing = await _context.UnitInSections.Where(i => i.SectionId == sectionId).ToListAsync(cancellationToken);
+			_context.UnitInSections.RemoveRange(existing);
+			foreach (var item in items)
+			{
+				item.SectionId = sectionId;
+			}
+			await _context.UnitInSections.AddRangeAsync(items, cancellationToken);
 			await _context.SaveChangesAsync(cancellationToken);
 		}
 

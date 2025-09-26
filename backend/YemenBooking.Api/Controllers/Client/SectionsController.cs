@@ -12,8 +12,10 @@ namespace YemenBooking.Api.Controllers.Client
 
 
 		
+
 		[HttpGet]
-		public async Task<IActionResult> GetSections([FromQuery] GetSectionsQuery query)
+		[AllowAnonymous]
+		public async Task<IActionResult> GetSections([FromQuery] GetActiveSectionsForHomeQuery query)
 		{
 			var result = await _mediator.Send(query);
 			return Ok(result);

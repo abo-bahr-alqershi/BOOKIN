@@ -171,4 +171,10 @@ public class Unit : BaseEntity<Guid>
     [Display(Name = "عناصر الأقسام المرتبطة بالوحدة")]
     public virtual ICollection<SectionItem> SectionItems { get; set; } = new List<SectionItem>();
 
+    /// <summary>
+    /// سجلات الغنية للوحدة في الأقسام
+    /// Rich section-unit records
+    /// </summary>
+    public virtual ICollection<UnitInSection> UnitInSections { get; set; } = new List<UnitInSection>();
+
 } 

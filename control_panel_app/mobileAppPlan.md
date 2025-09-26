@@ -18,8 +18,10 @@ lib/
 │   ├── enums/
 │   │   ├── booking_status.dart
 │   │   ├── payment_method_enum.dart
-│   │   ├── section_target_enum.dart
-│   │   └── section_type_enum.dart
+│   │   ├── section_content_type.dart    # [Properties, Units, Mixed]
+│   │   ├── section_type.dart            # [Featured, Popular, NewArrivals, etc.]
+│   │   └── section_display_style.dart   # [Grid, List, Carousel, Map]
+│   │
 │   ├── error/
 │   │   ├── error_handler.dart
 │   │   ├── exceptions.dart
@@ -63,6 +65,84 @@ lib/
 │       └── rating_widget.dart
 │
 ├── features/
+|   ├── admin_sections/
+|   |    ├── data/
+|   |    │   ├── datasources/
+|   |    │   │   ├── sections_local_datasource.dart
+|   |    │   │   └── sections_remote_datasource.dart
+|   |    │   ├── models/
+|   |    │   │   ├── section_model.dart
+|   |    │   │   ├── section_item_model.dart
+|   |    │   │   ├── property_in_section_model.dart
+|   |    │   │   ├── unit_in_section_model.dart
+|   |    │   │   ├── section_metadata_model.dart
+|   |    │   │   └── dynamic_field_value_model.dart
+|   |    │   └── repositories/
+|   |    │       └── sections_repository_impl.dart
+|   |    │
+|   |    ├── domain/
+|   |    │   ├── entities/
+|   |    │   │   ├── section.dart
+|   |    │   │   ├── section_item.dart
+|   |    │   │   ├── property_in_section.dart
+|   |    │   │   ├── unit_in_section.dart
+|   |    │   │   ├── section_metadata.dart
+|   |    │   │   └── section_filter_criteria.dart
+|   |    │   ├── repositories/
+|   |    │   │   └── sections_repository.dart
+|   |    │   └── usecases/
+|   |    │       ├── sections/
+|   |    │       │   ├── create_section_usecase.dart
+|   |    │       │   ├── update_section_usecase.dart
+|   |    │       │   ├── delete_section_usecase.dart
+|   |    │       │   ├── toggle_section_status_usecase.dart
+|   |    │       │   ├── get_all_sections_usecase.dart
+|   |    │       │   ├── get_section_by_id_usecase.dart
+|   |    │       │   └── get_active_sections_for_home_usecase.dart
+|   |    │       └── section_items/
+|   |    │           ├── add_items_to_section_usecase.dart
+|   |    │           ├── remove_items_from_section_usecase.dart
+|   |    │           ├── update_item_order_usecase.dart
+|   |    │           └── get_section_items_usecase.dart
+|   |    │
+|   |    └── presentation/
+|   |        ├── bloc/
+|   |        │   ├── sections_list/
+|   |        │   │   ├── sections_list_bloc.dart
+|   |        │   │   ├── sections_list_event.dart
+|   |        │   │   └── sections_list_state.dart
+|   |        │   ├── section_form/
+|   |        │   │   ├── section_form_bloc.dart
+|   |        │   │   ├── section_form_event.dart
+|   |        │   │   └── section_form_state.dart
+|   |        │   └── section_items/
+|   |        │       ├── section_items_bloc.dart
+|   |        │       ├── section_items_event.dart
+|   |        │       └── section_items_state.dart
+|   |        ├── pages/
+|   |        │   ├── sections_list_page.dart
+|   |        │   ├── create_section_page.dart
+|   |        │   ├── edit_section_page.dart
+|   |        │   └── section_items_management_page.dart
+|   |        └── widgets/
+|   |            ├── futuristic_section_card.dart
+|   |            ├── futuristic_sections_table.dart
+|   |            ├── section_form_widget.dart
+|   |            ├── section_type_selector.dart
+|   |            ├── section_content_type_toggle.dart
+|   |            ├── section_display_style_picker.dart
+|   |            ├── section_filter_criteria_editor.dart
+|   |            ├── section_sort_criteria_editor.dart
+|   |            ├── section_metadata_editor.dart
+|   |            ├── section_schedule_picker.dart
+|   |            ├── section_items_list.dart
+|   |            ├── add_items_dialog.dart
+|   |            ├── property_item_card.dart
+|   |            ├── unit_item_card.dart
+|   |            ├── item_order_drag_handle.dart
+|   |            ├── section_preview_widget.dart
+|   |            ├── section_stats_card.dart
+|   |            └── section_status_badge.dart
 |   ├── admin_properties/
 |   |   ├── data/
 |   |   │   ├── datasources/
@@ -1000,7 +1080,9 @@ lib/
 │   ├── local_storage_service.dart
 │   ├── location_service.dart
 │   ├── notification_service.dart
-│   └─ websocket_service.dart
+│   ├─ websocket_service.dart
+│   ├── section_service.dart              # للعمليات الأساسية
+│   └── section_content_service.dart      # لإدارة المحتوى
 
 # ملفات إضافية مهمة
 
