@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../../admin_properties/domain/entities/property_image.dart';
+import 'section_image.dart';
 
 class UnitInSection extends Equatable {
   final String id;
@@ -18,7 +18,7 @@ class UnitInSection extends Equatable {
   final int? adultsCapacity;
   final int? childrenCapacity;
   final String? mainImageUrl;
-  final List<PropertyImage> additionalImages;
+  final List<SectionImage> additionalImages;
   final Map<String, dynamic>? primaryFieldValues;
   final String propertyAddress;
   final String propertyCity;
