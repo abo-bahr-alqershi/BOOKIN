@@ -20,10 +20,14 @@ abstract class PropertyInSectionImagesRemoteDataSource {
 
   Future<List<SectionImageModel>> getImages(String propertyInSectionId,
       {int? page, int? limit});
+  Future<List<SectionImageModel>> getImagesByTempKey(String tempKey, {int? page, int? limit});
   Future<bool> updateImage(String imageId, Map<String, dynamic> data);
+  Future<bool> deleteImageById(String imageId, {bool permanent});
   Future<bool> deleteImage(String propertyInSectionId, String imageId,
       {bool permanent});
+  Future<bool> reorderImagesByTempKey(String tempKey, List<String> imageIds);
   Future<bool> reorderImages(String propertyInSectionId, List<String> imageIds);
+  Future<bool> setAsPrimaryImageByTempKey(String imageId, String tempKey);
   Future<bool> setAsPrimaryImage(String propertyInSectionId, String imageId);
 }
 
@@ -32,8 +36,7 @@ class PropertyInSectionImagesRemoteDataSourceImpl
   final ApiClient apiClient;
   PropertyInSectionImagesRemoteDataSourceImpl({required this.apiClient});
 
-  static String _base(String propertyInSectionId) =>
-      '/api/admin/section-items/$propertyInSectionId/images';
+  static const String _imagesEndpoint = '/api/images';
 
   @override
   Future<SectionImageModel> uploadImage({
@@ -64,7 +67,7 @@ class PropertyInSectionImagesRemoteDataSourceImpl
           'videoThumbnail': await MultipartFile.fromFile(posterPath),
       });
       final response = await apiClient.post(
-          '${_base(propertyInSectionId)}/upload',
+          '$_imagesEndpoint/upload',
           data: formData,
           options: Options(headers: {'Content-Type': 'multipart/form-data'}),
           onSendProgress: onSendProgress);
@@ -84,8 +87,9 @@ class PropertyInSectionImagesRemoteDataSourceImpl
   Future<List<SectionImageModel>> getImages(String propertyInSectionId,
       {int? page, int? limit}) async {
     try {
-      final response = await apiClient.get(_base(propertyInSectionId),
+      final response = await apiClient.get(_imagesEndpoint,
           queryParameters: {
+            'propertyInSectionId': propertyInSectionId,
             if (page != null) 'page': page,
             if (limit != null) 'limit': limit
           });
@@ -106,6 +110,26 @@ class PropertyInSectionImagesRemoteDataSourceImpl
   }
 
   @override
+  Future<List<SectionImageModel>> getImagesByTempKey(String tempKey, {int? page, int? limit}) async {
+    try {
+      final response = await apiClient.get(_imagesEndpoint,
+          queryParameters: {
+            'tempKey': tempKey,
+            if (page != null) 'page': page,
+            if (limit != null) 'limit': limit
+          });
+      final data = response.data is Map<String, dynamic> ? response.data : null;
+      if (data != null) {
+        final items = (data['items'] as List?) ?? (data['images'] as List?) ?? const [];
+        return items.map((e) => SectionImageModel.fromJson(Map<String, dynamic>.from(e))).toList();
+      }
+      throw const ServerException('Invalid response');
+    } on DioException catch (e) {
+      throw ServerException(e.response?.data['message'] ?? 'Failed to load images');
+    }
+  }
+
+  @override
   Future<bool> updateImage(String imageId, Map<String, dynamic> data) async {
     try {
       final response = await apiClient.put('/api/images/$imageId', data: data);
@@ -118,11 +142,11 @@ class PropertyInSectionImagesRemoteDataSourceImpl
   }
 
   @override
-  Future<bool> deleteImage(String propertyInSectionId, String imageId,
+  Future<bool> deleteImageById(String imageId,
       {bool permanent = false}) async {
     try {
       final response = await apiClient.delete(
-          '${_base(propertyInSectionId)}/$imageId',
+          '/api/images/$imageId',
           queryParameters: {'permanent': permanent});
       return response.statusCode == 204 ||
           (response.data is Map && response.data['success'] == true);
@@ -133,12 +157,17 @@ class PropertyInSectionImagesRemoteDataSourceImpl
   }
 
   @override
-  Future<bool> reorderImages(
-      String propertyInSectionId, List<String> imageIds) async {
+  Future<bool> deleteImage(String propertyInSectionId, String imageId,
+      {bool permanent = false}) async {
+    return deleteImageById(imageId, permanent: permanent);
+  }
+
+  @override
+  Future<bool> reorderImagesByTempKey(String tempKey, List<String> imageIds) async {
     try {
       final response = await apiClient.post(
-          '${_base(propertyInSectionId)}/reorder',
-          data: {'imageIds': imageIds});
+          '$_imagesEndpoint/reorder',
+          data: {'imageIds': imageIds, 'tempKey': tempKey});
       return response.statusCode == 204 ||
           (response.data is Map && response.data['success'] == true);
     } on DioException catch (e) {
@@ -148,11 +177,39 @@ class PropertyInSectionImagesRemoteDataSourceImpl
   }
 
   @override
+  Future<bool> reorderImages(
+      String propertyInSectionId, List<String> imageIds) async {
+    try {
+      final response = await apiClient.post(
+          '$_imagesEndpoint/reorder',
+          data: {'imageIds': imageIds, 'propertyInSectionId': propertyInSectionId});
+      return response.statusCode == 204 ||
+          (response.data is Map && response.data['success'] == true);
+    } on DioException catch (e) {
+      throw ServerException(
+          e.response?.data['message'] ?? 'Failed to reorder images');
+    }
+  }
+
+  @override
+  Future<bool> setAsPrimaryImageByTempKey(String imageId, String tempKey) async {
+    try {
+      final response = await apiClient
+          .post('$_imagesEndpoint/$imageId/set-primary', data: {'tempKey': tempKey});
+      return response.statusCode == 204 ||
+          (response.data is Map && response.data['success'] == true);
+    } on DioException catch (e) {
+      throw ServerException(
+          e.response?.data['message'] ?? 'Failed to set primary image');
+    }
+  }
+
+  @override
   Future<bool> setAsPrimaryImage(
       String propertyInSectionId, String imageId) async {
     try {
       final response = await apiClient
-          .post('${_base(propertyInSectionId)}/$imageId/set-primary');
+          .post('$_imagesEndpoint/$imageId/set-primary', data: {'propertyInSectionId': propertyInSectionId});
       return response.statusCode == 204 ||
           (response.data is Map && response.data['success'] == true);
     } on DioException catch (e) {

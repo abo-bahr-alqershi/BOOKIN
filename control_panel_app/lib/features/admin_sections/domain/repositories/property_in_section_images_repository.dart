@@ -17,14 +17,18 @@ abstract class PropertyInSectionImagesRepository {
   });
 
   Future<Either<Failure, List<SectionImage>>> getImages(String propertyInSectionId, {int? page, int? limit});
+  Future<Either<Failure, List<SectionImage>>> getImagesByTempKey(String tempKey, {int? page, int? limit});
 
   Future<Either<Failure, bool>> updateImage(String imageId, Map<String, dynamic> data);
 
   Future<Either<Failure, bool>> deleteImage(String propertyInSectionId, String imageId, {bool permanent});
+  Future<Either<Failure, bool>> deleteImageById(String imageId, {bool permanent});
 
   Future<Either<Failure, bool>> reorderImages(String propertyInSectionId, List<String> imageIds);
+  Future<Either<Failure, bool>> reorderImagesByTempKey(String tempKey, List<String> imageIds);
 
   Future<Either<Failure, bool>> setAsPrimaryImage(String propertyInSectionId, String imageId);
+  Future<Either<Failure, bool>> setAsPrimaryImageByTempKey(String imageId, String tempKey);
 
   Future<Either<Failure, List<SectionImage>>> uploadMultipleImages({
     required String propertyInSectionId,
