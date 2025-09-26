@@ -56,10 +56,10 @@ public class PropertyInSection : BaseEntity<Guid>
     public virtual string? MainImage { get; set; }
 
 	/// <summary>
-	/// صور إضافية مرتبطة مباشرة بسجل العقار في القسم
+    /// صور إضافية مخصصة لسجل العقار في القسم
 	/// </summary>
 	[Display(Name = "صور إضافية")]
-	public virtual ICollection<PropertyImage> AdditionalImages { get; set; } = new List<PropertyImage>();
+    public virtual ICollection<PropertyInSectionImage> AdditionalImages { get; set; } = new List<PropertyInSectionImage>();
 
     [Display(Name = "الوصف المختصر")]
     public string? ShortDescription { get; set; }

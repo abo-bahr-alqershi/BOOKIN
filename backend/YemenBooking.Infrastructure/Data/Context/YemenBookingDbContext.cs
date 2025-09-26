@@ -75,6 +75,21 @@ public class YemenBookingDbContext : DbContext
     public DbSet<PropertyImage> PropertyImages { get; set; }
 
     /// <summary>
+    /// جدول صور الأقسام المخصص
+    /// </summary>
+    public DbSet<SectionImage> SectionImages { get; set; }
+
+    /// <summary>
+    /// جدول صور "عقار في قسم" المخصص
+    /// </summary>
+    public DbSet<PropertyInSectionImage> PropertyInSectionImages { get; set; }
+
+    /// <summary>
+    /// جدول صور "وحدة في قسم" المخصص
+    /// </summary>
+    public DbSet<UnitInSectionImage> UnitInSectionImages { get; set; }
+
+    /// <summary>
     /// جدول أنواع الوحدات
     /// Unit types table
     /// </summary>
@@ -331,6 +346,9 @@ public class YemenBookingDbContext : DbContext
         modelBuilder.ApplyConfiguration(new PropertyTypeConfiguration());
         modelBuilder.ApplyConfiguration(new PropertyConfiguration());
         modelBuilder.ApplyConfiguration(new PropertyImageConfiguration());
+        modelBuilder.ApplyConfiguration(new SectionImageConfiguration());
+        modelBuilder.ApplyConfiguration(new PropertyInSectionImageConfiguration());
+        modelBuilder.ApplyConfiguration(new UnitInSectionImageConfiguration());
         modelBuilder.ApplyConfiguration(new UnitTypeConfiguration());
         modelBuilder.ApplyConfiguration(new UnitConfiguration());
         modelBuilder.ApplyConfiguration(new BookingConfiguration());

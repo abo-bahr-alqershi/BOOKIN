@@ -59,10 +59,10 @@ public class UnitInSection : BaseEntity<Guid>
     public virtual string? MainImage { get; set; }
 
     /// <summary>
-    /// صور إضافية مرتبطة مباشرة بسجل الوحدة في القسم
+    /// صور إضافية مخصصة لسجل الوحدة في القسم
     /// </summary>
     [Display(Name = "صور إضافية")]
-    public virtual ICollection<PropertyImage> AdditionalImages { get; set; } = new List<PropertyImage>();
+    public virtual ICollection<UnitInSectionImage> AdditionalImages { get; set; } = new List<UnitInSectionImage>();
 
     // الحقول الديناميكية المهمة للعرض
     [Display(Name = "قيم الحقول الأساسية (JSON)")]

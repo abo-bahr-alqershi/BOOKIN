@@ -20,10 +20,20 @@ namespace YemenBooking.Application.Handlers.Queries.Images
     public class GetImagesQueryHandler : IRequestHandler<GetImagesQuery, ResultDto<PaginatedResultDto<ImageDto>>>
     {
         private readonly IPropertyImageRepository _imageRepository;
+        private readonly ISectionImageRepository _sectionImageRepository;
+        private readonly IPropertyInSectionImageRepository _propertyInSectionImageRepository;
+        private readonly IUnitInSectionImageRepository _unitInSectionImageRepository;
 
-        public GetImagesQueryHandler(IPropertyImageRepository imageRepository)
+        public GetImagesQueryHandler(
+            IPropertyImageRepository imageRepository,
+            ISectionImageRepository sectionImageRepository,
+            IPropertyInSectionImageRepository propertyInSectionImageRepository,
+            IUnitInSectionImageRepository unitInSectionImageRepository)
         {
             _imageRepository = imageRepository;
+            _sectionImageRepository = sectionImageRepository;
+            _propertyInSectionImageRepository = propertyInSectionImageRepository;
+            _unitInSectionImageRepository = unitInSectionImageRepository;
         }
 
         public async Task<ResultDto<PaginatedResultDto<ImageDto>>> Handle(GetImagesQuery request, CancellationToken cancellationToken)
@@ -38,12 +48,22 @@ namespace YemenBooking.Application.Handlers.Queries.Images
                 query = query.Where(i => i.PropertyId == request.PropertyId.Value);
             if (request.UnitId.HasValue)
                 query = query.Where(i => i.UnitId == request.UnitId.Value);
+            // If specialized contexts provided, route to dedicated tables and return early
             if (request.SectionId.HasValue)
-                query = query.Where(i => i.SectionId == request.SectionId.Value);
+            {
+                var list = await _sectionImageRepository.GetBySectionIdAsync(request.SectionId.Value, cancellationToken);
+                return ResultDto<PaginatedResultDto<ImageDto>>.Ok(ToPagedDtos(list, request));
+            }
             if (request.PropertyInSectionId.HasValue)
-                query = query.Where(i => i.PropertyInSectionId == request.PropertyInSectionId.Value);
+            {
+                var list = await _propertyInSectionImageRepository.GetByPropertyInSectionIdAsync(request.PropertyInSectionId.Value, cancellationToken);
+                return ResultDto<PaginatedResultDto<ImageDto>>.Ok(ToPagedDtos(list, request));
+            }
             if (request.UnitInSectionId.HasValue)
-                query = query.Where(i => i.UnitInSectionId == request.UnitInSectionId.Value);
+            {
+                var list = await _unitInSectionImageRepository.GetByUnitInSectionIdAsync(request.UnitInSectionId.Value, cancellationToken);
+                return ResultDto<PaginatedResultDto<ImageDto>>.Ok(ToPagedDtos(list, request));
+            }
             if (!string.IsNullOrWhiteSpace(request.CityName))
                 query = query.Where(i => i.CityName == request.CityName);
             // Optional: support section-level images via SectionId when sent through TempKey/PropertyId alias at API layer
@@ -151,6 +171,99 @@ namespace YemenBooking.Application.Handlers.Queries.Images
                 return string.IsNullOrWhiteSpace(i.VideoThumbnailUrl) ? string.Empty : i.VideoThumbnailUrl!;
             }
             return i.Sizes ?? string.Empty;
+        }
+
+        private static PaginatedResultDto<ImageDto> ToPagedDtos(IEnumerable<Core.Entities.SectionImage> items, Queries.Images.GetImagesQuery request)
+        {
+            var page = request.Page.GetValueOrDefault(1);
+            var limit = request.Limit.GetValueOrDefault(10);
+            var total = items.Count();
+            var pageItems = items.Skip((page - 1) * limit).Take(limit).ToList();
+            var dtos = pageItems.Select(i => new ImageDto
+            {
+                Id = i.Id,
+                Url = i.Url,
+                Filename = i.Name,
+                Size = i.SizeBytes,
+                MimeType = i.Type,
+                Width = 0,
+                Height = 0,
+                Alt = i.AltText,
+                UploadedAt = i.UploadedAt,
+                UploadedBy = i.CreatedBy ?? Guid.Empty,
+                Order = i.DisplayOrder,
+                IsPrimary = i.IsMainImage,
+                Category = i.Category,
+                Tags = string.IsNullOrWhiteSpace(i.Tags) ? new List<string>() : System.Text.Json.JsonSerializer.Deserialize<List<string>>(i.Tags) ?? new List<string>(),
+                ProcessingStatus = i.Status.ToString(),
+                Thumbnails = new ImageThumbnailsDto { Small = i.Sizes ?? string.Empty, Medium = i.Sizes ?? string.Empty, Large = i.Sizes ?? string.Empty, Hd = i.Sizes ?? string.Empty },
+                MediaType = string.IsNullOrWhiteSpace(i.MediaType) ? "image" : i.MediaType,
+                Duration = i.DurationSeconds,
+                VideoThumbnail = string.IsNullOrWhiteSpace(i.VideoThumbnailUrl) ? null : i.VideoThumbnailUrl
+            }).ToList();
+            return new PaginatedResultDto<ImageDto> { Items = dtos, Total = total, Page = page, Limit = limit, TotalPages = (int)Math.Ceiling(total / (double)limit) };
+        }
+
+        private static PaginatedResultDto<ImageDto> ToPagedDtos(IEnumerable<Core.Entities.PropertyInSectionImage> items, Queries.Images.GetImagesQuery request)
+        {
+            var page = request.Page.GetValueOrDefault(1);
+            var limit = request.Limit.GetValueOrDefault(10);
+            var total = items.Count();
+            var pageItems = items.Skip((page - 1) * limit).Take(limit).ToList();
+            var dtos = pageItems.Select(i => new ImageDto
+            {
+                Id = i.Id,
+                Url = i.Url,
+                Filename = i.Name,
+                Size = i.SizeBytes,
+                MimeType = i.Type,
+                Width = 0,
+                Height = 0,
+                Alt = i.AltText,
+                UploadedAt = i.UploadedAt,
+                UploadedBy = i.CreatedBy ?? Guid.Empty,
+                Order = i.DisplayOrder,
+                IsPrimary = i.IsMainImage,
+                Category = i.Category,
+                Tags = string.IsNullOrWhiteSpace(i.Tags) ? new List<string>() : System.Text.Json.JsonSerializer.Deserialize<List<string>>(i.Tags) ?? new List<string>(),
+                ProcessingStatus = i.Status.ToString(),
+                Thumbnails = new ImageThumbnailsDto { Small = i.Sizes ?? string.Empty, Medium = i.Sizes ?? string.Empty, Large = i.Sizes ?? string.Empty, Hd = i.Sizes ?? string.Empty },
+                MediaType = string.IsNullOrWhiteSpace(i.MediaType) ? "image" : i.MediaType,
+                Duration = i.DurationSeconds,
+                VideoThumbnail = string.IsNullOrWhiteSpace(i.VideoThumbnailUrl) ? null : i.VideoThumbnailUrl
+            }).ToList();
+            return new PaginatedResultDto<ImageDto> { Items = dtos, Total = total, Page = page, Limit = limit, TotalPages = (int)Math.Ceiling(total / (double)limit) };
+        }
+
+        private static PaginatedResultDto<ImageDto> ToPagedDtos(IEnumerable<Core.Entities.UnitInSectionImage> items, Queries.Images.GetImagesQuery request)
+        {
+            var page = request.Page.GetValueOrDefault(1);
+            var limit = request.Limit.GetValueOrDefault(10);
+            var total = items.Count();
+            var pageItems = items.Skip((page - 1) * limit).Take(limit).ToList();
+            var dtos = pageItems.Select(i => new ImageDto
+            {
+                Id = i.Id,
+                Url = i.Url,
+                Filename = i.Name,
+                Size = i.SizeBytes,
+                MimeType = i.Type,
+                Width = 0,
+                Height = 0,
+                Alt = i.AltText,
+                UploadedAt = i.UploadedAt,
+                UploadedBy = i.CreatedBy ?? Guid.Empty,
+                Order = i.DisplayOrder,
+                IsPrimary = i.IsMainImage,
+                Category = i.Category,
+                Tags = string.IsNullOrWhiteSpace(i.Tags) ? new List<string>() : System.Text.Json.JsonSerializer.Deserialize<List<string>>(i.Tags) ?? new List<string>(),
+                ProcessingStatus = i.Status.ToString(),
+                Thumbnails = new ImageThumbnailsDto { Small = i.Sizes ?? string.Empty, Medium = i.Sizes ?? string.Empty, Large = i.Sizes ?? string.Empty, Hd = i.Sizes ?? string.Empty },
+                MediaType = string.IsNullOrWhiteSpace(i.MediaType) ? "image" : i.MediaType,
+                Duration = i.DurationSeconds,
+                VideoThumbnail = string.IsNullOrWhiteSpace(i.VideoThumbnailUrl) ? null : i.VideoThumbnailUrl
+            }).ToList();
+            return new PaginatedResultDto<ImageDto> { Items = dtos, Total = total, Page = page, Limit = limit, TotalPages = (int)Math.Ceiling(total / (double)limit) };
         }
     }
 } 

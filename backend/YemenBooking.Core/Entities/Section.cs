@@ -205,8 +205,8 @@ public class Section : BaseEntity<Guid>
 	public virtual ICollection<UnitInSection> UnitItems { get; set; } = new List<UnitInSection>();
 
 	/// <summary>
-	/// صور القسم المرتبطة من جدول الصور (خلفيات، أغلفة، إلخ)
+    /// صور القسم المخصصة (خلفيات، أغلفة، إلخ)
 	/// </summary>
 	[Display(Name = "صور القسم")]
-	public virtual ICollection<PropertyImage> Images { get; set; } = new List<PropertyImage>();
+    public virtual ICollection<SectionImage> Images { get; set; } = new List<SectionImage>();
 }

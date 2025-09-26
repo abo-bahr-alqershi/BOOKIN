@@ -42,13 +42,13 @@ namespace YemenBooking.Infrastructure.Data.Configurations
 				.HasForeignKey(ui => ui.SectionId)
 				.OnDelete(DeleteBehavior.Cascade);
 
-			// Optional link to background image via PropertyImages
-			builder.HasOne<PropertyImage>()
+            // Optional link to background image via SectionImages (new dedicated table)
+            builder.HasOne<SectionImage>()
 				.WithMany()
 				.HasForeignKey(s => s.BackgroundImageId)
 				.OnDelete(DeleteBehavior.SetNull);
 
-			// Images collection mapped via PropertyImageConfiguration (SectionId FK)
+            // Images collection mapped via SectionImageConfiguration
 		}
 	}
 }

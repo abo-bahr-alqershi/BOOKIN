@@ -93,6 +93,9 @@ namespace YemenBooking.Api.Extensions
                 }
             }
             services.AddScoped<IPropertyImageRepository, PropertyImageRepository>();
+            services.AddScoped<ISectionImageRepository, SectionImageRepository>();
+            services.AddScoped<IPropertyInSectionImageRepository, PropertyInSectionImageRepository>();
+            services.AddScoped<IUnitInSectionImageRepository, UnitInSectionImageRepository>();
             services.AddScoped<IUnitRepository, UnitRepository>();
 
             // FIX: Explicitly register WebSocketConnectionManager because it does not end with "Service" but

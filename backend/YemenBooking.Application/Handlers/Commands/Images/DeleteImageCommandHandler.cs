@@ -17,35 +17,50 @@ namespace YemenBooking.Application.Handlers.Commands.Images
     public class DeleteImageCommandHandler : IRequestHandler<DeleteImageCommand, ResultDto<bool>>
     {
         private readonly IPropertyImageRepository _imageRepository;
+        private readonly ISectionImageRepository _sectionImageRepository;
+        private readonly IPropertyInSectionImageRepository _propertyInSectionImageRepository;
+        private readonly IUnitInSectionImageRepository _unitInSectionImageRepository;
         private readonly IFileStorageService _fileStorageService;
         private readonly IUnitOfWork _unitOfWork;
 
         public DeleteImageCommandHandler(
             IPropertyImageRepository imageRepository,
+            ISectionImageRepository sectionImageRepository,
+            IPropertyInSectionImageRepository propertyInSectionImageRepository,
+            IUnitInSectionImageRepository unitInSectionImageRepository,
             IFileStorageService fileStorageService,
             IUnitOfWork unitOfWork)
         {
             _imageRepository = imageRepository;
+            _sectionImageRepository = sectionImageRepository;
+            _propertyInSectionImageRepository = propertyInSectionImageRepository;
+            _unitInSectionImageRepository = unitInSectionImageRepository;
             _fileStorageService = fileStorageService;
             _unitOfWork = unitOfWork;
         }
 
         public async Task<ResultDto<bool>> Handle(DeleteImageCommand request, CancellationToken cancellationToken)
         {
-            // جلب الصورة من المستودع
-            var image = await _imageRepository.GetPropertyImageByIdAsync(request.ImageId, cancellationToken);
-            if (image == null)
+            // جلب الصورة من المستودعات
+            var s = await _sectionImageRepository.GetByIdAsync(request.ImageId, cancellationToken);
+            var pis = s == null ? await _propertyInSectionImageRepository.GetByIdAsync(request.ImageId, cancellationToken) : null;
+            var uis = (s == null && pis == null) ? await _unitInSectionImageRepository.GetByIdAsync(request.ImageId, cancellationToken) : null;
+            var image = (s == null && pis == null && uis == null) ? await _imageRepository.GetPropertyImageByIdAsync(request.ImageId, cancellationToken) : null;
+            if (s == null && pis == null && uis == null && image == null)
                 return ResultDto<bool>.Failure("الصورة غير موجودة");
 
             var success = false;
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                // حذف السجل
-                success = await _imageRepository.DeletePropertyImageAsync(request.ImageId, cancellationToken);
-                // حذف الملف من التخزين إذا كان حذف دائم
-                if (success && request.Permanent && !string.IsNullOrEmpty(image.Url))
+                if (s != null) success = await _sectionImageRepository.DeleteAsync(request.ImageId, cancellationToken);
+                else if (pis != null) success = await _propertyInSectionImageRepository.DeleteAsync(request.ImageId, cancellationToken);
+                else if (uis != null) success = await _unitInSectionImageRepository.DeleteAsync(request.ImageId, cancellationToken);
+                else success = await _imageRepository.DeletePropertyImageAsync(request.ImageId, cancellationToken);
+
+                var fileUrl = s?.Url ?? pis?.Url ?? uis?.Url ?? image?.Url;
+                if (success && request.Permanent && !string.IsNullOrEmpty(fileUrl))
                 {
-                    await _fileStorageService.DeleteFileAsync(image.Url, cancellationToken);
+                    await _fileStorageService.DeleteFileAsync(fileUrl!, cancellationToken);
                 }
             }, cancellationToken);
 

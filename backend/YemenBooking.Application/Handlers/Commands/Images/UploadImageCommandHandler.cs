@@ -27,6 +27,9 @@ namespace YemenBooking.Application.Handlers.Commands.Images
         private readonly IAuditService _auditService;
         private readonly ILogger<UploadImageCommandHandler> _logger;
         private readonly IPropertyImageRepository _imageRepository;
+        private readonly ISectionImageRepository _sectionImageRepository;
+        private readonly IPropertyInSectionImageRepository _propertyInSectionImageRepository;
+        private readonly IUnitInSectionImageRepository _unitInSectionImageRepository;
         private readonly IUnitRepository _unitRepository;
         private readonly IMediaMetadataService _mediaMetadataService;
         // حذف خدمة توليد المصغرات من الخادم والاعتماد على العميل
@@ -38,6 +41,9 @@ namespace YemenBooking.Application.Handlers.Commands.Images
             IAuditService auditService,
             ILogger<UploadImageCommandHandler> logger,
             IPropertyImageRepository imageRepository,
+            ISectionImageRepository sectionImageRepository,
+            IPropertyInSectionImageRepository propertyInSectionImageRepository,
+            IUnitInSectionImageRepository unitInSectionImageRepository,
             IUnitRepository unitRepository,
             IMediaMetadataService mediaMetadataService)
         {
@@ -47,6 +53,9 @@ namespace YemenBooking.Application.Handlers.Commands.Images
             _auditService = auditService;
             _logger = logger;
             _imageRepository = imageRepository;
+            _sectionImageRepository = sectionImageRepository;
+            _propertyInSectionImageRepository = propertyInSectionImageRepository;
+            _unitInSectionImageRepository = unitInSectionImageRepository;
             _unitRepository = unitRepository;
             _mediaMetadataService = mediaMetadataService;
         }
@@ -308,15 +317,95 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     propertyAssociation = unit?.PropertyId;
                 }
 
-                // Persist image entity to database
-                var imageEntity = new PropertyImage
+                // Persist image entity to database based on context
+                if (request.SectionId.HasValue)
+                {
+                    var entity = new SectionImage
+                    {
+                        Id = imageDto.Id,
+                        SectionId = request.SectionId!.Value,
+                        Name = fileName,
+                        Url = uploadResult.FileUrl,
+                        SizeBytes = uploadResult.FileSizeBytes,
+                        Type = request.File.ContentType,
+                        Category = request.Category,
+                        Caption = request.Alt ?? string.Empty,
+                        AltText = request.Alt ?? string.Empty,
+                        Tags = JsonSerializer.Serialize(request.Tags ?? new List<string>()),
+                        Sizes = thumbnailsBase,
+                        IsMainImage = request.IsPrimary ?? false,
+                        DisplayOrder = request.Order ?? 0,
+                        Status = ImageStatus.Approved,
+                        UploadedAt = imageDto.UploadedAt,
+                        CreatedBy = _currentUserService.UserId,
+                        UpdatedAt = imageDto.UploadedAt,
+                        MediaType = isVideo ? "video" : "image",
+                        DurationSeconds = videoDurationSeconds,
+                        VideoThumbnailUrl = videoThumbUrl
+                    };
+                    await _sectionImageRepository.CreateAsync(entity, cancellationToken);
+                }
+                else if (request.PropertyInSectionId.HasValue)
+                {
+                    var entity = new PropertyInSectionImage
+                    {
+                        Id = imageDto.Id,
+                        PropertyInSectionId = request.PropertyInSectionId!.Value,
+                        Name = fileName,
+                        Url = uploadResult.FileUrl,
+                        SizeBytes = uploadResult.FileSizeBytes,
+                        Type = request.File.ContentType,
+                        Category = request.Category,
+                        Caption = request.Alt ?? string.Empty,
+                        AltText = request.Alt ?? string.Empty,
+                        Tags = JsonSerializer.Serialize(request.Tags ?? new List<string>()),
+                        Sizes = thumbnailsBase,
+                        IsMainImage = request.IsPrimary ?? false,
+                        DisplayOrder = request.Order ?? 0,
+                        Status = ImageStatus.Approved,
+                        UploadedAt = imageDto.UploadedAt,
+                        CreatedBy = _currentUserService.UserId,
+                        UpdatedAt = imageDto.UploadedAt,
+                        MediaType = isVideo ? "video" : "image",
+                        DurationSeconds = videoDurationSeconds,
+                        VideoThumbnailUrl = videoThumbUrl
+                    };
+                    await _propertyInSectionImageRepository.CreateAsync(entity, cancellationToken);
+                }
+                else if (request.UnitInSectionId.HasValue)
+                {
+                    var entity = new UnitInSectionImage
+                    {
+                        Id = imageDto.Id,
+                        UnitInSectionId = request.UnitInSectionId!.Value,
+                        Name = fileName,
+                        Url = uploadResult.FileUrl,
+                        SizeBytes = uploadResult.FileSizeBytes,
+                        Type = request.File.ContentType,
+                        Category = request.Category,
+                        Caption = request.Alt ?? string.Empty,
+                        AltText = request.Alt ?? string.Empty,
+                        Tags = JsonSerializer.Serialize(request.Tags ?? new List<string>()),
+                        Sizes = thumbnailsBase,
+                        IsMainImage = request.IsPrimary ?? false,
+                        DisplayOrder = request.Order ?? 0,
+                        Status = ImageStatus.Approved,
+                        UploadedAt = imageDto.UploadedAt,
+                        CreatedBy = _currentUserService.UserId,
+                        UpdatedAt = imageDto.UploadedAt,
+                        MediaType = isVideo ? "video" : "image",
+                        DurationSeconds = videoDurationSeconds,
+                        VideoThumbnailUrl = videoThumbUrl
+                    };
+                    await _unitInSectionImageRepository.CreateAsync(entity, cancellationToken);
+                }
+                else
+                {
+                    var imageEntity = new PropertyImage
                 {
                     Id = imageDto.Id,
                     PropertyId = propertyAssociation,
                     UnitId = request.UnitId,
-                    SectionId = request.SectionId,
-                    PropertyInSectionId = request.PropertyInSectionId,
-                    UnitInSectionId = request.UnitInSectionId,
                     CityName = string.IsNullOrWhiteSpace(request.CityName) ? null : request.CityName,
                     TempKey = string.IsNullOrWhiteSpace(request.TempKey) ? null : request.TempKey,
                     Name = fileName,
@@ -327,7 +416,6 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     Caption = request.Alt ?? string.Empty,
                     AltText = request.Alt ?? string.Empty,
                     Tags = JsonSerializer.Serialize(request.Tags ?? new List<string>()),
-                    // بالنسبة للفيديو نخزن رابط المصغّر كأساس للأحجام إن توفّر
                     Sizes = thumbnailsBase,
                     IsMainImage = request.IsPrimary ?? false,
                     DisplayOrder = request.Order ?? 0,
@@ -340,6 +428,7 @@ namespace YemenBooking.Application.Handlers.Commands.Images
                     VideoThumbnailUrl = videoThumbUrl
                 };
                 await _imageRepository.CreatePropertyImageAsync(imageEntity, cancellationToken);
+                }
                 
                 return ResultDto<ImageDto>.Succeeded(imageDto, "تم رفع الصورة بنجاح");
             }
