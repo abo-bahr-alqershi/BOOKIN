@@ -1821,6 +1821,30 @@ void _initAdminSections() {
       () => PropertyInSectionImagesRemoteDataSourceImpl(apiClient: sl()));
   sl.registerLazySingleton<UnitInSectionImagesRemoteDataSource>(
       () => UnitInSectionImagesRemoteDataSourceImpl(apiClient: sl()));
+
+  // Section Images Repository + UseCases + Bloc
+  sl.registerLazySingleton<SectionImagesRepository>(() => SectionImagesRepositoryImpl(
+        remoteDataSource: sl(),
+        networkInfo: sl(),
+      ));
+  sl.registerLazySingleton(() => UploadSectionImageUseCase(sl()));
+  sl.registerLazySingleton(() => UploadMultipleSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => GetSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateSectionImageUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteSectionImageUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteMultipleSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => ReorderSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => SetPrimarySectionImageUseCase(sl()));
+  sl.registerFactory(() => SectionImagesBloc(
+        uploadImage: sl(),
+        uploadMultipleImages: sl(),
+        getImages: sl(),
+        updateImage: sl(),
+        deleteImage: sl(),
+        deleteMultipleImages: sl(),
+        reorderImages: sl(),
+        setPrimaryImage: sl(),
+      ));
 }
 
 void _initCore() {
