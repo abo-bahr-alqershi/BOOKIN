@@ -1,4 +1,4 @@
-THIS SHOULD BE A LINTER ERRORusing Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using YemenBooking.Core.Entities;
 using YemenBooking.Infrastructure.Data.Configurations;
 using YemenBooking.Core.Seeds;
