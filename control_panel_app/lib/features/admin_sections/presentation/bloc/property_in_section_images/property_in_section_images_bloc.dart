@@ -56,7 +56,7 @@ class PropertyInSectionImagesBloc extends Bloc<PropertyInSectionImagesEvent, Pro
 
   Future<void> _onUpload(UploadPropertyInSectionImageEvent e, Emitter<PropertyInSectionImagesState> emit) async {
     emit(PropertyInSectionImageUploading(current: _current, fileName: e.filePath.split('/').last));
-    final res = await uploadImage(UploadPropertyInSectionImageParams(propertyInSectionId: e.propertyInSectionId, filePath: e.filePath, category: e.category, alt: e.alt, isPrimary: e.isPrimary, order: e.order, tags: e.tags, onSendProgress: (sent,total){ if(total>0) add(_ProgressEvent(e.propertyInSectionId, sent/total)); }));
+    final res = await uploadImage(UploadPropertyInSectionImageParams(propertyInSectionId: e.propertyInSectionId, filePath: e.filePath, category: e.category, alt: e.alt, isPrimary: e.isPrimary, order: e.order, tags: e.tags, tempKey: e.tempKey, onSendProgress: (sent,total){ if(total>0) add(_ProgressEvent(e.propertyInSectionId, sent/total)); }));
     res.fold((f)=>emit(PropertyInSectionImagesError(_msg(f))), (img){ _current.add(img); emit(PropertyInSectionImageUploaded(uploaded: img, all: List.from(_current))); });
   }
 

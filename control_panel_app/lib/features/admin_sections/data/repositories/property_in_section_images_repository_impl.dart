@@ -24,6 +24,7 @@ class PropertyInSectionImagesRepositoryImpl implements PropertyInSectionImagesRe
     int? order,
     List<String>? tags,
     ProgressCallback? onSendProgress,
+    String? tempKey,
   }) async {
     if (await networkInfo.isConnected) {
       try {
@@ -35,6 +36,7 @@ class PropertyInSectionImagesRepositoryImpl implements PropertyInSectionImagesRe
           isPrimary: isPrimary,
           order: order,
           tags: tags,
+          tempKey: tempKey,
           onSendProgress: onSendProgress,
         );
         return Right(result);
