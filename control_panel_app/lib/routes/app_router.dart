@@ -176,6 +176,8 @@ import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/sections_
     as sec_list_bloc;
 import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/section_form/section_form_bloc.dart'
     as sec_form_bloc;
+import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/section_form/section_form_event.dart'
+    as sec_form_event;
 import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/section_items/section_items_bloc.dart'
     as sec_items_bloc;
 import 'package:bookn_cp_app/core/enums/section_target.dart' as sec_enums;
@@ -645,7 +647,7 @@ class AppRouter {
           builder: (context, state) {
             return BlocProvider<sec_form_bloc.SectionFormBloc>(
               create: (_) => di.sl<sec_form_bloc.SectionFormBloc>()
-                ..add(const sec_form_bloc.InitializeSectionFormEvent()),
+                ..add(const sec_form_event.InitializeSectionFormEvent()),
               child: const sec_pages.CreateSectionPage(),
             );
           },
@@ -658,7 +660,8 @@ class AppRouter {
             final sectionId = state.pathParameters['sectionId']!;
             return BlocProvider<sec_form_bloc.SectionFormBloc>(
               create: (_) => di.sl<sec_form_bloc.SectionFormBloc>()
-                ..add(sec_form_bloc.InitializeSectionFormEvent(sectionId: sectionId)),
+                ..add(sec_form_event.InitializeSectionFormEvent(
+                    sectionId: sectionId)),
               child: sec_pages.EditSectionPage(sectionId: sectionId),
             );
           },
@@ -669,7 +672,8 @@ class AppRouter {
           path: '/admin/sections/:sectionId/items',
           builder: (context, state) {
             final sectionId = state.pathParameters['sectionId']!;
-            final target = state.extra as sec_enums.SectionTarget? ?? sec_enums.SectionTarget.properties;
+            final target = state.extra as sec_enums.SectionTarget? ??
+                sec_enums.SectionTarget.properties;
             return BlocProvider<sec_items_bloc.SectionItemsBloc>(
               create: (_) => di.sl<sec_items_bloc.SectionItemsBloc>(),
               child: sec_pages.SectionItemsManagementPage(
