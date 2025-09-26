@@ -64,6 +64,9 @@ import 'features/admin_sections/domain/usecases/unit_in_section_images/usecases.
 import 'features/admin_sections/presentation/bloc/unit_in_section_images/unit_in_section_images_bloc.dart';
 import 'features/admin_sections/presentation/bloc/unit_in_section_images/unit_in_section_images_event.dart';
 import 'features/admin_sections/presentation/bloc/unit_in_section_images/unit_in_section_images_state.dart';
+import 'features/admin_sections/presentation/bloc/sections_list/sections_list_bloc.dart';
+import 'features/admin_sections/presentation/bloc/section_form/section_form_bloc.dart';
+import 'features/admin_sections/presentation/bloc/section_items/section_items_bloc.dart';
 
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
@@ -1927,6 +1930,23 @@ void _initAdminSections() {
         deleteMultipleImages: sl(),
         reorderImages: sl(),
         setPrimaryImage: sl(),
+      ));
+
+  // Admin Sections BLoCs (list, form, items management)
+  sl.registerFactory(() => SectionsListBloc(
+        getAllSections: sl(),
+        deleteSection: sl(),
+        toggleStatus: sl(),
+      ));
+  sl.registerFactory(() => SectionFormBloc(
+        createSection: sl(),
+        updateSection: sl(),
+      ));
+  sl.registerFactory(() => SectionItemsBloc(
+        getItems: sl(),
+        addItems: sl(),
+        removeItems: sl(),
+        reorderItems: sl(),
       ));
 }
 
