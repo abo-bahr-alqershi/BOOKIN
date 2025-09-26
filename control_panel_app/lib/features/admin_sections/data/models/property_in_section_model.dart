@@ -1,4 +1,6 @@
 import '../../domain/entities/property_in_section.dart' as domain;
+import '../../../admin_properties/data/models/property_image_model.dart';
+import '../../../admin_properties/domain/entities/property_image.dart' as img_domain;
 
 class PropertyInSectionModel {
   final String id;
@@ -17,7 +19,7 @@ class PropertyInSectionModel {
   final String currency;
   final String? mainImageUrl;
   final String? mainImageId;
-  final List<String> additionalImages;
+  final List<img_domain.PropertyImage> additionalImages;
   final String? shortDescription;
   final int displayOrder;
   final bool isFeatured;
@@ -79,21 +81,13 @@ class PropertyInSectionModel {
   }
 
   factory PropertyInSectionModel.fromJson(Map<String, dynamic> json) {
-    List<String> _images = [];
+    List<img_domain.PropertyImage> _images = [];
     final additional = json['additionalImages'];
-    if (additional is String && additional.trim().isNotEmpty) {
-      // Expect JSON array in string
-      try {
-        _images = List<String>.from((additional as String)
-            .replaceAll('\n', '')
-            .replaceAll('\r', '')
-            .trim()
-            .replaceAll('"', '"'));
-      } catch (_) {
-        _images = const [];
-      }
-    } else if (additional is List) {
-      _images = additional.whereType<String>().toList();
+    if (additional is List) {
+      _images = additional
+          .whereType<Map<String, dynamic>>()
+          .map((m) => PropertyImageModel.fromJson(m))
+          .toList();
     }
     return PropertyInSectionModel(
       id: json['id']?.toString() ?? '',
@@ -160,7 +154,7 @@ class PropertyInSectionModel {
         'basePrice': basePrice,
         'currency': currency,
         'mainImageUrl': mainImageUrl,
-        'additionalImages': additionalImages,
+        'additionalImages': additionalImages.map((e) => (e is PropertyImageModel) ? e.toJson() : PropertyImageModel.fromJson({'id': e.id, 'url': e.url, 'filename': e.filename, 'size': e.size, 'mimeType': e.mimeType, 'width': e.width, 'height': e.height, 'uploadedAt': e.uploadedAt.toIso8601String(), 'uploadedBy': e.uploadedBy, 'order': e.order, 'isPrimary': e.isPrimary, 'category': e.category.name, 'tags': e.tags, 'processingStatus': e.processingStatus.name, 'thumbnails': (e.thumbnails)}).toJson()).toList(),
         'mainImageId': mainImageId,
         'shortDescription': shortDescription,
         'displayOrder': displayOrder,

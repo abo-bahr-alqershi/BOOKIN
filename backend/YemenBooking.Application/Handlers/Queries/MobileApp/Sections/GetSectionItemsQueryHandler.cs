@@ -50,26 +50,38 @@ namespace YemenBooking.Application.Handlers.Queries.MobileApp.Sections
                     .Take(request.PageSize)
                     .ToList();
 
-                // Map to existing property search dto for client compatibility
-                var resultItems = new List<PropertySearchItemDto>();
+                var resultObjects = new List<object>();
                 foreach (var p in pagedItems)
                 {
-                    // Ensure images are aligned with property images repo if missing
-                    var mainImage = p.MainImageUrl;
-                    List<string> additional = string.IsNullOrWhiteSpace(p.AdditionalImages)
-                        ? new List<string>()
-                        : System.Text.Json.JsonSerializer.Deserialize<List<string>>(p.AdditionalImages) ?? new List<string>();
-                    if (string.IsNullOrWhiteSpace(mainImage) || additional.Count == 0)
+                    var imgs = (await _images.GetImagesByPropertyAsync(p.PropertyId, cancellationToken))
+                        .OrderBy(i => i.DisplayOrder)
+                        .ToList();
+                    var mainImage = string.IsNullOrWhiteSpace(p.MainImageUrl)
+                        ? (imgs.FirstOrDefault(i => i.IsMainImage)?.Url ?? imgs.FirstOrDefault()?.Url)
+                        : p.MainImageUrl;
+                    var mainImageId = p.MainImageId ?? imgs.FirstOrDefault(i => i.IsMainImage)?.Id;
+                    var additional = imgs.Select(i => new PropertyImageDto
                     {
-                        var imgs = await _images.GetImagesByPropertyAsync(p.PropertyId, cancellationToken);
-                        var main = imgs.FirstOrDefault(i => i.IsMainImage)?.Url ?? imgs.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.Url;
-                        if (string.IsNullOrWhiteSpace(mainImage) && !string.IsNullOrWhiteSpace(main))
-                            mainImage = main;
-                        if (additional.Count == 0)
-                            additional = imgs.OrderBy(i => i.DisplayOrder).Select(i => i.Url).ToList();
-                    }
+                        Id = i.Id,
+                        PropertyId = i.PropertyId,
+                        UnitId = i.UnitId,
+                        Name = i.Name,
+                        Url = i.Url,
+                        SizeBytes = i.SizeBytes,
+                        Type = i.Type,
+                        Category = i.Category,
+                        Caption = i.Caption,
+                        AltText = i.AltText,
+                        Tags = i.Tags,
+                        Sizes = i.Sizes,
+                        IsMain = i.IsMainImage,
+                        DisplayOrder = i.DisplayOrder,
+                        UploadedAt = i.UploadedAt,
+                        Status = i.Status,
+                        AssociationType = i.UnitId.HasValue ? "Unit" : "Property"
+                    }).ToList();
 
-                    resultItems.Add(new PropertySearchItemDto
+                    resultObjects.Add(new
                     {
                         Id = p.PropertyId,
                         Name = p.PropertyName,
@@ -82,10 +94,12 @@ namespace YemenBooking.Application.Handlers.Queries.MobileApp.Sections
                         MinPrice = p.BasePrice,
                         Currency = p.Currency,
                         MainImageUrl = mainImage,
-                        ImageUrls = additional,
+                        MainImageId = mainImageId,
+                        ImageUrls = additional.Select(a => a.Url).ToList(),
+                        AdditionalImages = additional,
                         Amenities = new List<string>(),
                         PropertyType = p.PropertyType,
-                        DistanceKm = null,
+                        DistanceKm = (decimal?)null,
                         IsAvailable = true,
                         AvailableUnitsCount = 0,
                         MaxCapacity = 0,
@@ -93,7 +107,6 @@ namespace YemenBooking.Application.Handlers.Queries.MobileApp.Sections
                         LastUpdated = DateTime.UtcNow
                     });
                 }
-                var resultObjects = resultItems.Cast<object>().ToList();
                 return PaginatedResult<object>.Create(resultObjects, request.PageNumber, request.PageSize, total);
             }
             else
@@ -112,19 +125,33 @@ namespace YemenBooking.Application.Handlers.Queries.MobileApp.Sections
                 var resultItems = new List<object>();
                 foreach (var u in pagedItems)
                 {
-                    var mainImage = u.MainImageUrl;
-                    List<string> additional = string.IsNullOrWhiteSpace(u.AdditionalImages)
-                        ? new List<string>()
-                        : System.Text.Json.JsonSerializer.Deserialize<List<string>>(u.AdditionalImages) ?? new List<string>();
-                    if (string.IsNullOrWhiteSpace(mainImage) || additional.Count == 0)
+                    var imgs = (await _images.GetImagesByUnitAsync(u.UnitId, cancellationToken))
+                        .OrderBy(i => i.DisplayOrder)
+                        .ToList();
+                    var mainImage = string.IsNullOrWhiteSpace(u.MainImageUrl)
+                        ? (imgs.FirstOrDefault(i => i.IsMainImage)?.Url ?? imgs.FirstOrDefault()?.Url)
+                        : u.MainImageUrl;
+                    var mainImageId = u.MainImageId ?? imgs.FirstOrDefault(i => i.IsMainImage)?.Id;
+                    var additional = imgs.Select(i => new PropertyImageDto
                     {
-                        var imgs = await _images.GetImagesByUnitAsync(u.UnitId, cancellationToken);
-                        var main = imgs.FirstOrDefault(i => i.IsMainImage)?.Url ?? imgs.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.Url;
-                        if (string.IsNullOrWhiteSpace(mainImage) && !string.IsNullOrWhiteSpace(main))
-                            mainImage = main;
-                        if (additional.Count == 0)
-                            additional = imgs.OrderBy(i => i.DisplayOrder).Select(i => i.Url).ToList();
-                    }
+                        Id = i.Id,
+                        PropertyId = i.PropertyId,
+                        UnitId = i.UnitId,
+                        Name = i.Name,
+                        Url = i.Url,
+                        SizeBytes = i.SizeBytes,
+                        Type = i.Type,
+                        Category = i.Category,
+                        Caption = i.Caption,
+                        AltText = i.AltText,
+                        Tags = i.Tags,
+                        Sizes = i.Sizes,
+                        IsMain = i.IsMainImage,
+                        DisplayOrder = i.DisplayOrder,
+                        UploadedAt = i.UploadedAt,
+                        Status = i.Status,
+                        AssociationType = i.UnitId.HasValue ? "Unit" : "Property"
+                    }).ToList();
 
                     resultItems.Add(new
                     {
@@ -135,7 +162,9 @@ namespace YemenBooking.Application.Handlers.Queries.MobileApp.Sections
                         IsAvailable = u.IsAvailable,
                         MaxCapacity = u.MaxCapacity,
                         MainImageUrl = mainImage,
-                        ImageUrls = additional,
+                        MainImageId = mainImageId,
+                        ImageUrls = additional.Select(a => a.Url).ToList(),
+                        AdditionalImages = additional,
                         Badge = u.Badge,
                         BadgeColor = u.BadgeColor,
                         DiscountPercentage = u.DiscountPercentage,
