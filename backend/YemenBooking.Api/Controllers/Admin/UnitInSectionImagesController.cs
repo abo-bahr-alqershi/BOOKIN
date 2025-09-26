@@ -62,7 +62,7 @@ namespace YemenBooking.Api.Controllers.Admin
         }
 
         [HttpPut("unit-items/{unitInSectionId}/images/{imageId}")]
-        public async Task<IActionResult> Update(Guid unitInSectionId, Guid imageId, [FromBody] UpdateImageCommand command)
+        public async Task<IActionResult> Update(Guid unitInSectionId, Guid imageId, [FromBody] YemenBooking.Application.Commands.CP.UnitInSectionImages.UpdateUnitInSectionImageCommand command)
         {
             command.ImageId = imageId;
             var result = await _mediator.Send(command);
@@ -73,7 +73,7 @@ namespace YemenBooking.Api.Controllers.Admin
         [HttpDelete("unit-items/{unitInSectionId}/images/{imageId}")]
         public async Task<IActionResult> Delete(Guid unitInSectionId, Guid imageId, [FromQuery] bool permanent = false)
         {
-            var result = await _mediator.Send(new DeleteImageCommand { ImageId = imageId, Permanent = permanent });
+            var result = await _mediator.Send(new YemenBooking.Application.Commands.CP.UnitInSectionImages.DeleteUnitInSectionImageCommand { ImageId = imageId, Permanent = permanent });
             if (!result.Success) return BadRequest(result.Message);
             return NoContent();
         }
