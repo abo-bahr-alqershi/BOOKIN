@@ -2652,8 +2652,7 @@ public class Property : BaseEntity<Guid>
     /// عناصر الأقسام المرتبطة بالكيان
     /// Section items associated with the property
     /// </summary>
-    [Display(Name = "عناصر الأقسام المرتبطة بالكيان")]
-    public virtual ICollection<SectionItem> SectionItems { get; set; } = new List<SectionItem>();
+    // Legacy SectionItems removed
 
 } namespace YemenBooking.Core.Entities;
 
@@ -3669,8 +3668,7 @@ public class Section : BaseEntity<Guid>
 	/// <summary>
 	/// عناصر الربط مع الكيانات أو الوحدات
 	/// </summary>
-	[Display(Name = "عناصر القسم")]
-	public virtual ICollection<SectionItem> Items { get; set; } = new List<SectionItem>();
+    // Legacy SectionItem Items removed
 }namespace YemenBooking.Core.Entities;
 
 using System;
@@ -3680,9 +3678,7 @@ using System.ComponentModel.DataAnnotations;
 /// عنصر داخل القسم يربط القسم بكيان أو وحدة
 /// Section join entity linking a section to a property or unit
 /// </summary>
-[Display(Name = "عنصر القسم")]
-public class SectionItem : BaseEntity<Guid>
-{
+// Legacy SectionItem removed
 	/// <summary>
 	/// معرف القسم
 	/// </summary>
@@ -4153,8 +4149,7 @@ public class Unit : BaseEntity<Guid>
     /// عناصر الأقسام المرتبطة بالوحدة
     /// Section items associated with the unit
     /// </summary>
-    [Display(Name = "عناصر الأقسام المرتبطة بالوحدة")]
-    public virtual ICollection<SectionItem> SectionItems { get; set; } = new List<SectionItem>();
+    // Legacy SectionItems removed
 
 } namespace YemenBooking.Core.Entities;
 

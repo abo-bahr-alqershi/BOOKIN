@@ -31,11 +31,6 @@ namespace YemenBooking.Infrastructure.Data.Configurations
 			builder.Property(s => s.MinRating).HasColumnType("decimal(5,2)");
 			builder.Property(s => s.Metadata).HasColumnType("NVARCHAR(MAX)");
 
-			builder.HasMany(s => s.Items)
-				.WithOne(i => i.Section)
-				.HasForeignKey(i => i.SectionId)
-				.OnDelete(DeleteBehavior.Cascade);
-
 			builder.HasMany(s => s.PropertyItems)
 				.WithOne(pi => pi.Section)
 				.HasForeignKey(pi => pi.SectionId)

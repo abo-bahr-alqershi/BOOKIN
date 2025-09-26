@@ -212,12 +212,7 @@ public class Property : BaseEntity<Guid>
     [Display(Name = "البلاغات المرتبطة بالكيان")]
     public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
 
-    /// <summary>
-    /// عناصر الأقسام المرتبطة بالكيان
-    /// Section items associated with the property
-    /// </summary>
-    [Display(Name = "عناصر الأقسام المرتبطة بالكيان")]
-    public virtual ICollection<SectionItem> SectionItems { get; set; } = new List<SectionItem>();
+    // Legacy SectionItems removed in favor of rich entities PropertyInSection and UnitInSection
 
     /// <summary>
     /// سجلات الغنية لعقار في الأقسام

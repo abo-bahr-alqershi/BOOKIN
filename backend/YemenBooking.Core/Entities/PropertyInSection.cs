@@ -54,6 +54,13 @@ public class PropertyInSection : BaseEntity<Guid>
     [Display(Name = "الصورة الرئيسية")]
     public string? MainImageUrl { get; set; }
 
+	/// <summary>
+	/// صور إضافية (JSON)
+	/// Additional images for the property card within the section as JSON array of strings
+	/// </summary>
+	[Display(Name = "صور إضافية (JSON)")]
+	public string? AdditionalImages { get; set; }
+
     [Display(Name = "الوصف المختصر")]
     public string? ShortDescription { get; set; }
 

@@ -92,11 +92,7 @@ public class YemenBookingDbContext : DbContext
     /// </summary>
     public DbSet<Section> Sections { get; set; }
 
-    /// <summary>
-    /// جدول عناصر الأقسام
-    /// Section items table
-    /// </summary>
-    public DbSet<SectionItem> SectionItems { get; set; }
+    // Legacy SectionItems table removed in favor of rich entities PropertyInSections and UnitInSections
     
     /// <summary>
     /// جدول عقارات الأقسام (سجل غني)
@@ -354,7 +350,7 @@ public class YemenBookingDbContext : DbContext
         modelBuilder.ApplyConfiguration(new StaffConfiguration());
         modelBuilder.ApplyConfiguration(new AdminActionConfiguration());
         modelBuilder.ApplyConfiguration(new SectionConfiguration());
-        modelBuilder.ApplyConfiguration(new SectionItemConfiguration());
+        // SectionItem configuration removed
         modelBuilder.ApplyConfiguration(new PropertyInSectionConfiguration());
         modelBuilder.ApplyConfiguration(new UnitInSectionConfiguration());
 

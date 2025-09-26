@@ -17,7 +17,7 @@ namespace YemenBooking.Application.Handlers.Queries.Sections
 
 		public async Task<PaginatedResult<SectionDto>> Handle(GetSectionsQuery request, CancellationToken cancellationToken)
 		{
-			var (items, total) = await _repository.GetPagedAsync(request.PageNumber, request.PageSize, request.Target, request.Type, cancellationToken);
+            var (items, total) = await _repository.GetPagedAsync(request.PageNumber, request.PageSize, request.Target, request.Type, cancellationToken);
 			var dtoItems = items.Select(s => new SectionDto
 			{
 				Id = s.Id,
