@@ -16,5 +16,6 @@ public interface ISectionImageRepository : IRepository<SectionImage>
     Task<IEnumerable<SectionImage>> GetBySectionIdAsync(Guid sectionId, CancellationToken cancellationToken = default);
     Task<bool> UpdateDisplayOrdersAsync(IEnumerable<(Guid imageId, int displayOrder)> assignments, CancellationToken cancellationToken = default);
     Task<bool> UpdateMainImageStatusAsync(Guid imageId, bool isMain, CancellationToken cancellationToken = default);
+    Task<IEnumerable<SectionImage>> GetByTempKeyAsync(string tempKey, CancellationToken cancellationToken = default);
 }
 

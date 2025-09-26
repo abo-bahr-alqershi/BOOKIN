@@ -14,10 +14,10 @@ public class UnitInSectionImage : BaseEntity<Guid>
     public string? TempKey { get; set; }
 
     [Display(Name = "معرف وحدة في قسم")]
-    public Guid UnitInSectionId { get; set; }
+    public Guid? UnitInSectionId { get; set; }
 
     [Display(Name = "وحدة في قسم")]
-    public virtual UnitInSection UnitInSection { get; set; }
+    public virtual UnitInSection? UnitInSection { get; set; }
 
     // Common fields
     [Display(Name = "اسم الصورة")]

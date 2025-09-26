@@ -13,6 +13,7 @@ class UploadSectionImageParams {
   final int? order;
   final List<String>? tags;
   final ProgressCallback? onSendProgress;
+  final String? tempKey;
   UploadSectionImageParams({
     required this.sectionId,
     required this.filePath,
@@ -22,6 +23,7 @@ class UploadSectionImageParams {
     this.order,
     this.tags,
     this.onSendProgress,
+    this.tempKey,
   });
 }
 
@@ -38,6 +40,7 @@ class UploadSectionImageUseCase {
         order: p.order,
         tags: p.tags,
         onSendProgress: p.onSendProgress,
+        tempKey: p.tempKey,
       );
 }
 

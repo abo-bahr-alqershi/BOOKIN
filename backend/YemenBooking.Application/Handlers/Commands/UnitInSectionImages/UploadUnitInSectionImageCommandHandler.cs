@@ -39,7 +39,7 @@ namespace YemenBooking.Application.Handlers.Commands.UnitInSectionImages
         public async Task<ResultDto<ImageDto>> Handle(UploadUnitInSectionImageCommand request, CancellationToken cancellationToken)
         {
             var folderPath = string.IsNullOrWhiteSpace(request.TempKey)
-                ? $"unit-items/{request.UnitInSectionId}"
+                ? (request.UnitInSectionId.HasValue ? $"unit-items/{request.UnitInSectionId}" : "temp")
                 : $"temp/{request.TempKey}";
             var stream = new MemoryStream(request.File.FileContent);
             var fileName = request.Name + request.Extension;
@@ -50,7 +50,7 @@ namespace YemenBooking.Application.Handlers.Commands.UnitInSectionImages
             await _auditService.LogBusinessOperationAsync(
                 operationType: "UploadUnitInSectionImage",
                 operationDescription: "رفع صورة عنصر وحدة في القسم",
-                entityId: request.UnitInSectionId,
+                entityId: request.UnitInSectionId ?? Guid.Empty,
                 entityType: nameof(UnitInSectionImage),
                 performedBy: _currentUserService.UserId,
                 metadata: new System.Collections.Generic.Dictionary<string, object>

@@ -13,6 +13,7 @@ abstract class SectionImagesRepository {
     int? order,
     List<String>? tags,
     ProgressCallback? onSendProgress,
+    String? tempKey,
   });
 
   Future<Either<Failure, List<SectionImage>>> getImages(String sectionId, {int? page, int? limit});
