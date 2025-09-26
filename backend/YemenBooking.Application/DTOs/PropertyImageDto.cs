@@ -28,6 +28,27 @@ namespace YemenBooking.Application.DTOs
         public Guid? UnitId { get; set; }
 
         /// <summary>
+        /// معرف القسم (إن وجد)
+        /// Section identifier (if assigned)
+        /// </summary>
+        public Guid? SectionId { get; set; }
+
+        /// <summary>
+        /// ربط بسجل عقار في قسم (إن وجد)
+        /// </summary>
+        public Guid? PropertyInSectionId { get; set; }
+
+        /// <summary>
+        /// ربط بسجل وحدة في قسم (إن وجد)
+        /// </summary>
+        public Guid? UnitInSectionId { get; set; }
+
+        /// <summary>
+        /// اسم المدينة (إن وجد)
+        /// </summary>
+        public string? CityName { get; set; }
+
+        /// <summary>
         /// اسم الملف
         /// File name
         /// </summary>
