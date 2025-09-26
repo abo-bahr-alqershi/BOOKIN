@@ -187,12 +187,6 @@ public class Section : BaseEntity<Guid>
 	public string? Metadata { get; set; }
 
 	/// <summary>
-	/// عناصر الربط مع الكيانات أو الوحدات
-	/// </summary>
-	[Display(Name = "عناصر القسم")]
-	public virtual ICollection<SectionItem> Items { get; set; } = new List<SectionItem>();
-
-	/// <summary>
 	/// قائمة العقارات في القسم (كيان غني)
 	/// </summary>
 	[Display(Name = "قائمة العقارات في القسم")]

@@ -164,12 +164,7 @@ public class Unit : BaseEntity<Guid>
     [Display(Name = "طريقة حساب السعر")]
     public PricingMethod PricingMethod { get; set; }
 
-    /// <summary>
-    /// عناصر الأقسام المرتبطة بالوحدة
-    /// Section items associated with the unit
-    /// </summary>
-    [Display(Name = "عناصر الأقسام المرتبطة بالوحدة")]
-    public virtual ICollection<SectionItem> SectionItems { get; set; } = new List<SectionItem>();
+    // Legacy SectionItems removed in favor of rich entities UnitInSection
 
     /// <summary>
     /// سجلات الغنية للوحدة في الأقسام

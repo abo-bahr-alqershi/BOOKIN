@@ -21,14 +21,14 @@ namespace YemenBooking.Api.Controllers.Client
 			return Ok(result);
 		}
 
-		[HttpGet("{sectionId}/items")]
-		[AllowAnonymous]
-		public async Task<IActionResult> GetSectionItems(Guid sectionId, [FromQuery] GetSectionItemsQuery query)
-		{
-			query.SectionId = sectionId;
-			var result = await _mediator.Send(query);
-			return Ok(result);
-		}
+        [HttpGet("{sectionId}/items")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetSectionItems(Guid sectionId, [FromQuery] GetSectionItemsQuery query)
+        {
+            query.SectionId = sectionId;
+            var result = await _mediator.Send(query);
+            return Ok(result);
+        }
 		
 	}
 }

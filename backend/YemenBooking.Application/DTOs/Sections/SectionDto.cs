@@ -36,16 +36,8 @@ namespace YemenBooking.Application.DTOs.Sections
     public string? RequiresPermission { get; set; }
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
-    public string? Metadata { get; set; }
-		public IEnumerable<SectionItemDto> Items { get; set; } = new List<SectionItemDto>();
+        public string? Metadata { get; set; }
 	}
 
-	public class SectionItemDto
-	{
-		public Guid Id { get; set; }
-		public Guid SectionId { get; set; }
-		public Guid? PropertyId { get; set; }
-		public Guid? UnitId { get; set; }
-		public int SortOrder { get; set; }
-	}
+    // Legacy SectionItemDto removed
 }

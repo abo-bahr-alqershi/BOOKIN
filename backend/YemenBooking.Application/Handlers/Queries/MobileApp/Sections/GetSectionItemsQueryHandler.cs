@@ -33,108 +33,78 @@ namespace YemenBooking.Application.Handlers.Queries.MobileApp.Sections
 			if (section == null)
 				return PaginatedResult<object>.Empty(request.PageNumber, request.PageSize);
 
-			// احصل على كل العناصر (يمكن لاحقاً تحسينها إلى استعلام موجه بالترقيم في المستودع)
-			var allItems = (await _sections.GetItemsAsync(request.SectionId, cancellationToken)).ToList();
-			var total = allItems.Count;
-			if (total == 0)
-				return PaginatedResult<object>.Empty(request.PageNumber, request.PageSize);
+            // Use rich tables instead of legacy SectionItems
+            if (section.Target == SectionTarget.Properties)
+            {
+                var allItems = (await _sections.GetPropertyItemsAsync(request.SectionId, cancellationToken)).ToList();
+                var total = allItems.Count;
+                if (total == 0)
+                    return PaginatedResult<object>.Empty(request.PageNumber, request.PageSize);
 
-			var pagedItems = allItems
-				.OrderBy(i => i.SortOrder)
-				.Skip((request.PageNumber - 1) * request.PageSize)
-				.Take(request.PageSize)
-				.ToList();
+                var pagedItems = allItems
+                    .OrderBy(i => i.DisplayOrder)
+                    .Skip((request.PageNumber - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .ToList();
 
-			List<object> resultItems;
-			if (section.Target == SectionTarget.Properties)
-			{
-				var propertyIds = pagedItems.Where(i => i.PropertyId.HasValue).Select(i => i.PropertyId!.Value).Distinct().ToList();
-				if (propertyIds.Count == 0)
-					return PaginatedResult<object>.Empty(request.PageNumber, request.PageSize);
+                // Map to existing property search dto for client compatibility
+                var resultItems = pagedItems.Select(p => new PropertySearchItemDto
+                {
+                    Id = p.PropertyId,
+                    Name = p.PropertyName,
+                    Description = p.ShortDescription ?? string.Empty,
+                    City = p.City,
+                    Address = p.Address,
+                    StarRating = p.StarRating,
+                    AverageRating = p.AverageRating,
+                    ReviewCount = p.ReviewsCount,
+                    MinPrice = p.BasePrice,
+                    Currency = p.Currency,
+                    MainImageUrl = p.MainImageUrl,
+                    ImageUrls = string.IsNullOrWhiteSpace(p.AdditionalImages) ? new List<string>() : System.Text.Json.JsonSerializer.Deserialize<List<string>>(p.AdditionalImages) ?? new List<string>(),
+                    Amenities = new List<string>(),
+                    PropertyType = p.PropertyType,
+                    DistanceKm = null,
+                    IsAvailable = true,
+                    AvailableUnitsCount = 0,
+                    MaxCapacity = 0,
+                    IsFeatured = p.IsFeatured,
+                    LastUpdated = DateTime.UtcNow
+                }).Cast<object>().ToList();
 
-				// استعلام واحد مع تضمين الصور والمرافق لأن العدد في الصفحة محدود
-				var propsQuery = _properties
-					.GetQueryable()
-					.AsNoTracking()
-					.Where(p => propertyIds.Contains(p.Id))
-					.Include(p => p.Images)
-					.Include(p => p.Amenities)
-						.ThenInclude(pa => pa.PropertyTypeAmenity)
-						.ThenInclude(pta => pta.Amenity);
+                return PaginatedResult<object>.Create(resultItems, request.PageNumber, request.PageSize, total);
+            }
+            else
+            {
+                var allItems = (await _sections.GetUnitItemsAsync(request.SectionId, cancellationToken)).ToList();
+                var total = allItems.Count;
+                if (total == 0)
+                    return PaginatedResult<object>.Empty(request.PageNumber, request.PageSize);
 
-				var props = await propsQuery.Select(p => new PropertySearchItemDto
-				{
-					Id = p.Id,
-					Name = p.Name,
-					Description = p.Description,
-					City = p.City,
-					Address = p.Address,
-					StarRating = p.StarRating,
-					AverageRating = p.AverageRating,
-					ReviewCount = 0, // يمكن تحسينه لاحقاً بجلب عدد المراجعات
-					MinPrice = p.BasePricePerNight,
-					Currency = p.Currency,
-					// الصورة الرئيسية: أول صورة معنونة كـ IsMain أو IsMainImage أو حسب SortOrder
-					MainImageUrl = p.Images
-						.OrderBy(img => img.SortOrder)
-						.Where(img => img.IsMain || img.IsMainImage)
-						.Select(img => img.Url)
-						.FirstOrDefault() ?? p.Images
-							.OrderBy(img => img.SortOrder)
-							.Select(img => img.Url)
-							.FirstOrDefault(),
-					// كل الروابط (يمكن تقييد العدد إذا لزم)
-					ImageUrls = p.Images
-						.OrderBy(img => img.SortOrder)
-						.Select(img => img.Url)
-						.ToList(),
-					// أسماء المرافق المتاحة
-					Amenities = p.Amenities
-						.Where(a => a.IsAvailable && a.PropertyTypeAmenity.Amenity != null)
-						.Select(a => a.PropertyTypeAmenity.Amenity.Name)
-						.Distinct()
-						.ToList(),
-					PropertyType = p.TypeId.ToString(), // لاحقاً يمكن جلب الاسم عبر Include للنوع
-					DistanceKm = null,
-					IsAvailable = true, // تبسيط - يمكن حساب التوفر الحقيقي لاحقاً
-					AvailableUnitsCount = 0,
-					MaxCapacity = 0,
-					IsFeatured = p.IsFeatured,
-					LastUpdated = p.UpdatedAt
-				}).ToListAsync(cancellationToken);
+                var pagedItems = allItems
+                    .OrderBy(i => i.DisplayOrder)
+                    .Skip((request.PageNumber - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .ToList();
 
-				// المحافظة على ترتيب العناصر حسب SortOrder
-				var dict = props.ToDictionary(p => p.Id, p => (object)p);
-				resultItems = pagedItems
-					.Where(i => i.PropertyId.HasValue && dict.ContainsKey(i.PropertyId!.Value))
-					.Select(i => dict[i.PropertyId!.Value])
-					.ToList();
-			}
-			else // Units
-			{
-				var unitIds = pagedItems.Where(i => i.UnitId.HasValue).Select(i => i.UnitId!.Value).Distinct().ToList();
-				if (unitIds.Count == 0)
-					return PaginatedResult<object>.Empty(request.PageNumber, request.PageSize);
+                var resultItems = pagedItems.Select(u => new
+                {
+                    Id = u.UnitId,
+                    Name = u.UnitName,
+                    PropertyId = u.PropertyId,
+                    UnitTypeId = u.UnitTypeId,
+                    IsAvailable = u.IsAvailable,
+                    MaxCapacity = u.MaxCapacity,
+                    MainImageUrl = u.MainImageUrl,
+                    ImageUrls = string.IsNullOrWhiteSpace(u.AdditionalImages) ? new List<string>() : System.Text.Json.JsonSerializer.Deserialize<List<string>>(u.AdditionalImages) ?? new List<string>(),
+                    Badge = u.Badge,
+                    BadgeColor = u.BadgeColor,
+                    DiscountPercentage = u.DiscountPercentage,
+                    DiscountedPrice = u.DiscountedPrice
+                }).Cast<object>().ToList();
 
-				var unitsQuery = _units.GetQueryable().AsNoTracking().Where(u => unitIds.Contains(u.Id));
-				var units = await unitsQuery.Select(u => new
-				{
-					u.Id,
-					u.Name,
-					u.PropertyId,
-					u.UnitTypeId,
-					u.IsAvailable,
-					u.MaxCapacity
-				}).ToListAsync(cancellationToken);
-
-				var dict = units.ToDictionary(u => u.Id, u => (object)u);
-				resultItems = pagedItems
-					.Where(i => i.UnitId.HasValue && dict.ContainsKey(i.UnitId!.Value))
-					.Select(i => dict[i.UnitId!.Value])
-					.ToList();
-			}
-
-			return PaginatedResult<object>.Create(resultItems, request.PageNumber, request.PageSize, total);
+                return PaginatedResult<object>.Create(resultItems, request.PageNumber, request.PageSize, total);
+            }
 		}
 	}
 }

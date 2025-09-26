@@ -46,13 +46,13 @@ namespace YemenBooking.Api.Controllers.Admin
 			return Ok(result);
 		}
 
-		[HttpPost("{sectionId}/assign-items")]
-		public async Task<IActionResult> AssignItems(Guid sectionId, [FromBody] AssignSectionItemsCommand command)
-		{
-			command.SectionId = sectionId;
-			var result = await _mediator.Send(command);
-			return Ok(result);
-		}
+        [HttpPost("{sectionId}/assign-items")]
+        public async Task<IActionResult> AssignItems(Guid sectionId, [FromBody] AssignSectionItemsCommand command)
+        {
+            command.SectionId = sectionId;
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
 
 		[HttpPost("{sectionId}/add-items")]
 		public async Task<IActionResult> AddItems(Guid sectionId, [FromBody] AddItemsToSectionCommand command)
@@ -62,13 +62,13 @@ namespace YemenBooking.Api.Controllers.Admin
 			return Ok(result);
 		}
 
-		[HttpPost("{sectionId}/remove-items")]
-		public async Task<IActionResult> RemoveItems(Guid sectionId, [FromBody] RemoveItemsFromSectionCommand command)
-		{
-			command.SectionId = sectionId;
-			var result = await _mediator.Send(command);
-			return Ok(result);
-		}
+        [HttpPost("{sectionId}/remove-items")]
+        public async Task<IActionResult> RemoveItems(Guid sectionId, [FromBody] RemoveItemsFromSectionCommand command)
+        {
+            command.SectionId = sectionId;
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
 
 		[HttpPost("{sectionId}/reorder-items")]
 		public async Task<IActionResult> ReorderItems(Guid sectionId, [FromBody] UpdateItemOrderCommand command)
