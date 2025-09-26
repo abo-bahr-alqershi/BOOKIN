@@ -1,5 +1,6 @@
 using YemenBooking.Application.DTOs;
 using YemenBooking.Application.DTOs.Sections;
+using YemenBooking.Core.Entities;
 
 namespace YemenBooking.Application.Interfaces.Services
 {

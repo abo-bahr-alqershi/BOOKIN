@@ -1,6 +1,7 @@
 using MediatR;
 using YemenBooking.Application.Commands.CP.Sections;
 using YemenBooking.Application.DTOs;
+using YemenBooking.Core.Entities;
 using YemenBooking.Core.Interfaces.Repositories;
 
 namespace YemenBooking.Application.Handlers.Commands.Sections
