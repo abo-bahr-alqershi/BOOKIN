@@ -12,6 +12,20 @@ import 'package:bookn_cp_app/features/admin_properties/domain/usecases/property_
 import 'package:bookn_cp_app/features/admin_properties/domain/usecases/property_images/upload_multiple_images_usecase.dart';
 import 'package:bookn_cp_app/features/admin_properties/domain/usecases/property_images/upload_property_image_usecase.dart'; // إضافة هذا الاستيراد
 import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/property_images/property_images_bloc.dart';
+import 'package:bookn_cp_app/features/admin_sections/data/datasources/sections_local_datasource.dart';
+import 'package:bookn_cp_app/features/admin_sections/data/datasources/sections_remote_datasource.dart';
+import 'package:bookn_cp_app/features/admin_sections/data/repositories/sections_repository_impl.dart';
+import 'package:bookn_cp_app/features/admin_sections/domain/repositories/sections_repository.dart';
+import 'package:bookn_cp_app/features/admin_sections/domain/usecases/section_items/add_items_to_section_usecase.dart';
+import 'package:bookn_cp_app/features/admin_sections/domain/usecases/section_items/get_section_items_usecase.dart';
+import 'package:bookn_cp_app/features/admin_sections/domain/usecases/section_items/remove_items_from_section_usecase.dart';
+import 'package:bookn_cp_app/features/admin_sections/domain/usecases/section_items/update_item_order_usecase.dart';
+import 'package:bookn_cp_app/features/admin_sections/domain/usecases/sections/create_section_usecase.dart';
+import 'package:bookn_cp_app/features/admin_sections/domain/usecases/sections/delete_section_usecase.dart';
+import 'package:bookn_cp_app/features/admin_sections/domain/usecases/sections/get_all_sections_usecase.dart';
+import 'package:bookn_cp_app/features/admin_sections/domain/usecases/sections/get_section_by_id_usecase.dart';
+import 'package:bookn_cp_app/features/admin_sections/domain/usecases/sections/toggle_section_status_usecase.dart';
+import 'package:bookn_cp_app/features/admin_sections/domain/usecases/sections/update_section_usecase.dart';
 
 import 'package:bookn_cp_app/features/admin_units/data/datasources/unit_images_remote_datasource.dart';
 import 'package:bookn_cp_app/features/admin_units/data/repositories/unit_images_repository_impl.dart';
@@ -25,6 +39,8 @@ import 'package:bookn_cp_app/features/admin_units/domain/usecases/unit_images/up
 import 'package:bookn_cp_app/features/admin_units/domain/usecases/unit_images/upload_multiple_unit_images_usecase.dart';
 import 'package:bookn_cp_app/features/admin_units/domain/usecases/unit_images/upload_unit_image_usecase.dart'; // إضافة هذا الاستيراد
 import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_bloc.dart';
+import 'package:bookn_cp_app/services/section_content_service.dart';
+import 'package:bookn_cp_app/services/section_service.dart';
 
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
@@ -1786,6 +1802,7 @@ void _initAdminSections() {
         updateSection: sl(),
         deleteSection: sl(),
         toggleStatus: sl(),
+        getById: sl(),
       ));
   sl.registerLazySingleton(() => SectionContentService(
         getItems: sl(),

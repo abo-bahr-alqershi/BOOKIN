@@ -113,7 +113,8 @@ class UnitInSectionModel {
       basePrice: _toDouble(json['basePrice']),
       currency: json['currency']?.toString() ?? '',
       pricingMethod: json['pricingMethod']?.toString() ?? 'PerNight',
-      adultsCapacity: json['adultsCapacity'] is int ? json['adultsCapacity'] : null,
+      adultsCapacity:
+          json['adultsCapacity'] is int ? json['adultsCapacity'] : null,
       childrenCapacity:
           json['childrenCapacity'] is int ? json['childrenCapacity'] : null,
       mainImageUrl: json['mainImageUrl']?.toString(),
@@ -141,8 +142,9 @@ class UnitInSectionModel {
       discountPercentage: json['discountPercentage'] == null
           ? null
           : _toDouble(json['discountPercentage']),
-      discountedPrice:
-          json['discountedPrice'] == null ? null : _toDouble(json['discountedPrice']),
+      discountedPrice: json['discountedPrice'] == null
+          ? null
+          : _toDouble(json['discountedPrice']),
       promotionalText: json['promotionalText']?.toString(),
       badge: json['badge']?.toString(),
       badgeColor: json['badgeColor']?.toString(),
@@ -168,7 +170,27 @@ class UnitInSectionModel {
         'adultsCapacity': adultsCapacity,
         'childrenCapacity': childrenCapacity,
         'mainImageUrl': mainImageUrl,
-        'additionalImages': additionalImages.map((e) => (e is PropertyImageModel) ? e.toJson() : PropertyImageModel.fromJson({'id': e.id, 'url': e.url, 'filename': e.filename, 'size': e.size, 'mimeType': e.mimeType, 'width': e.width, 'height': e.height, 'uploadedAt': e.uploadedAt.toIso8601String(), 'uploadedBy': e.uploadedBy, 'order': e.order, 'isPrimary': e.isPrimary, 'category': e.category.name, 'tags': e.tags, 'processingStatus': e.processingStatus.name, 'thumbnails': (e.thumbnails)}).toJson()).toList(),
+        'additionalImages': additionalImages
+            .map((e) => (e is SectionImageModel)
+                ? e.toJson()
+                : SectionImageModel.fromJson({
+                    'id': e.id,
+                    'url': e.url,
+                    'filename': e.filename,
+                    'size': e.size,
+                    'mimeType': e.mimeType,
+                    'width': e.width,
+                    'height': e.height,
+                    'uploadedAt': e.uploadedAt.toIso8601String(),
+                    'uploadedBy': e.uploadedBy,
+                    'order': e.order,
+                    'isPrimary': e.isPrimary,
+                    'category': e.category.name,
+                    'tags': e.tags,
+                    'processingStatus': e.processingStatus.name,
+                    'thumbnails': (e.thumbnails)
+                  }).toJson())
+            .toList(),
         'mainImageId': mainImageId,
         'primaryFieldValues': primaryFieldValues,
         'propertyAddress': propertyAddress,
@@ -228,4 +250,3 @@ class UnitInSectionModel {
         nextAvailableDates: nextAvailableDates,
       );
 }
-

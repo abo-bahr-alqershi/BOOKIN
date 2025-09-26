@@ -1,5 +1,30 @@
 import 'package:equatable/equatable.dart';
 
+enum ImageCategory {
+  exterior,
+  interior,
+  amenity,
+  floorPlan,
+  documents,
+  avatar,
+  cover,
+  gallery,
+  video,
+}
+
+enum ProcessingStatus {
+  uploading,
+  processing,
+  ready,
+  failed,
+  deleted,
+}
+
+enum MediaType {
+  image,
+  video,
+}
+
 class SectionImage extends Equatable {
   final String id;
   final String url;
@@ -19,10 +44,10 @@ class SectionImage extends Equatable {
   final String? propertyInSectionId;
   final String? unitInSectionId;
   final List<String> tags;
-  final String category; // keep as string to avoid cross-feature enums
-  final String processingStatus;
-  final SectionImageThumbnails thumbnails;
-  final String mediaType; // image or video
+  final ImageCategory category; // keep as string to avoid cross-feature enums
+  final ProcessingStatus processingStatus;
+  final ImageThumbnails thumbnails;
+  final MediaType mediaType; // image or video
   final String? videoThumbnail;
   final int? duration;
 
@@ -45,10 +70,10 @@ class SectionImage extends Equatable {
     this.propertyInSectionId,
     this.unitInSectionId,
     this.tags = const [],
-    this.category = 'gallery',
-    this.processingStatus = 'ready',
+    this.category = ImageCategory.gallery,
+    this.processingStatus = ProcessingStatus.ready,
     required this.thumbnails,
-    this.mediaType = 'image',
+    this.mediaType = MediaType.image,
     this.videoThumbnail,
     this.duration,
   });
@@ -82,13 +107,13 @@ class SectionImage extends Equatable {
       ];
 }
 
-class SectionImageThumbnails extends Equatable {
+class ImageThumbnails extends Equatable {
   final String small;
   final String medium;
   final String large;
   final String hd;
 
-  const SectionImageThumbnails({
+  const ImageThumbnails({
     required this.small,
     required this.medium,
     required this.large,
@@ -96,6 +121,5 @@ class SectionImageThumbnails extends Equatable {
   });
 
   @override
-  List<Object?> get props => [small, medium, large, hd];
+  List<Object> get props => [small, medium, large, hd];
 }
-

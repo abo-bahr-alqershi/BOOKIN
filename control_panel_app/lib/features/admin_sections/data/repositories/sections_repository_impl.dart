@@ -1,3 +1,4 @@
+import 'package:bookn_cp_app/core/enums/section_display_style.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/error_handler.dart';
 import '../../../../core/error/failures.dart';
@@ -70,7 +71,8 @@ class SectionsRepositoryImpl implements SectionsRepository {
   }
 
   @override
-  Future<Either<Failure, domain.Section>> getSectionById(String sectionId) async {
+  Future<Either<Failure, domain.Section>> getSectionById(
+      String sectionId) async {
     try {
       final model = await remoteDataSource.getSectionById(sectionId);
       return Right(model.toEntity());
@@ -79,7 +81,7 @@ class SectionsRepositoryImpl implements SectionsRepository {
       final cached = localDataSource.getCachedSections();
       final hit = cached.firstWhere(
         (m) => m.id == sectionId,
-        orElse: () => SectionModel(
+        orElse: () => const SectionModel(
           id: '',
           type: SectionTypeEnum.featured,
           contentType: SectionContentType.properties,
@@ -99,7 +101,8 @@ class SectionsRepositoryImpl implements SectionsRepository {
   }
 
   @override
-  Future<Either<Failure, domain.Section>> createSection(domain.Section section) async {
+  Future<Either<Failure, domain.Section>> createSection(
+      domain.Section section) async {
     try {
       final model = await remoteDataSource.createSection(SectionModel(
         id: section.id,
@@ -141,41 +144,44 @@ class SectionsRepositoryImpl implements SectionsRepository {
   }
 
   @override
-  Future<Either<Failure, domain.Section>> updateSection(String sectionId, domain.Section section) async {
+  Future<Either<Failure, domain.Section>> updateSection(
+      String sectionId, domain.Section section) async {
     try {
-      final model = await remoteDataSource.updateSection(sectionId, SectionModel(
-        id: section.id,
-        type: section.type,
-        contentType: section.contentType,
-        displayStyle: section.displayStyle,
-        name: section.name,
-        title: section.title,
-        subtitle: section.subtitle,
-        description: section.description,
-        shortDescription: section.shortDescription,
-        displayOrder: section.displayOrder,
-        target: section.target,
-        isActive: section.isActive,
-        columnsCount: section.columnsCount,
-        itemsToShow: section.itemsToShow,
-        icon: section.icon,
-        colorTheme: section.colorTheme,
-        backgroundImage: section.backgroundImage,
-        filterCriteria: section.filterCriteria,
-        sortCriteria: section.sortCriteria,
-        cityName: section.cityName,
-        propertyTypeId: section.propertyTypeId,
-        unitTypeId: section.unitTypeId,
-        minPrice: section.minPrice,
-        maxPrice: section.maxPrice,
-        minRating: section.minRating,
-        isVisibleToGuests: section.isVisibleToGuests,
-        isVisibleToRegistered: section.isVisibleToRegistered,
-        requiresPermission: section.requiresPermission,
-        startDate: section.startDate,
-        endDate: section.endDate,
-        metadata: section.metadata,
-      ).toJson());
+      final model = await remoteDataSource.updateSection(
+          sectionId,
+          SectionModel(
+            id: section.id,
+            type: section.type,
+            contentType: section.contentType,
+            displayStyle: section.displayStyle,
+            name: section.name,
+            title: section.title,
+            subtitle: section.subtitle,
+            description: section.description,
+            shortDescription: section.shortDescription,
+            displayOrder: section.displayOrder,
+            target: section.target,
+            isActive: section.isActive,
+            columnsCount: section.columnsCount,
+            itemsToShow: section.itemsToShow,
+            icon: section.icon,
+            colorTheme: section.colorTheme,
+            backgroundImage: section.backgroundImage,
+            filterCriteria: section.filterCriteria,
+            sortCriteria: section.sortCriteria,
+            cityName: section.cityName,
+            propertyTypeId: section.propertyTypeId,
+            unitTypeId: section.unitTypeId,
+            minPrice: section.minPrice,
+            maxPrice: section.maxPrice,
+            minRating: section.minRating,
+            isVisibleToGuests: section.isVisibleToGuests,
+            isVisibleToRegistered: section.isVisibleToRegistered,
+            requiresPermission: section.requiresPermission,
+            startDate: section.startDate,
+            endDate: section.endDate,
+            metadata: section.metadata,
+          ).toJson());
       return Right(model.toEntity());
     } catch (e) {
       return ErrorHandler.handle(e);
@@ -193,9 +199,11 @@ class SectionsRepositoryImpl implements SectionsRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> toggleSectionStatus(String sectionId, bool isActive) async {
+  Future<Either<Failure, bool>> toggleSectionStatus(
+      String sectionId, bool isActive) async {
     try {
-      final ok = await remoteDataSource.toggleSectionStatus(sectionId, isActive);
+      final ok =
+          await remoteDataSource.toggleSectionStatus(sectionId, isActive);
       return Right(ok);
     } catch (e) {
       return ErrorHandler.handle(e);
@@ -203,7 +211,8 @@ class SectionsRepositoryImpl implements SectionsRepository {
   }
 
   @override
-  Future<Either<Failure, void>> assignItems(String sectionId, AssignSectionItemsDto payload) async {
+  Future<Either<Failure, void>> assignItems(
+      String sectionId, AssignSectionItemsDto payload) async {
     try {
       await remoteDataSource.assignItems(sectionId, payload);
       return const Right(null);
@@ -213,7 +222,8 @@ class SectionsRepositoryImpl implements SectionsRepository {
   }
 
   @override
-  Future<Either<Failure, void>> addItems(String sectionId, AddItemsToSectionDto payload) async {
+  Future<Either<Failure, void>> addItems(
+      String sectionId, AddItemsToSectionDto payload) async {
     try {
       await remoteDataSource.addItems(sectionId, payload);
       return const Right(null);
@@ -223,7 +233,8 @@ class SectionsRepositoryImpl implements SectionsRepository {
   }
 
   @override
-  Future<Either<Failure, void>> removeItems(String sectionId, RemoveItemsFromSectionDto payload) async {
+  Future<Either<Failure, void>> removeItems(
+      String sectionId, RemoveItemsFromSectionDto payload) async {
     try {
       await remoteDataSource.removeItems(sectionId, payload);
       return const Right(null);
@@ -233,7 +244,8 @@ class SectionsRepositoryImpl implements SectionsRepository {
   }
 
   @override
-  Future<Either<Failure, void>> reorderItems(String sectionId, UpdateItemOrderDto payload) async {
+  Future<Either<Failure, void>> reorderItems(
+      String sectionId, UpdateItemOrderDto payload) async {
     try {
       await remoteDataSource.reorderItems(sectionId, payload);
       return const Right(null);
@@ -243,9 +255,12 @@ class SectionsRepositoryImpl implements SectionsRepository {
   }
 
   @override
-  Future<Either<Failure, PaginatedResult<domain.PropertyInSection>>> getPropertyItems(String sectionId, {int? pageNumber, int? pageSize}) async {
+  Future<Either<Failure, PaginatedResult<domain.PropertyInSection>>>
+      getPropertyItems(String sectionId,
+          {int? pageNumber, int? pageSize}) async {
     try {
-      final result = await remoteDataSource.getPropertyItems(sectionId, pageNumber: pageNumber, pageSize: pageSize);
+      final result = await remoteDataSource.getPropertyItems(sectionId,
+          pageNumber: pageNumber, pageSize: pageSize);
       return Right(
         PaginatedResult<domain.PropertyInSection>(
           items: result.items.map((e) => e.toEntity()).toList(),
@@ -261,9 +276,13 @@ class SectionsRepositoryImpl implements SectionsRepository {
   }
 
   @override
-  Future<Either<Failure, PaginatedResult<domain.UnitInSection>>> getUnitItems(String sectionId, {int? pageNumber, int? pageSize}) async {
+  Future<Either<Failure, PaginatedResult<domain.UnitInSection>>> getUnitItems(
+      String sectionId,
+      {int? pageNumber,
+      int? pageSize}) async {
     try {
-      final result = await remoteDataSource.getUnitItems(sectionId, pageNumber: pageNumber, pageSize: pageSize);
+      final result = await remoteDataSource.getUnitItems(sectionId,
+          pageNumber: pageNumber, pageSize: pageSize);
       return Right(
         PaginatedResult<domain.UnitInSection>(
           items: result.items.map((e) => e.toEntity()).toList(),
@@ -278,4 +297,3 @@ class SectionsRepositoryImpl implements SectionsRepository {
     }
   }
 }
-

@@ -81,10 +81,10 @@ class PropertyInSectionModel {
   }
 
   factory PropertyInSectionModel.fromJson(Map<String, dynamic> json) {
-    List<section_img.SectionImage> _images = [];
+    List<section_img.SectionImage> images = [];
     final additional = json['additionalImages'];
     if (additional is List) {
-      _images = additional
+      images = additional
           .whereType<Map<String, dynamic>>()
           .map((m) => SectionImageModel.fromJson(m))
           .toList();
@@ -110,7 +110,7 @@ class PropertyInSectionModel {
       currency: json['currency']?.toString() ?? '',
       mainImageUrl: json['mainImageUrl']?.toString(),
       mainImageId: json['mainImageId']?.toString(),
-      additionalImages: _images,
+      additionalImages: images,
       shortDescription: json['shortDescription']?.toString(),
       displayOrder: (json['displayOrder'] is int)
           ? json['displayOrder']
@@ -154,7 +154,27 @@ class PropertyInSectionModel {
         'basePrice': basePrice,
         'currency': currency,
         'mainImageUrl': mainImageUrl,
-        'additionalImages': additionalImages.map((e) => (e is PropertyImageModel) ? e.toJson() : PropertyImageModel.fromJson({'id': e.id, 'url': e.url, 'filename': e.filename, 'size': e.size, 'mimeType': e.mimeType, 'width': e.width, 'height': e.height, 'uploadedAt': e.uploadedAt.toIso8601String(), 'uploadedBy': e.uploadedBy, 'order': e.order, 'isPrimary': e.isPrimary, 'category': e.category.name, 'tags': e.tags, 'processingStatus': e.processingStatus.name, 'thumbnails': (e.thumbnails)}).toJson()).toList(),
+        'additionalImages': additionalImages
+            .map((e) => (e is SectionImageModel)
+                ? e.toJson()
+                : SectionImageModel.fromJson({
+                    'id': e.id,
+                    'url': e.url,
+                    'filename': e.filename,
+                    'size': e.size,
+                    'mimeType': e.mimeType,
+                    'width': e.width,
+                    'height': e.height,
+                    'uploadedAt': e.uploadedAt.toIso8601String(),
+                    'uploadedBy': e.uploadedBy,
+                    'order': e.order,
+                    'isPrimary': e.isPrimary,
+                    'category': e.category.name,
+                    'tags': e.tags,
+                    'processingStatus': e.processingStatus.name,
+                    'thumbnails': (e.thumbnails)
+                  }).toJson())
+            .toList(),
         'mainImageId': mainImageId,
         'shortDescription': shortDescription,
         'displayOrder': displayOrder,
@@ -205,4 +225,3 @@ class PropertyInSectionModel {
         metadata: metadata,
       );
 }
-
