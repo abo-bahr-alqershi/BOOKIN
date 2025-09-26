@@ -1,3 +1,5 @@
+import 'package:bookn_cp_app/core/widgets/error_widget.dart';
+import 'package:bookn_cp_app/features/admin_sections/domain/entities/section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,7 +8,8 @@ import 'dart:ui';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/loading_widget.dart';
-import '../../../../core/widgets/custom_error_widget.dart';
+import '../widgets/section_preview_widget.dart';
+import '../../domain/usecases/sections/get_section_by_id_usecase.dart';
 import '../../../../core/widgets/empty_widget.dart';
 import '../../../../core/enums/section_target.dart';
 import '../../domain/entities/property_in_section.dart';
@@ -37,6 +40,8 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
   late AnimationController _animationController;
   final ScrollController _scrollController = ScrollController();
   bool _isReordering = false;
+  Section? _section;
+  bool _showPreview = false;
 
   @override
   void initState() {
@@ -45,7 +50,63 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
+    _loadSection(); // إضافة هنا
     _loadItems();
+  }
+
+// تحديث _buildActionBar لإضافة زر المعاينة
+  Widget _buildActionBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          _buildActionChip(
+            icon: CupertinoIcons.eye_fill,
+            label: 'معاينة القسم',
+            onTap: () => setState(() => _showPreview = !_showPreview),
+            isPrimary: _showPreview,
+          ),
+          const SizedBox(width: 8),
+          _buildActionChip(
+            icon: _isReordering
+                ? CupertinoIcons.checkmark_circle
+                : CupertinoIcons.arrow_up_arrow_down,
+            label: _isReordering ? 'حفظ الترتيب' : 'إعادة الترتيب',
+            onTap: () {
+              setState(() {
+                _isReordering = !_isReordering;
+              });
+              if (!_isReordering) {
+                _saveOrder();
+              }
+            },
+            isPrimary: _isReordering,
+          ),
+          const SizedBox(width: 8),
+          _buildActionChip(
+            icon: CupertinoIcons.arrow_clockwise,
+            label: 'تحديث',
+            onTap: _loadItems,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _loadSection() async {
+    // استخدام GetSectionByIdUseCase
+    // يمكنك حقن الـ usecase أو الحصول عليه من GetIt
+    // هذا مثال:
+    try {
+      // final useCase = GetIt.instance<GetSectionByIdUseCase>();
+      // final result = await useCase(GetSectionByIdParams(widget.sectionId));
+      // result.fold(
+      //   (failure) => print('Error loading section'),
+      //   (section) => setState(() => _section = section),
+      // );
+    } catch (e) {
+      print('Error: $e');
+    }
   }
 
   void _loadItems() {
@@ -66,6 +127,7 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
     super.dispose();
   }
 
+// تحديث build method لإضافة معاينة القسم
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,6 +137,17 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
           children: [
             _buildHeader(),
             _buildActionBar(),
+            if (_showPreview && _section != null)
+              Container(
+                height: 300,
+                padding: const EdgeInsets.all(16),
+                child: SectionPreviewWidget(
+                  section: _section!,
+                  items: _getCurrentItems(), // استخراج العناصر من state
+                  isExpanded: false,
+                  onExpand: () => _showFullPreview(),
+                ),
+              ),
             Expanded(
               child: BlocBuilder<SectionItemsBloc, SectionItemsState>(
                 builder: (context, state) {
@@ -117,6 +190,70 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
         ),
       ),
       floatingActionButton: _buildFloatingActionButton(),
+    );
+  }
+
+// إضافة method للحصول على العناصر الحالية
+  List<dynamic> _getCurrentItems() {
+    final state = context.read<SectionItemsBloc>().state;
+    if (state is SectionItemsLoaded) {
+      return state.page.items;
+    }
+    return [];
+  }
+
+// إضافة method لعرض المعاينة الكاملة
+  void _showFullPreview() {
+    if (_section == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height * 0.8,
+          decoration: BoxDecoration(
+            color: AppTheme.darkCard,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'معاينة القسم الكاملة',
+                      style: AppTextStyles.heading2.copyWith(
+                        color: AppTheme.textWhite,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(
+                        CupertinoIcons.xmark_circle_fill,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: SectionPreviewWidget(
+                    section: _section!,
+                    items: _getCurrentItems(),
+                    isExpanded: true,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -191,37 +328,6 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          _buildActionChip(
-            icon: _isReordering
-                ? CupertinoIcons.checkmark_circle
-                : CupertinoIcons.arrow_up_arrow_down,
-            label: _isReordering ? 'حفظ الترتيب' : 'إعادة الترتيب',
-            onTap: () {
-              setState(() {
-                _isReordering = !_isReordering;
-              });
-              if (!_isReordering) {
-                _saveOrder();
-              }
-            },
-            isPrimary: _isReordering,
-          ),
-          const SizedBox(width: 8),
-          _buildActionChip(
-            icon: CupertinoIcons.arrow_clockwise,
-            label: 'تحديث',
-            onTap: _loadItems,
           ),
         ],
       ),

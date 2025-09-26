@@ -1,3 +1,4 @@
+import 'package:bookn_cp_app/features/admin_sections/domain/entities/section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +16,11 @@ import '../bloc/section_form/section_form_state.dart';
 import 'section_type_selector.dart';
 import 'section_content_type_toggle.dart';
 import 'section_display_style_picker.dart';
+import 'section_filter_criteria_editor.dart';
+import 'section_sort_criteria_editor.dart';
+import 'section_metadata_editor.dart';
+import 'section_schedule_picker.dart';
+import 'section_preview_widget.dart';
 
 class SectionFormWidget extends StatefulWidget {
   final bool isEditing;
@@ -34,6 +40,8 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   late TabController _tabController;
+  late AnimationController _tabAnimationController;
+  late List<Animation<double>> _tabAnimations;
 
   // Controllers
   final _nameController = TextEditingController();
@@ -44,6 +52,9 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
   final _displayOrderController = TextEditingController();
   final _columnsCountController = TextEditingController();
   final _itemsToShowController = TextEditingController();
+  final _iconController = TextEditingController();
+  final _colorThemeController = TextEditingController();
+  final _backgroundImageController = TextEditingController();
 
   // State
   SectionTypeEnum? _selectedType;
@@ -51,16 +62,50 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
   SectionDisplayStyle? _selectedDisplayStyle;
   SectionTarget? _selectedTarget;
   bool _isActive = true;
+  bool _isVisibleToGuests = true;
+  bool _isVisibleToRegistered = true;
+  String? _requiresPermission;
+  DateTime? _startDate;
+  DateTime? _endDate;
+  Map<String, dynamic> _filterCriteria = {};
+  Map<String, dynamic> _sortCriteria = {};
+  String _metadata = '';
+  bool _showPreview = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
+    _tabAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _setupTabAnimations();
+    _tabAnimationController.forward();
+  }
+
+  void _setupTabAnimations() {
+    _tabAnimations = List.generate(5, (index) {
+      return Tween<double>(
+        begin: 0.0,
+        end: 1.0,
+      ).animate(
+        CurvedAnimation(
+          parent: _tabAnimationController,
+          curve: Interval(
+            index * 0.1,
+            0.5 + index * 0.1,
+            curve: Curves.easeOutBack,
+          ),
+        ),
+      );
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _tabAnimationController.dispose();
     _nameController.dispose();
     _titleController.dispose();
     _subtitleController.dispose();
@@ -69,6 +114,9 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
     _displayOrderController.dispose();
     _columnsCountController.dispose();
     _itemsToShowController.dispose();
+    _iconController.dispose();
+    _colorThemeController.dispose();
+    _backgroundImageController.dispose();
     super.dispose();
   }
 
@@ -87,34 +135,63 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
           );
         }
 
-        return Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              _buildTabs(),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildBasicInfoTab(),
-                    _buildConfigurationTab(),
-                    _buildAppearanceTab(),
-                    _buildAdvancedTab(),
-                  ],
-                ),
+        return Stack(
+          children: [
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  _buildAnimatedTabs(),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      physics: const BouncingScrollPhysics(),
+                      children: [
+                        _buildBasicInfoTab(),
+                        _buildConfigurationTab(),
+                        _buildAppearanceTab(),
+                        _buildFiltersAndSortingTab(),
+                        _buildAdvancedTab(),
+                      ],
+                    ),
+                  ),
+                  _buildActionButtons(state),
+                ],
               ),
-              _buildActionButtons(state),
-            ],
-          ),
+            ),
+            // Preview Overlay
+            if (_showPreview) _buildPreviewOverlay(),
+          ],
         );
       },
     );
   }
 
-  Widget _buildTabs() {
+  Widget _buildAnimatedTabs() {
+    final tabs = [
+      'معلومات أساسية',
+      'الإعدادات',
+      'المظهر',
+      'الفلترة والترتيب',
+      'متقدم',
+    ];
+
+    final icons = [
+      CupertinoIcons.info_circle_fill,
+      CupertinoIcons.settings,
+      CupertinoIcons.paintbrush_fill,
+      CupertinoIcons.slider_horizontal_3,
+      CupertinoIcons.gear_alt_fill,
+    ];
+
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.darkCard.withValues(alpha: 0.3),
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withValues(alpha: 0.5),
+            AppTheme.darkCard.withValues(alpha: 0.3),
+          ],
+        ),
         border: Border(
           bottom: BorderSide(
             color: AppTheme.darkBorder.withValues(alpha: 0.2),
@@ -123,16 +200,35 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
       ),
       child: TabBar(
         controller: _tabController,
+        isScrollable: true,
         labelColor: AppTheme.primaryBlue,
         unselectedLabelColor: AppTheme.textMuted,
         indicatorColor: AppTheme.primaryBlue,
         indicatorWeight: 3,
-        tabs: const [
-          Tab(text: 'معلومات أساسية'),
-          Tab(text: 'الإعدادات'),
-          Tab(text: 'المظهر'),
-          Tab(text: 'متقدم'),
-        ],
+        indicatorSize: TabBarIndicatorSize.label,
+        tabs: List.generate(tabs.length, (index) {
+          return AnimatedBuilder(
+            animation: _tabAnimations[index],
+            builder: (context, child) {
+              return Transform.scale(
+                scale: 0.9 + (_tabAnimations[index].value * 0.1),
+                child: Opacity(
+                  opacity: _tabAnimations[index].value,
+                  child: Tab(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(icons[index], size: 16),
+                        const SizedBox(width: 8),
+                        Text(tabs[index]),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        }),
       ),
     );
   }
@@ -140,9 +236,13 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
   Widget _buildBasicInfoTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
+      physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildSectionHeader(
+              'المعلومات الأساسية', CupertinoIcons.info_circle_fill),
+          const SizedBox(height: 20),
           _buildInputField(
             controller: _nameController,
             label: 'اسم القسم (داخلي)',
@@ -217,9 +317,12 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
   Widget _buildConfigurationTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
+      physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildSectionHeader('إعدادات القسم', CupertinoIcons.settings),
+          const SizedBox(height: 20),
           SectionTypeSelector(
             selectedType: _selectedType,
             onTypeSelected: (type) {
@@ -310,9 +413,12 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
   Widget _buildAppearanceTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
+      physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildSectionHeader('إعدادات المظهر', CupertinoIcons.paintbrush_fill),
+          const SizedBox(height: 20),
           SectionDisplayStylePicker(
             selectedStyle: _selectedDisplayStyle,
             onStyleSelected: (style) {
@@ -348,6 +454,88 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
               }
             },
           ),
+          const SizedBox(height: 20),
+          _buildInputField(
+            controller: _iconController,
+            label: 'أيقونة القسم',
+            hint: 'اسم الأيقونة (اختياري)',
+            icon: Icons.insert_emoticon,
+            onChanged: (value) {
+              context.read<SectionFormBloc>().add(
+                    UpdateSectionAppearanceEvent(icon: value),
+                  );
+            },
+          ),
+          const SizedBox(height: 20),
+          _buildInputField(
+            controller: _colorThemeController,
+            label: 'لون القسم',
+            hint: 'كود اللون (اختياري)',
+            icon: Icons.palette,
+            onChanged: (value) {
+              context.read<SectionFormBloc>().add(
+                    UpdateSectionAppearanceEvent(colorTheme: value),
+                  );
+            },
+          ),
+          const SizedBox(height: 20),
+          _buildInputField(
+            controller: _backgroundImageController,
+            label: 'صورة الخلفية',
+            hint: 'رابط الصورة (اختياري)',
+            icon: Icons.image,
+            onChanged: (value) {
+              context.read<SectionFormBloc>().add(
+                    UpdateSectionAppearanceEvent(backgroundImage: value),
+                  );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFiltersAndSortingTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader(
+              'الفلترة والترتيب', CupertinoIcons.slider_horizontal_3),
+          const SizedBox(height: 20),
+          // استخدام SectionFilterCriteriaEditor
+          SectionFilterCriteriaEditor(
+            initialCriteria: _filterCriteria,
+            onCriteriaChanged: (criteria) {
+              setState(() => _filterCriteria = criteria);
+              context.read<SectionFormBloc>().add(
+                    UpdateSectionFiltersEvent(
+                      filterCriteriaJson: criteria.toString(),
+                      cityName: criteria['cityName'],
+                      propertyTypeId: criteria['propertyTypeId'],
+                      unitTypeId: criteria['unitTypeId'],
+                      minPrice: criteria['minPrice'],
+                      maxPrice: criteria['maxPrice'],
+                      minRating: criteria['minRating'],
+                    ),
+                  );
+            },
+          ),
+          const SizedBox(height: 30),
+          // استخدام SectionSortCriteriaEditor
+          SectionSortCriteriaEditor(
+            initialCriteria: _sortCriteria,
+            onCriteriaChanged: (criteria) {
+              setState(() => _sortCriteria = criteria);
+              context.read<SectionFormBloc>().add(
+                    UpdateSectionFiltersEvent(
+                      sortCriteriaJson: criteria.toString(),
+                    ),
+                  );
+            },
+          ),
         ],
       ),
     );
@@ -356,19 +544,220 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
   Widget _buildAdvancedTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader('إعدادات متقدمة', CupertinoIcons.gear_alt_fill),
+          const SizedBox(height: 20),
+          // استخدام SectionSchedulePicker
+          SectionSchedulePicker(
+            startDate: _startDate,
+            endDate: _endDate,
+            onScheduleChanged: (start, end) {
+              setState(() {
+                _startDate = start;
+                _endDate = end;
+              });
+              context.read<SectionFormBloc>().add(
+                    UpdateSectionVisibilityEvent(
+                      startDate: start,
+                      endDate: end,
+                    ),
+                  );
+            },
+          ),
+          const SizedBox(height: 30),
+          _buildVisibilitySettings(),
+          const SizedBox(height: 30),
+          // استخدام SectionMetadataEditor
+          SectionMetadataEditor(
+            initialMetadata: _metadata,
+            onMetadataChanged: (metadata) {
+              setState(() => _metadata = metadata);
+              context.read<SectionFormBloc>().add(
+                    UpdateSectionMetadataEvent(metadataJson: metadata),
+                  );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVisibilitySettings() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.darkCard.withValues(alpha: 0.5),
+            AppTheme.darkCard.withValues(alpha: 0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'إعدادات متقدمة',
-            style: AppTextStyles.heading3.copyWith(
+            'إعدادات الظهور',
+            style: AppTextStyles.bodyMedium.copyWith(
               color: AppTheme.textWhite,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 20),
-          // TODO: Add advanced settings like filters, sorting, visibility, etc.
+          const SizedBox(height: 16),
+          _buildVisibilitySwitch(
+            label: 'مرئي للزوار',
+            value: _isVisibleToGuests,
+            onChanged: (value) {
+              setState(() => _isVisibleToGuests = value);
+              context.read<SectionFormBloc>().add(
+                    UpdateSectionVisibilityEvent(isVisibleToGuests: value),
+                  );
+            },
+          ),
+          const SizedBox(height: 12),
+          _buildVisibilitySwitch(
+            label: 'مرئي للمسجلين',
+            value: _isVisibleToRegistered,
+            onChanged: (value) {
+              setState(() => _isVisibleToRegistered = value);
+              context.read<SectionFormBloc>().add(
+                    UpdateSectionVisibilityEvent(isVisibleToRegistered: value),
+                  );
+            },
+          ),
+          const SizedBox(height: 16),
+          _buildInputField(
+            controller: TextEditingController(text: _requiresPermission),
+            label: 'الصلاحية المطلوبة',
+            hint: 'اسم الصلاحية (اختياري)',
+            icon: Icons.lock_outline,
+            onChanged: (value) {
+              setState(() => _requiresPermission = value);
+              context.read<SectionFormBloc>().add(
+                    UpdateSectionVisibilityEvent(requiresPermission: value),
+                  );
+            },
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildVisibilitySwitch({
+    required String label,
+    required bool value,
+    required Function(bool) onChanged,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textWhite,
+          ),
+        ),
+        CupertinoSwitch(
+          value: value,
+          onChanged: onChanged,
+          activeTrackColor: AppTheme.primaryBlue,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPreviewOverlay() {
+    final section = _createSectionFromForm();
+
+    return GestureDetector(
+      onTap: () => setState(() => _showPreview = false),
+      child: Container(
+        color: AppTheme.darkBackground.withValues(alpha: 0.9),
+        child: Center(
+          child: GestureDetector(
+            onTap: () {}, // Prevent closing when tapping on preview
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.height * 0.8,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.darkCard,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'معاينة القسم',
+                        style: AppTextStyles.heading2.copyWith(
+                          color: AppTheme.textWhite,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => setState(() => _showPreview = false),
+                        icon: Icon(
+                          CupertinoIcons.xmark_circle_fill,
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: SectionPreviewWidget(
+                        section: section,
+                        isExpanded: true,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // باقي الدوال المساعدة
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            gradient: AppTheme.primaryGradient,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: AppTextStyles.heading3.copyWith(
+            color: AppTheme.textWhite,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 
@@ -590,71 +979,103 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
       ),
       child: Row(
         children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppTheme.darkSurface.withValues(alpha: 0.5),
-                      AppTheme.darkSurface.withValues(alpha: 0.3),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppTheme.darkBorder.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
+          // Preview Button
+          GestureDetector(
+            onTap: () => setState(() => _showPreview = true),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primaryPurple.withValues(alpha: 0.3),
+                    AppTheme.primaryViolet.withValues(alpha: 0.2),
+                  ],
                 ),
-                child: Center(
-                  child: Text(
-                    'إلغاء',
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.primaryPurple.withValues(alpha: 0.5),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.eye_fill,
+                    color: AppTheme.primaryPurple,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'معاينة',
                     style: AppTextStyles.buttonMedium.copyWith(
-                      color: AppTheme.textWhite,
+                      color: AppTheme.primaryPurple,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+                ],
+              ),
+            ),
+          ),
+          const Spacer(),
+          // Cancel Button
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.darkSurface.withValues(alpha: 0.5),
+                    AppTheme.darkSurface.withValues(alpha: 0.3),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                'إلغاء',
+                style: AppTextStyles.buttonMedium.copyWith(
+                  color: AppTheme.textWhite,
                 ),
               ),
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(
-            child: GestureDetector(
-              onTap: _submitForm,
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: state is SectionFormLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          widget.isEditing ? 'تحديث' : 'إضافة',
-                          style: AppTextStyles.buttonMedium.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
+          // Submit Button
+          GestureDetector(
+            onTap: _submitForm,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: AppTheme.primaryGradient,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
+              child: state is SectionFormLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      widget.isEditing ? 'تحديث' : 'إضافة',
+                      style: AppTextStyles.buttonMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -671,6 +1092,9 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
     _displayOrderController.text = state.displayOrder?.toString() ?? '0';
     _columnsCountController.text = state.columnsCount?.toString() ?? '2';
     _itemsToShowController.text = state.itemsToShow?.toString() ?? '10';
+    _iconController.text = state.icon ?? '';
+    _colorThemeController.text = state.colorTheme ?? '';
+    _backgroundImageController.text = state.backgroundImage ?? '';
 
     setState(() {
       _selectedType = state.type;
@@ -678,7 +1102,58 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
       _selectedDisplayStyle = state.displayStyle;
       _selectedTarget = state.target;
       _isActive = state.isActive ?? true;
+      _isVisibleToGuests = state.isVisibleToGuests ?? true;
+      _isVisibleToRegistered = state.isVisibleToRegistered ?? true;
+      _requiresPermission = state.requiresPermission;
+      _startDate = state.startDate;
+      _endDate = state.endDate;
+      _metadata = state.metadataJson ?? '';
     });
+  }
+
+  Section _createSectionFromForm() {
+    return Section(
+      id: widget.sectionId ?? '',
+      type: _selectedType ?? SectionTypeEnum.featured,
+      contentType: _selectedContentType ?? SectionContentType.properties,
+      displayStyle: _selectedDisplayStyle ?? SectionDisplayStyle.grid,
+      name: _nameController.text,
+      title: _titleController.text,
+      subtitle:
+          _subtitleController.text.isEmpty ? null : _subtitleController.text,
+      description: _descriptionController.text.isEmpty
+          ? null
+          : _descriptionController.text,
+      shortDescription: _shortDescriptionController.text.isEmpty
+          ? null
+          : _shortDescriptionController.text,
+      displayOrder: int.tryParse(_displayOrderController.text) ?? 0,
+      target: _selectedTarget ?? SectionTarget.properties,
+      isActive: _isActive,
+      columnsCount: int.tryParse(_columnsCountController.text) ?? 2,
+      itemsToShow: int.tryParse(_itemsToShowController.text) ?? 10,
+      icon: _iconController.text.isEmpty ? null : _iconController.text,
+      colorTheme: _colorThemeController.text.isEmpty
+          ? null
+          : _colorThemeController.text,
+      backgroundImage: _backgroundImageController.text.isEmpty
+          ? null
+          : _backgroundImageController.text,
+      filterCriteria: _filterCriteria.toString(),
+      sortCriteria: _sortCriteria.toString(),
+      cityName: _filterCriteria['cityName'],
+      propertyTypeId: _filterCriteria['propertyTypeId'],
+      unitTypeId: _filterCriteria['unitTypeId'],
+      minPrice: _filterCriteria['minPrice'],
+      maxPrice: _filterCriteria['maxPrice'],
+      minRating: _filterCriteria['minRating'],
+      isVisibleToGuests: _isVisibleToGuests,
+      isVisibleToRegistered: _isVisibleToRegistered,
+      requiresPermission: _requiresPermission,
+      startDate: _startDate,
+      endDate: _endDate,
+      metadata: _metadata.isEmpty ? null : _metadata,
+    );
   }
 
   void _submitForm() {

@@ -235,7 +235,7 @@ class _FuturisticSectionsTableState extends State<FuturisticSectionsTable> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            section.type.apiValue,
+                            section.type.name,
                             style: AppTextStyles.caption.copyWith(
                               color: AppTheme.primaryBlue,
                             ),
@@ -254,12 +254,12 @@ class _FuturisticSectionsTableState extends State<FuturisticSectionsTable> {
                   children: [
                     _buildCompactInfo(
                       icon: CupertinoIcons.square_stack_3d_up,
-                      value: section.contentType.apiValue,
+                      value: section.contentType.name,
                     ),
                     const SizedBox(width: 12),
                     _buildCompactInfo(
                       icon: CupertinoIcons.eye,
-                      value: section.displayStyle.apiValue,
+                      value: section.displayStyle.name,
                     ),
                   ],
                 ),
@@ -435,10 +435,10 @@ class _FuturisticSectionsTableState extends State<FuturisticSectionsTable> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              _buildCell(section.type.apiValue, 120),
-              _buildCell(section.contentType.apiValue, 120),
-              _buildCell(section.displayStyle.apiValue, 120),
-              _buildCell(section.target.apiValue, 100),
+              _buildCell(section.type.name, 120),
+              _buildCell(section.contentType.name, 120),
+              _buildCell(section.displayStyle.name, 120),
+              _buildCell(section.target.name, 100),
               _buildCell(section.displayOrder.toString(), 80),
               _buildCell(section.itemsToShow.toString(), 80),
               SizedBox(
@@ -553,7 +553,7 @@ class _FuturisticSectionsTableState extends State<FuturisticSectionsTable> {
           result = (a.title ?? a.name ?? '').compareTo(b.title ?? b.name ?? '');
           break;
         case 'type':
-          result = a.type.apiValue.compareTo(b.type.apiValue);
+          result = a.type.name.compareTo(b.type.name);
           break;
         case 'status':
           result = a.isActive.toString().compareTo(b.isActive.toString());

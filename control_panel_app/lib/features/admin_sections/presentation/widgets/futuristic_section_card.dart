@@ -1,3 +1,4 @@
+import 'package:bookn_cp_app/core/enums/section_type.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:ui';
@@ -255,13 +256,13 @@ class _FuturisticSectionCardState extends State<FuturisticSectionCard>
           _buildInfoRow(
             icon: CupertinoIcons.square_stack_3d_up_fill,
             label: 'المحتوى',
-            value: widget.section.contentType.apiValue,
+            value: widget.section.contentType.name,
           ),
           const SizedBox(height: 8),
           _buildInfoRow(
             icon: CupertinoIcons.eye_fill,
             label: 'العرض',
-            value: widget.section.displayStyle.apiValue,
+            value: widget.section.displayStyle.name,
           ),
           const SizedBox(height: 8),
           _buildInfoRow(
