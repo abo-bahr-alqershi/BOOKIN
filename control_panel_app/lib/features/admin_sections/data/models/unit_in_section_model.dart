@@ -249,4 +249,19 @@ class UnitInSectionModel {
         isAvailable: isAvailable,
         nextAvailableDates: nextAvailableDates,
       );
+
+  static List<String>? _toStringList(dynamic v) {
+    if (v == null) return null;
+    if (v is List) {
+      return v.map((e) => e.toString()).toList();
+    }
+    if (v is String && v.isNotEmpty) {
+      return v
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    return null;
+  }
 }
