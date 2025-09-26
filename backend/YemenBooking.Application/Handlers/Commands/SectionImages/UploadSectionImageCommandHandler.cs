@@ -58,11 +58,19 @@ namespace YemenBooking.Application.Handlers.Commands.SectionImages
             }
 
             await _auditService.LogBusinessOperationAsync(
-                operation: "UploadSectionImage",
-                entityName: nameof(SectionImage),
-                entityId: request.SectionId.ToString(),
-                userId: _currentUserService.UserId,
-                metadata: new { request.Name, request.Category, request.IsPrimary, request.Order });
+                operationType: "UploadSectionImage",
+                operationDescription: "رفع صورة قسم",
+                entityId: request.SectionId,
+                entityType: nameof(SectionImage),
+                performedBy: _currentUserService.UserId,
+                metadata: new System.Collections.Generic.Dictionary<string, object>
+                {
+                    ["Name"] = request.Name,
+                    ["Category"] = request.Category.ToString(),
+                    ["IsPrimary"] = request.IsPrimary ?? false,
+                    ["Order"] = request.Order ?? 0
+                },
+                cancellationToken: cancellationToken);
 
             var thumbnails = new ImageThumbnailsDto
             {

@@ -78,6 +78,23 @@ class SectionImage extends Equatable {
     this.duration,
   });
 
+  bool get isReady => processingStatus == ProcessingStatus.ready;
+  bool get isVideo => mediaType == MediaType.video;
+  bool get isImage => mediaType == MediaType.image;
+  String get sizeInMB => (size / (1024 * 1024)).toStringAsFixed(2);
+
+  String get displayThumbnail {
+    if (isVideo && videoThumbnail != null) return videoThumbnail!;
+    return thumbnails.medium;
+  }
+
+  String get durationFormatted {
+    if (duration == null) return '';
+    final minutes = duration! ~/ 60;
+    final seconds = duration! % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
   @override
   List<Object?> get props => [
         id,

@@ -46,11 +46,19 @@ namespace YemenBooking.Application.Handlers.Commands.UnitInSectionImages
                 return ResultDto<ImageDto>.Failed("فشل رفع الملف");
 
             await _auditService.LogBusinessOperationAsync(
-                operation: "UploadUnitInSectionImage",
-                entityName: nameof(UnitInSectionImage),
-                entityId: request.UnitInSectionId.ToString(),
-                userId: _currentUserService.UserId,
-                metadata: new { request.Name, request.Category, request.IsPrimary, request.Order });
+                operationType: "UploadUnitInSectionImage",
+                operationDescription: "رفع صورة عنصر وحدة في القسم",
+                entityId: request.UnitInSectionId,
+                entityType: nameof(UnitInSectionImage),
+                performedBy: _currentUserService.UserId,
+                metadata: new System.Collections.Generic.Dictionary<string, object>
+                {
+                    ["Name"] = request.Name,
+                    ["Category"] = request.Category.ToString(),
+                    ["IsPrimary"] = request.IsPrimary ?? false,
+                    ["Order"] = request.Order ?? 0
+                },
+                cancellationToken: cancellationToken);
 
             var thumbnails = new ImageThumbnailsDto { Small = upload.FileUrl!, Medium = upload.FileUrl!, Large = upload.FileUrl!, Hd = upload.FileUrl! };
 
