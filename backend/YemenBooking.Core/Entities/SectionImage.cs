@@ -11,6 +11,9 @@ using YemenBooking.Core.Enums;
 [Display(Name = "صورة قسم")]
 public class SectionImage : BaseEntity<Guid>
 {
+    [Display(Name = "المفتاح المؤقت")]
+    public string? TempKey { get; set; }
+
     [Display(Name = "معرف القسم")]
     public Guid SectionId { get; set; }
 

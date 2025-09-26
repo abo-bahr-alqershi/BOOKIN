@@ -25,7 +25,7 @@ namespace YemenBooking.Api.Controllers.Admin
         /// </summary>
         [HttpPost("{sectionId}/upload")]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> Upload(Guid sectionId, IFormFile file, IFormFile? videoThumbnail, [FromForm] string? category, [FromForm] string? alt, [FromForm] bool? isPrimary, [FromForm] int? order, [FromForm] string? tags)
+        public async Task<IActionResult> Upload(Guid sectionId, IFormFile file, IFormFile? videoThumbnail, [FromForm] string? category, [FromForm] string? alt, [FromForm] bool? isPrimary, [FromForm] int? order, [FromForm] string? tags, [FromForm] string? tempKey)
         {
             if (file == null || file.Length == 0) return BadRequest("file is required");
 
@@ -47,6 +47,7 @@ namespace YemenBooking.Api.Controllers.Admin
             var cmd = new UploadSectionImageCommand
             {
                 SectionId = sectionId,
+                TempKey = string.IsNullOrWhiteSpace(tempKey) ? null : tempKey,
                 File = new FileUploadRequest
                 {
                     FileName = file.FileName,

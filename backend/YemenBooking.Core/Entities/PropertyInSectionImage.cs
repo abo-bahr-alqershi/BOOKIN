@@ -10,6 +10,9 @@ using YemenBooking.Core.Enums;
 [Display(Name = "صورة عقار في قسم")]
 public class PropertyInSectionImage : BaseEntity<Guid>
 {
+    [Display(Name = "المفتاح المؤقت")]
+    public string? TempKey { get; set; }
+
     [Display(Name = "معرف عقار في قسم")]
     public Guid PropertyInSectionId { get; set; }
 

@@ -12,6 +12,7 @@ namespace YemenBooking.Application.Commands.CP.UnitInSectionImages
     public class UploadUnitInSectionImageCommand : IRequest<ResultDto<ImageDto>>
     {
         public Guid UnitInSectionId { get; set; }
+        public string? TempKey { get; set; }
         public FileUploadRequest File { get; set; } = null!;
         public FileUploadRequest? VideoThumbnail { get; set; }
         public string Name { get; set; } = string.Empty;
