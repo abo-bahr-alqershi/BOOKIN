@@ -14,6 +14,7 @@ abstract class SectionImagesRemoteDataSource {
     bool isPrimary,
     int? order,
     List<String>? tags,
+    String? tempKey,
     ProgressCallback? onSendProgress,
   });
 
@@ -39,6 +40,7 @@ class SectionImagesRemoteDataSourceImpl implements SectionImagesRemoteDataSource
     bool isPrimary = false,
     int? order,
     List<String>? tags,
+    String? tempKey,
     ProgressCallback? onSendProgress,
   }) async {
     try {
@@ -53,6 +55,7 @@ class SectionImagesRemoteDataSourceImpl implements SectionImagesRemoteDataSource
         'isPrimary': isPrimary,
         if (order != null) 'order': order,
         if (tags != null && tags.isNotEmpty) 'tags': tags.join(','),
+        if (tempKey != null) 'tempKey': tempKey,
         if (posterPath != null) 'videoThumbnail': await MultipartFile.fromFile(posterPath),
       });
       final response = await apiClient.post(

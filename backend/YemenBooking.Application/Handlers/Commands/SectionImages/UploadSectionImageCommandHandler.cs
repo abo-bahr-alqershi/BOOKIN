@@ -41,7 +41,9 @@ namespace YemenBooking.Application.Handlers.Commands.SectionImages
 
         public async Task<ResultDto<ImageDto>> Handle(UploadSectionImageCommand request, CancellationToken cancellationToken)
         {
-            var folderPath = $"sections/{request.SectionId}";
+            var folderPath = string.IsNullOrWhiteSpace(request.TempKey)
+                ? $"sections/{request.SectionId}"
+                : $"temp/{request.TempKey}";
 
             var stream = new MemoryStream(request.File.FileContent);
             var fileName = request.Name + request.Extension;
@@ -84,6 +86,7 @@ namespace YemenBooking.Application.Handlers.Commands.SectionImages
             {
                 Id = Guid.NewGuid(),
                 SectionId = request.SectionId,
+                TempKey = string.IsNullOrWhiteSpace(request.TempKey) ? null : request.TempKey,
                 Name = fileName,
                 Url = upload.FileUrl!,
                 SizeBytes = upload.FileSizeBytes,

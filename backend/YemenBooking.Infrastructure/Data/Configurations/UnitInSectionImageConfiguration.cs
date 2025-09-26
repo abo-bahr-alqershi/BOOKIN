@@ -11,6 +11,7 @@ public class UnitInSectionImageConfiguration : IEntityTypeConfiguration<UnitInSe
         builder.ToTable("UnitInSectionImages");
         builder.HasKey(x => x.Id);
 
+        builder.Property(x => x.TempKey).HasMaxLength(100);
         builder.Property(x => x.Name).IsRequired().HasMaxLength(200);
         builder.Property(x => x.Url).IsRequired().HasMaxLength(500);
         builder.Property(x => x.Type).HasMaxLength(100);
@@ -28,6 +29,7 @@ public class UnitInSectionImageConfiguration : IEntityTypeConfiguration<UnitInSe
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(x => x.UnitInSectionId);
+        builder.HasIndex(x => x.TempKey);
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

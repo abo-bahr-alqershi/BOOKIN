@@ -38,7 +38,9 @@ namespace YemenBooking.Application.Handlers.Commands.PropertyInSectionImages
 
         public async Task<ResultDto<ImageDto>> Handle(UploadPropertyInSectionImageCommand request, CancellationToken cancellationToken)
         {
-            var folderPath = $"section-items/{request.PropertyInSectionId}";
+            var folderPath = string.IsNullOrWhiteSpace(request.TempKey)
+                ? $"section-items/{request.PropertyInSectionId}"
+                : $"temp/{request.TempKey}";
             var stream = new MemoryStream(request.File.FileContent);
             var fileName = request.Name + request.Extension;
             var upload = await _fileStorageService.UploadFileAsync(stream, fileName, request.File.ContentType, folderPath, cancellationToken);
@@ -66,6 +68,7 @@ namespace YemenBooking.Application.Handlers.Commands.PropertyInSectionImages
             {
                 Id = Guid.NewGuid(),
                 PropertyInSectionId = request.PropertyInSectionId,
+                TempKey = string.IsNullOrWhiteSpace(request.TempKey) ? null : request.TempKey,
                 Name = fileName,
                 Url = upload.FileUrl!,
                 SizeBytes = upload.FileSizeBytes,
