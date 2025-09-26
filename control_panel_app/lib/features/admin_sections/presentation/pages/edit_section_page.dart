@@ -7,6 +7,7 @@ import '../bloc/section_form/section_form_bloc.dart';
 import '../bloc/section_form/section_form_event.dart';
 import '../bloc/section_form/section_form_state.dart';
 import '../widgets/section_form_widget.dart';
+import '../widgets/section_image_gallery.dart';
 
 class EditSectionPage extends StatefulWidget {
   final String sectionId;
@@ -21,6 +22,7 @@ class EditSectionPage extends StatefulWidget {
 }
 
 class _EditSectionPageState extends State<EditSectionPage> {
+  final GlobalKey<SectionImageGalleryState> _galleryKey = GlobalKey();
   @override
   void initState() {
     super.initState();
@@ -133,6 +135,42 @@ class _EditSectionPageState extends State<EditSectionPage> {
               ],
             ),
           ),
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: _openSectionMediaDialog,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primaryPurple.withValues(alpha: 0.3),
+                    AppTheme.primaryViolet.withValues(alpha: 0.2),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.primaryPurple.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.collections,
+                    size: 18,
+                    color: AppTheme.primaryPurple,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'وسائط القسم',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppTheme.primaryPurple,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -153,6 +191,40 @@ class _EditSectionPageState extends State<EditSectionPage> {
         content: Text(message),
         backgroundColor: AppTheme.error,
       ),
+    );
+  }
+
+  void _openSectionMediaDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard.withValues(alpha: 0.98),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppTheme.darkBorder.withValues(alpha: 0.2),
+              ),
+            ),
+            padding: const EdgeInsets.all(12),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: SectionImageGallery(
+                key: _galleryKey,
+                sectionId: widget.sectionId,
+                tempKey: null,
+                isReadOnly: false,
+                maxImages: 20,
+                maxVideos: 5,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
