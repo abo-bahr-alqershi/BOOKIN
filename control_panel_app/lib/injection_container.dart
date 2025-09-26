@@ -44,6 +44,24 @@ import 'package:bookn_cp_app/services/section_service.dart';
 import 'features/admin_sections/data/datasources/section_images_remote_datasource.dart';
 import 'features/admin_sections/data/datasources/property_in_section_images_remote_datasource.dart';
 import 'features/admin_sections/data/datasources/unit_in_section_images_remote_datasource.dart';
+import 'features/admin_sections/domain/repositories/section_images_repository.dart';
+import 'features/admin_sections/data/repositories/section_images_repository_impl.dart';
+import 'features/admin_sections/domain/usecases/section_images/usecases.dart';
+import 'features/admin_sections/presentation/bloc/section_images/section_images_bloc.dart';
+import 'features/admin_sections/presentation/bloc/section_images/section_images_event.dart';
+import 'features/admin_sections/presentation/bloc/section_images/section_images_state.dart';
+import 'features/admin_sections/domain/repositories/property_in_section_images_repository.dart';
+import 'features/admin_sections/data/repositories/property_in_section_images_repository_impl.dart';
+import 'features/admin_sections/domain/usecases/property_in_section_images/usecases.dart' as pis_uc;
+import 'features/admin_sections/presentation/bloc/property_in_section_images/property_in_section_images_bloc.dart';
+import 'features/admin_sections/presentation/bloc/property_in_section_images/property_in_section_images_event.dart';
+import 'features/admin_sections/presentation/bloc/property_in_section_images/property_in_section_images_state.dart';
+import 'features/admin_sections/domain/repositories/unit_in_section_images_repository.dart';
+import 'features/admin_sections/data/repositories/unit_in_section_images_repository_impl.dart';
+import 'features/admin_sections/domain/usecases/unit_in_section_images/usecases.dart' as uis_uc;
+import 'features/admin_sections/presentation/bloc/unit_in_section_images/unit_in_section_images_bloc.dart';
+import 'features/admin_sections/presentation/bloc/unit_in_section_images/unit_in_section_images_event.dart';
+import 'features/admin_sections/presentation/bloc/unit_in_section_images/unit_in_section_images_state.dart';
 
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
@@ -1836,6 +1854,54 @@ void _initAdminSections() {
   sl.registerLazySingleton(() => ReorderSectionImagesUseCase(sl()));
   sl.registerLazySingleton(() => SetPrimarySectionImageUseCase(sl()));
   sl.registerFactory(() => SectionImagesBloc(
+        uploadImage: sl(),
+        uploadMultipleImages: sl(),
+        getImages: sl(),
+        updateImage: sl(),
+        deleteImage: sl(),
+        deleteMultipleImages: sl(),
+        reorderImages: sl(),
+        setPrimaryImage: sl(),
+      ));
+
+  // PropertyInSection Images Repository + UseCases + Bloc
+  sl.registerLazySingleton<PropertyInSectionImagesRepository>(() => PropertyInSectionImagesRepositoryImpl(
+        remoteDataSource: sl(),
+        networkInfo: sl(),
+      ));
+  sl.registerLazySingleton(() => pis_uc.UploadPropertyInSectionImageUseCase(sl()));
+  sl.registerLazySingleton(() => pis_uc.UploadMultiplePropertyInSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => pis_uc.GetPropertyInSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => pis_uc.UpdatePropertyInSectionImageUseCase(sl()));
+  sl.registerLazySingleton(() => pis_uc.DeletePropertyInSectionImageUseCase(sl()));
+  sl.registerLazySingleton(() => pis_uc.DeleteMultiplePropertyInSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => pis_uc.ReorderPropertyInSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => pis_uc.SetPrimaryPropertyInSectionImageUseCase(sl()));
+  sl.registerFactory(() => PropertyInSectionImagesBloc(
+        uploadImage: sl(),
+        uploadMultipleImages: sl(),
+        getImages: sl(),
+        updateImage: sl(),
+        deleteImage: sl(),
+        deleteMultipleImages: sl(),
+        reorderImages: sl(),
+        setPrimaryImage: sl(),
+      ));
+
+  // UnitInSection Images Repository + UseCases + Bloc
+  sl.registerLazySingleton<UnitInSectionImagesRepository>(() => UnitInSectionImagesRepositoryImpl(
+        remoteDataSource: sl(),
+        networkInfo: sl(),
+      ));
+  sl.registerLazySingleton(() => uis_uc.UploadUnitInSectionImageUseCase(sl()));
+  sl.registerLazySingleton(() => uis_uc.UploadMultipleUnitInSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => uis_uc.GetUnitInSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => uis_uc.UpdateUnitInSectionImageUseCase(sl()));
+  sl.registerLazySingleton(() => uis_uc.DeleteUnitInSectionImageUseCase(sl()));
+  sl.registerLazySingleton(() => uis_uc.DeleteMultipleUnitInSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => uis_uc.ReorderUnitInSectionImagesUseCase(sl()));
+  sl.registerLazySingleton(() => uis_uc.SetPrimaryUnitInSectionImageUseCase(sl()));
+  sl.registerFactory(() => UnitInSectionImagesBloc(
         uploadImage: sl(),
         uploadMultipleImages: sl(),
         getImages: sl(),
