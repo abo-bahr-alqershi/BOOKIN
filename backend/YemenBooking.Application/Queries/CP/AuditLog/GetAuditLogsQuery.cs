@@ -12,6 +12,18 @@ namespace YemenBooking.Application.Queries.AuditLog;
 public class GetAuditLogsQuery : IRequest<PaginatedResult<AuditLogDto>>
 {
     /// <summary>
+    /// نوع الكيان للتصفية (اختياري) مثال: Booking, Property, Unit
+    /// Entity type to filter (optional)
+    /// </summary>
+    public string? EntityType { get; set; }
+
+    /// <summary>
+    /// معرف السجل/الكيان للتصفية (اختياري)
+    /// Record identifier to filter (optional)
+    /// </summary>
+    public Guid? RecordId { get; set; }
+
+    /// <summary>
     /// معرف المستخدم (اختياري)
     /// User identifier (optional)
     /// </summary>

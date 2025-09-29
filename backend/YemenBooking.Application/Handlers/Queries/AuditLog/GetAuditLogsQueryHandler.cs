@@ -66,8 +66,8 @@ namespace YemenBooking.Application.Handlers.Queries.AuditLog
             // جلب سجلات التدقيق
             // جلب جميع السجلات الأساسية (بإلغاء الترقيم في الخدمة)
             var allLogs = await _auditService.GetAuditTrailAsync(
-                entityType: null,
-                entityId: null,
+                entityType: request.EntityType,
+                entityId: request.RecordId,
                 performedBy: request.UserId,
                 fromDate: request.From,
                 toDate: request.To,
