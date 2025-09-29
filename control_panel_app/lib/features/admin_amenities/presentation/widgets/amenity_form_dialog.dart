@@ -44,7 +44,8 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
 
   void _initializeControllers() {
     _nameController = TextEditingController(text: widget.amenity?.name ?? '');
-    _descriptionController = TextEditingController(text: widget.amenity?.description ?? '');
+    _descriptionController =
+        TextEditingController(text: widget.amenity?.description ?? '');
     _searchController = TextEditingController();
     _selectedIcon = widget.amenity?.icon ?? 'wifi';
   }
@@ -80,6 +81,7 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      insetPadding: const EdgeInsets.all(10),
       backgroundColor: Colors.transparent,
       child: ScaleTransition(
         scale: _scaleAnimation,
@@ -122,19 +124,23 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
                     _buildHeader(),
                     Flexible(
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+                        padding:
+                            const EdgeInsets.all(AppDimensions.paddingLarge),
                         child: Form(
                           key: _formKey,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               _buildNameField(),
-                              const SizedBox(height: AppDimensions.paddingLarge),
+                              const SizedBox(
+                                  height: AppDimensions.paddingLarge),
                               _buildDescriptionField(),
-                              const SizedBox(height: AppDimensions.paddingLarge),
+                              const SizedBox(
+                                  height: AppDimensions.paddingLarge),
                               _buildIconSelector(),
                               if (_showIconPicker) ...[
-                                const SizedBox(height: AppDimensions.paddingLarge),
+                                const SizedBox(
+                                    height: AppDimensions.paddingLarge),
                                 _buildIconPicker(),
                               ],
                             ],
@@ -371,7 +377,7 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
 
   Widget _buildIconSelector() {
     final selectedIconData = AmenityIcons.getIconByName(_selectedIcon);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -502,7 +508,7 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
       _searchController.text,
       category: _selectedCategory,
     );
-    
+
     return Container(
       height: 400,
       decoration: BoxDecoration(
@@ -557,7 +563,7 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
                     itemBuilder: (context, index) {
                       final category = AmenityIcons.categories[index];
                       final isSelected = _selectedCategory == category;
-                      
+
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: GestureDetector(
@@ -574,9 +580,8 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              gradient: isSelected
-                                  ? AppTheme.primaryGradient
-                                  : null,
+                              gradient:
+                                  isSelected ? AppTheme.primaryGradient : null,
                               color: !isSelected
                                   ? AppTheme.darkCard.withOpacity(0.5)
                                   : null,
@@ -632,7 +637,8 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
                   )
                 : GridView.builder(
                     padding: const EdgeInsets.all(12),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 6,
                       crossAxisSpacing: 8,
                       mainAxisSpacing: 8,
@@ -642,7 +648,7 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
                     itemBuilder: (context, index) {
                       final iconData = searchResults[index];
                       final isSelected = _selectedIcon == iconData.name;
-                      
+
                       return GestureDetector(
                         onTap: () {
                           HapticFeedback.lightImpact();
@@ -653,9 +659,8 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           decoration: BoxDecoration(
-                            gradient: isSelected
-                                ? AppTheme.primaryGradient
-                                : null,
+                            gradient:
+                                isSelected ? AppTheme.primaryGradient : null,
                             color: !isSelected
                                 ? AppTheme.darkCard.withOpacity(0.5)
                                 : null,
@@ -669,7 +674,8 @@ class _AmenityFormDialogState extends State<AmenityFormDialog>
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: AppTheme.primaryBlue.withOpacity(0.3),
+                                      color:
+                                          AppTheme.primaryBlue.withOpacity(0.3),
                                       blurRadius: 10,
                                       spreadRadius: 1,
                                     ),

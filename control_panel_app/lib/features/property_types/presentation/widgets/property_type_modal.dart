@@ -28,8 +28,10 @@ class _PropertyTypeModalState extends State<PropertyTypeModal> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.propertyType?.name ?? '');
-    _descriptionController = TextEditingController(text: widget.propertyType?.description ?? '');
+    _nameController =
+        TextEditingController(text: widget.propertyType?.name ?? '');
+    _descriptionController =
+        TextEditingController(text: widget.propertyType?.description ?? '');
     _amenities = widget.propertyType?.defaultAmenities ?? [];
     _selectedIcon = widget.propertyType?.icon ?? 'home';
   }
@@ -48,12 +50,14 @@ class _PropertyTypeModalState extends State<PropertyTypeModal> {
     final EdgeInsets inset = isSmall
         ? const EdgeInsets.symmetric(horizontal: 12, vertical: 12)
         : const EdgeInsets.all(20);
-    final double dialogWidth = isSmall ? (screenSize.width - inset.horizontal) : 600;
-    final double maxHeight = isSmall ? (screenSize.height * 0.95) : (screenSize.height * 0.85);
+    final double dialogWidth =
+        isSmall ? (screenSize.width - inset.horizontal) : 600;
+    final double maxHeight =
+        isSmall ? (screenSize.height * 0.95) : (screenSize.height * 0.85);
 
     return Dialog(
+      insetPadding: const EdgeInsets.all(10),
       backgroundColor: Colors.transparent,
-      insetPadding: inset,
       child: Container(
         width: dialogWidth,
         constraints: BoxConstraints(
@@ -146,7 +150,9 @@ class _PropertyTypeModalState extends State<PropertyTypeModal> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.propertyType == null ? 'إضافة نوع كيان جديد' : 'تعديل نوع الكيان',
+                  widget.propertyType == null
+                      ? 'إضافة نوع كيان جديد'
+                      : 'تعديل نوع الكيان',
                   style: AppTextStyles.heading3.copyWith(
                     color: AppTheme.textWhite,
                     fontWeight: FontWeight.bold,
@@ -338,7 +344,7 @@ class _PropertyTypeModalState extends State<PropertyTypeModal> {
 
   Widget _buildAmenitiesField() {
     final amenityController = TextEditingController();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -366,7 +372,8 @@ class _PropertyTypeModalState extends State<PropertyTypeModal> {
                   Expanded(
                     child: TextField(
                       controller: amenityController,
-                      style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
+                      style: AppTextStyles.bodyMedium
+                          .copyWith(color: AppTheme.textWhite),
                       decoration: InputDecoration(
                         hintText: 'أضف مرفق',
                         hintStyle: AppTextStyles.bodyMedium.copyWith(
@@ -407,7 +414,8 @@ class _PropertyTypeModalState extends State<PropertyTypeModal> {
                   runSpacing: 8,
                   children: _amenities.map((amenity) {
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [

@@ -1,3 +1,4 @@
+import 'package:bookn_cp_app/features/property_types/presentation/widgets/futuristic_stats_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,7 +21,7 @@ import '../widgets/unit_type_field_card.dart';
 import '../widgets/property_type_modal.dart';
 import '../widgets/unit_type_modal.dart';
 import '../widgets/unit_type_field_modal.dart';
-import '../widgets/futuristic_stats_card.dart';
+import 'package:flutter/src/painting/edge_insets.dart';
 
 class AdminPropertyTypesPage extends StatefulWidget {
   const AdminPropertyTypesPage({super.key});
@@ -36,11 +37,11 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
   late AnimationController _particleController;
   late Animation<double> _backgroundRotation;
   late Animation<double> _glowAnimation;
-  
+
   final ScrollController _propertyTypesScrollController = ScrollController();
   final ScrollController _unitTypesScrollController = ScrollController();
   final ScrollController _fieldsScrollController = ScrollController();
-  
+
   String? _selectedPropertyTypeId;
   String? _selectedUnitTypeId;
   String _searchFieldsQuery = '';
@@ -57,17 +58,17 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
-    
+
     _glowController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _particleController = AnimationController(
       duration: const Duration(seconds: 15),
       vsync: this,
     )..repeat();
-    
+
     _backgroundRotation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
@@ -75,7 +76,7 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
       parent: _backgroundAnimationController,
       curve: Curves.linear,
     ));
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.3,
       end: 1.0,
@@ -175,7 +176,8 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ShaderMask(
-                shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                shaderCallback: (bounds) =>
+                    AppTheme.primaryGradient.createShader(bounds),
                 child: Text(
                   'إدارة أنواع الكيانات والوحدات',
                   style: AppTextStyles.heading1.copyWith(
@@ -204,17 +206,19 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final cardWidth = constraints.maxWidth > 600 
-              ? (constraints.maxWidth - 36) / 3 
+          final cardWidth = constraints.maxWidth > 600
+              ? (constraints.maxWidth - 36) / 3
               : constraints.maxWidth;
-          
+
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 BlocBuilder<PropertyTypesBloc, PropertyTypesState>(
                   builder: (context, state) {
-                    final count = state is PropertyTypesLoaded ? state.propertyTypes.length : 0;
+                    final count = state is PropertyTypesLoaded
+                        ? state.propertyTypes.length
+                        : 0;
                     return SizedBox(
                       width: cardWidth,
                       child: FuturisticStatsCard(
@@ -230,7 +234,8 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
                 const SizedBox(width: 12),
                 BlocBuilder<UnitTypesBloc, UnitTypesState>(
                   builder: (context, state) {
-                    final count = state is UnitTypesLoaded ? state.unitTypes.length : 0;
+                    final count =
+                        state is UnitTypesLoaded ? state.unitTypes.length : 0;
                     return SizedBox(
                       width: cardWidth,
                       child: FuturisticStatsCard(
@@ -246,7 +251,8 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
                 const SizedBox(width: 12),
                 BlocBuilder<UnitTypeFieldsBloc, UnitTypeFieldsState>(
                   builder: (context, state) {
-                    final count = state is UnitTypeFieldsLoaded ? state.fields.length : 0;
+                    final count =
+                        state is UnitTypeFieldsLoaded ? state.fields.length : 0;
                     return SizedBox(
                       width: cardWidth,
                       child: FuturisticStatsCard(
@@ -283,7 +289,8 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
     return PageView(
       children: [
         _buildPropertyTypesColumn(expanded: true),
-        if (_selectedPropertyTypeId != null) _buildUnitTypesColumn(expanded: true),
+        if (_selectedPropertyTypeId != null)
+          _buildUnitTypesColumn(expanded: true),
         if (_selectedUnitTypeId != null) _buildFieldsColumn(expanded: true),
       ],
     );
@@ -344,11 +351,11 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
                     if (state is PropertyTypesLoading) {
                       return _buildLoadingState();
                     }
-                    
+
                     if (state is PropertyTypesError) {
                       return _buildErrorState(state.message);
                     }
-                    
+
                     if (state is PropertyTypesLoaded) {
                       if (state.propertyTypes.isEmpty) {
                         return _buildEmptyState(
@@ -356,7 +363,7 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
                           message: 'لا توجد أنواع كيانات',
                         );
                       }
-                      
+
                       return ListView.builder(
                         controller: _propertyTypesScrollController,
                         padding: const EdgeInsets.all(8),
@@ -365,34 +372,40 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
                           final propertyType = state.propertyTypes[index];
                           return PropertyTypeCard(
                             propertyType: propertyType,
-                            isSelected: _selectedPropertyTypeId == propertyType.id,
+                            isSelected:
+                                _selectedPropertyTypeId == propertyType.id,
                             onTap: () {
                               setState(() {
                                 _selectedPropertyTypeId = propertyType.id;
                                 _selectedUnitTypeId = null;
                               });
                               context.read<PropertyTypesBloc>().add(
-                                SelectPropertyTypeEvent(propertyTypeId: propertyType.id),
-                              );
+                                    SelectPropertyTypeEvent(
+                                        propertyTypeId: propertyType.id),
+                                  );
                               context.read<UnitTypesBloc>().add(
-                                LoadUnitTypesEvent(propertyTypeId: propertyType.id),
-                              );
+                                    LoadUnitTypesEvent(
+                                        propertyTypeId: propertyType.id),
+                                  );
                             },
-                            onEdit: () => _showPropertyTypeModal(propertyType: propertyType),
+                            onEdit: () => _showPropertyTypeModal(
+                                propertyType: propertyType),
                             onDelete: () => _confirmDelete(
                               title: 'حذف نوع الكيان',
-                              message: 'هل أنت متأكد من حذف نوع الكيان "${propertyType.name}"؟',
+                              message:
+                                  'هل أنت متأكد من حذف نوع الكيان "${propertyType.name}"؟',
                               onConfirm: () {
                                 context.read<PropertyTypesBloc>().add(
-                                  DeletePropertyTypeEvent(propertyTypeId: propertyType.id),
-                                );
+                                      DeletePropertyTypeEvent(
+                                          propertyTypeId: propertyType.id),
+                                    );
                               },
                             ),
                           );
                         },
                       );
                     }
-                    
+
                     return const SizedBox.shrink();
                   },
                 ),
@@ -438,11 +451,11 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
                     if (state is UnitTypesLoading) {
                       return _buildLoadingState();
                     }
-                    
+
                     if (state is UnitTypesError) {
                       return _buildErrorState(state.message);
                     }
-                    
+
                     if (state is UnitTypesLoaded) {
                       if (state.unitTypes.isEmpty) {
                         return _buildEmptyState(
@@ -450,7 +463,7 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
                           message: 'لا توجد أنواع وحدات',
                         );
                       }
-                      
+
                       return ListView.builder(
                         controller: _unitTypesScrollController,
                         padding: const EdgeInsets.all(8),
@@ -465,27 +478,32 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
                                 _selectedUnitTypeId = unitType.id;
                               });
                               context.read<UnitTypesBloc>().add(
-                                SelectUnitTypeEvent(unitTypeId: unitType.id),
-                              );
+                                    SelectUnitTypeEvent(
+                                        unitTypeId: unitType.id),
+                                  );
                               context.read<UnitTypeFieldsBloc>().add(
-                                LoadUnitTypeFieldsEvent(unitTypeId: unitType.id),
-                              );
+                                    LoadUnitTypeFieldsEvent(
+                                        unitTypeId: unitType.id),
+                                  );
                             },
-                            onEdit: () => _showUnitTypeModal(unitType: unitType),
+                            onEdit: () =>
+                                _showUnitTypeModal(unitType: unitType),
                             onDelete: () => _confirmDelete(
                               title: 'حذف نوع الوحدة',
-                              message: 'هل أنت متأكد من حذف نوع الوحدة "${unitType.name}"؟',
+                              message:
+                                  'هل أنت متأكد من حذف نوع الوحدة "${unitType.name}"؟',
                               onConfirm: () {
                                 context.read<UnitTypesBloc>().add(
-                                  DeleteUnitTypeEvent(unitTypeId: unitType.id),
-                                );
+                                      DeleteUnitTypeEvent(
+                                          unitTypeId: unitType.id),
+                                    );
                               },
                             ),
                           );
                         },
                       );
                     }
-                    
+
                     return const SizedBox.shrink();
                   },
                 ),
@@ -528,8 +546,8 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
                 onSearch: (query) {
                   setState(() => _searchFieldsQuery = query);
                   context.read<UnitTypeFieldsBloc>().add(
-                    SearchFieldsEvent(searchTerm: query),
-                  );
+                        SearchFieldsEvent(searchTerm: query),
+                      );
                 },
               ),
               Expanded(
@@ -538,23 +556,23 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
                     if (state is UnitTypeFieldsLoading) {
                       return _buildLoadingState();
                     }
-                    
+
                     if (state is UnitTypeFieldsError) {
                       return _buildErrorState(state.message);
                     }
-                    
+
                     if (state is UnitTypeFieldsLoaded) {
                       final fields = state.filteredFields;
-                      
+
                       if (fields.isEmpty) {
                         return _buildEmptyState(
                           icon: Icons.text_fields_rounded,
-                          message: _searchFieldsQuery.isNotEmpty 
+                          message: _searchFieldsQuery.isNotEmpty
                               ? 'لا توجد نتائج للبحث'
                               : 'لا توجد حقول ديناميكية',
                         );
                       }
-                      
+
                       return ListView.builder(
                         controller: _fieldsScrollController,
                         padding: const EdgeInsets.all(8),
@@ -566,18 +584,19 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
                             onEdit: () => _showFieldModal(field: field),
                             onDelete: () => _confirmDelete(
                               title: 'حذف الحقل',
-                              message: 'هل أنت متأكد من حذف الحقل "${field.displayName}"؟',
+                              message:
+                                  'هل أنت متأكد من حذف الحقل "${field.displayName}"؟',
                               onConfirm: () {
                                 context.read<UnitTypeFieldsBloc>().add(
-                                  DeleteFieldEvent(fieldId: field.fieldId),
-                                );
+                                      DeleteFieldEvent(fieldId: field.fieldId),
+                                    );
                               },
                             ),
                           );
                         },
                       );
                     }
-                    
+
                     return const SizedBox.shrink();
                   },
                 ),
@@ -644,7 +663,8 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
                   onAdd();
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [color, color.withOpacity(0.7)],
@@ -660,7 +680,8 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.add_rounded, color: Colors.white, size: 16),
+                      const Icon(Icons.add_rounded,
+                          color: Colors.white, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         'إضافة',
@@ -702,7 +723,8 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
                     size: 18,
                   ),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
               ),
             ),
@@ -813,23 +835,23 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
         onSave: (data) {
           if (propertyType != null) {
             parentContext.read<PropertyTypesBloc>().add(
-              UpdatePropertyTypeEvent(
-                propertyTypeId: propertyType.id,
-                name: data['name'],
-                description: data['description'],
-                defaultAmenities: data['defaultAmenities'],
-                icon: data['icon'],
-              ),
-            );
+                  UpdatePropertyTypeEvent(
+                    propertyTypeId: propertyType.id,
+                    name: data['name'],
+                    description: data['description'],
+                    defaultAmenities: data['defaultAmenities'],
+                    icon: data['icon'],
+                  ),
+                );
           } else {
             parentContext.read<PropertyTypesBloc>().add(
-              CreatePropertyTypeEvent(
-                name: data['name'],
-                description: data['description'],
-                defaultAmenities: data['defaultAmenities'],
-                icon: data['icon'],
-              ),
-            );
+                  CreatePropertyTypeEvent(
+                    name: data['name'],
+                    description: data['description'],
+                    defaultAmenities: data['defaultAmenities'],
+                    icon: data['icon'],
+                  ),
+                );
           }
         },
       ),
@@ -841,7 +863,7 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
       _showErrorMessage('يرجى اختيار نوع كيان أولاً');
       return;
     }
-    
+
     final parentContext = context;
     showDialog(
       context: context,
@@ -853,30 +875,32 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
         onSave: (data) {
           if (unitType != null) {
             parentContext.read<UnitTypesBloc>().add(
-              UpdateUnitTypeEvent(
-                unitTypeId: unitType.id,
-                name: data['name'],
-                maxCapacity: data['maxCapacity'],
-                icon: data['icon'],
-                isHasAdults: data['isHasAdults'],
-                isHasChildren: data['isHasChildren'],
-                isMultiDays: data['isMultiDays'],
-                isRequiredToDetermineTheHour: data['isRequiredToDetermineTheHour'],
-              ),
-            );
+                  UpdateUnitTypeEvent(
+                    unitTypeId: unitType.id,
+                    name: data['name'],
+                    maxCapacity: data['maxCapacity'],
+                    icon: data['icon'],
+                    isHasAdults: data['isHasAdults'],
+                    isHasChildren: data['isHasChildren'],
+                    isMultiDays: data['isMultiDays'],
+                    isRequiredToDetermineTheHour:
+                        data['isRequiredToDetermineTheHour'],
+                  ),
+                );
           } else {
             parentContext.read<UnitTypesBloc>().add(
-              CreateUnitTypeEvent(
-                propertyTypeId: _selectedPropertyTypeId!,
-                name: data['name'],
-                maxCapacity: data['maxCapacity'],
-                icon: data['icon'],
-                isHasAdults: data['isHasAdults'],
-                isHasChildren: data['isHasChildren'],
-                isMultiDays: data['isMultiDays'],
-                isRequiredToDetermineTheHour: data['isRequiredToDetermineTheHour'],
-              ),
-            );
+                  CreateUnitTypeEvent(
+                    propertyTypeId: _selectedPropertyTypeId!,
+                    name: data['name'],
+                    maxCapacity: data['maxCapacity'],
+                    icon: data['icon'],
+                    isHasAdults: data['isHasAdults'],
+                    isHasChildren: data['isHasChildren'],
+                    isMultiDays: data['isMultiDays'],
+                    isRequiredToDetermineTheHour:
+                        data['isRequiredToDetermineTheHour'],
+                  ),
+                );
           }
         },
       ),
@@ -888,7 +912,7 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
       _showErrorMessage('يرجى اختيار نوع وحدة أولاً');
       return;
     }
-    
+
     final parentContext = context;
     showDialog(
       context: context,
@@ -900,18 +924,18 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
         onSave: (data) {
           if (field != null) {
             parentContext.read<UnitTypeFieldsBloc>().add(
-              UpdateFieldEvent(
-                fieldId: field.fieldId,
-                fieldData: data,
-              ),
-            );
+                  UpdateFieldEvent(
+                    fieldId: field.fieldId,
+                    fieldData: data,
+                  ),
+                );
           } else {
             parentContext.read<UnitTypeFieldsBloc>().add(
-              CreateFieldEvent(
-                unitTypeId: _selectedUnitTypeId!,
-                fieldData: data,
-              ),
-            );
+                  CreateFieldEvent(
+                    unitTypeId: _selectedUnitTypeId!,
+                    fieldData: data,
+                  ),
+                );
           }
         },
       ),
@@ -1054,21 +1078,21 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
 class _FuturisticBackgroundPainter extends CustomPainter {
   final double rotation;
   final double glowIntensity;
-  
+
   _FuturisticBackgroundPainter({
     required this.rotation,
     required this.glowIntensity,
   });
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
-    
+
     paint.color = AppTheme.primaryBlue.withOpacity(0.05);
     const spacing = 50.0;
-    
+
     for (double x = 0; x < size.width; x += spacing) {
       canvas.drawLine(
         Offset(x, 0),
@@ -1076,7 +1100,7 @@ class _FuturisticBackgroundPainter extends CustomPainter {
         paint,
       );
     }
-    
+
     for (double y = 0; y < size.height; y += spacing) {
       canvas.drawLine(
         Offset(0, y),
@@ -1084,10 +1108,10 @@ class _FuturisticBackgroundPainter extends CustomPainter {
         paint,
       );
     }
-    
+
     final center = Offset(size.width / 2, size.height / 2);
     paint.color = AppTheme.primaryBlue.withOpacity(0.03 * glowIntensity);
-    
+
     for (int i = 0; i < 3; i++) {
       final radius = 200.0 + i * 100;
       canvas.save();
@@ -1098,7 +1122,7 @@ class _FuturisticBackgroundPainter extends CustomPainter {
       canvas.restore();
     }
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
@@ -1107,16 +1131,17 @@ class _DeleteConfirmationDialog extends StatelessWidget {
   final String title;
   final String message;
   final VoidCallback onConfirm;
-  
+
   const _DeleteConfirmationDialog({
     required this.title,
     required this.message,
     required this.onConfirm,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      insetPadding: const EdgeInsets.all(10),
       backgroundColor: Colors.transparent,
       child: Container(
         width: 400,

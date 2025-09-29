@@ -193,22 +193,24 @@ class _IconPickerModalState extends State<IconPickerModal> {
 
   List<Map<String, dynamic>> get filteredIcons {
     List<Map<String, dynamic>> icons = [];
-    
+
     if (_selectedCategory == 'الكل') {
-      _iconCategories.values.forEach((categoryIcons) {
+      for (var categoryIcons in _iconCategories.values) {
         icons.addAll(categoryIcons);
-      });
+      }
     } else {
       icons = _iconCategories[_selectedCategory] ?? [];
     }
-    
+
     if (_searchQuery.isNotEmpty) {
       icons = icons.where((icon) {
-        return icon['label'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               icon['name'].toLowerCase().contains(_searchQuery.toLowerCase());
+        return icon['label']
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()) ||
+            icon['name'].toLowerCase().contains(_searchQuery.toLowerCase());
       }).toList();
     }
-    
+
     return icons;
   }
 
@@ -220,11 +222,12 @@ class _IconPickerModalState extends State<IconPickerModal> {
         ? const EdgeInsets.symmetric(horizontal: 12, vertical: 12)
         : const EdgeInsets.all(20);
     final double dialogWidth = isSmall ? (size.width - inset.horizontal) : 800;
-    final double dialogHeight = isSmall ? (size.height * 0.95) : (size.height * 0.85);
+    final double dialogHeight =
+        isSmall ? (size.height * 0.95) : (size.height * 0.85);
 
     return Dialog(
+      insetPadding: const EdgeInsets.all(10),
       backgroundColor: Colors.transparent,
-      insetPadding: inset,
       child: Container(
         width: dialogWidth,
         height: dialogHeight,
@@ -359,7 +362,7 @@ class _IconPickerModalState extends State<IconPickerModal> {
 
   Widget _buildCategoryTabs() {
     final categories = ['الكل', ..._iconCategories.keys];
-    
+
     return Container(
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -369,7 +372,7 @@ class _IconPickerModalState extends State<IconPickerModal> {
         itemBuilder: (context, index) {
           final category = categories[index];
           final isSelected = _selectedCategory == category;
-          
+
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
@@ -379,10 +382,12 @@ class _IconPickerModalState extends State<IconPickerModal> {
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   gradient: isSelected ? AppTheme.primaryGradient : null,
-                  color: isSelected ? null : AppTheme.darkSurface.withOpacity(0.5),
+                  color:
+                      isSelected ? null : AppTheme.darkSurface.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: isSelected
@@ -396,7 +401,8 @@ class _IconPickerModalState extends State<IconPickerModal> {
                     category,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: isSelected ? Colors.white : AppTheme.textMuted,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),
                 ),
@@ -421,7 +427,7 @@ class _IconPickerModalState extends State<IconPickerModal> {
     } else {
       columns = 6;
     }
-    
+
     if (icons.isEmpty) {
       return Center(
         child: Column(
@@ -443,7 +449,7 @@ class _IconPickerModalState extends State<IconPickerModal> {
         ),
       );
     }
-    
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -456,7 +462,7 @@ class _IconPickerModalState extends State<IconPickerModal> {
       itemBuilder: (context, index) {
         final icon = icons[index];
         final isSelected = widget.selectedIcon == icon['name'];
-        
+
         return GestureDetector(
           onTap: () {
             HapticFeedback.lightImpact();
@@ -498,26 +504,26 @@ class _IconPickerModalState extends State<IconPickerModal> {
                 final double gap = cellH < 90 ? 6 : 8;
                 final double labelFont = cellH < 90 ? 9 : 10;
                 return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  IconPickerModal.getIconFromString(icon['name']),
+                  children: [
+                    Icon(
+                      IconPickerModal.getIconFromString(icon['name']),
                       size: iconSize,
-                  color: isSelected ? Colors.white : AppTheme.primaryBlue,
-                ),
+                      color: isSelected ? Colors.white : AppTheme.primaryBlue,
+                    ),
                     SizedBox(height: gap),
-                Text(
-                  icon['label'],
-                  style: AppTextStyles.caption.copyWith(
-                    color: isSelected ? Colors.white : AppTheme.textMuted,
+                    Text(
+                      icon['label'],
+                      style: AppTextStyles.caption.copyWith(
+                        color: isSelected ? Colors.white : AppTheme.textMuted,
                         fontSize: labelFont,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 );
               },
             ),
