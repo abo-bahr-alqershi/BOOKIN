@@ -64,12 +64,16 @@ class UnitInSectionImagesRemoteDataSourceImpl
         posterPath = await VideoUtils.generateVideoThumbnail(filePath);
       }
 
+      final normalizedUnitInSectionId = (unitInSectionId != null && unitInSectionId.trim().isNotEmpty)
+          ? unitInSectionId
+          : null;
+      final normalizedTempKey = (tempKey != null && tempKey.trim().isNotEmpty) ? tempKey : null;
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath),
-        if (unitInSectionId != null) 'unitInSectionId': unitInSectionId,
-        if (tempKey != null) 'tempKey': tempKey,
-        if (category != null) 'category': category,
-        if (alt != null) 'alt': alt,
+        if (normalizedUnitInSectionId != null) 'unitInSectionId': normalizedUnitInSectionId,
+        if (normalizedTempKey != null) 'tempKey': normalizedTempKey,
+        if (category != null && category.trim().isNotEmpty) 'category': category,
+        if (alt != null && alt.trim().isNotEmpty) 'alt': alt,
         'isPrimary': isPrimary,
         if (order != null) 'order': order,
         if (tags != null && tags.isNotEmpty) 'tags': tags.join(','),
@@ -122,9 +126,13 @@ class UnitInSectionImagesRemoteDataSourceImpl
     String? tempKey,
   }) async {
     try {
+      final normalizedUnitInSectionId = (unitInSectionId != null && unitInSectionId.trim().isNotEmpty)
+          ? unitInSectionId
+          : null;
+      final normalizedTempKey = (tempKey != null && tempKey.trim().isNotEmpty) ? tempKey : null;
       final qp = <String, dynamic>{
-        if (unitInSectionId != null) 'unitInSectionId': unitInSectionId,
-        if (tempKey != null) 'tempKey': tempKey,
+        if (normalizedUnitInSectionId != null) 'unitInSectionId': normalizedUnitInSectionId,
+        if (normalizedTempKey != null) 'tempKey': normalizedTempKey,
         'sortBy': 'order',
         'sortOrder': 'asc',
       };

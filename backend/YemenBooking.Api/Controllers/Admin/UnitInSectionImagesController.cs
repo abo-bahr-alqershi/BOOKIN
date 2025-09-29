@@ -87,17 +87,23 @@ namespace YemenBooking.Api.Controllers.Admin
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Get(
-            [FromQuery] Guid? unitInSectionId,
+            [FromQuery] string? unitInSectionId,
             [FromQuery] string? tempKey,
             [FromQuery] string? sortBy = "order",
             [FromQuery] string? sortOrder = "asc",
             [FromQuery] int? page = 1,
             [FromQuery] int? limit = 50)
         {
+            Guid? parsedId = null;
+            if (!string.IsNullOrWhiteSpace(unitInSectionId) && Guid.TryParse(unitInSectionId, out var id))
+            {
+                parsedId = id;
+            }
+
             var q = new GetUnitInSectionImagesQuery
             {
-                UnitInSectionId = unitInSectionId,
-                TempKey = tempKey,
+                UnitInSectionId = parsedId,
+                TempKey = string.IsNullOrWhiteSpace(tempKey) ? null : tempKey,
                 SortBy = sortBy,
                 SortOrder = sortOrder,
                 Page = page ?? 1,

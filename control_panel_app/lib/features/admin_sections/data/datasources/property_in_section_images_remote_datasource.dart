@@ -64,13 +64,17 @@ class PropertyInSectionImagesRemoteDataSourceImpl
         posterPath = await VideoUtils.generateVideoThumbnail(filePath);
       }
 
+      final normalizedPropertyInSectionId = (propertyInSectionId != null && propertyInSectionId.trim().isNotEmpty)
+          ? propertyInSectionId
+          : null;
+      final normalizedTempKey = (tempKey != null && tempKey.trim().isNotEmpty) ? tempKey : null;
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath),
-        if (propertyInSectionId != null)
-          'propertyInSectionId': propertyInSectionId,
-        if (tempKey != null) 'tempKey': tempKey,
-        if (category != null) 'category': category,
-        if (alt != null) 'alt': alt,
+        if (normalizedPropertyInSectionId != null)
+          'propertyInSectionId': normalizedPropertyInSectionId,
+        if (normalizedTempKey != null) 'tempKey': normalizedTempKey,
+        if (category != null && category.trim().isNotEmpty) 'category': category,
+        if (alt != null && alt.trim().isNotEmpty) 'alt': alt,
         'isPrimary': isPrimary,
         if (order != null) 'order': order,
         if (tags != null && tags.isNotEmpty) 'tags': tags.join(','),
@@ -122,10 +126,14 @@ class PropertyInSectionImagesRemoteDataSourceImpl
     String? tempKey,
   }) async {
     try {
+      final normalizedPropertyInSectionId = (propertyInSectionId != null && propertyInSectionId.trim().isNotEmpty)
+          ? propertyInSectionId
+          : null;
+      final normalizedTempKey = (tempKey != null && tempKey.trim().isNotEmpty) ? tempKey : null;
       final qp = <String, dynamic>{
-        if (propertyInSectionId != null)
-          'propertyInSectionId': propertyInSectionId,
-        if (tempKey != null) 'tempKey': tempKey,
+        if (normalizedPropertyInSectionId != null)
+          'propertyInSectionId': normalizedPropertyInSectionId,
+        if (normalizedTempKey != null) 'tempKey': normalizedTempKey,
         'sortBy': 'order',
         'sortOrder': 'asc',
       };
