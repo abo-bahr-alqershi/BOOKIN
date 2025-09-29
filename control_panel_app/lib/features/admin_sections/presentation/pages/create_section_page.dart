@@ -16,6 +16,7 @@ import '../bloc/section_form/section_form_state.dart';
 import '../widgets/section_form_widget.dart';
 import '../widgets/section_image_gallery.dart';
 import '../bloc/section_images/section_images_bloc.dart';
+import '../../domain/entities/section_image.dart';
 import 'package:bookn_cp_app/injection_container.dart' as di;
 
 class CreateSectionPage extends StatefulWidget {
@@ -35,6 +36,8 @@ class _CreateSectionPageState extends State<CreateSectionPage>
   // Media gallery integration
   final GlobalKey<SectionImageGalleryState> _galleryKey = GlobalKey();
   String? _tempKey;
+  List<SectionImage> _selectedImages = [];
+  List<String> _selectedLocalImages = [];
 
   @override
   void initState() {
@@ -95,14 +98,19 @@ class _CreateSectionPageState extends State<CreateSectionPage>
     return BlocListener<SectionFormBloc, SectionFormState>(
       listener: (context, state) {
         if (state is SectionFormSubmitted) {
-          _showSuccessMessage('تم إنشاء القسم بنجاح');
-          // Clear tempKey after successful save
-          _tempKey = null;
-          Future.delayed(const Duration(milliseconds: 500), () {
+          () async {
+            // Upload any local media picked before save, now that we have sectionId
+            try {
+              await _galleryKey.currentState?.uploadLocalImages(state.sectionId);
+            } catch (_) {}
+
+            _showSuccessMessage('تم إنشاء القسم بنجاح');
+            _tempKey = null;
+            await Future.delayed(const Duration(milliseconds: 500));
             if (mounted) {
               context.pop();
             }
-          });
+          }();
         } else if (state is SectionFormError) {
           _showErrorMessage(state.message);
         }
@@ -145,6 +153,18 @@ class _CreateSectionPageState extends State<CreateSectionPage>
                                   isReadOnly: false,
                                   maxImages: 20,
                                   maxVideos: 5,
+                                  initialImages: _selectedImages,
+                                  initialLocalImages: _selectedLocalImages,
+                                  onImagesChanged: (images) {
+                                    setState(() {
+                                      _selectedImages = images;
+                                    });
+                                  },
+                                  onLocalImagesChanged: (paths) {
+                                    setState(() {
+                                      _selectedLocalImages = paths;
+                                    });
+                                  },
                                 ),
                               ),
                               const SizedBox(height: 24),

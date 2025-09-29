@@ -9,6 +9,7 @@ import '../bloc/section_form/section_form_state.dart';
 import '../widgets/section_form_widget.dart';
 import '../widgets/section_image_gallery.dart';
 import '../bloc/section_images/section_images_bloc.dart';
+import '../../domain/entities/section_image.dart';
 import 'package:bookn_cp_app/injection_container.dart' as di;
 
 class EditSectionPage extends StatefulWidget {
@@ -25,6 +26,7 @@ class EditSectionPage extends StatefulWidget {
 
 class _EditSectionPageState extends State<EditSectionPage> {
   final GlobalKey<SectionImageGalleryState> _galleryKey = GlobalKey();
+  List<SectionImage> _selectedImages = [];
   @override
   void initState() {
     super.initState();
@@ -78,6 +80,12 @@ class _EditSectionPageState extends State<EditSectionPage> {
                           isReadOnly: false,
                           maxImages: 20,
                           maxVideos: 5,
+                          initialImages: _selectedImages,
+                          onImagesChanged: (images) {
+                            setState(() {
+                              _selectedImages = images;
+                            });
+                          },
                         ),
                       ),
                       const SizedBox(height: 24),
