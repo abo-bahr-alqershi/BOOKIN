@@ -25,6 +25,7 @@ class BookingDetailsBloc
   final RemoveServiceFromBookingUseCase removeServiceFromBookingUseCase;
   final GetBookingServicesUseCase getBookingServicesUseCase;
   final BookingsRepository repository;
+  final ReviewsRepository reviewsRepository;
 
   String? _currentBookingId;
 
@@ -39,6 +40,7 @@ class BookingDetailsBloc
     required this.removeServiceFromBookingUseCase,
     required this.getBookingServicesUseCase,
     required this.repository,
+    required this.reviewsRepository,
   }) : super(BookingDetailsInitial()) {
     on<LoadBookingDetailsEvent>(_onLoadBookingDetails);
     on<RefreshBookingDetailsEvent>(_onRefreshBookingDetails);
@@ -100,11 +102,16 @@ class BookingDetailsBloc
               (services) => services,
             );
 
+            // جلب التقييم المرتبط بالحجز (إن وجد)
+            final reviewResult = await reviewsRepository.getReviewByBooking(event.bookingId);
+            final review = reviewResult.fold((_) => null, (r) => r);
+
             emit(BookingDetailsLoaded(
               booking: booking,
               bookingDetails: details,
               services: services,
               isRefreshing: false,
+              review: review,
             ));
           },
         );

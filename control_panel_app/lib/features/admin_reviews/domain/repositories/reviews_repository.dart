@@ -37,4 +37,7 @@ abstract class ReviewsRepository {
   Future<Either<Failure, List<ReviewResponse>>> getReviewResponses(String reviewId);
   
   Future<Either<Failure, bool>> deleteReviewResponse(String responseId);
+
+  /// احضر تقييم الحجز إن وجد
+  Future<Either<Failure, Review?>> getReviewByBooking(String bookingId);
 }
