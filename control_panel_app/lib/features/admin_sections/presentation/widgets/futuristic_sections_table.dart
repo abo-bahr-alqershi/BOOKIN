@@ -12,6 +12,7 @@ class FuturisticSectionsTable extends StatefulWidget {
   final Function(String) onEdit;
   final Function(Section) onDelete;
   final Function(Section) onToggleStatus;
+  final Function(Section)? onManageItems;
 
   const FuturisticSectionsTable({
     super.key,
@@ -20,6 +21,7 @@ class FuturisticSectionsTable extends StatefulWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onToggleStatus,
+    this.onManageItems,
   });
 
   @override
@@ -379,7 +381,7 @@ class _FuturisticSectionsTableState extends State<FuturisticSectionsTable> {
           _buildHeaderCell('الترتيب', 80),
           _buildHeaderCell('العناصر', 80),
           _buildHeaderCell('الحالة', 100),
-          _buildHeaderCell('الإجراءات', 150),
+          _buildHeaderCell('الإجراءات', 200),
         ],
       ),
     );
@@ -449,7 +451,7 @@ class _FuturisticSectionsTableState extends State<FuturisticSectionsTable> {
                 ),
               ),
               SizedBox(
-                width: 150,
+                width: 200,
                 child: _buildActions(section),
               ),
             ],
@@ -490,6 +492,13 @@ class _FuturisticSectionsTableState extends State<FuturisticSectionsTable> {
           tooltip: 'تعديل',
           color: AppTheme.primaryBlue,
         ),
+        if (widget.onManageItems != null)
+          _buildActionIcon(
+            icon: CupertinoIcons.square_stack_3d_down_right,
+            onTap: () => widget.onManageItems!(section),
+            tooltip: 'إدارة العناصر',
+            color: AppTheme.primaryPurple,
+          ),
         _buildActionIcon(
           icon: section.isActive
               ? CupertinoIcons.pause_circle

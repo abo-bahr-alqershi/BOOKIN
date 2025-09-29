@@ -561,6 +561,7 @@ class _SectionsListPageState extends State<SectionsListPage>
           onEdit: _navigateToEdit,
           onDelete: _confirmDelete,
           onToggleStatus: _toggleStatus,
+          onManageItems: _navigateToManageItems,
         ),
       ),
     );
