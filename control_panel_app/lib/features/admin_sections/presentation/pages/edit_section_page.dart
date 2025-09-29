@@ -8,6 +8,8 @@ import '../bloc/section_form/section_form_event.dart';
 import '../bloc/section_form/section_form_state.dart';
 import '../widgets/section_form_widget.dart';
 import '../widgets/section_image_gallery.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
 
 class EditSectionPage extends StatefulWidget {
   final String sectionId;
@@ -213,13 +215,16 @@ class _EditSectionPageState extends State<EditSectionPage> {
             padding: const EdgeInsets.all(12),
             child: SizedBox(
               height: MediaQuery.of(context).size.height * 0.7,
-              child: SectionImageGallery(
-                key: _galleryKey,
-                sectionId: widget.sectionId,
-                tempKey: null,
-                isReadOnly: false,
-                maxImages: 20,
-                maxVideos: 5,
+              child: BlocProvider(
+                create: (_) => di.sl<SectionImagesBloc>(),
+                child: SectionImageGallery(
+                  key: _galleryKey,
+                  sectionId: widget.sectionId,
+                  tempKey: null,
+                  isReadOnly: false,
+                  maxImages: 20,
+                  maxVideos: 5,
+                ),
               ),
             ),
           ),

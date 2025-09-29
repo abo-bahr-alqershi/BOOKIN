@@ -19,6 +19,7 @@ class SectionFormBloc extends Bloc<SectionFormEvent, SectionFormState> {
     required this.updateSection,
   }) : super(SectionFormInitial()) {
     on<InitializeSectionFormEvent>(_onInit);
+    on<AttachSectionTempKeyEvent>(_onAttachTempKey);
     on<UpdateSectionBasicInfoEvent>(_onUpdateBasic);
     on<UpdateSectionConfigEvent>(_onUpdateConfig);
     on<UpdateSectionAppearanceEvent>(_onUpdateAppearance);
@@ -40,6 +41,17 @@ class SectionFormBloc extends Bloc<SectionFormEvent, SectionFormState> {
   ) async {
     emit(SectionFormLoading());
     emit(SectionFormReady(sectionId: event.sectionId));
+  }
+
+  Future<void> _onAttachTempKey(
+    AttachSectionTempKeyEvent event,
+    Emitter<SectionFormState> emit,
+  ) async {
+    _ensureReady(emit);
+    if (state is SectionFormReady) {
+      final s = state as SectionFormReady;
+      emit(s.copyWith(tempKey: event.tempKey));
+    }
   }
 
   Future<void> _onUpdateBasic(
@@ -192,7 +204,7 @@ class SectionFormBloc extends Bloc<SectionFormEvent, SectionFormState> {
     );
 
     if ((s.sectionId ?? '').isEmpty) {
-      final res = await createSection(CreateSectionParams(payload));
+      final res = await createSection(CreateSectionParams(payload, tempKey: (state is SectionFormReady) ? (state as SectionFormReady).tempKey : null));
       res.fold(
         (failure) => emit(SectionFormError(message: failure.message)),
         (created) => emit(SectionFormSubmitted(sectionId: created.id)),

@@ -215,7 +215,8 @@ class SectionImageGalleryState extends State<SectionImageGallery>
 
     _imagesBloc!.add(UploadMultipleSectionImagesEvent(
       sectionId: newSectionId,
-      tempKey: widget.tempKey,
+      // بعد إنشاء القسم، نستخدم sectionId فقط لربط الصور
+      tempKey: null,
       filePaths: _localImages,
     ));
 

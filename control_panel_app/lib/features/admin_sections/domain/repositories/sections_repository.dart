@@ -20,7 +20,7 @@ abstract class SectionsRepository {
 
   Future<Either<Failure, Section>> getSectionById(String sectionId);
 
-  Future<Either<Failure, Section>> createSection(Section section);
+  Future<Either<Failure, Section>> createSection(Section section, {String? tempKey});
   Future<Either<Failure, Section>> updateSection(String sectionId, Section section);
   Future<Either<Failure, bool>> deleteSection(String sectionId);
   Future<Either<Failure, bool>> toggleSectionStatus(String sectionId, bool isActive);
