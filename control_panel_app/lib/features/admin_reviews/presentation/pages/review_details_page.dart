@@ -633,11 +633,91 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
             value: review.bookingId,
           ),
           const SizedBox(height: 16),
+          if (review.unitName != null && review.unitName!.isNotEmpty) ...[
+            _buildInfoRow(
+              icon: Icons.meeting_room_outlined,
+              label: 'اسم الوحدة',
+              value: review.unitName!,
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (review.propertyCity != null && review.propertyCity!.isNotEmpty) ...[
+            _buildInfoRow(
+              icon: Icons.location_city_outlined,
+              label: 'المدينة',
+              value: review.propertyCity!,
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (review.propertyAddress != null && review.propertyAddress!.isNotEmpty) ...[
+            _buildInfoRow(
+              icon: Icons.place_outlined,
+              label: 'العنوان',
+              value: review.propertyAddress!,
+            ),
+            const SizedBox(height: 16),
+          ],
           _buildInfoRow(
             icon: Icons.calendar_today_outlined,
             label: 'تاريخ التقييم',
             value: _formatDate(review.createdAt),
           ),
+          if (review.bookingCheckIn != null) ...[
+            const SizedBox(height: 16),
+            _buildInfoRow(
+              icon: Icons.login_outlined,
+              label: 'تسجيل الوصول',
+              value: _formatDate(review.bookingCheckIn!),
+            ),
+          ],
+          if (review.bookingCheckOut != null) ...[
+            const SizedBox(height: 16),
+            _buildInfoRow(
+              icon: Icons.logout_outlined,
+              label: 'تسجيل المغادرة',
+              value: _formatDate(review.bookingCheckOut!),
+            ),
+          ],
+          if (review.guestsCount != null) ...[
+            const SizedBox(height: 16),
+            _buildInfoRow(
+              icon: Icons.group_outlined,
+              label: 'عدد الضيوف',
+              value: review.guestsCount!.toString(),
+            ),
+          ],
+          if (review.bookingStatus != null && review.bookingStatus!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildInfoRow(
+              icon: Icons.assignment_turned_in_outlined,
+              label: 'حالة الحجز',
+              value: review.bookingStatus!,
+            ),
+          ],
+          if (review.bookingSource != null && review.bookingSource!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildInfoRow(
+              icon: Icons.public_outlined,
+              label: 'مصدر الحجز',
+              value: review.bookingSource!,
+            ),
+          ],
+          if (review.userEmail != null && review.userEmail!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildInfoRow(
+              icon: Icons.email_outlined,
+              label: 'البريد الإلكتروني للعميل',
+              value: review.userEmail!,
+            ),
+          ],
+          if (review.userPhone != null && review.userPhone!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildInfoRow(
+              icon: Icons.phone_outlined,
+              label: 'رقم هاتف العميل',
+              value: review.userPhone!,
+            ),
+          ],
           if (review.hasResponse) ...[
             const SizedBox(height: 16),
             _buildInfoRow(

@@ -8,6 +8,7 @@ class ReviewModel extends Review {
     required super.id,
     required super.bookingId,
     required super.propertyName,
+    super.unitName,
     required super.userName,
     required super.cleanliness,
     required super.service,
@@ -21,6 +22,15 @@ class ReviewModel extends Review {
     super.responseText,
     super.responseDate,
     super.respondedBy,
+    super.propertyCity,
+    super.propertyAddress,
+    super.userEmail,
+    super.userPhone,
+    super.bookingCheckIn,
+    super.bookingCheckOut,
+    super.guestsCount,
+    super.bookingStatus,
+    super.bookingSource,
   });
   
   factory ReviewModel.fromJson(Map<String, dynamic> json) {
@@ -28,6 +38,7 @@ class ReviewModel extends Review {
       id: json['id'] as String,
       bookingId: json['bookingId'] as String,
       propertyName: json['propertyName'] as String,
+      unitName: json['unitName'] as String?,
       userName: json['userName'] as String,
       cleanliness: (json['cleanliness'] as num).toDouble(),
       service: (json['service'] as num).toDouble(),
@@ -45,6 +56,19 @@ class ReviewModel extends Review {
           ? DateTime.parse(json['responseDate'] as String)
           : null,
       respondedBy: json['respondedBy'] as String?,
+      propertyCity: json['propertyCity'] as String?,
+      propertyAddress: json['propertyAddress'] as String?,
+      userEmail: json['userEmail'] as String?,
+      userPhone: json['userPhone'] as String?,
+      bookingCheckIn: json['bookingCheckIn'] != null
+          ? DateTime.parse(json['bookingCheckIn'] as String)
+          : null,
+      bookingCheckOut: json['bookingCheckOut'] != null
+          ? DateTime.parse(json['bookingCheckOut'] as String)
+          : null,
+      guestsCount: json['guestsCount'] as int?,
+      bookingStatus: json['bookingStatus'] as String?,
+      bookingSource: json['bookingSource'] as String?,
     );
   }
   
@@ -53,6 +77,7 @@ class ReviewModel extends Review {
       'id': id,
       'bookingId': bookingId,
       'propertyName': propertyName,
+      'unitName': unitName,
       'userName': userName,
       'cleanliness': cleanliness,
       'service': service,
@@ -66,6 +91,15 @@ class ReviewModel extends Review {
       'responseText': responseText,
       'responseDate': responseDate?.toIso8601String(),
       'respondedBy': respondedBy,
+      'propertyCity': propertyCity,
+      'propertyAddress': propertyAddress,
+      'userEmail': userEmail,
+      'userPhone': userPhone,
+      'bookingCheckIn': bookingCheckIn?.toIso8601String(),
+      'bookingCheckOut': bookingCheckOut?.toIso8601String(),
+      'guestsCount': guestsCount,
+      'bookingStatus': bookingStatus,
+      'bookingSource': bookingSource,
     };
   }
 }

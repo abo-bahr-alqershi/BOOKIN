@@ -61,13 +61,10 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
   @override
   Future<Either<Failure, Review>> getReviewDetails(String reviewId) async {
     try {
-      // Backend does not expose GET /api/admin/reviews/{id}; fallback to cache
-      final cached = await localDataSource.getCachedReviews();
-      final match = cached.firstWhere(
-        (r) => r.id == reviewId,
-        orElse: () => throw ServerException('Review not found in cache'),
-      );
-      return Right(match);
+      final review = await remoteDataSource.getReviewDetails(reviewId);
+      // Optionally update cache entry for this review
+      await localDataSource.upsertReview(review);
+      return Right(review);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
