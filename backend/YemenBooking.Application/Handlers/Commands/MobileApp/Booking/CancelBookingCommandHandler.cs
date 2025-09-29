@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using YemenBooking.Application.Commands.MobileApp.Bookings;
 using YemenBooking.Core.Interfaces;
 using YemenBooking.Application.Interfaces.Services;
+using YemenBooking.Core.Interfaces.Repositories;
 using YemenBooking.Core.Enums;
 using YemenBooking.Application.DTOs;
 using YemenBooking.Core.Interfaces.Repositories;
@@ -24,6 +25,7 @@ public class CancelBookingCommandHandler : IRequestHandler<CancelBookingCommand,
     private readonly IUnitAvailabilityRepository _availabilityRepository;
     private readonly IMediator _mediator;
     private readonly IIndexingService _indexingService;
+    private readonly IPropertyRepository _propertyRepository;
 
 
     public CancelBookingCommandHandler(
@@ -34,7 +36,8 @@ public class CancelBookingCommandHandler : IRequestHandler<CancelBookingCommand,
         IUnitRepository unitRepository,
         IUnitAvailabilityRepository availabilityRepository,
         IMediator mediator,
-        IIndexingService indexingService)
+        IIndexingService indexingService,
+        IPropertyRepository propertyRepository)
     {
         _unitOfWork = unitOfWork;
         _auditService = auditService;
@@ -44,6 +47,7 @@ public class CancelBookingCommandHandler : IRequestHandler<CancelBookingCommand,
         _availabilityRepository = availabilityRepository;
         _mediator = mediator;
         _indexingService = indexingService;
+        _propertyRepository = propertyRepository;
     }
 
     /// <inheritdoc />
@@ -62,7 +66,34 @@ public class CancelBookingCommandHandler : IRequestHandler<CancelBookingCommand,
         {
             return new ResultDto<CancelBookingResponse> { Success = false, Message = "غير مصرح بإلغاء هذا الحجز" };
         }
+        // سياسة الإلغاء: تحقق صارم قبل أي تعديل
+        var unit = await _unitRepository.GetByIdAsync(booking.UnitId, cancellationToken);
+        if (unit == null)
+        {
+            return new ResultDto<CancelBookingResponse> { Success = false, Message = "الوحدة غير موجودة" };
+        }
 
+        if (!unit.AllowsCancellation)
+        {
+            return new ResultDto<CancelBookingResponse> { Success = false, Message = "هذه الوحدة لا تسمح بإلغاء الحجز" };
+        }
+
+        int? windowDays = unit.CancellationWindowDays;
+        if (!windowDays.HasValue)
+        {
+            var propertyPolicy = await _propertyRepository.GetCancellationPolicyAsync(unit.PropertyId, cancellationToken);
+            windowDays = propertyPolicy?.CancellationWindowDays;
+        }
+        if (windowDays.HasValue)
+        {
+            var daysBeforeCheckIn = (booking.CheckIn - DateTime.UtcNow).TotalDays;
+            if (daysBeforeCheckIn < windowDays.Value)
+            {
+                return new ResultDto<CancelBookingResponse> { Success = false, Message = $"لا يمكن الإلغاء. يجب الإلغاء قبل {windowDays.Value} أيام من تاريخ الوصول" };
+            }
+        }
+
+        // Passed policy checks: proceed to cancel
         booking.Status = BookingStatus.Cancelled;
         booking.CancellationReason = request.CancellationReason;
         booking.UpdatedAt = DateTime.UtcNow;
