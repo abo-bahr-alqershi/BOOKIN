@@ -464,6 +464,7 @@ class _EditSectionPageState extends State<EditSectionPage>
                       // Update selected images when loaded from server
                       if (!_isDataLoaded && images.isNotEmpty) {
                         _selectedImages = images;
+                        _isDataLoaded = true;
                       }
                     }
 
@@ -479,6 +480,11 @@ class _EditSectionPageState extends State<EditSectionPage>
                         setState(() {
                           _selectedImages = images;
                         });
+                        // إذا كانت هناك صورة رئيسية محددة ضمن الصور، يتم تحديث الخلفية عند المستوى الدومين بواسطة الخلفية
+                        // هنا نضمن إعادة التحميل بعد أي تغيير لتنعكس صورة رئيسية جديدة في الواجهة
+                        try {
+                          _imagesBloc.add(RefreshSectionImagesEvent(sectionId: widget.sectionId));
+                        } catch (_) {}
                       },
                       onLocalImagesChanged: (paths) {
                         setState(() {

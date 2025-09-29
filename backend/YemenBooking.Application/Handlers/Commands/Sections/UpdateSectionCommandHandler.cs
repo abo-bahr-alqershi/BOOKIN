@@ -19,6 +19,13 @@ namespace YemenBooking.Application.Handlers.Commands.Sections
 		{
 			var entity = await _repository.GetByIdAsync(request.SectionId, cancellationToken);
 			if (entity == null) return ResultDto<SectionDto>.Failure("Section not found");
+			// منع تعديل Target/ContentType إذا كان لدى القسم عناصر معيّنة مسبقاً
+			var hasAssignedItems = (await _repository.GetPropertyItemsAsync(request.SectionId, cancellationToken)).Any()
+				|| (await _repository.GetUnitItemsAsync(request.SectionId, cancellationToken)).Any();
+			if (hasAssignedItems && (request.Target != entity.Target || request.ContentType != entity.ContentType))
+			{
+				return ResultDto<SectionDto>.Failure("لا يمكن تغيير الهدف أو نوع المحتوى بعد تعيين عناصر للقسم");
+			}
 			entity.Type = request.Type;
 			entity.ContentType = request.ContentType;
 			entity.DisplayStyle = request.DisplayStyle;

@@ -818,7 +818,11 @@ class _SectionsListPageState extends State<SectionsListPage>
 
   void _navigateToCreate() {
     HapticFeedback.lightImpact();
-    context.push('/admin/sections/create');
+    context.push('/admin/sections/create').then((value) {
+      if (value == true) {
+        _loadSections();
+      }
+    });
   }
 
   void _navigateToDetails(String sectionId) {
@@ -826,7 +830,11 @@ class _SectionsListPageState extends State<SectionsListPage>
   }
 
   void _navigateToEdit(String sectionId) {
-    context.push('/admin/sections/$sectionId/edit');
+    context.push('/admin/sections/$sectionId/edit').then((value) {
+      if (value == true) {
+        _loadSections();
+      }
+    });
   }
 
   void _toggleStatus(Section section) {
