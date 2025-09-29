@@ -440,8 +440,8 @@ class _EditSectionPageState extends State<EditSectionPage>
       barrierDismissible: true,
       builder: (BuildContext dialogContext) {
         return Dialog(
+          insetPadding: const EdgeInsets.all(10),
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(16),
           child: Container(
             decoration: BoxDecoration(
               color: AppTheme.darkCard.withOpacity(0.98),

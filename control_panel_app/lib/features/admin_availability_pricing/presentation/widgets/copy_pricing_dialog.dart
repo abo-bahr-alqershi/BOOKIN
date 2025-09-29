@@ -15,7 +15,12 @@ class CopyPricingDialog extends StatefulWidget {
   final DateTime? initialSourceEnd;
   final DateTime? initialTargetStart;
 
-  const CopyPricingDialog({super.key, required this.unitId, this.initialSourceStart, this.initialSourceEnd, this.initialTargetStart});
+  const CopyPricingDialog(
+      {super.key,
+      required this.unitId,
+      this.initialSourceStart,
+      this.initialSourceEnd,
+      this.initialTargetStart});
 
   static Future<void> show(
     BuildContext context, {
@@ -56,7 +61,9 @@ class _CopyPricingDialogState extends State<CopyPricingDialog> {
     super.initState();
     _sourceStart = widget.initialSourceStart;
     _sourceEnd = widget.initialSourceEnd ?? widget.initialSourceStart;
-    _targetStart = widget.initialTargetStart ?? widget.initialSourceStart ?? DateTime.now();
+    _targetStart = widget.initialTargetStart ??
+        widget.initialSourceStart ??
+        DateTime.now();
   }
 
   @override
@@ -66,19 +73,25 @@ class _CopyPricingDialogState extends State<CopyPricingDialog> {
     final maxH = size.height * 0.9;
 
     return Dialog(
+      insetPadding: const EdgeInsets.all(10),
       backgroundColor: Colors.transparent,
       child: Container(
         width: width,
-        constraints: BoxConstraints(maxHeight: maxH, maxWidth: size.width * 0.95),
+        constraints:
+            BoxConstraints(maxHeight: maxH, maxWidth: size.width * 0.95),
         decoration: BoxDecoration(
           gradient: LinearGradient(colors: [
             AppTheme.darkCard.withOpacity(0.95),
             AppTheme.darkCard.withOpacity(0.85),
           ]),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.primaryPurple.withOpacity(0.25), width: 1),
+          border: Border.all(
+              color: AppTheme.primaryPurple.withOpacity(0.25), width: 1),
           boxShadow: [
-            BoxShadow(color: AppTheme.primaryBlue.withOpacity(0.12), blurRadius: 24, spreadRadius: 4),
+            BoxShadow(
+                color: AppTheme.primaryBlue.withOpacity(0.12),
+                blurRadius: 24,
+                spreadRadius: 4),
           ],
         ),
         child: ClipRRect(
@@ -95,34 +108,70 @@ class _CopyPricingDialogState extends State<CopyPricingDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('الفترة المصدر', style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite, fontWeight: FontWeight.w600)),
+                        Text('الفترة المصدر',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppTheme.textWhite,
+                                fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
                         Row(children: [
-                          Expanded(child: _dateField('من تاريخ', _sourceStart, () => _pickDate(true))),
+                          Expanded(
+                              child: _dateField('من تاريخ', _sourceStart,
+                                  () => _pickDate(true))),
                           const SizedBox(width: 12),
-                          Expanded(child: _dateField('إلى تاريخ', _sourceEnd, () => _pickDate(false, source: true))),
+                          Expanded(
+                              child: _dateField('إلى تاريخ', _sourceEnd,
+                                  () => _pickDate(false, source: true))),
                         ]),
                         const SizedBox(height: 16),
-                        Text('الفترة الهدف', style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite, fontWeight: FontWeight.w600)),
+                        Text('الفترة الهدف',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppTheme.textWhite,
+                                fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
-                        _dateField('تاريخ البداية', _targetStart, () => _pickDate(false)),
+                        _dateField('تاريخ البداية', _targetStart,
+                            () => _pickDate(false)),
                         const SizedBox(height: 16),
                         Row(children: [
-                          Expanded(child: _numberField(label: 'عدد التكرار', initial: _repeatCount.toString(), onChanged: (v) => setState(() => _repeatCount = int.tryParse(v) ?? 1))),
+                          Expanded(
+                              child: _numberField(
+                                  label: 'عدد التكرار',
+                                  initial: _repeatCount.toString(),
+                                  onChanged: (v) => setState(() =>
+                                      _repeatCount = int.tryParse(v) ?? 1))),
                           const SizedBox(width: 12),
-                          Expanded(child: _dropdownField(label: 'نوع التعديل', value: _adjustmentType, items: const [
-                            DropdownMenuItem(value: 'none', child: Text('بدون')),
-                            DropdownMenuItem(value: 'fixed', child: Text('قيمة ثابتة')),
-                            DropdownMenuItem(value: 'percentage', child: Text('نسبة مئوية')),
-                          ], onChanged: (val) => setState(() => _adjustmentType = val ?? 'none'))),
+                          Expanded(
+                              child: _dropdownField(
+                                  label: 'نوع التعديل',
+                                  value: _adjustmentType,
+                                  items: const [
+                                    DropdownMenuItem(
+                                        value: 'none', child: Text('بدون')),
+                                    DropdownMenuItem(
+                                        value: 'fixed',
+                                        child: Text('قيمة ثابتة')),
+                                    DropdownMenuItem(
+                                        value: 'percentage',
+                                        child: Text('نسبة مئوية')),
+                                  ],
+                                  onChanged: (val) => setState(
+                                      () => _adjustmentType = val ?? 'none'))),
                         ]),
                         const SizedBox(height: 12),
-                        _numberField(label: 'قيمة التعديل', initial: _adjustmentValue.toString(), onChanged: (v) => setState(() => _adjustmentValue = double.tryParse(v) ?? 0)),
+                        _numberField(
+                            label: 'قيمة التعديل',
+                            initial: _adjustmentValue.toString(),
+                            onChanged: (v) => setState(() =>
+                                _adjustmentValue = double.tryParse(v) ?? 0)),
                         const SizedBox(height: 12),
                         Row(children: [
-                          Switch(value: _overwrite, onChanged: (v) => setState(() => _overwrite = v), activeThumbColor: AppTheme.warning),
+                          Switch(
+                              value: _overwrite,
+                              onChanged: (v) => setState(() => _overwrite = v),
+                              activeThumbColor: AppTheme.warning),
                           const SizedBox(width: 8),
-                          Text('استبدال البيانات الموجودة', style: AppTextStyles.bodySmall.copyWith(color: AppTheme.textWhite)),
+                          Text('استبدال البيانات الموجودة',
+                              style: AppTextStyles.bodySmall
+                                  .copyWith(color: AppTheme.textWhite)),
                         ]),
                       ],
                     ),
@@ -145,19 +194,28 @@ class _CopyPricingDialogState extends State<CopyPricingDialog> {
           AppTheme.primaryPurple.withOpacity(0.1),
           AppTheme.primaryBlue.withOpacity(0.05),
         ]),
-        border: Border(bottom: BorderSide(color: AppTheme.darkBorder.withOpacity(0.3), width: 1)),
+        border: Border(
+            bottom: BorderSide(
+                color: AppTheme.darkBorder.withOpacity(0.3), width: 1)),
       ),
       child: Row(children: [
         Container(
           width: 36,
           height: 36,
-          decoration: BoxDecoration(gradient: AppTheme.primaryGradient, borderRadius: BorderRadius.circular(8)),
-          child: const Icon(Icons.content_copy_rounded, color: Colors.white, size: 18),
+          decoration: BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+              borderRadius: BorderRadius.circular(8)),
+          child: const Icon(Icons.content_copy_rounded,
+              color: Colors.white, size: 18),
         ),
         const SizedBox(width: 12),
-        Text('نسخ الإعدادات', style: AppTextStyles.heading3.copyWith(color: AppTheme.textWhite, fontWeight: FontWeight.bold)),
+        Text('نسخ الإعدادات',
+            style: AppTextStyles.heading3.copyWith(
+                color: AppTheme.textWhite, fontWeight: FontWeight.bold)),
         const Spacer(),
-        IconButton(onPressed: () => Navigator.of(context).pop(), icon: Icon(Icons.close_rounded, color: AppTheme.textMuted)),
+        IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: Icon(Icons.close_rounded, color: AppTheme.textMuted)),
       ]),
     );
   }
@@ -165,7 +223,10 @@ class _CopyPricingDialogState extends State<CopyPricingDialog> {
   Widget _buildActions() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(border: Border(top: BorderSide(color: AppTheme.darkBorder.withOpacity(0.3), width: 1))),
+      decoration: BoxDecoration(
+          border: Border(
+              top: BorderSide(
+                  color: AppTheme.darkBorder.withOpacity(0.3), width: 1))),
       child: Row(children: [
         Expanded(
           child: GestureDetector(
@@ -175,9 +236,13 @@ class _CopyPricingDialogState extends State<CopyPricingDialog> {
               decoration: BoxDecoration(
                 color: AppTheme.darkSurface.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.darkBorder.withOpacity(0.3), width: 1),
+                border: Border.all(
+                    color: AppTheme.darkBorder.withOpacity(0.3), width: 1),
               ),
-              child: Center(child: Text('إلغاء', style: AppTextStyles.buttonMedium.copyWith(color: AppTheme.textMuted))),
+              child: Center(
+                  child: Text('إلغاء',
+                      style: AppTextStyles.buttonMedium
+                          .copyWith(color: AppTheme.textMuted))),
             ),
           ),
         ),
@@ -188,11 +253,19 @@ class _CopyPricingDialogState extends State<CopyPricingDialog> {
             onTap: _isLoading ? null : _submit,
             child: Container(
               height: 46,
-              decoration: BoxDecoration(gradient: AppTheme.primaryGradient, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(12)),
               child: Center(
                 child: _isLoading
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : Text('نسخ الإعدادات', style: AppTextStyles.buttonMedium.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
+                    : Text('نسخ الإعدادات',
+                        style: AppTextStyles.buttonMedium.copyWith(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ),
           ),
@@ -250,19 +323,32 @@ class _CopyPricingDialogState extends State<CopyPricingDialog> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [AppTheme.darkSurface.withOpacity(0.6), AppTheme.darkSurface.withOpacity(0.4)]),
+          gradient: LinearGradient(colors: [
+            AppTheme.darkSurface.withOpacity(0.6),
+            AppTheme.darkSurface.withOpacity(0.4)
+          ]),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.darkBorder.withOpacity(0.3), width: 1),
+          border:
+              Border.all(color: AppTheme.darkBorder.withOpacity(0.3), width: 1),
         ),
         child: Row(children: [
-          Icon(Icons.calendar_today_rounded, size: 18, color: AppTheme.primaryPurple),
+          Icon(Icons.calendar_today_rounded,
+              size: 18, color: AppTheme.primaryPurple),
           const SizedBox(width: 8),
           Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(label, style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted)),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(label,
+                  style: AppTextStyles.caption
+                      .copyWith(color: AppTheme.textMuted)),
               Text(
-                value != null ? DateFormat('dd/MM/yyyy').format(value) : 'اختر التاريخ',
-                style: AppTextStyles.bodySmall.copyWith(color: value != null ? AppTheme.textWhite : AppTheme.textMuted, fontWeight: FontWeight.w600),
+                value != null
+                    ? DateFormat('dd/MM/yyyy').format(value)
+                    : 'اختر التاريخ',
+                style: AppTextStyles.bodySmall.copyWith(
+                    color:
+                        value != null ? AppTheme.textWhite : AppTheme.textMuted,
+                    fontWeight: FontWeight.w600),
               ),
             ]),
           ),
@@ -271,29 +357,50 @@ class _CopyPricingDialogState extends State<CopyPricingDialog> {
     );
   }
 
-  Widget _numberField({required String label, required String initial, required void Function(String) onChanged}) {
+  Widget _numberField(
+      {required String label,
+      required String initial,
+      required void Function(String) onChanged}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite, fontWeight: FontWeight.w600)),
+      Text(label,
+          style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textWhite, fontWeight: FontWeight.w600)),
       const SizedBox(height: 8),
       TextFormField(
         initialValue: initial,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
+        keyboardType:
+            const TextInputType.numberWithOptions(decimal: true, signed: false),
         style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
         decoration: InputDecoration(
           filled: true,
           fillColor: AppTheme.darkSurface.withOpacity(0.5),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.darkBorder.withOpacity(0.3))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.darkBorder.withOpacity(0.3))),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.primaryPurple.withOpacity(0.5))),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: AppTheme.darkBorder.withOpacity(0.3))),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: AppTheme.darkBorder.withOpacity(0.3))),
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: AppTheme.primaryPurple.withOpacity(0.5))),
         ),
         onChanged: onChanged,
       ),
     ]);
   }
 
-  Widget _dropdownField({required String label, required String value, required List<DropdownMenuItem<String>> items, required ValueChanged<String?> onChanged}) {
+  Widget _dropdownField(
+      {required String label,
+      required String value,
+      required List<DropdownMenuItem<String>> items,
+      required ValueChanged<String?> onChanged}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite, fontWeight: FontWeight.w600)),
+      Text(label,
+          style: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textWhite, fontWeight: FontWeight.w600)),
       const SizedBox(height: 8),
       DropdownButtonFormField<String>(
         value: value,
@@ -302,9 +409,18 @@ class _CopyPricingDialogState extends State<CopyPricingDialog> {
         decoration: InputDecoration(
           filled: true,
           fillColor: AppTheme.darkSurface.withOpacity(0.5),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.darkBorder.withOpacity(0.3))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.darkBorder.withOpacity(0.3))),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.primaryPurple.withOpacity(0.5))),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: AppTheme.darkBorder.withOpacity(0.3))),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: AppTheme.darkBorder.withOpacity(0.3))),
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: AppTheme.primaryPurple.withOpacity(0.5))),
         ),
         items: items,
         onChanged: onChanged,
@@ -319,7 +435,8 @@ class _CopyPricingDialogState extends State<CopyPricingDialog> {
           content: const Text('يرجى تحديد الفترات المطلوبة'),
           backgroundColor: AppTheme.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
       return;
@@ -346,11 +463,11 @@ class _CopyPricingDialogState extends State<CopyPricingDialog> {
             content: const Text('تم نسخ الإعدادات بنجاح'),
             backgroundColor: AppTheme.success,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
       }
     });
   }
 }
-

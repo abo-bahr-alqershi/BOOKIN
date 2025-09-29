@@ -1184,7 +1184,9 @@ class _UsersListPageState extends State<UsersListPage>
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          context.read<UsersListBloc>().add(DeleteUserEvent(userId));
+                          context
+                              .read<UsersListBloc>()
+                              .add(DeleteUserEvent(userId));
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.error,
@@ -1587,6 +1589,7 @@ class _DeleteConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      insetPadding: const EdgeInsets.all(10),
       backgroundColor: Colors.transparent,
       child: Container(
         width: 400,
