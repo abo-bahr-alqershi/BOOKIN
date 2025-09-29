@@ -91,7 +91,7 @@ class _UnitItemCardState extends State<UnitItemCard>
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      height: _showMediaPanel ? 420 : 100,
+      height: _showMediaPanel ? 420 : 110,
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
@@ -129,7 +129,7 @@ class _UnitItemCardState extends State<UnitItemCard>
                 children: [
                   // Main Card Content
                   SizedBox(
-                    height: 100,
+                    height: 108,
                     child: _buildMainContent(),
                   ),
 
@@ -161,8 +161,8 @@ class _UnitItemCardState extends State<UnitItemCard>
       children: [
         // Image
         Container(
-          width: 100,
-          height: 100,
+          width: 108,
+          height: 108,
           decoration: const BoxDecoration(
             borderRadius: BorderRadius.only(
               topRight: Radius.circular(15),
@@ -196,9 +196,10 @@ class _UnitItemCardState extends State<UnitItemCard>
         // Content
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
@@ -250,7 +251,7 @@ class _UnitItemCardState extends State<UnitItemCard>
                       ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     // Capacity
