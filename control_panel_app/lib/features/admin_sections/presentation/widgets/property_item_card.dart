@@ -421,7 +421,7 @@ class _PropertyItemCardState extends State<PropertyItemCard>
               child: PropertyInSectionGallery(
                 key: _galleryKey,
                 propertyInSectionId: widget.property.id,
-                tempKey: _tempKey,
+                // tempKey: _tempKey,
                 isReadOnly: false,
                 maxImages: 20,
                 maxVideos: 5,
