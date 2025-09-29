@@ -177,7 +177,11 @@ class UnitsRepositoryImpl implements UnitsRepository {
             'fieldValues': _convertFieldValuesToString(fieldValues),
           if (images != null) 'images': images,
           if (allowsCancellation != null) 'allowsCancellation': allowsCancellation,
-          if (cancellationWindowDays != null) 'cancellationWindowDays': cancellationWindowDays,
+          // Always include cancellationWindowDays when allowsCancellation is explicitly true or when days is provided
+          if ((allowsCancellation ?? false) && cancellationWindowDays == null)
+            'cancellationWindowDays': null,
+          if (cancellationWindowDays != null)
+            'cancellationWindowDays': cancellationWindowDays,
         };
         final result = await remoteDataSource.updateUnit(unitId, unitData);
         return Right(result);
