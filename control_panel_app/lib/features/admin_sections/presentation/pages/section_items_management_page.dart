@@ -136,60 +136,67 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildActionBar(),
-            if (_showPreview && _section != null)
-              Container(
-                height: 300,
-                padding: const EdgeInsets.all(16),
-                child: SectionPreviewWidget(
-                  section: _section!,
-                  items: _getCurrentItems(), // استخراج العناصر من state
-                  isExpanded: false,
-                  onExpand: () => _showFullPreview(),
+        child: BlocListener<SectionItemsBloc, SectionItemsState>(
+          listener: (context, state) {
+            if (state is SectionItemsOperationSuccess) {
+              _loadItems();
+            }
+          },
+          child: Column(
+            children: [
+              _buildHeader(),
+              _buildActionBar(),
+              if (_showPreview && _section != null)
+                Container(
+                  height: 300,
+                  padding: const EdgeInsets.all(16),
+                  child: SectionPreviewWidget(
+                    section: _section!,
+                    items: _getCurrentItems(), // استخراج العناصر من state
+                    isExpanded: false,
+                    onExpand: () => _showFullPreview(),
+                  ),
                 ),
-              ),
-            Expanded(
-              child: BlocBuilder<SectionItemsBloc, SectionItemsState>(
-                builder: (context, state) {
-                  if (state is SectionItemsLoading) {
-                    return const LoadingWidget(
-                      type: LoadingType.futuristic,
-                      message: 'جاري تحميل العناصر...',
-                    );
-                  }
-
-                  if (state is SectionItemsError) {
-                    return CustomErrorWidget(
-                      message: state.message,
-                      onRetry: _loadItems,
-                    );
-                  }
-
-                  if (state is SectionItemsLoaded) {
-                    if (state.page.items.isEmpty) {
-                      return EmptyWidget(
-                        message: 'لا توجد عناصر في هذا القسم',
-                        actionWidget: _buildAddButton(),
+              Expanded(
+                child: BlocBuilder<SectionItemsBloc, SectionItemsState>(
+                  builder: (context, state) {
+                    if (state is SectionItemsLoading) {
+                      return const LoadingWidget(
+                        type: LoadingType.futuristic,
+                        message: 'جاري تحميل العناصر...',
                       );
                     }
 
-                    return SectionItemsList(
-                      items: state.page.items,
-                      target: widget.target,
-                      isReordering: _isReordering,
-                      onReorder: _handleReorder,
-                      onRemove: _handleRemove,
-                    );
-                  }
+                    if (state is SectionItemsError) {
+                      return CustomErrorWidget(
+                        message: state.message,
+                        onRetry: _loadItems,
+                      );
+                    }
 
-                  return const SizedBox.shrink();
-                },
+                    if (state is SectionItemsLoaded) {
+                      if (state.page.items.isEmpty) {
+                        return EmptyWidget(
+                          message: 'لا توجد عناصر في هذا القسم',
+                          actionWidget: _buildAddButton(),
+                        );
+                      }
+
+                      return SectionItemsList(
+                        items: state.page.items,
+                        target: widget.target,
+                        isReordering: _isReordering,
+                        onReorder: _handleReorder,
+                        onRemove: _handleRemove,
+                      );
+                    }
+
+                    return const SizedBox.shrink();
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       floatingActionButton: _buildFloatingActionButton(),
@@ -428,7 +435,6 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
         child: AddItemsDialog(
           sectionId: widget.sectionId,
           target: widget.target,
-          onItemsAdded: _loadItems,
         ),
       ),
     );

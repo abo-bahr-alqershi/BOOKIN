@@ -84,7 +84,7 @@ class _PropertyItemCardState extends State<PropertyItemCard>
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      height: _showMediaPanel ? 400 : 100,
+      height: _showMediaPanel ? 420 : 110,
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
@@ -122,7 +122,7 @@ class _PropertyItemCardState extends State<PropertyItemCard>
                 children: [
                   // Main Card Content
                   SizedBox(
-                    height: 100,
+                    height: 110,
                     child: _buildMainContent(),
                   ),
 
@@ -148,8 +148,8 @@ class _PropertyItemCardState extends State<PropertyItemCard>
       children: [
         // Image
         Container(
-          width: 100,
-          height: 100,
+          width: 110,
+          height: 110,
           decoration: const BoxDecoration(
             borderRadius: BorderRadius.only(
               topRight: Radius.circular(15),
@@ -186,6 +186,7 @@ class _PropertyItemCardState extends State<PropertyItemCard>
             padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
@@ -220,7 +221,7 @@ class _PropertyItemCardState extends State<PropertyItemCard>
                       ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Row(
                   children: [
                     Icon(
@@ -241,7 +242,7 @@ class _PropertyItemCardState extends State<PropertyItemCard>
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Row(
                   children: [
                     // Rating
