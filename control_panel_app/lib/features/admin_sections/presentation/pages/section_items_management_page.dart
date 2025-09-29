@@ -58,37 +58,40 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
   Widget _buildActionBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          _buildActionChip(
-            icon: CupertinoIcons.eye_fill,
-            label: 'معاينة القسم',
-            onTap: () => setState(() => _showPreview = !_showPreview),
-            isPrimary: _showPreview,
-          ),
-          const SizedBox(width: 8),
-          _buildActionChip(
-            icon: _isReordering
-                ? CupertinoIcons.checkmark_circle
-                : CupertinoIcons.arrow_up_arrow_down,
-            label: _isReordering ? 'حفظ الترتيب' : 'إعادة الترتيب',
-            onTap: () {
-              setState(() {
-                _isReordering = !_isReordering;
-              });
-              if (!_isReordering) {
-                _saveOrder();
-              }
-            },
-            isPrimary: _isReordering,
-          ),
-          const SizedBox(width: 8),
-          _buildActionChip(
-            icon: CupertinoIcons.arrow_clockwise,
-            label: 'تحديث',
-            onTap: _loadItems,
-          ),
-        ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _buildActionChip(
+              icon: CupertinoIcons.eye_fill,
+              label: 'معاينة القسم',
+              onTap: () => setState(() => _showPreview = !_showPreview),
+              isPrimary: _showPreview,
+            ),
+            const SizedBox(width: 8),
+            _buildActionChip(
+              icon: _isReordering
+                  ? CupertinoIcons.checkmark_circle
+                  : CupertinoIcons.arrow_up_arrow_down,
+              label: _isReordering ? 'حفظ الترتيب' : 'إعادة الترتيب',
+              onTap: () {
+                setState(() {
+                  _isReordering = !_isReordering;
+                });
+                if (!_isReordering) {
+                  _saveOrder();
+                }
+              },
+              isPrimary: _isReordering,
+            ),
+            const SizedBox(width: 8),
+            _buildActionChip(
+              icon: CupertinoIcons.arrow_clockwise,
+              label: 'تحديث',
+              onTap: _loadItems,
+            ),
+          ],
+        ),
       ),
     );
   }

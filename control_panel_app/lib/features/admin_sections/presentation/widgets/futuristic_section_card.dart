@@ -162,9 +162,12 @@ class _FuturisticSectionCardState extends State<FuturisticSectionCard>
                       ),
                     ),
                     const SizedBox(width: 8),
-                    SectionStatusBadge(
-                      isActive: widget.section.isActive,
-                      size: BadgeSize.small,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: SectionStatusBadge(
+                        isActive: widget.section.isActive,
+                        size: BadgeSize.small,
+                      ),
                     ),
                   ],
                 ),
@@ -231,9 +234,17 @@ class _FuturisticSectionCardState extends State<FuturisticSectionCard>
               ],
             ),
           ),
-          SectionStatusBadge(
-            isActive: widget.section.isActive,
-            size: BadgeSize.medium,
+          Flexible(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: SectionStatusBadge(
+                  isActive: widget.section.isActive,
+                  size: BadgeSize.medium,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -434,23 +445,28 @@ class _FuturisticSectionCardState extends State<FuturisticSectionCard>
                   ),
           ),
           child: Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 16,
-                  color: isPrimary ? Colors.white : AppTheme.textMuted,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  label,
-                  style: AppTextStyles.caption.copyWith(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    size: 16,
                     color: isPrimary ? Colors.white : AppTheme.textMuted,
-                    fontWeight: FontWeight.w600,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  Text(
+                    label,
+                    style: AppTextStyles.caption.copyWith(
+                      color: isPrimary ? Colors.white : AppTheme.textMuted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
