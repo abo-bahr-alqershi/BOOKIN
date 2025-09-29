@@ -420,13 +420,17 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
   }
 
   void _showAddItemsDialog() {
+    final bloc = context.read<SectionItemsBloc>();
     showDialog(
       fullscreenDialog: true,
       context: context,
-      builder: (context) => AddItemsDialog(
-        sectionId: widget.sectionId,
-        target: widget.target,
-        onItemsAdded: _loadItems,
+      builder: (dialogContext) => BlocProvider.value(
+        value: bloc,
+        child: AddItemsDialog(
+          sectionId: widget.sectionId,
+          target: widget.target,
+          onItemsAdded: _loadItems,
+        ),
       ),
     );
   }
