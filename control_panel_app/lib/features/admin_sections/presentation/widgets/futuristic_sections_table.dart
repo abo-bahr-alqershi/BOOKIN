@@ -33,6 +33,7 @@ class _FuturisticSectionsTableState extends State<FuturisticSectionsTable> {
   int? _hoveredIndex;
   String _sortColumn = 'order';
   bool _sortAscending = true;
+  late List<Section> _sorted;
 
   @override
   Widget build(BuildContext context) {
@@ -167,7 +168,6 @@ class _FuturisticSectionsTableState extends State<FuturisticSectionsTable> {
             onChanged: (value) {
               setState(() {
                 _sortColumn = value!;
-                _sortSections();
               });
             },
           ),
@@ -175,7 +175,6 @@ class _FuturisticSectionsTableState extends State<FuturisticSectionsTable> {
             onPressed: () {
               setState(() {
                 _sortAscending = !_sortAscending;
-                _sortSections();
               });
             },
             icon: Icon(
@@ -197,13 +196,15 @@ class _FuturisticSectionsTableState extends State<FuturisticSectionsTable> {
   }
 
   Widget _buildCompactView() {
+    _sorted = List<Section>.from(widget.sections);
+    _sortSections();
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: widget.sections.length,
+      itemCount: _sorted.length,
       itemBuilder: (context, index) {
-        final section = widget.sections[index];
+        final section = _sorted[index];
 
         return GestureDetector(
           onTap: () => widget.onSectionTap(section.id),
@@ -349,9 +350,10 @@ class _FuturisticSectionsTableState extends State<FuturisticSectionsTable> {
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: widget.sections.length,
+              // compute sorted list for table view
+              itemCount: (() { _sorted = List<Section>.from(widget.sections); _sortSections(); return _sorted.length; })(),
               itemBuilder: (context, index) {
-                return _buildTableRow(index, widget.sections[index]);
+                return _buildTableRow(index, _sorted[index]);
               },
             ),
           ],
@@ -552,7 +554,7 @@ class _FuturisticSectionsTableState extends State<FuturisticSectionsTable> {
   }
 
   void _sortSections() {
-    widget.sections.sort((a, b) {
+    _sorted.sort((a, b) {
       int result;
       switch (_sortColumn) {
         case 'order':
