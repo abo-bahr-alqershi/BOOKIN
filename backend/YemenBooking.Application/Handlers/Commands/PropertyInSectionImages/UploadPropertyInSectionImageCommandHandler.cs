@@ -64,10 +64,14 @@ namespace YemenBooking.Application.Handlers.Commands.PropertyInSectionImages
 
             var thumbnails = new ImageThumbnailsDto { Small = upload.FileUrl!, Medium = upload.FileUrl!, Large = upload.FileUrl!, Hd = upload.FileUrl! };
 
+            // Prefer TempKey flow: if TempKey provided, postpone FK binding to avoid FK violations
+            var usingTempKey = !string.IsNullOrWhiteSpace(request.TempKey);
+            var boundPropertyInSectionId = usingTempKey ? (Guid?)null : request.PropertyInSectionId;
+
             var entity = new PropertyInSectionImage
             {
                 Id = Guid.NewGuid(),
-                PropertyInSectionId = request.PropertyInSectionId,
+                PropertyInSectionId = boundPropertyInSectionId,
                 TempKey = string.IsNullOrWhiteSpace(request.TempKey) ? null : request.TempKey,
                 Name = fileName,
                 Url = upload.FileUrl!,
@@ -104,7 +108,23 @@ namespace YemenBooking.Application.Handlers.Commands.PropertyInSectionImages
                 }
             }
 
-            await _repository.CreateAsync(entity, cancellationToken);
+            try
+            {
+                await _repository.CreateAsync(entity, cancellationToken);
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+            {
+                // If FK violation occurs due to invalid PropertyInSectionId, fallback to TempKey-only insert
+                if (!string.IsNullOrWhiteSpace(request.TempKey))
+                {
+                    entity.PropertyInSectionId = null;
+                    await _repository.CreateAsync(entity, cancellationToken);
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             var dto = new ImageDto
             {
