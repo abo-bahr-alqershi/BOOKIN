@@ -1258,8 +1258,46 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
             ),
           );
 
-      // إرسال الطلب النهائي
-      Future.delayed(const Duration(milliseconds: 100), () {
+      // تأكد من أن معايير الفلترة والترتيب يتم إرسالها كسلاسل JSON صحيحة
+      final String? filterJson = _filterCriteria.isNotEmpty
+          ? (() {
+              try {
+                return _filterCriteria.isNotEmpty
+                    ? const JsonEncoder.withIndent('  ').convert(_filterCriteria)
+                    : null;
+              } catch (_) {
+                return _filterCriteria.toString();
+              }
+            })()
+          : null;
+
+      final String? sortJson = _sortCriteria.isNotEmpty
+          ? (() {
+              try {
+                return const JsonEncoder.withIndent('  ').convert(_sortCriteria);
+              } catch (_) {
+                return _sortCriteria.toString();
+              }
+            })()
+          : null;
+
+      if (filterJson != null || sortJson != null) {
+        context.read<SectionFormBloc>().add(
+              UpdateSectionFiltersEvent(
+                filterCriteriaJson: filterJson,
+                sortCriteriaJson: sortJson,
+                cityName: _filterCriteria['cityName'],
+                propertyTypeId: _filterCriteria['propertyTypeId'],
+                unitTypeId: _filterCriteria['unitTypeId'],
+                minPrice: _filterCriteria['minPrice'],
+                maxPrice: _filterCriteria['maxPrice'],
+                minRating: _filterCriteria['minRating'],
+              ),
+            );
+      }
+
+      // إرسال الطلب النهائي بعد التأكد من تزامن تحديث الحالة
+      Future.delayed(const Duration(milliseconds: 120), () {
         context.read<SectionFormBloc>().add(SubmitSectionFormEvent());
       });
     } else {
