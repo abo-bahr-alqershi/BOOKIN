@@ -198,8 +198,15 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
         data: propertyData,
         options: Options(headers: headers),
       );
-      
-      return response.data['success'] == true;
+
+      final data = response.data;
+      if (data is Map) {
+        final success = data['success'] == true;
+        if (success) return true;
+        final message = data['message'] ?? data['error'] ?? 'فشل تحديث العقار';
+        throw ServerException(message);
+      }
+      throw ServerException('فشل تحديث العقار: رد غير متوقع من الخادم');
     } on api.ApiException catch (e) {
       throw ServerException(e.message);
     } on DioException catch (e) {

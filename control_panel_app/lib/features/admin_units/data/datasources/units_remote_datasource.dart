@@ -155,7 +155,15 @@ class UnitsRemoteDataSourceImpl implements UnitsRemoteDataSource {
     try {
       final response =
           await apiClient.put('/api/admin/Units/$unitId', data: unitData);
-      return response.data['success'] ?? false;
+      final data = response.data;
+      if (data is Map) {
+        final success = data['success'] == true;
+        if (success) return true;
+        final message = data['message'] ?? data['error'] ?? 'فشل تحديث الوحدة';
+        throw ServerException(message);
+      }
+      // Unexpected shape: treat as failure with generic message
+      throw ServerException('فشل تحديث الوحدة: رد غير متوقع من الخادم');
     } on api.ApiException catch (e) {
       throw ServerException(e.message);
     } on DioException catch (e) {
