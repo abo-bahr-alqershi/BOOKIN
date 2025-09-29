@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../../domain/entities/booking.dart';
 import '../../../domain/entities/booking_details.dart';
+import '../../../..//features/admin_reviews/domain/entities/review.dart' as admin_review;
 
 abstract class BookingDetailsState extends Equatable {
   const BookingDetailsState();
@@ -21,12 +22,14 @@ class BookingDetailsLoaded extends BookingDetailsState {
   final BookingDetails? bookingDetails;
   final List<Service> services;
   final bool isRefreshing;
+  final admin_review.Review? review;
 
   const BookingDetailsLoaded({
     required this.booking,
     this.bookingDetails,
     required this.services,
     this.isRefreshing = false,
+    this.review,
   });
 
   BookingDetailsLoaded copyWith({
@@ -34,17 +37,19 @@ class BookingDetailsLoaded extends BookingDetailsState {
     BookingDetails? bookingDetails,
     List<Service>? services,
     bool? isRefreshing,
+    admin_review.Review? review,
   }) {
     return BookingDetailsLoaded(
       booking: booking ?? this.booking,
       bookingDetails: bookingDetails ?? this.bookingDetails,
       services: services ?? this.services,
       isRefreshing: isRefreshing ?? this.isRefreshing,
+      review: review ?? this.review,
     );
   }
 
   @override
-  List<Object?> get props => [booking, bookingDetails, services, isRefreshing];
+  List<Object?> get props => [booking, bookingDetails, services, isRefreshing, review];
 }
 
 /// ❌ حالة الخطأ

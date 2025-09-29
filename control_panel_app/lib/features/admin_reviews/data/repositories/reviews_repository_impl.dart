@@ -129,6 +129,20 @@ class ReviewsRepositoryImpl implements ReviewsRepository {
       return Left(UnknownFailure(e.toString()));
     }
   }
+
+  Future<Either<Failure, Review?>> getReviewByBooking(String bookingId) async {
+    try {
+      final review = await remoteDataSource.getReviewByBooking(bookingId);
+      if (review != null) {
+        await localDataSource.upsertReview(review);
+      }
+      return Right(review);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
   
   @override
   Future<Either<Failure, List<ReviewResponse>>> getReviewResponses(

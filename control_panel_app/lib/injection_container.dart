@@ -1595,6 +1595,7 @@ void _initAdminBookings() {
         getBookingServicesUseCase:
             sl<ab_uc_get_services.GetBookingServicesUseCase>(),
         repository: sl<ab_repo.BookingsRepository>(),
+        reviewsRepository: sl<ar_repo.ReviewsRepository>(),
       ));
 
   // Use cases - bookings

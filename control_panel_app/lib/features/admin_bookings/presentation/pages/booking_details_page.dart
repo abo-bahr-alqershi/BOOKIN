@@ -127,6 +127,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage>
                       _buildPaymentSection(state),
                       _buildServicesSection(state),
                       _buildActivityTimeline(state),
+                      _buildReviewSection(state),
                       const SizedBox(height: 100),
                     ],
                   ),
@@ -502,6 +503,104 @@ class _BookingDetailsPageState extends State<BookingDetailsPage>
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildReviewSection(BookingDetailsLoaded state) {
+    final review = state.review;
+    if (review == null) return const SizedBox.shrink();
+
+    return _buildGlassCard(
+      title: 'تقييم الضيف',
+      icon: CupertinoIcons.star_fill,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: List.generate(5, (index) {
+              final value = review.averageRating;
+              final filled = index < value.floor();
+              final half = index == value.floor() && (value % 1) != 0;
+              return Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(
+                  half
+                      ? CupertinoIcons.star_lefthalf_fill
+                      : (filled
+                          ? CupertinoIcons.star_fill
+                          : CupertinoIcons.star),
+                  size: 18,
+                  color: AppTheme.warning,
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 12),
+          if (review.comment.isNotEmpty)
+            _buildDetailRow(
+              label: 'تعليق',
+              value: review.comment,
+              icon: CupertinoIcons.text_bubble,
+              isMultiline: true,
+            ),
+          const SizedBox(height: 8),
+          _buildDetailRow(
+            label: 'النظافة',
+            value: review.cleanliness.toStringAsFixed(1),
+            icon: CupertinoIcons.sparkles,
+          ),
+          _buildDetailRow(
+            label: 'الخدمة',
+            value: review.service.toStringAsFixed(1),
+            icon: CupertinoIcons.person_2,
+          ),
+          _buildDetailRow(
+            label: 'الموقع',
+            value: review.location.toStringAsFixed(1),
+            icon: CupertinoIcons.location_solid,
+          ),
+          _buildDetailRow(
+            label: 'القيمة',
+            value: review.value.toStringAsFixed(1),
+            icon: CupertinoIcons.money_dollar,
+          ),
+          const SizedBox(height: 8),
+          _buildDetailRow(
+            label: 'تاريخ التقييم',
+            value: Formatters.formatDate(review.createdAt),
+            icon: CupertinoIcons.calendar_today,
+          ),
+          if (review.responseText != null && review.responseText!.isNotEmpty)
+            _buildDetailRow(
+              label: 'رد الإدارة',
+              value: review.responseText!,
+              icon: CupertinoIcons.reply,
+              isMultiline: true,
+            ),
+          if (review.images.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: review.images.map((img) {
+                  return Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      image: DecorationImage(
+                        image: NetworkImage(img.url),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
