@@ -897,6 +897,7 @@ class _EditUnitPageState extends State<EditUnitPage>
                       _cancellationWindowDays = null;
                       _cancellationDaysController.text = '';
                     }
+                    _hasChanges = _checkForChanges();
                   });
                   _updateCancellationPolicy();
                 },
@@ -932,6 +933,7 @@ class _EditUnitPageState extends State<EditUnitPage>
                 onChanged: (value) {
                   setState(() {
                     _cancellationWindowDays = int.tryParse(value);
+                    _hasChanges = _checkForChanges();
                   });
                   _updateCancellationPolicy();
                 },
@@ -1898,7 +1900,13 @@ class _EditUnitPageState extends State<EditUnitPage>
     // التحقق من تغييرات الحقول الديناميكية
     final dynamicFieldsChanged = _checkDynamicFieldsChanges();
 
-    return basicFieldsChanged || imagesChanged || dynamicFieldsChanged;
+    // التحقق من تغييرات سياسة الإلغاء
+    final cancellationChanged =
+        _allowsCancellation != _originalUnit!.allowsCancellation ||
+            ((_cancellationWindowDays ?? -1) !=
+                (_originalUnit!.cancellationWindowDays ?? -1));
+
+    return basicFieldsChanged || imagesChanged || dynamicFieldsChanged || cancellationChanged;
   }
 
   // دالة للتحقق من تغييرات الحقول الديناميكية
@@ -1944,7 +1952,10 @@ class _EditUnitPageState extends State<EditUnitPage>
                 (_originalUnit!.adultsCapacity ?? _originalUnit!.maxCapacity) ||
             _childrenCapacity != (_originalUnit!.childrenCapacity ?? 0) ||
             _pricingMethod !=
-                _getPricingMethodString(_originalUnit!.pricingMethod);
+                _getPricingMethodString(_originalUnit!.pricingMethod) ||
+            _allowsCancellation != _originalUnit!.allowsCancellation ||
+            ((_cancellationWindowDays ?? -1) !=
+                (_originalUnit!.cancellationWindowDays ?? -1));
       case 2: // Features, Images & Dynamic Fields
         return _featuresController.text != _originalUnit!.customFeatures ||
             _imagesChanged ||
@@ -2051,6 +2062,13 @@ class _EditUnitPageState extends State<EditUnitPage>
                 _getPricingMethodString(_originalUnit!.pricingMethod);
             _existingImages = List<String>.from(_originalImages);
             _imagesChanged = false;
+
+            // إعادة تعيين سياسة الإلغاء
+            _allowsCancellation = _originalUnit!.allowsCancellation;
+            _cancellationWindowDays = _originalUnit!.cancellationWindowDays;
+            _cancellationDaysController.text = _cancellationWindowDays != null
+                ? _cancellationWindowDays.toString()
+                : '';
 
             // إعادة تعيين الحقول الديناميكية
             _dynamicFieldValues =
