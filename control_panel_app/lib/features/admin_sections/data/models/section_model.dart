@@ -154,8 +154,7 @@ class SectionModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
+    final map = <String, dynamic>{
       'type': type.apiValue,
       'contentType': contentType.apiValue,
       'displayStyle': displayStyle.apiValue,
@@ -187,6 +186,11 @@ class SectionModel {
       'endDate': endDate?.toIso8601String(),
       'metadata': metadata,
     };
+    // Only include id when it's non-empty to avoid backend validation issues on create
+    if (id.isNotEmpty) {
+      map['id'] = id;
+    }
+    return map;
   }
 
   domain.Section toEntity() {
