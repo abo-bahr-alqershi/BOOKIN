@@ -156,6 +156,10 @@ class _BookingDetailsPageState extends State<BookingDetailsPage>
           onPressed: () => _shareBooking(booking.id),
         ),
         _buildActionButton(
+          icon: CupertinoIcons.time,
+          onPressed: () => context.push('/admin/bookings/${booking.id}/audit'),
+        ),
+        _buildActionButton(
           icon: CupertinoIcons.printer,
           onPressed: () => _printBooking(booking.id),
         ),

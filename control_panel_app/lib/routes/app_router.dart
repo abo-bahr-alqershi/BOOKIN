@@ -133,6 +133,7 @@ import 'route_guards.dart' as guards;
 // Admin Bookings pages & blocs
 import 'package:bookn_cp_app/features/admin_bookings/presentation/pages/bookings_list_page.dart';
 import 'package:bookn_cp_app/features/admin_bookings/presentation/pages/booking_details_page.dart';
+import 'package:bookn_cp_app/features/admin_bookings/presentation/pages/booking_audit_timeline_page.dart';
 import 'package:bookn_cp_app/features/admin_bookings/presentation/pages/booking_calendar_page.dart';
 import 'package:bookn_cp_app/features/admin_bookings/presentation/pages/booking_timeline_page.dart';
 import 'package:bookn_cp_app/features/admin_bookings/presentation/pages/booking_analytics_page.dart';
@@ -457,6 +458,18 @@ class AppRouter {
                 ..add(ab_details_event.LoadBookingDetailsEvent(
                     bookingId: bookingId)),
               child: BookingDetailsPage(bookingId: bookingId),
+            );
+          },
+        ),
+
+        // Booking Audit Timeline
+        GoRoute(
+          path: '/admin/bookings/:bookingId/audit',
+          builder: (context, state) {
+            final bookingId = state.pathParameters['bookingId']!;
+            return BlocProvider<al_bloc.AuditLogsBloc>(
+              create: (_) => di.sl<al_bloc.AuditLogsBloc>(),
+              child: BookingAuditTimelinePage(bookingId: bookingId),
             );
           },
         ),
