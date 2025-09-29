@@ -96,10 +96,6 @@ class _CreateSectionPageState extends State<CreateSectionPage>
       listener: (context, state) {
         if (state is SectionFormSubmitted) {
           _showSuccessMessage('تم إنشاء القسم بنجاح');
-          // Upload any locally staged media to the newly created section
-          try {
-            _galleryKey.currentState?.uploadLocalImages(state.sectionId);
-          } catch (_) {}
           // Clear tempKey after successful save
           _tempKey = null;
           Future.delayed(const Duration(milliseconds: 500), () {
