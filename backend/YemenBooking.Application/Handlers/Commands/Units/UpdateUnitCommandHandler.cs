@@ -79,7 +79,7 @@ namespace YemenBooking.Application.Handlers.Commands.Units
 
             // التحقق المنطقي لنافذة الإلغاء
             if (request.AllowsCancellation.HasValue && request.AllowsCancellation.Value == false && request.CancellationWindowDays.HasValue)
-                return ResultDto<bool>.Failed("لا يمكن تحديد نافذة إلغاء إذا كانت الإلغاء غير مسموح");
+                request.CancellationWindowDays = null; // لا يمكن تعيين نافذة إلغاء إذا كانت الإلغاء غير مسموح به
             if (request.CancellationWindowDays.HasValue && request.CancellationWindowDays.Value < 0)
                 return ResultDto<bool>.Failed("نافذة الإلغاء يجب أن تكون صفر أو أكثر");
 
