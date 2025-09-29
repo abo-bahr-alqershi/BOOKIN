@@ -93,15 +93,19 @@ class _SectionItemsListState extends State<SectionItemsList> {
         item is PropertyInSection) {
       return PropertyItemCard(
         property: item,
-        onRemove:
-            widget.onRemove != null ? () => widget.onRemove!(item.id) : null,
+        onRemove: widget.onRemove != null
+            ? () => widget.onRemove!(item.id)
+            : null,
         isReordering: widget.isReordering,
       );
     } else if (widget.target == SectionTarget.units && item is UnitInSection) {
       return UnitItemCard(
         unit: item,
-        onRemove:
-            widget.onRemove != null ? () => widget.onRemove!(item.id) : null,
+        // Backend returns UnitInSectionId separately; our model maps id from JSON['id'].
+        // If ever needed, adjust here by preferring a UnitInSectionId field on the model.
+        onRemove: widget.onRemove != null
+            ? () => widget.onRemove!(item.id)
+            : null,
         isReordering: widget.isReordering,
       );
     }

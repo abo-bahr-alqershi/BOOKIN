@@ -12,6 +12,7 @@ import '../widgets/section_preview_widget.dart';
 import '../../domain/usecases/sections/get_section_by_id_usecase.dart';
 import '../../../../core/widgets/empty_widget.dart';
 import '../../../../core/enums/section_target.dart';
+import '../../../../core/models/section_item_dto.dart';
 import '../../domain/entities/property_in_section.dart';
 import '../../domain/entities/unit_in_section.dart';
 import '../bloc/section_items/section_items_bloc.dart';
@@ -42,6 +43,7 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
   bool _isReordering = false;
   Section? _section;
   bool _showPreview = false;
+  List<dynamic> _orderedItems = [];
 
   @override
   void initState() {
@@ -139,6 +141,9 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
         child: BlocListener<SectionItemsBloc, SectionItemsState>(
           listener: (context, state) {
             if (state is SectionItemsOperationSuccess) {
+              setState(() {
+                _isReordering = false;
+              });
               _loadItems();
             }
           },
@@ -175,6 +180,10 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
                     }
 
                     if (state is SectionItemsLoaded) {
+                      // حافظ على نسخة محلية لإعادة الترتيب
+                      if (!_isReordering || _orderedItems.isEmpty) {
+                        _orderedItems = List<dynamic>.from(state.page.items);
+                      }
                       if (state.page.items.isEmpty) {
                         return EmptyWidget(
                           message: 'لا توجد عناصر في هذا القسم',
@@ -183,7 +192,7 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
                       }
 
                       return SectionItemsList(
-                        items: state.page.items,
+                        items: _isReordering ? _orderedItems : state.page.items,
                         target: widget.target,
                         isReordering: _isReordering,
                         onReorder: _handleReorder,
@@ -442,7 +451,15 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
   }
 
   void _handleReorder(int oldIndex, int newIndex) {
-    // TODO: Implement reorder logic
+    if (_orderedItems.isEmpty) return;
+    if (oldIndex < 0 || oldIndex >= _orderedItems.length) return;
+    if (newIndex < 0 || newIndex >= _orderedItems.length) return;
+
+    setState(() {
+      if (oldIndex < newIndex) newIndex -= 1;
+      final item = _orderedItems.removeAt(oldIndex);
+      _orderedItems.insert(newIndex, item);
+    });
   }
 
   void _handleRemove(String itemId) {
@@ -455,6 +472,22 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
   }
 
   void _saveOrder() {
-    // TODO: Implement save order logic
+    if (_orderedItems.isEmpty) return;
+    final orders = <ItemOrderDto>[];
+    for (var i = 0; i < _orderedItems.length; i++) {
+      final item = _orderedItems[i];
+      final itemId = (item as dynamic).id?.toString() ?? '';
+      if (itemId.isEmpty) continue;
+      orders.add(ItemOrderDto(itemId: itemId, sortOrder: i + 1));
+    }
+
+    if (orders.isEmpty) return;
+
+    context.read<SectionItemsBloc>().add(
+          ReorderSectionItemsEvent(
+            sectionId: widget.sectionId,
+            orders: orders,
+          ),
+        );
   }
 }
