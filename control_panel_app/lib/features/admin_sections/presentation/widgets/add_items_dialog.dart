@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:ui';
+import 'dart:async';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/enums/section_target.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
+import '../../../helpers/domain/entities/search_result.dart';
+import '../../../helpers/domain/usecases/search_properties_usecase.dart';
+import '../../../helpers/domain/usecases/search_units_usecase.dart';
+import '../../../helpers/presentation/widgets/search_item_card.dart';
 import '../bloc/section_items/section_items_bloc.dart';
 import '../bloc/section_items/section_items_event.dart';
 
@@ -26,13 +32,43 @@ class AddItemsDialog extends StatefulWidget {
 
 class _AddItemsDialogState extends State<AddItemsDialog> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final List<String> _selectedIds = [];
   bool _isLoading = false;
+  bool _isLoadingMore = false;
+  bool _hasError = false;
+  String? _errorMessage;
+  Timer? _debounce;
+
+  // Pagination
+  int _currentPage = 1;
+  int _totalPages = 1;
+
+  // Data
+  List<SearchResult> _items = [];
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
+    _debounce?.cancel();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+    _loadItems();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoadingMore && _currentPage < _totalPages) {
+        _loadMoreItems();
+      }
+    }
   }
 
   @override
@@ -156,7 +192,12 @@ class _AddItemsDialogState extends State<AddItemsDialog> {
             border: InputBorder.none,
           ),
           onChanged: (value) {
-            // TODO: Implement search
+            _debounce?.cancel();
+            _debounce = Timer(const Duration(milliseconds: 450), () {
+              if (value == _searchController.text) {
+                _loadItems(isRefresh: true);
+              }
+            });
           },
         ),
       ),
@@ -164,91 +205,70 @@ class _AddItemsDialogState extends State<AddItemsDialog> {
   }
 
   Widget _buildItemsList() {
-    // TODO: Load items based on target
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: ListView.builder(
-        itemCount: 10, // Placeholder
-        itemBuilder: (context, index) {
-          final isSelected = _selectedIds.contains('item_$index');
+    if (_isLoading && _items.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 40),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
 
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                if (isSelected) {
-                  _selectedIds.remove('item_$index');
-                } else {
-                  _selectedIds.add('item_$index');
-                }
-              });
-            },
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: isSelected
-                    ? LinearGradient(
-                        colors: [
-                          AppTheme.primaryBlue.withValues(alpha: 0.1),
-                          AppTheme.primaryPurple.withValues(alpha: 0.05),
-                        ],
-                      )
-                    : null,
-                color: isSelected
-                    ? null
-                    : AppTheme.darkCard.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected
-                      ? AppTheme.primaryBlue.withValues(alpha: 0.5)
-                      : AppTheme.darkBorder.withValues(alpha: 0.3),
-                  width: isSelected ? 2 : 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Checkbox(
-                    value: isSelected,
-                    onChanged: (value) {
-                      setState(() {
-                        if (value == true) {
-                          _selectedIds.add('item_$index');
-                        } else {
-                          _selectedIds.remove('item_$index');
-                        }
-                      });
-                    },
-                    activeColor: AppTheme.primaryBlue,
-                    checkColor: Colors.white,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'عنصر رقم ${index + 1}',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppTheme.textWhite,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'وصف العنصر',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppTheme.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+    if (_hasError) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _errorMessage ?? 'حدث خطأ أثناء التحميل',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textMuted),
             ),
+            const SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: () => _loadItems(isRefresh: true),
+              child: const Text('إعادة المحاولة'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_items.isEmpty) {
+      return Center(
+        child: Text(
+          'لا توجد نتائج',
+          style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textMuted),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.only(bottom: 16),
+      itemCount: _items.length + (_isLoadingMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index == _items.length) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: CircularProgressIndicator()),
           );
-        },
-      ),
+        }
+
+        final item = _items[index];
+        final isSelected = _selectedIds.contains(item.id);
+
+        return SearchItemCard(
+          item: item,
+          isSelected: isSelected,
+          onTap: () {
+            setState(() {
+              if (isSelected) {
+                _selectedIds.remove(item.id);
+              } else {
+                _selectedIds.add(item.id);
+              }
+            });
+          },
+        );
+      },
     );
   }
 
@@ -357,5 +377,103 @@ class _AddItemsDialogState extends State<AddItemsDialog> {
 
     widget.onItemsAdded?.call();
     Navigator.of(context).pop();
+  }
+
+  Future<void> _loadItems({bool isRefresh = false}) async {
+    if (isRefresh) {
+      _currentPage = 1;
+      _items.clear();
+    }
+
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+
+    if (widget.target == SectionTarget.properties) {
+      final usecase = di.sl<SearchPropertiesUseCase>();
+      final result = await usecase(
+        searchTerm: _searchController.text.isEmpty ? null : _searchController.text,
+        pageNumber: _currentPage,
+        pageSize: 20,
+      );
+      result.fold((failure) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = failure.message;
+          _isLoading = false;
+        });
+      }, (page) {
+        setState(() {
+          _items = page.items;
+          _totalPages = page.totalPages;
+          _isLoading = false;
+        });
+      });
+    } else {
+      final usecase = di.sl<SearchUnitsUseCase>();
+      final result = await usecase(
+        searchTerm: _searchController.text.isEmpty ? null : _searchController.text,
+        pageNumber: _currentPage,
+        pageSize: 20,
+      );
+      result.fold((failure) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = failure.message;
+          _isLoading = false;
+        });
+      }, (page) {
+        setState(() {
+          _items = page.items;
+          _totalPages = page.totalPages;
+          _isLoading = false;
+        });
+      });
+    }
+  }
+
+  Future<void> _loadMoreItems() async {
+    if (_isLoadingMore) return;
+    setState(() => _isLoadingMore = true);
+    _currentPage++;
+
+    if (widget.target == SectionTarget.properties) {
+      final usecase = di.sl<SearchPropertiesUseCase>();
+      final result = await usecase(
+        searchTerm: _searchController.text.isEmpty ? null : _searchController.text,
+        pageNumber: _currentPage,
+        pageSize: 20,
+      );
+      result.fold((failure) {
+        _currentPage--;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(failure.message)),
+        );
+      }, (page) {
+        setState(() {
+          _items.addAll(page.items);
+        });
+      });
+    } else {
+      final usecase = di.sl<SearchUnitsUseCase>();
+      final result = await usecase(
+        searchTerm: _searchController.text.isEmpty ? null : _searchController.text,
+        pageNumber: _currentPage,
+        pageSize: 20,
+      );
+      result.fold((failure) {
+        _currentPage--;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(failure.message)),
+        );
+      }, (page) {
+        setState(() {
+          _items.addAll(page.items);
+        });
+      });
+    }
+
+    setState(() => _isLoadingMore = false);
   }
 }
