@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:bookn_cp_app/features/admin_sections/domain/entities/section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -1263,7 +1265,8 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
           ? (() {
               try {
                 return _filterCriteria.isNotEmpty
-                    ? const JsonEncoder.withIndent('  ').convert(_filterCriteria)
+                    ? const JsonEncoder.withIndent('  ')
+                        .convert(_filterCriteria)
                     : null;
               } catch (_) {
                 return _filterCriteria.toString();
@@ -1274,7 +1277,8 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
       final String? sortJson = _sortCriteria.isNotEmpty
           ? (() {
               try {
-                return const JsonEncoder.withIndent('  ').convert(_sortCriteria);
+                return const JsonEncoder.withIndent('  ')
+                    .convert(_sortCriteria);
               } catch (_) {
                 return _sortCriteria.toString();
               }
