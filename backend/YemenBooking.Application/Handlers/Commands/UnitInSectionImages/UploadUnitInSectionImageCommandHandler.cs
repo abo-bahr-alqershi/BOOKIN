@@ -64,9 +64,8 @@ namespace YemenBooking.Application.Handlers.Commands.UnitInSectionImages
 
             var thumbnails = new ImageThumbnailsDto { Small = upload.FileUrl!, Medium = upload.FileUrl!, Large = upload.FileUrl!, Hd = upload.FileUrl! };
 
-            // Prefer TempKey flow: if TempKey provided, postpone FK binding to avoid FK violations
-            var usingTempKey = !string.IsNullOrWhiteSpace(request.TempKey);
-            var boundUnitInSectionId = usingTempKey ? (Guid?)null : request.UnitInSectionId;
+            // Prefer FK when provided; only use TempKey when FK is not supplied
+            var boundUnitInSectionId = request.UnitInSectionId;
 
             var entity = new UnitInSectionImage
             {
@@ -108,23 +107,7 @@ namespace YemenBooking.Application.Handlers.Commands.UnitInSectionImages
                 }
             }
 
-            try
-            {
-                await _repository.CreateAsync(entity, cancellationToken);
-            }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException)
-            {
-                // If FK violation occurs due to invalid UnitInSectionId, fallback to TempKey-only insert
-                if (!string.IsNullOrWhiteSpace(request.TempKey))
-                {
-                    entity.UnitInSectionId = null;
-                    await _repository.CreateAsync(entity, cancellationToken);
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            await _repository.CreateAsync(entity, cancellationToken);
 
             var dto = new ImageDto
             {
