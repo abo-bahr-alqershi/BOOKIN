@@ -98,7 +98,8 @@ class UnitInSectionModel {
 
   factory UnitInSectionModel.fromJson(Map<String, dynamic> json) {
     return UnitInSectionModel(
-      id: json['id']?.toString() ?? '',
+      // Prefer the record id when provided by backend; fallback to entity id
+      id: (json['unitInSectionId'] ?? json['id'])?.toString() ?? '',
       sectionId: json['sectionId']?.toString() ?? '',
       unitId: json['unitId']?.toString() ?? '',
       propertyId: json['propertyId']?.toString() ?? '',
