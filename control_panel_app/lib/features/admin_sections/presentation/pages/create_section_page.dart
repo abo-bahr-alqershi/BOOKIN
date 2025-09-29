@@ -15,6 +15,8 @@ import '../bloc/section_form/section_form_event.dart';
 import '../bloc/section_form/section_form_state.dart';
 import '../widgets/section_form_widget.dart';
 import '../widgets/section_image_gallery.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
 
 class CreateSectionPage extends StatefulWidget {
   const CreateSectionPage({super.key});
@@ -292,13 +294,16 @@ class _CreateSectionPageState extends State<CreateSectionPage>
             padding: const EdgeInsets.all(12),
             child: SizedBox(
               height: MediaQuery.of(context).size.height * 0.7,
-              child: SectionImageGallery(
-                key: _galleryKey,
-                sectionId: null,
-                tempKey: _tempKey,
-                isReadOnly: false,
-                maxImages: 20,
-                maxVideos: 5,
+              child: BlocProvider(
+                create: (_) => di.sl<SectionImagesBloc>(),
+                child: SectionImageGallery(
+                  key: _galleryKey,
+                  sectionId: null,
+                  tempKey: _tempKey,
+                  isReadOnly: false,
+                  maxImages: 20,
+                  maxVideos: 5,
+                ),
               ),
             ),
           ),
