@@ -89,17 +89,30 @@ class PropertyInSectionImagesRemoteDataSourceImpl
         onSendProgress: onSendProgress,
       );
 
+      // Robust shape handling (align with section images)
       if (response.data is Map<String, dynamic>) {
         final map = response.data as Map<String, dynamic>;
-        if (map['success'] == true && map['data'] != null) {
-          return SectionImageModel.fromJson(map['data']);
+        final dynamic data =
+            map['data'] ?? map['item'] ?? map['image'] ?? map['payload'];
+        if (map['success'] == true && data != null) {
+          return SectionImageModel.fromJson(data);
+        }
+        // Fallback: image directly
+        if (map['success'] == true && data == null && map.containsKey('id')) {
+          return SectionImageModel.fromJson(map);
         }
       }
-      throw ServerException(
-          response.data['message'] ?? 'Failed to upload image');
+      throw const ServerException('Failed to upload image');
     } on DioException catch (e) {
-      throw ServerException(
-          e.response?.data['message'] ?? 'Failed to upload image');
+      final msg = e.response?.data is Map<String, dynamic>
+          ? (e.response?.data['message'] as String?)
+          : e.message;
+      if (e.type == DioExceptionType.unknown &&
+          e.error.toString().contains('SocketException')) {
+        throw const ServerException(
+            'لا يمكن الاتصال بالخادم. تحقق من الاتصال بالإنترنت أو إعدادات الخادم');
+      }
+      throw ServerException(msg ?? 'Failed to upload image');
     }
   }
 
@@ -122,14 +135,40 @@ class PropertyInSectionImagesRemoteDataSourceImpl
       if (response.data is Map<String, dynamic>) {
         final map = response.data as Map<String, dynamic>;
         if (map['success'] == true) {
-          final List<dynamic> list = map['images'] ?? map['items'] ?? [];
-          return list.map((json) => SectionImageModel.fromJson(json)).toList();
+          final dynamic imagesData =
+              map['images'] ?? map['items'] ?? map['data'];
+          if (imagesData is List) {
+            return imagesData
+                .map((json) => SectionImageModel.fromJson(json))
+                .toList();
+          } else if (imagesData is Map && imagesData['items'] is List) {
+            final List<dynamic> items = imagesData['items'];
+            return items
+                .map((json) => SectionImageModel.fromJson(json))
+                .toList();
+          }
         }
+        if (map['items'] is List) {
+          final List<dynamic> items = map['items'];
+          return items.map((json) => SectionImageModel.fromJson(json)).toList();
+        }
+      } else if (response.data is List) {
+        return (response.data as List)
+            .map((json) => SectionImageModel.fromJson(json))
+            .toList();
       }
-      throw const ServerException('Invalid response when fetching images');
+
+      return [];
     } on DioException catch (e) {
-      throw ServerException(
-          e.response?.data['message'] ?? 'Failed to fetch images');
+      if (e.type == DioExceptionType.unknown &&
+          e.error.toString().contains('SocketException')) {
+        throw const ServerException(
+            'لا يمكن الاتصال بالخادم. تحقق من الاتصال بالإنترنت أو إعدادات الخادم');
+      }
+      final msg = e.response?.data is Map<String, dynamic>
+          ? (e.response?.data['message'] as String?)
+          : e.message;
+      throw ServerException(msg ?? 'Failed to fetch images');
     }
   }
 
@@ -141,10 +180,16 @@ class PropertyInSectionImagesRemoteDataSourceImpl
         data: data,
       );
 
-      return response.data['success'] == true;
+      if (response.statusCode == 204) return true;
+      if (response.data is Map<String, dynamic>) {
+        return (response.data as Map<String, dynamic>)['success'] == true;
+      }
+      return response.statusCode == 200;
     } on DioException catch (e) {
-      throw ServerException(
-          e.response?.data['message'] ?? 'Failed to update image');
+      final msg = e.response?.data is Map<String, dynamic>
+          ? (e.response?.data['message'] as String?)
+          : e.message;
+      throw ServerException(msg ?? 'Failed to update image');
     }
   }
 
@@ -152,10 +197,16 @@ class PropertyInSectionImagesRemoteDataSourceImpl
   Future<bool> deleteImage(String imageId) async {
     try {
       final response = await apiClient.delete('$_baseEndpoint/$imageId');
-      return response.data['success'] == true;
+      if (response.statusCode == 204) return true;
+      if (response.data is Map<String, dynamic>) {
+        return (response.data as Map<String, dynamic>)['success'] == true;
+      }
+      return response.statusCode == 200;
     } on DioException catch (e) {
-      throw ServerException(
-          e.response?.data['message'] ?? 'Failed to delete image');
+      final msg = e.response?.data is Map<String, dynamic>
+          ? (e.response?.data['message'] as String?)
+          : e.message;
+      throw ServerException(msg ?? 'Failed to delete image');
     }
   }
 
