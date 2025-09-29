@@ -73,6 +73,7 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
   Map<String, dynamic> _sortCriteria = {};
   String _metadata = '';
   bool _showPreview = false;
+  bool _hasAssignedItems = false;
 
   @override
   void initState() {
@@ -96,6 +97,8 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
       context.read<SectionFormBloc>().add(
             InitializeSectionFormEvent(sectionId: widget.sectionId),
           );
+      // تقدير وجود عناصر معينة مسبقاً بناءً على قيمة itemsToShow > 0 لا يكفي.
+      // سنجمد الحقول فقط حين يعود الـ Bloc بحالة جاهزة تحمل مؤشر وجود عناصر، أو يمكننا الاعتماد على route extra.
     }
   }
 
@@ -143,6 +146,11 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
             widget.isEditing &&
             widget.sectionId != null) {
           _populateForm(state);
+          // إذا كان هناك عناصر مُعيّنة، نجمد هدف القسم ونوع المحتوى
+          // ملاحظة: نفترض استخدام itemsToShow كدلالة ضعيفة غير مؤكدة. يُفضل أن يمرر الـ Bloc معلومة أدق لاحقاً.
+          setState(() {
+            _hasAssignedItems = (state.itemsToShow ?? 0) > 0;
+          });
         } else if (state is SectionFormSubmitted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -383,27 +391,45 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
           children: [
             _buildSectionHeader('إعدادات القسم', CupertinoIcons.settings),
             const SizedBox(height: 20),
-            SectionTypeSelector(
-              selectedType: _selectedType,
-              onTypeSelected: (type) {
-                setState(() => _selectedType = type);
-                context.read<SectionFormBloc>().add(
-                      UpdateSectionConfigEvent(type: type),
-                    );
-              },
+            AbsorbPointer(
+              absorbing: _hasAssignedItems,
+              child: Opacity(
+                opacity: _hasAssignedItems ? 0.6 : 1,
+                child: SectionTypeSelector(
+                  selectedType: _selectedType,
+                  onTypeSelected: (type) {
+                    setState(() => _selectedType = type);
+                    context.read<SectionFormBloc>().add(
+                          UpdateSectionConfigEvent(type: type),
+                        );
+                  },
+                ),
+              ),
             ),
             const SizedBox(height: 20),
-            SectionContentTypeToggle(
-              selectedType: _selectedContentType,
-              onTypeSelected: (type) {
-                setState(() => _selectedContentType = type);
-                context.read<SectionFormBloc>().add(
-                      UpdateSectionConfigEvent(contentType: type),
-                    );
-              },
+            AbsorbPointer(
+              absorbing: _hasAssignedItems,
+              child: Opacity(
+                opacity: _hasAssignedItems ? 0.6 : 1,
+                child: SectionContentTypeToggle(
+                  selectedType: _selectedContentType,
+                  onTypeSelected: (type) {
+                    setState(() => _selectedContentType = type);
+                    context.read<SectionFormBloc>().add(
+                          UpdateSectionConfigEvent(contentType: type),
+                        );
+                  },
+                ),
+              ),
             ),
             const SizedBox(height: 20),
-            _buildTargetSelector(),
+            AbsorbPointer(
+              absorbing: _hasAssignedItems,
+              child: Opacity(
+                opacity: _hasAssignedItems ? 0.6 : 1,
+                child: _buildTargetSelector(),
+              ),
+            ),
             const SizedBox(height: 20),
             Row(
               children: [

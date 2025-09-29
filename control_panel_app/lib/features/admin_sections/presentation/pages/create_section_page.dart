@@ -169,7 +169,7 @@ class _CreateSectionPageState extends State<CreateSectionPage>
             _showSuccessMessage('تم إنشاء القسم بنجاح');
             Future.delayed(const Duration(milliseconds: 500), () {
               if (mounted) {
-                context.pop();
+                context.pop(true);
               }
             });
           } else if (state is SectionFormError) {
