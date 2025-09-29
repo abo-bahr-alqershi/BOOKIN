@@ -16,6 +16,11 @@ class InitializeSectionFormEvent extends SectionFormEvent {
   const InitializeSectionFormEvent({this.sectionId});
 }
 
+class AttachSectionTempKeyEvent extends SectionFormEvent {
+  final String tempKey;
+  const AttachSectionTempKeyEvent({required this.tempKey});
+}
+
 class UpdateSectionBasicInfoEvent extends SectionFormEvent {
   final String? name;
   final String? title;

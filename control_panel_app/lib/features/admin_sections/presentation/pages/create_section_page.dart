@@ -42,7 +42,11 @@ class _CreateSectionPageState extends State<CreateSectionPage>
     _initializeAnimations();
     // Generate a temp key to allow pre-save media uploads
     _tempKey = DateTime.now().millisecondsSinceEpoch.toString();
-    context.read<SectionFormBloc>().add(const InitializeSectionFormEvent());
+    final bloc = context.read<SectionFormBloc>();
+    bloc.add(const InitializeSectionFormEvent());
+    if (_tempKey != null) {
+      bloc.add(AttachSectionTempKeyEvent(tempKey: _tempKey!));
+    }
   }
 
   void _initializeAnimations() {

@@ -102,9 +102,10 @@ class SectionsRepositoryImpl implements SectionsRepository {
 
   @override
   Future<Either<Failure, domain.Section>> createSection(
-      domain.Section section) async {
+      domain.Section section, {String? tempKey}) async {
     try {
       final model = await remoteDataSource.createSection(SectionModel(
+        tempKey: (tempKey != null && tempKey.isNotEmpty) ? tempKey : null,
         id: section.id,
         type: section.type,
         contentType: section.contentType,

@@ -11,15 +11,16 @@ class CreateSectionUseCase implements UseCase<Section, CreateSectionParams> {
 
   @override
   Future<Either<Failure, Section>> call(CreateSectionParams params) {
-    return repository.createSection(params.section);
+    return repository.createSection(params.section, tempKey: params.tempKey);
   }
 }
 
 class CreateSectionParams extends Equatable {
   final Section section;
-  const CreateSectionParams(this.section);
+  final String? tempKey;
+  const CreateSectionParams(this.section, {this.tempKey});
 
   @override
-  List<Object?> get props => [section];
+  List<Object?> get props => [section, tempKey];
 }
 

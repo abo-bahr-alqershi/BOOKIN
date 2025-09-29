@@ -5,6 +5,7 @@ import '../../../../core/enums/section_content_type.dart';
 import '../../../../core/enums/section_display_style.dart';
 
 class SectionModel {
+  final String? tempKey;
   final String id;
   final SectionTypeEnum type;
   final SectionContentType contentType;
@@ -38,6 +39,7 @@ class SectionModel {
   final String? metadata;
 
   const SectionModel({
+    this.tempKey,
     required this.id,
     required this.type,
     required this.contentType,
@@ -104,6 +106,7 @@ class SectionModel {
     }
 
     return SectionModel(
+      tempKey: json['tempKey']?.toString(),
       id: json['id']?.toString() ?? '',
       type: parseType(json['type']),
       contentType: parseContentType(json['contentType']),
@@ -186,6 +189,9 @@ class SectionModel {
       'endDate': endDate?.toIso8601String(),
       'metadata': metadata,
     };
+    if (tempKey != null && tempKey!.isNotEmpty) {
+      map['tempKey'] = tempKey;
+    }
     // Only include id when it's non-empty to avoid backend validation issues on create
     if (id.isNotEmpty) {
       map['id'] = id;

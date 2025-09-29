@@ -16,6 +16,7 @@ class SectionFormInitial extends SectionFormState {}
 class SectionFormLoading extends SectionFormState {}
 
 class SectionFormReady extends SectionFormState {
+  final String? tempKey;
   final String? sectionId;
   final String? name;
   final String? title;
@@ -49,6 +50,7 @@ class SectionFormReady extends SectionFormState {
   final String? metadataJson;
 
   const SectionFormReady({
+    this.tempKey,
     this.sectionId,
     this.name,
     this.title,
@@ -83,6 +85,7 @@ class SectionFormReady extends SectionFormState {
   });
 
   SectionFormReady copyWith({
+    String? tempKey,
     String? sectionId,
     String? name,
     String? title,
@@ -116,6 +119,7 @@ class SectionFormReady extends SectionFormState {
     String? metadataJson,
   }) {
     return SectionFormReady(
+      tempKey: tempKey ?? this.tempKey,
       sectionId: sectionId ?? this.sectionId,
       name: name ?? this.name,
       title: title ?? this.title,
