@@ -24,20 +24,20 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
   final _currentController = TextEditingController();
   final _newController = TextEditingController();
   final _confirmController = TextEditingController();
-  
+
   final _currentFocusNode = FocusNode();
   final _newFocusNode = FocusNode();
   final _confirmFocusNode = FocusNode();
-  
+
   bool _obscureCurrent = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
-  
+
   // Password strength
   double _passwordStrength = 0.0;
   String _passwordStrengthText = '';
   Color _passwordStrengthColor = AppTheme.textMuted;
-  
+
   // Animation Controllers
   late AnimationController _backgroundAnimationController;
   late AnimationController _formAnimationController;
@@ -46,13 +46,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
   late AnimationController _fieldAnimationController;
   late AnimationController _strengthAnimationController;
   late AnimationController _shimmerController;
-  
+
   // Animations
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<double> _rotationAnimation;
-  
+
   // Particles
   final List<_FloatingParticle> _particles = [];
 
@@ -65,27 +65,27 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
     _setupFocusListeners();
     _newController.addListener(_checkPasswordStrength);
   }
-  
+
   void _setupFocusListeners() {
     _currentFocusNode.addListener(_onFocusChange);
     _newFocusNode.addListener(_onFocusChange);
     _confirmFocusNode.addListener(_onFocusChange);
   }
-  
+
   void _onFocusChange() {
-    if (_currentFocusNode.hasFocus || 
-        _newFocusNode.hasFocus || 
+    if (_currentFocusNode.hasFocus ||
+        _newFocusNode.hasFocus ||
         _confirmFocusNode.hasFocus) {
       _fieldAnimationController.forward();
     } else {
       _fieldAnimationController.reverse();
     }
   }
-  
+
   void _checkPasswordStrength() {
     final password = _newController.text;
     double strength = 0;
-    
+
     if (password.isEmpty) {
       setState(() {
         _passwordStrength = 0;
@@ -94,23 +94,23 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       });
       return;
     }
-    
+
     // Check length
     if (password.length >= 8) strength += 0.25;
     if (password.length >= 12) strength += 0.25;
-    
+
     // Check for uppercase
     if (password.contains(RegExp(r'[A-Z]'))) strength += 0.25;
-    
+
     // Check for numbers
     if (password.contains(RegExp(r'[0-9]'))) strength += 0.125;
-    
+
     // Check for special characters
     if (password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) strength += 0.125;
-    
+
     setState(() {
       _passwordStrength = strength.clamp(0.0, 1.0);
-      
+
       if (_passwordStrength <= 0.25) {
         _passwordStrengthText = 'ضعيفة';
         _passwordStrengthColor = AppTheme.error;
@@ -125,7 +125,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
         _passwordStrengthColor = AppTheme.success;
       }
     });
-    
+
     _strengthAnimationController.forward();
   }
 
@@ -135,18 +135,18 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
-    
+
     _rotationAnimation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
     ).animate(_backgroundAnimationController);
-    
+
     // Form Animation
     _formAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -154,7 +154,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       parent: _formAnimationController,
       curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
     ));
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
@@ -162,7 +162,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       parent: _formAnimationController,
       curve: const Interval(0.2, 0.8, curve: Curves.easeOutBack),
     ));
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.9,
       end: 1.0,
@@ -170,44 +170,44 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       parent: _formAnimationController,
       curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
     ));
-    
+
     // Particle Animation
     _particleAnimationController = AnimationController(
       duration: const Duration(seconds: 10),
       vsync: this,
     )..repeat();
-    
+
     // Glow Animation
     _glowAnimationController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     // Field Animation
     _fieldAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     // Strength Animation
     _strengthAnimationController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    
+
     // Shimmer Animation
     _shimmerController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat();
   }
-  
+
   void _generateParticles() {
     for (int i = 0; i < 20; i++) {
       _particles.add(_FloatingParticle());
     }
   }
-  
+
   void _startAnimations() {
     Future.delayed(const Duration(milliseconds: 100), () {
       _formAnimationController.forward();
@@ -246,15 +246,15 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
         },
         builder: (context, state) {
           final isLoading = state is AuthLoading;
-          
+
           return Stack(
             children: [
               // Animated Background
               _buildAnimatedBackground(),
-              
+
               // Floating Particles
               _buildParticles(),
-              
+
               // Main Content
               SafeArea(
                 child: Column(
@@ -272,7 +272,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
                               child: Transform.scale(
                                 scale: _scaleAnimation.value,
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
                                     _buildSecurityHeader(),
                                     const SizedBox(height: 32),
@@ -297,7 +298,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       ),
     );
   }
-  
+
   Widget _buildMinimalAppBar() {
     return Container(
       height: 56,
@@ -333,7 +334,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
               ),
             ),
           ),
-          
+
           // Title
           Expanded(
             child: Text(
@@ -346,14 +347,14 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
               textAlign: TextAlign.center,
             ),
           ),
-          
+
           // Placeholder for symmetry
           const SizedBox(width: 44),
         ],
       ),
     );
   }
-  
+
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
       animation: _rotationAnimation,
@@ -381,7 +382,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       },
     );
   }
-  
+
   Widget _buildParticles() {
     return AnimatedBuilder(
       animation: _particleAnimationController,
@@ -396,7 +397,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       },
     );
   }
-  
+
   Widget _buildSecurityHeader() {
     return Column(
       children: [
@@ -414,7 +415,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
                   decoration: BoxDecoration(
                     gradient: RadialGradient(
                       colors: [
-                        AppTheme.primaryBlue.withValues(alpha: 0.1 + (_glowAnimationController.value * 0.2),
+                        AppTheme.primaryBlue.withValues(
+                          alpha: 0.1 + (_glowAnimationController.value * 0.2),
                         ),
                         Colors.transparent,
                       ],
@@ -423,7 +425,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
                 );
               },
             ),
-            
+
             // Icon Container
             Container(
               width: 70,
@@ -447,12 +449,12 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
             ),
           ],
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Title
         ShaderMask(
-          shaderCallback: (bounds) => 
+          shaderCallback: (bounds) =>
               AppTheme.primaryGradient.createShader(bounds),
           child: Text(
             'تأمين حسابك',
@@ -463,9 +465,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
             ),
           ),
         ),
-        
+
         const SizedBox(height: 4),
-        
+
         Text(
           'قم بتغيير كلمة المرور لحماية حسابك',
           style: AppTextStyles.bodySmall.copyWith(
@@ -476,7 +478,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       ],
     );
   }
-  
+
   Widget _buildGlassPasswordForm(bool isLoading) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -521,9 +523,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 _buildPasswordField(
                   controller: _newController,
                   focusNode: _newFocusNode,
@@ -545,15 +547,15 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
                     return null;
                   },
                 ),
-                
+
                 // Password Strength Indicator
                 if (_passwordStrength > 0) ...[
                   const SizedBox(height: 8),
                   _buildPasswordStrengthIndicator(),
                 ],
-                
+
                 const SizedBox(height: 16),
-                
+
                 _buildPasswordField(
                   controller: _confirmController,
                   focusNode: _confirmFocusNode,
@@ -574,9 +576,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 _buildChangeButton(isLoading),
               ],
             ),
@@ -585,7 +587,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       ),
     );
   }
-  
+
   Widget _buildPasswordField({
     required TextEditingController controller,
     required FocusNode focusNode,
@@ -604,7 +606,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       ]),
       builder: (context, child) {
         final isFocused = focusNode.hasFocus;
-        
+
         return Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
@@ -671,7 +673,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
                       height: 32,
                       decoration: BoxDecoration(
                         gradient: isFocused ? AppTheme.primaryGradient : null,
-                        color: !isFocused ? AppTheme.darkCard.withValues(alpha: 0.3) : null,
+                        color: !isFocused
+                            ? AppTheme.darkCard.withValues(alpha: 0.3)
+                            : null,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -724,7 +728,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       },
     );
   }
-  
+
   Widget _buildPasswordStrengthIndicator() {
     return AnimatedBuilder(
       animation: _strengthAnimationController,
@@ -740,7 +744,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
                     child: LinearProgressIndicator(
                       value: _passwordStrength,
                       backgroundColor: AppTheme.darkCard.withValues(alpha: 0.3),
-                      valueColor: AlwaysStoppedAnimation<Color>(_passwordStrengthColor),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(_passwordStrengthColor),
                       minHeight: 4,
                     ),
                   ),
@@ -761,7 +766,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       },
     );
   }
-  
+
   Widget _buildPasswordTips() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -831,7 +836,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       ),
     );
   }
-  
+
   Widget _buildChangeButton(bool isLoading) {
     return GestureDetector(
       onTap: isLoading ? null : _submit,
@@ -913,28 +918,29 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       ),
     );
   }
-  
+
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (_newController.text != _confirmController.text) {
       _showErrorSnackBar('كلمة المرور الجديدة وتأكيدها غير متطابقين');
       return;
     }
-    
+
     HapticFeedback.mediumImpact();
-    
+
     context.read<AuthBloc>().add(ChangePasswordEvent(
-      currentPassword: _currentController.text,
-      newPassword: _newController.text,
-      newPasswordConfirmation: _confirmController.text,
-    ));
+          currentPassword: _currentController.text,
+          newPassword: _newController.text,
+          newPasswordConfirmation: _confirmController.text,
+        ));
   }
-  
+
   void _showSuccessDialog(String message) {
     HapticFeedback.mediumImpact();
-    
+
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       builder: (context) => Dialog(
@@ -1024,7 +1030,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       ),
     );
   }
-  
+
   void _showErrorSnackBar(String message) {
     HapticFeedback.heavyImpact();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1082,26 +1088,25 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
 // _BackgroundPatternPainter, _FloatingParticle, _ParticlePainter
 // (Same code as in EditProfilePage)
 
-
 // Reuse Background Pattern Painter from LoginPage
 class _BackgroundPatternPainter extends CustomPainter {
   final double rotation;
   final double glowIntensity;
-  
+
   _BackgroundPatternPainter({
     required this.rotation,
     required this.glowIntensity,
   });
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
-    
+
     // Draw rotating circles
     final center = Offset(size.width / 2, size.height / 2);
-    
+
     for (int i = 0; i < 3; i++) {
       paint.shader = RadialGradient(
         colors: [
@@ -1109,22 +1114,22 @@ class _BackgroundPatternPainter extends CustomPainter {
           Colors.transparent,
         ],
       ).createShader(Rect.fromCircle(center: center, radius: 200));
-      
+
       canvas.save();
       canvas.translate(center.dx, center.dy);
       canvas.rotate(rotation + (i * math.pi / 3));
       canvas.translate(-center.dx, -center.dy);
-      
+
       canvas.drawCircle(
         Offset(center.dx + 100, center.dy),
         50 + (i * 30),
         paint,
       );
-      
+
       canvas.restore();
     }
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
@@ -1138,11 +1143,11 @@ class _FloatingParticle {
   late double radius;
   late double opacity;
   late Color color;
-  
+
   _FloatingParticle() {
     reset();
   }
-  
+
   void reset() {
     x = math.Random().nextDouble();
     y = math.Random().nextDouble();
@@ -1150,7 +1155,7 @@ class _FloatingParticle {
     vy = (math.Random().nextDouble() - 0.5) * 0.001;
     radius = math.Random().nextDouble() * 2 + 0.5;
     opacity = math.Random().nextDouble() * 0.3 + 0.05;
-    
+
     final colors = [
       AppTheme.primaryBlue,
       AppTheme.primaryPurple,
@@ -1158,11 +1163,11 @@ class _FloatingParticle {
     ];
     color = colors[math.Random().nextInt(colors.length)];
   }
-  
+
   void update() {
     x += vx;
     y += vy;
-    
+
     if (x < 0 || x > 1) vx = -vx;
     if (y < 0 || y > 1) vy = -vy;
   }
@@ -1170,25 +1175,24 @@ class _FloatingParticle {
 
 // Reuse Particle Painter from LoginPage
 class _ParticlePainter extends CustomPainter {
-  
   final List<_FloatingParticle> particles;
   final double animationValue;
-  
+
   _ParticlePainter({
     required this.particles,
     required this.animationValue,
   });
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     for (var particle in particles) {
       particle.update();
-      
+
       final paint = Paint()
         ..color = particle.color.withValues(alpha: particle.opacity)
         ..style = PaintingStyle.fill
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
-      
+
       canvas.drawCircle(
         Offset(particle.x * size.width, particle.y * size.height),
         particle.radius,
@@ -1196,7 +1200,7 @@ class _ParticlePainter extends CustomPainter {
       );
     }
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

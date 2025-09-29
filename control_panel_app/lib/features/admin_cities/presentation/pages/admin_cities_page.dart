@@ -604,6 +604,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
     if (_isDeleting) return;
     _isDeleting = true;
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.transparent,
@@ -653,6 +654,7 @@ class _AdminCitiesPageState extends State<AdminCitiesPage>
   void _confirmDeleteCity(City city) {
     HapticFeedback.mediumImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (dialogContext) => BackdropFilter(

@@ -26,27 +26,27 @@ class _SettingsPageState extends State<SettingsPage>
   late AnimationController _backgroundAnimationController;
   late AnimationController _itemAnimationController;
   late AnimationController _glowAnimationController;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     _backgroundAnimationController = AnimationController(
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
-    
+
     _itemAnimationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     )..forward();
-    
+
     _glowAnimationController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
   }
-  
+
   @override
   void dispose() {
     _backgroundAnimationController.dispose();
@@ -63,7 +63,7 @@ class _SettingsPageState extends State<SettingsPage>
         children: [
           // Animated Background
           _buildAnimatedBackground(),
-          
+
           // Main Content
           CustomScrollView(
             slivers: [
@@ -86,7 +86,9 @@ class _SettingsPageState extends State<SettingsPage>
                         child: CustomErrorWidget(
                           message: state.message,
                           onRetry: () {
-                            context.read<SettingsBloc>().add(LoadSettingsEvent());
+                            context
+                                .read<SettingsBloc>()
+                                .add(LoadSettingsEvent());
                           },
                         ),
                       );
@@ -114,7 +116,7 @@ class _SettingsPageState extends State<SettingsPage>
       ),
     );
   }
-  
+
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
       animation: _backgroundAnimationController,
@@ -147,7 +149,7 @@ class _SettingsPageState extends State<SettingsPage>
       },
     );
   }
-  
+
   Widget _buildFuturisticAppBar() {
     return SliverAppBar(
       expandedHeight: 180,
@@ -188,7 +190,7 @@ class _SettingsPageState extends State<SettingsPage>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             ShaderMask(
-                              shaderCallback: (bounds) => 
+                              shaderCallback: (bounds) =>
                                   AppTheme.primaryGradient.createShader(bounds),
                               child: const Icon(
                                 Icons.settings_rounded,
@@ -198,7 +200,7 @@ class _SettingsPageState extends State<SettingsPage>
                             ),
                             const SizedBox(height: 16),
                             ShaderMask(
-                              shaderCallback: (bounds) => 
+                              shaderCallback: (bounds) =>
                                   AppTheme.primaryGradient.createShader(bounds),
                               child: Text(
                                 'الإعدادات',
@@ -246,14 +248,14 @@ class _SettingsPageState extends State<SettingsPage>
       ),
     );
   }
-  
+
   Widget _buildFuturisticContent(AppSettings settings) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
           const SizedBox(height: 20),
-          
+
           // Account Section
           _buildFuturisticSection(
             title: 'الحساب',
@@ -282,9 +284,9 @@ class _SettingsPageState extends State<SettingsPage>
               ),
             ],
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Preferences Section
           _buildFuturisticSection(
             title: 'التفضيلات',
@@ -296,7 +298,8 @@ class _SettingsPageState extends State<SettingsPage>
               FuturisticSettingsItem(
                 icon: Icons.language_rounded,
                 title: 'اللغة',
-                subtitle: settings.preferredLanguage == 'ar' ? 'العربية' : 'English',
+                subtitle:
+                    settings.preferredLanguage == 'ar' ? 'العربية' : 'English',
                 gradient: LinearGradient(
                   colors: [AppTheme.neonBlue, AppTheme.primaryCyan],
                 ),
@@ -323,7 +326,8 @@ class _SettingsPageState extends State<SettingsPage>
                 gradient: LinearGradient(
                   colors: [AppTheme.success, AppTheme.neonGreen],
                 ),
-                onTap: () => _showFuturisticCurrencySelector(context, settings.preferredCurrency),
+                onTap: () => _showFuturisticCurrencySelector(
+                    context, settings.preferredCurrency),
               ),
               FuturisticSettingsItem(
                 icon: Icons.notifications_active_rounded,
@@ -336,9 +340,9 @@ class _SettingsPageState extends State<SettingsPage>
               ),
             ],
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Support Section
           _buildFuturisticSection(
             title: 'الدعم والمساعدة',
@@ -376,9 +380,9 @@ class _SettingsPageState extends State<SettingsPage>
               ),
             ],
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // About Section
           _buildFuturisticSection(
             title: 'حول',
@@ -416,18 +420,18 @@ class _SettingsPageState extends State<SettingsPage>
               ),
             ],
           ),
-          
+
           const SizedBox(height: 40),
-          
+
           // Logout Button
           _buildFuturisticLogoutButton(context),
-          
+
           const SizedBox(height: 40),
         ],
       ),
     );
   }
-  
+
   Widget _buildFuturisticSection({
     required String title,
     required IconData icon,
@@ -512,7 +516,7 @@ class _SettingsPageState extends State<SettingsPage>
       },
     );
   }
-  
+
   Widget _buildFuturisticLogoutButton(BuildContext context) {
     return GestureDetector(
       onTap: () => _showFuturisticLogoutDialog(context),
@@ -565,9 +569,10 @@ class _SettingsPageState extends State<SettingsPage>
       ),
     );
   }
-  
+
   void _showFuturisticLogoutDialog(BuildContext context) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (dialogContext) {
@@ -583,10 +588,9 @@ class _SettingsPageState extends State<SettingsPage>
               ),
             ),
             title: ShaderMask(
-              shaderCallback: (bounds) => 
-                  LinearGradient(
-                    colors: [AppTheme.error, AppTheme.error.withOpacity(0.8)],
-                  ).createShader(bounds),
+              shaderCallback: (bounds) => LinearGradient(
+                colors: [AppTheme.error, AppTheme.error.withOpacity(0.8)],
+              ).createShader(bounds),
               child: const Text(
                 'تسجيل الخروج',
                 style: TextStyle(
@@ -643,11 +647,12 @@ class _SettingsPageState extends State<SettingsPage>
       },
     );
   }
-  
-  void _showFuturisticCurrencySelector(BuildContext context, String currentCurrency) {
+
+  void _showFuturisticCurrencySelector(
+      BuildContext context, String currentCurrency) {
     // Implementation similar to logout dialog
   }
-  
+
   String _getCurrencyName(String code) {
     switch (code) {
       case 'YER':
@@ -662,7 +667,7 @@ class _SettingsPageState extends State<SettingsPage>
         return code;
     }
   }
-  
+
   void _rateApp() {
     // TODO: Implement app rating
   }
@@ -675,39 +680,38 @@ class _SettingsPageState extends State<SettingsPage>
 // Background Painter
 class _SettingsBackgroundPainter extends CustomPainter {
   final double animationValue;
-  
+
   _SettingsBackgroundPainter({required this.animationValue});
-  
+
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.fill;
-    
+    final paint = Paint()..style = PaintingStyle.fill;
+
     // Draw floating hexagons
     for (int i = 0; i < 5; i++) {
       final offset = Offset(
         size.width * (0.2 + i * 0.2),
         size.height * (0.3 + animationValue * 0.1 + i * 0.1),
       );
-      
+
       paint.shader = RadialGradient(
         colors: [
           AppTheme.primaryPurple.withOpacity(0.05 + animationValue * 0.02),
           Colors.transparent,
         ],
       ).createShader(Rect.fromCircle(center: offset, radius: 100));
-      
+
       _drawHexagon(canvas, offset, 50 + i * 10, paint);
     }
   }
-  
+
   void _drawHexagon(Canvas canvas, Offset center, double radius, Paint paint) {
     final path = Path();
     for (int i = 0; i < 6; i++) {
       final angle = (math.pi / 3) * i;
       final x = center.dx + radius * math.cos(angle);
       final y = center.dy + radius * math.sin(angle);
-      
+
       if (i == 0) {
         path.moveTo(x, y);
       } else {
@@ -717,7 +721,7 @@ class _SettingsBackgroundPainter extends CustomPainter {
     path.close();
     canvas.drawPath(path, paint);
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
@@ -725,18 +729,18 @@ class _SettingsBackgroundPainter extends CustomPainter {
 // Grid Pattern Painter
 class _GridPatternPainter extends CustomPainter {
   final double animationValue;
-  
+
   _GridPatternPainter({required this.animationValue});
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
-    
+
     // Draw grid lines
     const spacing = 30.0;
-    
+
     for (double x = 0; x < size.width; x += spacing) {
       paint.shader = LinearGradient(
         begin: Alignment.topCenter,
@@ -747,14 +751,14 @@ class _GridPatternPainter extends CustomPainter {
           Colors.transparent,
         ],
       ).createShader(Rect.fromLTWH(x, 0, 1, size.height));
-      
+
       canvas.drawLine(
         Offset(x, 0),
         Offset(x, size.height),
         paint,
       );
     }
-    
+
     for (double y = 0; y < size.height; y += spacing) {
       paint.shader = LinearGradient(
         begin: Alignment.centerLeft,
@@ -765,7 +769,7 @@ class _GridPatternPainter extends CustomPainter {
           Colors.transparent,
         ],
       ).createShader(Rect.fromLTWH(0, y, size.width, 1));
-      
+
       canvas.drawLine(
         Offset(0, y),
         Offset(size.width, y),
@@ -773,7 +777,7 @@ class _GridPatternPainter extends CustomPainter {
       );
     }
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

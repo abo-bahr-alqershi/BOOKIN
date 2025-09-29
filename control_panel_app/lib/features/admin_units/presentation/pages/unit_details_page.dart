@@ -1154,6 +1154,7 @@ class _UnitDetailsPageState extends State<UnitDetailsPage>
   void _showDeleteConfirmation(Unit unit) {
     HapticFeedback.mediumImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (context) => BackdropFilter(

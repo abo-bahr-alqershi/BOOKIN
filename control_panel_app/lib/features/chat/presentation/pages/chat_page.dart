@@ -31,38 +31,39 @@ class ChatPage extends StatefulWidget {
   State<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> 
+class _ChatPageState extends State<ChatPage>
     with WidgetsBindingObserver, TickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _messageController = TextEditingController();
   final FocusNode _messageFocusNode = FocusNode();
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
-  
+
   // Message keys for scrolling to reply
   final Map<String, GlobalKey> _messageKeys = {};
-  
+
   // Animation Controllers
   late AnimationController _fadeController;
   late AnimationController _backgroundController;
   late AnimationController _particleController;
   late AnimationController _glowController;
-  
+
   late Animation<double> _fadeAnimation;
   late Animation<double> _backgroundAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<double> _glowAnimation;
-  
+
   // Particles for background
   final List<_ChatParticle> _particles = [];
-  
+
   Timer? _typingTimer;
   bool _isTyping = false;
   bool _showScrollToBottom = false;
   String? _replyToMessageId;
   Message? _editingMessage;
-  
+
   String? _currentUserId; // سيتم ملؤه من AuthBloc
-  StreamSubscription<AuthState>? _authSubscription; // للاشتراك في تغييرات حالة المصادقة
+  StreamSubscription<AuthState>?
+      _authSubscription; // للاشتراك في تغييرات حالة المصادقة
 
   @override
   void initState() {
@@ -82,32 +83,32 @@ class _ChatPageState extends State<ChatPage>
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    
+
     _backgroundController = AnimationController(
       duration: const Duration(seconds: 30),
       vsync: this,
     )..repeat();
-    
+
     _particleController = AnimationController(
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
-    
+
     _glowController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
       curve: Curves.easeOutQuart,
     );
-    
+
     _backgroundAnimation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
     ).animate(_backgroundController);
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.98,
       end: 1.0,
@@ -115,7 +116,7 @@ class _ChatPageState extends State<ChatPage>
       parent: _fadeController,
       curve: Curves.easeOutBack,
     ));
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.3,
       end: 1.0,
@@ -123,7 +124,7 @@ class _ChatPageState extends State<ChatPage>
       parent: _glowController,
       curve: Curves.easeInOut,
     ));
-    
+
     _fadeController.forward();
   }
 
@@ -135,7 +136,7 @@ class _ChatPageState extends State<ChatPage>
 
   void _initializeTypingIndicator() {
     final typingProvider = context.read<TypingIndicatorProvider>();
-    
+
     context.read<ChatBloc>().webSocketService.typingEvents.listen((event) {
       for (final userId in event.typingUserIds) {
         typingProvider.setUserTyping(
@@ -171,10 +172,10 @@ class _ChatPageState extends State<ChatPage>
 
   void _loadMessages() {
     context.read<ChatBloc>().add(
-      LoadMessagesEvent(
-        conversationId: widget.conversation.id,
-      ),
-    );
+          LoadMessagesEvent(
+            conversationId: widget.conversation.id,
+          ),
+        );
   }
 
   void _onScroll() {
@@ -186,7 +187,7 @@ class _ChatPageState extends State<ChatPage>
         });
       }
 
-      if (_scrollController.position.pixels == 
+      if (_scrollController.position.pixels ==
           _scrollController.position.maxScrollExtent) {
         _loadMoreMessages();
       }
@@ -199,12 +200,12 @@ class _ChatPageState extends State<ChatPage>
       final messages = state.messages[widget.conversation.id] ?? [];
       if (messages.isNotEmpty) {
         context.read<ChatBloc>().add(
-          LoadMessagesEvent(
-            conversationId: widget.conversation.id,
-            pageNumber: (messages.length ~/ 50) + 1,
-            beforeMessageId: messages.last.id,
-          ),
-        );
+              LoadMessagesEvent(
+                conversationId: widget.conversation.id,
+                pageNumber: (messages.length ~/ 50) + 1,
+                beforeMessageId: messages.last.id,
+              ),
+            );
       }
     }
   }
@@ -213,11 +214,11 @@ class _ChatPageState extends State<ChatPage>
     if (_messageController.text.isNotEmpty && !_isTyping) {
       _isTyping = true;
       context.read<ChatBloc>().add(
-        SendTypingIndicatorEvent(
-          conversationId: widget.conversation.id,
-          isTyping: true,
-        ),
-      );
+            SendTypingIndicatorEvent(
+              conversationId: widget.conversation.id,
+              isTyping: true,
+            ),
+          );
     }
 
     _typingTimer?.cancel();
@@ -225,11 +226,11 @@ class _ChatPageState extends State<ChatPage>
       if (_isTyping) {
         _isTyping = false;
         context.read<ChatBloc>().add(
-          SendTypingIndicatorEvent(
-            conversationId: widget.conversation.id,
-            isTyping: false,
-          ),
-        );
+              SendTypingIndicatorEvent(
+                conversationId: widget.conversation.id,
+                isTyping: false,
+              ),
+            );
       }
     });
   }
@@ -240,19 +241,20 @@ class _ChatPageState extends State<ChatPage>
     final state = context.read<ChatBloc>().state;
     if (state is ChatLoaded) {
       // Strong cast to Message to avoid generic runtime issues
-      final List<Message> messages = (state.messages[widget.conversation.id] ?? []).cast<Message>();
+      final List<Message> messages =
+          (state.messages[widget.conversation.id] ?? []).cast<Message>();
       final unreadMessages = messages
           .where((m) => m.senderId != userId && !m.isRead)
           .map((m) => m.id)
           .toList();
-      
+
       if (unreadMessages.isNotEmpty) {
         context.read<ChatBloc>().add(
-          MarkMessagesAsReadEvent(
-            conversationId: widget.conversation.id,
-            messageIds: unreadMessages,
-          ),
-        );
+              MarkMessagesAsReadEvent(
+                conversationId: widget.conversation.id,
+                messageIds: unreadMessages,
+              ),
+            );
       }
     }
   }
@@ -267,7 +269,7 @@ class _ChatPageState extends State<ChatPage>
         curve: Curves.easeOutExpo,
         alignment: 0.5,
       );
-      
+
       // Highlight animation
       HapticFeedback.lightImpact();
       // You can add a highlight animation here
@@ -295,17 +297,18 @@ class _ChatPageState extends State<ChatPage>
 
   @override
   Widget build(BuildContext context) {
-    final effectiveUserId = _currentUserId ?? ''; // fallback مؤقت حتى يتم تحميل المستخدم
+    final effectiveUserId =
+        _currentUserId ?? ''; // fallback مؤقت حتى يتم تحميل المستخدم
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: Stack(
         children: [
           // Premium animated background
           _buildPremiumBackground(),
-          
+
           // Floating particles
           _buildFloatingParticles(),
-          
+
           // Main content
           SafeArea(
             child: Column(
@@ -393,7 +396,9 @@ class _ChatPageState extends State<ChatPage>
                 }
 
                 // Strong cast to concrete Message list (underlying objects may be MessageModel)
-                final List<Message> messages = (state.messages[widget.conversation.id] ?? []).cast<Message>();
+                final List<Message> messages =
+                    (state.messages[widget.conversation.id] ?? [])
+                        .cast<Message>();
 
                 if (messages.isEmpty) {
                   return _buildPremiumEmptyState();
@@ -404,7 +409,8 @@ class _ChatPageState extends State<ChatPage>
                   _messageKeys[message.id] ??= GlobalKey();
                 }
 
-                return _buildMessagesList(messages, typingUsers, userId: userId);
+                return _buildMessagesList(messages, typingUsers,
+                    userId: userId);
               },
             );
           },
@@ -559,7 +565,8 @@ class _ChatPageState extends State<ChatPage>
     );
   }
 
-  Widget _buildMessagesList(List<Message> messages, List<String> typingUsers, {required String userId}) {
+  Widget _buildMessagesList(List<Message> messages, List<String> typingUsers,
+      {required String userId}) {
     return ListView.builder(
       key: _listKey,
       controller: _scrollController,
@@ -583,17 +590,22 @@ class _ChatPageState extends State<ChatPage>
 
         final messageIndex = typingUsers.isNotEmpty ? index - 1 : index;
         final message = messages[messageIndex];
-        final previousMessage = messageIndex < messages.length - 1 ? messages[messageIndex + 1] : null;
-        final nextMessage = messageIndex > 0 ? messages[messageIndex - 1] : null;
+        final previousMessage = messageIndex < messages.length - 1
+            ? messages[messageIndex + 1]
+            : null;
+        final nextMessage =
+            messageIndex > 0 ? messages[messageIndex - 1] : null;
 
-        final showDateSeparator = previousMessage == null || !_isSameDay(message.createdAt, previousMessage.createdAt);
+        final showDateSeparator = previousMessage == null ||
+            !_isSameDay(message.createdAt, previousMessage.createdAt);
         final isMe = message.senderId == userId && userId.isNotEmpty;
 
         // FIXED: Proper alignment for message bubbles
         return Column(
           key: _messageKeys[message.id],
           children: [
-            if (showDateSeparator) _buildPremiumDateSeparator(message.createdAt),
+            if (showDateSeparator)
+              _buildPremiumDateSeparator(message.createdAt),
             Align(
               alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
               child: MessageBubbleWidget(
@@ -604,8 +616,11 @@ class _ChatPageState extends State<ChatPage>
                 onReply: () => _setReplyTo(message),
                 onEdit: isMe ? () => _startEditingMessage(message) : null,
                 onDelete: isMe ? () => _deleteMessage(message) : null,
-                onReaction: (reactionType) => _addReaction(message, reactionType, userId),
-                onReplyTap: message.replyToMessageId != null ? () => _scrollToMessage(message.replyToMessageId!) : null,
+                onReaction: (reactionType) =>
+                    _addReaction(message, reactionType, userId),
+                onReplyTap: message.replyToMessageId != null
+                    ? () => _scrollToMessage(message.replyToMessageId!)
+                    : null,
               ),
             ),
           ],
@@ -762,8 +777,9 @@ class _ChatPageState extends State<ChatPage>
   Widget _buildPremiumReplySection() {
     final state = context.read<ChatBloc>().state;
     if (state is! ChatLoaded) return const SizedBox.shrink();
-    
-    final List<Message> messages = (state.messages[widget.conversation.id] ?? []).cast<Message>();
+
+    final List<Message> messages =
+        (state.messages[widget.conversation.id] ?? []).cast<Message>();
 
     Message? replyMessage;
     if (_replyToMessageId != null) {
@@ -780,9 +796,10 @@ class _ChatPageState extends State<ChatPage>
     }
 
     final currentUserId = _currentUserId;
-    final displayName = currentUserId != null && replyMessage.senderId == currentUserId
-        ? 'أنت'
-        : 'مستخدم';
+    final displayName =
+        currentUserId != null && replyMessage.senderId == currentUserId
+            ? 'أنت'
+            : 'مستخدم';
 
     return GestureDetector(
       onTap: () => _scrollToMessage(replyMessage!.id),
@@ -964,23 +981,23 @@ class _ChatPageState extends State<ChatPage>
 
     if (_editingMessage != null) {
       context.read<ChatBloc>().add(
-        EditMessageEvent(
-          messageId: _editingMessage!.id,
-          content: content,
-        ),
-      );
+            EditMessageEvent(
+              messageId: _editingMessage!.id,
+              content: content,
+            ),
+          );
       setState(() {
         _editingMessage = null;
       });
     } else {
       context.read<ChatBloc>().add(
-        SendMessageEvent(
-          conversationId: widget.conversation.id,
-          messageType: 'text',
-          content: content,
-          replyToMessageId: _replyToMessageId,
-        ),
-      );
+            SendMessageEvent(
+              conversationId: widget.conversation.id,
+              messageType: 'text',
+              content: content,
+              replyToMessageId: _replyToMessageId,
+            ),
+          );
       setState(() {
         _replyToMessageId = null;
       });
@@ -1018,13 +1035,14 @@ class _ChatPageState extends State<ChatPage>
   void _deleteMessage(Message message) {
     HapticFeedback.lightImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black38,
       builder: (context) => _PremiumDeleteDialog(
         onConfirm: () {
           context.read<ChatBloc>().add(
-            DeleteMessageEvent(messageId: message.id),
-          );
+                DeleteMessageEvent(messageId: message.id),
+              );
           Navigator.pop(context);
         },
       ),
@@ -1033,25 +1051,25 @@ class _ChatPageState extends State<ChatPage>
 
   void _addReaction(Message message, String reactionType, String userId) {
     HapticFeedback.lightImpact();
-    
+
     final hasReaction = message.reactions.any(
       (r) => r.userId == userId && r.reactionType == reactionType,
     );
 
     if (hasReaction) {
       context.read<ChatBloc>().add(
-        RemoveReactionEvent(
-          messageId: message.id,
-          reactionType: reactionType,
-        ),
-      );
+            RemoveReactionEvent(
+              messageId: message.id,
+              reactionType: reactionType,
+            ),
+          );
     } else {
       context.read<ChatBloc>().add(
-        AddReactionEvent(
-          messageId: message.id,
-          reactionType: reactionType,
-        ),
-      );
+            AddReactionEvent(
+              messageId: message.id,
+              reactionType: reactionType,
+            ),
+          );
     }
   }
 
@@ -1093,7 +1111,15 @@ class _ChatPageState extends State<ChatPage>
     } else if (messageDate == yesterday) {
       return 'أمس';
     } else if (now.difference(date).inDays < 7) {
-      final days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+      final days = [
+        'الأحد',
+        'الإثنين',
+        'الثلاثاء',
+        'الأربعاء',
+        'الخميس',
+        'الجمعة',
+        'السبت'
+      ];
       return days[date.weekday % 7];
     } else {
       return '${date.day}/${date.month}/${date.year}';
@@ -1179,7 +1205,8 @@ class _PremiumDeleteDialog extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: AppTheme.darkBorder.withValues(alpha: 0.15),
+                                color:
+                                    AppTheme.darkBorder.withValues(alpha: 0.15),
                                 width: 0.5,
                               ),
                               borderRadius: BorderRadius.circular(8),
@@ -1188,7 +1215,8 @@ class _PremiumDeleteDialog extends StatelessWidget {
                               'إلغاء',
                               style: AppTextStyles.bodySmall.copyWith(
                                 fontSize: 12,
-                                color: AppTheme.textWhite.withValues(alpha: 0.7),
+                                color:
+                                    AppTheme.textWhite.withValues(alpha: 0.7),
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -1276,7 +1304,9 @@ class _PremiumBackgroundPainter extends CustomPainter {
     const spacing = 30.0;
     final offset = animation * spacing;
 
-    for (double x = -spacing + offset % spacing; x < size.width + spacing; x += spacing) {
+    for (double x = -spacing + offset % spacing;
+        x < size.width + spacing;
+        x += spacing) {
       canvas.drawLine(
         Offset(x, 0),
         Offset(x, size.height),
@@ -1302,12 +1332,12 @@ class _ParticlePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (var particle in particles) {
       particle.update();
-      
+
       final paint = Paint()
         ..color = particle.color.withValues(alpha: particle.opacity)
         ..style = PaintingStyle.fill
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
-      
+
       canvas.drawCircle(
         Offset(particle.x * size.width, particle.y * size.height),
         particle.radius,

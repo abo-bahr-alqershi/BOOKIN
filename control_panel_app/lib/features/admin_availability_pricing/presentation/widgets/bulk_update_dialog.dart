@@ -40,6 +40,7 @@ class BulkUpdateDialog extends StatefulWidget {
     String? currencyCode,
   }) async {
     return showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       barrierColor: AppTheme.overlayDark,

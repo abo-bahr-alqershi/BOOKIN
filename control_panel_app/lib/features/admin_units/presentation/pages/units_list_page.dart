@@ -73,6 +73,7 @@ class _UnitsListPageState extends State<UnitsListPage>
     if (_isDeleting) return;
     _isDeleting = true;
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.transparent,
@@ -380,6 +381,7 @@ class _UnitsListPageState extends State<UnitsListPage>
 
   void _showNavigationAnimation() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.transparent,
@@ -1188,6 +1190,7 @@ class _UnitsListPageState extends State<UnitsListPage>
   void _showDeleteConfirmation(Unit unit) {
     HapticFeedback.mediumImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (dialogContext) => BackdropFilter(
@@ -1298,6 +1301,7 @@ class _UnitsListPageState extends State<UnitsListPage>
 
   void _showBulkDeleteConfirmation() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppTheme.darkCard,
@@ -1400,6 +1404,7 @@ class _DeleteConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      insetPadding: const EdgeInsets.all(10),
       backgroundColor: Colors.transparent,
       child: Container(
         width: 400,

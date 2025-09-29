@@ -679,6 +679,7 @@ class _AuditLogsPageState extends State<AuditLogsPage>
 
   void _showLogDetails(AuditLog log) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => AuditLogDetailsDialog(auditLog: log),
     );

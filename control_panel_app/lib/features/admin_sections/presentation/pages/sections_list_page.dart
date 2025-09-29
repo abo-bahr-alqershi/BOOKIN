@@ -40,7 +40,7 @@ class _SectionsListPageState extends State<SectionsListPage>
   late AnimationController _pulseAnimationController;
   final ScrollController _scrollController = ScrollController();
 
-  ViewMode _currentViewMode = ViewMode.expanded; // الوضع الافتراضي
+  ViewMode _currentViewMode = ViewMode.table; // الوضع الافتراضي
   bool _showFilters = false;
   Map<String, dynamic> _activeFilters = {};
 
@@ -258,23 +258,6 @@ class _SectionsListPageState extends State<SectionsListPage>
 
             // عرض رسالة توضيحية
             ScaffoldMessenger.of(context).clearSnackBars();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  message,
-                  style: AppTextStyles.bodySmall.copyWith(color: Colors.white),
-                  textAlign: TextAlign.center,
-                ),
-                backgroundColor: AppTheme.darkCard,
-                duration: const Duration(milliseconds: 1500),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                margin:
-                    const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-              ),
-            );
           },
           borderRadius: BorderRadius.circular(12),
           child: Container(
@@ -367,8 +350,10 @@ class _SectionsListPageState extends State<SectionsListPage>
 
   void _showExpandedSectionPreview(Section section) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(10),
         backgroundColor: Colors.transparent,
         child: Container(
           width: MediaQuery.of(context).size.width * 0.9,
@@ -863,6 +848,7 @@ class _SectionsListPageState extends State<SectionsListPage>
 
   void _confirmDelete(Section section) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.darkCard,

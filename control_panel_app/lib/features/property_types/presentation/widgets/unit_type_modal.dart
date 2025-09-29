@@ -39,7 +39,8 @@ class _UnitTypeModalState extends State<UnitTypeModal> {
     _isHasAdults = widget.unitType?.isHasAdults ?? false;
     _isHasChildren = widget.unitType?.isHasChildren ?? false;
     _isMultiDays = widget.unitType?.isMultiDays ?? false;
-    _isRequiredToDetermineTheHour = widget.unitType?.isRequiredToDetermineTheHour ?? false;
+    _isRequiredToDetermineTheHour =
+        widget.unitType?.isRequiredToDetermineTheHour ?? false;
   }
 
   @override
@@ -55,12 +56,14 @@ class _UnitTypeModalState extends State<UnitTypeModal> {
     final EdgeInsets inset = isSmall
         ? const EdgeInsets.symmetric(horizontal: 12, vertical: 12)
         : const EdgeInsets.all(20);
-    final double dialogWidth = isSmall ? (screenSize.width - inset.horizontal) : 640;
-    final double maxHeight = isSmall ? (screenSize.height * 0.95) : (screenSize.height * 0.85);
+    final double dialogWidth =
+        isSmall ? (screenSize.width - inset.horizontal) : 640;
+    final double maxHeight =
+        isSmall ? (screenSize.height * 0.95) : (screenSize.height * 0.85);
 
     return Dialog(
+      insetPadding: const EdgeInsets.all(10),
       backgroundColor: Colors.transparent,
-      insetPadding: inset,
       child: Container(
         width: dialogWidth,
         constraints: BoxConstraints(
@@ -139,7 +142,10 @@ class _UnitTypeModalState extends State<UnitTypeModal> {
             height: 40,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppTheme.neonGreen, AppTheme.neonGreen.withOpacity(0.7)],
+                colors: [
+                  AppTheme.neonGreen,
+                  AppTheme.neonGreen.withOpacity(0.7)
+                ],
               ),
               borderRadius: BorderRadius.circular(10),
             ),
@@ -155,7 +161,9 @@ class _UnitTypeModalState extends State<UnitTypeModal> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.unitType == null ? 'إضافة نوع وحدة جديد' : 'تعديل نوع الوحدة',
+                  widget.unitType == null
+                      ? 'إضافة نوع وحدة جديد'
+                      : 'تعديل نوع الوحدة',
                   style: AppTextStyles.heading3.copyWith(
                     color: AppTheme.textWhite,
                     fontWeight: FontWeight.bold,
@@ -257,7 +265,10 @@ class _UnitTypeModalState extends State<UnitTypeModal> {
                   height: 40,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [AppTheme.neonGreen, AppTheme.neonGreen.withOpacity(0.7)],
+                      colors: [
+                        AppTheme.neonGreen,
+                        AppTheme.neonGreen.withOpacity(0.7)
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -368,7 +379,10 @@ class _UnitTypeModalState extends State<UnitTypeModal> {
                   height: 36,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [AppTheme.neonGreen, AppTheme.neonGreen.withOpacity(0.7)],
+                      colors: [
+                        AppTheme.neonGreen,
+                        AppTheme.neonGreen.withOpacity(0.7)
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -441,7 +455,8 @@ class _UnitTypeModalState extends State<UnitTypeModal> {
                 title: 'يتطلب تحديد الساعة',
                 subtitle: 'إلزام تحديد الوقت عند الحجز',
                 value: _isRequiredToDetermineTheHour,
-                onChanged: (value) => setState(() => _isRequiredToDetermineTheHour = value),
+                onChanged: (value) =>
+                    setState(() => _isRequiredToDetermineTheHour = value),
                 color: AppTheme.primaryPurple,
               ),
             ],
@@ -473,7 +488,9 @@ class _UnitTypeModalState extends State<UnitTypeModal> {
         color: value ? null : AppTheme.darkSurface.withOpacity(0.3),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: value ? color.withOpacity(0.3) : AppTheme.darkBorder.withOpacity(0.2),
+          color: value
+              ? color.withOpacity(0.3)
+              : AppTheme.darkBorder.withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -516,7 +533,7 @@ class _UnitTypeModalState extends State<UnitTypeModal> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: color,
+            activeThumbColor: color,
             activeTrackColor: color.withOpacity(0.3),
             inactiveThumbColor: AppTheme.textMuted,
             inactiveTrackColor: AppTheme.darkSurface,
@@ -577,7 +594,10 @@ class _UnitTypeModalState extends State<UnitTypeModal> {
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppTheme.neonGreen, AppTheme.neonGreen.withOpacity(0.7)],
+                    colors: [
+                      AppTheme.neonGreen,
+                      AppTheme.neonGreen.withOpacity(0.7)
+                    ],
                   ),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
@@ -607,6 +627,7 @@ class _UnitTypeModalState extends State<UnitTypeModal> {
 
   void _showIconPicker() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => IconPickerModal(
         selectedIcon: _selectedIcon,

@@ -348,12 +348,13 @@ class _CreateSectionPageState extends State<CreateSectionPage>
 
   void _openSectionMediaDialog() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: true,
       builder: (BuildContext dialogContext) {
         return Dialog(
+          insetPadding: const EdgeInsets.all(10),
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(16),
           child: Container(
             decoration: BoxDecoration(
               color: AppTheme.darkCard.withOpacity(0.98),

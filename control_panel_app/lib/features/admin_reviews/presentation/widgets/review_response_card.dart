@@ -10,13 +10,13 @@ import '../../domain/entities/review_response.dart';
 class ReviewResponseCard extends StatefulWidget {
   final ReviewResponse response;
   final VoidCallback onDelete;
-  
+
   const ReviewResponseCard({
     super.key,
     required this.response,
     required this.onDelete,
   });
-  
+
   @override
   State<ReviewResponseCard> createState() => _ReviewResponseCardState();
 }
@@ -27,7 +27,7 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
   late Animation<double> _expandAnimation;
   bool _isExpanded = false;
   bool _isHovered = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -35,19 +35,19 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _expandAnimation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeOutCubic,
     );
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -124,13 +124,14 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppTheme.primaryBlue.withOpacity(0.3),
+                                    color:
+                                        AppTheme.primaryBlue.withOpacity(0.3),
                                     blurRadius: 12,
                                     spreadRadius: 2,
                                   ),
                                 ],
                               ),
-                              child: Center(
+                              child: const Center(
                                 child: Icon(
                                   Icons.support_agent,
                                   color: Colors.white,
@@ -139,7 +140,7 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                               ),
                             ),
                             const SizedBox(width: 12),
-                            
+
                             // معلومات الرد
                             Expanded(
                               child: Column(
@@ -161,10 +162,13 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                                           vertical: 2,
                                         ),
                                         decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(8),
-                                          color: AppTheme.success.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          color:
+                                              AppTheme.success.withOpacity(0.1),
                                           border: Border.all(
-                                            color: AppTheme.success.withOpacity(0.3),
+                                            color: AppTheme.success
+                                                .withOpacity(0.3),
                                             width: 0.5,
                                           ),
                                         ),
@@ -193,13 +197,15 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                                           color: AppTheme.textMuted,
                                         ),
                                       ),
-                                      if (widget.response.updatedAt != null) ...[
+                                      if (widget.response.updatedAt !=
+                                          null) ...[
                                         const SizedBox(width: 8),
                                         Text(
                                           '(معدّل)',
                                           style: AppTextStyles.caption.copyWith(
                                             fontStyle: FontStyle.italic,
-                                            color: AppTheme.textMuted.withOpacity(0.7),
+                                            color: AppTheme.textMuted
+                                                .withOpacity(0.7),
                                           ),
                                         ),
                                       ],
@@ -208,7 +214,7 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                                 ],
                               ),
                             ),
-                            
+
                             // الإجراءات
                             Row(
                               children: [
@@ -231,9 +237,9 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 12),
-                        
+
                         // معاينة نص الرد
                         Text(
                           widget.response.responseText,
@@ -242,15 +248,15 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                             color: AppTheme.textLight,
                           ),
                           maxLines: _isExpanded ? null : 2,
-                          overflow: _isExpanded 
-                              ? TextOverflow.visible 
+                          overflow: _isExpanded
+                              ? TextOverflow.visible
                               : TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
                 ),
-                
+
                 // التفاصيل الموسعة
                 SizeTransition(
                   sizeFactor: _expandAnimation,
@@ -275,20 +281,21 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
                             value: widget.response.id,
                           ),
                           const SizedBox(height: 12),
-                          
+
                           // تاريخ الإنشاء
                           _buildDetailRow(
                             icon: Icons.calendar_today_outlined,
                             label: 'تاريخ الإنشاء',
                             value: _formatFullDate(widget.response.createdAt),
                           ),
-                          
+
                           if (widget.response.updatedAt != null) ...[
                             const SizedBox(height: 12),
                             _buildDetailRow(
                               icon: Icons.edit_calendar_outlined,
                               label: 'آخر تحديث',
-                              value: _formatFullDate(widget.response.updatedAt!),
+                              value:
+                                  _formatFullDate(widget.response.updatedAt!),
                             ),
                           ],
                         ],
@@ -303,7 +310,7 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
       ),
     );
   }
-  
+
   Widget _buildActionButton({
     required IconData icon,
     required Color color,
@@ -332,7 +339,7 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
       ),
     );
   }
-  
+
   Widget _buildDetailRow({
     required IconData icon,
     required String label,
@@ -377,10 +384,11 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
       ],
     );
   }
-  
+
   void _showDeleteConfirmation(BuildContext context) {
     HapticFeedback.mediumImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black54,
       builder: (context) => BackdropFilter(
@@ -474,11 +482,11 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
       ),
     );
   }
-  
+
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays == 0) {
       if (difference.inHours == 0) {
         if (difference.inMinutes == 0) {
@@ -495,16 +503,26 @@ class _ReviewResponseCardState extends State<ReviewResponseCard>
       return '${date.day}/${date.month}/${date.year}';
     }
   }
-  
+
   String _formatFullDate(DateTime date) {
     final months = [
-      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر'
     ];
-    
+
     final hour = date.hour.toString().padLeft(2, '0');
     final minute = date.minute.toString().padLeft(2, '0');
-    
+
     return '${date.day} ${months[date.month - 1]}، ${date.year} الساعة $hour:$minute';
   }
 }

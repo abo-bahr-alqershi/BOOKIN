@@ -867,7 +867,12 @@ class _CityFormPageState extends State<CityFormPage>
               for (int i = 0; i < paths.length; i++) {
                 final path = paths[i];
                 final lower = path.toLowerCase();
-                final isRemote = lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('/uploads') || lower.startsWith('uploads/') || lower.startsWith('/images') || lower.startsWith('images/');
+                final isRemote = lower.startsWith('http://') ||
+                    lower.startsWith('https://') ||
+                    lower.startsWith('/uploads') ||
+                    lower.startsWith('uploads/') ||
+                    lower.startsWith('/images') ||
+                    lower.startsWith('images/');
                 if (!isRemote) {
                   setState(() {
                     _uploadProgress[path] = 0.0;
@@ -894,7 +899,9 @@ class _CityFormPageState extends State<CityFormPage>
                       (url) {
                         if (!mounted) return;
                         setState(() {
-                          if (i >= 0 && i < _images.length && _images[i] == path) {
+                          if (i >= 0 &&
+                              i < _images.length &&
+                              _images[i] == path) {
                             _images[i] = url;
                           } else {
                             // fallback: replace first matching local occurrence
@@ -1097,7 +1104,9 @@ class _CityFormPageState extends State<CityFormPage>
       final List<String> finalImages = [];
       for (final img in _images) {
         // Keep remote images as is (absolute or server-relative like /uploads/...)
-        if (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('/')) {
+        if (img.startsWith('http://') ||
+            img.startsWith('https://') ||
+            img.startsWith('/')) {
           finalImages.add(img);
           continue;
         }
@@ -1159,6 +1168,7 @@ class _CityFormPageState extends State<CityFormPage>
     setState(() => _isLoading = false);
 
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       builder: (context) => BackdropFilter(

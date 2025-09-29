@@ -22,28 +22,28 @@ class ConversationsPage extends StatefulWidget {
   State<ConversationsPage> createState() => _ConversationsPageState();
 }
 
-class _ConversationsPageState extends State<ConversationsPage> 
+class _ConversationsPageState extends State<ConversationsPage>
     with TickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
-  
+
   // Animation Controllers
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late AnimationController _shimmerController;
   late AnimationController _backgroundController;
   late AnimationController _pulseController;
-  
+
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _shimmerAnimation;
   late Animation<double> _backgroundAnimation;
   late Animation<double> _pulseAnimation;
-  
+
   bool _isSearching = false;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  
+
   // Minimal background particles
   final List<_MinimalParticle> _particles = [];
 
@@ -61,32 +61,32 @@ class _ConversationsPageState extends State<ConversationsPage>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _slideController = AnimationController(
       duration: const Duration(milliseconds: 700),
       vsync: this,
     );
-    
+
     _shimmerController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat();
-    
+
     _backgroundController = AnimationController(
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
-    
+
     _pulseController = AnimationController(
       duration: const Duration(seconds: 4),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
       curve: Curves.easeOut,
     );
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0.0, 0.02),
       end: Offset.zero,
@@ -94,7 +94,7 @@ class _ConversationsPageState extends State<ConversationsPage>
       parent: _slideController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     _shimmerAnimation = Tween<double>(
       begin: 0,
       end: 1,
@@ -102,12 +102,12 @@ class _ConversationsPageState extends State<ConversationsPage>
       parent: _shimmerController,
       curve: Curves.linear,
     ));
-    
+
     _backgroundAnimation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
     ).animate(_backgroundController);
-    
+
     _pulseAnimation = Tween<double>(
       begin: 0.8,
       end: 1.0,
@@ -115,7 +115,7 @@ class _ConversationsPageState extends State<ConversationsPage>
       parent: _pulseController,
       curve: Curves.easeInOut,
     ));
-    
+
     _fadeController.forward();
     _slideController.forward();
   }
@@ -148,10 +148,10 @@ class _ConversationsPageState extends State<ConversationsPage>
       final state = context.read<ChatBloc>().state;
       if (state is ChatLoaded && !state.isLoadingMore) {
         context.read<ChatBloc>().add(
-          LoadConversationsEvent(
-            pageNumber: (state.conversations.length ~/ 20) + 1,
-          ),
-        );
+              LoadConversationsEvent(
+                pageNumber: (state.conversations.length ~/ 20) + 1,
+              ),
+            );
       }
     }
   }
@@ -171,10 +171,10 @@ class _ConversationsPageState extends State<ConversationsPage>
         children: [
           // Ultra minimal gradient background
           _buildUltraMinimalBackground(),
-          
+
           // Subtle floating particles
           _buildSubtleParticles(),
-          
+
           // Main content with glass overlay
           SafeArea(
             child: Column(
@@ -244,7 +244,7 @@ class _ConversationsPageState extends State<ConversationsPage>
   }
 
   Widget _buildUltraPremiumHeader() {
-    return Container(
+    return SizedBox(
       height: _isSearching ? 110 : 60,
       child: Stack(
         children: [
@@ -272,7 +272,7 @@ class _ConversationsPageState extends State<ConversationsPage>
               ),
             ),
           ),
-          
+
           // Content
           Column(
             children: [
@@ -306,8 +306,10 @@ class _ConversationsPageState extends State<ConversationsPage>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppTheme.primaryBlue.withValues(alpha: 0.1 * _pulseAnimation.value),
-                      AppTheme.primaryPurple.withValues(alpha: 0.05 * _pulseAnimation.value),
+                      AppTheme.primaryBlue
+                          .withValues(alpha: 0.1 * _pulseAnimation.value),
+                      AppTheme.primaryPurple
+                          .withValues(alpha: 0.05 * _pulseAnimation.value),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(8),
@@ -324,9 +326,9 @@ class _ConversationsPageState extends State<ConversationsPage>
               );
             },
           ),
-          
+
           const SizedBox(width: 12),
-          
+
           // Minimal title
           Text(
             'المحادثات',
@@ -337,9 +339,9 @@ class _ConversationsPageState extends State<ConversationsPage>
               letterSpacing: 0.5,
             ),
           ),
-          
+
           const Spacer(),
-          
+
           // Minimal search toggle
           _buildMinimalIconButton(
             icon: _isSearching ? Icons.close : Icons.search,
@@ -359,9 +361,9 @@ class _ConversationsPageState extends State<ConversationsPage>
               });
             },
           ),
-          
+
           const SizedBox(width: 8),
-          
+
           // Minimal menu
           _buildMinimalIconButton(
             icon: Icons.more_horiz,
@@ -464,7 +466,7 @@ class _ConversationsPageState extends State<ConversationsPage>
 
         if (state is ChatLoaded) {
           final conversations = _filterConversations(state.conversations);
-          
+
           if (conversations.isEmpty) {
             return _buildUltraMinimalEmpty();
           }
@@ -513,11 +515,12 @@ class _ConversationsPageState extends State<ConversationsPage>
                             Colors.transparent,
                           ],
                           stops: const [0.0, 0.25, 0.5, 1.0],
-                          transform: GradientRotation(_shimmerAnimation.value * 2 * math.pi),
+                          transform: GradientRotation(
+                              _shimmerAnimation.value * 2 * math.pi),
                         ),
                       ),
                     ),
-                    
+
                     // Icon
                     Icon(
                       Icons.forum_outlined,
@@ -529,9 +532,9 @@ class _ConversationsPageState extends State<ConversationsPage>
               );
             },
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           Text(
             'جاري التحميل',
             style: AppTextStyles.caption.copyWith(
@@ -676,7 +679,8 @@ class _ConversationsPageState extends State<ConversationsPage>
                             borderRadius: BorderRadius.circular(8),
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+                                color:
+                                    AppTheme.primaryBlue.withValues(alpha: 0.2),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -792,11 +796,12 @@ class _ConversationsPageState extends State<ConversationsPage>
 
   List<Conversation> _filterConversations(List<Conversation> conversations) {
     if (_searchQuery.isEmpty) return conversations;
-    
+
     final query = _searchQuery.toLowerCase();
     return conversations.where((conversation) {
       final title = conversation.title?.toLowerCase() ?? '';
-      final lastMessage = conversation.lastMessage?.content?.toLowerCase() ?? '';
+      final lastMessage =
+          conversation.lastMessage?.content?.toLowerCase() ?? '';
       return title.contains(query) || lastMessage.contains(query);
     }).toList();
   }
@@ -806,7 +811,7 @@ class _ConversationsPageState extends State<ConversationsPage>
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => 
+        pageBuilder: (context, animation, secondaryAnimation) =>
             ChatPage(conversation: conversation),
         transitionDuration: const Duration(milliseconds: 300),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -836,7 +841,7 @@ class _ConversationsPageState extends State<ConversationsPage>
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => 
+        pageBuilder: (context, animation, secondaryAnimation) =>
             const NewConversationPage(),
         transitionDuration: const Duration(milliseconds: 400),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -889,10 +894,11 @@ class _ConversationsPageState extends State<ConversationsPage>
         conversation: conversation,
         onArchive: () {
           context.read<ChatBloc>().add(
-            conversation.isArchived
-                ? UnarchiveConversationEvent(conversationId: conversation.id)
-                : ArchiveConversationEvent(conversationId: conversation.id),
-          );
+                conversation.isArchived
+                    ? UnarchiveConversationEvent(
+                        conversationId: conversation.id)
+                    : ArchiveConversationEvent(conversationId: conversation.id),
+              );
         },
         onDelete: () {
           _confirmDelete(conversation);
@@ -907,6 +913,7 @@ class _ConversationsPageState extends State<ConversationsPage>
   void _confirmDelete(Conversation conversation) {
     HapticFeedback.lightImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black26,
       builder: (context) => _UltraMinimalDialog(
@@ -916,8 +923,8 @@ class _ConversationsPageState extends State<ConversationsPage>
         isDestructive: true,
         onConfirm: () {
           context.read<ChatBloc>().add(
-            DeleteConversationEvent(conversationId: conversation.id),
-          );
+                DeleteConversationEvent(conversationId: conversation.id),
+              );
           Navigator.pop(context);
         },
       ),
@@ -965,7 +972,7 @@ class _UltraMinimalOptionsSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(1.5),
                   ),
                 ),
-                
+
                 _buildMinimalOption(
                   icon: Icons.archive_outlined,
                   title: 'أرشفة الكل',
@@ -974,7 +981,7 @@ class _UltraMinimalOptionsSheet extends StatelessWidget {
                     onArchiveAll();
                   },
                 ),
-                
+
                 _buildMinimalOption(
                   icon: Icons.settings_outlined,
                   title: 'الإعدادات',
@@ -983,7 +990,7 @@ class _UltraMinimalOptionsSheet extends StatelessWidget {
                     onSettings();
                   },
                 ),
-                
+
                 const SizedBox(height: 8),
               ],
             ),
@@ -1068,7 +1075,6 @@ class _UltraMinimalConversationSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(1.5),
                   ),
                 ),
-                
                 _buildOption(
                   icon: conversation.isMuted
                       ? Icons.notifications_active_outlined
@@ -1079,7 +1085,6 @@ class _UltraMinimalConversationSheet extends StatelessWidget {
                     onMute();
                   },
                 ),
-                
                 _buildOption(
                   icon: conversation.isArchived
                       ? Icons.unarchive_outlined
@@ -1090,7 +1095,6 @@ class _UltraMinimalConversationSheet extends StatelessWidget {
                     onArchive();
                   },
                 ),
-                
                 _buildOption(
                   icon: Icons.delete_outline,
                   title: 'حذف',
@@ -1100,7 +1104,6 @@ class _UltraMinimalConversationSheet extends StatelessWidget {
                     onDelete();
                   },
                 ),
-                
                 const SizedBox(height: 8),
               ],
             ),
@@ -1198,7 +1201,6 @@ class _UltraMinimalDialog extends StatelessWidget {
                         size: 20,
                       ),
                     ),
-                  
                   Text(
                     title,
                     style: AppTextStyles.bodyMedium.copyWith(
@@ -1206,9 +1208,7 @@ class _UltraMinimalDialog extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  
                   const SizedBox(height: 6),
-                  
                   Text(
                     message,
                     style: AppTextStyles.caption.copyWith(
@@ -1217,9 +1217,7 @@ class _UltraMinimalDialog extends StatelessWidget {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  
                   const SizedBox(height: 16),
-                  
                   Row(
                     children: [
                       Expanded(
@@ -1229,7 +1227,8 @@ class _UltraMinimalDialog extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: AppTheme.darkBorder.withValues(alpha: 0.1),
+                                color:
+                                    AppTheme.darkBorder.withValues(alpha: 0.1),
                                 width: 0.5,
                               ),
                               borderRadius: BorderRadius.circular(8),
@@ -1261,8 +1260,10 @@ class _UltraMinimalDialog extends StatelessWidget {
                                         AppTheme.error.withValues(alpha: 0.5),
                                       ]
                                     : [
-                                        AppTheme.primaryBlue.withValues(alpha: 0.8),
-                                        AppTheme.primaryPurple.withValues(alpha: 0.6),
+                                        AppTheme.primaryBlue
+                                            .withValues(alpha: 0.8),
+                                        AppTheme.primaryPurple
+                                            .withValues(alpha: 0.6),
                                       ],
                               ),
                               borderRadius: BorderRadius.circular(8),
@@ -1336,7 +1337,7 @@ class _UltraMinimalGradientPainter extends CustomPainter {
         positions[i].dx + math.sin(animation + i) * 10,
         positions[i].dy + math.cos(animation + i) * 10,
       );
-      
+
       paint.color = colors[i];
       canvas.drawCircle(offset, 100, paint);
     }

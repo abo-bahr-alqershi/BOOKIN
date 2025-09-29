@@ -111,6 +111,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
     if (_isDeleting) return;
     _isDeleting = true;
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.transparent,
@@ -1582,6 +1583,7 @@ class _EditPropertyPageContentState extends State<_EditPropertyPageContent>
     if (_isNavigating) return;
 
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => _DeleteConfirmationDialog(

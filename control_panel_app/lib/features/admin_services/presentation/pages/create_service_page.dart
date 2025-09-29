@@ -97,10 +97,11 @@ class _CreateServicePageState extends State<CreateServicePage>
         if (state is ServiceOperationSuccess) {
           _showSuccessMessage(state.message);
           Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) context.pop({
-              'refresh': true,
-              'propertyId': _selectedPropertyId,
-            });
+            if (mounted)
+              context.pop({
+                'refresh': true,
+                'propertyId': _selectedPropertyId,
+              });
           });
         } else if (state is ServicesError) {
           _showErrorMessage(state.message);
@@ -204,7 +205,8 @@ class _CreateServicePageState extends State<CreateServicePage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ShaderMask(
-                  shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                  shaderCallback: (bounds) =>
+                      AppTheme.primaryGradient.createShader(bounds),
                   child: Text(
                     'إضافة خدمة جديدة',
                     style: AppTextStyles.heading2.copyWith(
@@ -378,6 +380,7 @@ class _CreateServicePageState extends State<CreateServicePage>
 
   void _showIconPicker() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => ServiceIconPicker(
         selectedIcon: _selectedIcon,
@@ -466,7 +469,8 @@ class _CreateServicePageState extends State<CreateServicePage>
             style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
             decoration: InputDecoration(
               labelText: 'السعر',
-              labelStyle: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
+              labelStyle:
+                  AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
               filled: true,
               fillColor: AppTheme.darkSurface.withOpacity(0.3),
               border: OutlineInputBorder(
@@ -504,7 +508,8 @@ class _CreateServicePageState extends State<CreateServicePage>
           ),
         ),
         const SizedBox(width: 12),
-        Expanded(child: _CurrencyDropdown(
+        Expanded(
+            child: _CurrencyDropdown(
           value: _selectedCurrency,
           onChanged: (v) => setState(() => _selectedCurrency = v),
         )),
@@ -535,10 +540,12 @@ class _CreateServicePageState extends State<CreateServicePage>
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   gradient: isSelected ? AppTheme.primaryGradient : null,
-                  color: isSelected ? null : AppTheme.darkSurface.withOpacity(0.3),
+                  color:
+                      isSelected ? null : AppTheme.darkSurface.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
@@ -551,7 +558,8 @@ class _CreateServicePageState extends State<CreateServicePage>
                   model.label,
                   style: AppTextStyles.bodySmall.copyWith(
                     color: isSelected ? Colors.white : AppTheme.textMuted,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ),
@@ -671,14 +679,14 @@ class _CreateServicePageState extends State<CreateServicePage>
       );
 
       context.read<ServicesBloc>().add(
-        CreateServiceEvent(
-          propertyId: _selectedPropertyId!,
-          name: _nameController.text,
-          price: price,
-          pricingModel: _selectedPricingModel,
-          icon: _selectedIcon,
-        ),
-      );
+            CreateServiceEvent(
+              propertyId: _selectedPropertyId!,
+              name: _nameController.text,
+              price: price,
+              pricingModel: _selectedPricingModel,
+              icon: _selectedIcon,
+            ),
+          );
     }
   }
 
@@ -752,7 +760,10 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
       final usecase = di.sl<GetCurrenciesUseCase>();
       final result = await usecase(NoParams());
       result.fold(
-        (f) => setState(() { _error = f.message; _loading = false; }),
+        (f) => setState(() {
+          _error = f.message;
+          _loading = false;
+        }),
         (list) => setState(() {
           _codes = list.map((c) => c.code).toList();
           _loading = false;
@@ -762,7 +773,10 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
         }),
       );
     } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
     }
   }
 
@@ -784,30 +798,40 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
         child: Row(children: [
           const SizedBox(width: 4, height: 4),
           SizedBox(
-            width: 18, height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.textMuted),
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppTheme.textMuted),
           ),
           const SizedBox(width: 8),
-          Text('جاري تحميل العملات...', style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted)),
+          Text('جاري تحميل العملات...',
+              style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted)),
         ]),
       );
     }
     if (_error != null) {
       return DropdownButtonFormField<String>(
-        value: _codes.contains(widget.value) ? widget.value : null,
+        initialValue: _codes.contains(widget.value) ? widget.value : null,
         decoration: decoration.copyWith(errorText: _error),
-        items: _codes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-        onChanged: (v) { if (v != null) widget.onChanged(v); },
+        items: _codes
+            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+            .toList(),
+        onChanged: (v) {
+          if (v != null) widget.onChanged(v);
+        },
       );
     }
     return DropdownButtonFormField<String>(
-      value: _codes.contains(widget.value) ? widget.value : null,
+      initialValue: _codes.contains(widget.value) ? widget.value : null,
       decoration: decoration,
       dropdownColor: AppTheme.darkCard,
       style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
-      items: _codes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-      onChanged: (v) { if (v != null) widget.onChanged(v); },
+      items: _codes
+          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+          .toList(),
+      onChanged: (v) {
+        if (v != null) widget.onChanged(v);
+      },
     );
   }
 }
-

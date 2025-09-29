@@ -1107,6 +1107,7 @@ class _UsersListPageState extends State<UsersListPage>
   void _showDeleteConfirmation(String userId) {
     HapticFeedback.mediumImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (context) => BackdropFilter(
@@ -1184,7 +1185,9 @@ class _UsersListPageState extends State<UsersListPage>
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          context.read<UsersListBloc>().add(DeleteUserEvent(userId));
+                          context
+                              .read<UsersListBloc>()
+                              .add(DeleteUserEvent(userId));
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.error,
@@ -1587,6 +1590,7 @@ class _DeleteConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      insetPadding: const EdgeInsets.all(10),
       backgroundColor: Colors.transparent,
       child: Container(
         width: 400,

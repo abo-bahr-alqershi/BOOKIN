@@ -10,13 +10,13 @@ import '../../domain/entities/review_image.dart';
 class ReviewImagesGallery extends StatefulWidget {
   final List<ReviewImage> images;
   final bool isDesktop;
-  
+
   const ReviewImagesGallery({
     super.key,
     required this.images,
     required this.isDesktop,
   });
-  
+
   @override
   State<ReviewImagesGallery> createState() => _ReviewImagesGalleryState();
 }
@@ -27,7 +27,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
   late Animation<double> _scaleAnimation;
   int? _selectedImageIndex;
   final PageController _pageController = PageController();
-  
+
   @override
   void initState() {
     super.initState();
@@ -35,7 +35,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.9,
       end: 1.0,
@@ -43,22 +43,22 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
       parent: _animationController,
       curve: Curves.easeOutBack,
     ));
-    
+
     _animationController.forward();
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
     _pageController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final crossAxisCount = widget.isDesktop ? 4 : 3;
     final aspectRatio = widget.isDesktop ? 1.5 : 1.0;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -80,7 +80,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
             },
           ),
         ),
-        
+
         // معلومات الصور
         if (widget.images.isNotEmpty)
           Padding(
@@ -90,11 +90,11 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
       ],
     );
   }
-  
+
   Widget _buildImageThumbnail(int index) {
     final image = widget.images[index];
     final isSelected = _selectedImageIndex == index;
-    
+
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: Duration(milliseconds: 300 + (index * 100)),
@@ -172,7 +172,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
                       },
                     ),
                   ),
-                  
+
                   // تدرج التراكب
                   Positioned.fill(
                     child: Container(
@@ -190,7 +190,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
                       ),
                     ),
                   ),
-                  
+
                   // شارة الفئة
                   Positioned(
                     top: 8,
@@ -217,7 +217,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
                       ),
                     ),
                   ),
-                  
+
                   // رقم الصورة
                   Positioned(
                     bottom: 8,
@@ -259,18 +259,19 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
       },
     );
   }
-  
+
   Widget _buildImageInfo() {
     final totalSize = widget.images.fold<int>(
       0,
       (sum, image) => sum + image.sizeBytes,
     );
-    
+
     final categoryCounts = <ImageCategory, int>{};
     for (final image in widget.images) {
-      categoryCounts[image.category] = (categoryCounts[image.category] ?? 0) + 1;
+      categoryCounts[image.category] =
+          (categoryCounts[image.category] ?? 0) + 1;
     }
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -290,7 +291,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
             value: '${widget.images.length} صورة',
           ),
           const SizedBox(width: 24),
-          
+
           // الحجم الإجمالي
           _buildInfoItem(
             icon: Icons.storage_outlined,
@@ -298,7 +299,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
             value: _formatFileSize(totalSize),
           ),
           const SizedBox(width: 24),
-          
+
           // الفئات
           Expanded(
             child: Wrap(
@@ -333,7 +334,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
       ),
     );
   }
-  
+
   Widget _buildInfoItem({
     required IconData icon,
     required String label,
@@ -368,9 +369,10 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
       ],
     );
   }
-  
+
   void _showImageViewer(int initialIndex) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (context) => _ImageViewerDialog(
@@ -379,7 +381,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
       ),
     );
   }
-  
+
   String _getCategoryName(ImageCategory category) {
     switch (category) {
       case ImageCategory.exterior:
@@ -400,10 +402,11 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
         return 'معرض';
     }
   }
-  
+
   String _formatFileSize(int bytes) {
     if (bytes < 1024) return '$bytes بايت';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} كيلوبايت';
+    if (bytes < 1024 * 1024)
+      return '${(bytes / 1024).toStringAsFixed(1)} كيلوبايت';
     if (bytes < 1024 * 1024 * 1024) {
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} ميجابايت';
     }
@@ -415,12 +418,12 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
 class _ImageViewerDialog extends StatefulWidget {
   final List<ReviewImage> images;
   final int initialIndex;
-  
+
   const _ImageViewerDialog({
     required this.images,
     required this.initialIndex,
   });
-  
+
   @override
   State<_ImageViewerDialog> createState() => _ImageViewerDialogState();
 }
@@ -431,18 +434,18 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
   late int _currentIndex;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  
+
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: _currentIndex);
-    
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.8,
       end: 1.0,
@@ -450,24 +453,24 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
       parent: _animationController,
       curve: Curves.easeOutBack,
     ));
-    
+
     _animationController.forward();
   }
-  
+
   @override
   void dispose() {
     _pageController.dispose();
     _animationController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    
+
     return Dialog(
+      insetPadding: const EdgeInsets.all(10),
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(20),
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Container(
@@ -522,7 +525,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
                             ],
                           ),
                         ),
-                        
+
                         // زر الإغلاق
                         IconButton(
                           onPressed: () {
@@ -545,7 +548,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
                       ],
                     ),
                   ),
-                  
+
                   // عارض الصور
                   Expanded(
                     child: Stack(
@@ -565,13 +568,18 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
                                 child: Image.network(
                                   widget.images[index].url,
                                   fit: BoxFit.contain,
-                                  loadingBuilder: (context, child, loadingProgress) {
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
                                     if (loadingProgress == null) return child;
                                     return Center(
                                       child: CircularProgressIndicator(
-                                        value: loadingProgress.expectedTotalBytes != null
-                                            ? loadingProgress.cumulativeBytesLoaded /
-                                                loadingProgress.expectedTotalBytes!
+                                        value: loadingProgress
+                                                    .expectedTotalBytes !=
+                                                null
+                                            ? loadingProgress
+                                                    .cumulativeBytesLoaded /
+                                                loadingProgress
+                                                    .expectedTotalBytes!
                                             : null,
                                         color: AppTheme.primaryBlue,
                                       ),
@@ -582,7 +590,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
                             );
                           },
                         ),
-                        
+
                         // أزرار التنقل
                         if (_currentIndex > 0)
                           Positioned(
@@ -601,7 +609,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
                               ),
                             ),
                           ),
-                        
+
                         if (_currentIndex < widget.images.length - 1)
                           Positioned(
                             right: 16,
@@ -622,7 +630,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
                       ],
                     ),
                   ),
-                  
+
                   // الصور المصغرة
                   Container(
                     height: 80,
@@ -682,7 +690,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog>
       ),
     );
   }
-  
+
   Widget _buildNavButton({
     required IconData icon,
     required VoidCallback onTap,

@@ -1081,6 +1081,7 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
 
   void _openMapPicker() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (context) => _MapPickerDialog(
@@ -1492,8 +1493,8 @@ class _MapPickerDialogState extends State<_MapPickerDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      insetPadding: const EdgeInsets.all(10),
       backgroundColor: Colors.transparent,
-      insetPadding: EdgeInsets.zero,
       child: Container(
         decoration: BoxDecoration(
           color: AppTheme.darkCard,

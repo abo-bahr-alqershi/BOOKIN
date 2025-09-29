@@ -566,7 +566,6 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
                     );
               },
             ),
-            // تم إخفاء حقل رابط الصورة الرئيسية. يتم تعيين الصورة الرئيسية تلقائياً من المعرض.
           ],
         ),
       ),
@@ -1056,73 +1055,42 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
       ),
       child: Row(
         children: [
-          // GestureDetector(
-          //   onTap: () => setState(() => _showPreview = true),
-          //   child: Container(
-          //     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          //     decoration: BoxDecoration(
-          //       gradient: LinearGradient(
-          //         colors: [
-          //           AppTheme.primaryPurple.withValues(alpha: 0.3),
-          //           AppTheme.primaryViolet.withValues(alpha: 0.2),
-          //         ],
-          //       ),
-          //       borderRadius: BorderRadius.circular(12),
-          //       border: Border.all(
-          //         color: AppTheme.primaryPurple.withValues(alpha: 0.5),
-          //         width: 1,
-          //       ),
-          //     ),
-          //     child: Row(
-          //       children: [
-          //         Icon(
-          //           CupertinoIcons.eye_fill,
-          //           color: AppTheme.primaryPurple,
-          //           size: 18,
-          //         ),
-          //         const SizedBox(width: 8),
-          //         Text(
-          //           'معاينة',
-          //           style: AppTextStyles.buttonMedium.copyWith(
-          //             color: AppTheme.primaryPurple,
-          //             fontWeight: FontWeight.bold,
-          //           ),
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          // ),
-          ElevatedButton(
-            onPressed: () {
-              print('🔴 Test button pressed');
-
-              // تجربة إرسال event مباشرة
-              try {
-                final bloc = context.read<SectionFormBloc>();
-                print('🔴 Bloc found: $bloc');
-
-                // إرسال بيانات تجريبية
-                bloc.add(const UpdateSectionBasicInfoEvent(
-                  name: 'test',
-                  title: 'Test Section',
-                ));
-
-                bloc.add(const UpdateSectionConfigEvent(
-                  type: SectionTypeEnum.featured,
-                  target: SectionTarget.properties,
-                ));
-
-                Future.delayed(const Duration(milliseconds: 200), () {
-                  print('🔴 Sending submit event...');
-                  bloc.add(SubmitSectionFormEvent());
-                });
-              } catch (e) {
-                print('🔴 Error: $e');
-              }
-            },
-            child: const Text('تجربة'),
+          GestureDetector(
+            onTap: () => setState(() => _showPreview = true),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primaryPurple.withValues(alpha: 0.3),
+                    AppTheme.primaryViolet.withValues(alpha: 0.2),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.primaryPurple.withValues(alpha: 0.5),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.eye_fill,
+                    color: AppTheme.primaryPurple,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'معاينة',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: AppTheme.primaryPurple,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-
           const Spacer(),
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),

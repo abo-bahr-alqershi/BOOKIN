@@ -991,6 +991,7 @@ class PropertyInSectionGalleryState extends State<PropertyInSectionGallery>
 
   void confirmDeleteLocalImage(int index) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => _DeleteConfirmationDialog(
         count: 1,
@@ -1035,6 +1036,7 @@ class PropertyInSectionGalleryState extends State<PropertyInSectionGallery>
 
   void confirmDeleteLocalMedia(int index) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => _DeleteConfirmationDialog(
         count: 1,
@@ -1293,6 +1295,7 @@ class PropertyInSectionGalleryState extends State<PropertyInSectionGallery>
     if (_selectedLocalIndices.isEmpty) return;
 
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => _DeleteConfirmationDialog(
         count: _selectedLocalIndices.length,
@@ -1873,6 +1876,7 @@ class PropertyInSectionGalleryState extends State<PropertyInSectionGallery>
   // 20. _confirmDeleteImage
   void confirmDeleteImage(SectionImage media) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => _DeleteConfirmationDialog(
         count: 1,
@@ -1910,6 +1914,7 @@ class PropertyInSectionGalleryState extends State<PropertyInSectionGallery>
     if (_selectedImageIds.isEmpty) return;
 
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => _DeleteConfirmationDialog(
         count: _selectedImageIds.length,

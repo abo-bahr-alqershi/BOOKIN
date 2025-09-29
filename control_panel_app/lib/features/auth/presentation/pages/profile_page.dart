@@ -25,33 +25,33 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> 
+class _ProfilePageState extends State<ProfilePage>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _subtleGlowController;
   late AnimationController _themeSwitchController;
   late Animation<double> _themeSwitchRotation;
   late Animation<double> _themeSwitchScale;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     )..forward();
-    
+
     _subtleGlowController = AnimationController(
       duration: const Duration(seconds: 4),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _themeSwitchController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    
+
     _themeSwitchRotation = Tween<double>(
       begin: 0,
       end: math.pi * 2,
@@ -59,7 +59,7 @@ class _ProfilePageState extends State<ProfilePage>
       parent: _themeSwitchController,
       curve: Curves.easeInOut,
     ));
-    
+
     _themeSwitchScale = Tween<double>(
       begin: 1.0,
       end: 0.8,
@@ -68,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage>
       curve: Curves.easeOutBack,
     ));
   }
-  
+
   @override
   void dispose() {
     _fadeController.dispose();
@@ -100,13 +100,14 @@ class _ProfilePageState extends State<ProfilePage>
 
           if (user == null) {
             // Fallback minimal loader while determining state
-            return const Center(child: CircularProgressIndicator(strokeWidth: 1.5));
+            return const Center(
+                child: CircularProgressIndicator(strokeWidth: 1.5));
           }
 
           return Stack(
             children: [
               _buildMinimalBackground(),
-              
+
               CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
@@ -130,7 +131,7 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                 ],
               ),
-              
+
               // زر تبديل الثيم العائم
               _buildFloatingThemeToggle(),
               if (state is AuthLoading)
@@ -152,7 +153,7 @@ class _ProfilePageState extends State<ProfilePage>
       ),
     );
   }
-  
+
   Widget _buildMinimalBackground() {
     return Container(
       decoration: BoxDecoration(
@@ -359,7 +360,8 @@ class _ProfilePageState extends State<ProfilePage>
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          AppTheme.primaryBlue.withValues(alpha: 0.08 + (_subtleGlowController.value * 0.04),
+                          AppTheme.primaryBlue.withValues(
+                            alpha: 0.08 + (_subtleGlowController.value * 0.04),
                           ),
                           Colors.transparent,
                         ],
@@ -372,8 +374,8 @@ class _ProfilePageState extends State<ProfilePage>
                 currentImageUrl: user.profileImage,
                 onImageSelected: (imagePath) {
                   context.read<AuthBloc>().add(
-                    UploadProfileImageEvent(imagePath: imagePath),
-                  );
+                        UploadProfileImageEvent(imagePath: imagePath),
+                      );
                 },
                 size: 90,
               ),
@@ -413,17 +415,14 @@ class _ProfilePageState extends State<ProfilePage>
                       ? Icons.verified_rounded
                       : Icons.pending_rounded,
                   size: 14,
-                  color: user.isVerified
-                      ? AppTheme.success
-                      : AppTheme.warning,
+                  color: user.isVerified ? AppTheme.success : AppTheme.warning,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   user.isVerified ? 'حساب موثق' : 'في انتظار التحقق',
                   style: AppTextStyles.caption.copyWith(
-                    color: user.isVerified
-                        ? AppTheme.success
-                        : AppTheme.warning,
+                    color:
+                        user.isVerified ? AppTheme.success : AppTheme.warning,
                     fontWeight: FontWeight.w500,
                     fontSize: 11,
                   ),
@@ -542,9 +541,7 @@ class _ProfilePageState extends State<ProfilePage>
                     ),
                     if (verified != null)
                       Icon(
-                        verified
-                            ? Icons.check_circle
-                            : Icons.error_outline,
+                        verified ? Icons.check_circle : Icons.error_outline,
                         size: 14,
                         color: verified
                             ? AppTheme.success.withValues(alpha: 0.8)
@@ -582,7 +579,7 @@ class _ProfilePageState extends State<ProfilePage>
       bloc: AppBloc.theme, // استخدام ThemeBloc من AppBloc
       builder: (context, themeState) {
         final isDark = themeState.themeMode == ThemeMode.dark;
-        
+
         return Positioned(
           top: MediaQuery.of(context).padding.top + 10,
           right: 20,
@@ -599,7 +596,8 @@ class _ProfilePageState extends State<ProfilePage>
                     _themeSwitchController.forward().then((_) {
                       _themeSwitchController.reverse();
                     });
-                    AppBloc.theme.add(const ToggleThemeEvent()); // استخدام AppBloc.theme
+                    AppBloc.theme
+                        .add(const ToggleThemeEvent()); // استخدام AppBloc.theme
                   },
                   child: AnimatedBuilder(
                     animation: Listenable.merge([
@@ -621,27 +619,42 @@ class _ProfilePageState extends State<ProfilePage>
                                 end: Alignment.bottomRight,
                                 colors: isDark
                                     ? [
-                                        const Color(0xFFFDB813).withValues(alpha: 0.15),
-                                        const Color(0xFFFFE082).withValues(alpha: 0.08),
+                                        const Color(0xFFFDB813)
+                                            .withValues(alpha: 0.15),
+                                        const Color(0xFFFFE082)
+                                            .withValues(alpha: 0.08),
                                       ]
                                     : [
-                                        const Color(0xFF6366F1).withValues(alpha: 0.15),
-                                        const Color(0xFF8B5CF6).withValues(alpha: 0.08),
+                                        const Color(0xFF6366F1)
+                                            .withValues(alpha: 0.15),
+                                        const Color(0xFF8B5CF6)
+                                            .withValues(alpha: 0.08),
                                       ],
                               ),
                               borderRadius: BorderRadius.circular(13),
                               border: Border.all(
                                 color: isDark
-                                    ? const Color(0xFFFDB813).withValues(alpha: 0.2 + _subtleGlowController.value * 0.1)
-                                    : const Color(0xFF6366F1).withValues(alpha: 0.2 + _subtleGlowController.value * 0.1),
+                                    ? const Color(0xFFFDB813).withValues(
+                                        alpha: 0.2 +
+                                            _subtleGlowController.value * 0.1)
+                                    : const Color(0xFF6366F1).withValues(
+                                        alpha: 0.2 +
+                                            _subtleGlowController.value * 0.1),
                                 width: 0.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
                                   color: isDark
-                                      ? const Color(0xFFFDB813).withValues(alpha: 0.1 + _subtleGlowController.value * 0.05)
-                                      : const Color(0xFF6366F1).withValues(alpha: 0.1 + _subtleGlowController.value * 0.05),
-                                  blurRadius: 12 + _subtleGlowController.value * 4,
+                                      ? const Color(0xFFFDB813).withValues(
+                                          alpha: 0.1 +
+                                              _subtleGlowController.value *
+                                                  0.05)
+                                      : const Color(0xFF6366F1).withValues(
+                                          alpha: 0.1 +
+                                              _subtleGlowController.value *
+                                                  0.05),
+                                  blurRadius:
+                                      12 + _subtleGlowController.value * 4,
                                   spreadRadius: 1,
                                 ),
                               ],
@@ -649,28 +662,33 @@ class _ProfilePageState extends State<ProfilePage>
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(13),
                               child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                filter:
+                                    ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                                 child: Stack(
                                   alignment: Alignment.center,
                                   children: [
                                     AnimatedContainer(
-                                      duration: const Duration(milliseconds: 300),
+                                      duration:
+                                          const Duration(milliseconds: 300),
                                       decoration: BoxDecoration(
                                         gradient: RadialGradient(
                                           colors: isDark
                                               ? [
-                                                  const Color(0xFFFDB813).withValues(alpha: 0.05),
+                                                  const Color(0xFFFDB813)
+                                                      .withValues(alpha: 0.05),
                                                   Colors.transparent,
                                                 ]
                                               : [
-                                                  const Color(0xFF6366F1).withValues(alpha: 0.05),
+                                                  const Color(0xFF6366F1)
+                                                      .withValues(alpha: 0.05),
                                                   Colors.transparent,
                                                 ],
                                         ),
                                       ),
                                     ),
                                     AnimatedSwitcher(
-                                      duration: const Duration(milliseconds: 300),
+                                      duration:
+                                          const Duration(milliseconds: 300),
                                       transitionBuilder: (child, animation) {
                                         return ScaleTransition(
                                           scale: animation,
@@ -681,7 +699,9 @@ class _ProfilePageState extends State<ProfilePage>
                                         );
                                       },
                                       child: Icon(
-                                        isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                                        isDark
+                                            ? Icons.light_mode_rounded
+                                            : Icons.dark_mode_rounded,
                                         key: ValueKey(isDark),
                                         size: 20,
                                         color: isDark
@@ -713,7 +733,7 @@ class _ProfilePageState extends State<ProfilePage>
       bloc: AppBloc.theme, // استخدام AppBloc.theme
       builder: (context, themeState) {
         final isDark = themeState.themeMode == ThemeMode.dark;
-        
+
         return Material(
           color: Colors.transparent,
           child: InkWell(
@@ -722,7 +742,8 @@ class _ProfilePageState extends State<ProfilePage>
               _themeSwitchController.forward().then((_) {
                 _themeSwitchController.reverse();
               });
-              AppBloc.theme.add(const ToggleThemeEvent()); // استخدام AppBloc.theme
+              AppBloc.theme
+                  .add(const ToggleThemeEvent()); // استخدام AppBloc.theme
             },
             borderRadius: BorderRadius.circular(12),
             child: Padding(
@@ -744,26 +765,34 @@ class _ProfilePageState extends State<ProfilePage>
                             gradient: LinearGradient(
                               colors: isDark
                                   ? [
-                                      const Color(0xFFFDB813).withValues(alpha: 0.15),
-                                      const Color(0xFFFFE082).withValues(alpha: 0.08),
+                                      const Color(0xFFFDB813)
+                                          .withValues(alpha: 0.15),
+                                      const Color(0xFFFFE082)
+                                          .withValues(alpha: 0.08),
                                     ]
                                   : [
-                                      const Color(0xFF6366F1).withValues(alpha: 0.15),
-                                      const Color(0xFF8B5CF6).withValues(alpha: 0.08),
+                                      const Color(0xFF6366F1)
+                                          .withValues(alpha: 0.15),
+                                      const Color(0xFF8B5CF6)
+                                          .withValues(alpha: 0.08),
                                     ],
                             ),
                             borderRadius: BorderRadius.circular(11),
                             border: Border.all(
                               color: isDark
-                                  ? const Color(0xFFFDB813).withValues(alpha: 0.2)
-                                  : const Color(0xFF6366F1).withValues(alpha: 0.2),
+                                  ? const Color(0xFFFDB813)
+                                      .withValues(alpha: 0.2)
+                                  : const Color(0xFF6366F1)
+                                      .withValues(alpha: 0.2),
                               width: 0.5,
                             ),
                           ),
                           child: AnimatedSwitcher(
                             duration: const Duration(milliseconds: 200),
                             child: Icon(
-                              isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                              isDark
+                                  ? Icons.light_mode_rounded
+                                  : Icons.dark_mode_rounded,
                               key: ValueKey(isDark),
                               color: isDark
                                   ? const Color(0xFFFDB813)
@@ -963,7 +992,7 @@ class _ProfilePageState extends State<ProfilePage>
               children: menuItems.asMap().entries.map((entry) {
                 final index = entry.key;
                 final item = entry.value;
-                
+
                 if (item['widget'] != null) {
                   return Column(
                     children: [
@@ -977,7 +1006,7 @@ class _ProfilePageState extends State<ProfilePage>
                     ],
                   );
                 }
-                
+
                 return Column(
                   children: [
                     _buildMinimalMenuItem(
@@ -1102,7 +1131,7 @@ class _ProfilePageState extends State<ProfilePage>
       ),
     );
   }
-  
+
   Widget _buildMinimalButton({
     required Widget child,
     required VoidCallback onPressed,
@@ -1146,6 +1175,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   void _showLogoutDialog(BuildContext context) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black54,
       builder: (context) => BackdropFilter(
@@ -1225,8 +1255,18 @@ class _ProfilePageState extends State<ProfilePage>
 
   String _formatDate(DateTime date) {
     final months = [
-      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر'
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -1235,14 +1275,13 @@ class _ProfilePageState extends State<ProfilePage>
 // Minimal Background Painter
 class _MinimalBackgroundPainter extends CustomPainter {
   final double animationValue;
-  
+
   _MinimalBackgroundPainter({required this.animationValue});
-  
+
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.fill;
-    
+    final paint = Paint()..style = PaintingStyle.fill;
+
     for (int i = 0; i < 2; i++) {
       paint.shader = RadialGradient(
         colors: [
@@ -1256,7 +1295,7 @@ class _MinimalBackgroundPainter extends CustomPainter {
         ),
         radius: 80 + animationValue * 10,
       ));
-      
+
       canvas.drawCircle(
         Offset(
           size.width * (0.3 + i * 0.4),
@@ -1267,7 +1306,7 @@ class _MinimalBackgroundPainter extends CustomPainter {
       );
     }
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

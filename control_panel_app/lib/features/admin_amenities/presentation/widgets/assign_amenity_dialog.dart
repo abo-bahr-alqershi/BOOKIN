@@ -44,6 +44,7 @@ class AssignAmenityDialog extends StatefulWidget {
     Function(String message)? onError,
   }) {
     return showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.black.withOpacity(0.7),
@@ -69,33 +70,33 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
   late AnimationController _slideController;
   late AnimationController _shimmerController;
   late AnimationController _pulseController;
-  
+
   // Animations
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _shimmerAnimation;
   late Animation<double> _pulseAnimation;
-  
+
   // Form Controllers
   final _formKey = GlobalKey<FormState>();
   final _costController = TextEditingController();
   final _descriptionController = TextEditingController();
-  
+
   // State
   String? _selectedPropertyId;
   String? _selectedPropertyName;
   bool _isAvailable = true;
   bool _isLoading = false;
   bool _showAdvancedOptions = false;
-  
+
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _initializeData();
   }
-  
+
   void _initializeAnimations() {
     // Scale Animation
     _scaleController = AnimationController(
@@ -109,7 +110,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       parent: _scaleController,
       curve: Curves.easeOutBack,
     ));
-    
+
     // Fade Animation
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -122,7 +123,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       parent: _fadeController,
       curve: Curves.easeOut,
     ));
-    
+
     // Slide Animation
     _slideController = AnimationController(
       duration: const Duration(milliseconds: 500),
@@ -135,7 +136,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       parent: _slideController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     // Shimmer Animation
     _shimmerController = AnimationController(
       duration: const Duration(seconds: 2),
@@ -148,7 +149,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       parent: _shimmerController,
       curve: Curves.linear,
     ));
-    
+
     // Pulse Animation
     _pulseController = AnimationController(
       duration: const Duration(seconds: 2),
@@ -161,21 +162,23 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       parent: _pulseController,
       curve: Curves.easeInOut,
     ));
-    
+
     // Start animations
     _scaleController.forward();
     _fadeController.forward();
     _slideController.forward();
   }
-  
+
   void _initializeData() {
     _selectedPropertyId = widget.preSelectedPropertyId;
     // Set default cost if amenity has average cost
-    if (widget.amenity.averageExtraCost != null && widget.amenity.averageExtraCost! > 0) {
-      _costController.text = widget.amenity.averageExtraCost!.toStringAsFixed(0);
+    if (widget.amenity.averageExtraCost != null &&
+        widget.amenity.averageExtraCost! > 0) {
+      _costController.text =
+          widget.amenity.averageExtraCost!.toStringAsFixed(0);
     }
   }
-  
+
   @override
   void dispose() {
     _scaleController.dispose();
@@ -187,7 +190,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
     _descriptionController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return ScaleTransition(
@@ -242,7 +245,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
                   children: [
                     // Background Pattern
                     _buildBackgroundPattern(),
-                    
+
                     // Main Content
                     SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
@@ -254,7 +257,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
                         ],
                       ),
                     ),
-                    
+
                     // Loading Overlay
                     if (_isLoading) _buildLoadingOverlay(),
                   ],
@@ -266,7 +269,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       ),
     );
   }
-  
+
   Widget _buildBackgroundPattern() {
     return Positioned.fill(
       child: AnimatedBuilder(
@@ -282,7 +285,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       ),
     );
   }
-  
+
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -336,9 +339,9 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
               );
             },
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Title Section
           Expanded(
             child: Column(
@@ -398,7 +401,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
               ],
             ),
           ),
-          
+
           // Close Button
           GestureDetector(
             onTap: () {
@@ -427,7 +430,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       ),
     );
   }
-  
+
   Widget _buildContent() {
     return SlideTransition(
       position: _slideAnimation,
@@ -440,17 +443,17 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
             children: [
               // Property Selection
               _buildPropertySelection(),
-              
+
               const SizedBox(height: 20),
-              
+
               // Availability Toggle
               _buildAvailabilityToggle(),
-              
+
               const SizedBox(height: 20),
-              
+
               // Advanced Options Toggle
               _buildAdvancedOptionsToggle(),
-              
+
               // Advanced Options Content
               if (_showAdvancedOptions) ...[
                 const SizedBox(height: 20),
@@ -458,9 +461,9 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
                 const SizedBox(height: 20),
                 _buildDescriptionField(),
               ],
-              
+
               const SizedBox(height: 20),
-              
+
               // Info Card
               _buildInfoCard(),
             ],
@@ -469,7 +472,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       ),
     );
   }
-  
+
   Widget _buildPropertySelection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -521,9 +524,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
             ),
           ],
         ),
-        
         const SizedBox(height: 12),
-        
         GestureDetector(
           onTap: _selectProperty,
           child: AnimatedContainer(
@@ -532,31 +533,31 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: _selectedPropertyId != null
-                  ? [
-                      AppTheme.primaryBlue.withOpacity(0.1),
-                      AppTheme.primaryBlue.withOpacity(0.05),
-                    ]
-                  : [
-                      AppTheme.darkSurface.withOpacity(0.5),
-                      AppTheme.darkSurface.withOpacity(0.3),
-                    ],
+                    ? [
+                        AppTheme.primaryBlue.withOpacity(0.1),
+                        AppTheme.primaryBlue.withOpacity(0.05),
+                      ]
+                    : [
+                        AppTheme.darkSurface.withOpacity(0.5),
+                        AppTheme.darkSurface.withOpacity(0.3),
+                      ],
               ),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: _selectedPropertyId != null
-                  ? AppTheme.primaryBlue.withOpacity(0.3)
-                  : AppTheme.darkBorder.withOpacity(0.3),
+                    ? AppTheme.primaryBlue.withOpacity(0.3)
+                    : AppTheme.darkBorder.withOpacity(0.3),
                 width: 1.5,
               ),
               boxShadow: _selectedPropertyId != null
-                ? [
-                    BoxShadow(
-                      color: AppTheme.primaryBlue.withOpacity(0.1),
-                      blurRadius: 15,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : [],
+                  ? [
+                      BoxShadow(
+                        color: AppTheme.primaryBlue.withOpacity(0.1),
+                        blurRadius: 15,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : [],
             ),
             child: Row(
               children: [
@@ -646,8 +647,8 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
                   Icons.arrow_forward_ios_rounded,
                   size: 16,
                   color: _selectedPropertyId != null
-                    ? AppTheme.primaryBlue
-                    : AppTheme.textMuted,
+                      ? AppTheme.primaryBlue
+                      : AppTheme.textMuted,
                 ),
               ],
             ),
@@ -656,7 +657,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       ],
     );
   }
-  
+
   Widget _buildAvailabilityToggle() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -680,14 +681,14 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: _isAvailable
-                  ? [
-                      AppTheme.success.withOpacity(0.2),
-                      AppTheme.neonGreen.withOpacity(0.1),
-                    ]
-                  : [
-                      AppTheme.textMuted.withOpacity(0.2),
-                      AppTheme.textMuted.withOpacity(0.1),
-                    ],
+                    ? [
+                        AppTheme.success.withOpacity(0.2),
+                        AppTheme.neonGreen.withOpacity(0.1),
+                      ]
+                    : [
+                        AppTheme.textMuted.withOpacity(0.2),
+                        AppTheme.textMuted.withOpacity(0.1),
+                      ],
               ),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -727,7 +728,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
                 HapticFeedback.lightImpact();
                 setState(() => _isAvailable = value);
               },
-              activeColor: AppTheme.success,
+              activeThumbColor: AppTheme.success,
               activeTrackColor: AppTheme.success.withOpacity(0.3),
               inactiveThumbColor: AppTheme.textMuted,
               inactiveTrackColor: AppTheme.textMuted.withOpacity(0.3),
@@ -737,7 +738,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       ),
     );
   }
-  
+
   Widget _buildAdvancedOptionsToggle() {
     return GestureDetector(
       onTap: () {
@@ -789,7 +790,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       ),
     );
   }
-  
+
   Widget _buildCostField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -840,9 +841,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
             ),
           ],
         ),
-        
         const SizedBox(height: 12),
-        
         TextFormField(
           controller: _costController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -908,7 +907,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       ],
     );
   }
-  
+
   Widget _buildDescriptionField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -942,9 +941,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
             ),
           ],
         ),
-        
         const SizedBox(height: 12),
-        
         TextFormField(
           controller: _descriptionController,
           maxLines: 3,
@@ -984,7 +981,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       ],
     );
   }
-  
+
   Widget _buildInfoCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1049,7 +1046,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       ),
     );
   }
-  
+
   Widget _buildFooter() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -1072,10 +1069,12 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
           // Cancel Button
           Expanded(
             child: GestureDetector(
-              onTap: _isLoading ? null : () {
-                HapticFeedback.lightImpact();
-                Navigator.pop(context);
-              },
+              onTap: _isLoading
+                  ? null
+                  : () {
+                      HapticFeedback.lightImpact();
+                      Navigator.pop(context);
+                    },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 decoration: BoxDecoration(
@@ -1097,9 +1096,9 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
               ),
             ),
           ),
-          
+
           const SizedBox(width: 12),
-          
+
           // Assign Button
           Expanded(
             flex: 2,
@@ -1111,25 +1110,25 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: _isLoading
-                      ? [
-                          AppTheme.textMuted.withOpacity(0.3),
-                          AppTheme.textMuted.withOpacity(0.2),
-                        ]
-                      : [
-                          AppTheme.primaryPurple,
-                          AppTheme.primaryBlue,
-                        ],
+                        ? [
+                            AppTheme.textMuted.withOpacity(0.3),
+                            AppTheme.textMuted.withOpacity(0.2),
+                          ]
+                        : [
+                            AppTheme.primaryPurple,
+                            AppTheme.primaryBlue,
+                          ],
                   ),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: !_isLoading
-                    ? [
-                        BoxShadow(
-                          color: AppTheme.primaryPurple.withOpacity(0.3),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
-                        ),
-                      ]
-                    : [],
+                      ? [
+                          BoxShadow(
+                            color: AppTheme.primaryPurple.withOpacity(0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ]
+                      : [],
                 ),
                 child: Center(
                   child: Row(
@@ -1172,7 +1171,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       ),
     );
   }
-  
+
   Widget _buildLoadingOverlay() {
     return Positioned.fill(
       child: Container(
@@ -1229,7 +1228,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       ),
     );
   }
-  
+
   void _selectProperty() {
     HapticFeedback.lightImpact();
     context.push(
@@ -1245,21 +1244,21 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       },
     );
   }
-  
+
   Future<void> _handleAssign() async {
     if (_formKey.currentState?.validate() ?? false) {
       if (_selectedPropertyId == null) {
         _showError('الرجاء اختيار عقار');
         return;
       }
-      
+
       setState(() => _isLoading = true);
-      
+
       try {
         final cost = _costController.text.isNotEmpty
-          ? double.tryParse(_costController.text)
-          : null;
-        
+            ? double.tryParse(_costController.text)
+            : null;
+
         // Call the callback function
         await widget.onAssign?.call(
           amenityId: widget.amenity.id,
@@ -1267,25 +1266,25 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
           isAvailable: _isAvailable,
           extraCost: cost,
           description: _descriptionController.text.isNotEmpty
-            ? _descriptionController.text
-            : null,
+              ? _descriptionController.text
+              : null,
         );
-        
+
         // Simulate delay for better UX
         await Future.delayed(const Duration(milliseconds: 500));
-        
+
         _handleSuccess();
       } catch (e) {
         _handleError(e.toString());
       }
     }
   }
-  
+
   void _handleSuccess() {
     HapticFeedback.heavyImpact();
     widget.onSuccess?.call();
     Navigator.pop(context);
-    
+
     // Show success snackbar
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1325,13 +1324,13 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       ),
     );
   }
-  
+
   void _handleError(String message) {
     setState(() => _isLoading = false);
     widget.onError?.call(message);
     _showError(message);
   }
-  
+
   void _showError(String message) {
     HapticFeedback.mediumImpact();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1374,7 +1373,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       ),
     );
   }
-  
+
   IconData _getAmenityIcon(String iconName) {
     final iconMap = {
       'wifi': Icons.wifi_rounded,
@@ -1390,7 +1389,7 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
       'elevator': Icons.elevator_rounded,
       'safe': Icons.lock_rounded,
     };
-    
+
     return iconMap[iconName] ?? Icons.star_rounded;
   }
 }
@@ -1399,23 +1398,23 @@ class _AssignAmenityDialogState extends State<AssignAmenityDialog>
 class _DialogPatternPainter extends CustomPainter {
   final double animation;
   final Color color;
-  
+
   _DialogPatternPainter({
     required this.animation,
     required this.color,
   });
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
-    
+
     // Draw animated grid pattern
     const spacing = 40.0;
     final offset = animation * spacing;
-    
+
     for (double x = -spacing + offset; x < size.width + spacing; x += spacing) {
       canvas.drawLine(
         Offset(x, 0),
@@ -1423,38 +1422,40 @@ class _DialogPatternPainter extends CustomPainter {
         paint,
       );
     }
-    
-    for (double y = -spacing + offset; y < size.height + spacing; y += spacing) {
+
+    for (double y = -spacing + offset;
+        y < size.height + spacing;
+        y += spacing) {
       canvas.drawLine(
         Offset(0, y),
         Offset(size.width, y - 20),
         paint,
       );
     }
-    
+
     // Draw corner decorations
     paint.strokeWidth = 1.5;
     paint.color = color.withOpacity(0.5);
-    
+
     // Top-left corner
     canvas.drawArc(
-      Rect.fromLTWH(0, 0, 60, 60),
-      math.pi, 
+      const Rect.fromLTWH(0, 0, 60, 60),
+      math.pi,
       math.pi / 2,
       false,
       paint,
     );
-    
+
     // Bottom-right corner
     canvas.drawArc(
       Rect.fromLTWH(size.width - 60, size.height - 60, 60, 60),
-      0, 
+      0,
       math.pi / 2,
       false,
       paint,
     );
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

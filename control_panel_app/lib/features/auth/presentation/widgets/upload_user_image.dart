@@ -30,13 +30,13 @@ class UploadUserImage extends StatefulWidget {
   State<UploadUserImage> createState() => _UploadUserImageState();
 }
 
-class _UploadUserImageState extends State<UploadUserImage> 
+class _UploadUserImageState extends State<UploadUserImage>
     with TickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
   File? _selectedImage;
   bool _isLoading = false;
   bool _isHovered = false;
-  
+
   late AnimationController _pulseController;
   late AnimationController _rotateController;
   late Animation<double> _pulseAnimation;
@@ -45,12 +45,12 @@ class _UploadUserImageState extends State<UploadUserImage>
   @override
   void initState() {
     super.initState();
-    
+
     _pulseController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _pulseAnimation = Tween<double>(
       begin: 0.98,
       end: 1.02,
@@ -58,12 +58,12 @@ class _UploadUserImageState extends State<UploadUserImage>
       parent: _pulseController,
       curve: Curves.easeInOut,
     ));
-    
+
     _rotateController = AnimationController(
       duration: const Duration(seconds: 10), // Faster rotation
       vsync: this,
     )..repeat();
-    
+
     _rotateAnimation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
@@ -80,8 +80,10 @@ class _UploadUserImageState extends State<UploadUserImage>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: widget.enabled ? (_) => setState(() => _isHovered = true) : null,
-      onTapUp: widget.enabled ? (_) => setState(() => _isHovered = false) : null,
+      onTapDown:
+          widget.enabled ? (_) => setState(() => _isHovered = true) : null,
+      onTapUp:
+          widget.enabled ? (_) => setState(() => _isHovered = false) : null,
       onTapCancel: () => setState(() => _isHovered = false),
       onTap: widget.enabled ? _showImageSourceDialog : null,
       child: Stack(
@@ -112,7 +114,7 @@ class _UploadUserImageState extends State<UploadUserImage>
               );
             },
           ),
-          
+
           // Main Image Container with Pulse
           AnimatedBuilder(
             animation: _pulseAnimation,
@@ -142,8 +144,7 @@ class _UploadUserImageState extends State<UploadUserImage>
                       fit: StackFit.expand,
                       children: [
                         _buildUltraMinimalImageContent(),
-                        if (_isLoading)
-                          _buildLoadingOverlay(),
+                        if (_isLoading) _buildLoadingOverlay(),
                       ],
                     ),
                   ),
@@ -151,7 +152,7 @@ class _UploadUserImageState extends State<UploadUserImage>
               );
             },
           ),
-          
+
           // Ultra Minimal Camera Badge
           if (widget.enabled)
             Positioned(
@@ -201,7 +202,8 @@ class _UploadUserImageState extends State<UploadUserImage>
         width: widget.size,
         height: widget.size,
       );
-    } else if (widget.currentImageUrl != null && widget.currentImageUrl!.isNotEmpty) {
+    } else if (widget.currentImageUrl != null &&
+        widget.currentImageUrl!.isNotEmpty) {
       return CachedImageWidget(
         imageUrl: widget.currentImageUrl!,
         fit: BoxFit.cover,
@@ -257,7 +259,8 @@ class _UploadUserImageState extends State<UploadUserImage>
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black26,
       builder: (context) => _UltraMinimalImageSourceSheet(
-        hasCurrentImage: _selectedImage != null || widget.currentImageUrl != null,
+        hasCurrentImage:
+            _selectedImage != null || widget.currentImageUrl != null,
         onCameraPressed: () {
           Navigator.pop(context);
           _pickImage(ImageSource.camera);
@@ -371,6 +374,7 @@ class _UploadUserImageState extends State<UploadUserImage>
   void _showMinimalPermissionDialog() {
     HapticFeedback.lightImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black26,
       builder: (context) => _UltraMinimalDialog(
@@ -389,7 +393,7 @@ class _UploadUserImageState extends State<UploadUserImage>
 
   void _showMinimalErrorSnackBar(String message) {
     HapticFeedback.heavyImpact();
-    
+
     final overlay = Overlay.of(context);
     final overlayEntry = OverlayEntry(
       builder: (context) => _UltraMinimalSnackBar(
@@ -398,9 +402,9 @@ class _UploadUserImageState extends State<UploadUserImage>
         backgroundColor: AppTheme.error,
       ),
     );
-    
+
     overlay.insert(overlayEntry);
-    
+
     Future.delayed(const Duration(seconds: 2), () {
       overlayEntry.remove();
     });
@@ -452,9 +456,9 @@ class _UltraMinimalImageSourceSheet extends StatelessWidget {
                       borderRadius: BorderRadius.circular(1.5),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Title
                   Text(
                     'اختر صورة',
@@ -464,9 +468,9 @@ class _UltraMinimalImageSourceSheet extends StatelessWidget {
                       color: AppTheme.textWhite.withValues(alpha: 0.9),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   // Camera option
                   _buildMinimalOption(
                     icon: Icons.camera_alt_outlined,
@@ -474,7 +478,7 @@ class _UltraMinimalImageSourceSheet extends StatelessWidget {
                     subtitle: 'التقط صورة جديدة',
                     onTap: onCameraPressed,
                   ),
-                  
+
                   // Gallery option
                   _buildMinimalOption(
                     icon: Icons.photo_library_outlined,
@@ -482,7 +486,7 @@ class _UltraMinimalImageSourceSheet extends StatelessWidget {
                     subtitle: 'اختر من الصور',
                     onTap: onGalleryPressed,
                   ),
-                  
+
                   // Remove option
                   if (hasCurrentImage)
                     _buildMinimalOption(
@@ -492,7 +496,7 @@ class _UltraMinimalImageSourceSheet extends StatelessWidget {
                       onTap: onRemovePressed,
                       isDestructive: true,
                     ),
-                  
+
                   const SizedBox(height: 16),
                 ],
               ),
@@ -665,7 +669,8 @@ class _UltraMinimalDialog extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: AppTheme.darkBorder.withValues(alpha: 0.1),
+                                color:
+                                    AppTheme.darkBorder.withValues(alpha: 0.1),
                                 width: 0.5,
                               ),
                               borderRadius: BorderRadius.circular(8),
@@ -751,12 +756,12 @@ class _UltraMinimalSnackBarState extends State<_UltraMinimalSnackBar>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _fadeAnimation = CurvedAnimation(
       parent: _controller,
       curve: Curves.easeOut,
     );
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 1),
       end: Offset.zero,
@@ -764,9 +769,9 @@ class _UltraMinimalSnackBarState extends State<_UltraMinimalSnackBar>
       parent: _controller,
       curve: Curves.easeOutCubic,
     ));
-    
+
     _controller.forward();
-    
+
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) {
         _controller.reverse();

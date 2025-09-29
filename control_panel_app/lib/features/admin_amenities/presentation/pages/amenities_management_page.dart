@@ -139,6 +139,7 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
     if (_isDeleting) return;
     _isDeleting = true;
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.transparent,
@@ -328,6 +329,7 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
 
   void _showNavigationAnimation() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.transparent,
@@ -1046,6 +1048,7 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
 
   void _showDeleteConfirmation(Amenity amenity) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (dialogCtx) => BackdropFilter(
@@ -1156,6 +1159,7 @@ class _AmenitiesManagementPageState extends State<AmenitiesManagementPage>
 
   void _showBulkDeleteConfirmation() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.darkCard,
@@ -1297,6 +1301,7 @@ class _DeleteConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      insetPadding: const EdgeInsets.all(10),
       backgroundColor: Colors.transparent,
       child: Container(
         width: 400,

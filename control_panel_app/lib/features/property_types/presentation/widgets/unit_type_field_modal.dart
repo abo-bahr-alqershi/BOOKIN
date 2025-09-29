@@ -1521,7 +1521,7 @@ class _UnitTypeFieldModalState extends State<UnitTypeFieldModal>
             scale: _scaleAnimation,
             child: Dialog(
               backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.all(20),
+              insetPadding: const EdgeInsets.all(10),
               child: _buildDesktopContent(),
             ),
           ),
@@ -2299,6 +2299,7 @@ class _UnitTypeFieldModalState extends State<UnitTypeFieldModal>
 //     final double maxHeight = isSmall ? (screenSize.height * 0.95) : (screenSize.height * 0.9);
 
 //     return Dialog(
+      // insetPadding: const EdgeInsets.all(10),
 //       backgroundColor: Colors.transparent,
 //       insetPadding: inset,
 //       child: Container(

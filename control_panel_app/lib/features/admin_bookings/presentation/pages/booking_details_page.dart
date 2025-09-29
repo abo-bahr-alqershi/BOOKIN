@@ -778,6 +778,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage>
 
   void _showCheckInDialog(String bookingId) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => CheckInOutDialog(
         bookingId: bookingId,
@@ -793,6 +794,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage>
 
   void _showCheckOutDialog(String bookingId) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => CheckInOutDialog(
         bookingId: bookingId,
@@ -808,6 +810,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage>
 
   void _showCancelDialog(String bookingId) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => BookingActionsDialog(
         bookingId: bookingId,

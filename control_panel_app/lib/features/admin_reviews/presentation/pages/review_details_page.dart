@@ -990,6 +990,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
   void _showApproveConfirmation(BuildContext context, String reviewId) {
     HapticFeedback.mediumImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (context) => BackdropFilter(
@@ -1238,6 +1239,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
     final reviewDetailsBloc = context.read<ReviewDetailsBloc>();
 
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       barrierDismissible: true,

@@ -5,6 +5,7 @@ import '../../domain/entities/section_image.dart' as section_img;
 class UnitInSectionModel {
   final String id;
   final String sectionId;
+  final String? unitInSectionId;
   final String unitId;
   final String propertyId;
   final String unitName;
@@ -42,6 +43,7 @@ class UnitInSectionModel {
 
   const UnitInSectionModel({
     required this.id,
+    required this.unitInSectionId,
     required this.sectionId,
     required this.unitId,
     required this.propertyId,
@@ -98,8 +100,8 @@ class UnitInSectionModel {
 
   factory UnitInSectionModel.fromJson(Map<String, dynamic> json) {
     return UnitInSectionModel(
-      // Prefer the record id when provided by backend; fallback to entity id
       id: (json['unitInSectionId'] ?? json['id'])?.toString() ?? '',
+      unitInSectionId: json['unitInSectionId']?.toString(),
       sectionId: json['sectionId']?.toString() ?? '',
       unitId: json['unitId']?.toString() ?? '',
       propertyId: json['propertyId']?.toString() ?? '',

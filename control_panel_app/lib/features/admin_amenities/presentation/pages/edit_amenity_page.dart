@@ -3,7 +3,8 @@ import 'dart:ui';
 import 'package:bookn_cp_app/core/theme/app_text_styles.dart';
 import 'package:bookn_cp_app/core/theme/app_theme.dart';
 import 'package:bookn_cp_app/features/admin_amenities/presentation/widgets/amenity_icon_picker.dart';
-import 'package:bookn_cp_app/features/admin_amenities/domain/entities/amenity.dart' as am_entity;
+import 'package:bookn_cp_app/features/admin_amenities/domain/entities/amenity.dart'
+    as am_entity;
 import 'package:bookn_cp_app/features/admin_amenities/presentation/bloc/amenities_bloc.dart';
 import 'package:bookn_cp_app/features/admin_amenities/presentation/bloc/amenities_event.dart';
 import 'package:bookn_cp_app/features/admin_amenities/presentation/bloc/amenities_state.dart';
@@ -11,18 +12,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/property_types/property_types_bloc.dart' as ap_pt_bloc;
+import 'package:bookn_cp_app/features/admin_properties/presentation/bloc/property_types/property_types_bloc.dart'
+    as ap_pt_bloc;
 
 class EditAmenityPage extends StatefulWidget {
   final String amenityId;
   final am_entity.Amenity? initialAmenity;
-  const EditAmenityPage({super.key, required this.amenityId, this.initialAmenity});
+  const EditAmenityPage(
+      {super.key, required this.amenityId, this.initialAmenity});
 
   @override
   State<EditAmenityPage> createState() => _EditAmenityPageState();
 }
 
-class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderStateMixin {
+class _EditAmenityPageState extends State<EditAmenityPage>
+    with TickerProviderStateMixin {
   late AnimationController _animationController;
   late AnimationController _glowController;
   late Animation<double> _fadeAnimation;
@@ -33,7 +37,8 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
   final TextEditingController _descriptionController = TextEditingController();
 
   String _selectedIcon = 'star_rounded';
-  String? _selectedPropertyTypeId; // optional selection for assignment after update
+  String?
+      _selectedPropertyTypeId; // optional selection for assignment after update
   bool _isDefaultForType = false;
   bool _isPrefillReady = false;
 
@@ -141,7 +146,9 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
                       opacity: _fadeAnimation,
                       child: SlideTransition(
                         position: _slideAnimation,
-                        child: _isPrefillReady ? _buildForm() : _buildFormLoading(),
+                        child: _isPrefillReady
+                            ? _buildForm()
+                            : _buildFormLoading(),
                       ),
                     ),
                   ),
@@ -157,7 +164,8 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
 
   void _tryPrefillFromState(AmenitiesLoaded state) {
     try {
-      final found = state.amenities.items.firstWhere((a) => a.id == widget.amenityId);
+      final found =
+          state.amenities.items.firstWhere((a) => a.id == widget.amenityId);
       setState(() {
         _nameController.text = found.name;
         _descriptionController.text = found.description;
@@ -262,7 +270,8 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ShaderMask(
-                  shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                  shaderCallback: (bounds) =>
+                      AppTheme.primaryGradient.createShader(bounds),
                   child: Text(
                     'تعديل المرفق',
                     style: AppTextStyles.heading2.copyWith(
@@ -321,12 +330,16 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
           ),
         ),
         const SizedBox(height: 8),
-        BlocBuilder<ap_pt_bloc.PropertyTypesBloc, ap_pt_bloc.PropertyTypesState>(
+        BlocBuilder<ap_pt_bloc.PropertyTypesBloc,
+            ap_pt_bloc.PropertyTypesState>(
           builder: (context, state) {
             if (state is ap_pt_bloc.PropertyTypesInitial) {
-              context.read<ap_pt_bloc.PropertyTypesBloc>().add(const ap_pt_bloc.LoadPropertyTypesEvent(pageSize: 1000));
+              context
+                  .read<ap_pt_bloc.PropertyTypesBloc>()
+                  .add(const ap_pt_bloc.LoadPropertyTypesEvent(pageSize: 1000));
             }
-            if (state is ap_pt_bloc.PropertyTypesLoading || state is ap_pt_bloc.PropertyTypesInitial) {
+            if (state is ap_pt_bloc.PropertyTypesLoading ||
+                state is ap_pt_bloc.PropertyTypesInitial) {
               return _buildLoadingDropdown();
             }
             if (state is ap_pt_bloc.PropertyTypesError) {
@@ -341,23 +354,33 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
                     AppTheme.darkCard.withOpacity(0.3),
                   ]),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.darkBorder.withOpacity(0.3), width: 1),
+                  border: Border.all(
+                      color: AppTheme.darkBorder.withOpacity(0.3), width: 1),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String?>(
                     value: _selectedPropertyTypeId,
                     isExpanded: true,
                     dropdownColor: AppTheme.darkCard,
-                    icon: Icon(Icons.arrow_drop_down_rounded, color: AppTheme.primaryBlue.withOpacity(0.7)),
-                    style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
-                    hint: Text('اختر نوع العقار لربطه بالمرفق', style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textMuted.withOpacity(0.5))),
+                    icon: Icon(Icons.arrow_drop_down_rounded,
+                        color: AppTheme.primaryBlue.withOpacity(0.7)),
+                    style: AppTextStyles.bodyMedium
+                        .copyWith(color: AppTheme.textWhite),
+                    hint: Text('اختر نوع العقار لربطه بالمرفق',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppTheme.textMuted.withOpacity(0.5))),
                     items: [
-                      const DropdownMenuItem<String?>(value: null, child: Text('بدون')), ...state.propertyTypes.map((t) => DropdownMenuItem<String?>(value: t.id, child: Text(t.name))).toList()
+                      const DropdownMenuItem<String?>(
+                          value: null, child: Text('بدون')),
+                      ...state.propertyTypes.map((t) =>
+                          DropdownMenuItem<String?>(
+                              value: t.id, child: Text(t.name)))
                     ],
                     onChanged: (value) {
                       setState(() {
                         _selectedPropertyTypeId = value;
-                        if (_selectedPropertyTypeId == null) _isDefaultForType = false;
+                        if (_selectedPropertyTypeId == null)
+                          _isDefaultForType = false;
                       });
                     },
                   ),
@@ -380,10 +403,13 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
           children: [
             Checkbox(
               value: _isDefaultForType,
-              onChanged: (val) => setState(() => _isDefaultForType = val ?? false),
+              onChanged: (val) =>
+                  setState(() => _isDefaultForType = val ?? false),
               activeColor: AppTheme.primaryBlue,
             ),
-            Text('تعيينه كافتراضي لنوع العقار المختار', style: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted)),
+            Text('تعيينه كافتراضي لنوع العقار المختار',
+                style: AppTextStyles.bodySmall
+                    .copyWith(color: AppTheme.textMuted)),
           ],
         ),
       ),
@@ -495,6 +521,7 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
 
   void _showIconPicker() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => AmenityIconPicker(
         selectedIcon: _selectedIcon,
@@ -785,4 +812,3 @@ class _EditAmenityPageState extends State<EditAmenityPage> with TickerProviderSt
     );
   }
 }
-

@@ -2032,6 +2032,7 @@ class _EditUnitPageState extends State<EditUnitPage>
     if (_originalUnit == null) return;
 
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => _ResetConfirmationDialog(
         onConfirm: () {
@@ -2611,6 +2612,7 @@ class _ResetConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      insetPadding: const EdgeInsets.all(10),
       backgroundColor: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.all(24),
@@ -2734,6 +2736,7 @@ class _UnsavedChangesDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      insetPadding: const EdgeInsets.all(10),
       backgroundColor: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.all(24),

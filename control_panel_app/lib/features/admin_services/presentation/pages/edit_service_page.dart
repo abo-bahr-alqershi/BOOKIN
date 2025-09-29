@@ -6,12 +6,14 @@ import 'package:bookn_cp_app/core/usecases/usecase.dart';
 import 'package:bookn_cp_app/features/admin_currencies/domain/usecases/get_currencies_usecase.dart';
 import 'package:bookn_cp_app/features/admin_services/domain/entities/money.dart';
 import 'package:bookn_cp_app/features/admin_services/domain/entities/pricing_model.dart';
-import 'package:bookn_cp_app/features/admin_services/domain/entities/service.dart' as svc_entity;
+import 'package:bookn_cp_app/features/admin_services/domain/entities/service.dart'
+    as svc_entity;
 import 'package:bookn_cp_app/features/admin_services/presentation/bloc/services_bloc.dart';
 import 'package:bookn_cp_app/features/admin_services/presentation/bloc/services_event.dart';
 import 'package:bookn_cp_app/features/admin_services/presentation/bloc/services_state.dart';
 import 'package:bookn_cp_app/features/admin_services/presentation/widgets/service_icon_picker.dart';
-import 'package:bookn_cp_app/features/admin_services/domain/entities/service.dart' as svc_entity;
+import 'package:bookn_cp_app/features/admin_services/domain/entities/service.dart'
+    as svc_entity;
 import 'package:bookn_cp_app/injection_container.dart' as di;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,13 +23,15 @@ import 'package:go_router/go_router.dart';
 class EditServicePage extends StatefulWidget {
   final String serviceId;
   final svc_entity.Service? initialService;
-  const EditServicePage({super.key, required this.serviceId, this.initialService});
+  const EditServicePage(
+      {super.key, required this.serviceId, this.initialService});
 
   @override
   State<EditServicePage> createState() => _EditServicePageState();
 }
 
-class _EditServicePageState extends State<EditServicePage> with TickerProviderStateMixin {
+class _EditServicePageState extends State<EditServicePage>
+    with TickerProviderStateMixin {
   late AnimationController _animationController;
   late AnimationController _glowController;
   late Animation<double> _fadeAnimation;
@@ -91,7 +95,9 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
       _selectedCurrency = initial.price.currency;
       _selectedPricingModel = initial.pricingModel;
     } else {
-      context.read<ServicesBloc>().add(LoadServiceDetailsEvent(widget.serviceId));
+      context
+          .read<ServicesBloc>()
+          .add(LoadServiceDetailsEvent(widget.serviceId));
     }
   }
 
@@ -115,7 +121,8 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
           });
         } else if (state is ServicesError) {
           _showErrorMessage(state.message);
-        } else if (state is ServiceDetailsLoaded && widget.initialService == null) {
+        } else if (state is ServiceDetailsLoaded &&
+            widget.initialService == null) {
           final d = state.serviceDetails;
           _nameController.text = d.name;
           _amountController.text = d.price.amount.toString();
@@ -223,7 +230,8 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ShaderMask(
-                  shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                  shaderCallback: (bounds) =>
+                      AppTheme.primaryGradient.createShader(bounds),
                   child: Text(
                     'تعديل الخدمة',
                     style: AppTextStyles.heading2.copyWith(
@@ -371,11 +379,13 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
                 decoration: BoxDecoration(
                   color: AppTheme.darkSurface.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.darkBorder.withOpacity(0.2), width: 0.5),
+                  border: Border.all(
+                      color: AppTheme.darkBorder.withOpacity(0.2), width: 0.5),
                 ),
                 child: Text(
                   'لا يمكن التعديل',
-                  style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted),
+                  style:
+                      AppTextStyles.caption.copyWith(color: AppTheme.textMuted),
                 ),
               ),
             ],
@@ -387,6 +397,7 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
 
   void _showIconPicker() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => ServiceIconPicker(
         selectedIcon: _selectedIcon,
@@ -475,7 +486,8 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
             style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
             decoration: InputDecoration(
               labelText: 'السعر',
-              labelStyle: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
+              labelStyle:
+                  AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
               filled: true,
               fillColor: AppTheme.darkSurface.withOpacity(0.3),
               border: OutlineInputBorder(
@@ -513,7 +525,8 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
           ),
         ),
         const SizedBox(width: 12),
-        Expanded(child: _CurrencyDropdown(
+        Expanded(
+            child: _CurrencyDropdown(
           value: _selectedCurrency,
           onChanged: (v) => setState(() => _selectedCurrency = v),
         )),
@@ -544,10 +557,12 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   gradient: isSelected ? AppTheme.primaryGradient : null,
-                  color: isSelected ? null : AppTheme.darkSurface.withOpacity(0.3),
+                  color:
+                      isSelected ? null : AppTheme.darkSurface.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
@@ -560,7 +575,8 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
                   model.label,
                   style: AppTextStyles.bodySmall.copyWith(
                     color: isSelected ? Colors.white : AppTheme.textMuted,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ),
@@ -675,14 +691,14 @@ class _EditServicePageState extends State<EditServicePage> with TickerProviderSt
       );
 
       context.read<ServicesBloc>().add(
-        UpdateServiceEvent(
-          serviceId: widget.serviceId,
-          name: _nameController.text,
-          price: price,
-          pricingModel: _selectedPricingModel,
-          icon: _selectedIcon,
-        ),
-      );
+            UpdateServiceEvent(
+              serviceId: widget.serviceId,
+              name: _nameController.text,
+              price: price,
+              pricingModel: _selectedPricingModel,
+              icon: _selectedIcon,
+            ),
+          );
     }
   }
 
@@ -756,7 +772,10 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
       final usecase = di.sl<GetCurrenciesUseCase>();
       final result = await usecase(NoParams());
       result.fold(
-        (f) => setState(() { _error = f.message; _loading = false; }),
+        (f) => setState(() {
+          _error = f.message;
+          _loading = false;
+        }),
         (list) => setState(() {
           _codes = list.map((c) => c.code).toList();
           _loading = false;
@@ -766,7 +785,10 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
         }),
       );
     } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
     }
   }
 
@@ -788,30 +810,40 @@ class _CurrencyDropdownState extends State<_CurrencyDropdown> {
         child: Row(children: [
           const SizedBox(width: 4, height: 4),
           SizedBox(
-            width: 18, height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.textMuted),
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppTheme.textMuted),
           ),
           const SizedBox(width: 8),
-          Text('جاري تحميل العملات...', style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted)),
+          Text('جاري تحميل العملات...',
+              style: AppTextStyles.caption.copyWith(color: AppTheme.textMuted)),
         ]),
       );
     }
     if (_error != null) {
       return DropdownButtonFormField<String>(
-        value: _codes.contains(widget.value) ? widget.value : null,
+        initialValue: _codes.contains(widget.value) ? widget.value : null,
         decoration: decoration.copyWith(errorText: _error),
-        items: _codes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-        onChanged: (v) { if (v != null) widget.onChanged(v); },
+        items: _codes
+            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+            .toList(),
+        onChanged: (v) {
+          if (v != null) widget.onChanged(v);
+        },
       );
     }
     return DropdownButtonFormField<String>(
-      value: _codes.contains(widget.value) ? widget.value : null,
+      initialValue: _codes.contains(widget.value) ? widget.value : null,
       decoration: decoration,
       dropdownColor: AppTheme.darkCard,
       style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
-      items: _codes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-      onChanged: (v) { if (v != null) widget.onChanged(v); },
+      items: _codes
+          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+          .toList(),
+      onChanged: (v) {
+        if (v != null) widget.onChanged(v);
+      },
     );
   }
 }
-
