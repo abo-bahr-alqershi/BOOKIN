@@ -4,6 +4,7 @@ import '../../domain/entities/section_image.dart' as section_img;
 
 class PropertyInSectionModel {
   final String id;
+  final String? propertyInSectionId;
   final String sectionId;
   final String propertyId;
   final String propertyName;
@@ -37,6 +38,8 @@ class PropertyInSectionModel {
 
   const PropertyInSectionModel({
     required this.id,
+    this.propertyInSectionId,
+    this.mainImageId,
     required this.sectionId,
     required this.propertyId,
     required this.propertyName,
@@ -52,7 +55,6 @@ class PropertyInSectionModel {
     required this.currency,
     this.mainImageUrl,
     this.additionalImages = const [],
-    this.mainImageId,
     this.shortDescription,
     required this.displayOrder,
     this.isFeatured = false,
@@ -90,7 +92,8 @@ class PropertyInSectionModel {
           .toList();
     }
     return PropertyInSectionModel(
-      id: json['id']?.toString() ?? '',
+      id: (json['propertyInSectionId'] ?? json['id'])?.toString() ?? '',
+      propertyInSectionId: json['propertyInSectionId']?.toString(),
       sectionId: json['sectionId']?.toString() ?? '',
       propertyId: json['propertyId']?.toString() ?? '',
       propertyName: json['propertyName']?.toString() ?? '',
