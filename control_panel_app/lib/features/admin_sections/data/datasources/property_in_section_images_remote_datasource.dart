@@ -71,8 +71,9 @@ class PropertyInSectionImagesRemoteDataSourceImpl
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath),
         if (normalizedPropertyInSectionId != null)
-          'propertyInSectionId': normalizedPropertyInSectionId,
-        if (normalizedTempKey != null) 'tempKey': normalizedTempKey,
+          'propertyInSectionId': normalizedPropertyInSectionId
+        else if (normalizedTempKey != null)
+          'tempKey': normalizedTempKey,
         if (category != null && category.trim().isNotEmpty) 'category': category,
         if (alt != null && alt.trim().isNotEmpty) 'alt': alt,
         'isPrimary': isPrimary,
@@ -132,8 +133,9 @@ class PropertyInSectionImagesRemoteDataSourceImpl
       final normalizedTempKey = (tempKey != null && tempKey.trim().isNotEmpty) ? tempKey : null;
       final qp = <String, dynamic>{
         if (normalizedPropertyInSectionId != null)
-          'propertyInSectionId': normalizedPropertyInSectionId,
-        if (normalizedTempKey != null) 'tempKey': normalizedTempKey,
+          'propertyInSectionId': normalizedPropertyInSectionId
+        else if (normalizedTempKey != null)
+          'tempKey': normalizedTempKey,
         'sortBy': 'order',
         'sortOrder': 'asc',
       };
@@ -227,9 +229,10 @@ class PropertyInSectionImagesRemoteDataSourceImpl
     try {
       final payload = {
         'imageIds': imageIds,
-        if (propertyInSectionId != null)
-          'propertyInSectionId': propertyInSectionId,
-        if (tempKey != null) 'tempKey': tempKey,
+        if (propertyInSectionId != null && propertyInSectionId.trim().isNotEmpty)
+          'propertyInSectionId': propertyInSectionId
+        else if (tempKey != null && tempKey.trim().isNotEmpty)
+          'tempKey': tempKey,
       };
       final response =
           await apiClient.post('$_baseEndpoint/reorder', data: payload);
@@ -249,9 +252,10 @@ class PropertyInSectionImagesRemoteDataSourceImpl
   ) async {
     try {
       final body = {
-        if (propertyInSectionId != null)
-          'propertyInSectionId': propertyInSectionId,
-        if (tempKey != null) 'tempKey': tempKey,
+        if (propertyInSectionId != null && propertyInSectionId.trim().isNotEmpty)
+          'propertyInSectionId': propertyInSectionId
+        else if (tempKey != null && tempKey.trim().isNotEmpty)
+          'tempKey': tempKey,
       };
       final response = await apiClient
           .post('$_baseEndpoint/$imageId/set-primary', data: body);
