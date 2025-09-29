@@ -229,6 +229,7 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
       fullscreenDialog: true,
       context: context,
       builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(10),
         backgroundColor: Colors.transparent,
         child: Container(
           width: MediaQuery.of(context).size.width * 0.9,

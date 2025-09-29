@@ -353,6 +353,7 @@ class _SectionsListPageState extends State<SectionsListPage>
       fullscreenDialog: true,
       context: context,
       builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(10),
         backgroundColor: Colors.transparent,
         child: Container(
           width: MediaQuery.of(context).size.width * 0.9,

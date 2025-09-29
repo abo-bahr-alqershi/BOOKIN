@@ -1,3 +1,4 @@
+import 'package:bookn_cp_app/core/enums/section_content_type.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:ui';
@@ -257,12 +258,24 @@ class _FuturisticSectionsTableState extends State<FuturisticSectionsTable> {
                   children: [
                     _buildCompactInfo(
                       icon: CupertinoIcons.square_stack_3d_up,
-                      value: section.contentType.name,
+                      value: section.contentType.name ==
+                              SectionContentType.properties.name
+                          ? 'عقارات'
+                          : section.contentType.name ==
+                                  SectionContentType.units.name
+                              ? 'وحدات'
+                              : 'مختلط',
                     ),
                     const SizedBox(width: 12),
                     _buildCompactInfo(
                       icon: CupertinoIcons.eye,
-                      value: section.displayStyle.name,
+                      value: section.displayStyle.name == 'grid'
+                          ? 'شبكة'
+                          : section.displayStyle.name == 'list'
+                              ? 'قائمة'
+                              : section.displayStyle.name == 'carousel'
+                                  ? 'كاروسيل'
+                                  : 'خريطة',
                     ),
                   ],
                 ),
@@ -351,7 +364,11 @@ class _FuturisticSectionsTableState extends State<FuturisticSectionsTable> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               // compute sorted list for table view
-              itemCount: (() { _sorted = List<Section>.from(widget.sections); _sortSections(); return _sorted.length; })(),
+              itemCount: (() {
+                _sorted = List<Section>.from(widget.sections);
+                _sortSections();
+                return _sorted.length;
+              })(),
               itemBuilder: (context, index) {
                 return _buildTableRow(index, _sorted[index]);
               },

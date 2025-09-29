@@ -1,3 +1,5 @@
+import 'package:bookn_cp_app/core/enums/section_content_type.dart';
+import 'package:bookn_cp_app/core/enums/section_display_style.dart';
 import 'package:bookn_cp_app/core/enums/section_type.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -300,19 +302,69 @@ class _FuturisticSectionCardState extends State<FuturisticSectionCard>
           _buildClassicInfoRow(
             icon: CupertinoIcons.layers_alt_fill,
             label: 'النوع',
-            value: widget.section.type.apiValue,
+            value: widget.section.type.apiValue ==
+                    SectionTypeEnum.featured.apiValue
+                ? 'مميز'
+                : widget.section.type.apiValue ==
+                        SectionTypeEnum.popular.apiValue
+                    ? 'شائع'
+                    : widget.section.type.apiValue ==
+                            SectionTypeEnum.newArrivals.apiValue
+                        ? 'وارد حديثاً'
+                        : widget.section.type.apiValue ==
+                                SectionTypeEnum.topRated.apiValue
+                            ? 'الأعلى تقييماً'
+                            : widget.section.type.apiValue ==
+                                    SectionTypeEnum.discounted.apiValue
+                                ? 'مخفض'
+                                : widget.section.type.apiValue ==
+                                        SectionTypeEnum.nearBy.apiValue
+                                    ? 'بالقرب مني'
+                                    : widget.section.type.apiValue ==
+                                            SectionTypeEnum.recommended.apiValue
+                                        ? 'موصى به'
+                                        : widget.section.type.apiValue ==
+                                                SectionTypeEnum
+                                                    .category.apiValue
+                                            ? 'فئة'
+                                            : widget.section.type.apiValue ==
+                                                    SectionTypeEnum
+                                                        .custom.apiValue
+                                                ? 'مخصص'
+                                                : 'غير معروف',
           ),
           const SizedBox(height: 8),
           _buildClassicInfoRow(
             icon: CupertinoIcons.square_stack_3d_up_fill,
             label: 'المحتوى',
-            value: widget.section.contentType.name,
+            value: widget.section.contentType.name ==
+                    SectionContentType.properties.name
+                ? 'عقارات'
+                : widget.section.contentType.name ==
+                        SectionContentType.units.name
+                    ? 'وحدات'
+                    : widget.section.contentType.name ==
+                            SectionContentType.mixed.name
+                        ? 'مختلط'
+                        : 'غير معروف',
           ),
           const SizedBox(height: 8),
           _buildClassicInfoRow(
             icon: CupertinoIcons.eye_fill,
             label: 'العرض',
-            value: widget.section.displayStyle.name,
+            value: widget.section.displayStyle.name ==
+                    SectionDisplayStyle.grid.name
+                ? 'شبكة'
+                : widget.section.displayStyle.name ==
+                        SectionDisplayStyle.list.name
+                    ? 'قائمة'
+                    : widget.section.displayStyle.name ==
+                            SectionDisplayStyle.carousel.name
+                        ? 'دائري'
+                        : widget.section.displayStyle.name ==
+                                SectionDisplayStyle.map.name
+                            ? 'خريطة'
+                            : 'غير معروف',
           ),
           const SizedBox(height: 8),
           _buildClassicInfoRow(
@@ -583,19 +635,71 @@ class _FuturisticSectionCardState extends State<FuturisticSectionCard>
                 _buildInfoRow(
                   icon: CupertinoIcons.layers,
                   label: 'النوع',
-                  value: widget.section.type.apiValue,
+                  value: widget.section.type.apiValue ==
+                          SectionTypeEnum.featured.apiValue
+                      ? 'مميز'
+                      : widget.section.type.apiValue ==
+                              SectionTypeEnum.popular.apiValue
+                          ? 'شائع'
+                          : widget.section.type.apiValue ==
+                                  SectionTypeEnum.newArrivals.apiValue
+                              ? 'وارد حديثاً'
+                              : widget.section.type.apiValue ==
+                                      SectionTypeEnum.topRated.apiValue
+                                  ? 'الأعلى تقييماً'
+                                  : widget.section.type.apiValue ==
+                                          SectionTypeEnum.discounted.apiValue
+                                      ? 'مخفض'
+                                      : widget.section.type.apiValue ==
+                                              SectionTypeEnum.nearBy.apiValue
+                                          ? 'بالقرب مني'
+                                          : widget.section.type.apiValue ==
+                                                  SectionTypeEnum
+                                                      .recommended.apiValue
+                                              ? 'موصى به'
+                                              : widget.section.type.apiValue ==
+                                                      SectionTypeEnum
+                                                          .category.apiValue
+                                                  ? 'فئة'
+                                                  : widget.section.type
+                                                              .apiValue ==
+                                                          SectionTypeEnum
+                                                              .custom.apiValue
+                                                      ? 'مخصص'
+                                                      : 'غير معروف',
                 ),
                 const SizedBox(height: 6),
                 _buildInfoRow(
                   icon: CupertinoIcons.square_stack,
                   label: 'المحتوى',
-                  value: widget.section.contentType.name,
+                  value: widget.section.contentType.name ==
+                          SectionContentType.properties.name
+                      ? 'عقارات'
+                      : widget.section.contentType.name ==
+                              SectionContentType.units.name
+                          ? 'وحدات'
+                          : widget.section.contentType.name ==
+                                  SectionContentType.mixed.name
+                              ? 'مختلط'
+                              : 'غير معروف',
                 ),
                 const SizedBox(height: 6),
                 _buildInfoRow(
                   icon: CupertinoIcons.eye,
                   label: 'العرض',
-                  value: widget.section.displayStyle.name,
+                  value: widget.section.displayStyle.name ==
+                          SectionDisplayStyle.grid.name
+                      ? 'شبكة'
+                      : widget.section.displayStyle.name ==
+                              SectionDisplayStyle.list.name
+                          ? 'قائمة'
+                          : widget.section.displayStyle.name ==
+                                  SectionDisplayStyle.carousel.name
+                              ? 'دائري'
+                              : widget.section.displayStyle.name ==
+                                      SectionDisplayStyle.map.name
+                                  ? 'خريطة'
+                                  : 'غير معروف',
                 ),
                 const SizedBox(height: 6),
                 _buildInfoRow(
