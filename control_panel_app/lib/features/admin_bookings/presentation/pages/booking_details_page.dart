@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -270,7 +271,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage>
           onTap: () => Navigator.of(context).pop(),
           borderRadius: BorderRadius.circular(12),
           child: Icon(
-            CupertinoIcons.arrow_left,
+            CupertinoIcons.arrow_right,
             color: AppTheme.textWhite,
             size: 20,
           ),
@@ -459,7 +460,8 @@ class _BookingDetailsPageState extends State<BookingDetailsPage>
               value: booking.propertyName!,
               icon: CupertinoIcons.location,
             ),
-          if (propertyDetails?.address != null && propertyDetails!.address.isNotEmpty)
+          if (propertyDetails?.address != null &&
+              propertyDetails!.address.isNotEmpty)
             _buildDetailRow(
               label: 'عنوان العقار',
               value: propertyDetails.address,

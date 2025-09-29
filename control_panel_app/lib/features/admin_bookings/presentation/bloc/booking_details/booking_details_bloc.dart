@@ -1,3 +1,4 @@
+import 'package:bookn_cp_app/features/admin_reviews/domain/repositories/reviews_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/entities/booking_details.dart';
 import '../../../domain/usecases/bookings/get_booking_by_id_usecase.dart';
@@ -103,7 +104,8 @@ class BookingDetailsBloc
             );
 
             // جلب التقييم المرتبط بالحجز (إن وجد)
-            final reviewResult = await reviewsRepository.getReviewByBooking(event.bookingId);
+            final reviewResult =
+                await reviewsRepository.getReviewByBooking(event.bookingId);
             final review = reviewResult.fold((_) => null, (r) => r);
 
             emit(BookingDetailsLoaded(
@@ -171,7 +173,7 @@ class BookingDetailsBloc
             message: 'تم تحديث الحجز بنجاح',
           ));
           // إعادة تحميل التفاصيل
-          add(RefreshBookingDetailsEvent());
+          add(const RefreshBookingDetailsEvent());
         },
       );
     }
@@ -215,7 +217,7 @@ class BookingDetailsBloc
             message: 'تم إلغاء الحجز بنجاح',
           ));
           // إعادة تحميل التفاصيل
-          add(RefreshBookingDetailsEvent());
+          add(const RefreshBookingDetailsEvent());
         },
       );
     }
@@ -256,7 +258,7 @@ class BookingDetailsBloc
             message: 'تم تأكيد الحجز بنجاح',
           ));
           // إعادة تحميل التفاصيل
-          add(RefreshBookingDetailsEvent());
+          add(const RefreshBookingDetailsEvent());
         },
       );
     }
@@ -297,7 +299,7 @@ class BookingDetailsBloc
             message: 'تم تسجيل الوصول بنجاح',
           ));
           // إعادة تحميل التفاصيل
-          add(RefreshBookingDetailsEvent());
+          add(const RefreshBookingDetailsEvent());
         },
       );
     }
@@ -338,7 +340,7 @@ class BookingDetailsBloc
             message: 'تم تسجيل المغادرة بنجاح',
           ));
           // إعادة تحميل التفاصيل
-          add(RefreshBookingDetailsEvent());
+          add(const RefreshBookingDetailsEvent());
         },
       );
     }

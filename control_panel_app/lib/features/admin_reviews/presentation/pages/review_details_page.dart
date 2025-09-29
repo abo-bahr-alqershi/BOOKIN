@@ -641,7 +641,8 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
             ),
             const SizedBox(height: 16),
           ],
-          if (review.propertyCity != null && review.propertyCity!.isNotEmpty) ...[
+          if (review.propertyCity != null &&
+              review.propertyCity!.isNotEmpty) ...[
             _buildInfoRow(
               icon: Icons.location_city_outlined,
               label: 'المدينة',
@@ -649,7 +650,8 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
             ),
             const SizedBox(height: 16),
           ],
-          if (review.propertyAddress != null && review.propertyAddress!.isNotEmpty) ...[
+          if (review.propertyAddress != null &&
+              review.propertyAddress!.isNotEmpty) ...[
             _buildInfoRow(
               icon: Icons.place_outlined,
               label: 'العنوان',
@@ -686,7 +688,8 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
               value: review.guestsCount!.toString(),
             ),
           ],
-          if (review.bookingStatus != null && review.bookingStatus!.isNotEmpty) ...[
+          if (review.bookingStatus != null &&
+              review.bookingStatus!.isNotEmpty) ...[
             const SizedBox(height: 16),
             _buildInfoRow(
               icon: Icons.assignment_turned_in_outlined,
@@ -694,7 +697,8 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
               value: review.bookingStatus!,
             ),
           ],
-          if (review.bookingSource != null && review.bookingSource!.isNotEmpty) ...[
+          if (review.bookingSource != null &&
+              review.bookingSource!.isNotEmpty) ...[
             const SizedBox(height: 16),
             _buildInfoRow(
               icon: Icons.public_outlined,
@@ -1327,10 +1331,7 @@ class _ReviewDetailsPageState extends State<ReviewDetailsPage>
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 24,
-          ),
+          insetPadding: const EdgeInsets.all(5),
           child: BlocProvider.value(
             value: reviewDetailsBloc,
             child: AddResponseDialog(

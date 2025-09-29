@@ -1,7 +1,8 @@
+import 'package:bookn_cp_app/features/admin_reviews/domain/entities/review.dart'
+    as admin_review;
 import 'package:equatable/equatable.dart';
 import '../../../domain/entities/booking.dart';
 import '../../../domain/entities/booking_details.dart';
-import '../../../..//features/admin_reviews/domain/entities/review.dart' as admin_review;
 
 abstract class BookingDetailsState extends Equatable {
   const BookingDetailsState();
@@ -49,7 +50,8 @@ class BookingDetailsLoaded extends BookingDetailsState {
   }
 
   @override
-  List<Object?> get props => [booking, bookingDetails, services, isRefreshing, review];
+  List<Object?> get props =>
+      [booking, bookingDetails, services, isRefreshing, review];
 }
 
 /// ❌ حالة الخطأ

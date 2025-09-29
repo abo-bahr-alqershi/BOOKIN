@@ -1,8 +1,8 @@
-using System.Collections.Generic;
 using YemenBooking.Api.Extensions;
 using YemenBooking.Api.Services;
 using YemenBooking.Application.Interfaces.Services;
 using YemenBooking.Application.Mappings;
+using YemenBooking.Application.Interfaces.Services;
 using YemenBooking.Core.Settings;
 using YemenBooking.Infrastructure;
 using YemenBooking.Infrastructure.Data;
@@ -34,20 +34,6 @@ using Microsoft.AspNetCore.Hosting;
 using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
-
-static void ApplySecretOverride(WebApplicationBuilder builder, string envVar, string configKey)
-{
-    var value = Environment.GetEnvironmentVariable(envVar);
-    if (!string.IsNullOrWhiteSpace(value))
-    {
-        builder.Configuration[configKey] = value;
-    }
-}
-
-ApplySecretOverride(builder, "DEFAULT_CONNECTION_STRING", "ConnectionStrings:DefaultConnection");
-ApplySecretOverride(builder, "JWT_SECRET", "JwtSettings:Secret");
-ApplySecretOverride(builder, "SENDGRID_API_KEY", "EmailSettings:Password");
-ApplySecretOverride(builder, "SENDGRID_USERNAME", "EmailSettings:Username");
 
 // Listen on port 5000 only in Development; in hosting, rely on platform binding
 if (builder.Environment.IsDevelopment())
@@ -162,23 +148,9 @@ builder.Services.AddCors(options =>
 });
 
 // تسجيل إعدادات JWT من ملفات التكوين
-var jwtSettingsSection = builder.Configuration.GetRequiredSection("JwtSettings");
-builder.Services.Configure<JwtSettings>(jwtSettingsSection);
-
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 // تسجيل إعدادات البريد الإلكتروني من ملفات التكوين
-var emailSettingsSection = builder.Configuration.GetRequiredSection("EmailSettings");
-builder.Services.Configure<EmailSettings>(options =>
-{
-    emailSettingsSection.Bind(options);
-    if (string.IsNullOrWhiteSpace(options.Password) || options.Password == "CHANGE_ME_IN_ENVIRONMENT")
-    {
-        var envApiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
-        if (!string.IsNullOrWhiteSpace(envApiKey))
-        {
-            options.Password = envApiKey;
-        }
-    }
-});
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
 // إعداد المصادقة باستخدام JWT
 builder.Services.AddAuthentication(options =>
@@ -188,19 +160,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    var jwtSettings = jwtSettingsSection.Get<JwtSettings>() ?? throw new InvalidOperationException("JwtSettings are not configured.");
-    if (string.IsNullOrWhiteSpace(jwtSettings.Secret) || jwtSettings.Secret == "CHANGE_ME_IN_ENVIRONMENT")
-    {
-        var envSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
-        if (!string.IsNullOrWhiteSpace(envSecret))
-        {
-            jwtSettings.Secret = envSecret;
-        }
-        else
-        {
-            throw new InvalidOperationException("JWT secret is not configured. Set the JWT_SECRET environment variable or configure JwtSettings:Secret.");
-        }
-    }
+    var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
     options.RequireHttpsMetadata = false; // Changed to false for development
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters

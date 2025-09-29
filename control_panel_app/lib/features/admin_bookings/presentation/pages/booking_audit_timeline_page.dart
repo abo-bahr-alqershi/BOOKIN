@@ -21,7 +21,8 @@ class BookingAuditTimelinePage extends StatefulWidget {
   const BookingAuditTimelinePage({super.key, required this.bookingId});
 
   @override
-  State<BookingAuditTimelinePage> createState() => _BookingAuditTimelinePageState();
+  State<BookingAuditTimelinePage> createState() =>
+      _BookingAuditTimelinePageState();
 }
 
 class _BookingAuditTimelinePageState extends State<BookingAuditTimelinePage> {
@@ -71,7 +72,8 @@ class _BookingAuditTimelinePageState extends State<BookingAuditTimelinePage> {
                     final logs = state.auditLogs
                         .where((l) =>
                             l.tableName.toLowerCase() == 'booking' ||
-                            l.recordId.toLowerCase() == widget.bookingId.toLowerCase() ||
+                            l.recordId.toLowerCase() ==
+                                widget.bookingId.toLowerCase() ||
                             l.changes.contains(widget.bookingId))
                         .toList();
 
@@ -161,7 +163,8 @@ class _BookingAuditTimelinePageState extends State<BookingAuditTimelinePage> {
           borderRadius: BorderRadius.circular(10),
           child: const Padding(
             padding: EdgeInsets.all(8.0),
-            child: Icon(CupertinoIcons.arrow_left, color: Colors.white, size: 18),
+            child:
+                Icon(CupertinoIcons.arrow_right, color: Colors.white, size: 18),
           ),
         ),
       ),
@@ -203,7 +206,8 @@ class _BookingAuditTimelinePageState extends State<BookingAuditTimelinePage> {
             return Container(
               decoration: BoxDecoration(
                 color: AppTheme.darkCard,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
                 border: Border.all(color: AppTheme.darkBorder.withOpacity(0.2)),
               ),
               child: ListView(
@@ -218,13 +222,15 @@ class _BookingAuditTimelinePageState extends State<BookingAuditTimelinePage> {
                           gradient: AppTheme.primaryGradient,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(CupertinoIcons.doc_text, color: Colors.white, size: 18),
+                        child: const Icon(CupertinoIcons.doc_text,
+                            color: Colors.white, size: 18),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'تفاصيل السجل',
-                          style: AppTextStyles.heading3.copyWith(color: AppTheme.textWhite),
+                          style: AppTextStyles.heading3
+                              .copyWith(color: AppTheme.textWhite),
                         ),
                       ),
                     ],
@@ -236,8 +242,10 @@ class _BookingAuditTimelinePageState extends State<BookingAuditTimelinePage> {
                   _kv('الاسم', log.recordName),
                   _kv('المستخدم', log.username),
                   _kv('تاريخ', log.timestamp.toString()),
-                  if (log.notes.isNotEmpty) _kv('ملاحظات', log.notes, multiline: true),
-                  if (log.changes.isNotEmpty) _kv('التغييرات', log.changes, multiline: true),
+                  if (log.notes.isNotEmpty)
+                    _kv('ملاحظات', log.notes, multiline: true),
+                  if (log.changes.isNotEmpty)
+                    _kv('التغييرات', log.changes, multiline: true),
                 ],
               ),
             );
@@ -257,7 +265,8 @@ class _BookingAuditTimelinePageState extends State<BookingAuditTimelinePage> {
         border: Border.all(color: AppTheme.darkBorder.withOpacity(0.2)),
       ),
       child: Row(
-        crossAxisAlignment: multiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        crossAxisAlignment:
+            multiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Text(
@@ -270,9 +279,11 @@ class _BookingAuditTimelinePageState extends State<BookingAuditTimelinePage> {
             flex: 2,
             child: Text(
               v,
-              style: AppTextStyles.bodySmall.copyWith(color: AppTheme.textWhite),
+              style:
+                  AppTextStyles.bodySmall.copyWith(color: AppTheme.textWhite),
               maxLines: multiline ? null : 2,
-              overflow: multiline ? TextOverflow.visible : TextOverflow.ellipsis,
+              overflow:
+                  multiline ? TextOverflow.visible : TextOverflow.ellipsis,
               textAlign: TextAlign.end,
             ),
           ),
@@ -281,4 +292,3 @@ class _BookingAuditTimelinePageState extends State<BookingAuditTimelinePage> {
     );
   }
 }
-
