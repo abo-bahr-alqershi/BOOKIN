@@ -147,3 +147,7 @@ build/
 
 appsettings.json
 appsettings.Development.json
+appsettings.secrets.json
+appsettings.*.secrets.json
+**/appsettings.secrets.json
+firebase-service-account.json
