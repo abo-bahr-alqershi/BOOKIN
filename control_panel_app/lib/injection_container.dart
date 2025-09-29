@@ -1941,6 +1941,7 @@ void _initAdminSections() {
   sl.registerFactory(() => SectionFormBloc(
         createSection: sl(),
         updateSection: sl(),
+        getSectionById: sl(),
       ));
   sl.registerFactory(() => SectionItemsBloc(
         getItems: sl(),

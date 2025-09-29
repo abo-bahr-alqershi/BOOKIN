@@ -90,10 +90,13 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
     _columnsCountController.text = '2';
     _itemsToShowController.text = '10';
 
-    // Initialize form
-    context.read<SectionFormBloc>().add(
-          InitializeSectionFormEvent(sectionId: widget.sectionId),
-        );
+    // Remove the initialization from here since it's done in CreateSectionPage
+    // Only initialize if we're editing
+    if (widget.isEditing && widget.sectionId != null) {
+      context.read<SectionFormBloc>().add(
+            InitializeSectionFormEvent(sectionId: widget.sectionId),
+          );
+    }
   }
 
   void _setupTabAnimations() {
@@ -1038,42 +1041,73 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
       ),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => setState(() => _showPreview = true),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryPurple.withValues(alpha: 0.3),
-                    AppTheme.primaryViolet.withValues(alpha: 0.2),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppTheme.primaryPurple.withValues(alpha: 0.5),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    CupertinoIcons.eye_fill,
-                    color: AppTheme.primaryPurple,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'معاينة',
-                    style: AppTextStyles.buttonMedium.copyWith(
-                      color: AppTheme.primaryPurple,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          // GestureDetector(
+          //   onTap: () => setState(() => _showPreview = true),
+          //   child: Container(
+          //     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          //     decoration: BoxDecoration(
+          //       gradient: LinearGradient(
+          //         colors: [
+          //           AppTheme.primaryPurple.withValues(alpha: 0.3),
+          //           AppTheme.primaryViolet.withValues(alpha: 0.2),
+          //         ],
+          //       ),
+          //       borderRadius: BorderRadius.circular(12),
+          //       border: Border.all(
+          //         color: AppTheme.primaryPurple.withValues(alpha: 0.5),
+          //         width: 1,
+          //       ),
+          //     ),
+          //     child: Row(
+          //       children: [
+          //         Icon(
+          //           CupertinoIcons.eye_fill,
+          //           color: AppTheme.primaryPurple,
+          //           size: 18,
+          //         ),
+          //         const SizedBox(width: 8),
+          //         Text(
+          //           'معاينة',
+          //           style: AppTextStyles.buttonMedium.copyWith(
+          //             color: AppTheme.primaryPurple,
+          //             fontWeight: FontWeight.bold,
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          //   ),
+          // ),
+          ElevatedButton(
+            onPressed: () {
+              print('🔴 Test button pressed');
+
+              // تجربة إرسال event مباشرة
+              try {
+                final bloc = context.read<SectionFormBloc>();
+                print('🔴 Bloc found: $bloc');
+
+                // إرسال بيانات تجريبية
+                bloc.add(const UpdateSectionBasicInfoEvent(
+                  name: 'test',
+                  title: 'Test Section',
+                ));
+
+                bloc.add(const UpdateSectionConfigEvent(
+                  type: SectionTypeEnum.featured,
+                  target: SectionTarget.properties,
+                ));
+
+                Future.delayed(const Duration(milliseconds: 200), () {
+                  print('🔴 Sending submit event...');
+                  bloc.add(SubmitSectionFormEvent());
+                });
+              } catch (e) {
+                print('🔴 Error: $e');
+              }
+            },
+            child: const Text('تجربة'),
           ),
+
           const Spacer(),
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
@@ -1145,34 +1179,80 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
   }
 
   void _populateForm(SectionFormReady state) {
-    if (state.sectionId != null && state.sectionId!.isNotEmpty) {
-      _nameController.text = state.name ?? '';
-      _titleController.text = state.title ?? '';
-      _subtitleController.text = state.subtitle ?? '';
-      _descriptionController.text = state.description ?? '';
-      _shortDescriptionController.text = state.shortDescription ?? '';
-      _displayOrderController.text = state.displayOrder?.toString() ?? '0';
-      _columnsCountController.text = state.columnsCount?.toString() ?? '2';
-      _itemsToShowController.text = state.itemsToShow?.toString() ?? '10';
-      _iconController.text = state.icon ?? '';
-      _colorThemeController.text = state.colorTheme ?? '';
-      _backgroundImageController.text = state.backgroundImage ?? '';
+    print('📝 Populating form with data');
+    print('  - Name: ${state.name}');
+    print('  - Title: ${state.title}');
 
-      setState(() {
-        _selectedType = state.type ?? SectionTypeEnum.featured;
-        _selectedContentType =
-            state.contentType ?? SectionContentType.properties;
-        _selectedDisplayStyle = state.displayStyle ?? SectionDisplayStyle.grid;
-        _selectedTarget = state.target ?? SectionTarget.properties;
-        _isActive = state.isActive ?? true;
-        _isVisibleToGuests = state.isVisibleToGuests ?? true;
-        _isVisibleToRegistered = state.isVisibleToRegistered ?? true;
-        _requiresPermission = state.requiresPermission;
-        _startDate = state.startDate;
-        _endDate = state.endDate;
-        _metadata = state.metadataJson ?? '';
-      });
+    // تعبئة الحقول النصية
+    if (state.name != null && state.name!.isNotEmpty) {
+      _nameController.text = state.name!;
     }
+    if (state.title != null && state.title!.isNotEmpty) {
+      _titleController.text = state.title!;
+    }
+    if (state.subtitle != null && state.subtitle!.isNotEmpty) {
+      _subtitleController.text = state.subtitle!;
+    }
+    if (state.description != null && state.description!.isNotEmpty) {
+      _descriptionController.text = state.description!;
+    }
+    if (state.shortDescription != null && state.shortDescription!.isNotEmpty) {
+      _shortDescriptionController.text = state.shortDescription!;
+    }
+
+    _displayOrderController.text = (state.displayOrder ?? 0).toString();
+    _columnsCountController.text = (state.columnsCount ?? 2).toString();
+    _itemsToShowController.text = (state.itemsToShow ?? 10).toString();
+
+    if (state.icon != null && state.icon!.isNotEmpty) {
+      _iconController.text = state.icon!;
+    }
+    if (state.colorTheme != null && state.colorTheme!.isNotEmpty) {
+      _colorThemeController.text = state.colorTheme!;
+    }
+    if (state.backgroundImage != null && state.backgroundImage!.isNotEmpty) {
+      _backgroundImageController.text = state.backgroundImage!;
+    }
+
+    // تحديث الحالات
+    setState(() {
+      _selectedType = state.type ?? SectionTypeEnum.featured;
+      _selectedContentType = state.contentType ?? SectionContentType.properties;
+      _selectedDisplayStyle = state.displayStyle ?? SectionDisplayStyle.grid;
+      _selectedTarget = state.target ?? SectionTarget.properties;
+      _isActive = state.isActive ?? true;
+      _isVisibleToGuests = state.isVisibleToGuests ?? true;
+      _isVisibleToRegistered = state.isVisibleToRegistered ?? true;
+      _requiresPermission = state.requiresPermission;
+      _startDate = state.startDate;
+      _endDate = state.endDate;
+
+      if (state.filterCriteriaJson != null &&
+          state.filterCriteriaJson!.isNotEmpty) {
+        try {
+          _filterCriteria = Map<String, dynamic>.from(
+              state.filterCriteriaJson is String
+                  ? jsonDecode(state.filterCriteriaJson!)
+                  : state.filterCriteriaJson);
+        } catch (e) {
+          print('Error parsing filter criteria: $e');
+        }
+      }
+
+      if (state.sortCriteriaJson != null &&
+          state.sortCriteriaJson!.isNotEmpty) {
+        try {
+          _sortCriteria = Map<String, dynamic>.from(
+              state.sortCriteriaJson is String
+                  ? jsonDecode(state.sortCriteriaJson!)
+                  : state.sortCriteriaJson);
+        } catch (e) {
+          print('Error parsing sort criteria: $e');
+        }
+      }
+
+      _metadata = state.metadataJson ?? '';
+    });
   }
 
   Section _createSectionFromForm() {
@@ -1223,91 +1303,93 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
     );
   }
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      // التحقق من الحقول المطلوبة
-      if (_nameController.text.isEmpty) {
-        _nameController.text = _titleController.text;
-      }
+  void _submitForm() async {
+    print('🔵 _submitForm called'); // نقطة تشخيص 1
 
-      // التأكد من تحديث جميع البيانات قبل الإرسال
-      context.read<SectionFormBloc>().add(
-            UpdateSectionBasicInfoEvent(
-              name: _nameController.text,
-              title: _titleController.text,
-              subtitle: _subtitleController.text.isEmpty
-                  ? null
-                  : _subtitleController.text,
-              description: _descriptionController.text.isEmpty
-                  ? null
-                  : _descriptionController.text,
-              shortDescription: _shortDescriptionController.text.isEmpty
-                  ? null
-                  : _shortDescriptionController.text,
-            ),
-          );
+    // التحقق من الـ form validation
+    final isValid = _formKey.currentState?.validate() ?? false;
+    print('🔵 Form validation result: $isValid'); // نقطة تشخيص 2
 
-      context.read<SectionFormBloc>().add(
-            UpdateSectionConfigEvent(
-              type: _selectedType,
-              contentType: _selectedContentType,
-              displayStyle: _selectedDisplayStyle,
-              target: _selectedTarget,
-              displayOrder: int.tryParse(_displayOrderController.text) ?? 0,
-              itemsToShow: int.tryParse(_itemsToShowController.text) ?? 10,
-              columnsCount: int.tryParse(_columnsCountController.text) ?? 2,
-              isActive: _isActive,
-            ),
-          );
-
-      // تأكد من أن معايير الفلترة والترتيب يتم إرسالها كسلاسل JSON صحيحة
-      final String? filterJson = _filterCriteria.isNotEmpty
-          ? (() {
-              try {
-                return _filterCriteria.isNotEmpty
-                    ? const JsonEncoder.withIndent('  ')
-                        .convert(_filterCriteria)
-                    : null;
-              } catch (_) {
-                return _filterCriteria.toString();
-              }
-            })()
-          : null;
-
-      final String? sortJson = _sortCriteria.isNotEmpty
-          ? (() {
-              try {
-                return const JsonEncoder.withIndent('  ')
-                    .convert(_sortCriteria);
-              } catch (_) {
-                return _sortCriteria.toString();
-              }
-            })()
-          : null;
-
-      if (filterJson != null || sortJson != null) {
-        context.read<SectionFormBloc>().add(
-              UpdateSectionFiltersEvent(
-                filterCriteriaJson: filterJson,
-                sortCriteriaJson: sortJson,
-                cityName: _filterCriteria['cityName'],
-                propertyTypeId: _filterCriteria['propertyTypeId'],
-                unitTypeId: _filterCriteria['unitTypeId'],
-                minPrice: _filterCriteria['minPrice'],
-                maxPrice: _filterCriteria['maxPrice'],
-                minRating: _filterCriteria['minRating'],
-              ),
-            );
-      }
-
-      // إرسال الطلب النهائي بعد التأكد من تزامن تحديث الحالة
-      Future.delayed(const Duration(milliseconds: 120), () {
-        context.read<SectionFormBloc>().add(SubmitSectionFormEvent());
-      });
-    } else {
+    if (!isValid) {
+      print('❌ Form validation failed');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('يرجى ملء جميع الحقول المطلوبة'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+      return;
+    }
+
+    print('🔵 Form is valid, proceeding...'); // نقطة تشخيص 3
+
+    // التحقق من الحقول المطلوبة
+    if (_nameController.text.isEmpty) {
+      _nameController.text = _titleController.text;
+    }
+
+    if (_titleController.text.isEmpty) {
+      print('❌ Title is empty');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('عنوان القسم مطلوب'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+      return;
+    }
+
+    print('🔵 Title: ${_titleController.text}'); // نقطة تشخيص 4
+    print('🔵 Name: ${_nameController.text}');
+    print('🔵 Type: $_selectedType');
+    print('🔵 Target: $_selectedTarget');
+
+    try {
+      // التحقق من وجود الـ Bloc
+      final bloc = context.read<SectionFormBloc>();
+      print('✅ SectionFormBloc found'); // نقطة تشخيص 5
+
+      // تحديث البيانات الأساسية
+      bloc.add(UpdateSectionBasicInfoEvent(
+        name: _nameController.text,
+        title: _titleController.text,
+        subtitle:
+            _subtitleController.text.isEmpty ? null : _subtitleController.text,
+        description: _descriptionController.text.isEmpty
+            ? null
+            : _descriptionController.text,
+        shortDescription: _shortDescriptionController.text.isEmpty
+            ? null
+            : _shortDescriptionController.text,
+      ));
+      print('🔵 Basic info event sent'); // نقطة تشخيص 6
+
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // تحديث الإعدادات
+      bloc.add(UpdateSectionConfigEvent(
+        type: _selectedType,
+        contentType: _selectedContentType,
+        displayStyle: _selectedDisplayStyle,
+        target: _selectedTarget,
+        displayOrder: int.tryParse(_displayOrderController.text) ?? 0,
+        itemsToShow: int.tryParse(_itemsToShowController.text) ?? 10,
+        columnsCount: int.tryParse(_columnsCountController.text) ?? 2,
+        isActive: _isActive,
+      ));
+      print('🔵 Config event sent'); // نقطة تشخيص 7
+
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // إرسال الطلب النهائي
+      print('🔵 Sending SubmitSectionFormEvent...'); // نقطة تشخيص 8
+      bloc.add(SubmitSectionFormEvent());
+    } catch (e, stackTrace) {
+      print('❌ Error in _submitForm: $e');
+      print('❌ StackTrace: $stackTrace');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('خطأ: ${e.toString()}'),
           backgroundColor: AppTheme.error,
         ),
       );

@@ -59,6 +59,10 @@ class SectionImagesRemoteDataSourceImpl
     ProgressCallback? onSendProgress,
   }) async {
     try {
+      print('📤 Uploading image: $filePath');
+      print('  - SectionId: $sectionId');
+      print('  - TempKey: $tempKey');
+
       String? posterPath;
       if (AppConstants.isVideoFile(filePath)) {
         posterPath = await VideoUtils.generateVideoThumbnail(filePath);
@@ -88,6 +92,8 @@ class SectionImagesRemoteDataSourceImpl
         onSendProgress: onSendProgress,
       );
 
+      print('📥 Upload response: ${response.data}');
+
       if (response.data is Map<String, dynamic>) {
         final map = response.data as Map<String, dynamic>;
         if (map['success'] == true && map['data'] != null) {
@@ -97,8 +103,10 @@ class SectionImagesRemoteDataSourceImpl
       throw ServerException(
           response.data['message'] ?? 'Failed to upload image');
     } on DioException catch (e) {
-      throw ServerException(
-          e.response?.data['message'] ?? 'Failed to upload image');
+      print('❌ Upload error: ${e.message}');
+      print('❌ Response: ${e.response?.data}');
+      throw ServerException(e.response?.data['message'] ??
+          'Failed to upload image: ${e.message}');
     }
   }
 
@@ -108,6 +116,10 @@ class SectionImagesRemoteDataSourceImpl
     String? tempKey,
   }) async {
     try {
+      print('🔍 Getting section images');
+      print('  - SectionId: $sectionId');
+      print('  - TempKey: $tempKey');
+
       final qp = <String, dynamic>{
         if (sectionId != null) 'sectionId': sectionId,
         if (tempKey != null) 'tempKey': tempKey,
@@ -117,17 +129,63 @@ class SectionImagesRemoteDataSourceImpl
 
       final response = await apiClient.get(_baseEndpoint, queryParameters: qp);
 
+      print('📥 Response type: ${response.data.runtimeType}');
+      print('📥 Response data: ${response.data}');
+
+      // Handle different response formats
       if (response.data is Map<String, dynamic>) {
         final map = response.data as Map<String, dynamic>;
+
+        // Check for success field
         if (map['success'] == true) {
-          final List<dynamic> list = map['images'] ?? map['items'] ?? [];
-          return list.map((json) => SectionImageModel.fromJson(json)).toList();
+          // Try different field names for the images array
+          final dynamic imagesData =
+              map['images'] ?? map['items'] ?? map['data'];
+
+          if (imagesData is List) {
+            return imagesData
+                .map((json) => SectionImageModel.fromJson(json))
+                .toList();
+          } else if (imagesData is Map && imagesData['items'] is List) {
+            // Handle paginated response
+            final List<dynamic> items = imagesData['items'];
+            return items
+                .map((json) => SectionImageModel.fromJson(json))
+                .toList();
+          }
         }
+
+        // If success field doesn't exist, check if data is directly in the map
+        if (map['items'] is List) {
+          final List<dynamic> items = map['items'];
+          return items.map((json) => SectionImageModel.fromJson(json)).toList();
+        }
+      } else if (response.data is List) {
+        // If response is directly a list
+        return (response.data as List)
+            .map((json) => SectionImageModel.fromJson(json))
+            .toList();
       }
-      throw const ServerException('Invalid response when fetching images');
+
+      // Return empty list if no images found
+      print('⚠️ No images found or unexpected response format');
+      return [];
     } on DioException catch (e) {
-      throw ServerException(
-          e.response?.data['message'] ?? 'Failed to fetch section images');
+      print('❌ Get images error: ${e.message}');
+      print('❌ Response: ${e.response?.data}');
+
+      // Check if it's a connection error
+      if (e.type == DioExceptionType.unknown &&
+          e.error.toString().contains('SocketException')) {
+        throw const ServerException(
+            'لا يمكن الاتصال بالخادم. تحقق من الاتصال بالإنترنت أو إعدادات الخادم');
+      }
+
+      throw ServerException(e.response?.data['message'] ??
+          'Failed to fetch section images: ${e.message}');
+    } catch (e) {
+      print('❌ Unexpected error: $e');
+      throw ServerException('Unexpected error: $e');
     }
   }
 

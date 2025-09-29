@@ -28,7 +28,7 @@ import '../bloc/property_in_section_images/property_in_section_images_event.dart
 import '../bloc/property_in_section_images/property_in_section_images_state.dart';
 
 class PropertyInSectionGallery extends StatefulWidget {
-  final String? sectionId;
+  final String? propertyInSectionId;
   final String? tempKey;
   final bool isReadOnly;
   final int maxImages;
@@ -40,7 +40,7 @@ class PropertyInSectionGallery extends StatefulWidget {
 
   const PropertyInSectionGallery({
     super.key,
-    this.sectionId,
+    this.propertyInSectionId,
     this.tempKey,
     this.isReadOnly = false,
     this.maxImages = 10,
@@ -93,7 +93,8 @@ class PropertyInSectionGalleryState extends State<PropertyInSectionGallery>
   int? _primaryLocalImageIndex = 0;
 
   bool get _isLocalMode =>
-      (widget.sectionId == null || widget.sectionId!.isEmpty) &&
+      (widget.propertyInSectionId == null ||
+          widget.propertyInSectionId!.isEmpty) &&
       (widget.tempKey == null || widget.tempKey!.isEmpty);
   bool _isInitialLoadDone = false;
 
@@ -171,10 +172,12 @@ class PropertyInSectionGalleryState extends State<PropertyInSectionGallery>
       try {
         _imagesBloc = context.read<PropertyInSectionImagesBloc?>();
         if (_imagesBloc != null &&
-            ((widget.sectionId != null && widget.sectionId!.isNotEmpty) ||
+            ((widget.propertyInSectionId != null &&
+                    widget.propertyInSectionId!.isNotEmpty) ||
                 (widget.tempKey != null && widget.tempKey!.isNotEmpty))) {
           _imagesBloc!.add(LoadPropertyInSectionImagesEvent(
-              propertyInSectionId: widget.sectionId, tempKey: widget.tempKey));
+              propertyInSectionId: widget.propertyInSectionId,
+              tempKey: widget.tempKey));
           _isInitialLoadDone = true;
         }
       } catch (e) {
@@ -1133,7 +1136,7 @@ class PropertyInSectionGalleryState extends State<PropertyInSectionGallery>
           ? 'تم إضافة الفيديو (سيتم الرفع عند الحفظ)'
           : 'تم إضافة الصورة (سيتم الرفع عند الحفظ)');
     } else if (_imagesBloc != null &&
-        (widget.sectionId != null ||
+        (widget.propertyInSectionId != null ||
             (widget.tempKey != null && widget.tempKey!.isNotEmpty))) {
       // في وضع التعديل، ارفع مباشرة
       final fileKey = DateTime.now().millisecondsSinceEpoch.toString();
@@ -1145,7 +1148,7 @@ class PropertyInSectionGalleryState extends State<PropertyInSectionGallery>
       });
 
       _imagesBloc!.add(UploadPropertyInSectionImageEvent(
-        propertyInSectionId: widget.sectionId,
+        propertyInSectionId: widget.propertyInSectionId,
         tempKey: widget.tempKey,
         filePath: filePath,
         isPrimary: _displayImages.isEmpty && !isVideo,
@@ -1194,7 +1197,7 @@ class PropertyInSectionGalleryState extends State<PropertyInSectionGallery>
             showSuccessSnackBar(
                 'تم إضافة ${imagesToAdd.length} صورة (سيتم الرفع عند الحفظ)');
           } else if (_imagesBloc != null &&
-              (widget.sectionId != null || widget.tempKey != null)) {
+              (widget.propertyInSectionId != null || widget.tempKey != null)) {
             setState(() {
               for (var img in imagesToAdd) {
                 final fileKey =
@@ -1207,7 +1210,7 @@ class PropertyInSectionGalleryState extends State<PropertyInSectionGallery>
             });
 
             _imagesBloc!.add(UploadMultiplePropertyInSectionImagesEvent(
-              propertyInSectionId: widget.sectionId,
+              propertyInSectionId: widget.propertyInSectionId,
               tempKey: widget.tempKey,
               filePaths: imagesToAdd.map((img) => img.path).toList(),
             ));
@@ -1803,9 +1806,9 @@ class PropertyInSectionGalleryState extends State<PropertyInSectionGallery>
     });
 
     if (_imagesBloc != null &&
-        (widget.sectionId != null || widget.tempKey != null)) {
+        (widget.propertyInSectionId != null || widget.tempKey != null)) {
       _imagesBloc!.add(ReorderPropertyInSectionImagesEvent(
-        propertyInSectionId: widget.sectionId,
+        propertyInSectionId: widget.propertyInSectionId,
         tempKey: widget.tempKey,
         imageIds: _displayImages.map((img) => img.id).toList(),
       ));
@@ -1855,10 +1858,10 @@ class PropertyInSectionGalleryState extends State<PropertyInSectionGallery>
     });
 
     if (_imagesBloc != null &&
-        (widget.sectionId != null || widget.tempKey != null) &&
+        (widget.propertyInSectionId != null || widget.tempKey != null) &&
         index < _displayImages.length) {
       _imagesBloc!.add(SetPrimaryPropertyInSectionImageEvent(
-        propertyInSectionId: widget.sectionId,
+        propertyInSectionId: widget.propertyInSectionId,
         tempKey: widget.tempKey,
         imageId: _displayImages[index].id,
       ));
@@ -3139,7 +3142,7 @@ class PropertyInSectionGalleryState extends State<PropertyInSectionGallery>
           _showSuccessSnackBar(
               'تم إضافة ${allFilesToAdd.length} ملف (سيتم الرفع عند الحفظ)');
         } else if (_imagesBloc != null &&
-            (widget.sectionId != null || widget.tempKey != null)) {
+            (widget.propertyInSectionId != null || widget.tempKey != null)) {
           setState(() {
             for (var file in allFilesToAdd) {
               final fileKey =
@@ -3153,7 +3156,7 @@ class PropertyInSectionGalleryState extends State<PropertyInSectionGallery>
           });
 
           _imagesBloc!.add(UploadMultiplePropertyInSectionImagesEvent(
-            propertyInSectionId: widget.sectionId,
+            propertyInSectionId: widget.propertyInSectionId,
             tempKey: widget.tempKey,
             filePaths: allFilesToAdd.map((file) => file.path).toList(),
           ));

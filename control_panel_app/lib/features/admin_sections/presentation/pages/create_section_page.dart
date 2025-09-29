@@ -1,3 +1,6 @@
+import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/section_images/section_images_bloc.dart';
+import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/section_images/section_images_event.dart';
+import 'package:bookn_cp_app/features/admin_sections/domain/entities/section_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -15,9 +18,9 @@ import '../bloc/section_form/section_form_event.dart';
 import '../bloc/section_form/section_form_state.dart';
 import '../widgets/section_form_widget.dart';
 import '../widgets/section_image_gallery.dart';
-import '../bloc/section_images/section_images_bloc.dart';
-import '../../domain/entities/section_image.dart';
 import 'package:bookn_cp_app/injection_container.dart' as di;
+import 'package:bookn_cp_app/core/network/api_client.dart';
+import 'package:get_it/get_it.dart';
 
 class CreateSectionPage extends StatefulWidget {
   const CreateSectionPage({super.key});
@@ -38,18 +41,36 @@ class _CreateSectionPageState extends State<CreateSectionPage>
   String? _tempKey;
   List<SectionImage> _selectedImages = [];
   List<String> _selectedLocalImages = [];
+  String? _createdSectionId;
+  bool _isDisposed = false;
+
+  // Store the bloc instances
+  late final SectionImagesBloc _imagesBloc;
+  late final SectionFormBloc _formBloc; // إضافة هذا السطر
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
-    // Generate a temp key to allow pre-save media uploads
+
+    // Generate a temp key
     _tempKey = DateTime.now().millisecondsSinceEpoch.toString();
-    final bloc = context.read<SectionFormBloc>();
-    bloc.add(const InitializeSectionFormEvent());
-    if (_tempKey != null) {
-      bloc.add(AttachSectionTempKeyEvent(tempKey: _tempKey!));
-    }
+
+    // Initialize the blocs
+    _imagesBloc = di.sl<SectionImagesBloc>();
+    _formBloc = di.sl<SectionFormBloc>();
+
+    // Initialize form first, then attach tempKey
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _formBloc.add(const InitializeSectionFormEvent());
+
+      // Add delay to ensure initialization is complete
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (_tempKey != null) {
+          _formBloc.add(AttachSectionTempKeyEvent(tempKey: _tempKey!));
+        }
+      });
+    });
   }
 
   void _initializeAnimations() {
@@ -80,7 +101,7 @@ class _CreateSectionPageState extends State<CreateSectionPage>
     ));
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
+      if (mounted && !_isDisposed) {
         _animationController.forward();
       }
     });
@@ -88,99 +109,94 @@ class _CreateSectionPageState extends State<CreateSectionPage>
 
   @override
   void dispose() {
+    // If user leaves without saving and no section was created, purge temp images
+    if (_tempKey != null && _createdSectionId == null) {
+      try {
+        GetIt.instance<ApiClient>().delete('/api/sections/images/purge-temp',
+            queryParameters: {'tempKey': _tempKey});
+      } catch (_) {}
+    }
+    _isDisposed = true;
     _animationController.dispose();
     _glowController.dispose();
+    _imagesBloc.close();
+    _formBloc.close(); // إضافة هذا السطر
     super.dispose();
+  }
+
+  void _safeSetState(VoidCallback fn) {
+    if (mounted && !_isDisposed) {
+      setState(fn);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<SectionFormBloc, SectionFormState>(
-      listener: (context, state) {
-        if (state is SectionFormSubmitted) {
-          () async {
-            // Upload any local media picked before save, now that we have sectionId
-            try {
-              await _galleryKey.currentState?.uploadLocalImages(state.sectionId);
-            } catch (_) {}
+    // توفير كلا الـ Blocs
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: _imagesBloc),
+        BlocProvider.value(value: _formBloc), // إضافة هذا السطر - مهم جداً!
+      ],
+      child: BlocListener<SectionFormBloc, SectionFormState>(
+        listener: (context, state) {
+          if (!mounted) return;
+
+          print('SectionFormState: ${state.runtimeType}'); // للتشخيص
+
+          if (state is SectionFormSubmitted) {
+            // Store the created section ID
+            _createdSectionId = state.sectionId;
+
+            // إن وُجدت صور محلية، قم برفعها للقسم الذي تم إنشاؤه
+            if (_selectedLocalImages.isNotEmpty) {
+              try {
+                _imagesBloc.add(UploadMultipleSectionImagesEvent(
+                  sectionId: state.sectionId,
+                  filePaths: List<String>.from(_selectedLocalImages),
+                ));
+              } catch (_) {}
+            }
+            // Clear tempKey after successful save
+            _tempKey = null;
 
             _showSuccessMessage('تم إنشاء القسم بنجاح');
-            _tempKey = null;
-            await Future.delayed(const Duration(milliseconds: 500));
-            if (mounted) {
-              context.pop();
-            }
-          }();
-        } else if (state is SectionFormError) {
-          _showErrorMessage(state.message);
-        }
-      },
-      child: Scaffold(
-        backgroundColor: AppTheme.darkBackground,
-        body: Stack(
-          children: [
-            _buildAnimatedBackground(),
-            SafeArea(
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  Expanded(
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: SlideTransition(
-                        position: _slideAnimation,
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Embedded media gallery for Section (pre-save via tempKey)
-                              Text(
-                                'وسائط القسم',
-                                style: AppTextStyles.heading3.copyWith(
-                                  color: AppTheme.textWhite,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              BlocProvider(
-                                create: (_) => di.sl<SectionImagesBloc>(),
-                                child: SectionImageGallery(
-                                  key: _galleryKey,
-                                  sectionId: null,
-                                  tempKey: _tempKey,
-                                  isReadOnly: false,
-                                  maxImages: 20,
-                                  maxVideos: 5,
-                                  initialImages: _selectedImages,
-                                  initialLocalImages: _selectedLocalImages,
-                                  onImagesChanged: (images) {
-                                    setState(() {
-                                      _selectedImages = images;
-                                    });
-                                  },
-                                  onLocalImagesChanged: (paths) {
-                                    setState(() {
-                                      _selectedLocalImages = paths;
-                                    });
-                                  },
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              const SectionFormWidget(
-                                isEditing: false,
-                              ),
-                            ],
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) {
+                context.pop();
+              }
+            });
+          } else if (state is SectionFormError) {
+            _showErrorMessage(state.message);
+          } else if (state is SectionFormLoading) {
+            print('Loading state...'); // للتشخيص
+          }
+        },
+        child: Scaffold(
+          backgroundColor: AppTheme.darkBackground,
+          body: Stack(
+            children: [
+              _buildAnimatedBackground(),
+              SafeArea(
+                child: Column(
+                  children: [
+                    _buildHeader(),
+                    Expanded(
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: const SectionFormWidget(
+                            isEditing: false,
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -197,8 +213,8 @@ class _CreateSectionPageState extends State<CreateSectionPage>
               end: Alignment.bottomRight,
               colors: [
                 AppTheme.darkBackground,
-                AppTheme.darkBackground2.withValues(alpha: 0.8),
-                AppTheme.darkBackground3.withValues(alpha: 0.6),
+                AppTheme.darkBackground2.withOpacity(0.8),
+                AppTheme.darkBackground3.withOpacity(0.6),
               ],
             ),
           ),
@@ -219,13 +235,13 @@ class _CreateSectionPageState extends State<CreateSectionPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.darkCard.withValues(alpha: 0.7),
-            AppTheme.darkCard.withValues(alpha: 0.3),
+            AppTheme.darkCard.withOpacity(0.7),
+            AppTheme.darkCard.withOpacity(0.3),
           ],
         ),
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+            color: AppTheme.primaryBlue.withOpacity(0.3),
             width: 1,
           ),
         ),
@@ -240,13 +256,13 @@ class _CreateSectionPageState extends State<CreateSectionPage>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.darkSurface.withValues(alpha: 0.5),
-                    AppTheme.darkSurface.withValues(alpha: 0.3),
+                    AppTheme.darkSurface.withOpacity(0.5),
+                    AppTheme.darkSurface.withOpacity(0.3),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppTheme.darkBorder.withValues(alpha: 0.3),
+                  color: AppTheme.darkBorder.withOpacity(0.3),
                   width: 1,
                 ),
               ),
@@ -283,8 +299,91 @@ class _CreateSectionPageState extends State<CreateSectionPage>
               ],
             ),
           ),
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: _openSectionMediaDialog,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primaryPurple.withOpacity(0.3),
+                    AppTheme.primaryViolet.withOpacity(0.2),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.primaryPurple.withOpacity(0.4),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.collections,
+                    size: 18,
+                    color: AppTheme.primaryPurple,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'وسائط القسم',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppTheme.primaryPurple,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  void _openSectionMediaDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppTheme.darkCard.withOpacity(0.98),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppTheme.darkBorder.withOpacity(0.2),
+              ),
+            ),
+            padding: const EdgeInsets.all(12),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: BlocProvider.value(
+                value: _imagesBloc,
+                child: SectionImageGallery(
+                  key: _galleryKey,
+                  sectionId: null,
+                  tempKey: _tempKey,
+                  isReadOnly: false,
+                  maxImages: 20,
+                  maxVideos: 5,
+                  onImagesChanged: (images) {
+                    _safeSetState(() {
+                      _selectedImages = images;
+                    });
+                  },
+                  onLocalImagesChanged: (paths) {
+                    _safeSetState(() {
+                      _selectedLocalImages = paths;
+                    });
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -352,8 +451,8 @@ class _CreateSectionBackgroundPainter extends CustomPainter {
 
     paint.shader = RadialGradient(
       colors: [
-        AppTheme.primaryBlue.withValues(alpha: 0.1 * glowIntensity),
-        AppTheme.primaryBlue.withValues(alpha: 0.05 * glowIntensity),
+        AppTheme.primaryBlue.withOpacity(0.1 * glowIntensity),
+        AppTheme.primaryBlue.withOpacity(0.05 * glowIntensity),
         Colors.transparent,
       ],
     ).createShader(Rect.fromCircle(
@@ -369,8 +468,8 @@ class _CreateSectionBackgroundPainter extends CustomPainter {
 
     paint.shader = RadialGradient(
       colors: [
-        AppTheme.primaryPurple.withValues(alpha: 0.1 * glowIntensity),
-        AppTheme.primaryPurple.withValues(alpha: 0.05 * glowIntensity),
+        AppTheme.primaryPurple.withOpacity(0.1 * glowIntensity),
+        AppTheme.primaryPurple.withOpacity(0.05 * glowIntensity),
         Colors.transparent,
       ],
     ).createShader(Rect.fromCircle(
