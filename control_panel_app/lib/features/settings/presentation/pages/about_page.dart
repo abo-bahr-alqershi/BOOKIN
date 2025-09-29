@@ -15,20 +15,19 @@ class AboutPage extends StatefulWidget {
   State<AboutPage> createState() => _AboutPageState();
 }
 
-class _AboutPageState extends State<AboutPage>
-    with TickerProviderStateMixin {
+class _AboutPageState extends State<AboutPage> with TickerProviderStateMixin {
   late AnimationController _logoAnimationController;
   late AnimationController _contentAnimationController;
   late AnimationController _particleAnimationController;
   late AnimationController _glowAnimationController;
-  
+
   late Animation<double> _logoRotationAnimation;
   late Animation<double> _logoScaleAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  
+
   PackageInfo? _packageInfo;
-  
+
   final List<FeatureItem> _features = [
     FeatureItem(
       icon: Icons.search_rounded,
@@ -63,7 +62,7 @@ class _AboutPageState extends State<AboutPage>
       ),
     ),
   ];
-  
+
   final List<SocialMedia> _socialMedia = [
     SocialMedia(
       icon: Icons.facebook,
@@ -94,27 +93,27 @@ class _AboutPageState extends State<AboutPage>
   @override
   void initState() {
     super.initState();
-    
+
     _logoAnimationController = AnimationController(
       duration: const Duration(seconds: 4),
       vsync: this,
     )..repeat();
-    
+
     _contentAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    
+
     _particleAnimationController = AnimationController(
       duration: const Duration(seconds: 10),
       vsync: this,
     )..repeat();
-    
+
     _glowAnimationController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _logoRotationAnimation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
@@ -122,7 +121,7 @@ class _AboutPageState extends State<AboutPage>
       parent: _logoAnimationController,
       curve: Curves.linear,
     ));
-    
+
     _logoScaleAnimation = Tween<double>(
       begin: 0.9,
       end: 1.1,
@@ -130,7 +129,7 @@ class _AboutPageState extends State<AboutPage>
       parent: _glowAnimationController,
       curve: Curves.easeInOut,
     ));
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -138,7 +137,7 @@ class _AboutPageState extends State<AboutPage>
       parent: _contentAnimationController,
       curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
     ));
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
@@ -146,7 +145,7 @@ class _AboutPageState extends State<AboutPage>
       parent: _contentAnimationController,
       curve: const Interval(0.2, 0.8, curve: Curves.easeOutBack),
     ));
-    
+
     _loadPackageInfo();
     _contentAnimationController.forward();
   }
@@ -175,10 +174,10 @@ class _AboutPageState extends State<AboutPage>
         children: [
           // Animated Background
           _buildAnimatedBackground(),
-          
+
           // Floating Particles
           _buildFloatingParticles(),
-          
+
           // Main Content
           CustomScrollView(
             slivers: [
@@ -330,7 +329,7 @@ class _AboutPageState extends State<AboutPage>
                       ),
                     ),
                   ),
-                  
+
                   // Rotating Ring
                   Transform.rotate(
                     angle: _logoRotationAnimation.value,
@@ -350,7 +349,7 @@ class _AboutPageState extends State<AboutPage>
                       ),
                     ),
                   ),
-                  
+
                   // Main Logo
                   Container(
                     width: 120,
@@ -379,11 +378,11 @@ class _AboutPageState extends State<AboutPage>
             );
           },
         ),
-        
+
         const SizedBox(height: 24),
-        
+
         ShaderMask(
-          shaderCallback: (bounds) => 
+          shaderCallback: (bounds) =>
               AppTheme.primaryGradient.createShader(bounds),
           child: Text(
             AppConstants.appName,
@@ -394,9 +393,9 @@ class _AboutPageState extends State<AboutPage>
             ),
           ),
         ),
-        
+
         const SizedBox(height: 8),
-        
+
         Text(
           'منصتك الموثوقة للحجوزات في اليمن',
           style: AppTextStyles.bodyMedium.copyWith(
@@ -414,7 +413,7 @@ class _AboutPageState extends State<AboutPage>
       child: Column(
         children: [
           const SizedBox(height: 30),
-          
+
           // Description Card
           _buildFuturisticCard(
             title: 'نبذة عن التطبيق',
@@ -433,32 +432,32 @@ class _AboutPageState extends State<AboutPage>
               textAlign: TextAlign.justify,
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Features Section
           _buildFeaturesSection(),
-          
+
           const SizedBox(height: 24),
-          
+
           // Contact Section
           _buildContactSection(),
-          
+
           const SizedBox(height: 24),
-          
+
           // Social Media Section
           _buildSocialMediaSection(),
-          
+
           const SizedBox(height: 24),
-          
+
           // Legal Section
           _buildLegalSection(),
-          
+
           const SizedBox(height: 40),
-          
+
           // Version Info
           _buildVersionInfo(),
-          
+
           const SizedBox(height: 40),
         ],
       ),
@@ -526,7 +525,7 @@ class _AboutPageState extends State<AboutPage>
                   ],
                 ),
               ),
-              
+
               // Content
               Padding(
                 padding: const EdgeInsets.all(20),
@@ -549,7 +548,7 @@ class _AboutPageState extends State<AboutPage>
       child: Column(
         children: _features.map((feature) {
           final index = _features.indexOf(feature);
-          
+
           return TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.0, end: 1.0),
             duration: Duration(milliseconds: 600 + (index * 100)),
@@ -883,7 +882,7 @@ class _AboutPageState extends State<AboutPage>
           ),
           const SizedBox(height: 8),
           ShaderMask(
-            shaderCallback: (bounds) => 
+            shaderCallback: (bounds) =>
                 AppTheme.primaryGradient.createShader(bounds),
             child: Text(
               '${_packageInfo?.version ?? AppConstants.appVersion} (${_packageInfo?.buildNumber ?? AppConstants.appBuildNumber})',
@@ -905,10 +904,9 @@ class _AboutPageState extends State<AboutPage>
               ),
               const SizedBox(width: 4),
               ShaderMask(
-                shaderCallback: (bounds) => 
-                    const LinearGradient(
-                      colors: [Colors.red, Colors.pink],
-                    ).createShader(bounds),
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [Colors.red, Colors.pink],
+                ).createShader(bounds),
                 child: const Icon(
                   Icons.favorite,
                   size: 16,
@@ -931,6 +929,7 @@ class _AboutPageState extends State<AboutPage>
 
   void _showCopyrightDialog() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (context) => BackdropFilter(
@@ -945,7 +944,7 @@ class _AboutPageState extends State<AboutPage>
             ),
           ),
           title: ShaderMask(
-            shaderCallback: (bounds) => 
+            shaderCallback: (bounds) =>
                 AppTheme.primaryGradient.createShader(bounds),
             child: const Text(
               'حقوق الطبع والنشر',
@@ -1044,18 +1043,18 @@ class SocialMedia {
 // Particles Painter
 class _ParticlesPainter extends CustomPainter {
   final double animationValue;
-  
+
   _ParticlesPainter({required this.animationValue});
-  
+
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.fill;
-    
+    final paint = Paint()..style = PaintingStyle.fill;
+
     for (int i = 0; i < 20; i++) {
       final x = (i * size.width / 20) + (animationValue * size.width);
-      final y = size.height * (0.2 + math.sin(animationValue * 2 * math.pi + i) * 0.3);
-      
+      final y = size.height *
+          (0.2 + math.sin(animationValue * 2 * math.pi + i) * 0.3);
+
       paint.shader = RadialGradient(
         colors: [
           AppTheme.primaryBlue.withOpacity(0.3),
@@ -1065,7 +1064,7 @@ class _ParticlesPainter extends CustomPainter {
         center: Offset(x % size.width, y),
         radius: 3,
       ));
-      
+
       canvas.drawCircle(
         Offset(x % size.width, y),
         3 + (i % 3),
@@ -1073,7 +1072,7 @@ class _ParticlesPainter extends CustomPainter {
       );
     }
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

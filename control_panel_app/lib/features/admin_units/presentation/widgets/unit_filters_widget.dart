@@ -1081,6 +1081,7 @@ class _UnitFiltersWidgetState extends State<UnitFiltersWidget>
 
   void _openMapPicker() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (context) => _MapPickerDialog(

@@ -436,6 +436,7 @@ class _EditSectionPageState extends State<EditSectionPage>
 
   void _openSectionMediaDialog() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: true,
       builder: (BuildContext dialogContext) {

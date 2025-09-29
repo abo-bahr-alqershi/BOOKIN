@@ -22,6 +22,7 @@ class ConflictResolutionDialog extends StatefulWidget {
     required Function(ConflictResolution) onResolve,
   }) async {
     return showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       barrierColor: AppTheme.overlayDark,
@@ -33,14 +34,15 @@ class ConflictResolutionDialog extends StatefulWidget {
   }
 
   @override
-  State<ConflictResolutionDialog> createState() => _ConflictResolutionDialogState();
+  State<ConflictResolutionDialog> createState() =>
+      _ConflictResolutionDialogState();
 }
 
 class _ConflictResolutionDialogState extends State<ConflictResolutionDialog>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  
+
   ConflictResolution _selectedResolution = ConflictResolution.cancel;
   final Map<String, bool> _selectedConflicts = {};
 
@@ -51,7 +53,7 @@ class _ConflictResolutionDialogState extends State<ConflictResolutionDialog>
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.9,
       end: 1.0,
@@ -59,9 +61,9 @@ class _ConflictResolutionDialogState extends State<ConflictResolutionDialog>
       parent: _animationController,
       curve: Curves.easeOutBack,
     ));
-    
+
     _animationController.forward();
-    
+
     // Initialize all conflicts as selected
     for (final conflict in widget.conflicts) {
       _selectedConflicts[conflict.bookingId] = true;
@@ -238,7 +240,7 @@ class _ConflictResolutionDialogState extends State<ConflictResolutionDialog>
           ),
         ),
         const SizedBox(height: 12),
-        ...widget.conflicts.map((conflict) => _buildConflictCard(conflict)).toList(),
+        ...widget.conflicts.map((conflict) => _buildConflictCard(conflict)),
       ],
     );
   }
@@ -246,7 +248,7 @@ class _ConflictResolutionDialogState extends State<ConflictResolutionDialog>
   Widget _buildConflictCard(BookingConflict conflict) {
     final isSelected = _selectedConflicts[conflict.bookingId] ?? false;
     final impactColor = _getImpactColor(conflict.impactLevel);
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -381,7 +383,7 @@ class _ConflictResolutionDialogState extends State<ConflictResolutionDialog>
     required Color color,
   }) {
     final isSelected = _selectedResolution == resolution;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -653,4 +655,4 @@ enum ConflictResolution {
   skip,
   notify,
   cancel,
-}        
+}

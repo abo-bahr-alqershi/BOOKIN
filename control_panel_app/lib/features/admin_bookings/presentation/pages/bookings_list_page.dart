@@ -25,7 +25,8 @@ class BookingsListPage extends StatefulWidget {
   final DateTime? initialStartDate;
   final DateTime? initialEndDate;
 
-  const BookingsListPage({super.key, this.initialStartDate, this.initialEndDate});
+  const BookingsListPage(
+      {super.key, this.initialStartDate, this.initialEndDate});
 
   @override
   State<BookingsListPage> createState() => _BookingsListPageState();
@@ -62,8 +63,10 @@ class _BookingsListPageState extends State<BookingsListPage>
   }
 
   void _loadBookings() {
-    final start = widget.initialStartDate ?? DateTime.now().subtract(const Duration(days: 365));
-    final end = widget.initialEndDate ?? DateTime.now().add(const Duration(days: 1));
+    final start = widget.initialStartDate ??
+        DateTime.now().subtract(const Duration(days: 365));
+    final end =
+        widget.initialEndDate ?? DateTime.now().add(const Duration(days: 1));
 
     context.read<BookingsListBloc>().add(
           LoadBookingsEvent(
@@ -285,6 +288,7 @@ class _BookingsListPageState extends State<BookingsListPage>
   // 🎯 Animation عند التنقل
   void _showNavigationAnimation() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.transparent,
@@ -805,6 +809,7 @@ class _BookingsListPageState extends State<BookingsListPage>
   void _showCancelDialog(String bookingId) {
     final reasonController = TextEditingController();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (ctx) {
         return AlertDialog(

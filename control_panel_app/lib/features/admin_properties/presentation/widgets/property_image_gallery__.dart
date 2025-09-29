@@ -432,6 +432,7 @@
 //     if (_selectedLocalIndices.isEmpty) return;
 
 //     showDialog(
+      fullscreenDialog: true,
 //       context: context,
 //       builder: (context) => _DeleteConfirmationDialog(
 //         count: _selectedLocalIndices.length,
@@ -880,6 +881,7 @@
 
 //   void _confirmDeleteLocalImage(int index) {
 //     showDialog(
+      fullscreenDialog: true,
 //       context: context,
 //       builder: (context) => _DeleteConfirmationDialog(
 //         count: 1,
@@ -2240,6 +2242,7 @@
 //     if (_selectedImageIds.isEmpty) return;
 
 //     showDialog(
+      fullscreenDialog: true,
 //       context: context,
 //       builder: (context) => _DeleteConfirmationDialog(
 //         count: _selectedImageIds.length,
@@ -2267,6 +2270,7 @@
 
 //   void _confirmDeleteImage(PropertyImage image) {
 //     showDialog(
+      fullscreenDialog: true,
 //       context: context,
 //       builder: (context) => _DeleteConfirmationDialog(
 //         count: 1,

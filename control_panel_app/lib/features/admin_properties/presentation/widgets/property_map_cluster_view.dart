@@ -923,6 +923,7 @@ class _PropertyMapClusterViewState extends State<PropertyMapClusterView>
   // دالة البحث المنبثقة للوضع المضغوط
   void _showSearchDialog() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,

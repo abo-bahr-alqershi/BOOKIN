@@ -342,6 +342,7 @@ class _CreateSectionPageState extends State<CreateSectionPage>
 
   void _openSectionMediaDialog() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: true,
       builder: (BuildContext dialogContext) {

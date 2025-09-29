@@ -155,49 +155,49 @@ class _AdminServicesPageState extends State<AdminServicesPage>
         }
       },
       child: Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-      body: Stack(
-        children: [
-          // Animated Background
-          _buildAnimatedBackground(),
+        backgroundColor: AppTheme.darkBackground,
+        body: Stack(
+          children: [
+            // Animated Background
+            _buildAnimatedBackground(),
 
-          // Floating Particles
-          _buildFloatingParticles(),
+            // Floating Particles
+            _buildFloatingParticles(),
 
-          // Main Content with CustomScrollView for better scrolling
-          CustomScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // App Bar similar to bookings page
-              _buildSliverAppBar(),
+            // Main Content with CustomScrollView for better scrolling
+            CustomScrollView(
+              controller: _scrollController,
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // App Bar similar to bookings page
+                _buildSliverAppBar(),
 
-              // Stats Cards as SliverToBoxAdapter
-              SliverToBoxAdapter(
-                child: _buildStatsCards(),
-              ),
-
-              // Filters as SliverToBoxAdapter
-              if (_showFilters)
+                // Stats Cards as SliverToBoxAdapter
                 SliverToBoxAdapter(
-                  child: _buildFilters(),
+                  child: _buildStatsCards(),
                 ),
 
-              // Content as SliverFillRemaining لضمان قيود الارتفاع
-              SliverFillRemaining(
-                hasScrollBody: true,
-                child: _buildContent(),
-              ),
+                // Filters as SliverToBoxAdapter
+                if (_showFilters)
+                  SliverToBoxAdapter(
+                    child: _buildFilters(),
+                  ),
 
-              // Bottom padding
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 100),
-              ),
-            ],
-          ),
-        ],
-      ),
-      floatingActionButton: _buildFloatingActionButton(),
+                // Content as SliverFillRemaining لضمان قيود الارتفاع
+                SliverFillRemaining(
+                  hasScrollBody: true,
+                  child: _buildContent(),
+                ),
+
+                // Bottom padding
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: 100),
+                ),
+              ],
+            ),
+          ],
+        ),
+        floatingActionButton: _buildFloatingActionButton(),
       ),
     );
   }
@@ -207,6 +207,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
     if (_isDeleting) return;
     _isDeleting = true;
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.transparent,
@@ -216,9 +217,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
         elevation: 0,
         child: Center(
           child: LoadingWidget(
-            type: LoadingType.futuristic,
-            message: 'جاري حذف الخدمة...'
-          ),
+              type: LoadingType.futuristic, message: 'جاري حذف الخدمة...'),
         ),
       ),
     );
@@ -808,6 +807,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
     HapticFeedback.lightImpact();
     context.read<ServicesBloc>().add(LoadServiceDetailsEvent(service.id));
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => ServiceDetailsDialog(service: service),
     );
@@ -816,6 +816,7 @@ class _AdminServicesPageState extends State<AdminServicesPage>
   void _confirmDelete(Service service) {
     HapticFeedback.mediumImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (dialogCtx) => BackdropFilter(

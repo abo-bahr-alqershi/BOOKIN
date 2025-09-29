@@ -694,6 +694,7 @@ class _CurrenciesManagementPageState extends State<CurrenciesManagementPage>
     HapticFeedback.heavyImpact();
     final currenciesBloc = context.read<CurrenciesBloc>();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: true,
       builder: (ctx) => Center(
@@ -705,7 +706,8 @@ class _CurrenciesManagementPageState extends State<CurrenciesManagementPage>
             decoration: BoxDecoration(
               color: AppTheme.darkCard,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.darkBorder.withValues(alpha: 0.3)),
+              border:
+                  Border.all(color: AppTheme.darkBorder.withValues(alpha: 0.3)),
               boxShadow: [
                 BoxShadow(
                   color: AppTheme.error.withOpacity(0.2),

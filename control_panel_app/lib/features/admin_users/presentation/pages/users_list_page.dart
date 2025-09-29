@@ -1107,6 +1107,7 @@ class _UsersListPageState extends State<UsersListPage>
   void _showDeleteConfirmation(String userId) {
     HapticFeedback.mediumImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (context) => BackdropFilter(

@@ -29,16 +29,16 @@ class _ServiceFormDialogState extends State<ServiceFormDialog>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  
+
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _amountController = TextEditingController();
-  
+
   String _selectedIcon = 'room_service';
   String _selectedCurrency = 'SAR';
   PricingModel _selectedPricingModel = PricingModel.perBooking;
   String? _selectedPropertyId;
-  
+
   bool _isSubmitting = false;
 
   @override
@@ -53,7 +53,7 @@ class _ServiceFormDialogState extends State<ServiceFormDialog>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.7,
       end: 1.0,
@@ -61,7 +61,7 @@ class _ServiceFormDialogState extends State<ServiceFormDialog>
       parent: _animationController,
       curve: Curves.easeOutBack,
     ));
-    
+
     _animationController.forward();
   }
 
@@ -88,6 +88,7 @@ class _ServiceFormDialogState extends State<ServiceFormDialog>
 
   void _showIconPicker() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => ServiceIconPicker(
         selectedIcon: _selectedIcon,
@@ -102,7 +103,7 @@ class _ServiceFormDialogState extends State<ServiceFormDialog>
     if (_formKey.currentState!.validate()) {
       HapticFeedback.mediumImpact();
       setState(() => _isSubmitting = true);
-      
+
       final data = {
         'propertyId': _selectedPropertyId,
         'name': _nameController.text,
@@ -113,7 +114,7 @@ class _ServiceFormDialogState extends State<ServiceFormDialog>
         'pricingModel': _selectedPricingModel,
         'icon': _selectedIcon,
       };
-      
+
       widget.onSubmit(data);
       Navigator.of(context).pop();
     }
@@ -353,7 +354,8 @@ class _ServiceFormDialogState extends State<ServiceFormDialog>
             style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
             decoration: InputDecoration(
               labelText: 'السعر',
-              labelStyle: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
+              labelStyle:
+                  AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
               filled: true,
               fillColor: AppTheme.darkSurface.withOpacity(0.3),
               border: OutlineInputBorder(
@@ -393,10 +395,11 @@ class _ServiceFormDialogState extends State<ServiceFormDialog>
         const SizedBox(width: 12),
         Expanded(
           child: DropdownButtonFormField<String>(
-            value: _selectedCurrency,
+            initialValue: _selectedCurrency,
             decoration: InputDecoration(
               labelText: 'العملة',
-              labelStyle: AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
+              labelStyle:
+                  AppTextStyles.bodySmall.copyWith(color: AppTheme.textMuted),
               filled: true,
               fillColor: AppTheme.darkSurface.withOpacity(0.3),
               border: OutlineInputBorder(
@@ -444,10 +447,12 @@ class _ServiceFormDialogState extends State<ServiceFormDialog>
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   gradient: isSelected ? AppTheme.primaryGradient : null,
-                  color: isSelected ? null : AppTheme.darkSurface.withOpacity(0.3),
+                  color:
+                      isSelected ? null : AppTheme.darkSurface.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
@@ -460,7 +465,8 @@ class _ServiceFormDialogState extends State<ServiceFormDialog>
                   model.label,
                   style: AppTextStyles.bodySmall.copyWith(
                     color: isSelected ? Colors.white : AppTheme.textMuted,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ),
@@ -486,7 +492,8 @@ class _ServiceFormDialogState extends State<ServiceFormDialog>
         children: [
           Expanded(
             child: TextButton(
-              onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+              onPressed:
+                  _isSubmitting ? null : () => Navigator.of(context).pop(),
               child: Text(
                 'إلغاء',
                 style: AppTextStyles.buttonMedium.copyWith(

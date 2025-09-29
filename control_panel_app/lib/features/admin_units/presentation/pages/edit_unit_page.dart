@@ -2032,6 +2032,7 @@ class _EditUnitPageState extends State<EditUnitPage>
     if (_originalUnit == null) return;
 
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => _ResetConfirmationDialog(
         onConfirm: () {

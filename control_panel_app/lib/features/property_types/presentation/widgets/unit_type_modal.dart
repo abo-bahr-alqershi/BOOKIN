@@ -627,6 +627,7 @@ class _UnitTypeModalState extends State<UnitTypeModal> {
 
   void _showIconPicker() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => IconPickerModal(
         selectedIcon: _selectedIcon,

@@ -53,6 +53,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
     if (_isDeleting) return;
     _isDeleting = true;
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.transparent,
@@ -992,6 +993,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
   }) {
     HapticFeedback.mediumImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (dialogContext) => BlocProvider<ap_am_bloc.AmenitiesBloc>(
@@ -1026,6 +1028,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
 
   void _showDeleteConfirmation(String propertyId) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (dialogContext) => BackdropFilter(
@@ -1136,6 +1139,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
   void _showApproveConfirmation(String propertyId) {
     HapticFeedback.mediumImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (dialogContext) => BackdropFilter(
@@ -1246,6 +1250,7 @@ class _PropertiesListPageState extends State<PropertiesListPage>
   void _showRejectConfirmation(String propertyId) {
     HapticFeedback.mediumImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (dialogContext) => BackdropFilter(

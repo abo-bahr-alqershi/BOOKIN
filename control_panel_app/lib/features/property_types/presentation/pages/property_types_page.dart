@@ -827,6 +827,7 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
   void _showPropertyTypeModal({dynamic propertyType}) {
     final parentContext = context;
     showDialog(
+      fullscreenDialog: true,
       context: context,
       useRootNavigator: false,
       barrierDismissible: false,
@@ -866,6 +867,7 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
 
     final parentContext = context;
     showDialog(
+      fullscreenDialog: true,
       context: context,
       useRootNavigator: false,
       barrierDismissible: false,
@@ -915,6 +917,7 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
 
     final parentContext = context;
     showDialog(
+      fullscreenDialog: true,
       context: context,
       useRootNavigator: false,
       barrierDismissible: false,
@@ -948,6 +951,7 @@ class _AdminPropertyTypesPageState extends State<AdminPropertyTypesPage>
     required VoidCallback onConfirm,
   }) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       useRootNavigator: false,
       barrierColor: Colors.black87,

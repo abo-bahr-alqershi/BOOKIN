@@ -30,6 +30,7 @@ class CopyPricingDialog extends StatefulWidget {
     DateTime? initialTargetStart,
   }) async {
     return showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       barrierColor: AppTheme.overlayDark,
@@ -403,7 +404,7 @@ class _CopyPricingDialogState extends State<CopyPricingDialog> {
               color: AppTheme.textWhite, fontWeight: FontWeight.w600)),
       const SizedBox(height: 8),
       DropdownButtonFormField<String>(
-        value: value,
+        initialValue: value,
         dropdownColor: AppTheme.darkCard,
         style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textWhite),
         decoration: InputDecoration(

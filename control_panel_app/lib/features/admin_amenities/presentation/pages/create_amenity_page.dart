@@ -445,6 +445,7 @@ class _CreateAmenityPageState extends State<CreateAmenityPage>
 
   void _showIconPicker() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => AmenityIconPicker(
         selectedIcon: _selectedIcon,

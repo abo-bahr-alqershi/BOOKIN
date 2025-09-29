@@ -720,6 +720,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
   void _showDeleteConfirmation(BuildContext context, String reviewId) {
     HapticFeedback.mediumImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (context) => BackdropFilter(
@@ -831,6 +832,7 @@ class _ReviewsListPageState extends State<ReviewsListPage>
     HapticFeedback.mediumImpact();
     final reviewsListBloc = context.read<ReviewsListBloc>();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (context) => BackdropFilter(

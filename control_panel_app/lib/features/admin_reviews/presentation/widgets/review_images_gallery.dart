@@ -372,6 +372,7 @@ class _ReviewImagesGalleryState extends State<ReviewImagesGallery>
 
   void _showImageViewer(int initialIndex) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (context) => _ImageViewerDialog(

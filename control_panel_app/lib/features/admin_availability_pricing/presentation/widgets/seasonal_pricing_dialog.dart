@@ -30,6 +30,7 @@ class SeasonalPricingDialog extends StatefulWidget {
     DateTime? initialEndDate,
   }) async {
     return showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierDismissible: false,
       barrierColor: AppTheme.overlayDark,

@@ -1717,6 +1717,7 @@ class _RegisterFormState extends State<RegisterForm>
 
   void _openMapPicker() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (context) => _EnhancedMapPickerDialog(

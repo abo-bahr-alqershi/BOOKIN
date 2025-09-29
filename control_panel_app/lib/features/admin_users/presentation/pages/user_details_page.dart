@@ -1504,6 +1504,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
 
   void _showAuditLogDetails(AuditLog log) {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => AuditLogDetailsDialog(auditLog: log),
     );
@@ -1523,6 +1524,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
 
   Future<void> _handleCancelBooking(String bookingId) async {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => BookingActionsDialog(
         bookingId: bookingId,
@@ -1891,6 +1893,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
   void _showDeleteConfirmation() {
     HapticFeedback.mediumImpact();
     showDialog(
+      fullscreenDialog: true,
       context: context,
       barrierColor: Colors.black87,
       builder: (dialogContext) => BackdropFilter(

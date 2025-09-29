@@ -217,6 +217,7 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
     if (_section == null) return;
 
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
