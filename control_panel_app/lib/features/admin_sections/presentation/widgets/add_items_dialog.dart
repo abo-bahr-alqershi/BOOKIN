@@ -377,8 +377,10 @@ class _AddItemsDialogState extends State<AddItemsDialog> {
           );
     }
 
-    widget.onItemsAdded?.call();
-    Navigator.of(context).pop();
+    // Close dialog after a short delay to allow BlocListener to react
+    Future.delayed(const Duration(milliseconds: 50), () {
+      if (mounted) Navigator.of(context).pop();
+    });
   }
 
   Future<void> _loadItems({bool isRefresh = false}) async {
