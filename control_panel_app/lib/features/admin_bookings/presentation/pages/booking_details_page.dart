@@ -308,6 +308,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage>
 
   Widget _buildBookingInfoCard(BookingDetailsLoaded state) {
     final booking = state.booking;
+    final details = state.bookingDetails;
 
     return _buildGlassCard(
       title: 'معلومات الحجز',
@@ -334,11 +335,61 @@ class _BookingDetailsPageState extends State<BookingDetailsPage>
             value: '${booking.guestsCount} ضيف',
             icon: CupertinoIcons.person_2_fill,
           ),
+          if (booking.bookingSource != null)
+            _buildDetailRow(
+              label: 'مصدر الحجز',
+              value: booking.bookingSource!,
+              icon: CupertinoIcons.link,
+            ),
+          if (booking.isWalkIn == true)
+            _buildDetailRow(
+              label: 'حجز مباشر (Walk-in)',
+              value: 'نعم',
+              icon: CupertinoIcons.person_crop_circle_badge_checkmark,
+            ),
+          if (booking.confirmedAt != null)
+            _buildDetailRow(
+              label: 'تاريخ التأكيد',
+              value: Formatters.formatDateTime(booking.confirmedAt!),
+              icon: CupertinoIcons.checkmark_seal_fill,
+            ),
+          if (booking.checkedInAt != null)
+            _buildDetailRow(
+              label: 'تسجيل الوصول الفعلي',
+              value: Formatters.formatDateTime(booking.checkedInAt!),
+              icon: CupertinoIcons.arrow_down_circle_fill,
+            ),
+          if (booking.checkedOutAt != null)
+            _buildDetailRow(
+              label: 'تسجيل المغادرة الفعلي',
+              value: Formatters.formatDateTime(booking.checkedOutAt!),
+              icon: CupertinoIcons.arrow_up_circle_fill,
+            ),
+          if (booking.cancellationReason != null)
+            _buildDetailRow(
+              label: 'سبب الإلغاء',
+              value: booking.cancellationReason!,
+              icon: CupertinoIcons.xmark_octagon_fill,
+              isMultiline: true,
+            ),
+          if (booking.paymentStatus != null)
+            _buildDetailRow(
+              label: 'حالة الدفع',
+              value: booking.paymentStatus!,
+              icon: CupertinoIcons.creditcard_fill,
+            ),
           if (booking.notes != null)
             _buildDetailRow(
               label: 'ملاحظات',
               value: booking.notes!,
               icon: CupertinoIcons.text_bubble,
+              isMultiline: true,
+            ),
+          if (booking.specialRequests != null)
+            _buildDetailRow(
+              label: 'طلبات خاصة',
+              value: booking.specialRequests!,
+              icon: CupertinoIcons.square_list_fill,
               isMultiline: true,
             ),
         ],
@@ -386,6 +437,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage>
   Widget _buildUnitInfoCard(BookingDetailsLoaded state) {
     final booking = state.booking;
     final unitDetails = state.bookingDetails?.unitDetails;
+    final propertyDetails = state.bookingDetails?.propertyDetails;
 
     return _buildGlassCard(
       title: 'معلومات الوحدة',
@@ -402,6 +454,13 @@ class _BookingDetailsPageState extends State<BookingDetailsPage>
               label: 'العقار',
               value: booking.propertyName!,
               icon: CupertinoIcons.location,
+            ),
+          if (propertyDetails?.address != null && propertyDetails!.address.isNotEmpty)
+            _buildDetailRow(
+              label: 'عنوان العقار',
+              value: propertyDetails.address,
+              icon: CupertinoIcons.map_pin_ellipse,
+              isMultiline: true,
             ),
           if (unitDetails?.type != null)
             _buildDetailRow(

@@ -15,25 +15,180 @@ class BookingDetailsModel extends BookingDetails {
   });
 
   factory BookingDetailsModel.fromJson(Map<String, dynamic> json) {
-    // Support both shapes: { booking: {...}, payments: [...] } and flat booking object
+    // Support multiple backend shapes (Admin CP, Mobile, Legacy):
+    // 1) { data: {...} } is handled by caller; here we get {...}
+    // 2) { booking: {...}, payments: [...], services: [...] }
+    // 3) Flat BookingDetailsDto with fields like payments/paymentDetails, contactInfo, propertyAddress, unitImages, totalAmount/currency
+
+    // Extract booking node if present, otherwise treat the whole json as a details DTO
     final Object? bookingNode = json['booking'] ?? json;
-    final Map<String, dynamic> bookingMap = bookingNode is Map
+    final Map<String, dynamic> bookingRaw = bookingNode is Map
         ? Map<String, dynamic>.from(bookingNode as Map)
         : <String, dynamic>{};
 
+    // Normalize booking map expected by BookingModel.fromJson
+    final bool isFlatDetailsDto = bookingRaw.isNotEmpty && (
+      bookingRaw.containsKey('totalAmount') ||
+      bookingRaw.containsKey('bookingNumber') ||
+      bookingRaw.containsKey('contactInfo') ||
+      bookingRaw.containsKey('checkIn') || bookingRaw.containsKey('checkInDate')
+    );
+
+    Map<String, dynamic> normalizedBookingMap;
+    if (bookingNode == json && isFlatDetailsDto) {
+      // Build a BookingModel-compatible map from flat details
+      final String? currency = bookingRaw['currency']?.toString();
+      final double totalAmount = (bookingRaw['totalAmount'] ?? 0).toDouble();
+      final String formattedAmount =
+          '${currency ?? 'YER'} ${totalAmount.toStringAsFixed(2)}';
+
+      final DateTime? actualCheckIn = _tryParseDate(bookingRaw['actualCheckInDate']);
+      final DateTime? actualCheckOut = _tryParseDate(bookingRaw['actualCheckOutDate']);
+      final DateTime? confirmedAt = _tryParseDate(bookingRaw['confirmedAt']);
+      final DateTime? cancelledAt = _tryParseDate(bookingRaw['cancelledAt']);
+
+      final List unitImages = (bookingRaw['unitImages'] is List)
+          ? (bookingRaw['unitImages'] as List)
+          : const [];
+
+      // Contact info fallback for guest data
+      final Map<String, dynamic> contactInfo = Map<String, dynamic>.from(
+          (bookingRaw['contactInfo'] is Map) ? bookingRaw['contactInfo'] : {});
+
+      normalizedBookingMap = {
+        'id': bookingRaw['id']?.toString() ?? '',
+        'userId': bookingRaw['userId']?.toString() ?? '',
+        'unitId': bookingRaw['unitId']?.toString() ?? '',
+        'checkIn': (bookingRaw['checkIn'] ?? bookingRaw['checkInDate'])?.toString() ?? DateTime.now().toIso8601String(),
+        'checkOut': (bookingRaw['checkOut'] ?? bookingRaw['checkOutDate'])?.toString() ?? DateTime.now().toIso8601String(),
+        'guestsCount': bookingRaw['guestsCount'] ??
+            ((bookingRaw['adultGuests'] ?? 0) + (bookingRaw['childGuests'] ?? 0)),
+        'totalPrice': {
+          'amount': totalAmount,
+          'currency': currency ?? 'YER',
+          'formattedAmount': formattedAmount,
+        },
+        'status': bookingRaw['status']?.toString(),
+        'bookedAt': (bookingRaw['bookedAt'] ?? bookingRaw['bookingDate'])?.toString() ?? DateTime.now().toIso8601String(),
+        'userName': bookingRaw['userName'] ?? '',
+        'unitName': bookingRaw['unitName'] ?? '',
+        'userEmail': bookingRaw['userEmail'] ?? contactInfo['email'],
+        'userPhone': bookingRaw['userPhone'] ?? contactInfo['phoneNumber'],
+        'unitImage': unitImages.isNotEmpty ? unitImages.first?.toString() : null,
+        'propertyId': bookingRaw['propertyId']?.toString(),
+        'propertyName': bookingRaw['propertyName'],
+        'notes': bookingRaw['specialNotes'],
+        'specialRequests': bookingRaw['specialRequests'],
+        'cancellationReason': bookingRaw['cancellationReason'],
+        'cancelledAt': cancelledAt?.toIso8601String(),
+        'confirmedAt': confirmedAt?.toIso8601String(),
+        'checkedInAt': (actualCheckIn ?? _tryParseDate(bookingRaw['checkedInAt']))?.toIso8601String(),
+        'checkedOutAt': (actualCheckOut ?? _tryParseDate(bookingRaw['checkedOutAt']))?.toIso8601String(),
+        'bookingSource': bookingRaw['bookingSource'],
+        'isWalkIn': bookingRaw['isWalkIn'],
+        'paymentStatus': bookingRaw['paymentStatus'],
+      };
+    } else {
+      // Already in expected booking shape
+      normalizedBookingMap = bookingRaw;
+    }
+
+    // Payments: support both payments[] and paymentDetails[] (Admin mapping)
     List paymentsRaw = const [];
     if (json['payments'] is List) paymentsRaw = json['payments'] as List;
+    // If only paymentDetails is provided, normalize to PaymentModel json
+    if (paymentsRaw.isEmpty && json['paymentDetails'] is List) {
+      final List details = json['paymentDetails'] as List;
+      paymentsRaw = details
+          .whereType<Map>()
+          .map((p) {
+            final mp = Map<String, dynamic>.from(p);
+            final double amt = (mp['amount'] ?? 0).toDouble();
+            final String cur = mp['currency']?.toString() ?? (normalizedBookingMap['totalPrice']?['currency']?.toString() ?? 'YER');
+            return {
+              'id': mp['id']?.toString() ?? '',
+              'bookingId': normalizedBookingMap['id'] ?? '',
+              'amount': {
+                'amount': amt,
+                'currency': cur,
+                'formattedAmount': '$cur ${amt.toStringAsFixed(2)}',
+              },
+              'transactionId': mp['transactionId']?.toString() ?? '',
+              'method': mp['paymentMethod'], // can be string/int; parser handles both
+              'status': mp['status']?.toString() ?? 'pending',
+              'paymentDate': (mp['paymentDate'] ?? DateTime.now().toIso8601String()).toString(),
+            };
+          })
+          .toList();
+    }
+
+    // Services: support services[] and BookingServiceDto (TotalPrice + Quantity)
     List servicesRaw = const [];
     if (json['services'] is List) servicesRaw = json['services'] as List;
+    servicesRaw = servicesRaw
+        .whereType<Map>()
+        .map((s) {
+          final ms = Map<String, dynamic>.from(s);
+          // If service has TotalPrice/Currency (BookingServiceDto), convert to price + quantity
+          if (ms.containsKey('totalPrice') || ms.containsKey('currency')) {
+            final int qty = (ms['quantity'] ?? 1) is int ? (ms['quantity'] ?? 1) : int.tryParse(ms['quantity'].toString()) ?? 1;
+            final double total = (ms['totalPrice'] ?? 0).toDouble();
+            final String cur = ms['currency']?.toString() ?? (normalizedBookingMap['totalPrice']?['currency']?.toString() ?? 'YER');
+            final double unitPrice = qty > 0 ? (total / qty) : total;
+            return {
+              'id': ms['id']?.toString() ?? '',
+              'name': ms['name'] ?? '',
+              'description': ms['description'] ?? '',
+              'quantity': qty,
+              'price': {
+                'amount': unitPrice,
+                'currency': cur,
+                'formattedAmount': '$cur ${unitPrice.toStringAsFixed(2)}',
+              },
+              'icon': ms['icon'],
+              'category': ms['category'],
+            };
+          }
+          return ms;
+        })
+        .toList();
+
+    // Activities (optional)
     List activitiesRaw = const [];
     if (json['activities'] is List) activitiesRaw = json['activities'] as List;
 
-    final guestInfoRaw = json['guestInfo'];
-    final unitDetailsRaw = json['unitDetails'];
-    final propertyDetailsRaw = json['propertyDetails'];
+    // Guest info fallback to contactInfo if provided but guestInfo is missing
+    final guestInfoRaw = json['guestInfo'] ?? json['contactInfo'];
+
+    // Unit details fallback using unitImages
+    Map<String, dynamic>? unitDetailsRaw;
+    if (json['unitDetails'] is Map) {
+      unitDetailsRaw = Map<String, dynamic>.from(json['unitDetails']);
+    } else if (json['unitImages'] is List) {
+      unitDetailsRaw = {
+        'id': normalizedBookingMap['unitId'] ?? '',
+        'name': normalizedBookingMap['unitName'] ?? '',
+        'type': '',
+        'capacity': normalizedBookingMap['guestsCount'] ?? 1,
+        'amenities': const <String>[],
+        'images': List<String>.from((json['unitImages'] as List).map((e) => e.toString())),
+      };
+    }
+
+    // Property details fallback using propertyAddress in flat DTO
+    Map<String, dynamic>? propertyDetailsRaw;
+    if (json['propertyDetails'] is Map) {
+      propertyDetailsRaw = Map<String, dynamic>.from(json['propertyDetails']);
+    } else if (bookingRaw['propertyAddress'] != null || json['propertyAddress'] != null) {
+      propertyDetailsRaw = {
+        'id': normalizedBookingMap['propertyId'] ?? '',
+        'name': normalizedBookingMap['propertyName'] ?? '',
+        'address': (bookingRaw['propertyAddress'] ?? json['propertyAddress'] ?? '').toString(),
+      };
+    }
 
     return BookingDetailsModel(
-      booking: BookingModel.fromJson(bookingMap),
+      booking: BookingModel.fromJson(normalizedBookingMap),
       payments: paymentsRaw
           .whereType<Map>()
           .map((p) => PaymentModel.fromJson(Map<String, dynamic>.from(p)))
@@ -49,12 +204,11 @@ class BookingDetailsModel extends BookingDetails {
       guestInfo: guestInfoRaw is Map
           ? GuestInfoModel.fromJson(Map<String, dynamic>.from(guestInfoRaw))
           : null,
-      unitDetails: unitDetailsRaw is Map
-          ? UnitDetailsModel.fromJson(Map<String, dynamic>.from(unitDetailsRaw))
+      unitDetails: unitDetailsRaw != null
+          ? UnitDetailsModel.fromJson(unitDetailsRaw)
           : null,
-      propertyDetails: propertyDetailsRaw is Map
-          ? PropertyDetailsModel.fromJson(
-              Map<String, dynamic>.from(propertyDetailsRaw))
+      propertyDetails: propertyDetailsRaw != null
+          ? PropertyDetailsModel.fromJson(propertyDetailsRaw)
           : null,
     );
   }
