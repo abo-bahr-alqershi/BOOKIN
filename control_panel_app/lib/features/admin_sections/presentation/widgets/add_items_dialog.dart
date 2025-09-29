@@ -74,6 +74,7 @@ class _AddItemsDialogState extends State<AddItemsDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      insetPadding: const EdgeInsets.all(10),
       backgroundColor: Colors.transparent,
       child: Container(
         width: MediaQuery.of(context).size.width * 0.9,
@@ -219,7 +220,8 @@ class _AddItemsDialogState extends State<AddItemsDialog> {
           children: [
             Text(
               _errorMessage ?? 'حدث خطأ أثناء التحميل',
-              style: AppTextStyles.bodyMedium.copyWith(color: AppTheme.textMuted),
+              style:
+                  AppTextStyles.bodyMedium.copyWith(color: AppTheme.textMuted),
             ),
             const SizedBox(height: 12),
             OutlinedButton(
@@ -393,7 +395,8 @@ class _AddItemsDialogState extends State<AddItemsDialog> {
     if (widget.target == SectionTarget.properties) {
       final usecase = di.sl<SearchPropertiesUseCase>();
       final result = await usecase(
-        searchTerm: _searchController.text.isEmpty ? null : _searchController.text,
+        searchTerm:
+            _searchController.text.isEmpty ? null : _searchController.text,
         pageNumber: _currentPage,
         pageSize: 20,
       );
@@ -413,7 +416,8 @@ class _AddItemsDialogState extends State<AddItemsDialog> {
     } else {
       final usecase = di.sl<SearchUnitsUseCase>();
       final result = await usecase(
-        searchTerm: _searchController.text.isEmpty ? null : _searchController.text,
+        searchTerm:
+            _searchController.text.isEmpty ? null : _searchController.text,
         pageNumber: _currentPage,
         pageSize: 20,
       );
@@ -441,7 +445,8 @@ class _AddItemsDialogState extends State<AddItemsDialog> {
     if (widget.target == SectionTarget.properties) {
       final usecase = di.sl<SearchPropertiesUseCase>();
       final result = await usecase(
-        searchTerm: _searchController.text.isEmpty ? null : _searchController.text,
+        searchTerm:
+            _searchController.text.isEmpty ? null : _searchController.text,
         pageNumber: _currentPage,
         pageSize: 20,
       );
@@ -458,7 +463,8 @@ class _AddItemsDialogState extends State<AddItemsDialog> {
     } else {
       final usecase = di.sl<SearchUnitsUseCase>();
       final result = await usecase(
-        searchTerm: _searchController.text.isEmpty ? null : _searchController.text,
+        searchTerm:
+            _searchController.text.isEmpty ? null : _searchController.text,
         pageNumber: _currentPage,
         pageSize: 20,
       );

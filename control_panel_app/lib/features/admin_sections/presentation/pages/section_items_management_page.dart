@@ -421,6 +421,7 @@ class _SectionItemsManagementPageState extends State<SectionItemsManagementPage>
 
   void _showAddItemsDialog() {
     showDialog(
+      fullscreenDialog: true,
       context: context,
       builder: (context) => AddItemsDialog(
         sectionId: widget.sectionId,
