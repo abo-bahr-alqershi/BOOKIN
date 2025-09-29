@@ -122,7 +122,7 @@ class _PropertyItemCardState extends State<PropertyItemCard>
                 children: [
                   // Main Card Content
                   SizedBox(
-                    height: 110,
+                    height: 108,
                     child: _buildMainContent(),
                   ),
 
@@ -148,8 +148,8 @@ class _PropertyItemCardState extends State<PropertyItemCard>
       children: [
         // Image
         Container(
-          width: 110,
-          height: 110,
+          width: 108,
+          height: 108,
           decoration: const BoxDecoration(
             borderRadius: BorderRadius.only(
               topRight: Radius.circular(15),
@@ -183,7 +183,7 @@ class _PropertyItemCardState extends State<PropertyItemCard>
         // Content
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -221,7 +221,7 @@ class _PropertyItemCardState extends State<PropertyItemCard>
                       ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     Icon(
@@ -242,7 +242,7 @@ class _PropertyItemCardState extends State<PropertyItemCard>
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     // Rating
