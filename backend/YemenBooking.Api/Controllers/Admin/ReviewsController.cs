@@ -30,6 +30,17 @@ namespace YemenBooking.Api.Controllers.Admin
         }
 
         /// <summary>
+        /// جلب تفاصيل تقييم محدد
+        /// Get details of a specific review
+        /// </summary>
+        [HttpGet("{reviewId}")]
+        public async Task<IActionResult> GetReviewDetails(Guid reviewId)
+        {
+            var result = await _mediator.Send(new GetReviewDetailsQuery { ReviewId = reviewId });
+            return Ok(result);
+        }
+
+        /// <summary>
         /// الموافقة على تقييم
         /// Approve a review
         /// </summary>

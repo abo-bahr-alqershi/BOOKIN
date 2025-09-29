@@ -9,6 +9,7 @@ abstract class ReviewsLocalDataSource {
   Future<void> cacheReviews(List<ReviewModel> reviews);
   Future<void> deleteReview(String reviewId);
   Future<void> clearCache();
+  Future<void> upsertReview(ReviewModel review);
 }
 
 class ReviewsLocalDataSourceImpl implements ReviewsLocalDataSource {
@@ -46,5 +47,17 @@ class ReviewsLocalDataSourceImpl implements ReviewsLocalDataSource {
   @override
   Future<void> clearCache() async {
     await sharedPreferences.remove(CACHED_REVIEWS_KEY);
+  }
+
+  @override
+  Future<void> upsertReview(ReviewModel review) async {
+    final reviews = await getCachedReviews();
+    final index = reviews.indexWhere((r) => r.id == review.id);
+    if (index >= 0) {
+      reviews[index] = review;
+    } else {
+      reviews.add(review);
+    }
+    await cacheReviews(reviews);
   }
 }

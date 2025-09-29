@@ -48,6 +48,8 @@ export interface ReviewDto {
   bookingId: string;
   /** اسم الكيان */
   propertyName: string;
+  /** اسم الوحدة */
+  unitName?: string;
   /** اسم المستخدم الذي قام بالتقييم */
   userName: string;
   cleanliness: number;
@@ -71,6 +73,20 @@ export interface ReviewDto {
   respondedBy?: string;
   /** ردود التقييم */
   responses?: ReviewResponseDto[];
+  /** مدينة الكيان */
+  propertyCity?: string;
+  /** عنوان الكيان */
+  propertyAddress?: string;
+  /** بريد العميل */
+  userEmail?: string;
+  /** هاتف العميل */
+  userPhone?: string;
+  /** تواريخ الحجز */
+  bookingCheckIn?: string;
+  bookingCheckOut?: string;
+  guestsCount?: number;
+  bookingStatus?: string;
+  bookingSource?: string;
 }
 
 /**
