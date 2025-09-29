@@ -56,6 +56,16 @@ class UnitModel extends Unit {
         );
 
   factory UnitModel.fromJson(Map<String, dynamic> json) {
+    // Robust parsing for cancellationWindowDays in case backend returns as num/string
+    final dynamic _cwdRaw = json['cancellationWindowDays'];
+    final int? _cwd = _cwdRaw == null
+        ? null
+        : (_cwdRaw is int
+            ? _cwdRaw
+            : (_cwdRaw is num
+                ? _cwdRaw.toInt()
+                : (int.tryParse(_cwdRaw.toString()))));
+
     return UnitModel(
       id: json['id'] as String,
       propertyId: json['propertyId'] as String,
@@ -87,7 +97,7 @@ class UnitModel extends Unit {
               .toList() ??
           [],
       allowsCancellation: json['allowsCancellation'] as bool? ?? true,
-      cancellationWindowDays: json['cancellationWindowDays'] as int?,
+      cancellationWindowDays: _cwd,
     );
   }
 

@@ -2615,7 +2615,10 @@ class _EditUnitPageState extends State<EditUnitPage>
     context.read<UnitFormBloc>().add(
           UpdateCancellationPolicyEvent(
             allowsCancellation: _allowsCancellation,
-            cancellationWindowDays: _cancellationWindowDays,
+            // Normalize: when not allowed -> null; when allowed and empty -> null
+            cancellationWindowDays: _allowsCancellation
+                ? _cancellationWindowDays
+                : null,
           ),
         );
   }
