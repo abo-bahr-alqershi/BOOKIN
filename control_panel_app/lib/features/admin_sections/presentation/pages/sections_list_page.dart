@@ -348,13 +348,28 @@ class _SectionsListPageState extends State<SectionsListPage>
         builder: (context, state) {
           if (state is! SectionsListLoaded) return const SizedBox.shrink();
 
+          // حساب الارتفاع بناءً على حجم الشاشة
+          final screenWidth = MediaQuery.of(context).size.width;
+          final statsHeight = screenWidth < 400
+              ? 140.0 // للهواتف الصغيرة
+              : screenWidth < 600
+                  ? 150.0 // للهواتف المتوسطة
+                  : 160.0; // للأجهزة اللوحية والكبيرة
+
           return AnimationLimiter(
             child: Container(
-              height: 130,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              height: statsHeight,
+              padding: EdgeInsets.symmetric(
+                horizontal: screenWidth < 400 ? 8 : 16,
+                vertical: 8,
+              ),
               child: SectionStatsCard(
                 sections: state.page.items,
                 totalCount: state.page.totalCount,
+                onRefresh: _loadSections,
+                onStatTap: (type) {
+                  // handle stat tap
+                },
               ),
             ),
           );

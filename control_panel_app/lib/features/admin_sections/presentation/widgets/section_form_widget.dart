@@ -56,11 +56,11 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
   final _colorThemeController = TextEditingController();
   final _backgroundImageController = TextEditingController();
 
-  // State
-  SectionTypeEnum? _selectedType;
-  SectionContentType? _selectedContentType;
-  SectionDisplayStyle? _selectedDisplayStyle;
-  SectionTarget? _selectedTarget;
+  // State with default values
+  SectionTypeEnum _selectedType = SectionTypeEnum.featured;
+  SectionContentType _selectedContentType = SectionContentType.properties;
+  SectionDisplayStyle _selectedDisplayStyle = SectionDisplayStyle.grid;
+  SectionTarget _selectedTarget = SectionTarget.properties;
   bool _isActive = true;
   bool _isVisibleToGuests = true;
   bool _isVisibleToRegistered = true;
@@ -82,6 +82,16 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
     );
     _setupTabAnimations();
     _tabAnimationController.forward();
+
+    // Set default values for required fields
+    _displayOrderController.text = '0';
+    _columnsCountController.text = '2';
+    _itemsToShowController.text = '10';
+
+    // Initialize form
+    context.read<SectionFormBloc>().add(
+          InitializeSectionFormEvent(sectionId: widget.sectionId),
+        );
   }
 
   void _setupTabAnimations() {
@@ -95,7 +105,7 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
           curve: Interval(
             index * 0.1,
             0.5 + index * 0.1,
-            curve: Curves.easeOutBack,
+            curve: Curves.easeOutCubic,
           ),
         ),
       );
@@ -124,12 +134,31 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
   Widget build(BuildContext context) {
     return BlocConsumer<SectionFormBloc, SectionFormState>(
       listener: (context, state) {
-        if (state is SectionFormReady && widget.isEditing) {
+        if (state is SectionFormReady &&
+            widget.isEditing &&
+            widget.sectionId != null) {
           _populateForm(state);
+        } else if (state is SectionFormSubmitted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(widget.isEditing
+                  ? 'تم تحديث القسم بنجاح'
+                  : 'تم إضافة القسم بنجاح'),
+              backgroundColor: AppTheme.success,
+            ),
+          );
+          Navigator.of(context).pop(true);
+        } else if (state is SectionFormError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('خطأ: ${state.message}'),
+              backgroundColor: AppTheme.error,
+            ),
+          );
         }
       },
       builder: (context, state) {
-        if (state is SectionFormLoading) {
+        if (state is SectionFormLoading && widget.isEditing) {
           return const Center(
             child: CircularProgressIndicator(),
           );
@@ -159,7 +188,6 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
                 ],
               ),
             ),
-            // Preview Overlay
             if (_showPreview) _buildPreviewOverlay(),
           ],
         );
@@ -210,10 +238,14 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
           return AnimatedBuilder(
             animation: _tabAnimations[index],
             builder: (context, child) {
+              final animationValue =
+                  _tabAnimations[index].value.clamp(0.0, 1.0);
+              final scaleValue = 0.9 + (animationValue * 0.1);
+
               return Transform.scale(
-                scale: 0.9 + (_tabAnimations[index].value * 0.1),
+                scale: scaleValue,
                 child: Opacity(
-                  opacity: _tabAnimations[index].value,
+                  opacity: animationValue,
                   child: Tab(
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -233,354 +265,378 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
     );
   }
 
+  Widget _buildScrollableContent({required Widget child}) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight,
+            ),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildBasicInfoTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader(
-              'المعلومات الأساسية', CupertinoIcons.info_circle_fill),
-          const SizedBox(height: 20),
-          _buildInputField(
-            controller: _nameController,
-            label: 'اسم القسم (داخلي)',
-            hint: 'أدخل اسم القسم للاستخدام الداخلي',
-            icon: Icons.label_outline,
-            onChanged: (value) {
-              context.read<SectionFormBloc>().add(
-                    UpdateSectionBasicInfoEvent(name: value),
-                  );
-            },
-          ),
-          const SizedBox(height: 20),
-          _buildInputField(
-            controller: _titleController,
-            label: 'العنوان',
-            hint: 'أدخل عنوان القسم',
-            icon: Icons.title,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'العنوان مطلوب';
-              }
-              return null;
-            },
-            onChanged: (value) {
-              context.read<SectionFormBloc>().add(
-                    UpdateSectionBasicInfoEvent(title: value),
-                  );
-            },
-          ),
-          const SizedBox(height: 20),
-          _buildInputField(
-            controller: _subtitleController,
-            label: 'العنوان الفرعي',
-            hint: 'أدخل عنوان فرعي (اختياري)',
-            icon: Icons.subtitles_outlined,
-            onChanged: (value) {
-              context.read<SectionFormBloc>().add(
-                    UpdateSectionBasicInfoEvent(subtitle: value),
-                  );
-            },
-          ),
-          const SizedBox(height: 20),
-          _buildInputField(
-            controller: _descriptionController,
-            label: 'الوصف',
-            hint: 'أدخل وصف القسم',
-            icon: Icons.description_outlined,
-            maxLines: 3,
-            onChanged: (value) {
-              context.read<SectionFormBloc>().add(
-                    UpdateSectionBasicInfoEvent(description: value),
-                  );
-            },
-          ),
-          const SizedBox(height: 20),
-          _buildInputField(
-            controller: _shortDescriptionController,
-            label: 'وصف مختصر',
-            hint: 'أدخل وصف مختصر للعرض السريع',
-            icon: Icons.short_text,
-            onChanged: (value) {
-              context.read<SectionFormBloc>().add(
-                    UpdateSectionBasicInfoEvent(shortDescription: value),
-                  );
-            },
-          ),
-        ],
+    return _buildScrollableContent(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader(
+                'المعلومات الأساسية', CupertinoIcons.info_circle_fill),
+            const SizedBox(height: 20),
+            _buildInputField(
+              controller: _nameController,
+              label: 'اسم القسم (داخلي)',
+              hint: 'أدخل اسم القسم للاستخدام الداخلي',
+              icon: Icons.label_outline,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'اسم القسم مطلوب';
+                }
+                return null;
+              },
+              onChanged: (value) {
+                context.read<SectionFormBloc>().add(
+                      UpdateSectionBasicInfoEvent(name: value),
+                    );
+              },
+            ),
+            const SizedBox(height: 20),
+            _buildInputField(
+              controller: _titleController,
+              label: 'العنوان',
+              hint: 'أدخل عنوان القسم',
+              icon: Icons.title,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'العنوان مطلوب';
+                }
+                return null;
+              },
+              onChanged: (value) {
+                context.read<SectionFormBloc>().add(
+                      UpdateSectionBasicInfoEvent(title: value),
+                    );
+              },
+            ),
+            const SizedBox(height: 20),
+            _buildInputField(
+              controller: _subtitleController,
+              label: 'العنوان الفرعي',
+              hint: 'أدخل عنوان فرعي (اختياري)',
+              icon: Icons.subtitles_outlined,
+              onChanged: (value) {
+                context.read<SectionFormBloc>().add(
+                      UpdateSectionBasicInfoEvent(subtitle: value),
+                    );
+              },
+            ),
+            const SizedBox(height: 20),
+            _buildInputField(
+              controller: _descriptionController,
+              label: 'الوصف',
+              hint: 'أدخل وصف القسم',
+              icon: Icons.description_outlined,
+              maxLines: 3,
+              onChanged: (value) {
+                context.read<SectionFormBloc>().add(
+                      UpdateSectionBasicInfoEvent(description: value),
+                    );
+              },
+            ),
+            const SizedBox(height: 20),
+            _buildInputField(
+              controller: _shortDescriptionController,
+              label: 'وصف مختصر',
+              hint: 'أدخل وصف مختصر للعرض السريع',
+              icon: Icons.short_text,
+              onChanged: (value) {
+                context.read<SectionFormBloc>().add(
+                      UpdateSectionBasicInfoEvent(shortDescription: value),
+                    );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildConfigurationTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader('إعدادات القسم', CupertinoIcons.settings),
-          const SizedBox(height: 20),
-          SectionTypeSelector(
-            selectedType: _selectedType,
-            onTypeSelected: (type) {
-              setState(() => _selectedType = type);
-              context.read<SectionFormBloc>().add(
-                    UpdateSectionConfigEvent(type: type),
-                  );
-            },
-          ),
-          const SizedBox(height: 20),
-          SectionContentTypeToggle(
-            selectedType: _selectedContentType,
-            onTypeSelected: (type) {
-              setState(() => _selectedContentType = type);
-              context.read<SectionFormBloc>().add(
-                    UpdateSectionConfigEvent(contentType: type),
-                  );
-            },
-          ),
-          const SizedBox(height: 20),
-          _buildTargetSelector(),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: _buildInputField(
-                  controller: _displayOrderController,
-                  label: 'ترتيب العرض',
-                  hint: '0',
-                  icon: Icons.format_list_numbered,
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'الترتيب مطلوب';
-                    }
-                    if (int.tryParse(value) == null) {
-                      return 'أدخل رقم صحيح';
-                    }
-                    return null;
-                  },
-                  onChanged: (value) {
-                    final order = int.tryParse(value);
-                    if (order != null) {
-                      context.read<SectionFormBloc>().add(
-                            UpdateSectionConfigEvent(displayOrder: order),
-                          );
-                    }
-                  },
+    return _buildScrollableContent(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader('إعدادات القسم', CupertinoIcons.settings),
+            const SizedBox(height: 20),
+            SectionTypeSelector(
+              selectedType: _selectedType,
+              onTypeSelected: (type) {
+                setState(() => _selectedType = type);
+                context.read<SectionFormBloc>().add(
+                      UpdateSectionConfigEvent(type: type),
+                    );
+              },
+            ),
+            const SizedBox(height: 20),
+            SectionContentTypeToggle(
+              selectedType: _selectedContentType,
+              onTypeSelected: (type) {
+                setState(() => _selectedContentType = type);
+                context.read<SectionFormBloc>().add(
+                      UpdateSectionConfigEvent(contentType: type),
+                    );
+              },
+            ),
+            const SizedBox(height: 20),
+            _buildTargetSelector(),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildInputField(
+                    controller: _displayOrderController,
+                    label: 'ترتيب العرض',
+                    hint: '0',
+                    icon: Icons.format_list_numbered,
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'الترتيب مطلوب';
+                      }
+                      if (int.tryParse(value) == null) {
+                        return 'أدخل رقم صحيح';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      final order = int.tryParse(value);
+                      if (order != null) {
+                        context.read<SectionFormBloc>().add(
+                              UpdateSectionConfigEvent(displayOrder: order),
+                            );
+                      }
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildInputField(
-                  controller: _itemsToShowController,
-                  label: 'عدد العناصر',
-                  hint: '10',
-                  icon: Icons.view_module,
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'العدد مطلوب';
-                    }
-                    final count = int.tryParse(value);
-                    if (count == null || count < 1) {
-                      return 'أدخل رقم صحيح أكبر من 0';
-                    }
-                    return null;
-                  },
-                  onChanged: (value) {
-                    final count = int.tryParse(value);
-                    if (count != null) {
-                      context.read<SectionFormBloc>().add(
-                            UpdateSectionConfigEvent(itemsToShow: count),
-                          );
-                    }
-                  },
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildInputField(
+                    controller: _itemsToShowController,
+                    label: 'عدد العناصر',
+                    hint: '10',
+                    icon: Icons.view_module,
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'العدد مطلوب';
+                      }
+                      final count = int.tryParse(value);
+                      if (count == null || count < 1) {
+                        return 'أدخل رقم صحيح أكبر من 0';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      final count = int.tryParse(value);
+                      if (count != null) {
+                        context.read<SectionFormBloc>().add(
+                              UpdateSectionConfigEvent(itemsToShow: count),
+                            );
+                      }
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _buildActiveSwitch(),
-        ],
+              ],
+            ),
+            const SizedBox(height: 20),
+            _buildActiveSwitch(),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildAppearanceTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader('إعدادات المظهر', CupertinoIcons.paintbrush_fill),
-          const SizedBox(height: 20),
-          SectionDisplayStylePicker(
-            selectedStyle: _selectedDisplayStyle,
-            onStyleSelected: (style) {
-              setState(() => _selectedDisplayStyle = style);
-              context.read<SectionFormBloc>().add(
-                    UpdateSectionConfigEvent(displayStyle: style),
-                  );
-            },
-          ),
-          const SizedBox(height: 20),
-          _buildInputField(
-            controller: _columnsCountController,
-            label: 'عدد الأعمدة',
-            hint: '2',
-            icon: Icons.view_column,
-            keyboardType: TextInputType.number,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'عدد الأعمدة مطلوب';
-              }
-              final count = int.tryParse(value);
-              if (count == null || count < 1 || count > 6) {
-                return 'أدخل رقم بين 1 و 6';
-              }
-              return null;
-            },
-            onChanged: (value) {
-              final count = int.tryParse(value);
-              if (count != null) {
+    return _buildScrollableContent(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader(
+                'إعدادات المظهر', CupertinoIcons.paintbrush_fill),
+            const SizedBox(height: 20),
+            SectionDisplayStylePicker(
+              selectedStyle: _selectedDisplayStyle,
+              onStyleSelected: (style) {
+                setState(() => _selectedDisplayStyle = style);
                 context.read<SectionFormBloc>().add(
-                      UpdateSectionConfigEvent(columnsCount: count),
+                      UpdateSectionConfigEvent(displayStyle: style),
                     );
-              }
-            },
-          ),
-          const SizedBox(height: 20),
-          _buildInputField(
-            controller: _iconController,
-            label: 'أيقونة القسم',
-            hint: 'اسم الأيقونة (اختياري)',
-            icon: Icons.insert_emoticon,
-            onChanged: (value) {
-              context.read<SectionFormBloc>().add(
-                    UpdateSectionAppearanceEvent(icon: value),
-                  );
-            },
-          ),
-          const SizedBox(height: 20),
-          _buildInputField(
-            controller: _colorThemeController,
-            label: 'لون القسم',
-            hint: 'كود اللون (اختياري)',
-            icon: Icons.palette,
-            onChanged: (value) {
-              context.read<SectionFormBloc>().add(
-                    UpdateSectionAppearanceEvent(colorTheme: value),
-                  );
-            },
-          ),
-          const SizedBox(height: 20),
-          _buildInputField(
-            controller: _backgroundImageController,
-            label: 'صورة الخلفية',
-            hint: 'رابط الصورة (اختياري)',
-            icon: Icons.image,
-            onChanged: (value) {
-              context.read<SectionFormBloc>().add(
-                    UpdateSectionAppearanceEvent(backgroundImage: value),
-                  );
-            },
-          ),
-        ],
+              },
+            ),
+            const SizedBox(height: 20),
+            _buildInputField(
+              controller: _columnsCountController,
+              label: 'عدد الأعمدة',
+              hint: '2',
+              icon: Icons.view_column,
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'عدد الأعمدة مطلوب';
+                }
+                final count = int.tryParse(value);
+                if (count == null || count < 1 || count > 6) {
+                  return 'أدخل رقم بين 1 و 6';
+                }
+                return null;
+              },
+              onChanged: (value) {
+                final count = int.tryParse(value);
+                if (count != null) {
+                  context.read<SectionFormBloc>().add(
+                        UpdateSectionConfigEvent(columnsCount: count),
+                      );
+                }
+              },
+            ),
+            const SizedBox(height: 20),
+            _buildInputField(
+              controller: _iconController,
+              label: 'أيقونة القسم',
+              hint: 'اسم الأيقونة (اختياري)',
+              icon: Icons.insert_emoticon,
+              onChanged: (value) {
+                context.read<SectionFormBloc>().add(
+                      UpdateSectionAppearanceEvent(icon: value),
+                    );
+              },
+            ),
+            const SizedBox(height: 20),
+            _buildInputField(
+              controller: _colorThemeController,
+              label: 'لون القسم',
+              hint: 'كود اللون (اختياري)',
+              icon: Icons.palette,
+              onChanged: (value) {
+                context.read<SectionFormBloc>().add(
+                      UpdateSectionAppearanceEvent(colorTheme: value),
+                    );
+              },
+            ),
+            const SizedBox(height: 20),
+            _buildInputField(
+              controller: _backgroundImageController,
+              label: 'صورة الخلفية',
+              hint: 'رابط الصورة (اختياري)',
+              icon: Icons.image,
+              onChanged: (value) {
+                context.read<SectionFormBloc>().add(
+                      UpdateSectionAppearanceEvent(backgroundImage: value),
+                    );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildFiltersAndSortingTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader(
-              'الفلترة والترتيب', CupertinoIcons.slider_horizontal_3),
-          const SizedBox(height: 20),
-          // استخدام SectionFilterCriteriaEditor
-          SectionFilterCriteriaEditor(
-            initialCriteria: _filterCriteria,
-            onCriteriaChanged: (criteria) {
-              setState(() => _filterCriteria = criteria);
-              context.read<SectionFormBloc>().add(
-                    UpdateSectionFiltersEvent(
-                      filterCriteriaJson: criteria.toString(),
-                      cityName: criteria['cityName'],
-                      propertyTypeId: criteria['propertyTypeId'],
-                      unitTypeId: criteria['unitTypeId'],
-                      minPrice: criteria['minPrice'],
-                      maxPrice: criteria['maxPrice'],
-                      minRating: criteria['minRating'],
-                    ),
-                  );
-            },
-          ),
-          const SizedBox(height: 30),
-          // استخدام SectionSortCriteriaEditor
-          SectionSortCriteriaEditor(
-            initialCriteria: _sortCriteria,
-            onCriteriaChanged: (criteria) {
-              setState(() => _sortCriteria = criteria);
-              context.read<SectionFormBloc>().add(
-                    UpdateSectionFiltersEvent(
-                      sortCriteriaJson: criteria.toString(),
-                    ),
-                  );
-            },
-          ),
-        ],
+    return _buildScrollableContent(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader(
+                'الفلترة والترتيب', CupertinoIcons.slider_horizontal_3),
+            const SizedBox(height: 20),
+            SectionFilterCriteriaEditor(
+              initialCriteria: _filterCriteria,
+              onCriteriaChanged: (criteria) {
+                setState(() => _filterCriteria = criteria);
+                context.read<SectionFormBloc>().add(
+                      UpdateSectionFiltersEvent(
+                        filterCriteriaJson: criteria.toString(),
+                        cityName: criteria['cityName'],
+                        propertyTypeId: criteria['propertyTypeId'],
+                        unitTypeId: criteria['unitTypeId'],
+                        minPrice: criteria['minPrice'],
+                        maxPrice: criteria['maxPrice'],
+                        minRating: criteria['minRating'],
+                      ),
+                    );
+              },
+            ),
+            const SizedBox(height: 30),
+            SectionSortCriteriaEditor(
+              initialCriteria: _sortCriteria,
+              onCriteriaChanged: (criteria) {
+                setState(() => _sortCriteria = criteria);
+                context.read<SectionFormBloc>().add(
+                      UpdateSectionFiltersEvent(
+                        sortCriteriaJson: criteria.toString(),
+                      ),
+                    );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildAdvancedTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader('إعدادات متقدمة', CupertinoIcons.gear_alt_fill),
-          const SizedBox(height: 20),
-          // استخدام SectionSchedulePicker
-          SectionSchedulePicker(
-            startDate: _startDate,
-            endDate: _endDate,
-            onScheduleChanged: (start, end) {
-              setState(() {
-                _startDate = start;
-                _endDate = end;
-              });
-              context.read<SectionFormBloc>().add(
-                    UpdateSectionVisibilityEvent(
-                      startDate: start,
-                      endDate: end,
-                    ),
-                  );
-            },
-          ),
-          const SizedBox(height: 30),
-          _buildVisibilitySettings(),
-          const SizedBox(height: 30),
-          // استخدام SectionMetadataEditor
-          SectionMetadataEditor(
-            initialMetadata: _metadata,
-            onMetadataChanged: (metadata) {
-              setState(() => _metadata = metadata);
-              context.read<SectionFormBloc>().add(
-                    UpdateSectionMetadataEvent(metadataJson: metadata),
-                  );
-            },
-          ),
-        ],
+    return _buildScrollableContent(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader('إعدادات متقدمة', CupertinoIcons.gear_alt_fill),
+            const SizedBox(height: 20),
+            SectionSchedulePicker(
+              startDate: _startDate,
+              endDate: _endDate,
+              onScheduleChanged: (start, end) {
+                setState(() {
+                  _startDate = start;
+                  _endDate = end;
+                });
+                context.read<SectionFormBloc>().add(
+                      UpdateSectionVisibilityEvent(
+                        startDate: start,
+                        endDate: end,
+                      ),
+                    );
+              },
+            ),
+            const SizedBox(height: 30),
+            _buildVisibilitySettings(),
+            const SizedBox(height: 30),
+            SectionMetadataEditor(
+              initialMetadata: _metadata,
+              onMetadataChanged: (metadata) {
+                setState(() => _metadata = metadata);
+                context.read<SectionFormBloc>().add(
+                      UpdateSectionMetadataEvent(metadataJson: metadata),
+                    );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -683,7 +739,7 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
         color: AppTheme.darkBackground.withValues(alpha: 0.9),
         child: Center(
           child: GestureDetector(
-            onTap: () {}, // Prevent closing when tapping on preview
+            onTap: () {},
             child: Container(
               width: MediaQuery.of(context).size.width * 0.9,
               height: MediaQuery.of(context).size.height * 0.8,
@@ -733,7 +789,6 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
     );
   }
 
-  // باقي الدوال المساعدة
   Widget _buildSectionHeader(String title, IconData icon) {
     return Row(
       children: [
@@ -961,6 +1016,8 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
   }
 
   Widget _buildActionButtons(SectionFormState state) {
+    final isLoading = state is SectionFormLoading;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -979,7 +1036,6 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
       ),
       child: Row(
         children: [
-          // Preview Button
           GestureDetector(
             onTap: () => setState(() => _showPreview = true),
             child: Container(
@@ -1017,7 +1073,6 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
             ),
           ),
           const Spacer(),
-          // Cancel Button
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
             child: Container(
@@ -1044,13 +1099,17 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
             ),
           ),
           const SizedBox(width: 12),
-          // Submit Button
           GestureDetector(
-            onTap: _submitForm,
+            onTap: isLoading ? null : _submitForm,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               decoration: BoxDecoration(
-                gradient: AppTheme.primaryGradient,
+                gradient: isLoading
+                    ? LinearGradient(colors: [
+                        AppTheme.primaryBlue.withValues(alpha: 0.5),
+                        AppTheme.primaryBlue.withValues(alpha: 0.3),
+                      ])
+                    : AppTheme.primaryGradient,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -1060,7 +1119,7 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
                   ),
                 ],
               ),
-              child: state is SectionFormLoading
+              child: isLoading
                   ? const SizedBox(
                       width: 20,
                       height: 20,
@@ -1084,40 +1143,45 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
   }
 
   void _populateForm(SectionFormReady state) {
-    _nameController.text = state.name ?? '';
-    _titleController.text = state.title ?? '';
-    _subtitleController.text = state.subtitle ?? '';
-    _descriptionController.text = state.description ?? '';
-    _shortDescriptionController.text = state.shortDescription ?? '';
-    _displayOrderController.text = state.displayOrder?.toString() ?? '0';
-    _columnsCountController.text = state.columnsCount?.toString() ?? '2';
-    _itemsToShowController.text = state.itemsToShow?.toString() ?? '10';
-    _iconController.text = state.icon ?? '';
-    _colorThemeController.text = state.colorTheme ?? '';
-    _backgroundImageController.text = state.backgroundImage ?? '';
+    if (state.sectionId != null && state.sectionId!.isNotEmpty) {
+      _nameController.text = state.name ?? '';
+      _titleController.text = state.title ?? '';
+      _subtitleController.text = state.subtitle ?? '';
+      _descriptionController.text = state.description ?? '';
+      _shortDescriptionController.text = state.shortDescription ?? '';
+      _displayOrderController.text = state.displayOrder?.toString() ?? '0';
+      _columnsCountController.text = state.columnsCount?.toString() ?? '2';
+      _itemsToShowController.text = state.itemsToShow?.toString() ?? '10';
+      _iconController.text = state.icon ?? '';
+      _colorThemeController.text = state.colorTheme ?? '';
+      _backgroundImageController.text = state.backgroundImage ?? '';
 
-    setState(() {
-      _selectedType = state.type;
-      _selectedContentType = state.contentType;
-      _selectedDisplayStyle = state.displayStyle;
-      _selectedTarget = state.target;
-      _isActive = state.isActive ?? true;
-      _isVisibleToGuests = state.isVisibleToGuests ?? true;
-      _isVisibleToRegistered = state.isVisibleToRegistered ?? true;
-      _requiresPermission = state.requiresPermission;
-      _startDate = state.startDate;
-      _endDate = state.endDate;
-      _metadata = state.metadataJson ?? '';
-    });
+      setState(() {
+        _selectedType = state.type ?? SectionTypeEnum.featured;
+        _selectedContentType =
+            state.contentType ?? SectionContentType.properties;
+        _selectedDisplayStyle = state.displayStyle ?? SectionDisplayStyle.grid;
+        _selectedTarget = state.target ?? SectionTarget.properties;
+        _isActive = state.isActive ?? true;
+        _isVisibleToGuests = state.isVisibleToGuests ?? true;
+        _isVisibleToRegistered = state.isVisibleToRegistered ?? true;
+        _requiresPermission = state.requiresPermission;
+        _startDate = state.startDate;
+        _endDate = state.endDate;
+        _metadata = state.metadataJson ?? '';
+      });
+    }
   }
 
   Section _createSectionFromForm() {
     return Section(
       id: widget.sectionId ?? '',
-      type: _selectedType ?? SectionTypeEnum.featured,
-      contentType: _selectedContentType ?? SectionContentType.properties,
-      displayStyle: _selectedDisplayStyle ?? SectionDisplayStyle.grid,
-      name: _nameController.text,
+      type: _selectedType,
+      contentType: _selectedContentType,
+      displayStyle: _selectedDisplayStyle,
+      name: _nameController.text.isEmpty
+          ? _titleController.text
+          : _nameController.text,
       title: _titleController.text,
       subtitle:
           _subtitleController.text.isEmpty ? null : _subtitleController.text,
@@ -1128,7 +1192,7 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
           ? null
           : _shortDescriptionController.text,
       displayOrder: int.tryParse(_displayOrderController.text) ?? 0,
-      target: _selectedTarget ?? SectionTarget.properties,
+      target: _selectedTarget,
       isActive: _isActive,
       columnsCount: int.tryParse(_columnsCountController.text) ?? 2,
       itemsToShow: int.tryParse(_itemsToShowController.text) ?? 10,
@@ -1139,8 +1203,9 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
       backgroundImage: _backgroundImageController.text.isEmpty
           ? null
           : _backgroundImageController.text,
-      filterCriteria: _filterCriteria.toString(),
-      sortCriteria: _sortCriteria.toString(),
+      filterCriteria:
+          _filterCriteria.isNotEmpty ? _filterCriteria.toString() : null,
+      sortCriteria: _sortCriteria.isNotEmpty ? _sortCriteria.toString() : null,
       cityName: _filterCriteria['cityName'],
       propertyTypeId: _filterCriteria['propertyTypeId'],
       unitTypeId: _filterCriteria['unitTypeId'],
@@ -1158,7 +1223,52 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
-      context.read<SectionFormBloc>().add(SubmitSectionFormEvent());
+      // التحقق من الحقول المطلوبة
+      if (_nameController.text.isEmpty) {
+        _nameController.text = _titleController.text;
+      }
+
+      // التأكد من تحديث جميع البيانات قبل الإرسال
+      context.read<SectionFormBloc>().add(
+            UpdateSectionBasicInfoEvent(
+              name: _nameController.text,
+              title: _titleController.text,
+              subtitle: _subtitleController.text.isEmpty
+                  ? null
+                  : _subtitleController.text,
+              description: _descriptionController.text.isEmpty
+                  ? null
+                  : _descriptionController.text,
+              shortDescription: _shortDescriptionController.text.isEmpty
+                  ? null
+                  : _shortDescriptionController.text,
+            ),
+          );
+
+      context.read<SectionFormBloc>().add(
+            UpdateSectionConfigEvent(
+              type: _selectedType,
+              contentType: _selectedContentType,
+              displayStyle: _selectedDisplayStyle,
+              target: _selectedTarget,
+              displayOrder: int.tryParse(_displayOrderController.text) ?? 0,
+              itemsToShow: int.tryParse(_itemsToShowController.text) ?? 10,
+              columnsCount: int.tryParse(_columnsCountController.text) ?? 2,
+              isActive: _isActive,
+            ),
+          );
+
+      // إرسال الطلب النهائي
+      Future.delayed(const Duration(milliseconds: 100), () {
+        context.read<SectionFormBloc>().add(SubmitSectionFormEvent());
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('يرجى ملء جميع الحقول المطلوبة'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
     }
   }
 }

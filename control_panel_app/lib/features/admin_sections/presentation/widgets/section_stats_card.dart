@@ -64,7 +64,7 @@ class _SectionStatsCardState extends State<SectionStatsCard>
           curve: Interval(
             index * 0.1,
             0.5 + index * 0.1,
-            curve: Curves.easeOutBack,
+            curve: Curves.easeOutCubic, // تغيير من easeOutBack إلى easeOutCubic
           ),
         ),
       );
@@ -79,6 +79,59 @@ class _SectionStatsCardState extends State<SectionStatsCard>
     super.dispose();
   }
 
+  // تحديد حجم الشاشة
+  bool get _isSmallScreen {
+    final width = MediaQuery.of(context).size.width;
+    return width < 400;
+  }
+
+  bool get _isMediumScreen {
+    final width = MediaQuery.of(context).size.width;
+    return width >= 400 && width < 600;
+  }
+
+  bool get _isTablet {
+    final width = MediaQuery.of(context).size.width;
+    return width >= 600 && width < 900;
+  }
+
+  // حساب الأبعاد بناءً على حجم الشاشة
+  double get _cardWidth {
+    if (_isSmallScreen) return 140;
+    if (_isMediumScreen) return 160;
+    if (_isTablet) return 180;
+    return 200;
+  }
+
+  double get _cardHeight {
+    if (_isSmallScreen) return 130;
+    if (_isMediumScreen) return 140;
+    return 150;
+  }
+
+  double get _iconSize {
+    if (_isSmallScreen) return 14;
+    if (_isMediumScreen) return 16;
+    return 18;
+  }
+
+  double get _backgroundIconSize {
+    if (_isSmallScreen) return 70;
+    if (_isMediumScreen) return 85;
+    return 100;
+  }
+
+  EdgeInsets get _cardPadding {
+    if (_isSmallScreen) return const EdgeInsets.all(10);
+    if (_isMediumScreen) return const EdgeInsets.all(12);
+    return const EdgeInsets.all(14);
+  }
+
+  double get _cardMargin {
+    if (_isSmallScreen) return 4;
+    return 6;
+  }
+
   Map<String, dynamic> _calculateDetailedStats() {
     int active = 0;
     int inactive = 0;
@@ -86,50 +139,39 @@ class _SectionStatsCardState extends State<SectionStatsCard>
     int units = 0;
     int mixed = 0;
 
-    // Stats by type
     Map<SectionTypeEnum, int> typeStats = {};
     for (var type in SectionTypeEnum.values) {
       typeStats[type] = 0;
     }
 
-    // Stats by display style
     Map<SectionDisplayStyle, int> styleStats = {};
     for (var style in SectionDisplayStyle.values) {
       styleStats[style] = 0;
     }
 
-    // Calculate averages
     double avgItemsPerSection = 0;
     int totalItems = 0;
 
     for (final section in widget.sections) {
-      // Basic stats
       if (section.isActive) {
         active++;
       } else {
         inactive++;
       }
 
-      // Target stats
       if (section.target == SectionTarget.properties) {
         properties++;
       } else if (section.target == SectionTarget.units) {
         units++;
       }
 
-      // Content type stats
       if (section.contentType == SectionContentType.mixed) {
         mixed++;
       }
 
-      // Type stats
       typeStats[section.type] = (typeStats[section.type] ?? 0) + 1;
-
-      // Style stats
       styleStats[section.displayStyle] =
           (styleStats[section.displayStyle] ?? 0) + 1;
-
-      // Items stats
       totalItems += section.itemsToShow;
     }
 
@@ -137,7 +179,6 @@ class _SectionStatsCardState extends State<SectionStatsCard>
       avgItemsPerSection = totalItems / widget.sections.length;
     }
 
-    // Find most used type
     SectionTypeEnum? mostUsedType;
     int maxTypeCount = 0;
     typeStats.forEach((type, count) {
@@ -167,124 +208,131 @@ class _SectionStatsCardState extends State<SectionStatsCard>
   Widget build(BuildContext context) {
     final stats = _calculateDetailedStats();
 
-    return Container(
-      height: 140,
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Stack(
-        children: [
-          // Background gradient effect
-          Positioned.fill(
-            child: AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                return CustomPaint(
-                  painter: _StatsBackgroundPainter(
-                    animationValue: _pulseController.value,
-                  ),
-                );
-              },
-            ),
-          ),
-          // Stats cards
-          ListView(
-            controller: _scrollController,
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Container(
+          height: _cardHeight + 10,
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Stack(
             children: [
-              _buildAnimatedStatCard(
-                index: 0,
-                title: 'إجمالي الأقسام',
-                value: widget.totalCount.toString(),
-                subtitle: 'قسم',
-                icon: CupertinoIcons.square_stack_3d_up_fill,
-                gradient: AppTheme.primaryGradient,
-                onTap: () => widget.onStatTap?.call('total'),
-                trend: _calculateTrend('total'),
-                sparklineData: _generateSparklineData(),
-              ),
-              _buildAnimatedStatCard(
-                index: 1,
-                title: 'أقسام نشطة',
-                value: stats['active'].toString(),
-                subtitle: '${stats['activePercentage']}% نشط',
-                icon: CupertinoIcons.checkmark_circle_fill,
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.success,
-                    AppTheme.success.withValues(alpha: 0.7),
-                  ],
+              // Background gradient effect - مخفي على الشاشات الصغيرة
+              if (!_isSmallScreen)
+                Positioned.fill(
+                  child: AnimatedBuilder(
+                    animation: _pulseController,
+                    builder: (context, child) {
+                      return CustomPaint(
+                        painter: _StatsBackgroundPainter(
+                          animationValue: _pulseController.value,
+                        ),
+                      );
+                    },
+                  ),
                 ),
-                onTap: () => widget.onStatTap?.call('active'),
-                trend: _calculateTrend('active'),
-                progressValue: stats['activePercentage'] / 100,
+              // Stats cards
+              ListView(
+                controller: _scrollController,
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                padding:
+                    EdgeInsets.symmetric(horizontal: _isSmallScreen ? 4 : 8),
+                children: [
+                  _buildAnimatedStatCard(
+                    index: 0,
+                    title: 'إجمالي الأقسام',
+                    value: widget.totalCount.toString(),
+                    subtitle: 'قسم',
+                    icon: CupertinoIcons.square_stack_3d_up_fill,
+                    gradient: AppTheme.primaryGradient,
+                    onTap: () => widget.onStatTap?.call('total'),
+                    trend: _calculateTrend('total'),
+                    sparklineData:
+                        !_isSmallScreen ? _generateSparklineData() : null,
+                  ),
+                  _buildAnimatedStatCard(
+                    index: 1,
+                    title: 'أقسام نشطة',
+                    value: stats['active'].toString(),
+                    subtitle: '${stats['activePercentage']}% نشط',
+                    icon: CupertinoIcons.checkmark_circle_fill,
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.success,
+                        AppTheme.success.withValues(alpha: 0.7),
+                      ],
+                    ),
+                    onTap: () => widget.onStatTap?.call('active'),
+                    trend: _calculateTrend('active'),
+                    progressValue: stats['activePercentage'] / 100,
+                  ),
+                  _buildAnimatedStatCard(
+                    index: 2,
+                    title: 'أقسام متوقفة',
+                    value: stats['inactive'].toString(),
+                    subtitle: 'متوقف',
+                    icon: CupertinoIcons.pause_circle_fill,
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.warning,
+                        AppTheme.warning.withValues(alpha: 0.7),
+                      ],
+                    ),
+                    onTap: () => widget.onStatTap?.call('inactive'),
+                    trend: _calculateTrend('inactive'),
+                    isNegative: true,
+                  ),
+                  _buildAnimatedStatCard(
+                    index: 3,
+                    title: 'أقسام العقارات',
+                    value: stats['properties'].toString(),
+                    subtitle: 'عقار',
+                    icon: CupertinoIcons.building_2_fill,
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.primaryPurple,
+                        AppTheme.primaryPurple.withValues(alpha: 0.7),
+                      ],
+                    ),
+                    onTap: () => widget.onStatTap?.call('properties'),
+                    additionalInfo: _getTypeIcon(SectionTarget.properties),
+                  ),
+                  _buildAnimatedStatCard(
+                    index: 4,
+                    title: 'أقسام الوحدات',
+                    value: stats['units'].toString(),
+                    subtitle: 'وحدة',
+                    icon: CupertinoIcons.house_fill,
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.info,
+                        AppTheme.info.withValues(alpha: 0.7),
+                      ],
+                    ),
+                    onTap: () => widget.onStatTap?.call('units'),
+                    additionalInfo: _getTypeIcon(SectionTarget.units),
+                  ),
+                  _buildAnimatedStatCard(
+                    index: 5,
+                    title: 'محتوى مختلط',
+                    value: stats['mixed'].toString(),
+                    subtitle: 'مختلط',
+                    icon: CupertinoIcons.square_stack_3d_down_right_fill,
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.primaryViolet,
+                        AppTheme.primaryCyan,
+                      ],
+                    ),
+                    onTap: () => widget.onStatTap?.call('mixed'),
+                    hasGlowEffect: !_isSmallScreen,
+                  ),
+                  if (widget.onRefresh != null) _buildRefreshCard(),
+                ],
               ),
-              _buildAnimatedStatCard(
-                index: 2,
-                title: 'أقسام متوقفة',
-                value: stats['inactive'].toString(),
-                subtitle: 'متوقف',
-                icon: CupertinoIcons.pause_circle_fill,
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.warning,
-                    AppTheme.warning.withValues(alpha: 0.7),
-                  ],
-                ),
-                onTap: () => widget.onStatTap?.call('inactive'),
-                trend: _calculateTrend('inactive'),
-                isNegative: true,
-              ),
-              _buildAnimatedStatCard(
-                index: 3,
-                title: 'أقسام العقارات',
-                value: stats['properties'].toString(),
-                subtitle: 'عقار',
-                icon: CupertinoIcons.building_2_fill,
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryPurple,
-                    AppTheme.primaryPurple.withValues(alpha: 0.7),
-                  ],
-                ),
-                onTap: () => widget.onStatTap?.call('properties'),
-                additionalInfo: _getTypeIcon(SectionTarget.properties),
-              ),
-              _buildAnimatedStatCard(
-                index: 4,
-                title: 'أقسام الوحدات',
-                value: stats['units'].toString(),
-                subtitle: 'وحدة',
-                icon: CupertinoIcons.house_fill,
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.info,
-                    AppTheme.info.withValues(alpha: 0.7),
-                  ],
-                ),
-                onTap: () => widget.onStatTap?.call('units'),
-                additionalInfo: _getTypeIcon(SectionTarget.units),
-              ),
-              _buildAnimatedStatCard(
-                index: 5,
-                title: 'محتوى مختلط',
-                value: stats['mixed'].toString(),
-                subtitle: 'مختلط',
-                icon: CupertinoIcons.square_stack_3d_down_right_fill,
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryViolet,
-                    AppTheme.primaryCyan,
-                  ],
-                ),
-                onTap: () => widget.onStatTap?.call('mixed'),
-                hasGlowEffect: true,
-              ),
-              if (widget.onRefresh != null) _buildRefreshCard(),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -303,20 +351,29 @@ class _SectionStatsCardState extends State<SectionStatsCard>
     List<double>? sparklineData,
     bool hasGlowEffect = false,
   }) {
+    // حساب أحجام النصوص بناءً على حجم الشاشة
+    final valueFontSize =
+        _isSmallScreen ? 20.0 : (_isMediumScreen ? 24.0 : 28.0);
+    final titleFontSize = _isSmallScreen ? 9.0 : 10.0;
+    final subtitleFontSize = _isSmallScreen ? 10.0 : 11.0;
+
     return AnimatedBuilder(
       animation: _cardAnimations[index],
       builder: (context, child) {
+        // تحديد القيمة لتكون ضمن النطاق المسموح
+        final animationValue = _cardAnimations[index].value.clamp(0.0, 1.0);
+
         return Transform.scale(
-          scale: _cardAnimations[index].value,
+          scale: animationValue,
           child: Opacity(
-            opacity: _cardAnimations[index].value,
+            opacity: animationValue,
             child: GestureDetector(
               onTap: onTap,
               child: Container(
-                width: 180,
-                margin: const EdgeInsets.symmetric(horizontal: 6),
+                width: _cardWidth,
+                margin: EdgeInsets.symmetric(horizontal: _cardMargin),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(_isSmallScreen ? 16 : 20),
                   boxShadow: [
                     BoxShadow(
                       color: gradient.colors.first.withValues(alpha: 0.3),
@@ -327,7 +384,7 @@ class _SectionStatsCardState extends State<SectionStatsCard>
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(_isSmallScreen ? 16 : 20),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                     child: Container(
@@ -340,7 +397,8 @@ class _SectionStatsCardState extends State<SectionStatsCard>
                             gradient.colors.last.withValues(alpha: 0.08),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius:
+                            BorderRadius.circular(_isSmallScreen ? 16 : 20),
                         border: Border.all(
                           color: gradient.colors.first.withValues(alpha: 0.3),
                           width: 1,
@@ -365,8 +423,8 @@ class _SectionStatsCardState extends State<SectionStatsCard>
                             ),
                           // Background Icon
                           Positioned(
-                            right: -20,
-                            top: -20,
+                            right: _isSmallScreen ? -15 : -20,
+                            top: _isSmallScreen ? -15 : -20,
                             child: AnimatedBuilder(
                               animation: _pulseController,
                               builder: (context, child) {
@@ -374,7 +432,7 @@ class _SectionStatsCardState extends State<SectionStatsCard>
                                   angle: _pulseController.value * 0.1,
                                   child: Icon(
                                     icon,
-                                    size: 100,
+                                    size: _backgroundIconSize,
                                     color: gradient.colors.first
                                         .withValues(alpha: 0.1),
                                   ),
@@ -384,7 +442,7 @@ class _SectionStatsCardState extends State<SectionStatsCard>
                           ),
                           // Content
                           Padding(
-                            padding: const EdgeInsets.all(14),
+                            padding: _cardPadding,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -395,10 +453,12 @@ class _SectionStatsCardState extends State<SectionStatsCard>
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.all(8),
+                                      padding: EdgeInsets.all(
+                                          _isSmallScreen ? 6 : 8),
                                       decoration: BoxDecoration(
                                         gradient: gradient,
-                                        borderRadius: BorderRadius.circular(10),
+                                        borderRadius: BorderRadius.circular(
+                                            _isSmallScreen ? 8 : 10),
                                         boxShadow: [
                                           BoxShadow(
                                             color: gradient.colors.first
@@ -410,44 +470,55 @@ class _SectionStatsCardState extends State<SectionStatsCard>
                                       ),
                                       child: Icon(
                                         icon,
-                                        size: 18,
+                                        size: _iconSize,
                                         color: Colors.white,
                                       ),
                                     ),
-                                    if (trend != null)
+                                    if (trend != null && !_isSmallScreen)
                                       _buildTrendIndicator(trend, isNegative),
                                     if (additionalInfo != null) additionalInfo,
                                   ],
                                 ),
                                 // Value section
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (sparklineData != null)
-                                      _buildSparkline(sparklineData, gradient),
-                                    ShaderMask(
-                                      shaderCallback: (bounds) =>
-                                          gradient.createShader(bounds),
-                                      child: Text(
-                                        value,
-                                        style:
-                                            AppTextStyles.displaySmall.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          height: 1.0,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      if (sparklineData != null &&
+                                          !_isSmallScreen)
+                                        _buildSparkline(
+                                            sparklineData, gradient),
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: ShaderMask(
+                                          shaderCallback: (bounds) =>
+                                              gradient.createShader(bounds),
+                                          child: Text(
+                                            value,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: valueFontSize,
+                                              fontWeight: FontWeight.bold,
+                                              height: 1.0,
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      subtitle,
-                                      style: AppTextStyles.caption.copyWith(
-                                        color: AppTheme.textMuted
-                                            .withValues(alpha: 0.8),
-                                        fontSize: 11,
+                                      SizedBox(height: _isSmallScreen ? 1 : 2),
+                                      Text(
+                                        subtitle,
+                                        style: AppTextStyles.caption.copyWith(
+                                          color: AppTheme.textMuted
+                                              .withValues(alpha: 0.8),
+                                          fontSize: subtitleFontSize,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                                 // Footer
                                 Column(
@@ -460,7 +531,7 @@ class _SectionStatsCardState extends State<SectionStatsCard>
                                       title,
                                       style: AppTextStyles.caption.copyWith(
                                         color: AppTheme.textMuted,
-                                        fontSize: 10,
+                                        fontSize: titleFontSize,
                                         fontWeight: FontWeight.w600,
                                       ),
                                       maxLines: 1,
@@ -485,20 +556,22 @@ class _SectionStatsCardState extends State<SectionStatsCard>
   }
 
   Widget _buildRefreshCard() {
+    final cardWidth = _isSmallScreen ? 80.0 : 100.0;
+
     return GestureDetector(
       onTap: widget.onRefresh,
       child: Container(
-        width: 100,
-        margin: const EdgeInsets.symmetric(horizontal: 6),
+        width: cardWidth,
+        margin: EdgeInsets.symmetric(horizontal: _cardMargin),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(_isSmallScreen ? 16 : 20),
           border: Border.all(
             color: AppTheme.primaryBlue.withValues(alpha: 0.3),
             width: 2,
           ),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(_isSmallScreen ? 16 : 20),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
@@ -512,7 +585,7 @@ class _SectionStatsCardState extends State<SectionStatsCard>
                     Icon(
                       CupertinoIcons.arrow_clockwise,
                       color: AppTheme.primaryBlue,
-                      size: 24,
+                      size: _isSmallScreen ? 20 : 24,
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -520,6 +593,7 @@ class _SectionStatsCardState extends State<SectionStatsCard>
                       style: AppTextStyles.caption.copyWith(
                         color: AppTheme.primaryBlue,
                         fontWeight: FontWeight.bold,
+                        fontSize: _isSmallScreen ? 10 : 12,
                       ),
                     ),
                   ],
@@ -535,12 +609,16 @@ class _SectionStatsCardState extends State<SectionStatsCard>
   Widget _buildTrendIndicator(double trend, bool isNegative) {
     final isPositive = isNegative ? trend <= 0 : trend >= 0;
     final color = isPositive ? AppTheme.success : AppTheme.error;
+    final fontSize = _isSmallScreen ? 8.0 : 9.0;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: EdgeInsets.symmetric(
+        horizontal: _isSmallScreen ? 4 : 6,
+        vertical: _isSmallScreen ? 2 : 3,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(_isSmallScreen ? 6 : 8),
         border: Border.all(
           color: color.withValues(alpha: 0.3),
           width: 0.5,
@@ -553,16 +631,16 @@ class _SectionStatsCardState extends State<SectionStatsCard>
             isPositive
                 ? CupertinoIcons.arrow_up_right
                 : CupertinoIcons.arrow_down_right,
-            size: 10,
+            size: _isSmallScreen ? 8 : 10,
             color: color,
           ),
-          const SizedBox(width: 2),
+          SizedBox(width: _isSmallScreen ? 1 : 2),
           Text(
             '${trend.abs().toStringAsFixed(1)}%',
             style: AppTextStyles.caption.copyWith(
               color: color,
               fontWeight: FontWeight.bold,
-              fontSize: 9,
+              fontSize: fontSize,
             ),
           ),
         ],
@@ -572,8 +650,8 @@ class _SectionStatsCardState extends State<SectionStatsCard>
 
   Widget _buildProgressBar(double value, Gradient gradient) {
     return Container(
-      height: 4,
-      margin: const EdgeInsets.only(bottom: 6),
+      height: _isSmallScreen ? 3 : 4,
+      margin: EdgeInsets.only(bottom: _isSmallScreen ? 4 : 6),
       decoration: BoxDecoration(
         color: AppTheme.darkBackground.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(2),
@@ -598,8 +676,8 @@ class _SectionStatsCardState extends State<SectionStatsCard>
 
   Widget _buildSparkline(List<double> data, Gradient gradient) {
     return Container(
-      height: 30,
-      margin: const EdgeInsets.only(bottom: 8),
+      height: _isSmallScreen ? 20 : 30,
+      margin: EdgeInsets.only(bottom: _isSmallScreen ? 4 : 8),
       child: CustomPaint(
         painter: _SparklinePainter(
           data: data,
@@ -611,29 +689,27 @@ class _SectionStatsCardState extends State<SectionStatsCard>
 
   Widget _getTypeIcon(SectionTarget target) {
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: EdgeInsets.all(_isSmallScreen ? 3 : 4),
       decoration: BoxDecoration(
         color: AppTheme.primaryBlue.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(_isSmallScreen ? 4 : 6),
       ),
       child: Icon(
         target == SectionTarget.properties
             ? CupertinoIcons.building_2_fill
             : CupertinoIcons.house_fill,
-        size: 12,
+        size: _isSmallScreen ? 10 : 12,
         color: AppTheme.primaryBlue,
       ),
     );
   }
 
   double _calculateTrend(String type) {
-    // Mock trend calculation - replace with actual logic
     final random = math.Random();
     return (random.nextDouble() * 20) - 10;
   }
 
   List<double> _generateSparklineData() {
-    // Mock sparkline data - replace with actual data
     final random = math.Random();
     return List.generate(10, (index) => random.nextDouble() * 100);
   }
