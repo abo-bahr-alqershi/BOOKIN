@@ -157,6 +157,12 @@ class _CreateSectionPageState extends State<CreateSectionPage>
                 ));
               } catch (_) {}
             }
+            // إن لم تكن هناك صورة رئيسية بعد الرفع، حاول تعيين أول صورة كصورة رئيسية
+            Future.delayed(const Duration(milliseconds: 400), () {
+              try {
+                _imagesBloc.add(RefreshSectionImagesEvent(sectionId: state.sectionId));
+              } catch (_) {}
+            });
             // Clear tempKey after successful save
             _tempKey = null;
 

@@ -540,18 +540,7 @@ class _SectionFormWidgetState extends State<SectionFormWidget>
                     );
               },
             ),
-            const SizedBox(height: 20),
-            _buildInputField(
-              controller: _backgroundImageController,
-              label: 'صورة الخلفية',
-              hint: 'رابط الصورة (اختياري)',
-              icon: Icons.image,
-              onChanged: (value) {
-                context.read<SectionFormBloc>().add(
-                      UpdateSectionAppearanceEvent(backgroundImage: value),
-                    );
-              },
-            ),
+            // تم إخفاء حقل رابط الصورة الرئيسية. يتم تعيين الصورة الرئيسية تلقائياً من المعرض.
           ],
         ),
       ),
