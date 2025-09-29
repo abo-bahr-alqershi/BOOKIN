@@ -19,6 +19,14 @@ import '../widgets/futuristic_sections_table.dart';
 import '../widgets/section_stats_card.dart';
 import '../widgets/section_preview_widget.dart';
 
+// تعداد لطرق العرض المختلفة
+enum ViewMode {
+  compact, // عرض مضغوط
+  expanded, // عرض موسع
+  grid, // عرض شبكي
+  table, // عرض جدولي (للشاشات الكبيرة فقط)
+}
+
 class SectionsListPage extends StatefulWidget {
   const SectionsListPage({super.key});
 
@@ -32,7 +40,7 @@ class _SectionsListPageState extends State<SectionsListPage>
   late AnimationController _pulseAnimationController;
   final ScrollController _scrollController = ScrollController();
 
-  bool _isGridView = false;
+  ViewMode _currentViewMode = ViewMode.expanded; // الوضع الافتراضي
   bool _showFilters = false;
   Map<String, dynamic> _activeFilters = {};
 
@@ -176,12 +184,7 @@ class _SectionsListPageState extends State<SectionsListPage>
         ),
       ),
       actions: [
-        _buildActionButton(
-          icon: _isGridView
-              ? CupertinoIcons.list_bullet
-              : CupertinoIcons.square_grid_2x2,
-          onPressed: () => setState(() => _isGridView = !_isGridView),
-        ),
+        _buildViewModeButton(),
         _buildActionButton(
           icon: _showFilters
               ? CupertinoIcons.xmark
@@ -195,6 +198,121 @@ class _SectionsListPageState extends State<SectionsListPage>
         const SizedBox(width: 8),
       ],
     );
+  }
+
+  Widget _buildViewModeButton() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 500;
+    final isMediumScreen = screenWidth < 768;
+
+    // تحديد الأيقونة والوضع التالي
+    IconData icon;
+    String message;
+
+    switch (_currentViewMode) {
+      case ViewMode.compact:
+        icon = CupertinoIcons.square_stack;
+        message = 'تم التبديل للعرض الموسع';
+        break;
+      case ViewMode.expanded:
+        if (isSmallScreen) {
+          icon = CupertinoIcons.rectangle_grid_1x2;
+          message = 'تم التبديل للعرض الشبكي المحسن';
+        } else {
+          icon = CupertinoIcons.square_grid_2x2;
+          message = 'تم التبديل للعرض الشبكي';
+        }
+        break;
+      case ViewMode.grid:
+        if (!isSmallScreen && !isMediumScreen) {
+          icon = CupertinoIcons.table;
+          message = 'تم التبديل للعرض الجدولي';
+        } else {
+          icon = CupertinoIcons.rectangle_compress_vertical;
+          message = 'تم التبديل للعرض المضغوط';
+        }
+        break;
+      case ViewMode.table:
+        icon = CupertinoIcons.rectangle_compress_vertical;
+        message = 'تم التبديل للعرض المضغوط';
+        break;
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              _currentViewMode = _getNextViewMode();
+            });
+
+            // عرض رسالة توضيحية
+            ScaffoldMessenger.of(context).clearSnackBars();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  message,
+                  style: AppTextStyles.bodySmall.copyWith(color: Colors.white),
+                  textAlign: TextAlign.center,
+                ),
+                backgroundColor: AppTheme.darkCard,
+                duration: const Duration(milliseconds: 1500),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            child: Icon(
+              icon,
+              color: AppTheme.textWhite,
+              size: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  ViewMode _getNextViewMode() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 500;
+    final isMediumScreen = screenWidth < 768;
+    if (!isSmallScreen && !isMediumScreen) {
+      switch (_currentViewMode) {
+        case ViewMode.compact:
+          return ViewMode.expanded;
+        case ViewMode.expanded:
+          return ViewMode.grid;
+        case ViewMode.grid:
+          // في الشاشات الكبيرة فقط نعرض الجدول
+          if (!isSmallScreen && !isMediumScreen) {
+            return ViewMode.table;
+          }
+          return ViewMode.compact;
+        case ViewMode.table:
+          return ViewMode.compact;
+      }
+    }
+    return _currentViewMode == ViewMode.table
+        ? ViewMode.expanded
+        : ViewMode.table;
   }
 
   void _showSectionPreview(Section section) {
@@ -317,10 +435,10 @@ class _SectionsListPageState extends State<SectionsListPage>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
-        color: AppTheme.darkCard.withValues(alpha: 0.5),
+        color: AppTheme.darkCard.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.darkBorder.withValues(alpha: 0.3),
+          color: AppTheme.darkBorder.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -505,9 +623,22 @@ class _SectionsListPageState extends State<SectionsListPage>
             );
           }
 
-          return _isGridView
-              ? _buildGridView(state.page.items)
-              : _buildTableView(state.page.items);
+          // اختيار طريقة العرض بناءً على الوضع الحالي
+          switch (_currentViewMode) {
+            case ViewMode.compact:
+              return _buildListView(state.page.items, CardDisplayMode.compact);
+            case ViewMode.expanded:
+              return _buildListView(state.page.items, CardDisplayMode.expanded);
+            case ViewMode.grid:
+              final screenWidth = MediaQuery.of(context).size.width;
+              if (screenWidth < 500) {
+                // في الشاشات الصغيرة نعرض قائمة بتصميم grid محسن
+                return _buildOptimizedGridList(state.page.items);
+              }
+              return _buildGridView(state.page.items);
+            case ViewMode.table:
+              return _buildTableView(state.page.items);
+          }
         }
 
         return const SliverFillRemaining(child: SizedBox.shrink());
@@ -515,14 +646,53 @@ class _SectionsListPageState extends State<SectionsListPage>
     );
   }
 
-  Widget _buildGridView(List<Section> sections) {
+  Widget _buildListView(List<Section> sections, CardDisplayMode cardMode) {
     return SliverPadding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(
+          horizontal: cardMode == CardDisplayMode.compact ? 8 : 12,
+          vertical: 8),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final section = sections[index];
+            return AnimationConfiguration.staggeredList(
+              position: index,
+              duration: const Duration(milliseconds: 375),
+              child: SlideAnimation(
+                verticalOffset: 30.0,
+                child: FadeInAnimation(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                        bottom: cardMode == CardDisplayMode.compact ? 8 : 12),
+                    child: FuturisticSectionCard(
+                      section: section,
+                      onTap: () => _showSectionPreview(section),
+                      onEdit: () => _navigateToEdit(section.id),
+                      onDelete: () => _confirmDelete(section),
+                      onToggleStatus: () => _toggleStatus(section),
+                      onManageItems: () => _navigateToManageItems(section),
+                      cardMode: cardMode,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+          childCount: sections.length,
+        ),
+      ),
+    );
+  }
+
+  // قائمة محسنة للشاشات الصغيرة بتصميم شبكي
+  Widget _buildOptimizedGridList(List<Section> sections) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       sliver: SliverGrid(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
           childAspectRatio: 0.85,
         ),
         delegate: SliverChildBuilderDelegate(
@@ -536,10 +706,12 @@ class _SectionsListPageState extends State<SectionsListPage>
                 child: FadeInAnimation(
                   child: FuturisticSectionCard(
                     section: section,
-                    onTap: () => _showSectionPreview(section), // تغيير هنا
+                    onTap: () => _showSectionPreview(section),
                     onEdit: () => _navigateToEdit(section.id),
                     onDelete: () => _confirmDelete(section),
                     onToggleStatus: () => _toggleStatus(section),
+                    onManageItems: () => _navigateToManageItems(section),
+                    cardMode: CardDisplayMode.grid,
                   ),
                 ),
               ),
@@ -547,6 +719,72 @@ class _SectionsListPageState extends State<SectionsListPage>
           },
           childCount: sections.length,
         ),
+      ),
+    );
+  }
+
+  Widget _buildGridView(List<Section> sections) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      sliver: LayoutBuilder(
+        builder: (context, constraints) {
+          final screenWidth = MediaQuery.of(context).size.width;
+
+          int crossAxisCount;
+          double childAspectRatio;
+          double spacing;
+
+          if (screenWidth < 768) {
+            crossAxisCount = 2;
+            childAspectRatio = 0.95;
+            spacing = 12;
+          } else if (screenWidth < 1024) {
+            crossAxisCount = 3;
+            childAspectRatio = 0.9;
+            spacing = 16;
+          } else if (screenWidth < 1440) {
+            crossAxisCount = 4;
+            childAspectRatio = 0.85;
+            spacing = 16;
+          } else {
+            crossAxisCount = 5;
+            childAspectRatio = 0.85;
+            spacing = 20;
+          }
+
+          return SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: spacing,
+              crossAxisSpacing: spacing,
+              childAspectRatio: childAspectRatio,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final section = sections[index];
+                return AnimationConfiguration.staggeredGrid(
+                  position: index,
+                  duration: const Duration(milliseconds: 375),
+                  columnCount: crossAxisCount,
+                  child: ScaleAnimation(
+                    child: FadeInAnimation(
+                      child: FuturisticSectionCard(
+                        section: section,
+                        onTap: () => _showSectionPreview(section),
+                        onEdit: () => _navigateToEdit(section.id),
+                        onDelete: () => _confirmDelete(section),
+                        onToggleStatus: () => _toggleStatus(section),
+                        onManageItems: () => _navigateToManageItems(section),
+                        cardMode: CardDisplayMode.grid,
+                      ),
+                    ),
+                  ),
+                );
+              },
+              childCount: sections.length,
+            ),
+          );
+        },
       ),
     );
   }
