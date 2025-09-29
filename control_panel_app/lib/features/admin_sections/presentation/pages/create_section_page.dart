@@ -15,7 +15,8 @@ import '../bloc/section_form/section_form_event.dart';
 import '../bloc/section_form/section_form_state.dart';
 import '../widgets/section_form_widget.dart';
 import '../widgets/section_image_gallery.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/section_images/section_images_bloc.dart';
+import '../../domain/entities/section_image.dart';
 import 'package:bookn_cp_app/injection_container.dart' as di;
 
 class CreateSectionPage extends StatefulWidget {
@@ -35,6 +36,8 @@ class _CreateSectionPageState extends State<CreateSectionPage>
   // Media gallery integration
   final GlobalKey<SectionImageGalleryState> _galleryKey = GlobalKey();
   String? _tempKey;
+  List<SectionImage> _selectedImages = [];
+  List<String> _selectedLocalImages = [];
 
   @override
   void initState() {
@@ -95,14 +98,19 @@ class _CreateSectionPageState extends State<CreateSectionPage>
     return BlocListener<SectionFormBloc, SectionFormState>(
       listener: (context, state) {
         if (state is SectionFormSubmitted) {
-          _showSuccessMessage('تم إنشاء القسم بنجاح');
-          // Clear tempKey after successful save
-          _tempKey = null;
-          Future.delayed(const Duration(milliseconds: 500), () {
+          () async {
+            // Upload any local media picked before save, now that we have sectionId
+            try {
+              await _galleryKey.currentState?.uploadLocalImages(state.sectionId);
+            } catch (_) {}
+
+            _showSuccessMessage('تم إنشاء القسم بنجاح');
+            _tempKey = null;
+            await Future.delayed(const Duration(milliseconds: 500));
             if (mounted) {
               context.pop();
             }
-          });
+          }();
         } else if (state is SectionFormError) {
           _showErrorMessage(state.message);
         }
@@ -121,8 +129,50 @@ class _CreateSectionPageState extends State<CreateSectionPage>
                       opacity: _fadeAnimation,
                       child: SlideTransition(
                         position: _slideAnimation,
-                        child: const SectionFormWidget(
-                          isEditing: false,
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Embedded media gallery for Section (pre-save via tempKey)
+                              Text(
+                                'وسائط القسم',
+                                style: AppTextStyles.heading3.copyWith(
+                                  color: AppTheme.textWhite,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              BlocProvider(
+                                create: (_) => di.sl<SectionImagesBloc>(),
+                                child: SectionImageGallery(
+                                  key: _galleryKey,
+                                  sectionId: null,
+                                  tempKey: _tempKey,
+                                  isReadOnly: false,
+                                  maxImages: 20,
+                                  maxVideos: 5,
+                                  initialImages: _selectedImages,
+                                  initialLocalImages: _selectedLocalImages,
+                                  onImagesChanged: (images) {
+                                    setState(() {
+                                      _selectedImages = images;
+                                    });
+                                  },
+                                  onLocalImagesChanged: (paths) {
+                                    setState(() {
+                                      _selectedLocalImages = paths;
+                                    });
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              const SectionFormWidget(
+                                isEditing: false,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -233,82 +283,8 @@ class _CreateSectionPageState extends State<CreateSectionPage>
               ],
             ),
           ),
-          const SizedBox(width: 12),
-          // Open Section media gallery dialog
-          GestureDetector(
-            onTap: _openSectionMediaDialog,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryPurple.withValues(alpha: 0.3),
-                    AppTheme.primaryViolet.withValues(alpha: 0.2),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppTheme.primaryPurple.withValues(alpha: 0.4),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.collections,
-                    size: 18,
-                    color: AppTheme.primaryPurple,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'وسائط القسم',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppTheme.primaryPurple,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
-    );
-  }
-
-  void _openSectionMediaDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(16),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppTheme.darkCard.withValues(alpha: 0.98),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppTheme.darkBorder.withValues(alpha: 0.2),
-              ),
-            ),
-            padding: const EdgeInsets.all(12),
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height * 0.7,
-              child: BlocProvider(
-                create: (_) => di.sl<SectionImagesBloc>(),
-                child: SectionImageGallery(
-                  key: _galleryKey,
-                  sectionId: null,
-                  tempKey: _tempKey,
-                  isReadOnly: false,
-                  maxImages: 20,
-                  maxVideos: 5,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 
