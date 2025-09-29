@@ -114,7 +114,7 @@ public class CancelBookingCommandHandler : IRequestHandler<CancelBookingCommand,
                     .Select(p => (p.StartDate, p.EndDate))
                     .ToList();
 
-                var unit = await _unitRepository.GetByIdAsync(bookingToUpdate.UnitId, cancellationToken);
+                // var unit = await _unitRepository.GetByIdAsync(bookingToUpdate.UnitId, cancellationToken);
                 var propertyId = unit?.PropertyId ?? Guid.Empty;
 
                 await _indexingService.OnAvailabilityChangedAsync(bookingToUpdate.UnitId, propertyId, availableRanges, cancellationToken);

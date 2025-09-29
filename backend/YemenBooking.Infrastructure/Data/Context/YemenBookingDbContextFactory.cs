@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.AspNetCore.Http;
@@ -17,8 +18,16 @@ public class YemenBookingDbContextFactory : IDesignTimeDbContextFactory<YemenBoo
         var optionsBuilder = new DbContextOptionsBuilder<YemenBookingDbContext>();
         // // تهيئة الاتصال بقاعدة بيانات SQLite
         // optionsBuilder.UseSqlite("Data Source=YemenBooking.db");
-        // تهيئة الاتصال بقاعدة بيانات SQL Server
-        optionsBuilder.UseSqlServer("Data Source=SQL5107.site4now.net;Initial Catalog=db_abd8fd_bookn2;User Id=db_abd8fd_bookn2_admin;Password=Qaz123@Wsx123@");
+        // تهيئة الاتصال بقاعدة بيانات SQL Server باستخدام المتغيرات البيئية
+        var connectionString = Environment.GetEnvironmentVariable("DEFAULT_CONNECTION_STRING")
+                               ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException("Default connection string is not configured. Set DEFAULT_CONNECTION_STRING or ConnectionStrings__DefaultConnection environment variable.");
+        }
+
+        optionsBuilder.UseSqlServer(connectionString);
         // For design-time, httpContextAccessor not used, passing new HttpContextAccessor instance
         return new YemenBookingDbContext(
             optionsBuilder.Options,

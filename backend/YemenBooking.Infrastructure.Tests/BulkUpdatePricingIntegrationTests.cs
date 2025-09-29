@@ -21,8 +21,16 @@ namespace YemenBooking.Tests.Integration
         public async Task BulkUpdate_WithYER_Currency_ShouldSucceed()
         {
             // Arrange: switched off in-memory SQLite for SQL Server environment
+            var connectionString = Environment.GetEnvironmentVariable("DEFAULT_CONNECTION_STRING")
+                                   ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException("Default connection string is not configured for integration tests. Set DEFAULT_CONNECTION_STRING or ConnectionStrings__DefaultConnection environment variable.");
+            }
+
             var options = new DbContextOptionsBuilder<YemenBookingDbContext>()
-                .UseSqlServer("Data Source=SQL5107.site4now.net;Initial Catalog=db_abd8fd_bookn2;User Id=db_abd8fd_bookn2_admin;Password=Qaz123@Wsx123@")
+                .UseSqlServer(connectionString)
                 .Options;
 
             // Create context and apply migrations
@@ -65,7 +73,7 @@ namespace YemenBooking.Tests.Integration
                         EndTime = null,
                         PriceType = "Custom",
                         Price = 120m,
-                        Currency = null, // use unit base currency
+                        Currency = null!, // use unit base currency
                         Tier = "1",
                         PercentageChange = null,
                         MinPrice = null,
