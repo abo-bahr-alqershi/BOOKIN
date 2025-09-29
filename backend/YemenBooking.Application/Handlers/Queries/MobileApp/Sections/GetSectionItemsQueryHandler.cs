@@ -96,6 +96,7 @@ namespace YemenBooking.Application.Handlers.Queries.MobileApp.Sections
                     resultObjects.Add(new
                     {
                         Id = p.PropertyId,
+                        PropertyInSectionId = p.Id,
                         Name = p.PropertyName,
                         Description = p.ShortDescription ?? string.Empty,
                         City = p.City,
@@ -177,6 +178,7 @@ namespace YemenBooking.Application.Handlers.Queries.MobileApp.Sections
                     resultItems.Add(new
                     {
                         Id = u.UnitId,
+                        UnitInSectionId = u.Id,
                         Name = u.UnitName,
                         PropertyId = u.PropertyId,
                         UnitTypeId = u.UnitTypeId,
