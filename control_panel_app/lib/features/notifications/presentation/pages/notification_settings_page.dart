@@ -20,26 +20,24 @@ class NotificationSettingsPage extends StatefulWidget {
       _NotificationSettingsPageState();
 }
 
-class _NotificationSettingsPageState extends State<NotificationSettingsPage>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   Map<String, bool> _settings = {
-    'push_enabled': true,
-    'email_enabled': true,
-    'sms_enabled': false,
-    'booking_updates': true,
-    'payment_updates': true,
-    'promotion_updates': false,
-    'system_updates': true,
+    'booking_confirmed': true,
+    'booking_cancelled': true,
+    'payment_received': true,
+    'payment_refunded': true,
+    'promotion_new': true,
+    'system_updates': false,
+    'push_notifications': true,
+    'email_notifications': true,
+    'sms_notifications': false,
   };
+
+  bool _hasChanges = false;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
     _loadSettings();
   }
 
@@ -47,12 +45,6 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage>
     context.read<NotificationBloc>().add(
           const LoadNotificationSettingsEvent(),
         );
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
   }
 
   @override
@@ -65,11 +57,13 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage>
           if (state is NotificationSettingsLoaded) {
             setState(() {
               _settings = state.settings;
+              _hasChanges = false;
             });
           } else if (state is NotificationOperationSuccess) {
-            _showSuccessSnackBar(state.message);
+            _showSuccessSnackbar(state.message);
+            setState(() => _hasChanges = false);
           } else if (state is NotificationError) {
-            _showErrorSnackBar(state.message);
+            _showErrorSnackbar(state.message);
           }
         },
         builder: (context, state) {
@@ -80,9 +74,10 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage>
             );
           }
 
-          return _buildSettingsContent();
+          return _buildContent();
         },
       ),
+      bottomNavigationBar: _hasChanges ? _buildSaveButton() : null,
     );
   }
 
@@ -97,122 +92,119 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage>
         ),
       ),
       leading: IconButton(
+        onPressed: () {
+          if (_hasChanges) {
+            _showDiscardChangesDialog();
+          } else {
+            Navigator.pop(context);
+          }
+        },
         icon: Icon(
-          CupertinoIcons.arrow_left,
+          CupertinoIcons.arrow_right,
           color: AppTheme.textWhite,
         ),
-        onPressed: () => Navigator.of(context).pop(),
       ),
-      actions: [
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          decoration: BoxDecoration(
-            gradient: AppTheme.primaryGradient,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: _saveSettings,
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Center(
-                  child: Text(
-                    'حفظ',
-                    style: AppTextStyles.buttonMedium.copyWith(
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
-  Widget _buildSettingsContent() {
+  Widget _buildContent() {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle('طرق الإشعار'),
-          const SizedBox(height: 16),
-          _buildNotificationMethodsSection(),
-          const SizedBox(height: 32),
-          _buildSectionTitle('أنواع الإشعارات'),
-          const SizedBox(height: 16),
-          _buildNotificationTypesSection(),
-          const SizedBox(height: 32),
-          _buildQuickActionsSection(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Text(
-        title,
-        style: AppTextStyles.heading3.copyWith(
-          color: AppTheme.textWhite,
-          fontSize: 18,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNotificationMethodsSection() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.darkCard.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.darkBorder.withValues(alpha: 0.2),
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Column(
+          _buildSection(
+            title: 'قنوات الإشعارات',
+            icon: CupertinoIcons.bell_circle_fill,
             children: [
               _buildSettingTile(
-                icon: CupertinoIcons.bell_fill,
-                title: 'إشعارات التطبيق',
+                key: 'push_notifications',
+                title: 'الإشعارات الفورية',
                 subtitle: 'تلقي إشعارات فورية على جهازك',
-                settingKey: 'push_enabled',
-                iconGradient: [AppTheme.primaryBlue, AppTheme.primaryCyan],
-              ),
-              _buildDivider(),
-              _buildSettingTile(
-                icon: CupertinoIcons.mail_solid,
-                title: 'البريد الإلكتروني',
-                subtitle: 'تلقي الإشعارات عبر البريد الإلكتروني',
-                settingKey: 'email_enabled',
-                iconGradient: [AppTheme.primaryPurple, AppTheme.primaryViolet],
-              ),
-              _buildDivider(),
-              _buildSettingTile(
                 icon: CupertinoIcons.device_phone_portrait,
+              ),
+              _buildSettingTile(
+                key: 'email_notifications',
+                title: 'البريد الإلكتروني',
+                subtitle: 'تلقي إشعارات عبر البريد الإلكتروني',
+                icon: CupertinoIcons.mail,
+              ),
+              _buildSettingTile(
+                key: 'sms_notifications',
                 title: 'الرسائل النصية',
-                subtitle: 'تلقي رسائل SMS للتحديثات المهمة',
-                settingKey: 'sms_enabled',
-                iconGradient: [AppTheme.success, AppTheme.neonGreen],
+                subtitle: 'تلقي إشعارات عبر رسائل SMS',
+                icon: CupertinoIcons.bubble_left,
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 24),
+          _buildSection(
+            title: 'إشعارات الحجوزات',
+            icon: CupertinoIcons.calendar,
+            children: [
+              _buildSettingTile(
+                key: 'booking_confirmed',
+                title: 'تأكيد الحجز',
+                subtitle: 'إشعار عند تأكيد حجز جديد',
+                icon: CupertinoIcons.checkmark_circle,
+              ),
+              _buildSettingTile(
+                key: 'booking_cancelled',
+                title: 'إلغاء الحجز',
+                subtitle: 'إشعار عند إلغاء حجز',
+                icon: CupertinoIcons.xmark_circle,
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildSection(
+            title: 'إشعارات المدفوعات',
+            icon: CupertinoIcons.creditcard,
+            children: [
+              _buildSettingTile(
+                key: 'payment_received',
+                title: 'استلام دفعة',
+                subtitle: 'إشعار عند استلام دفعة جديدة',
+                icon: CupertinoIcons.money_dollar_circle,
+              ),
+              _buildSettingTile(
+                key: 'payment_refunded',
+                title: 'استرداد دفعة',
+                subtitle: 'إشعار عند استرداد دفعة',
+                icon: CupertinoIcons.arrow_counterclockwise_circle,
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildSection(
+            title: 'إشعارات أخرى',
+            icon: CupertinoIcons.square_grid_2x2,
+            children: [
+              _buildSettingTile(
+                key: 'promotion_new',
+                title: 'العروض والخصومات',
+                subtitle: 'إشعار بالعروض والخصومات الجديدة',
+                icon: CupertinoIcons.gift,
+              ),
+              _buildSettingTile(
+                key: 'system_updates',
+                title: 'تحديثات النظام',
+                subtitle: 'إشعار بتحديثات وصيانة النظام',
+                icon: CupertinoIcons.gear,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildNotificationTypesSection() {
+  Widget _buildSection({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.darkCard.withValues(alpha: 0.3),
@@ -227,115 +219,81 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage>
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Column(
             children: [
-              _buildSettingTile(
-                icon: CupertinoIcons.calendar,
-                title: 'تحديثات الحجوزات',
-                subtitle: 'إشعارات حول حجوزاتك وتغييراتها',
-                settingKey: 'booking_updates',
-                iconGradient: [AppTheme.info, AppTheme.neonBlue],
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryBlue.withValues(alpha: 0.05),
+                      AppTheme.primaryPurple.withValues(alpha: 0.03),
+                    ],
+                  ),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppTheme.darkBorder.withValues(alpha: 0.1),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.primaryGradient,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        icon,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      title,
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        color: AppTheme.textWhite,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              _buildDivider(),
-              _buildSettingTile(
-                icon: CupertinoIcons.creditcard_fill,
-                title: 'تحديثات المدفوعات',
-                subtitle: 'إشعارات المعاملات المالية',
-                settingKey: 'payment_updates',
-                iconGradient: [AppTheme.warning, const Color(0xFFFFD700)],
-              ),
-              _buildDivider(),
-              _buildSettingTile(
-                icon: CupertinoIcons.gift_fill,
-                title: 'العروض والخصومات',
-                subtitle: 'عروض خاصة وخصومات حصرية',
-                settingKey: 'promotion_updates',
-                iconGradient: [AppTheme.error, const Color(0xFFFF69B4)],
-              ),
-              _buildDivider(),
-              _buildSettingTile(
-                icon: CupertinoIcons.gear_solid,
-                title: 'تحديثات النظام',
-                subtitle: 'إشعارات مهمة حول النظام',
-                settingKey: 'system_updates',
-                iconGradient: [AppTheme.textMuted, AppTheme.darkBorder],
-              ),
+              ...children,
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActionsSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primaryBlue.withValues(alpha: 0.05),
-            AppTheme.primaryPurple.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.primaryBlue.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            CupertinoIcons.info_circle_fill,
-            color: AppTheme.primaryBlue,
-            size: 40,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'نصيحة',
-            style: AppTextStyles.heading3.copyWith(
-              color: AppTheme.textWhite,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'قم بتفعيل الإشعارات المهمة فقط لتجنب الإزعاج والحصول على تجربة أفضل',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppTheme.textMuted,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
       ),
     );
   }
 
   Widget _buildSettingTile({
-    required IconData icon,
+    required String key,
     required String title,
     required String subtitle,
-    required String settingKey,
-    required List<Color> iconGradient,
+    required IconData icon,
   }) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.darkBorder.withValues(alpha: 0.05),
+          ),
+        ),
+      ),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: iconGradient),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: iconGradient.first.withValues(alpha: 0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              color: AppTheme.darkBackground.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               icon,
-              color: Colors.white,
-              size: 24,
+              color: AppTheme.primaryBlue,
+              size: 18,
             ),
           ),
           const SizedBox(width: 16),
@@ -345,12 +303,12 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage>
               children: [
                 Text(
                   title,
-                  style: AppTextStyles.bodyLarge.copyWith(
+                  style: AppTextStyles.bodyMedium.copyWith(
                     color: AppTheme.textWhite,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: AppTextStyles.caption.copyWith(
@@ -360,29 +318,69 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage>
               ],
             ),
           ),
-          Transform.scale(
-            scale: 0.9,
-            child: CupertinoSwitch(
-              value: _settings[settingKey] ?? false,
-              onChanged: (value) {
-                HapticFeedback.lightImpact();
-                setState(() {
-                  _settings[settingKey] = value;
-                });
-              },
-              activeTrackColor: AppTheme.primaryBlue,
-            ),
+          CupertinoSwitch(
+            value: _settings[key] ?? false,
+            onChanged: (value) {
+              HapticFeedback.lightImpact();
+              setState(() {
+                _settings[key] = value;
+                _hasChanges = true;
+              });
+            },
+            activeTrackColor: AppTheme.primaryBlue,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildSaveButton() {
     return Container(
-      height: 1,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      color: AppTheme.darkBorder.withValues(alpha: 0.1),
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: MediaQuery.of(context).padding.bottom + 16,
+      ),
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withValues(alpha: 0.95),
+        border: Border(
+          top: BorderSide(
+            color: AppTheme.darkBorder.withValues(alpha: 0.2),
+          ),
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: AppTheme.primaryGradient,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: _saveSettings,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text(
+                  'حفظ التغييرات',
+                  style: AppTextStyles.buttonLarge.copyWith(
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -393,22 +391,76 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage>
         );
   }
 
-  void _showSuccessSnackBar(String message) {
+  void _showDiscardChangesDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.darkCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Text(
+          'تجاهل التغييرات؟',
+          style: AppTextStyles.heading3.copyWith(
+            color: AppTheme.textWhite,
+          ),
+        ),
+        content: Text(
+          'لديك تغييرات غير محفوظة. هل تريد تجاهلها؟',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textLight,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'إلغاء',
+              style: TextStyle(color: AppTheme.textMuted),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Text(
+                    'تجاهل',
+                    style: AppTextStyles.buttonSmall.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccessSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.success.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                CupertinoIcons.check_mark,
-                color: AppTheme.success,
-                size: 16,
-              ),
+            Icon(
+              CupertinoIcons.checkmark_circle_fill,
+              color: AppTheme.success,
+              size: 20,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -430,22 +482,15 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage>
     );
   }
 
-  void _showErrorSnackBar(String message) {
+  void _showErrorSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.error.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                CupertinoIcons.xmark,
-                color: AppTheme.error,
-                size: 16,
-              ),
+            Icon(
+              CupertinoIcons.xmark_circle_fill,
+              color: AppTheme.error,
+              size: 20,
             ),
             const SizedBox(width: 12),
             Expanded(

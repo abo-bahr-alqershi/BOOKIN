@@ -18,6 +18,11 @@ class NotificationLoading extends NotificationState {
   const NotificationLoading();
 }
 
+/// State when notification settings are being loaded
+class NotificationSettingsLoading extends NotificationState {
+  const NotificationSettingsLoading();
+}
+
 /// State when notifications are successfully loaded
 class NotificationLoaded extends NotificationState {
   final List<NotificationEntity> notifications;

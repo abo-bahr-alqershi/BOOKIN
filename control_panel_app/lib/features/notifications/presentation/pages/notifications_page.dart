@@ -233,7 +233,22 @@ class _NotificationsPageState extends State<NotificationsPage>
 
   Widget _buildNotificationsList() {
     return BlocBuilder<NotificationBloc, NotificationState>(
+      buildWhen: (previous, current) {
+        return current is NotificationInitial ||
+            current is NotificationLoading ||
+            current is NotificationLoaded ||
+            current is NotificationError;
+      },
       builder: (context, state) {
+        if (state is NotificationInitial) {
+          return const SliverFillRemaining(
+            child: LoadingWidget(
+              type: LoadingType.futuristic,
+              message: 'جاري تجهيز الإشعارات...',
+            ),
+          );
+        }
+
         if (state is NotificationLoading) {
           return const SliverFillRemaining(
             child: LoadingWidget(

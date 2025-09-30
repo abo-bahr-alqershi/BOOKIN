@@ -245,6 +245,8 @@ import 'features/notifications/domain/usecases/update_notification_settings_usec
     as notif_uc_update;
 import 'features/notifications/domain/usecases/get_unread_count_usecase.dart'
     as notif_uc_unread;
+import 'features/notifications/domain/usecases/get_notification_settings_usecase.dart'
+    as notif_uc_get_settings;
 import 'features/notifications/domain/repositories/notification_repository.dart'
     as notif_repo;
 import 'features/notifications/data/repositories/notification_repository_impl.dart'
@@ -749,6 +751,8 @@ void _initNotifications() {
         dismissNotificationUseCase: sl<notif_uc_dismiss.DismissNotificationUseCase>(),
         updateNotificationSettingsUseCase: sl<notif_uc_update.UpdateNotificationSettingsUseCase>(),
         getUnreadCountUseCase: sl<notif_uc_unread.GetUnreadCountUseCase>(),
+                getNotificationSettingsUseCase:
+                        sl<notif_uc_get_settings.GetNotificationSettingsUseCase>(),
       ));
 
   // Use cases
@@ -762,6 +766,8 @@ void _initNotifications() {
       () => notif_uc_update.UpdateNotificationSettingsUseCase(sl()));
   sl.registerLazySingleton<notif_uc_unread.GetUnreadCountUseCase>(
       () => notif_uc_unread.GetUnreadCountUseCase(sl()));
+  sl.registerLazySingleton<notif_uc_get_settings.GetNotificationSettingsUseCase>(
+      () => notif_uc_get_settings.GetNotificationSettingsUseCase(sl()));
 
   // Repository
   sl.registerLazySingleton<notif_repo.NotificationRepository>(

@@ -962,8 +962,15 @@ class AppRouter {
         GoRoute(
           path: '/notifications/settings',
           pageBuilder: (context, state) => slideUpTransitionPage(
-            child: BlocProvider<st_bloc.SettingsBloc>(
-              create: (_) => di.sl<st_bloc.SettingsBloc>(),
+            child: MultiBlocProvider(
+              providers: [
+                BlocProvider<notif_bloc.NotificationBloc>(
+                  create: (_) => di.sl<notif_bloc.NotificationBloc>(),
+                ),
+                BlocProvider<st_bloc.SettingsBloc>(
+                  create: (_) => di.sl<st_bloc.SettingsBloc>(),
+                ),
+              ],
               child: const NotificationSettingsPage(),
             ),
           ),
