@@ -56,10 +56,12 @@ namespace YemenBooking.Application.Handlers.Queries.Users
             var query = _userRepository.GetQueryable()
                 .AsNoTracking()
                 .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
-                .Where(u => u.Name.ToLower().Contains(term) || u.Email.ToLower().Contains(term));
+                .Where(u => u.Name.ToLower().Contains(term) || u.Email.ToLower().Contains(term) || u.Phone.ToLower().Contains(term));
 
             if (request.RoleId.HasValue)
                 query = query.Where(u => u.UserRoles.Any(ur => ur.RoleId == request.RoleId.Value));
+            else if (!string.IsNullOrWhiteSpace(request.RoleName))
+                query = query.Where(u => u.UserRoles.Any(ur => ur.Role != null && ur.Role.Name == request.RoleName));
 
             if (request.IsActive.HasValue)
                 query = query.Where(u => u.IsActive == request.IsActive.Value);

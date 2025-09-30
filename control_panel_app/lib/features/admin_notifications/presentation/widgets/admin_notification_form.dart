@@ -33,6 +33,7 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
   final _recipientController = TextEditingController();
   User? _selectedRecipient;
   final _userIdsController = TextEditingController();
+  final List<User> _selectedUsers = [];
 
   String _selectedType = 'booking';
   String _selectedPriority = 'normal';
@@ -42,7 +43,7 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
 
   final List<String> _types = ['booking', 'payment', 'promotion', 'system'];
   final List<String> _priorities = ['low', 'normal', 'high', 'urgent'];
-  final List<String> _roles = ['admin', 'user', 'owner', 'guest'];
+  final List<String> _roles = ['Admin', 'Owner', 'Staff', 'Client'];
 
   @override
   void initState() {
@@ -112,6 +113,8 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
               const SizedBox(height: 16),
               _buildRolesSelector(),
               const SizedBox(height: 16),
+            _buildMultiUsersSelector(),
+            const SizedBox(height: 12),
               _buildTextField(
                 controller: _userIdsController,
                 label: 'معرفات المستخدمين (اختياري)',
@@ -571,13 +574,20 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
       if (widget.isBroadcast) {
         formData['targetAll'] = _targetAll;
         if (!_targetAll) {
-          formData['roles'] = _selectedRoles.isEmpty ? null : _selectedRoles;
+          formData['roles'] = _selectedRoles.isEmpty
+              ? null
+              : _selectedRoles.map(_mapRoleValue).toList();
           final userIds = _userIdsController.text
               .split(',')
               .map((id) => id.trim())
               .where((id) => id.isNotEmpty)
               .toList();
-          formData['userIds'] = userIds.isEmpty ? null : userIds;
+          if (_selectedUsers.isNotEmpty) {
+            userIds.addAll(_selectedUsers.map((u) => u.id));
+          }
+          // remove duplicates
+          final uniqueIds = userIds.toSet().toList();
+          formData['userIds'] = uniqueIds.isEmpty ? null : uniqueIds;
         }
         formData['scheduledFor'] = _scheduledFor;
       } else {
@@ -637,6 +647,84 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMultiUsersSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'اختيار مستخدمين محددين (اختياري)',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppTheme.textLight,
+                ),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () async {
+                final users = await SearchNavigationHelper.searchMultipleUsers(context);
+                if (users != null && users.isNotEmpty) {
+                  setState(() {
+                    // add unique by id
+                    for (final u in users) {
+                      if (_selectedUsers.indexWhere((x) => x.id == u.id) == -1) {
+                        _selectedUsers.add(u);
+                      }
+                    }
+                    // sync controller
+                    final ids = _selectedUsers.map((u) => u.id).join(',');
+                    _userIdsController.text = ids;
+                  });
+                }
+              },
+              icon: const Icon(CupertinoIcons.person_crop_circle_badge_plus),
+              label: const Text('اختيار'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.primaryBlue,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (_selectedUsers.isNotEmpty)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _selectedUsers.map((u) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.darkCard.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppTheme.darkBorder.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      u.name,
+                      style: AppTextStyles.caption.copyWith(color: AppTheme.textWhite),
+                    ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedUsers.removeWhere((x) => x.id == u.id);
+                          _userIdsController.text = _selectedUsers.map((e) => e.id).join(',');
+                        });
+                      },
+                      child: Icon(CupertinoIcons.xmark_circle_fill, size: 16, color: AppTheme.textMuted),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+      ],
     );
   }
 
@@ -763,16 +851,27 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
 
   String _getRoleLabel(String role) {
     switch (role) {
-      case 'admin':
+      case 'Admin':
         return 'مدير';
-      case 'user':
-        return 'مستخدم';
-      case 'owner':
+      case 'Owner':
         return 'مالك';
-      case 'guest':
-        return 'ضيف';
+      case 'Staff':
+        return 'طاقم (Staff)';
+      case 'Client':
+        return 'عميل';
       default:
         return role;
+    }
+  }
+
+  String _mapRoleValue(String role) {
+    switch (role) {
+      case 'Staff':
+        return 'Manager';
+      case 'Client':
+        return 'Customer';
+      default:
+        return role; // Admin, Owner
     }
   }
 }

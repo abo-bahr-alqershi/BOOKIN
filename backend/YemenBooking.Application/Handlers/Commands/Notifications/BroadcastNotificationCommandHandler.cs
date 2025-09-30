@@ -48,6 +48,12 @@ namespace YemenBooking.Application.Handlers.Commands.Notifications
                 var queryable = _userRepository.GetQueryable();
                 recipients = queryable.Where(u => ids.Contains(u.Id)).ToList();
             }
+            else if (request.TargetRoles != null && request.TargetRoles.Length > 0)
+            {
+                var roleNames = request.TargetRoles.Where(r => !string.IsNullOrWhiteSpace(r)).Select(r => r.Trim()).ToArray();
+                var queryable = _userRepository.GetQueryable();
+                recipients = queryable.Where(u => u.UserRoles.Any(ur => ur.Role != null && roleNames.Contains(ur.Role.Name))).ToList();
+            }
             else
             {
                 return ResultDto<int>.Failed("لم يتم تحديد المستلمين");

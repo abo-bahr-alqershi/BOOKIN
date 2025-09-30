@@ -4,6 +4,7 @@ import '../../../admin_properties/domain/entities/property.dart';
 import '../../../admin_units/domain/entities/unit.dart';
 import '../../../admin_cities/domain/entities/city.dart';
 import '../pages/user_search_page.dart';
+import '../../../admin_notifications/presentation/pages/user_selector_page.dart' as an_selector;
 import '../pages/property_search_page.dart';
 import '../pages/unit_search_page.dart';
 import '../pages/city_search_page.dart';
@@ -19,7 +20,7 @@ class SearchNavigationHelper {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => UserSearchPage(
+        builder: (context) => an_selector.AdminUserSelectorPage(
           initialSearchTerm: initialSearchTerm,
           allowMultiSelect: false,
           onUserSelected: (user) => result = user,
@@ -38,7 +39,7 @@ class SearchNavigationHelper {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => UserSearchPage(
+        builder: (context) => an_selector.AdminUserSelectorPage(
           initialSearchTerm: initialSearchTerm,
           allowMultiSelect: true,
           onUsersSelected: (users) => result = users,
