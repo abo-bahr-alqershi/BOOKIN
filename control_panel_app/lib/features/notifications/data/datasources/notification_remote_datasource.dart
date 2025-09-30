@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../../../../core/models/paginated_result.dart';
 import '../../../../core/models/result_dto.dart';
 import '../../../../core/network/api_client.dart';
@@ -65,13 +66,14 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     });
     try {
       final userId = await _resolveUserId();
+      final normalizedType = _normalizeTypeFilter(type);
       final response = await apiClient.get(
         '/api/client/notifications',
         queryParameters: {
           if (userId != null) 'userId': userId,
           'pageNumber': page,
           'pageSize': limit,
-          if (type != null) 'type': type,
+          if (normalizedType != null) 'type': normalizedType,
         },
       );
       logRequestSuccess(requestName, statusCode: response.statusCode);
@@ -192,13 +194,29 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
       if (response.statusCode == 200) {
         final result = ResultDto.fromJson(response.data as Map<String, dynamic>, (raw) => raw);
         final data = (result.data is Map<String, dynamic>) ? result.data as Map<String, dynamic> : <String, dynamic>{};
-        final settings = (data['notificationSettings'] as Map<String, dynamic>?) ?? <String, dynamic>{};
-        return {
-          'bookingNotifications': (settings['bookingNotifications'] as bool?) ?? true,
-          'promotionalNotifications': (settings['promotionalNotifications'] as bool?) ?? true,
-          'emailNotifications': (settings['emailNotifications'] as bool?) ?? true,
-          'smsNotifications': (settings['smsNotifications'] as bool?) ?? false,
-          'pushNotifications': (settings['pushNotifications'] as bool?) ?? true,
+        final remote = (data['notificationSettings'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+
+        final cached = await _getCachedUiSettings();
+
+        bool _b(dynamic v, bool d) => v is bool ? v : d;
+        final bookingGroup = _b(remote['bookingNotifications'], true);
+        final promoGroup = _b(remote['promotionalNotifications'], true);
+        final push = _b(remote['pushNotifications'], true);
+        final email = _b(remote['emailNotifications'], true);
+        final sms = _b(remote['smsNotifications'], false);
+
+        return <String, bool>{
+          // map group to UI granular toggles with cached fallback
+          'booking_confirmed': cached['booking_confirmed'] ?? bookingGroup,
+          'booking_cancelled': cached['booking_cancelled'] ?? bookingGroup,
+          'payment_received': cached['payment_received'] ?? true,
+          'payment_refunded': cached['payment_refunded'] ?? true,
+          'promotion_new': cached['promotion_new'] ?? promoGroup,
+          'system_updates': cached['system_updates'] ?? false,
+          // channels
+          'push_notifications': push,
+          'email_notifications': email,
+          'sms_notifications': sms,
         };
       }
     return {};
@@ -263,13 +281,53 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
       return fallback;
     }
 
+    // Derive group toggles from UI granular toggles as needed
+    final bookingGroup = getVal([
+      'bookingNotifications',
+      'booking',
+      'booking_confirmed',
+      'booking_cancelled',
+    ], true);
+    final promoGroup = getVal([
+      'promotionalNotifications',
+      'promotional',
+      'promotion_new',
+    ], true);
+
     return {
-      'bookingNotifications': getVal(['bookingNotifications', 'booking'], true),
-      'promotionalNotifications': getVal(['promotionalNotifications', 'promotional'], true),
+      'bookingNotifications': bookingGroup,
+      'promotionalNotifications': promoGroup,
       'reviewResponseNotifications': getVal(['reviewResponseNotifications', 'reviewResponses'], true),
-      'emailNotifications': getVal(['emailNotifications', 'email'], true),
-      'smsNotifications': getVal(['smsNotifications', 'sms'], false),
-      'pushNotifications': getVal(['pushNotifications', 'push'], true),
+      'emailNotifications': getVal(['emailNotifications', 'email', 'email_notifications'], true),
+      'smsNotifications': getVal(['smsNotifications', 'sms', 'sms_notifications'], false),
+      'pushNotifications': getVal(['pushNotifications', 'push', 'push_notifications'], true),
     };
+  }
+
+  String? _normalizeTypeFilter(String? type) {
+    if (type == null) return null;
+    final l = type.trim().toLowerCase();
+    if (l.isEmpty || l == 'all') return null;
+    // Do not send high-level category filters to backend; filter locally
+    if (l == 'booking' || l == 'payment' || l == 'promotion' || l == 'system') {
+      return null;
+    }
+    return type;
+  }
+
+  Future<Map<String, bool>> _getCachedUiSettings() async {
+    try {
+      final raw = localStorage?.getData('notification_settings');
+      if (raw is Map<String, dynamic>) {
+        return raw.map((key, value) => MapEntry(key, value == true));
+      }
+      if (raw is String && raw.isNotEmpty) {
+        try {
+          final Map<String, dynamic> m = jsonDecode(raw) as Map<String, dynamic>;
+          return m.map((key, value) => MapEntry(key, value == true));
+        } catch (_) {}
+      }
+    } catch (_) {}
+    return <String, bool>{};
   }
 }

@@ -346,7 +346,9 @@ class _NotificationsPageState extends State<NotificationsPage>
     }
 
     if (_selectedType != null) {
-      filtered = filtered.where((n) => n.type == _selectedType).toList();
+      filtered = filtered
+          .where((n) => _mapTypeToCategory(n.type) == _selectedType)
+          .toList();
     }
 
     return filtered;
@@ -454,7 +456,9 @@ class _NotificationsPageState extends State<NotificationsPage>
     final IconData icon;
     final List<Color> gradient;
 
-    switch (type) {
+    final String category = _mapTypeToCategory(type);
+
+    switch (category) {
       case 'booking':
         icon = CupertinoIcons.calendar;
         gradient = [AppTheme.info, AppTheme.neonBlue];
@@ -496,6 +500,24 @@ class _NotificationsPageState extends State<NotificationsPage>
         size: 28,
       ),
     );
+  }
+
+  String _mapTypeToCategory(String rawType) {
+    final String t = rawType.trim();
+    if (t.isEmpty) return 'other';
+    // Normalize to upper for matching against backend types
+    final upper = t.toUpperCase();
+    if (upper.startsWith('BOOKING_')) return 'booking';
+    if (upper.startsWith('PAYMENT_')) return 'payment';
+    if (upper.startsWith('PROMOTION_')) return 'promotion';
+    if (upper.startsWith('SYSTEM_')) return 'system';
+    if (upper == 'SECURITY_ALERT') return 'system';
+    // Fallback: try simple mappings
+    final lower = t.toLowerCase();
+    if (['booking', 'payment', 'promotion', 'system'].contains(lower)) {
+      return lower;
+    }
+    return 'other';
   }
 
   Widget _buildActionButtons(NotificationEntity notification) {

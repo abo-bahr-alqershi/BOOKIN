@@ -63,6 +63,13 @@ class NotificationLocalDataSourceImpl implements NotificationLocalDataSource {
 
   @override
   Future<void> saveNotificationSettings(Map<String, bool> settings) async {
-    await localStorage.saveData('notification_settings', settings);
+    try {
+      final existing = await getNotificationSettings();
+      // Merge to preserve any keys not present in current update
+      final merged = Map<String, bool>.from(existing)..addAll(settings);
+      await localStorage.saveData('notification_settings', merged);
+    } catch (_) {
+      await localStorage.saveData('notification_settings', settings);
+    }
   }
 }
