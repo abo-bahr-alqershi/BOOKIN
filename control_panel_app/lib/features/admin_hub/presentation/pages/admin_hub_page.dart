@@ -1,12 +1,17 @@
 // lib/features/admin_hub/presentation/pages/admin_hub_page.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:ui';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../notifications/presentation/bloc/notification_bloc.dart';
+import '../../../notifications/presentation/bloc/notification_event.dart';
+import '../../../notifications/presentation/bloc/notification_state.dart';
+import '../../../../injection_container.dart' as di;
 
 class AdminHubPage extends StatefulWidget {
   const AdminHubPage({super.key});
@@ -378,10 +383,23 @@ class _AdminHubPageState extends State<AdminHubPage>
         ),
 
         // Notifications
-        _buildAppBarAction(
-          icon: Icons.notifications_none_rounded,
-          onTap: () => context.push('/notifications'),
-          badge: '3',
+        BlocProvider<NotificationBloc>(
+          create: (_) => di.sl<NotificationBloc>()..add(const LoadUnreadCountEvent()),
+          child: BlocBuilder<NotificationBloc, NotificationState>(
+            builder: (context, state) {
+              String? badge;
+              if (state is NotificationLoaded) {
+                if (state.unreadCount > 0) badge = state.unreadCount > 99 ? '99+' : state.unreadCount.toString();
+              } else if (state is NotificationUnreadCountLoaded) {
+                if (state.unreadCount > 0) badge = state.unreadCount > 99 ? '99+' : state.unreadCount.toString();
+              }
+              return _buildAppBarAction(
+                icon: Icons.notifications_none_rounded,
+                onTap: () => context.push('/notifications'),
+                badge: badge,
+              );
+            },
+          ),
         ),
 
         // Profile
@@ -1352,10 +1370,23 @@ class _AdminHubPageState extends State<AdminHubPage>
                 // Quick Stats
                 Row(
                   children: [
-                    _buildMiniStat(
-                      icon: Icons.notifications_active,
-                      value: '3',
-                      color: AppTheme.warning,
+                    BlocProvider<NotificationBloc>(
+                      create: (_) => di.sl<NotificationBloc>()..add(const LoadUnreadCountEvent()),
+                      child: BlocBuilder<NotificationBloc, NotificationState>(
+                        builder: (context, state) {
+                          String value = '0';
+                          if (state is NotificationLoaded) {
+                            value = state.unreadCount.toString();
+                          } else if (state is NotificationUnreadCountLoaded) {
+                            value = state.unreadCount.toString();
+                          }
+                          return _buildMiniStat(
+                            icon: Icons.notifications_active,
+                            value: value,
+                            color: AppTheme.warning,
+                          );
+                        },
+                      ),
                     ),
                     const SizedBox(width: 16),
                     _buildMiniStat(

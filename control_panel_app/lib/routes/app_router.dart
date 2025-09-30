@@ -112,6 +112,7 @@ import 'package:bookn_cp_app/features/onboarding/presentation/pages/select_city_
 import 'package:bookn_cp_app/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:bookn_cp_app/features/notifications/presentation/pages/notification_settings_page.dart';
 import 'package:bookn_cp_app/features/admin_hub/presentation/pages/admin_hub_page.dart';
+import 'package:bookn_cp_app/features/notifications/presentation/bloc/notification_bloc.dart' as notif_bloc;
 import 'package:bookn_cp_app/features/settings/presentation/pages/language_settings_page.dart';
 import 'package:bookn_cp_app/features/settings/presentation/bloc/settings_bloc.dart'
     as st_bloc;
@@ -484,8 +485,12 @@ class AppRouter {
         // Admin Hub
         GoRoute(
           path: '/admin',
-          pageBuilder: (context, state) =>
-              scaleFadeTransitionPage(child: const AdminHubPage()),
+          pageBuilder: (context, state) => scaleFadeTransitionPage(
+            child: BlocProvider<notif_bloc.NotificationBloc>(
+              create: (_) => di.sl<notif_bloc.NotificationBloc>(),
+              child: const AdminHubPage(),
+            ),
+          ),
         ),
 
         // Admin Units - list
@@ -946,13 +951,21 @@ class AppRouter {
         // Notifications
         GoRoute(
           path: '/notifications',
-          pageBuilder: (context, state) =>
-              fadeTransitionPage(child: const NotificationsPage()),
+          pageBuilder: (context, state) => fadeTransitionPage(
+            child: BlocProvider<notif_bloc.NotificationBloc>(
+              create: (_) => di.sl<notif_bloc.NotificationBloc>()..add(const notif_bloc.LoadNotificationsEvent()),
+              child: const NotificationsPage(),
+            ),
+          ),
         ),
         GoRoute(
           path: '/notifications/settings',
-          pageBuilder: (context, state) =>
-              slideUpTransitionPage(child: const NotificationSettingsPage()),
+          pageBuilder: (context, state) => slideUpTransitionPage(
+            child: BlocProvider<st_bloc.SettingsBloc>(
+              create: (_) => di.sl<st_bloc.SettingsBloc>(),
+              child: const NotificationSettingsPage(),
+            ),
+          ),
         ),
 
         // Admin Cities

@@ -50,6 +50,16 @@ class NotificationLoaded extends NotificationState {
   }
 }
 
+/// State when only unread count is loaded/refreshed
+class NotificationUnreadCountLoaded extends NotificationState {
+  final int unreadCount;
+
+  const NotificationUnreadCountLoaded({required this.unreadCount});
+
+  @override
+  List<Object?> get props => [unreadCount];
+}
+
 /// State when notification settings are loaded
 class NotificationSettingsLoaded extends NotificationState {
   final Map<String, bool> settings;
