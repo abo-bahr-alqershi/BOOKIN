@@ -185,9 +185,13 @@ import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/section_f
 import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/section_items/section_items_bloc.dart'
     as sec_items_bloc;
 import 'package:bookn_cp_app/core/enums/section_target.dart' as sec_enums;
-import 'package:bookn_cp_app/features/admin_notifications/presentation/bloc/admin_notifications_bloc.dart' as an_bloc;
-import 'package:bookn_cp_app/features/admin_notifications/presentation/bloc/admin_notifications_event.dart' as an_events;
+import 'package:bookn_cp_app/features/admin_notifications/presentation/bloc/admin_notifications_bloc.dart'
+    as an_bloc;
+import 'package:bookn_cp_app/features/admin_notifications/presentation/bloc/admin_notifications_event.dart'
+    as an_events;
 import 'package:bookn_cp_app/features/admin_notifications/presentation/pages/admin_notifications_page.dart';
+import 'package:bookn_cp_app/features/admin_notifications/presentation/pages/create_admin_notification_page.dart';
+import 'package:bookn_cp_app/features/admin_notifications/presentation/pages/user_notifications_page.dart';
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
@@ -507,6 +511,40 @@ class AppRouter {
                 ..add(const an_events.LoadAdminNotificationsStatsEvent())
                 ..add(const an_events.LoadSystemNotificationsEvent()),
               child: const AdminNotificationsPage(),
+            );
+          },
+        ),
+
+        // Admin Notifications - create one-off
+        GoRoute(
+          path: '/admin/notifications/create',
+          builder: (context, state) {
+            return BlocProvider<an_bloc.AdminNotificationsBloc>(
+              create: (_) => di.sl<an_bloc.AdminNotificationsBloc>(),
+              child: const CreateAdminNotificationPage(isBroadcast: false),
+            );
+          },
+        ),
+
+        // Admin Notifications - broadcast
+        GoRoute(
+          path: '/admin/notifications/broadcast',
+          builder: (context, state) {
+            return BlocProvider<an_bloc.AdminNotificationsBloc>(
+              create: (_) => di.sl<an_bloc.AdminNotificationsBloc>(),
+              child: const CreateAdminNotificationPage(isBroadcast: true),
+            );
+          },
+        ),
+
+        // Admin Notifications - user notifications
+        GoRoute(
+          path: '/admin/notifications/user/:userId',
+          builder: (context, state) {
+            final userId = state.pathParameters['userId']!;
+            return BlocProvider<an_bloc.AdminNotificationsBloc>(
+              create: (_) => di.sl<an_bloc.AdminNotificationsBloc>(),
+              child: UserNotificationsPage(userId: userId),
             );
           },
         ),

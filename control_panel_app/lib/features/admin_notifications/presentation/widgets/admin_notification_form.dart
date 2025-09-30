@@ -6,6 +6,8 @@ import 'dart:ui';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../helpers/presentation/utils/search_navigation_helper.dart';
+import '../../../admin_users/domain/entities/user.dart';
 
 class AdminNotificationForm extends StatefulWidget {
   final bool isBroadcast;
@@ -29,6 +31,7 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
   final _titleController = TextEditingController();
   final _messageController = TextEditingController();
   final _recipientController = TextEditingController();
+  User? _selectedRecipient;
   final _userIdsController = TextEditingController();
 
   String _selectedType = 'info';
@@ -121,18 +124,7 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
           ] else ...[
             _buildSectionTitle('المستلم'),
             const SizedBox(height: 16),
-            _buildTextField(
-              controller: _recipientController,
-              label: 'معرف المستلم',
-              hint: 'أدخل معرف المستلم',
-              icon: CupertinoIcons.person,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'يرجى إدخال معرف المستلم';
-                }
-                return null;
-              },
-            ),
+            _buildRecipientSelector(),
           ],
           const SizedBox(height: 32),
           _buildSubmitButton(),
@@ -589,11 +581,63 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
         }
         formData['scheduledFor'] = _scheduledFor;
       } else {
-        formData['recipientId'] = _recipientController.text.trim();
+        formData['recipientId'] =
+            _selectedRecipient?.id ?? _recipientController.text.trim();
       }
 
       widget.onSubmit(formData);
     }
+  }
+
+  Widget _buildRecipientSelector() {
+    return GestureDetector(
+      onTap: () async {
+        final user = await SearchNavigationHelper.searchSingleUser(context);
+        if (user != null) {
+          setState(() {
+            _selectedRecipient = user;
+            _recipientController.text = user.id;
+          });
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppTheme.inputBackground.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.darkBorder.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              CupertinoIcons.person_crop_circle_badge_checkmark,
+              color: AppTheme.primaryBlue,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _selectedRecipient?.name ?? 'اختر مستخدماً لاستلام الإشعار',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: _selectedRecipient == null
+                      ? AppTheme.textMuted
+                      : AppTheme.textWhite,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Icon(
+              CupertinoIcons.chevron_forward,
+              size: 16,
+              color: AppTheme.textMuted,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _selectScheduleDateTime(BuildContext context) async {
