@@ -1,5 +1,5 @@
+import 'package:bookn_cp_app/features/admin_notifications/domain/repositories/admin_notifications_repository.dart';
 import 'package:dartz/dartz.dart';
-import '../../repositories/admin_notifications_repository.dart';
 import '../../../../../core/error/failures.dart';
 
 class CreateAdminNotificationUseCase {
@@ -11,6 +11,7 @@ class CreateAdminNotificationUseCase {
     required String title,
     required String message,
     required String recipientId,
-  }) => repository.create(type: type, title: title, message: message, recipientId: recipientId);
+  }) =>
+      repository.create(
+          type: type, title: title, message: message, recipientId: recipientId);
 }
-

@@ -9,6 +9,7 @@ using YemenBooking.Application.Queries.Notifications;
 using YemenBooking.Core.Entities;
 using YemenBooking.Core.Interfaces.Repositories;
 using YemenBooking.Application.Interfaces;
+using YemenBooking.Application.Interfaces.Services;
 
 namespace YemenBooking.Application.Handlers.Queries.Notifications
 {
