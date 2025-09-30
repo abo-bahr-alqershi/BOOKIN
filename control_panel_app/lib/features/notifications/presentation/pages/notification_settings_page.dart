@@ -4,6 +4,7 @@ import '../../../../injection_container.dart' as di;
 import '../../../settings/presentation/bloc/settings_bloc.dart' as st_bloc;
 import '../../../settings/presentation/bloc/settings_event.dart' as st_event;
 import '../../../settings/presentation/bloc/settings_state.dart' as st_state;
+import '../../../settings/domain/entities/app_settings.dart';
 
 class NotificationSettingsPage extends StatelessWidget {
   const NotificationSettingsPage({super.key});
@@ -25,33 +26,33 @@ class NotificationSettingsPage extends StatelessWidget {
               final settings = state is st_state.SettingsLoaded
                   ? state.settings
                   : (state as st_state.SettingsUpdated).settings;
-              final notif = settings.notificationSettings;
+              final NotificationSettings notif = settings.notificationSettings;
               return ListView(
                 children: [
                   SwitchListTile(
                     title: const Text('إشعارات الحجوزات'),
-                    value: notif['bookingNotifications'] ?? true,
-                    onChanged: (val) => _update(context, notif..['bookingNotifications'] = val),
+                    value: notif.bookingNotifications,
+                    onChanged: (val) => _update(context, notif.copyWith(bookingNotifications: val)),
                   ),
                   SwitchListTile(
                     title: const Text('إشعارات ترويجية'),
-                    value: notif['promotionalNotifications'] ?? true,
-                    onChanged: (val) => _update(context, notif..['promotionalNotifications'] = val),
+                    value: notif.promotionalNotifications,
+                    onChanged: (val) => _update(context, notif.copyWith(promotionalNotifications: val)),
                   ),
                   SwitchListTile(
                     title: const Text('إشعارات البريد الإلكتروني'),
-                    value: notif['emailNotifications'] ?? true,
-                    onChanged: (val) => _update(context, notif..['emailNotifications'] = val),
+                    value: notif.emailNotifications,
+                    onChanged: (val) => _update(context, notif.copyWith(emailNotifications: val)),
                   ),
                   SwitchListTile(
                     title: const Text('إشعارات الرسائل القصيرة'),
-                    value: notif['smsNotifications'] ?? false,
-                    onChanged: (val) => _update(context, notif..['smsNotifications'] = val),
+                    value: notif.smsNotifications,
+                    onChanged: (val) => _update(context, notif.copyWith(smsNotifications: val)),
                   ),
                   SwitchListTile(
                     title: const Text('الإشعارات الدفعية (Push)'),
-                    value: notif['pushNotifications'] ?? true,
-                    onChanged: (val) => _update(context, notif..['pushNotifications'] = val),
+                    value: notif.pushNotifications,
+                    onChanged: (val) => _update(context, notif.copyWith(pushNotifications: val)),
                   ),
                 ],
               );
@@ -66,9 +67,9 @@ class NotificationSettingsPage extends StatelessWidget {
     );
   }
 
-  void _update(BuildContext context, Map<String, bool> newSettings) {
+  void _update(BuildContext context, NotificationSettings newSettings) {
     context.read<st_bloc.SettingsBloc>().add(
-          st_event.UpdateNotificationSettingsEvent(settings: Map<String, bool>.from(newSettings)),
+          st_event.UpdateNotificationSettingsEvent(newSettings),
         );
   }
 }
