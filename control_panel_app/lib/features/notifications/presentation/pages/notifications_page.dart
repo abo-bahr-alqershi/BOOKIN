@@ -323,7 +323,8 @@ class _NotificationsPageState extends State<NotificationsPage>
                           key: ValueKey(notification.id),
                           notification: notification,
                           onTap: () => _openNotificationDetails(notification),
-                          onDismiss: () => _dismissNotification(notification.id),
+                          onDismiss: () =>
+                              _dismissNotification(notification.id),
                           onMarkAsRead: () => _markAsRead(notification.id),
                         ),
                       ),

@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Collections.Generic;
+using System.Text.Json;
 using YemenBooking.Core.Entities;
 
 namespace YemenBooking.Infrastructure.Data.Configurations
@@ -30,8 +33,28 @@ namespace YemenBooking.Infrastructure.Data.Configurations
             builder.Property(us => us.TimeZone)
                 .HasMaxLength(50);
 
-            // Store AdditionalSettings as JSON if provider supports; fallback to string conversion handled by EF Core
-            // No explicit conversion applied here assuming SQL Server can handle JSON nvarchar(max)
+            var jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false
+            };
+
+            var dictionaryComparer = new ValueComparer<Dictionary<string, object>>(
+                (left, right) => JsonSerializer.Serialize(left, jsonOptions) == JsonSerializer.Serialize(right, jsonOptions),
+                value => value == null ? 0 : JsonSerializer.Serialize(value, jsonOptions).GetHashCode(),
+                value => value == null
+                    ? new Dictionary<string, object>()
+                    : JsonSerializer.Deserialize<Dictionary<string, object>>(JsonSerializer.Serialize(value, jsonOptions), jsonOptions)
+                        ?? new Dictionary<string, object>());
+
+            builder.Property(us => us.AdditionalSettings)
+                .HasColumnType("NVARCHAR(MAX)")
+                .HasConversion(
+                    value => value == null ? null : JsonSerializer.Serialize(value, jsonOptions),
+                    value => string.IsNullOrWhiteSpace(value)
+                        ? new Dictionary<string, object>()
+                        : JsonSerializer.Deserialize<Dictionary<string, object>>(value!, jsonOptions) ?? new Dictionary<string, object>())
+                .Metadata.SetValueComparer(dictionaryComparer);
         }
     }
 }

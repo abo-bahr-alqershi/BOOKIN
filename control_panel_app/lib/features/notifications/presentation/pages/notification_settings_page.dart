@@ -48,8 +48,6 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
             setState(() {
               _settings = state.settings;
             });
-          } else if (state is NotificationOperationSuccess) {
-            _showSuccessSnackbar(state.message);
           } else if (state is NotificationError) {
             _showErrorSnackbar(state.message);
           }
@@ -323,152 +321,11 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     );
   }
 
-  Widget _buildSaveButton() {
-    return Container(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: MediaQuery.of(context).padding.bottom + 16,
-      ),
-      decoration: BoxDecoration(
-        color: AppTheme.darkCard.withValues(alpha: 0.95),
-        border: Border(
-          top: BorderSide(
-            color: AppTheme.darkBorder.withValues(alpha: 0.2),
-          ),
-        ),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: _saveSettings,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Center(
-                child: Text(
-                  'حفظ التغييرات',
-                  style: AppTextStyles.buttonLarge.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   void _saveSettings() {
     HapticFeedback.mediumImpact();
     context.read<NotificationBloc>().add(
           UpdateNotificationSettingsEvent(settings: _settings),
         );
-  }
-
-  void _showDiscardChangesDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.darkCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: Text(
-          'تجاهل التغييرات؟',
-          style: AppTextStyles.heading3.copyWith(
-            color: AppTheme.textWhite,
-          ),
-        ),
-        content: Text(
-          'لديك تغييرات غير محفوظة. هل تريد تجاهلها؟',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppTheme.textLight,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'إلغاء',
-              style: TextStyle(color: AppTheme.textMuted),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: Text(
-                    'تجاهل',
-                    style: AppTextStyles.buttonSmall.copyWith(
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSuccessSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              CupertinoIcons.checkmark_circle_fill,
-              color: AppTheme.success,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: AppTheme.darkCard,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
   }
 
   void _showErrorSnackbar(String message) {
@@ -486,7 +343,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
               child: Text(
                 message,
                 style: AppTextStyles.bodyMedium.copyWith(
-                  color: Colors.white,
+                  color: AppTheme.textWhite,
                 ),
               ),
             ),
