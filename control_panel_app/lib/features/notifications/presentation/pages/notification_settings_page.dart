@@ -21,17 +21,7 @@ class NotificationSettingsPage extends StatefulWidget {
 }
 
 class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
-  Map<String, bool> _settings = {
-    'booking_confirmed': true,
-    'booking_cancelled': true,
-    'payment_received': true,
-    'payment_refunded': true,
-    'promotion_new': true,
-    'system_updates': false,
-    'push_notifications': true,
-    'email_notifications': true,
-    'sms_notifications': false,
-  };
+  Map<String, bool> _settings = {};
 
   bool _hasChanges = false;
 
