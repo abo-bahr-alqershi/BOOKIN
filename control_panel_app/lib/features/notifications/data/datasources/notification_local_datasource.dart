@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../../../../services/local_storage_service.dart';
 import '../models/notification_model.dart';
 
@@ -16,28 +17,52 @@ class NotificationLocalDataSourceImpl implements NotificationLocalDataSource {
 
   @override
   Future<List<NotificationModel>> getCachedNotifications() async {
-    // TODO: Implement local storage
-    return [];
+    final raw = localStorage.getData('notifications_cache')?.toString();
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final decoded = raw is String ? raw : raw.toString();
+      final List<dynamic> list = decoded is String ? (decoded.startsWith('[') ? (jsonDecode(decoded) as List<dynamic>) : <dynamic>[]) : <dynamic>[];
+      return list
+          .whereType<Map>()
+          .map((e) => NotificationModel.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
+    } catch (_) {
+      return [];
+    }
   }
 
   @override
   Future<void> cacheNotifications(List<NotificationModel> notifications) async {
-    // TODO: Implement local storage
+    try {
+      final data = notifications.map((n) => n.toJson()).toList();
+      await localStorage.saveData('notifications_cache', data);
+    } catch (_) {}
   }
 
   @override
   Future<void> clearCache() async {
-    // TODO: Implement local storage
+    try {
+      await localStorage.removeData('notifications_cache');
+    } catch (_) {}
   }
 
   @override
   Future<Map<String, bool>> getNotificationSettings() async {
-    // TODO: Implement local storage
+    final raw = localStorage.getData('notification_settings');
+    if (raw is Map<String, dynamic>) {
+      return raw.map((key, value) => MapEntry(key, value == true));
+    }
+    if (raw is String && raw.isNotEmpty) {
+      try {
+        final Map<String, dynamic> m = jsonDecode(raw) as Map<String, dynamic>;
+        return m.map((key, value) => MapEntry(key, value == true));
+      } catch (_) {}
+    }
     return {};
   }
 
   @override
   Future<void> saveNotificationSettings(Map<String, bool> settings) async {
-    // TODO: Implement local storage
+    await localStorage.saveData('notification_settings', settings);
   }
 }

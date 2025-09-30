@@ -2,6 +2,9 @@ import '../../../../core/models/paginated_result.dart';
 import '../../../../core/models/result_dto.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/utils/request_logger.dart';
+import '../../../../core/constants/storage_constants.dart';
+import '../../../../services/local_storage_service.dart';
+import '../../../auth/data/datasources/auth_local_datasource.dart';
 import '../models/notification_model.dart';
 
 abstract class NotificationRemoteDataSource {
@@ -26,8 +29,27 @@ abstract class NotificationRemoteDataSource {
 
 class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   final ApiClient apiClient;
+  final LocalStorageService? localStorage;
+  final AuthLocalDataSource? authLocalDataSource;
 
-  NotificationRemoteDataSourceImpl({required this.apiClient});
+  NotificationRemoteDataSourceImpl({
+    required this.apiClient,
+    this.localStorage,
+    this.authLocalDataSource,
+  });
+
+  Future<String?> _resolveUserId({String? explicitUserId}) async {
+    if (explicitUserId != null && explicitUserId.isNotEmpty) return explicitUserId;
+    try {
+      final cachedUser = await authLocalDataSource?.getCachedUser();
+      if (cachedUser != null && cachedUser.userId.isNotEmpty) return cachedUser.userId;
+    } catch (_) {}
+    try {
+      final stored = localStorage?.getData(StorageConstants.userId)?.toString();
+      if (stored != null && stored.isNotEmpty) return stored;
+    } catch (_) {}
+    return null;
+  }
 
   @override
   Future<PaginatedResult<NotificationModel>> getNotifications({
@@ -42,9 +64,11 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
       if (type != null) 'type': type,
     });
     try {
+      final userId = await _resolveUserId();
       final response = await apiClient.get(
         '/api/client/notifications',
         queryParameters: {
+          if (userId != null) 'userId': userId,
           'pageNumber': page,
           'pageSize': limit,
           if (type != null) 'type': type,
@@ -98,10 +122,12 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     const requestName = 'notifications.markAsRead';
     logRequestStart(requestName, details: {'notificationId': notificationId});
     try {
+      final userId = await _resolveUserId();
       await apiClient.put(
         '/api/client/notifications/mark-as-read',
         data: {
           'notificationId': notificationId,
+          if (userId != null) 'userId': userId,
         },
       );
       logRequestSuccess(requestName);
@@ -116,10 +142,11 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     const requestName = 'notifications.markAllAsRead';
     logRequestStart(requestName, details: {'userId': userId ?? ''});
     try {
+      final resolvedUserId = await _resolveUserId(explicitUserId: userId);
       await apiClient.put(
         '/api/client/notifications/mark-all-as-read',
         data: {
-          if (userId != null) 'userId': userId,
+          if (resolvedUserId != null) 'userId': resolvedUserId,
         },
       );
       logRequestSuccess(requestName);
@@ -134,10 +161,12 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
     const requestName = 'notifications.dismissNotification';
     logRequestStart(requestName, details: {'notificationId': notificationId});
     try {
+      final userId = await _resolveUserId();
       await apiClient.delete(
         '/api/client/notifications/dismiss',
         data: {
           'notificationId': notificationId,
+          if (userId != null) 'userId': userId,
         },
       );
       logRequestSuccess(requestName);
@@ -150,22 +179,48 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   @override
   Future<Map<String, bool>> getNotificationSettings({String? userId}) async {
     const requestName = 'notifications.getNotificationSettings';
-    logRequestStart(requestName, details: {'userId': userId ?? ''});
-    logRequestSuccess(requestName);
-    return {};
+    final resolvedUserId = await _resolveUserId(explicitUserId: userId);
+    logRequestStart(requestName, details: {'userId': resolvedUserId ?? ''});
+    try {
+      final response = await apiClient.get(
+        '/api/client/settings',
+        queryParameters: {
+          if (resolvedUserId != null) 'userId': resolvedUserId,
+        },
+      );
+      logRequestSuccess(requestName, statusCode: response.statusCode);
+      if (response.statusCode == 200) {
+        final result = ResultDto.fromJson(response.data as Map<String, dynamic>, (raw) => raw);
+        final data = (result.data is Map<String, dynamic>) ? result.data as Map<String, dynamic> : <String, dynamic>{};
+        final settings = (data['notificationSettings'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+        return {
+          'bookingNotifications': (settings['bookingNotifications'] as bool?) ?? true,
+          'promotionalNotifications': (settings['promotionalNotifications'] as bool?) ?? true,
+          'emailNotifications': (settings['emailNotifications'] as bool?) ?? true,
+          'smsNotifications': (settings['smsNotifications'] as bool?) ?? false,
+          'pushNotifications': (settings['pushNotifications'] as bool?) ?? true,
+        };
+      }
+      return {};
+    } catch (e, s) {
+      logRequestError(requestName, e, stackTrace: s);
+      rethrow;
+    }
   }
 
   @override
   Future<void> updateNotificationSettings(Map<String, bool> settings, {String? userId}) async {
     const requestName = 'notifications.updateNotificationSettings';
-    logRequestStart(requestName, details: {'userId': userId ?? ''});
+    final resolvedUserId = await _resolveUserId(explicitUserId: userId);
+    logRequestStart(requestName, details: {'userId': resolvedUserId ?? ''});
     try {
+      final payload = _mapSettingsToCommand(settings);
+      if (resolvedUserId != null) {
+        payload['userId'] = resolvedUserId;
+      }
       await apiClient.put(
         '/api/client/notifications/settings',
-        data: {
-          if (userId != null) 'userId': userId,
-          'settings': settings,
-        },
+        data: payload,
       );
       logRequestSuccess(requestName);
     } catch (e, s) {
@@ -177,12 +232,13 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   @override
   Future<int> getUnreadCount({String? userId}) async {
     const requestName = 'notifications.getUnreadCount';
-    logRequestStart(requestName, details: {'userId': userId ?? ''});
+    final resolvedUserId = await _resolveUserId(explicitUserId: userId);
+    logRequestStart(requestName, details: {'userId': resolvedUserId ?? ''});
     try {
       final response = await apiClient.get(
         '/api/client/notifications/summary',
         queryParameters: {
-          if (userId != null) 'userId': userId,
+          if (resolvedUserId != null) 'userId': resolvedUserId,
         },
       );
       logRequestSuccess(requestName, statusCode: response.statusCode);
@@ -196,5 +252,24 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
       logRequestError(requestName, e, stackTrace: s);
       rethrow;
     }
+  }
+
+  Map<String, dynamic> _mapSettingsToCommand(Map<String, bool> settings) {
+    bool getVal(List<String> keys, bool fallback) {
+      for (final k in keys) {
+        final v = settings[k];
+        if (v != null) return v;
+      }
+      return fallback;
+    }
+
+    return {
+      'bookingNotifications': getVal(['bookingNotifications', 'booking'], true),
+      'promotionalNotifications': getVal(['promotionalNotifications', 'promotional'], true),
+      'reviewResponseNotifications': getVal(['reviewResponseNotifications', 'reviewResponses'], true),
+      'emailNotifications': getVal(['emailNotifications', 'email'], true),
+      'smsNotifications': getVal(['smsNotifications', 'sms'], false),
+      'pushNotifications': getVal(['pushNotifications', 'push'], true),
+    };
   }
 }
