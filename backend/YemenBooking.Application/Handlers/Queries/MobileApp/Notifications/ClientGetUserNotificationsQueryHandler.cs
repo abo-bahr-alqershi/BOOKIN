@@ -67,7 +67,7 @@ public class ClientGetUserNotificationsQueryHandler : IRequestHandler<ClientGetU
                 request.PageSize, 
                 cancellationToken);
 
-            var notifications = notificationsData?.Cast<Notification>().ToList() ?? new List<Notification>();
+            var notifications = notificationsData?.ToList() ?? new List<Notification>();
 
             // تطبيق الفلاتر الإضافية
             var filteredNotifications = ApplyFilters(notifications, request);

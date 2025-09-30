@@ -67,8 +67,8 @@ public class ClientGetNotificationsSummaryQueryHandler : IRequestHandler<ClientG
             var unreadCount = await _notificationRepository.GetUnreadNotificationsCountAsync(request.UserId, cancellationToken);
             
             // الحصول على جميع الإشعارات للمستخدم (مع تحديد عدد أكبر للحصول على الإحصائيات)
-            var allNotificationsData = await _notificationRepository.GetUserNotificationsAsync(request.UserId, null, 1, 1000, cancellationToken);
-            var allNotifications = allNotificationsData?.Cast<Notification>().ToList() ?? new List<Notification>();
+            var allNotifications = (await _notificationRepository.GetUserNotificationsAsync(request.UserId, null, 1, 1000, cancellationToken))
+                ?.ToList() ?? new List<Notification>();
             
             var totalCount = allNotifications.Count;
             var readCount = totalCount - unreadCount;
