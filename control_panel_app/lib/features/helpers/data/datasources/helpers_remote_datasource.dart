@@ -68,17 +68,25 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
     int pageNumber = 1,
     int pageSize = 20,
   }) async {
+    final trimmedTerm = searchTerm?.trim();
+    final hasSearchTerm = trimmedTerm != null && trimmedTerm.isNotEmpty;
+
+    final endpoint = hasSearchTerm
+        ? '${ApiConstants.adminBaseUrl}/Users/search'
+        : '${ApiConstants.adminBaseUrl}/Users';
+
+    final queryParameters = <String, dynamic>{
+      'pageNumber': pageNumber,
+      'pageSize': pageSize,
+      'isActive': isActive,
+      if (hasSearchTerm) 'searchTerm': trimmedTerm,
+      if (role != null && !_isGuid(role)) 'roleName': _mapRoleAlias(role),
+      if (_isGuid(role)) 'roleId': role,
+    }..removeWhere((key, value) => value == null);
+
     final response = await _apiClient.get(
-      '${ApiConstants.adminBaseUrl}/Users/search',
-      queryParameters: {
-        'searchTerm': searchTerm,
-        // Prefer sending RoleName to allow logical roles; backend also supports RoleId
-        if (role != null && !_isGuid(role)) 'roleName': _mapRoleAlias(role),
-        if (_isGuid(role)) 'roleId': role,
-        'isActive': isActive,
-        'pageNumber': pageNumber,
-        'pageSize': pageSize,
-      }..removeWhere((key, value) => value == null),
+      endpoint,
+      queryParameters: queryParameters,
     );
 
     final paginatedResult = PaginatedResult<UserModel>.fromJson(
@@ -94,7 +102,8 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
           item: user,
           id: user.id,
           title: user.name,
-          subtitle: [user.email, user.role].where((s) => (s).isNotEmpty).join(' • '),
+          subtitle:
+              [user.email, user.role].where((s) => (s).isNotEmpty).join(' • '),
           imageUrl: user.profileImage,
           metadata: {
             'email': user.email,
@@ -112,17 +121,24 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
 
   bool _isGuid(String? value) {
     if (value == null) return false;
-    final guidRegex = RegExp(r'^[{(]?[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}[)}]?$');
+    final guidRegex = RegExp(
+        r'^[{(]?[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}[)}]?$');
     return guidRegex.hasMatch(value);
   }
 
   String _mapRoleAlias(String role) {
     // Map common aliases to backend Role.Name seeds: Admin, Owner, Manager, Customer
     final lower = role.trim().toLowerCase();
-    if (lower == 'admin' || lower == 'administrator' || lower == 'super_admin') return 'Admin';
-    if (lower == 'owner' || lower == 'hotel_owner' || lower == 'property_owner') return 'Owner';
-    if (lower == 'staff' || lower == 'manager' || lower == 'hotel_manager' || lower == 'receptionist') return 'Manager';
-    if (lower == 'client' || lower == 'customer' || lower == 'guest') return 'Customer';
+    if (lower == 'admin' || lower == 'administrator' || lower == 'super_admin')
+      return 'Admin';
+    if (lower == 'owner' || lower == 'hotel_owner' || lower == 'property_owner')
+      return 'Owner';
+    if (lower == 'staff' ||
+        lower == 'manager' ||
+        lower == 'hotel_manager' ||
+        lower == 'receptionist') return 'Manager';
+    if (lower == 'client' || lower == 'customer' || lower == 'guest')
+      return 'Customer';
     // Fallback to original capitalized
     return role;
   }
@@ -160,9 +176,8 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
           id: property.id,
           title: property.name,
           subtitle: '${property.city} • ${property.typeName}',
-          imageUrl: property.images.isNotEmpty 
-              ? property.images.first.url 
-              : null,
+          imageUrl:
+              property.images.isNotEmpty ? property.images.first.url : null,
           metadata: {
             'address': property.address,
             'city': property.city,
@@ -205,22 +220,31 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
     );
 
     // Filter out experimental/test/demo units on client-side to prevent accidental selection
-    bool _isExperimental(UnitModel unit) {
+    bool isExperimental(UnitModel unit) {
       final name = unit.name.toLowerCase();
       final propertyName = unit.propertyName.toLowerCase();
       final features = unit.customFeatures.toLowerCase();
       const experimentalHints = [
-        'test', 'demo', 'dummy', 'sample',
-        'تجريبي', 'تجريب', 'اختبار', 'ديمو', 'عينه', 'عينة'
+        'test',
+        'demo',
+        'dummy',
+        'sample',
+        'تجريبي',
+        'تجريب',
+        'اختبار',
+        'ديمو',
+        'عينه',
+        'عينة'
       ];
       final hasHint = experimentalHints.any((h) =>
-        name.contains(h) || propertyName.contains(h) || features.contains(h));
+          name.contains(h) || propertyName.contains(h) || features.contains(h));
       // Also treat obviously invalid GUID-like ids as experimental safeguards (length != 36)
       final looksInvalidId = unit.id.length != 36;
       return hasHint || looksInvalidId;
     }
 
-    final filteredUnits = paginatedResult.items.where((u) => !_isExperimental(u)).toList();
+    final filteredUnits =
+        paginatedResult.items.where((u) => !isExperimental(u)).toList();
 
     return PaginatedResult<SearchResult>(
       items: filteredUnits.map((unit) {
@@ -229,9 +253,7 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
           id: unit.id,
           title: unit.name,
           subtitle: '${unit.propertyName} • ${unit.unitTypeName}',
-          imageUrl: unit.images?.isNotEmpty == true 
-              ? unit.images!.first 
-              : null,
+          imageUrl: unit.images?.isNotEmpty == true ? unit.images!.first : null,
           metadata: {
             'propertyName': unit.propertyName,
             'unitType': unit.unitTypeName,
@@ -276,13 +298,12 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
     if (searchTerm != null && searchTerm.isNotEmpty) {
       cities = cities.where((city) {
         return city.name.toLowerCase().contains(searchTerm.toLowerCase()) ||
-               city.country.toLowerCase().contains(searchTerm.toLowerCase());
+            city.country.toLowerCase().contains(searchTerm.toLowerCase());
       }).toList();
     }
 
     // Implement manual pagination
     final startIndex = (pageNumber - 1) * pageSize;
-    final endIndex = startIndex + pageSize;
     final paginatedCities = cities.skip(startIndex).take(pageSize).toList();
 
     return PaginatedResult<SearchResult>(

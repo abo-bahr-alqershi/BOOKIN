@@ -113,8 +113,8 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
               const SizedBox(height: 16),
               _buildRolesSelector(),
               const SizedBox(height: 16),
-            _buildMultiUsersSelector(),
-            const SizedBox(height: 12),
+              _buildMultiUsersSelector(),
+              const SizedBox(height: 12),
               _buildTextField(
                 controller: _userIdsController,
                 label: 'معرفات المستخدمين (اختياري)',
@@ -666,12 +666,14 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
             ),
             TextButton.icon(
               onPressed: () async {
-                final users = await SearchNavigationHelper.searchMultipleUsers(context);
+                final users =
+                    await SearchNavigationHelper.searchMultipleUsers(context);
                 if (users != null && users.isNotEmpty) {
                   setState(() {
                     // add unique by id
                     for (final u in users) {
-                      if (_selectedUsers.indexWhere((x) => x.id == u.id) == -1) {
+                      if (_selectedUsers.indexWhere((x) => x.id == u.id) ==
+                          -1) {
                         _selectedUsers.add(u);
                       }
                     }
@@ -696,28 +698,33 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
             runSpacing: 8,
             children: _selectedUsers.map((u) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: AppTheme.darkCard.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.darkBorder.withValues(alpha: 0.3)),
+                  border: Border.all(
+                      color: AppTheme.darkBorder.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       u.name,
-                      style: AppTextStyles.caption.copyWith(color: AppTheme.textWhite),
+                      style: AppTextStyles.caption
+                          .copyWith(color: AppTheme.textWhite),
                     ),
                     const SizedBox(width: 6),
                     GestureDetector(
                       onTap: () {
                         setState(() {
                           _selectedUsers.removeWhere((x) => x.id == u.id);
-                          _userIdsController.text = _selectedUsers.map((e) => e.id).join(',');
+                          _userIdsController.text =
+                              _selectedUsers.map((e) => e.id).join(',');
                         });
                       },
-                      child: Icon(CupertinoIcons.xmark_circle_fill, size: 16, color: AppTheme.textMuted),
+                      child: Icon(CupertinoIcons.xmark_circle_fill,
+                          size: 16, color: AppTheme.textMuted),
                     ),
                   ],
                 ),
