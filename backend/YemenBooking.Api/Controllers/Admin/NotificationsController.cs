@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using YemenBooking.Application.Commands.Notifications;
 using YemenBooking.Application.Queries.Notifications;
 using System;
+using YemenBooking.Application.DTOs;
 
 namespace YemenBooking.Api.Controllers.Admin
 {
@@ -22,6 +23,17 @@ namespace YemenBooking.Api.Controllers.Admin
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> CreateNotification([FromBody] CreateNotificationCommand command)
+        {
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// بث إشعار لمجموعة مستخدمين
+        /// Broadcast a notification to users
+        /// </summary>
+        [HttpPost("broadcast")]
+        public async Task<ActionResult<ResultDto<int>>> Broadcast([FromBody] BroadcastNotificationCommand command)
         {
             var result = await _mediator.Send(command);
             return Ok(result);
@@ -46,6 +58,36 @@ namespace YemenBooking.Api.Controllers.Admin
         public async Task<IActionResult> GetUserNotifications(Guid userId, [FromQuery] GetUserNotificationsQuery query)
         {
             query.UserId = userId;
+            var result = await _mediator.Send(query);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// حذف إشعار
+        /// </summary>
+        [HttpDelete("{notificationId}")]
+        public async Task<ActionResult<ResultDto<bool>>> Delete(Guid notificationId)
+        {
+            var result = await _mediator.Send(new DeleteNotificationCommand { NotificationId = notificationId });
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// إعادة إرسال إشعار فاشل
+        /// </summary>
+        [HttpPost("{notificationId}/resend")]
+        public async Task<ActionResult<ResultDto<bool>>> Resend(Guid notificationId)
+        {
+            var result = await _mediator.Send(new ResendNotificationCommand { NotificationId = notificationId });
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// الحصول على إحصائيات الإشعارات
+        /// </summary>
+        [HttpGet("stats")]
+        public async Task<ActionResult<NotificationsStatsDto>> GetStats([FromQuery] GetNotificationsStatsQuery query)
+        {
             var result = await _mediator.Send(query);
             return Ok(result);
         }
