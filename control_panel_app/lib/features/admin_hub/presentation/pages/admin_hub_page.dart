@@ -1606,6 +1606,13 @@ class _AdminHubPageState extends State<AdminHubPage>
           onTap: () => context.push('/admin/sections'),
         ),
         _AdminFeature(
+          title: 'الإشعارات',
+          description: 'إدارة إشعارات النظام والمستخدمين',
+          icon: Icons.notifications_active_rounded,
+          gradient: [AppTheme.warning, AppTheme.primaryViolet],
+          onTap: () => context.push('/admin/notifications'),
+        ),
+        _AdminFeature(
           title: 'المدفوعات',
           description: 'إدارة المعاملات المالية والاستردادات',
           icon: Icons.account_balance_wallet_rounded,

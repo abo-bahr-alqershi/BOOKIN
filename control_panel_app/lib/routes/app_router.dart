@@ -186,6 +186,7 @@ import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/section_i
     as sec_items_bloc;
 import 'package:bookn_cp_app/core/enums/section_target.dart' as sec_enums;
 import 'package:bookn_cp_app/features/admin_notifications/presentation/bloc/admin_notifications_bloc.dart' as an_bloc;
+import 'package:bookn_cp_app/features/admin_notifications/presentation/bloc/admin_notifications_event.dart' as an_events;
 import 'package:bookn_cp_app/features/admin_notifications/presentation/pages/admin_notifications_page.dart';
 
 class AppRouter {
@@ -502,7 +503,9 @@ class AppRouter {
           path: '/admin/notifications',
           builder: (context, state) {
             return BlocProvider<an_bloc.AdminNotificationsBloc>(
-              create: (_) => di.sl<an_bloc.AdminNotificationsBloc>(),
+              create: (_) => di.sl<an_bloc.AdminNotificationsBloc>()
+                ..add(const an_events.LoadAdminNotificationsStatsEvent())
+                ..add(const an_events.LoadSystemNotificationsEvent()),
               child: const AdminNotificationsPage(),
             );
           },
