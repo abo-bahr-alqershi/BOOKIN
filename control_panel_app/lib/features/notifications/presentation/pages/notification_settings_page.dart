@@ -321,13 +321,6 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     );
   }
 
-  void _saveSettings() {
-    HapticFeedback.mediumImpact();
-    context.read<NotificationBloc>().add(
-          UpdateNotificationSettingsEvent(settings: _settings),
-        );
-  }
-
   void _showErrorSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
