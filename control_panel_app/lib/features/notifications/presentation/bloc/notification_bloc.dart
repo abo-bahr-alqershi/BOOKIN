@@ -76,7 +76,17 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
     await result.fold(
       (failure) async => emit(NotificationError(message: _mapFailureToMessage(failure))),
-      (_) async => emit(const NotificationOperationSuccess(message: 'Notification marked as read')),
+      (_) async {
+        emit(const NotificationOperationSuccess(message: 'Notification marked as read'));
+        // refresh unread count after marking as read
+        if (getUnreadCountUseCase != null) {
+          final unreadRes = await getUnreadCountUseCase!(const GetUnreadCountParams());
+          await unreadRes.fold(
+            (failure) async {},
+            (count) async => emit(NotificationUnreadCountLoaded(unreadCount: count)),
+          );
+        }
+      },
     );
   }
 
@@ -94,7 +104,16 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
     await result.fold(
       (failure) async => emit(NotificationError(message: _mapFailureToMessage(failure))),
-      (_) async => emit(const NotificationOperationSuccess(message: 'All notifications marked as read')),
+      (_) async {
+        emit(const NotificationOperationSuccess(message: 'All notifications marked as read'));
+        if (getUnreadCountUseCase != null) {
+          final unreadRes = await getUnreadCountUseCase!(const GetUnreadCountParams());
+          await unreadRes.fold(
+            (failure) async {},
+            (count) async => emit(NotificationUnreadCountLoaded(unreadCount: count)),
+          );
+        }
+      },
     );
   }
 
@@ -112,7 +131,16 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
     await result.fold(
       (failure) async => emit(NotificationError(message: _mapFailureToMessage(failure))),
-      (_) async => emit(const NotificationOperationSuccess(message: 'Notification dismissed')),
+      (_) async {
+        emit(const NotificationOperationSuccess(message: 'Notification dismissed'));
+        if (getUnreadCountUseCase != null) {
+          final unreadRes = await getUnreadCountUseCase!(const GetUnreadCountParams());
+          await unreadRes.fold(
+            (failure) async {},
+            (count) async => emit(NotificationUnreadCountLoaded(unreadCount: count)),
+          );
+        }
+      },
     );
   }
 
@@ -145,7 +173,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     final result = await getUnreadCountUseCase!(const GetUnreadCountParams());
     await result.fold(
       (failure) async => emit(NotificationError(message: _mapFailureToMessage(failure))),
-      (count) async => emit(NotificationOperationSuccess(message: 'Unread count: $count')),
+      (count) async => emit(NotificationUnreadCountLoaded(unreadCount: count)),
     );
   }
 
