@@ -262,6 +262,126 @@ namespace YemenBooking.Api.Services
             //     _context.Payments.AddRange(seededPayments);
             //     await _context.SaveChangesAsync();
             // }
+
+            // Seed Arabic notifications for admin@example.com
+            if (!await _context.Notifications.AnyAsync())
+            {
+                var admin = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "admin@example.com");
+                if (admin != null)
+                {
+                    var now = DateTime.UtcNow;
+                    var notifications = new List<Notification>
+                    {
+                        new Notification
+                        {
+                            Id = Guid.NewGuid(),
+                            RecipientId = admin.Id,
+                            Type = "BOOKING_CREATED",
+                            Title = "حجز جديد",
+                            Message = "تم إنشاء حجز جديد برقم HBK-2025-001",
+                            TitleAr = "حجز جديد",
+                            MessageAr = "تم إنشاء حجز جديد برقم HBK-2025-001",
+                            Priority = "MEDIUM",
+                            Data = "{\"bookingNumber\":\"HBK-2025-001\"}",
+                            Channels = new List<string> { "IN_APP" },
+                            CreatedAt = now.AddMinutes(-30),
+                            UpdatedAt = now.AddMinutes(-30)
+                        },
+                        new Notification
+                        {
+                            Id = Guid.NewGuid(),
+                            RecipientId = admin.Id,
+                            Type = "BOOKING_CANCELLED",
+                            Title = "إلغاء حجز",
+                            Message = "تم إلغاء الحجز رقم HBK-2025-002",
+                            TitleAr = "إلغاء حجز",
+                            MessageAr = "تم إلغاء الحجز رقم HBK-2025-002",
+                            Priority = "LOW",
+                            Data = "{\"bookingNumber\":\"HBK-2025-002\"}",
+                            Channels = new List<string> { "IN_APP" },
+                            CreatedAt = now.AddHours(-2),
+                            UpdatedAt = now.AddHours(-2)
+                        },
+                        new Notification
+                        {
+                            Id = Guid.NewGuid(),
+                            RecipientId = admin.Id,
+                            Type = "PAYMENT_UPDATE",
+                            Title = "تحديث الدفع",
+                            Message = "تم اعتماد دفعة بمبلغ 120,000 ريال يمني",
+                            TitleAr = "تحديث الدفع",
+                            MessageAr = "تم اعتماد دفعة بمبلغ 120,000 ريال يمني",
+                            Priority = "HIGH",
+                            Data = "{\"amount\":\"120000 YER\",\"status\":\"Approved\"}",
+                            Channels = new List<string> { "IN_APP" },
+                            CreatedAt = now.AddMinutes(-10),
+                            UpdatedAt = now.AddMinutes(-10)
+                        },
+                        new Notification
+                        {
+                            Id = Guid.NewGuid(),
+                            RecipientId = admin.Id,
+                            Type = "PAYMENT_FAILED",
+                            Title = "فشل عملية الدفع",
+                            Message = "تعذر معالجة الدفعة الأخيرة، يرجى المحاولة لاحقاً",
+                            TitleAr = "فشل عملية الدفع",
+                            MessageAr = "تعذر معالجة الدفعة الأخيرة، يرجى المحاولة لاحقاً",
+                            Priority = "URGENT",
+                            RequiresAction = true,
+                            Data = "{\"reason\":\"CardDeclined\"}",
+                            Channels = new List<string> { "IN_APP" },
+                            CreatedAt = now.AddMinutes(-5),
+                            UpdatedAt = now.AddMinutes(-5)
+                        },
+                        new Notification
+                        {
+                            Id = Guid.NewGuid(),
+                            RecipientId = admin.Id,
+                            Type = "PROMOTION_OFFER",
+                            Title = "عرض ترويجي جديد",
+                            Message = "خصم 20% على الحجوزات لمدة محدودة",
+                            TitleAr = "عرض ترويجي جديد",
+                            MessageAr = "خصم 20% على الحجوزات لمدة محدودة",
+                            Priority = "LOW",
+                            Data = "{\"discount\":20,\"currency\":\"YER\"}",
+                            Channels = new List<string> { "IN_APP" },
+                            CreatedAt = now.AddDays(-1),
+                            UpdatedAt = now.AddDays(-1)
+                        },
+                        new Notification
+                        {
+                            Id = Guid.NewGuid(),
+                            RecipientId = admin.Id,
+                            Type = "SYSTEM_UPDATE",
+                            Title = "تحديث النظام",
+                            Message = "تم تحديث النظام لتحسين الأداء والاستقرار",
+                            TitleAr = "تحديث النظام",
+                            MessageAr = "تم تحديث النظام لتحسين الأداء والاستقرار",
+                            Priority = "MEDIUM",
+                            Channels = new List<string> { "IN_APP" },
+                            CreatedAt = now.AddDays(-2),
+                            UpdatedAt = now.AddDays(-2)
+                        },
+                        new Notification
+                        {
+                            Id = Guid.NewGuid(),
+                            RecipientId = admin.Id,
+                            Type = "SECURITY_ALERT",
+                            Title = "تنبيه أمني",
+                            Message = "تم اكتشاف محاولة تسجيل دخول غير معتادة وتم حظرها",
+                            TitleAr = "تنبيه أمني",
+                            MessageAr = "تم اكتشاف محاولة تسجيل دخول غير معتادة وتم حظرها",
+                            Priority = "HIGH",
+                            Channels = new List<string> { "IN_APP" },
+                            CreatedAt = now.AddHours(-6),
+                            UpdatedAt = now.AddHours(-6)
+                        }
+                    };
+
+                    _context.Notifications.AddRange(notifications);
+                    await _context.SaveChangesAsync();
+                }
+            }
         }
     }
 }
