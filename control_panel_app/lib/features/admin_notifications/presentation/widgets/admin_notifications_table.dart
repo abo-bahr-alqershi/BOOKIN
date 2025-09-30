@@ -518,21 +518,17 @@ class _AdminNotificationsTableState extends State<AdminNotificationsTable> {
     Color color;
 
     switch (type.toLowerCase()) {
-      case 'info':
-        icon = CupertinoIcons.info_circle_fill;
+      case 'booking':
+        icon = CupertinoIcons.calendar;
         color = AppTheme.info;
         break;
-      case 'warning':
-        icon = CupertinoIcons.exclamationmark_triangle_fill;
+      case 'payment':
+        icon = CupertinoIcons.creditcard_fill;
         color = AppTheme.warning;
         break;
-      case 'error':
-        icon = CupertinoIcons.xmark_circle_fill;
+      case 'promotion':
+        icon = CupertinoIcons.gift_fill;
         color = AppTheme.error;
-        break;
-      case 'success':
-        icon = CupertinoIcons.checkmark_circle_fill;
-        color = AppTheme.success;
         break;
       case 'system':
         icon = CupertinoIcons.gear_solid;
