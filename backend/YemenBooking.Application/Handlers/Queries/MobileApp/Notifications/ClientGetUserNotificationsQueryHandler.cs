@@ -71,6 +71,8 @@ public class ClientGetUserNotificationsQueryHandler : IRequestHandler<ClientGetU
 
             // تطبيق الفلاتر الإضافية
             var filteredNotifications = ApplyFilters(notifications, request);
+            // Ensure dismissed are excluded as an extra safety
+            filteredNotifications = filteredNotifications.Where(n => !n.IsDismissed).ToList();
 
             // التحويل إلى DTO
             var notificationDtos = filteredNotifications

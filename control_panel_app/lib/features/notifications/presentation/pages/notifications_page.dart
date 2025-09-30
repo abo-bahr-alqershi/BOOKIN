@@ -308,26 +308,29 @@ class _NotificationsPageState extends State<NotificationsPage>
           }
           return SliverPadding(
             padding: const EdgeInsets.all(16),
-            sliver: SliverAnimatedList(
-              initialItemCount: notifications.length,
-              itemBuilder: (context, index, animation) {
-                final notification = notifications[index];
-                return AnimationConfiguration.staggeredList(
-                  position: index,
-                  duration: const Duration(milliseconds: 375),
-                  child: SlideAnimation(
-                    verticalOffset: 50.0,
-                    child: FadeInAnimation(
-                      child: NotificationItemWidget(
-                        notification: notification,
-                        onTap: () => _openNotificationDetails(notification),
-                        onDismiss: () => _dismissNotification(notification.id),
-                        onMarkAsRead: () => _markAsRead(notification.id),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final notification = notifications[index];
+                  return AnimationConfiguration.staggeredList(
+                    position: index,
+                    duration: const Duration(milliseconds: 375),
+                    child: SlideAnimation(
+                      verticalOffset: 50.0,
+                      child: FadeInAnimation(
+                        child: NotificationItemWidget(
+                          key: ValueKey(notification.id),
+                          notification: notification,
+                          onTap: () => _openNotificationDetails(notification),
+                          onDismiss: () => _dismissNotification(notification.id),
+                          onMarkAsRead: () => _markAsRead(notification.id),
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+                childCount: notifications.length,
+              ),
             ),
           );
         }

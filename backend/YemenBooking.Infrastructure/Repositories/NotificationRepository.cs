@@ -28,7 +28,7 @@ namespace YemenBooking.Infrastructure.Repositories
 
         public async Task<IEnumerable<Notification>> GetUserNotificationsAsync(Guid userId, bool? isRead = null, int page = 1, int pageSize = 50, CancellationToken cancellationToken = default)
         {
-            var query = _dbSet.Where(n => n.RecipientId == userId);
+            var query = _dbSet.Where(n => n.RecipientId == userId && !n.IsDismissed);
             if (isRead.HasValue) query = query.Where(n => n.IsRead == isRead.Value);
             var items = await query
                 .OrderByDescending(n => n.CreatedAt)
@@ -82,6 +82,6 @@ namespace YemenBooking.Infrastructure.Repositories
         }
 
         public async Task<int> GetUnreadNotificationsCountAsync(Guid userId, CancellationToken cancellationToken = default)
-            => await _dbSet.CountAsync(n => n.RecipientId == userId && !n.IsRead, cancellationToken);
+            => await _dbSet.CountAsync(n => n.RecipientId == userId && !n.IsRead && !n.IsDismissed, cancellationToken);
     }
 } 
