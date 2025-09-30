@@ -18,6 +18,7 @@ import '../bloc/admin_notifications_state.dart';
 import '../widgets/admin_notifications_table.dart';
 import '../widgets/notification_filters_bar.dart';
 import '../widgets/notifications_stats_card.dart';
+import '../../../helpers/presentation/utils/search_navigation_helper.dart';
 
 class AdminNotificationsPage extends StatefulWidget {
   const AdminNotificationsPage({super.key});
@@ -445,122 +446,11 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage>
     _showUserSelectionDialog();
   }
 
-  void _showUserSelectionDialog() {
-    final userIdController = TextEditingController();
-
-    showDialog(
-      context: context,
-      barrierColor: Colors.black87,
-      builder: (ctx) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppTheme.darkCard.withValues(alpha: 0.95),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: AppTheme.darkBorder.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'عرض إشعارات المستخدم',
-                  style: AppTextStyles.heading3.copyWith(
-                    color: AppTheme.textWhite,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: userIdController,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppTheme.textWhite,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'أدخل معرف المستخدم',
-                    hintStyle: AppTextStyles.bodyMedium.copyWith(
-                      color: AppTheme.textMuted,
-                    ),
-                    prefixIcon: Icon(
-                      CupertinoIcons.person,
-                      color: AppTheme.primaryBlue,
-                    ),
-                    filled: true,
-                    fillColor: AppTheme.inputBackground.withValues(alpha: 0.3),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: AppTheme.primaryBlue,
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: Text(
-                          'إلغاء',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppTheme.textMuted,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: AppTheme.primaryGradient,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              final userId = userIdController.text.trim();
-                              if (userId.isNotEmpty) {
-                                Navigator.pop(ctx);
-                                context
-                                    .push('/admin/notifications/user/$userId');
-                              }
-                            },
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'عرض',
-                                  style: AppTextStyles.buttonMedium.copyWith(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  Future<void> _showUserSelectionDialog() async {
+    final user = await SearchNavigationHelper.searchSingleUser(context);
+    if (user != null && mounted) {
+      context.push('/admin/notifications/user/${user.id}');
+    }
   }
 
   void _showBroadcastDialog() {
