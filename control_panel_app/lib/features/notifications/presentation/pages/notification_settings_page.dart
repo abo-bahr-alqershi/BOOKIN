@@ -47,11 +47,9 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
           if (state is NotificationSettingsLoaded) {
             setState(() {
               _settings = state.settings;
-              _hasChanges = false;
             });
           } else if (state is NotificationOperationSuccess) {
             _showSuccessSnackbar(state.message);
-            setState(() => _hasChanges = false);
           } else if (state is NotificationError) {
             _showErrorSnackbar(state.message);
           }
@@ -67,7 +65,8 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
           return _buildContent();
         },
       ),
-      bottomNavigationBar: _hasChanges ? _buildSaveButton() : null,
+      // Save button removed; updates happen instantly on toggle change
+      bottomNavigationBar: null,
     );
   }
 
@@ -83,11 +82,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
       ),
       leading: IconButton(
         onPressed: () {
-          if (_hasChanges) {
-            _showDiscardChangesDialog();
-          } else {
-            Navigator.pop(context);
-          }
+          Navigator.pop(context);
         },
         icon: Icon(
           CupertinoIcons.arrow_right,
@@ -314,8 +309,12 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
               HapticFeedback.lightImpact();
               setState(() {
                 _settings[key] = value;
-                _hasChanges = true;
+                _hasChanges = false; // no pending changes; saved instantly
               });
+              // Update instantly (no save button)
+              context.read<NotificationBloc>().add(
+                    UpdateNotificationSettingsEvent(settings: _settings),
+                  );
             },
             activeTrackColor: AppTheme.primaryBlue,
           ),
