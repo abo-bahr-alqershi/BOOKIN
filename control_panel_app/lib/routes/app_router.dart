@@ -113,6 +113,7 @@ import 'package:bookn_cp_app/features/notifications/presentation/pages/notificat
 import 'package:bookn_cp_app/features/notifications/presentation/pages/notification_settings_page.dart';
 import 'package:bookn_cp_app/features/admin_hub/presentation/pages/admin_hub_page.dart';
 import 'package:bookn_cp_app/features/notifications/presentation/bloc/notification_bloc.dart' as notif_bloc;
+import 'package:bookn_cp_app/features/notifications/presentation/bloc/notification_event.dart';
 import 'package:bookn_cp_app/features/settings/presentation/pages/language_settings_page.dart';
 import 'package:bookn_cp_app/features/settings/presentation/bloc/settings_bloc.dart'
     as st_bloc;
@@ -953,7 +954,7 @@ class AppRouter {
           path: '/notifications',
           pageBuilder: (context, state) => fadeTransitionPage(
             child: BlocProvider<notif_bloc.NotificationBloc>(
-              create: (_) => di.sl<notif_bloc.NotificationBloc>()..add(const notif_bloc.LoadNotificationsEvent()),
+              create: (_) => di.sl<notif_bloc.NotificationBloc>()..add(const LoadNotificationsEvent()),
               child: const NotificationsPage(),
             ),
           ),
