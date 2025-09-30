@@ -38,7 +38,8 @@ class NotificationLoaded extends NotificationState {
   });
 
   @override
-  List<Object> get props => [notifications, hasReachedMax, currentPage, unreadCount];
+  List<Object> get props =>
+      [notifications, hasReachedMax, currentPage, unreadCount];
 
   NotificationLoaded copyWith({
     List<NotificationEntity>? notifications,

@@ -45,7 +45,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) async {
     if (getNotificationsUseCase == null) {
-      emit(const NotificationError(message: 'Notifications feature not initialized'));
+      emit(const NotificationError(
+          message: 'Notifications feature not initialized'));
       return;
     }
 
@@ -67,7 +68,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     final result = await getNotificationsUseCase!(params);
 
     await result.fold(
-      (failure) async => emit(NotificationError(message: _mapFailureToMessage(failure))),
+      (failure) async =>
+          emit(NotificationError(message: _mapFailureToMessage(failure))),
       (paginatedResult) async {
         _currentPage = paginatedResult.pageNumber;
         _hasReachedMax = !paginatedResult.hasNextPage;
@@ -82,7 +84,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) async {
     if (markAsReadUseCase == null) {
-      emit(const NotificationError(message: 'Mark as read feature not initialized'));
+      emit(const NotificationError(
+          message: 'Mark as read feature not initialized'));
       return;
     }
 
@@ -90,7 +93,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     final result = await markAsReadUseCase!(params);
 
     await result.fold(
-      (failure) async => emit(NotificationError(message: _mapFailureToMessage(failure))),
+      (failure) async =>
+          emit(NotificationError(message: _mapFailureToMessage(failure))),
       (_) async {
         _cachedNotifications = _cachedNotifications
             .map((notification) => notification.id == event.notificationId
@@ -98,7 +102,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
                 : notification)
             .toList(growable: false);
         await _refreshUnreadCount();
-        emit(const NotificationOperationSuccess(message: 'Notification marked as read'));
+        emit(const NotificationOperationSuccess(
+            message: 'Notification marked as read'));
         _emitLoadedState(emit);
       },
     );
@@ -109,7 +114,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) async {
     if (markAsReadUseCase == null) {
-      emit(const NotificationError(message: 'Mark as read feature not initialized'));
+      emit(const NotificationError(
+          message: 'Mark as read feature not initialized'));
       return;
     }
 
@@ -117,13 +123,15 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     final result = await markAsReadUseCase!(params);
 
     await result.fold(
-      (failure) async => emit(NotificationError(message: _mapFailureToMessage(failure))),
+      (failure) async =>
+          emit(NotificationError(message: _mapFailureToMessage(failure))),
       (_) async {
         _cachedNotifications = _cachedNotifications
             .map((notification) => _markNotificationAsRead(notification))
             .toList(growable: false);
         await _refreshUnreadCount();
-        emit(const NotificationOperationSuccess(message: 'All notifications marked as read'));
+        emit(const NotificationOperationSuccess(
+            message: 'All notifications marked as read'));
         _emitLoadedState(emit);
       },
     );
@@ -134,21 +142,25 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) async {
     if (dismissNotificationUseCase == null) {
-      emit(const NotificationError(message: 'Dismiss notification feature not initialized'));
+      emit(const NotificationError(
+          message: 'Dismiss notification feature not initialized'));
       return;
     }
 
-    final params = DismissNotificationParams(notificationId: event.notificationId);
+    final params =
+        DismissNotificationParams(notificationId: event.notificationId);
     final result = await dismissNotificationUseCase!(params);
 
     await result.fold(
-      (failure) async => emit(NotificationError(message: _mapFailureToMessage(failure))),
+      (failure) async =>
+          emit(NotificationError(message: _mapFailureToMessage(failure))),
       (_) async {
         _cachedNotifications = _cachedNotifications
             .where((notification) => notification.id != event.notificationId)
             .toList(growable: false);
         await _refreshUnreadCount();
-        emit(const NotificationOperationSuccess(message: 'Notification dismissed'));
+        emit(const NotificationOperationSuccess(
+            message: 'Notification dismissed'));
         _emitLoadedState(emit);
       },
     );
@@ -159,7 +171,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) async {
     if (updateNotificationSettingsUseCase == null) {
-      emit(const NotificationError(message: 'Update settings feature not initialized'));
+      emit(const NotificationError(
+          message: 'Update settings feature not initialized'));
       return;
     }
 
@@ -167,8 +180,10 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     final result = await updateNotificationSettingsUseCase!(params);
 
     await result.fold(
-      (failure) async => emit(NotificationError(message: _mapFailureToMessage(failure))),
-      (_) async => emit(const NotificationOperationSuccess(message: 'Settings updated successfully')),
+      (failure) async =>
+          emit(NotificationError(message: _mapFailureToMessage(failure))),
+      (_) async => emit(const NotificationOperationSuccess(
+          message: 'Settings updated successfully')),
     );
   }
 
@@ -177,16 +192,19 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) async {
     if (getNotificationSettingsUseCase == null) {
-      emit(const NotificationError(message: 'Notification settings feature not initialized'));
+      emit(const NotificationError(
+          message: 'Notification settings feature not initialized'));
       return;
     }
 
-  emit(const NotificationSettingsLoading());
+    emit(const NotificationSettingsLoading());
 
-    final result = await getNotificationSettingsUseCase!(const GetNotificationSettingsParams());
+    final result = await getNotificationSettingsUseCase!(
+        const GetNotificationSettingsParams());
 
     await result.fold(
-      (failure) async => emit(NotificationError(message: _mapFailureToMessage(failure))),
+      (failure) async =>
+          emit(NotificationError(message: _mapFailureToMessage(failure))),
       (settings) async => emit(NotificationSettingsLoaded(settings: settings)),
     );
   }
@@ -196,7 +214,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) async {
     if (getUnreadCountUseCase == null) {
-      emit(const NotificationError(message: 'Unread count feature not initialized'));
+      emit(const NotificationError(
+          message: 'Unread count feature not initialized'));
       return;
     }
     final result = await getUnreadCountUseCase!(const GetUnreadCountParams());
@@ -239,7 +258,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     } else {
       final updated = List<NotificationEntity>.from(_cachedNotifications);
       for (final notification in freshNotifications) {
-        final index = updated.indexWhere((element) => element.id == notification.id);
+        final index =
+            updated.indexWhere((element) => element.id == notification.id);
         if (index >= 0) {
           updated[index] = notification;
         } else {
@@ -248,7 +268,9 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       }
       _cachedNotifications = updated;
     }
-    _unreadCount = _cachedNotifications.where((notification) => !notification.isRead).length;
+    _unreadCount = _cachedNotifications
+        .where((notification) => !notification.isRead)
+        .length;
   }
 
   NotificationEntity _markNotificationAsRead(NotificationEntity notification) {
@@ -270,14 +292,19 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
   Future<void> _refreshUnreadCount() async {
     if (getUnreadCountUseCase == null) {
-      _unreadCount = _cachedNotifications.where((notification) => !notification.isRead).length;
+      _unreadCount = _cachedNotifications
+          .where((notification) => !notification.isRead)
+          .length;
       return;
     }
 
-    final unreadRes = await getUnreadCountUseCase!(const GetUnreadCountParams());
+    final unreadRes =
+        await getUnreadCountUseCase!(const GetUnreadCountParams());
     await unreadRes.fold(
       (failure) async {
-        _unreadCount = _cachedNotifications.where((notification) => !notification.isRead).length;
+        _unreadCount = _cachedNotifications
+            .where((notification) => !notification.isRead)
+            .length;
       },
       (count) async {
         _unreadCount = count;
@@ -287,7 +314,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
   void _emitLoadedState(Emitter<NotificationState> emit) {
     emit(NotificationLoaded(
-      notifications: List<NotificationEntity>.unmodifiable(_cachedNotifications),
+      notifications:
+          List<NotificationEntity>.unmodifiable(_cachedNotifications),
       hasReachedMax: _hasReachedMax,
       currentPage: _currentPage,
       unreadCount: _unreadCount,

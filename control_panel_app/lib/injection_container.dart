@@ -748,11 +748,13 @@ void _initNotifications() {
   sl.registerFactory(() => NotificationBloc(
         getNotificationsUseCase: sl<notif_uc_get.GetNotificationsUseCase>(),
         markAsReadUseCase: sl<notif_uc_mark.MarkAsReadUseCase>(),
-        dismissNotificationUseCase: sl<notif_uc_dismiss.DismissNotificationUseCase>(),
-        updateNotificationSettingsUseCase: sl<notif_uc_update.UpdateNotificationSettingsUseCase>(),
+        dismissNotificationUseCase:
+            sl<notif_uc_dismiss.DismissNotificationUseCase>(),
+        updateNotificationSettingsUseCase:
+            sl<notif_uc_update.UpdateNotificationSettingsUseCase>(),
         getUnreadCountUseCase: sl<notif_uc_unread.GetUnreadCountUseCase>(),
-                getNotificationSettingsUseCase:
-                        sl<notif_uc_get_settings.GetNotificationSettingsUseCase>(),
+        getNotificationSettingsUseCase:
+            sl<notif_uc_get_settings.GetNotificationSettingsUseCase>(),
       ));
 
   // Use cases
@@ -766,7 +768,8 @@ void _initNotifications() {
       () => notif_uc_update.UpdateNotificationSettingsUseCase(sl()));
   sl.registerLazySingleton<notif_uc_unread.GetUnreadCountUseCase>(
       () => notif_uc_unread.GetUnreadCountUseCase(sl()));
-  sl.registerLazySingleton<notif_uc_get_settings.GetNotificationSettingsUseCase>(
+  sl.registerLazySingleton<
+          notif_uc_get_settings.GetNotificationSettingsUseCase>(
       () => notif_uc_get_settings.GetNotificationSettingsUseCase(sl()));
 
   // Repository

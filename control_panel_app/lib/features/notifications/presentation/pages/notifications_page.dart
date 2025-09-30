@@ -166,7 +166,7 @@ class _NotificationsPageState extends State<NotificationsPage>
         _buildActionButton(
           icon: CupertinoIcons.settings,
           onPressed: () =>
-              Navigator.pushNamed(context, '/notification-settings'),
+              Navigator.pushNamed(context, '/notifications/settings'),
         ),
         _buildActionButton(
           icon: CupertinoIcons.check_mark_circled,
