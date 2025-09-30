@@ -630,7 +630,7 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
               ),
             ),
             Icon(
-              CupertinoIcons.chevron_forward,
+              CupertinoIcons.chevron_back,
               size: 16,
               color: AppTheme.textMuted,
             ),

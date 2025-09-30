@@ -9,7 +9,8 @@ import '../../domain/usecases/get_notifications_stats_usecase.dart';
 import 'admin_notifications_event.dart';
 import 'admin_notifications_state.dart';
 
-class AdminNotificationsBloc extends Bloc<AdminNotificationsEvent, AdminNotificationsState> {
+class AdminNotificationsBloc
+    extends Bloc<AdminNotificationsEvent, AdminNotificationsState> {
   final CreateAdminNotificationUseCase createUseCase;
   final BroadcastAdminNotificationUseCase broadcastUseCase;
   final DeleteAdminNotificationUseCase deleteUseCase;
@@ -17,6 +18,9 @@ class AdminNotificationsBloc extends Bloc<AdminNotificationsEvent, AdminNotifica
   final GetSystemAdminNotificationsUseCase getSystemUseCase;
   final GetUserAdminNotificationsUseCase getUserUseCase;
   final GetAdminNotificationsStatsUseCase getStatsUseCase;
+
+  Map<String, int>? _cachedStats;
+  String? _statsError;
 
   AdminNotificationsBloc({
     required this.createUseCase,
@@ -28,28 +32,68 @@ class AdminNotificationsBloc extends Bloc<AdminNotificationsEvent, AdminNotifica
     required this.getStatsUseCase,
   }) : super(const AdminNotificationsInitial()) {
     on<LoadSystemNotificationsEvent>((event, emit) async {
-      emit(const AdminNotificationsLoading());
-      final res = await getSystemUseCase(page: event.page, pageSize: event.pageSize, type: event.type, status: event.status);
+      emit(AdminNotificationsLoading(
+          stats: _cachedStats, statsError: _statsError));
+      final res = await getSystemUseCase(
+          page: event.page,
+          pageSize: event.pageSize,
+          type: event.type,
+          status: event.status);
       res.fold(
-        (l) => emit(AdminNotificationsError(l.message ?? 'فشل تحميل إشعارات النظام')),
-        (r) => emit(AdminSystemNotificationsLoaded(items: r.items, totalCount: r.totalCount)),
+        (l) => emit(AdminNotificationsError(
+          l.message,
+          stats: _cachedStats,
+          statsError: _statsError,
+        )),
+        (r) => emit(AdminSystemNotificationsLoaded(
+          items: r.items,
+          totalCount: r.totalCount,
+          stats: _cachedStats,
+          statsError: _statsError,
+        )),
       );
     });
 
     on<LoadUserNotificationsEvent>((event, emit) async {
-      emit(const AdminNotificationsLoading());
-      final res = await getUserUseCase(userId: event.userId, page: event.page, pageSize: event.pageSize, isRead: event.isRead);
+      emit(AdminNotificationsLoading(
+          stats: _cachedStats, statsError: _statsError));
+      final res = await getUserUseCase(
+          userId: event.userId,
+          page: event.page,
+          pageSize: event.pageSize,
+          isRead: event.isRead);
       res.fold(
-        (l) => emit(AdminNotificationsError(l.message ?? 'فشل تحميل إشعارات المستخدم')),
-        (r) => emit(AdminUserNotificationsLoaded(items: r.items, totalCount: r.totalCount)),
+        (l) => emit(AdminNotificationsError(
+          l.message,
+          stats: _cachedStats,
+          statsError: _statsError,
+        )),
+        (r) => emit(AdminUserNotificationsLoaded(
+          items: r.items,
+          totalCount: r.totalCount,
+          stats: _cachedStats,
+          statsError: _statsError,
+        )),
       );
     });
 
     on<CreateAdminNotificationEvent>((event, emit) async {
-      final res = await createUseCase(type: event.type, title: event.title, message: event.message, recipientId: event.recipientId);
+      final res = await createUseCase(
+          type: event.type,
+          title: event.title,
+          message: event.message,
+          recipientId: event.recipientId);
       res.fold(
-        (l) => emit(AdminNotificationsError(l.message ?? 'فشل إنشاء الإشعار')),
-        (r) => emit(const AdminNotificationsSuccess('تم إنشاء الإشعار')),
+        (l) => emit(AdminNotificationsError(
+          l.message,
+          stats: _cachedStats,
+          statsError: _statsError,
+        )),
+        (r) => emit(AdminNotificationsSuccess(
+          'تم إنشاء الإشعار',
+          stats: _cachedStats,
+          statsError: _statsError,
+        )),
       );
     });
 
@@ -64,34 +108,118 @@ class AdminNotificationsBloc extends Bloc<AdminNotificationsEvent, AdminNotifica
         scheduledFor: event.scheduledFor,
       );
       res.fold(
-        (l) => emit(AdminNotificationsError(l.message ?? 'فشل بث الإشعار')),
-        (r) => emit(AdminNotificationsSuccess('تم بث الإشعار لعدد $r مستخدم')),
+        (l) => emit(AdminNotificationsError(
+          l.message,
+          stats: _cachedStats,
+          statsError: _statsError,
+        )),
+        (r) => emit(AdminNotificationsSuccess(
+          'تم بث الإشعار لعدد $r مستخدم',
+          stats: _cachedStats,
+          statsError: _statsError,
+        )),
       );
     });
 
     on<DeleteAdminNotificationEvent>((event, emit) async {
       final res = await deleteUseCase(event.notificationId);
       res.fold(
-        (l) => emit(AdminNotificationsError(l.message ?? 'فشل حذف الإشعار')),
-        (r) => emit(const AdminNotificationsSuccess('تم حذف الإشعار')),
+        (l) => emit(AdminNotificationsError(
+          l.message,
+          stats: _cachedStats,
+          statsError: _statsError,
+        )),
+        (r) => emit(AdminNotificationsSuccess(
+          'تم حذف الإشعار',
+          stats: _cachedStats,
+          statsError: _statsError,
+        )),
       );
     });
 
     on<ResendAdminNotificationEvent>((event, emit) async {
       final res = await resendUseCase(event.notificationId);
       res.fold(
-        (l) => emit(AdminNotificationsError(l.message ?? 'فشل إعادة إرسال الإشعار')),
-        (r) => emit(const AdminNotificationsSuccess('تمت إعادة الإرسال')),
+        (l) => emit(AdminNotificationsError(
+          l.message,
+          stats: _cachedStats,
+          statsError: _statsError,
+        )),
+        (r) => emit(AdminNotificationsSuccess(
+          'تمت إعادة الإرسال',
+          stats: _cachedStats,
+          statsError: _statsError,
+        )),
       );
     });
 
     on<LoadAdminNotificationsStatsEvent>((event, emit) async {
       final res = await getStatsUseCase();
       res.fold(
-        (l) => emit(AdminNotificationsError(l.message ?? 'فشل تحميل الإحصائيات')),
-        (r) => emit(AdminNotificationsStatsLoaded(r)),
+        (l) {
+          _statsError = l.message;
+          _cachedStats = null;
+          emit(_cloneStateWithStats(state,
+              stats: _cachedStats, statsError: _statsError));
+        },
+        (r) {
+          _cachedStats = r;
+          _statsError = null;
+          emit(_cloneStateWithStats(state, stats: _cachedStats));
+        },
       );
     });
   }
-}
 
+  AdminNotificationsState _cloneStateWithStats(
+    AdminNotificationsState current, {
+    required Map<String, int>? stats,
+    String? statsError,
+  }) {
+    if (current is AdminSystemNotificationsLoaded) {
+      return AdminSystemNotificationsLoaded(
+        items: current.items,
+        totalCount: current.totalCount,
+        stats: stats ?? current.stats,
+        statsError: statsError,
+      );
+    }
+
+    if (current is AdminUserNotificationsLoaded) {
+      return AdminUserNotificationsLoaded(
+        items: current.items,
+        totalCount: current.totalCount,
+        stats: stats ?? current.stats,
+        statsError: statsError,
+      );
+    }
+
+    if (current is AdminNotificationsLoading) {
+      return AdminNotificationsLoading(
+        stats: stats ?? current.stats,
+        statsError: statsError,
+      );
+    }
+
+    if (current is AdminNotificationsSuccess) {
+      return AdminNotificationsSuccess(
+        current.message,
+        stats: stats ?? current.stats,
+        statsError: statsError,
+      );
+    }
+
+    if (current is AdminNotificationsError) {
+      return AdminNotificationsError(
+        current.message,
+        stats: stats ?? current.stats,
+        statsError: statsError,
+      );
+    }
+
+    return AdminNotificationsInitial(
+      stats: stats ?? current.stats,
+      statsError: statsError,
+    );
+  }
+}

@@ -155,29 +155,29 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage>
                 if (isExpanded)
                   BlocBuilder<AdminNotificationsBloc, AdminNotificationsState>(
                     buildWhen: (previous, current) =>
-                        current is AdminNotificationsStatsLoaded,
+                        previous.stats != current.stats,
                     builder: (context, state) {
-                      if (state is AdminNotificationsStatsLoaded) {
-                        final total = state.stats['total'] ?? 0;
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: AppTheme.primaryGradient,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            '$total',
-                            style: AppTextStyles.caption.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        );
+                      final total = state.stats?['total'];
+                      if (total == null) {
+                        return const SizedBox.shrink();
                       }
-                      return const SizedBox.shrink();
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.primaryGradient,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '$total',
+                          style: AppTextStyles.caption.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
                     },
                   ),
               ],
@@ -305,18 +305,43 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage>
     return SliverToBoxAdapter(
       child: BlocBuilder<AdminNotificationsBloc, AdminNotificationsState>(
         buildWhen: (previous, current) =>
-            current is AdminNotificationsStatsLoaded,
+            previous.stats != current.stats ||
+            previous.statsError != current.statsError,
         builder: (context, state) {
-          if (state is AdminNotificationsStatsLoaded) {
+          final stats = state.stats;
+          if (stats != null) {
             return AnimationLimiter(
               child: Container(
                 height: 130,
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                child: NotificationsStatsCard(stats: state.stats),
+                child: NotificationsStatsCard(stats: stats),
               ),
             );
           }
-          return const SizedBox(height: 130);
+
+          if (state.statsError != null) {
+            return SizedBox(
+              height: 130,
+              child: Center(
+                child: Text(
+                  state.statsError!,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.error,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
+
+          return SizedBox(
+            height: 130,
+            child: Center(
+              child: CupertinoActivityIndicator(
+                color: AppTheme.primaryBlue,
+              ),
+            ),
+          );
         },
       ),
     );
@@ -355,6 +380,15 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage>
   Widget _buildNotificationsList() {
     return BlocBuilder<AdminNotificationsBloc, AdminNotificationsState>(
       builder: (context, state) {
+        if (state is AdminNotificationsInitial) {
+          return const SliverFillRemaining(
+            child: LoadingWidget(
+              type: LoadingType.futuristic,
+              message: 'جاري تحميل الإشعارات...',
+            ),
+          );
+        }
+
         if (state is AdminNotificationsLoading) {
           return const SliverFillRemaining(
             child: LoadingWidget(
