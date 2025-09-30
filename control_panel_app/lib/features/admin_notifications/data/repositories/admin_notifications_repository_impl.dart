@@ -9,22 +9,35 @@ import '../datasources/admin_notifications_remote_datasource.dart';
 class AdminNotificationsRepositoryImpl implements AdminNotificationsRepository {
   final AdminNotificationsRemoteDataSource remote;
   final NetworkInfo networkInfo;
-  AdminNotificationsRepositoryImpl({required this.remote, required this.networkInfo});
+  AdminNotificationsRepositoryImpl(
+      {required this.remote, required this.networkInfo});
 
   @override
-  Future<Either<Failure, String>> create({required String type, required String title, required String message, required String recipientId}) async {
-    if (!await networkInfo.isConnected) return Left(NetworkFailure());
+  Future<Either<Failure, String>> create(
+      {required String type,
+      required String title,
+      required String message,
+      required String recipientId}) async {
+    if (!await networkInfo.isConnected) return const Left(NetworkFailure());
     try {
-      final id = await remote.create(type: type, title: title, message: message, recipientId: recipientId);
+      final id = await remote.create(
+          type: type, title: title, message: message, recipientId: recipientId);
       return Right(id);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, int>> broadcast({required String type, required String title, required String message, bool targetAll = false, List<String>? userIds, List<String>? roles, DateTime? scheduledFor}) async {
-    if (!await networkInfo.isConnected) return Left(NetworkFailure());
+  Future<Either<Failure, int>> broadcast(
+      {required String type,
+      required String title,
+      required String message,
+      bool targetAll = false,
+      List<String>? userIds,
+      List<String>? roles,
+      DateTime? scheduledFor}) async {
+    if (!await networkInfo.isConnected) return const Left(NetworkFailure());
     try {
       final count = await remote.broadcast(
         type: type,
@@ -37,63 +50,69 @@ class AdminNotificationsRepositoryImpl implements AdminNotificationsRepository {
       );
       return Right(count);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, bool>> delete(String notificationId) async {
-    if (!await networkInfo.isConnected) return Left(NetworkFailure());
+    if (!await networkInfo.isConnected) return const Left(NetworkFailure());
     try {
       final ok = await remote.delete(notificationId);
       return Right(ok);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, PaginatedResult<AdminNotificationEntity>>> getSystem({int page = 1, int pageSize = 20, String? type, String? status}) async {
-    if (!await networkInfo.isConnected) return Left(NetworkFailure());
+  Future<Either<Failure, PaginatedResult<AdminNotificationEntity>>> getSystem(
+      {int page = 1, int pageSize = 20, String? type, String? status}) async {
+    if (!await networkInfo.isConnected) return const Left(NetworkFailure());
     try {
-      final res = await remote.getSystem(page: page, pageSize: pageSize, type: type, status: status);
+      final res = await remote.getSystem(
+          page: page, pageSize: pageSize, type: type, status: status);
       return Right(res);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, PaginatedResult<AdminNotificationEntity>>> getUser({required String userId, int page = 1, int pageSize = 20, bool? isRead}) async {
-    if (!await networkInfo.isConnected) return Left(NetworkFailure());
+  Future<Either<Failure, PaginatedResult<AdminNotificationEntity>>> getUser(
+      {required String userId,
+      int page = 1,
+      int pageSize = 20,
+      bool? isRead}) async {
+    if (!await networkInfo.isConnected) return const Left(NetworkFailure());
     try {
-      final res = await remote.getUser(userId: userId, page: page, pageSize: pageSize, isRead: isRead);
+      final res = await remote.getUser(
+          userId: userId, page: page, pageSize: pageSize, isRead: isRead);
       return Right(res);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, bool>> resend(String notificationId) async {
-    if (!await networkInfo.isConnected) return Left(NetworkFailure());
+    if (!await networkInfo.isConnected) return const Left(NetworkFailure());
     try {
       final ok = await remote.resend(notificationId);
       return Right(ok);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, Map<String, int>>> getStats() async {
-    if (!await networkInfo.isConnected) return Left(NetworkFailure());
+    if (!await networkInfo.isConnected) return const Left(NetworkFailure());
     try {
       final res = await remote.getStats();
       return Right(res);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 }
-

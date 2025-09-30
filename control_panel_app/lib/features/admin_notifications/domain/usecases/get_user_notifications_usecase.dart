@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
-import '../../repositories/admin_notifications_repository.dart';
-import '../../entities/admin_notification.dart';
+import 'package:bookn_cp_app/features/admin_notifications/domain/repositories/admin_notifications_repository.dart';
+import 'package:bookn_cp_app/features/admin_notifications/domain/entities/admin_notification.dart';
 import '../../../../../core/error/failures.dart';
 import '../../../../../core/models/paginated_result.dart';
 
@@ -13,6 +13,7 @@ class GetUserAdminNotificationsUseCase {
     int page = 1,
     int pageSize = 20,
     bool? isRead,
-  }) => repository.getUser(userId: userId, page: page, pageSize: pageSize, isRead: isRead);
+  }) =>
+      repository.getUser(
+          userId: userId, page: page, pageSize: pageSize, isRead: isRead);
 }
-

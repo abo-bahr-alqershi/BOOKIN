@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import '../../repositories/admin_notifications_repository.dart';
+import 'package:bookn_cp_app/features/admin_notifications/domain/repositories/admin_notifications_repository.dart';
 import '../../../../../core/error/failures.dart';
 
 class GetAdminNotificationsStatsUseCase {
@@ -8,4 +8,3 @@ class GetAdminNotificationsStatsUseCase {
 
   Future<Either<Failure, Map<String, int>>> call() => repository.getStats();
 }
-

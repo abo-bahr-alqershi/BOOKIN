@@ -1,0 +1,736 @@
+// lib/features/admin_notifications/presentation/widgets/admin_notification_form.dart
+
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'dart:ui';
+import 'package:flutter/services.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
+
+class AdminNotificationForm extends StatefulWidget {
+  final bool isBroadcast;
+  final Function(Map<String, dynamic>) onSubmit;
+
+  const AdminNotificationForm({
+    super.key,
+    required this.isBroadcast,
+    required this.onSubmit,
+  });
+
+  @override
+  State<AdminNotificationForm> createState() => _AdminNotificationFormState();
+}
+
+class _AdminNotificationFormState extends State<AdminNotificationForm>
+    with SingleTickerProviderStateMixin {
+  final _formKey = GlobalKey<FormState>();
+  late AnimationController _animationController;
+
+  final _titleController = TextEditingController();
+  final _messageController = TextEditingController();
+  final _recipientController = TextEditingController();
+  final _userIdsController = TextEditingController();
+
+  String _selectedType = 'info';
+  String _selectedPriority = 'normal';
+  bool _targetAll = false;
+  final List<String> _selectedRoles = [];
+  DateTime? _scheduledFor;
+
+  final List<String> _types = ['info', 'warning', 'error', 'success', 'system'];
+  final List<String> _priorities = ['low', 'normal', 'high', 'urgent'];
+  final List<String> _roles = ['admin', 'user', 'owner', 'guest'];
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _titleController.dispose();
+    _messageController.dispose();
+    _recipientController.dispose();
+    _userIdsController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle('معلومات الإشعار'),
+          const SizedBox(height: 16),
+          _buildTypeSelector(),
+          const SizedBox(height: 16),
+          _buildPrioritySelector(),
+          const SizedBox(height: 20),
+          _buildTextField(
+            controller: _titleController,
+            label: 'عنوان الإشعار',
+            hint: 'أدخل عنوان الإشعار',
+            icon: CupertinoIcons.text_cursor,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'يرجى إدخال عنوان الإشعار';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            controller: _messageController,
+            label: 'محتوى الإشعار',
+            hint: 'أدخل محتوى الإشعار',
+            icon: CupertinoIcons.doc_text,
+            maxLines: 4,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'يرجى إدخال محتوى الإشعار';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 24),
+          if (widget.isBroadcast) ...[
+            _buildSectionTitle('الجمهور المستهدف'),
+            const SizedBox(height: 16),
+            _buildTargetAllSwitch(),
+            if (!_targetAll) ...[
+              const SizedBox(height: 16),
+              _buildRolesSelector(),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _userIdsController,
+                label: 'معرفات المستخدمين (اختياري)',
+                hint: 'أدخل معرفات المستخدمين مفصولة بفاصلة',
+                icon: CupertinoIcons.person_2,
+              ),
+            ],
+            const SizedBox(height: 16),
+            _buildScheduleSelector(),
+          ] else ...[
+            _buildSectionTitle('المستلم'),
+            const SizedBox(height: 16),
+            _buildTextField(
+              controller: _recipientController,
+              label: 'معرف المستلم',
+              hint: 'أدخل معرف المستلم',
+              icon: CupertinoIcons.person,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'يرجى إدخال معرف المستلم';
+                }
+                return null;
+              },
+            ),
+          ],
+          const SizedBox(height: 32),
+          _buildSubmitButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: AppTextStyles.heading3.copyWith(
+        color: AppTheme.textWhite,
+      ),
+    );
+  }
+
+  Widget _buildTypeSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'نوع الإشعار',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textLight,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _types.map((type) {
+            final isSelected = _selectedType == type;
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                setState(() => _selectedType = type);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  gradient: isSelected ? AppTheme.primaryGradient : null,
+                  color: isSelected
+                      ? null
+                      : AppTheme.darkCard.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.transparent
+                        : AppTheme.darkBorder.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Text(
+                  _getTypeLabel(type),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: isSelected ? Colors.white : AppTheme.textMuted,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrioritySelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'الأولوية',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textLight,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _priorities.map((priority) {
+            final isSelected = _selectedPriority == priority;
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                setState(() => _selectedPriority = priority);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? _getPriorityColor(priority)
+                      : AppTheme.darkCard.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? _getPriorityColor(priority).withValues(alpha: 0.5)
+                        : AppTheme.darkBorder.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Text(
+                  _getPriorityLabel(priority),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: isSelected ? Colors.white : AppTheme.textMuted,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textLight,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textWhite,
+          ),
+          validator: validator,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: AppTextStyles.bodyMedium.copyWith(
+              color: AppTheme.textMuted.withValues(alpha: 0.5),
+            ),
+            prefixIcon: maxLines == 1
+                ? Icon(
+                    icon,
+                    color: AppTheme.primaryBlue,
+                    size: 20,
+                  )
+                : null,
+            filled: true,
+            fillColor: AppTheme.inputBackground.withValues(alpha: 0.3),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppTheme.primaryBlue,
+                width: 1,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppTheme.error,
+                width: 1,
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppTheme.error,
+                width: 1,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTargetAllSwitch() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.darkBorder.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            CupertinoIcons.person_3_fill,
+            color: AppTheme.primaryBlue,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'إرسال للجميع',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppTheme.textWhite,
+                  ),
+                ),
+                Text(
+                  'إرسال الإشعار لجميع المستخدمين',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          CupertinoSwitch(
+            value: _targetAll,
+            onChanged: (value) {
+              HapticFeedback.lightImpact();
+              setState(() => _targetAll = value);
+            },
+            activeTrackColor: AppTheme.primaryBlue,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRolesSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'الأدوار المستهدفة',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textLight,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _roles.map((role) {
+            final isSelected = _selectedRoles.contains(role);
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                setState(() {
+                  if (isSelected) {
+                    _selectedRoles.remove(role);
+                  } else {
+                    _selectedRoles.add(role);
+                  }
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppTheme.primaryBlue.withValues(alpha: 0.2)
+                      : AppTheme.darkCard.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppTheme.primaryBlue.withValues(alpha: 0.5)
+                        : AppTheme.darkBorder.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isSelected)
+                      Icon(
+                        CupertinoIcons.checkmark_circle_fill,
+                        size: 16,
+                        color: AppTheme.primaryBlue,
+                      ),
+                    if (isSelected) const SizedBox(width: 6),
+                    Text(
+                      _getRoleLabel(role),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: isSelected
+                            ? AppTheme.primaryBlue
+                            : AppTheme.textMuted,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScheduleSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'جدولة الإرسال (اختياري)',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppTheme.textLight,
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => _selectScheduleDateTime(context),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.inputBackground.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _scheduledFor != null
+                    ? AppTheme.primaryBlue.withValues(alpha: 0.5)
+                    : AppTheme.darkBorder.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  CupertinoIcons.calendar_badge_plus,
+                  color: _scheduledFor != null
+                      ? AppTheme.primaryBlue
+                      : AppTheme.textMuted,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _scheduledFor != null
+                        ? _formatScheduledDateTime(_scheduledFor!)
+                        : 'اختر تاريخ ووقت الجدولة',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: _scheduledFor != null
+                          ? AppTheme.textWhite
+                          : AppTheme.textMuted.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+                if (_scheduledFor != null)
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() => _scheduledFor = null);
+                    },
+                    child: Icon(
+                      CupertinoIcons.xmark_circle_fill,
+                      color: AppTheme.textMuted,
+                      size: 20,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: AppTheme.primaryGradient,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _handleSubmit,
+          borderRadius: BorderRadius.circular(16),
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  widget.isBroadcast
+                      ? CupertinoIcons.paperplane_fill
+                      : CupertinoIcons.bell_fill,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  widget.isBroadcast ? 'بث الإشعار' : 'إرسال الإشعار',
+                  style: AppTextStyles.buttonLarge.copyWith(
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleSubmit() {
+    if (_formKey.currentState!.validate()) {
+      HapticFeedback.mediumImpact();
+
+      final formData = <String, dynamic>{
+        'type': _selectedType,
+        'title': _titleController.text.trim(),
+        'message': _messageController.text.trim(),
+        'priority': _selectedPriority,
+      };
+
+      if (widget.isBroadcast) {
+        formData['targetAll'] = _targetAll;
+        if (!_targetAll) {
+          formData['roles'] = _selectedRoles.isEmpty ? null : _selectedRoles;
+          final userIds = _userIdsController.text
+              .split(',')
+              .map((id) => id.trim())
+              .where((id) => id.isNotEmpty)
+              .toList();
+          formData['userIds'] = userIds.isEmpty ? null : userIds;
+        }
+        formData['scheduledFor'] = _scheduledFor;
+      } else {
+        formData['recipientId'] = _recipientController.text.trim();
+      }
+
+      widget.onSubmit(formData);
+    }
+  }
+
+  Future<void> _selectScheduleDateTime(BuildContext context) async {
+    HapticFeedback.lightImpact();
+
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().add(const Duration(hours: 1)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.dark().copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: AppTheme.primaryBlue,
+              surface: AppTheme.darkCard,
+            ),
+            dialogTheme: DialogThemeData(backgroundColor: AppTheme.darkCard),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedDate != null) {
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+        builder: (context, child) {
+          return Theme(
+            data: ThemeData.dark().copyWith(
+              colorScheme: ColorScheme.dark(
+                primary: AppTheme.primaryBlue,
+                surface: AppTheme.darkCard,
+              ),
+              dialogTheme: DialogThemeData(backgroundColor: AppTheme.darkCard),
+            ),
+            child: child!,
+          );
+        },
+      );
+
+      if (pickedTime != null) {
+        setState(() {
+          _scheduledFor = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+        });
+      }
+    }
+  }
+
+  String _formatScheduledDateTime(DateTime dateTime) {
+    final months = [
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر'
+    ];
+
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+
+    return '${dateTime.day} ${months[dateTime.month - 1]}, ${dateTime.year} - $hour:$minute';
+  }
+
+  String _getTypeLabel(String type) {
+    switch (type) {
+      case 'info':
+        return 'معلومات';
+      case 'warning':
+        return 'تحذير';
+      case 'error':
+        return 'خطأ';
+      case 'success':
+        return 'نجاح';
+      case 'system':
+        return 'نظام';
+      default:
+        return type;
+    }
+  }
+
+  String _getPriorityLabel(String priority) {
+    switch (priority) {
+      case 'low':
+        return 'منخفضة';
+      case 'normal':
+        return 'عادية';
+      case 'high':
+        return 'عالية';
+      case 'urgent':
+        return 'عاجلة';
+      default:
+        return priority;
+    }
+  }
+
+  Color _getPriorityColor(String priority) {
+    switch (priority) {
+      case 'low':
+        return AppTheme.info;
+      case 'normal':
+        return AppTheme.primaryBlue;
+      case 'high':
+        return AppTheme.warning;
+      case 'urgent':
+        return AppTheme.error;
+      default:
+        return AppTheme.textMuted;
+    }
+  }
+
+  String _getRoleLabel(String role) {
+    switch (role) {
+      case 'admin':
+        return 'مدير';
+      case 'user':
+        return 'مستخدم';
+      case 'owner':
+        return 'مالك';
+      case 'guest':
+        return 'ضيف';
+      default:
+        return role;
+    }
+  }
+}

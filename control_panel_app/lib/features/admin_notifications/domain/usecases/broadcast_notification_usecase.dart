@@ -1,5 +1,5 @@
+import 'package:bookn_cp_app/features/admin_notifications/domain/repositories/admin_notifications_repository.dart';
 import 'package:dartz/dartz.dart';
-import '../../repositories/admin_notifications_repository.dart';
 import '../../../../../core/error/failures.dart';
 
 class BroadcastAdminNotificationUseCase {
@@ -14,7 +14,8 @@ class BroadcastAdminNotificationUseCase {
     List<String>? userIds,
     List<String>? roles,
     DateTime? scheduledFor,
-  }) => repository.broadcast(
+  }) =>
+      repository.broadcast(
         type: type,
         title: title,
         message: message,
@@ -24,4 +25,3 @@ class BroadcastAdminNotificationUseCase {
         scheduledFor: scheduledFor,
       );
 }
-
