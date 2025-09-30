@@ -233,6 +233,26 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/domain/usecases/update_profile_usecase.dart';
 import 'features/auth/domain/usecases/upload_user_image_usecase.dart';
 import 'features/auth/domain/usecases/change_password_usecase.dart';
+// Features - Notifications
+import 'features/notifications/presentation/bloc/notification_bloc.dart';
+import 'features/notifications/domain/usecases/get_notifications_usecase.dart'
+    as notif_uc_get;
+import 'features/notifications/domain/usecases/mark_as_read_usecase.dart'
+    as notif_uc_mark;
+import 'features/notifications/domain/usecases/dismiss_notification_usecase.dart'
+    as notif_uc_dismiss;
+import 'features/notifications/domain/usecases/update_notification_settings_usecase.dart'
+    as notif_uc_update;
+import 'features/notifications/domain/usecases/get_unread_count_usecase.dart'
+    as notif_uc_unread;
+import 'features/notifications/domain/repositories/notification_repository.dart'
+    as notif_repo;
+import 'features/notifications/data/repositories/notification_repository_impl.dart'
+    as notif_repo_impl;
+import 'features/notifications/data/datasources/notification_remote_datasource.dart'
+    as notif_ds_remote;
+import 'features/notifications/data/datasources/notification_local_datasource.dart'
+    as notif_ds_local;
 
 // Features - Chat
 import 'features/chat/presentation/bloc/chat_bloc.dart';
@@ -692,6 +712,9 @@ Future<void> init() async {
   // Features - Settings
   _initSettings();
 
+  // Features - Notifications
+  _initNotifications();
+
   // Features - Reference
   _initReference();
 
@@ -715,6 +738,51 @@ Future<void> init() async {
 
   // External
   await _initExternal();
+}
+
+// Features - Notifications
+void _initNotifications() {
+  // Bloc
+  sl.registerFactory(() => NotificationBloc(
+        getNotificationsUseCase: sl<notif_uc_get.GetNotificationsUseCase>(),
+        markAsReadUseCase: sl<notif_uc_mark.MarkAsReadUseCase>(),
+        dismissNotificationUseCase: sl<notif_uc_dismiss.DismissNotificationUseCase>(),
+        updateNotificationSettingsUseCase: sl<notif_uc_update.UpdateNotificationSettingsUseCase>(),
+        getUnreadCountUseCase: sl<notif_uc_unread.GetUnreadCountUseCase>(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton<notif_uc_get.GetNotificationsUseCase>(
+      () => notif_uc_get.GetNotificationsUseCase(sl()));
+  sl.registerLazySingleton<notif_uc_mark.MarkAsReadUseCase>(
+      () => notif_uc_mark.MarkAsReadUseCase(sl()));
+  sl.registerLazySingleton<notif_uc_dismiss.DismissNotificationUseCase>(
+      () => notif_uc_dismiss.DismissNotificationUseCase(sl()));
+  sl.registerLazySingleton<notif_uc_update.UpdateNotificationSettingsUseCase>(
+      () => notif_uc_update.UpdateNotificationSettingsUseCase(sl()));
+  sl.registerLazySingleton<notif_uc_unread.GetUnreadCountUseCase>(
+      () => notif_uc_unread.GetUnreadCountUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<notif_repo.NotificationRepository>(
+    () => notif_repo_impl.NotificationRepositoryImpl(
+      remoteDataSource: sl(),
+      localDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<notif_ds_remote.NotificationRemoteDataSource>(
+    () => notif_ds_remote.NotificationRemoteDataSourceImpl(
+      apiClient: sl(),
+      localStorage: sl(),
+      authLocalDataSource: sl(),
+    ),
+  );
+  sl.registerLazySingleton<notif_ds_local.NotificationLocalDataSource>(
+    () => notif_ds_local.NotificationLocalDataSourceImpl(localStorage: sl()),
+  );
 }
 
 void _initSettings() {

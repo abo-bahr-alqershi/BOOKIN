@@ -15,11 +15,11 @@ class NotificationModel extends NotificationEntity {
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
     return NotificationModel(
       id: json['id'] ?? '',
-      title: json['title'] ?? '',
-      message: json['message'] ?? '',
+      title: json['title'] ?? json['Title'] ?? '',
+      message: json['message'] ?? json['content'] ?? json['Content'] ?? '',
       type: json['type'] ?? '',
       data: json['data'],
-      isRead: json['isRead'] ?? json['is_read'] ?? false,
+      isRead: json['isRead'] ?? json['is_read'] ?? json['IsRead'] ?? false,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : json['created_at'] != null
@@ -29,6 +29,8 @@ class NotificationModel extends NotificationEntity {
           ? DateTime.parse(json['readAt'])
           : json['read_at'] != null
               ? DateTime.parse(json['read_at'])
+              : json['ReadAt'] != null
+                  ? DateTime.tryParse(json['ReadAt'])
               : null,
     );
   }

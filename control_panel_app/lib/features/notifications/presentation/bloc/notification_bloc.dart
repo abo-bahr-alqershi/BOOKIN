@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/usecases/get_notifications_usecase.dart';
+import '../../domain/usecases/get_unread_count_usecase.dart';
 import '../../domain/usecases/mark_as_read_usecase.dart';
 import '../../domain/usecases/dismiss_notification_usecase.dart';
 import '../../domain/usecases/update_notification_settings_usecase.dart';
@@ -12,12 +13,14 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   final MarkAsReadUseCase? markAsReadUseCase;
   final DismissNotificationUseCase? dismissNotificationUseCase;
   final UpdateNotificationSettingsUseCase? updateNotificationSettingsUseCase;
+  final GetUnreadCountUseCase? getUnreadCountUseCase;
 
   NotificationBloc({
     this.getNotificationsUseCase,
     this.markAsReadUseCase,
     this.dismissNotificationUseCase,
     this.updateNotificationSettingsUseCase,
+    this.getUnreadCountUseCase,
   }) : super(const NotificationInitial()) {
     on<LoadNotificationsEvent>(_onLoadNotifications);
     on<MarkNotificationAsReadEvent>(_onMarkAsRead);
@@ -135,8 +138,15 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     LoadUnreadCountEvent event,
     Emitter<NotificationState> emit,
   ) async {
-    // For now, emit a simple state to avoid build errors
-    emit(const NotificationOperationSuccess(message: 'Unread count loaded'));
+    if (getUnreadCountUseCase == null) {
+      emit(const NotificationError(message: 'Unread count feature not initialized'));
+      return;
+    }
+    final result = await getUnreadCountUseCase!(const GetUnreadCountParams());
+    await result.fold(
+      (failure) async => emit(NotificationError(message: _mapFailureToMessage(failure))),
+      (count) async => emit(NotificationOperationSuccess(message: 'Unread count: $count')),
+    );
   }
 
   String _mapFailureToMessage(Failure failure) {
