@@ -145,6 +145,12 @@ public class UpdateUserSettingsCommandHandler : IRequestHandler<UpdateUserSettin
         existingSettings.PreferredCurrency = request.PreferredCurrency.ToUpper();
         existingSettings.TimeZone = request.TimeZone;
         existingSettings.DarkMode = request.DarkMode;
+        // تحديث إعدادات الإشعارات من الطلب
+        existingSettings.BookingNotifications = request.NotificationSettings.BookingNotifications;
+        existingSettings.PromotionalNotifications = request.NotificationSettings.PromotionalNotifications;
+        existingSettings.EmailNotifications = request.NotificationSettings.EmailNotifications;
+        existingSettings.SmsNotifications = request.NotificationSettings.SmsNotifications;
+        existingSettings.PushNotifications = request.NotificationSettings.PushNotifications;
         
         // تحديث الإعدادات الإضافية
         if (request.AdditionalSettings != null && request.AdditionalSettings.Count > 0)
@@ -184,6 +190,11 @@ public class UpdateUserSettingsCommandHandler : IRequestHandler<UpdateUserSettin
             PreferredCurrency = request.PreferredCurrency.ToUpper(),
             TimeZone = request.TimeZone,
             DarkMode = request.DarkMode,
+            BookingNotifications = request.NotificationSettings.BookingNotifications,
+            PromotionalNotifications = request.NotificationSettings.PromotionalNotifications,
+            EmailNotifications = request.NotificationSettings.EmailNotifications,
+            SmsNotifications = request.NotificationSettings.SmsNotifications,
+            PushNotifications = request.NotificationSettings.PushNotifications,
             AdditionalSettings = request.AdditionalSettings ?? new Dictionary<string, object>(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow

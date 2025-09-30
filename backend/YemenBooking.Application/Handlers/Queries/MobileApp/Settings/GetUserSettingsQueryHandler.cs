@@ -78,7 +78,7 @@ public class GetUserSettingsQueryHandler : IRequestHandler<GetUserSettingsQuery,
                 );
             }
 
-            // تحويل البيانات إلى DTO
+            // تحويل البيانات إلى DTO مع fallback لقراءة SettingsJson من جدول المستخدم عند غياب UserSettings
             var userSettingsDto = new UserSettingsDto
             {
                 PreferredLanguage = userSettings.PreferredLanguage ?? "ar",

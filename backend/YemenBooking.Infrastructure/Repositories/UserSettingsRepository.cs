@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using YemenBooking.Core.Entities;
 using YemenBooking.Core.Interfaces.Repositories;
 using YemenBooking.Infrastructure.Data.Context;
@@ -11,29 +12,60 @@ namespace YemenBooking.Infrastructure.Repositories
     {
         public UserSettingsRepository(YemenBookingDbContext context) : base(context) { }
 
-        public Task<bool> CreateOrUpdateAsync(UserSettings userSettings, CancellationToken cancellationToken = default)
+        public async Task<UserSettings> CreateOrUpdateAsync(UserSettings userSettings, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            var existing = await _context.Set<UserSettings>().FirstOrDefaultAsync(s => s.UserId == userSettings.UserId, cancellationToken);
+            if (existing == null)
+            {
+                await _context.Set<UserSettings>().AddAsync(userSettings, cancellationToken);
+            }
+            else
+            {
+                existing.PreferredLanguage = userSettings.PreferredLanguage;
+                existing.PreferredCurrency = userSettings.PreferredCurrency;
+                existing.TimeZone = userSettings.TimeZone;
+                existing.DarkMode = userSettings.DarkMode;
+                existing.BookingNotifications = userSettings.BookingNotifications;
+                existing.PromotionalNotifications = userSettings.PromotionalNotifications;
+                existing.EmailNotifications = userSettings.EmailNotifications;
+                existing.SmsNotifications = userSettings.SmsNotifications;
+                existing.PushNotifications = userSettings.PushNotifications;
+                existing.AdditionalSettings = userSettings.AdditionalSettings;
+                _context.Set<UserSettings>().Update(existing);
+                userSettings = existing;
+            }
+            await _context.SaveChangesAsync(cancellationToken);
+            return userSettings;
         }
 
-        public Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            var entity = await GetByIdAsync(id, cancellationToken);
+            if (entity == null) return false;
+            _context.Set<UserSettings>().Remove(entity);
+            await _context.SaveChangesAsync(cancellationToken);
+            return true;
         }
 
-        public Task<bool> DeleteByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            var entity = await _context.Set<UserSettings>().FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
+            if (entity == null) return false;
+            _context.Set<UserSettings>().Remove(entity);
+            await _context.SaveChangesAsync(cancellationToken);
+            return true;
         }
 
-        public Task<UserSettings> CreateAsync(UserSettings userSettings, CancellationToken cancellationToken = default)
+        public async Task<UserSettings> CreateAsync(UserSettings userSettings, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            await _context.Set<UserSettings>().AddAsync(userSettings, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+            return userSettings;
         }
 
-        public Task<bool> ExistsAsync(Guid userId, CancellationToken cancellationToken = default)
+        public async Task<bool> ExistsAsync(Guid userId, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            return await _context.Set<UserSettings>().AnyAsync(s => s.UserId == userId, cancellationToken);
         }
 
         public Task<UserSettings?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -41,19 +73,19 @@ namespace YemenBooking.Infrastructure.Repositories
             return base.GetByIdAsync(id, cancellationToken);
         }
 
-        public Task<UserSettings?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+        public async Task<UserSettings?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            return await _context.Set<UserSettings>().FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
         }
 
-        public Task<UserSettings> UpdateAsync(UserSettings userSettings, CancellationToken cancellationToken = default)
+        public async Task<UserSettings> UpdateAsync(UserSettings userSettings, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            _context.Set<UserSettings>().Update(userSettings);
+            await _context.SaveChangesAsync(cancellationToken);
+            return userSettings;
         }
 
-        Task<UserSettings> IUserSettingsRepository.CreateOrUpdateAsync(UserSettings userSettings, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
+        async Task<UserSettings> IUserSettingsRepository.CreateOrUpdateAsync(UserSettings userSettings, CancellationToken cancellationToken)
+            => await CreateOrUpdateAsync(userSettings, cancellationToken);
     }
 }
