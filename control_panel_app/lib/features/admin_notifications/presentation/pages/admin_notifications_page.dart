@@ -65,7 +65,7 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage>
           LoadSystemNotificationsEvent(
             page: _currentPage,
             pageSize: _pageSize,
-            type: _selectedType,
+            type: _normalizeAdminTypeFilter(_selectedType),
             status: _selectedStatus,
           ),
         );
@@ -343,6 +343,13 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage>
             : const SizedBox.shrink(),
       ),
     );
+  }
+
+  String? _normalizeAdminTypeFilter(String? category) {
+    if (category == null) return null;
+    // High-level categories should not be sent to backend; leave null to get all and filter server-side by exact types if needed
+    // Admin API expects exact Type values; here we keep it null to avoid mismatches.
+    return null;
   }
 
   Widget _buildNotificationsList() {

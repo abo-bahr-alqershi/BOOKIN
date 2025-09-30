@@ -510,14 +510,12 @@ class _NotificationsPageState extends State<NotificationsPage>
   String _mapTypeToCategory(String rawType) {
     final String t = rawType.trim();
     if (t.isEmpty) return 'other';
-    // Normalize to upper for matching against backend types
     final upper = t.toUpperCase();
-    if (upper.startsWith('BOOKING_')) return 'booking';
-    if (upper.startsWith('PAYMENT_')) return 'payment';
-    if (upper.startsWith('PROMOTION_')) return 'promotion';
-    if (upper.startsWith('SYSTEM_')) return 'system';
-    if (upper == 'SECURITY_ALERT') return 'system';
-    // Fallback: try simple mappings
+    // Support both SNAKE_CASE (BOOKING_CREATED) and PascalCase (BookingCreated)
+    if (upper.startsWith('BOOKING')) return 'booking';
+    if (upper.startsWith('PAYMENT')) return 'payment';
+    if (upper.startsWith('PROMOTION')) return 'promotion';
+    if (upper.startsWith('SYSTEM') || upper == 'SECURITY_ALERT') return 'system';
     final lower = t.toLowerCase();
     if (['booking', 'payment', 'promotion', 'system'].contains(lower)) {
       return lower;
