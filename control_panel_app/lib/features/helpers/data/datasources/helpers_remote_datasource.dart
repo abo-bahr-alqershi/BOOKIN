@@ -72,8 +72,9 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
       '${ApiConstants.adminBaseUrl}/Users/search',
       queryParameters: {
         'searchTerm': searchTerm,
-        // backend expects GUID RoleId (nullable). Do not send if not GUID.
-        'roleId': _tryGuid(role),
+        // Prefer sending RoleName to allow logical roles; backend also supports RoleId
+        if (role != null && !_isGuid(role)) 'roleName': _mapRoleAlias(role),
+        if (_isGuid(role)) 'roleId': role,
         'isActive': isActive,
         'pageNumber': pageNumber,
         'pageSize': pageSize,
@@ -109,10 +110,21 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
     );
   }
 
-  String? _tryGuid(String? value) {
-    if (value == null) return null;
+  bool _isGuid(String? value) {
+    if (value == null) return false;
     final guidRegex = RegExp(r'^[{(]?[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}[)}]?$');
-    return guidRegex.hasMatch(value) ? value : null;
+    return guidRegex.hasMatch(value);
+  }
+
+  String _mapRoleAlias(String role) {
+    // Map common aliases to backend Role.Name seeds: Admin, Owner, Manager, Customer
+    final lower = role.trim().toLowerCase();
+    if (lower == 'admin' || lower == 'administrator' || lower == 'super_admin') return 'Admin';
+    if (lower == 'owner' || lower == 'hotel_owner' || lower == 'property_owner') return 'Owner';
+    if (lower == 'staff' || lower == 'manager' || lower == 'hotel_manager' || lower == 'receptionist') return 'Manager';
+    if (lower == 'client' || lower == 'customer' || lower == 'guest') return 'Customer';
+    // Fallback to original capitalized
+    return role;
   }
 
   @override

@@ -46,6 +46,12 @@ public class GetAllUsersQuery : IRequest<PaginatedResult<object>>
     public Guid? RoleId { get; set; }
 
     /// <summary>
+    /// فلترة باسم الدور المنطقي (Admin, Owner, Staff, Customer) - اختياري
+    /// Logical role name filter (Admin, Owner, Staff, Customer) - optional
+    /// </summary>
+    public string? RoleName { get; set; }
+
+    /// <summary>
     /// فلترة بالحالة النشطة (اختياري)
     /// Active status filter (optional)
     /// </summary>

@@ -30,7 +30,7 @@ class UserModel extends User {
     return UserModel(
       id: (json['id'] ?? json['userId'] ?? '').toString(),
       name: (json['name'] ?? json['fullName'] ?? json['userName'] ?? '').toString(),
-      role: (json['role'] ?? json['roleName'] ?? '').toString(),
+      role: (json['role'] ?? json['roleName'] ?? json['accountRole'] ?? '').toString(),
       email: (json['email'] ?? '').toString(),
       phone: (json['phone'] ?? json['phoneNumber'] ?? '').toString(),
       profileImage: (json['profileImage'] ?? json['avatarUrl']) as String?,

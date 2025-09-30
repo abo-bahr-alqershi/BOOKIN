@@ -58,11 +58,19 @@ namespace YemenBooking.Application.Handlers.Queries.Users
             {
                 query = query.Where(u => u.UserRoles.Any(ur => ur.RoleId == request.RoleId.Value));
             }
+            else if (!string.IsNullOrWhiteSpace(request.RoleName))
+            {
+                var roleName = request.RoleName.Trim();
+                query = query.Where(u => u.UserRoles.Any(ur => ur.Role != null && ur.Role.Name == roleName));
+            }
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 var term = request.SearchTerm.Trim().ToLower();
-                query = query.Where(u => u.Name.ToLower().Contains(term) || u.Email.ToLower().Contains(term));
+                query = query.Where(u =>
+                    u.Name.ToLower().Contains(term)
+                    || u.Email.ToLower().Contains(term)
+                    || u.Phone.ToLower().Contains(term));
             }
 
             if (request.IsActive.HasValue)

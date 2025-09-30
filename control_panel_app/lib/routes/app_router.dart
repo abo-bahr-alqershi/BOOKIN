@@ -192,6 +192,7 @@ import 'package:bookn_cp_app/features/admin_notifications/presentation/bloc/admi
 import 'package:bookn_cp_app/features/admin_notifications/presentation/pages/admin_notifications_page.dart';
 import 'package:bookn_cp_app/features/admin_notifications/presentation/pages/create_admin_notification_page.dart';
 import 'package:bookn_cp_app/features/admin_notifications/presentation/pages/user_notifications_page.dart';
+import 'package:bookn_cp_app/features/admin_notifications/presentation/pages/user_selector_page.dart' as an_selector;
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
@@ -545,6 +546,23 @@ class AppRouter {
             return BlocProvider<an_bloc.AdminNotificationsBloc>(
               create: (_) => di.sl<an_bloc.AdminNotificationsBloc>(),
               child: UserNotificationsPage(userId: userId),
+            );
+          },
+        ),
+
+        // Helpers - Admin User Selector (optional direct route)
+        GoRoute(
+          path: '/helpers/select/users',
+          builder: (context, state) {
+            final params = state.extra is Map<String, dynamic>
+                ? state.extra as Map<String, dynamic>
+                : const {};
+            return an_selector.AdminUserSelectorPage(
+              allowMultiSelect: params['allowMultiSelect'] ?? false,
+              initialSearchTerm: params['initialSearchTerm'],
+              initialRole: params['initialRole'],
+              onUsersSelected: params['onUsersSelected'],
+              onUserSelected: params['onUserSelected'],
             );
           },
         ),
