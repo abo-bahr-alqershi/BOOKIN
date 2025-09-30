@@ -23,7 +23,7 @@ public interface INotificationRepository : IRepository<Notification>
     /// الحصول على إشعارات المستخدم
     /// Get user notifications
     /// </summary>
-    Task<IEnumerable<object>> GetUserNotificationsAsync(
+    Task<IEnumerable<Notification>> GetUserNotificationsAsync(
         Guid userId,
         bool? isRead = null,
         int page = 1,
@@ -34,7 +34,7 @@ public interface INotificationRepository : IRepository<Notification>
     /// الحصول على إشعارات النظام
     /// Get system notifications
     /// </summary>
-    Task<IEnumerable<object>> GetSystemNotificationsAsync(
+    Task<IEnumerable<Notification>> GetSystemNotificationsAsync(
         string? notificationType = null,
         DateTime? fromDate = null,
         DateTime? toDate = null,

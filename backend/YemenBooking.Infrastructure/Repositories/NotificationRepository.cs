@@ -26,22 +26,30 @@ namespace YemenBooking.Infrastructure.Repositories
             return true;
         }
 
-        public async Task<IEnumerable<object>> GetUserNotificationsAsync(Guid userId, bool? isRead = null, int page = 1, int pageSize = 50, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Notification>> GetUserNotificationsAsync(Guid userId, bool? isRead = null, int page = 1, int pageSize = 50, CancellationToken cancellationToken = default)
         {
             var query = _dbSet.Where(n => n.RecipientId == userId);
             if (isRead.HasValue) query = query.Where(n => n.IsRead == isRead.Value);
-            var items = await query.Skip((page-1)*pageSize).Take(pageSize).ToListAsync(cancellationToken);
-            return items.Select(n => new { n.Id, n.Title, n.Message, n.Type, n.CreatedAt, n.IsRead });
+            var items = await query
+                .OrderByDescending(n => n.CreatedAt)
+                .Skip((page-1)*pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+            return items;
         }
 
-        public async Task<IEnumerable<object>> GetSystemNotificationsAsync(string? notificationType = null, DateTime? fromDate = null, DateTime? toDate = null, int page = 1, int pageSize = 50, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Notification>> GetSystemNotificationsAsync(string? notificationType = null, DateTime? fromDate = null, DateTime? toDate = null, int page = 1, int pageSize = 50, CancellationToken cancellationToken = default)
         {
             var query = _dbSet.AsQueryable();
             if (!string.IsNullOrEmpty(notificationType)) query = query.Where(n => n.Type == notificationType);
             if (fromDate.HasValue) query = query.Where(n => n.CreatedAt >= fromDate.Value);
             if (toDate.HasValue) query = query.Where(n => n.CreatedAt <= toDate.Value);
-            var items = await query.Skip((page-1)*pageSize).Take(pageSize).ToListAsync(cancellationToken);
-            return items.Select(n => new { n.Id, n.RecipientId, n.Title, n.Message, n.Type, n.CreatedAt, n.IsRead });
+            var items = await query
+                .OrderByDescending(n => n.CreatedAt)
+                .Skip((page-1)*pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+            return items;
         }
 
         public async Task<bool> MarkNotificationAsReadAsync(Guid notificationId, CancellationToken cancellationToken = default)
