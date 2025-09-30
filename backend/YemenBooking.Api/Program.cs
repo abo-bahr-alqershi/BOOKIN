@@ -32,6 +32,7 @@ using Google.Apis.Auth.OAuth2;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
+using YemenBooking.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -204,6 +205,9 @@ builder.Services.AddSingleton<YemenBooking.Infrastructure.Indexing.Services.ILit
 });
 
 builder.Services.AddHostedService(provider => (YemenBooking.Infrastructure.Indexing.Services.QueuedLiteDbService)provider.GetRequiredService<YemenBooking.Infrastructure.Indexing.Services.ILiteDbWriteQueue>());
+
+// إشغّل مرسل الإشعارات المجدولة
+builder.Services.AddHostedService<ScheduledNotificationsDispatcher>();
 
 // IMPORTANT: IIndexingService depends on scoped repositories/services, so register it as Scoped
 builder.Services.AddScoped<IIndexingService>(provider =>

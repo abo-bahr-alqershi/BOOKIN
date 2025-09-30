@@ -663,6 +663,18 @@ import 'features/admin_payments/domain/usecases/analytics/get_refund_statistics_
 import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_analytics/payment_analytics_bloc.dart'
     as pay_an_bloc;
 import 'package:bookn_cp_app/features/auth/verification/bloc/email_verification_bloc.dart';
+// Admin Notifications
+import 'features/admin_notifications/presentation/bloc/admin_notifications_bloc.dart' as an_bloc;
+import 'features/admin_notifications/domain/repositories/admin_notifications_repository.dart' as an_repo;
+import 'features/admin_notifications/data/repositories/admin_notifications_repository_impl.dart' as an_repo_impl;
+import 'features/admin_notifications/data/datasources/admin_notifications_remote_datasource.dart' as an_ds_remote;
+import 'features/admin_notifications/domain/usecases/create_notification_usecase.dart' as an_uc_create;
+import 'features/admin_notifications/domain/usecases/broadcast_notification_usecase.dart' as an_uc_broadcast;
+import 'features/admin_notifications/domain/usecases/delete_notification_usecase.dart' as an_uc_delete;
+import 'features/admin_notifications/domain/usecases/resend_notification_usecase.dart' as an_uc_resend;
+import 'features/admin_notifications/domain/usecases/get_system_notifications_usecase.dart' as an_uc_get_system;
+import 'features/admin_notifications/domain/usecases/get_user_notifications_usecase.dart' as an_uc_get_user;
+import 'features/admin_notifications/domain/usecases/get_notifications_stats_usecase.dart' as an_uc_stats;
 
 final sl = GetIt.instance;
 
@@ -731,6 +743,9 @@ Future<void> init() async {
 
   // Features - Admin Sections
   _initAdminSections();
+
+  // Features - Admin Notifications
+  _initAdminNotifications();
 
   // Theme
   _initTheme();
@@ -2061,4 +2076,32 @@ Future<void> _initExternal() async {
             AddressCheckOptions(
                 address: io.InternetAddress.tryParse('8.8.8.8')!, port: 53),
           ]));
+}
+
+void _initAdminNotifications() {
+  // Bloc
+  sl.registerFactory(() => an_bloc.AdminNotificationsBloc(
+        createUseCase: sl<an_uc_create.CreateAdminNotificationUseCase>(),
+        broadcastUseCase: sl<an_uc_broadcast.BroadcastAdminNotificationUseCase>(),
+        deleteUseCase: sl<an_uc_delete.DeleteAdminNotificationUseCase>(),
+        resendUseCase: sl<an_uc_resend.ResendAdminNotificationUseCase>(),
+        getSystemUseCase: sl<an_uc_get_system.GetSystemAdminNotificationsUseCase>(),
+        getUserUseCase: sl<an_uc_get_user.GetUserAdminNotificationsUseCase>(),
+        getStatsUseCase: sl<an_uc_stats.GetAdminNotificationsStatsUseCase>(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton<an_uc_create.CreateAdminNotificationUseCase>(() => an_uc_create.CreateAdminNotificationUseCase(sl()));
+  sl.registerLazySingleton<an_uc_broadcast.BroadcastAdminNotificationUseCase>(() => an_uc_broadcast.BroadcastAdminNotificationUseCase(sl()));
+  sl.registerLazySingleton<an_uc_delete.DeleteAdminNotificationUseCase>(() => an_uc_delete.DeleteAdminNotificationUseCase(sl()));
+  sl.registerLazySingleton<an_uc_resend.ResendAdminNotificationUseCase>(() => an_uc_resend.ResendAdminNotificationUseCase(sl()));
+  sl.registerLazySingleton<an_uc_get_system.GetSystemAdminNotificationsUseCase>(() => an_uc_get_system.GetSystemAdminNotificationsUseCase(sl()));
+  sl.registerLazySingleton<an_uc_get_user.GetUserAdminNotificationsUseCase>(() => an_uc_get_user.GetUserAdminNotificationsUseCase(sl()));
+  sl.registerLazySingleton<an_uc_stats.GetAdminNotificationsStatsUseCase>(() => an_uc_stats.GetAdminNotificationsStatsUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<an_repo.AdminNotificationsRepository>(() => an_repo_impl.AdminNotificationsRepositoryImpl(remote: sl(), networkInfo: sl()));
+
+  // Data source
+  sl.registerLazySingleton<an_ds_remote.AdminNotificationsRemoteDataSource>(() => an_ds_remote.AdminNotificationsRemoteDataSource(apiClient: sl()));
 }

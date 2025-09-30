@@ -185,6 +185,8 @@ import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/section_f
 import 'package:bookn_cp_app/features/admin_sections/presentation/bloc/section_items/section_items_bloc.dart'
     as sec_items_bloc;
 import 'package:bookn_cp_app/core/enums/section_target.dart' as sec_enums;
+import 'package:bookn_cp_app/features/admin_notifications/presentation/bloc/admin_notifications_bloc.dart' as an_bloc;
+import 'package:bookn_cp_app/features/admin_notifications/presentation/pages/admin_notifications_page.dart';
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
@@ -493,6 +495,17 @@ class AppRouter {
               child: const AdminHubPage(),
             ),
           ),
+        ),
+
+        // Admin Notifications
+        GoRoute(
+          path: '/admin/notifications',
+          builder: (context, state) {
+            return BlocProvider<an_bloc.AdminNotificationsBloc>(
+              create: (_) => di.sl<an_bloc.AdminNotificationsBloc>(),
+              child: const AdminNotificationsPage(),
+            );
+          },
         ),
 
         // Admin Units - list

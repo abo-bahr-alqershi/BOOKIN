@@ -1070,6 +1070,42 @@ lib/
 │               ├─ settings_item_widget.dart
 │               └─ theme_selector_widget.dart
 │
+│
+│   ├── admin_notifications/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   │   └── admin_notifications_remote_datasource.dart
+│   │   │   ├── models/
+│   │   │   │   └── admin_notification_model.dart
+│   │   │   └── repositories/
+│   │   │       └── admin_notifications_repository_impl.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   └── admin_notification.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── admin_notifications_repository.dart
+│   │   │   └── usecases/
+│   │   │       ├── create_notification_usecase.dart
+│   │   │       ├── broadcast_notification_usecase.dart
+│   │   │       ├── delete_notification_usecase.dart
+│   │   │       ├── resend_notification_usecase.dart
+│   │   │       ├── get_system_notifications_usecase.dart
+│   │   │       ├── get_user_notifications_usecase.dart
+│   │   │       └── get_notifications_stats_usecase.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── admin_notifications_bloc.dart
+│   │       │   ├── admin_notifications_event.dart
+│   │       │   └── admin_notifications_state.dart
+│   │       ├── pages/
+│   │       │   ├── admin_notifications_page.dart
+│   │       │   ├── create_admin_notification_page.dart
+│   │       │   └── user_notifications_page.dart
+│   │       └── widgets/
+│   │           ├── notification_filters_bar.dart
+│   │           ├── notifications_stats_card.dart
+│   │           ├── admin_notification_form.dart
+│   │           └── admin_notifications_table.dart
 ├── routes/
 │   ├── app_router.dart
 │   ├── route_animations.dart
