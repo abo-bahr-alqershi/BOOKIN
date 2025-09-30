@@ -200,6 +200,12 @@ public class YemenBookingDbContext : DbContext
     public DbSet<AuditLog> AuditLogs { get; set; }
 
     /// <summary>
+    /// جدول إعدادات المستخدم
+    /// User settings table
+    /// </summary>
+    public DbSet<UserSettings> UserSettings { get; set; }
+
+    /// <summary>
     /// جدول صور التقييمات
     /// Review images table
     /// </summary>
@@ -366,6 +372,7 @@ public class YemenBookingDbContext : DbContext
         modelBuilder.ApplyConfiguration(new ReviewConfiguration());
         modelBuilder.ApplyConfiguration(new PropertyPolicyConfiguration());
         modelBuilder.ApplyConfiguration(new StaffConfiguration());
+        modelBuilder.ApplyConfiguration(new UserSettingsConfiguration());
         modelBuilder.ApplyConfiguration(new AdminActionConfiguration());
         modelBuilder.ApplyConfiguration(new SectionConfiguration());
         // SectionItem configuration removed
