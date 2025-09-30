@@ -1,5 +1,6 @@
 // lib/features/notifications/presentation/pages/notifications_page.dart
 
+import 'package:bookn_cp_app/core/constants/route_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/loading_widget.dart';
@@ -165,8 +167,7 @@ class _NotificationsPageState extends State<NotificationsPage>
       actions: [
         _buildActionButton(
           icon: CupertinoIcons.settings,
-          onPressed: () =>
-              Navigator.pushNamed(context, '/notifications/settings'),
+          onPressed: () => context.push(RouteConstants.notificationSettings),
         ),
         _buildActionButton(
           icon: CupertinoIcons.check_mark_circled,
