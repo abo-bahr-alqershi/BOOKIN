@@ -34,13 +34,13 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
   User? _selectedRecipient;
   final _userIdsController = TextEditingController();
 
-  String _selectedType = 'info';
+  String _selectedType = 'booking';
   String _selectedPriority = 'normal';
   bool _targetAll = false;
   final List<String> _selectedRoles = [];
   DateTime? _scheduledFor;
 
-  final List<String> _types = ['info', 'warning', 'error', 'success', 'system'];
+  final List<String> _types = ['booking', 'payment', 'promotion', 'system'];
   final List<String> _priorities = ['low', 'normal', 'high', 'urgent'];
   final List<String> _roles = ['admin', 'user', 'owner', 'guest'];
 
@@ -718,16 +718,14 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
 
   String _getTypeLabel(String type) {
     switch (type) {
-      case 'info':
-        return 'معلومات';
-      case 'warning':
-        return 'تحذير';
-      case 'error':
-        return 'خطأ';
-      case 'success':
-        return 'نجاح';
+      case 'booking':
+        return 'الحجوزات';
+      case 'payment':
+        return 'المدفوعات';
+      case 'promotion':
+        return 'العروض';
       case 'system':
-        return 'نظام';
+        return 'النظام';
       default:
         return type;
     }
