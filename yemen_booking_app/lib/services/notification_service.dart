@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:permission_handler/permission_handler.dart';
 import '../core/network/api_client.dart';
 import 'local_storage_service.dart';
 import '../features/auth/data/datasources/auth_local_datasource.dart';
@@ -45,6 +46,15 @@ class NotificationService {
 
   // Request notification permission
   Future<void> _requestPermission() async {
+    // Android 13+ requires runtime POST_NOTIFICATIONS permission
+    if (Platform.isAndroid) {
+      final current = await Permission.notification.status;
+      if (!current.isGranted) {
+        final result = await Permission.notification.request();
+        debugPrint('Android notification permission result: $result');
+      }
+    }
+
     final settings = await _firebaseMessaging.requestPermission(
       alert: true,
       badge: true,
@@ -100,11 +110,15 @@ class NotificationService {
 
   // Configure Firebase messaging
   Future<void> _configureFirebaseMessaging() async {
+    // iOS: allow notifications to be displayed while app in foreground
+    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
     // Foreground message handler
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-
-    // Background message handler
-    FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
 
     // Message opened app handler
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
@@ -121,6 +135,7 @@ class NotificationService {
     try {
       final token = await _firebaseMessaging.getToken();
       if (token != null) {
+        debugPrint('FCM token: $token');
         await _sendTokenToServer(token);
         await _localStorage?.saveFcmToken(token);
       }
@@ -154,6 +169,7 @@ class NotificationService {
 
   // Handle token refresh
   Future<void> _onTokenRefresh(String token) async {
+    debugPrint('FCM token refreshed: $token');
     await _sendTokenToServer(token);
     await _localStorage?.saveFcmToken(token);
   }
