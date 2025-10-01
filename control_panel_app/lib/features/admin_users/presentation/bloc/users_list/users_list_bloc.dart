@@ -111,7 +111,31 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
                 AssignRoleParams(userId: event.userId, roleId: event.roleId!),
               );
             }
-            add(RefreshUsersEvent());
+            // Reload list and emit loaded to notify listeners
+            final reload = await _getAllUsersUseCase(
+              GetAllUsersParams(
+                pageNumber: 1,
+                pageSize: _pageSize,
+                searchTerm: _lastSearchTerm,
+                roleId: _lastRoleFilter,
+                isActive: _lastActiveFilter,
+              ),
+            );
+            reload.fold(
+              (failure) => emit(UsersListError(message: failure.message)),
+              (paginatedResult) {
+                _currentPage = 1;
+                _allUsers = paginatedResult.items;
+                _hasMoreData =
+                    paginatedResult.pageNumber < paginatedResult.totalPages;
+                emit(UsersListLoaded(
+                  users: _allUsers,
+                  hasMore: _hasMoreData,
+                  totalCount: paginatedResult.totalCount,
+                  isLoadingMore: false,
+                ));
+              },
+            );
           } else {
             emit(const UsersListError(message: 'فشل تحديث المستخدم'));
           }
@@ -356,7 +380,7 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
     CreateUserEvent event,
     Emitter<UsersListState> emit,
   ) async {
-    // Keep UX simple: attempt to create then refresh list
+    // Create user then reload and emit state to notify listeners
     final result = await _createUserUseCase(CreateUserParams(
       name: event.name,
       email: event.email,
@@ -366,12 +390,37 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
     ));
 
     await result.fold(
-      (_) async {},
+      (failure) async {
+        emit(UsersListError(message: failure.message));
+      },
       (userId) async {
         if (event.roleId != null && event.roleId!.isNotEmpty) {
           await _assignRoleUseCase(AssignRoleParams(userId: userId, roleId: event.roleId!));
         }
-        add(RefreshUsersEvent());
+        final reload = await _getAllUsersUseCase(
+          GetAllUsersParams(
+            pageNumber: 1,
+            pageSize: _pageSize,
+            searchTerm: _lastSearchTerm,
+            roleId: _lastRoleFilter,
+            isActive: _lastActiveFilter,
+          ),
+        );
+        reload.fold(
+          (failure) => emit(UsersListError(message: failure.message)),
+          (paginatedResult) {
+            _currentPage = 1;
+            _allUsers = paginatedResult.items;
+            _hasMoreData =
+                paginatedResult.pageNumber < paginatedResult.totalPages;
+            emit(UsersListLoaded(
+              users: _allUsers,
+              hasMore: _hasMoreData,
+              totalCount: paginatedResult.totalCount,
+              isLoadingMore: false,
+            ));
+          },
+        );
       },
     );
   }
