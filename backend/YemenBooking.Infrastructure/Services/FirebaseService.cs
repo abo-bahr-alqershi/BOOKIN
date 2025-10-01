@@ -26,8 +26,11 @@ namespace YemenBooking.Infrastructure.Services
             try
             {
                 // Determine if we are sending to a topic or a token
-                // We treat any value that starts with "/topics/" or starts with "topic:" or "user_" as a topic
-                // The control panel and server subscribe tokens to topic "user_{id}", so we send to that topic
+                // Treat the following as topics:
+                // - Strings starting with "/topics/" or "topic:"
+                // - User topics: "user_{id}"
+                // - Role topics: "role_{roleName}"
+                // - Global topics: "all" and "admins"
                 bool isTopic = false;
                 string? topic = null;
                 string? token = null;
@@ -49,6 +52,17 @@ namespace YemenBooking.Infrastructure.Services
                     {
                         isTopic = true;
                         topic = value; // Firebase accepts topic names without the "/topics/" prefix when using Topic property
+                    }
+                    else if (value.StartsWith("role_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        isTopic = true;
+                        topic = value;
+                    }
+                    else if (value.Equals("all", StringComparison.OrdinalIgnoreCase) ||
+                             value.Equals("admins", StringComparison.OrdinalIgnoreCase))
+                    {
+                        isTopic = true;
+                        topic = value.ToLowerInvariant();
                     }
                     else
                     {
