@@ -681,7 +681,11 @@ void _initCore() {
 	// Services
 	sl.registerLazySingleton(() => LocalStorageService(sl()));
 	sl.registerLazySingleton(() => LocationService());
-	sl.registerLazySingleton(() => NotificationService());
+	sl.registerLazySingleton(() => NotificationService(
+		apiClient: sl(),
+		localStorage: sl(),
+		authLocalDataSource: sl(),
+	));
 	sl.registerLazySingleton(() => AnalyticsService());
 	sl.registerLazySingleton(() => DeepLinkService());
 	

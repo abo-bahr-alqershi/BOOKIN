@@ -145,11 +145,13 @@ class NotificationService {
     try {
       final user = await _authLocalDataSource!.getCachedUser();
       if (user == null) return;
+      final token = await _firebaseMessaging.getToken();
 
       await _apiClient!.post(
         '/api/fcm/unregister',
         data: {
           'userId': user.userId,
+          if (token != null) 'token': token,
         },
       );
 
