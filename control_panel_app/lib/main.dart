@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app.dart';
@@ -13,6 +14,8 @@ import 'core/bloc/locale/locale_cubit.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  // Register a top-level background message handler for Android/iOS
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await Hive.initFlutter();
   
   // Set preferred orientations
@@ -51,4 +54,10 @@ void main() async {
   );
   
   runApp(const YemenBookingApp());
+}
+
+// Top-level background message handler (required by firebase_messaging)
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
 }

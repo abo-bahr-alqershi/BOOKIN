@@ -20,15 +20,18 @@ namespace YemenBooking.Application.Handlers.Commands.Notifications
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserRepository _userRepository;
         private readonly ILogger<BroadcastNotificationCommandHandler> _logger;
+        private readonly INotificationService _notificationService;
 
         public BroadcastNotificationCommandHandler(
             IUnitOfWork unitOfWork,
             IUserRepository userRepository,
-            ILogger<BroadcastNotificationCommandHandler> logger)
+            ILogger<BroadcastNotificationCommandHandler> logger,
+            INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _userRepository = userRepository;
             _logger = logger;
+            _notificationService = notificationService;
         }
 
         public async Task<ResultDto<int>> Handle(BroadcastNotificationCommand request, CancellationToken cancellationToken)
@@ -77,6 +80,34 @@ namespace YemenBooking.Application.Handlers.Commands.Notifications
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("تم إنشاء {Count} إشعار للبث", inserted);
+            // إذا لم يكن هناك موعد مجدول، أرسل الإشعارات فوراً عبر قنواتها (بما فيها FCM)
+            if (!request.ScheduledFor.HasValue)
+            {
+                foreach (var n in notifications)
+                {
+                    try
+                    {
+                        await _notificationService.SendAsync(new YemenBooking.Core.Notifications.NotificationRequest
+                        {
+                            UserId = n.RecipientId,
+                            Title = n.Title,
+                            Message = n.Message,
+                            Type = Enum.TryParse<YemenBooking.Core.Notifications.NotificationType>(n.Type, true, out var t)
+                                ? t : YemenBooking.Core.Notifications.NotificationType.System,
+                            Data = null
+                        }, cancellationToken);
+                        n.MarkAsSent("PUSH");
+                        n.MarkAsDelivered();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "فشل إرسال إشعار البث الفوري للمستخدم {UserId}", n.RecipientId);
+                        n.MarkAsFailed(ex.Message);
+                    }
+                }
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+
             return ResultDto<int>.Succeeded(inserted, $"تم إنشاء {inserted} إشعار");
         }
     }

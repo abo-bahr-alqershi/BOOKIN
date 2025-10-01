@@ -284,21 +284,42 @@ try
     if (FirebaseApp.DefaultInstance == null)
     {
         GoogleCredential credential;
-        var credentialsPath = builder.Configuration["Firebase:CredentialsPath"];
+        var credentialsPath = builder.Configuration["Firebase:CredentialsPath"]; // file path
+        var credentialsJson = builder.Configuration["Firebase:CredentialsJson"]; // raw JSON (appsettings or env)
+        var credentialsBase64 = builder.Configuration["Firebase:CredentialsBase64"]; // base64-encoded JSON (env-friendly)
+
         if (!string.IsNullOrWhiteSpace(credentialsPath) && System.IO.File.Exists(credentialsPath))
         {
             credential = GoogleCredential.FromFile(credentialsPath);
+        }
+        else if (!string.IsNullOrWhiteSpace(credentialsJson))
+        {
+            using var ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(credentialsJson));
+            credential = GoogleCredential.FromStream(ms);
+        }
+        else if (!string.IsNullOrWhiteSpace(credentialsBase64))
+        {
+            var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(credentialsBase64));
+            using var ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+            credential = GoogleCredential.FromStream(ms);
+        }
+        else if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS_JSON")))
+        {
+            var envJson = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS_JSON")!;
+            using var ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(envJson));
+            credential = GoogleCredential.FromStream(ms);
         }
         else
         {
             credential = GoogleCredential.GetApplicationDefault();
         }
+
         FirebaseApp.Create(new AppOptions { Credential = credential });
     }
 }
 catch (Exception ex)
 {
-    app.Logger.LogError(ex, "Failed to initialize Firebase Admin SDK. Configure Firebase:CredentialsPath or GOOGLE_APPLICATION_CREDENTIALS.");
+    app.Logger.LogError(ex, "Failed to initialize Firebase Admin SDK. Configure Firebase:CredentialsPath or credentials JSON (Firebase:CredentialsJson / Firebase:CredentialsBase64 / GOOGLE_APPLICATION_CREDENTIALS_JSON).");
 }
 
 var summaries = new[]
