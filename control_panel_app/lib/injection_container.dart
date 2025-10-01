@@ -39,6 +39,8 @@ import 'package:bookn_cp_app/features/admin_units/domain/usecases/unit_images/up
 import 'package:bookn_cp_app/features/admin_units/domain/usecases/unit_images/upload_multiple_unit_images_usecase.dart';
 import 'package:bookn_cp_app/features/admin_units/domain/usecases/unit_images/upload_unit_image_usecase.dart'; // إضافة هذا الاستيراد
 import 'package:bookn_cp_app/features/admin_units/presentation/bloc/unit_images/unit_images_bloc.dart';
+import 'package:bookn_cp_app/services/data_sync_service.dart';
+import 'package:bookn_cp_app/services/local_data_service.dart';
 import 'package:bookn_cp_app/services/section_content_service.dart';
 import 'package:bookn_cp_app/services/section_service.dart';
 import 'features/admin_sections/data/datasources/section_images_remote_datasource.dart';
@@ -664,17 +666,28 @@ import 'package:bookn_cp_app/features/admin_payments/presentation/bloc/payment_a
     as pay_an_bloc;
 import 'package:bookn_cp_app/features/auth/verification/bloc/email_verification_bloc.dart';
 // Admin Notifications
-import 'features/admin_notifications/presentation/bloc/admin_notifications_bloc.dart' as an_bloc;
-import 'features/admin_notifications/domain/repositories/admin_notifications_repository.dart' as an_repo;
-import 'features/admin_notifications/data/repositories/admin_notifications_repository_impl.dart' as an_repo_impl;
-import 'features/admin_notifications/data/datasources/admin_notifications_remote_datasource.dart' as an_ds_remote;
-import 'features/admin_notifications/domain/usecases/create_notification_usecase.dart' as an_uc_create;
-import 'features/admin_notifications/domain/usecases/broadcast_notification_usecase.dart' as an_uc_broadcast;
-import 'features/admin_notifications/domain/usecases/delete_notification_usecase.dart' as an_uc_delete;
-import 'features/admin_notifications/domain/usecases/resend_notification_usecase.dart' as an_uc_resend;
-import 'features/admin_notifications/domain/usecases/get_system_notifications_usecase.dart' as an_uc_get_system;
-import 'features/admin_notifications/domain/usecases/get_user_notifications_usecase.dart' as an_uc_get_user;
-import 'features/admin_notifications/domain/usecases/get_notifications_stats_usecase.dart' as an_uc_stats;
+import 'features/admin_notifications/presentation/bloc/admin_notifications_bloc.dart'
+    as an_bloc;
+import 'features/admin_notifications/domain/repositories/admin_notifications_repository.dart'
+    as an_repo;
+import 'features/admin_notifications/data/repositories/admin_notifications_repository_impl.dart'
+    as an_repo_impl;
+import 'features/admin_notifications/data/datasources/admin_notifications_remote_datasource.dart'
+    as an_ds_remote;
+import 'features/admin_notifications/domain/usecases/create_notification_usecase.dart'
+    as an_uc_create;
+import 'features/admin_notifications/domain/usecases/broadcast_notification_usecase.dart'
+    as an_uc_broadcast;
+import 'features/admin_notifications/domain/usecases/delete_notification_usecase.dart'
+    as an_uc_delete;
+import 'features/admin_notifications/domain/usecases/resend_notification_usecase.dart'
+    as an_uc_resend;
+import 'features/admin_notifications/domain/usecases/get_system_notifications_usecase.dart'
+    as an_uc_get_system;
+import 'features/admin_notifications/domain/usecases/get_user_notifications_usecase.dart'
+    as an_uc_get_user;
+import 'features/admin_notifications/domain/usecases/get_notifications_stats_usecase.dart'
+    as an_uc_stats;
 
 final sl = GetIt.instance;
 
@@ -2055,10 +2068,10 @@ void _initCore() {
   sl.registerLazySingleton(() => LocalStorageService(sl()));
   sl.registerLazySingleton(() => LocationService());
   sl.registerLazySingleton(() => NotificationService(
-    apiClient: sl(),
-    localStorage: sl(),
-    authLocalDataSource: sl(),
-  ));
+        apiClient: sl(),
+        localStorage: sl(),
+        authLocalDataSource: sl(),
+      ));
   sl.registerLazySingleton(() => AnalyticsService());
   sl.registerLazySingleton(() => DeepLinkService());
 
@@ -2067,21 +2080,24 @@ void _initCore() {
   sl.registerLazySingleton(() => ConnectivityService());
 
   // Reference datasources and repository
-  sl.registerLazySingleton<ReferenceRemoteDataSource>(() => ReferenceRemoteDataSourceImpl(apiClient: sl()));
-  sl.registerLazySingleton<ReferenceLocalDataSource>(() => ReferenceLocalDataSourceImpl(localStorage: sl()));
-  sl.registerLazySingleton<ReferenceRepository>(() => ReferenceRepositoryImpl(remote: sl(), local: sl()));
+  sl.registerLazySingleton<ref_ds_remote.ReferenceRemoteDataSource>(
+      () => ref_ds_remote.ReferenceRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<ref_ds_local.ReferenceLocalDataSource>(
+      () => ref_ds_local.ReferenceLocalDataSourceImpl(localStorage: sl()));
+  sl.registerLazySingleton<ref_repo.ReferenceRepository>(
+      () => ref_repo_impl.ReferenceRepositoryImpl(remote: sl(), local: sl()));
 
   // Reference use cases
-  sl.registerLazySingleton(() => GetCitiesUseCase(sl()));
-  sl.registerLazySingleton(() => GetCurrenciesUseCase(sl()));
+  sl.registerLazySingleton(() => ref_uc_cities.GetCitiesUseCase(sl()));
+  sl.registerLazySingleton(() => ref_uc_currencies.GetCurrenciesUseCase(sl()));
 
   // Data sync service
   sl.registerLazySingleton(() => DataSyncService(
-    localDataService: sl(),
-    connectivityService: sl(),
-    remoteDataSource: sl(),
-    referenceRemoteDataSource: sl(),
-  ));
+        localDataService: sl(),
+        connectivityService: sl(),
+        remoteDataSource: sl(),
+        referenceRemoteDataSource: sl(),
+      ));
 
   // Removed generic WebSocketService registration; using ChatWebSocketService for chat feature
 }
@@ -2108,26 +2124,38 @@ void _initAdminNotifications() {
   // Bloc
   sl.registerFactory(() => an_bloc.AdminNotificationsBloc(
         createUseCase: sl<an_uc_create.CreateAdminNotificationUseCase>(),
-        broadcastUseCase: sl<an_uc_broadcast.BroadcastAdminNotificationUseCase>(),
+        broadcastUseCase:
+            sl<an_uc_broadcast.BroadcastAdminNotificationUseCase>(),
         deleteUseCase: sl<an_uc_delete.DeleteAdminNotificationUseCase>(),
         resendUseCase: sl<an_uc_resend.ResendAdminNotificationUseCase>(),
-        getSystemUseCase: sl<an_uc_get_system.GetSystemAdminNotificationsUseCase>(),
+        getSystemUseCase:
+            sl<an_uc_get_system.GetSystemAdminNotificationsUseCase>(),
         getUserUseCase: sl<an_uc_get_user.GetUserAdminNotificationsUseCase>(),
         getStatsUseCase: sl<an_uc_stats.GetAdminNotificationsStatsUseCase>(),
       ));
 
   // Use cases
-  sl.registerLazySingleton<an_uc_create.CreateAdminNotificationUseCase>(() => an_uc_create.CreateAdminNotificationUseCase(sl()));
-  sl.registerLazySingleton<an_uc_broadcast.BroadcastAdminNotificationUseCase>(() => an_uc_broadcast.BroadcastAdminNotificationUseCase(sl()));
-  sl.registerLazySingleton<an_uc_delete.DeleteAdminNotificationUseCase>(() => an_uc_delete.DeleteAdminNotificationUseCase(sl()));
-  sl.registerLazySingleton<an_uc_resend.ResendAdminNotificationUseCase>(() => an_uc_resend.ResendAdminNotificationUseCase(sl()));
-  sl.registerLazySingleton<an_uc_get_system.GetSystemAdminNotificationsUseCase>(() => an_uc_get_system.GetSystemAdminNotificationsUseCase(sl()));
-  sl.registerLazySingleton<an_uc_get_user.GetUserAdminNotificationsUseCase>(() => an_uc_get_user.GetUserAdminNotificationsUseCase(sl()));
-  sl.registerLazySingleton<an_uc_stats.GetAdminNotificationsStatsUseCase>(() => an_uc_stats.GetAdminNotificationsStatsUseCase(sl()));
+  sl.registerLazySingleton<an_uc_create.CreateAdminNotificationUseCase>(
+      () => an_uc_create.CreateAdminNotificationUseCase(sl()));
+  sl.registerLazySingleton<an_uc_broadcast.BroadcastAdminNotificationUseCase>(
+      () => an_uc_broadcast.BroadcastAdminNotificationUseCase(sl()));
+  sl.registerLazySingleton<an_uc_delete.DeleteAdminNotificationUseCase>(
+      () => an_uc_delete.DeleteAdminNotificationUseCase(sl()));
+  sl.registerLazySingleton<an_uc_resend.ResendAdminNotificationUseCase>(
+      () => an_uc_resend.ResendAdminNotificationUseCase(sl()));
+  sl.registerLazySingleton<an_uc_get_system.GetSystemAdminNotificationsUseCase>(
+      () => an_uc_get_system.GetSystemAdminNotificationsUseCase(sl()));
+  sl.registerLazySingleton<an_uc_get_user.GetUserAdminNotificationsUseCase>(
+      () => an_uc_get_user.GetUserAdminNotificationsUseCase(sl()));
+  sl.registerLazySingleton<an_uc_stats.GetAdminNotificationsStatsUseCase>(
+      () => an_uc_stats.GetAdminNotificationsStatsUseCase(sl()));
 
   // Repository
-  sl.registerLazySingleton<an_repo.AdminNotificationsRepository>(() => an_repo_impl.AdminNotificationsRepositoryImpl(remote: sl(), networkInfo: sl()));
+  sl.registerLazySingleton<an_repo.AdminNotificationsRepository>(() =>
+      an_repo_impl.AdminNotificationsRepositoryImpl(
+          remote: sl(), networkInfo: sl()));
 
   // Data source
-  sl.registerLazySingleton<an_ds_remote.AdminNotificationsRemoteDataSource>(() => an_ds_remote.AdminNotificationsRemoteDataSource(apiClient: sl()));
+  sl.registerLazySingleton<an_ds_remote.AdminNotificationsRemoteDataSource>(
+      () => an_ds_remote.AdminNotificationsRemoteDataSource(apiClient: sl()));
 }

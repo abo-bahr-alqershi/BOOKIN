@@ -54,6 +54,9 @@ namespace YemenBooking.Core.Notifications
         PaymentProcessed,
         PaymentVoided,
         RefundProcessed,
-        PaymentFailed
+        PaymentFailed,
+        System,
+        Promotion,
+        Alert
     }
 } 
