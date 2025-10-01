@@ -91,7 +91,7 @@ namespace YemenBooking.Application.Handlers.Commands.Notifications
                 // إذا كان الهدف جميع المستخدمين، استخدم موضوع "all"
                 if (request.TargetAllUsers)
                 {
-                    var ok = await _firebaseService.SendNotificationAsync("all", request.Title, request.Message, null, cancellationToken);
+                    var ok = await _firebaseService.SendNotificationAsync("/topics/all", request.Title, request.Message, null, cancellationToken);
                     _logger.LogInformation("تم إرسال بث موضوع all عبر FCM: {Status}", ok);
                     foreach (var n in notifications)
                     {
@@ -109,7 +109,7 @@ namespace YemenBooking.Application.Handlers.Commands.Notifications
 
                     foreach (var role in roles)
                     {
-                        var topic = $"role_{role}";
+                        var topic = $"/topics/role_{role}";
                         var ok = await _firebaseService.SendNotificationAsync(topic, request.Title, request.Message, null, cancellationToken);
                         _logger.LogInformation("تم إرسال بث دور {Role} عبر FCM: {Status}", role, ok);
                     }
@@ -127,7 +127,7 @@ namespace YemenBooking.Application.Handlers.Commands.Notifications
                     {
                         try
                         {
-                            var topic = $"user_{n.RecipientId}";
+                            var topic = $"/topics/user_{n.RecipientId}";
                             await _firebaseService.SendNotificationAsync(topic, n.Title, n.Message, null, cancellationToken);
                             n.MarkAsSent("PUSH");
                             n.MarkAsDelivered();
