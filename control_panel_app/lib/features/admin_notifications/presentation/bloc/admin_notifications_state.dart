@@ -17,6 +17,11 @@ class AdminNotificationsLoading extends AdminNotificationsState {
   const AdminNotificationsLoading({super.stats, super.statsError});
 }
 
+class AdminNotificationsSubmitting extends AdminNotificationsState {
+  final String action; // create, broadcast, resend, delete
+  const AdminNotificationsSubmitting(this.action, {super.stats, super.statsError});
+}
+
 class AdminSystemNotificationsLoaded extends AdminNotificationsState {
   final List<AdminNotificationEntity> items;
   final int totalCount;

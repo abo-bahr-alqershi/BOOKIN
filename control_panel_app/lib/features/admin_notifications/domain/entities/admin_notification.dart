@@ -6,6 +6,9 @@ class AdminNotificationEntity {
   final String status;
   final String priority;
   final String recipientId;
+  final String? recipientName;
+  final String? recipientEmail;
+  final String? recipientPhone;
   final bool isRead;
   final DateTime createdAt;
   final DateTime? readAt;
@@ -18,6 +21,9 @@ class AdminNotificationEntity {
     required this.status,
     required this.priority,
     required this.recipientId,
+    this.recipientName,
+    this.recipientEmail,
+    this.recipientPhone,
     required this.isRead,
     required this.createdAt,
     this.readAt,

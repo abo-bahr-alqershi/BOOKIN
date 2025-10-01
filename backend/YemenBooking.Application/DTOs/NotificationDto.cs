@@ -58,6 +58,18 @@ namespace YemenBooking.Application.DTOs
         public string RecipientName { get; set; }
 
         /// <summary>
+        /// بريد المستلم
+        /// Recipient email
+        /// </summary>
+        public string RecipientEmail { get; set; }
+
+        /// <summary>
+        /// هاتف المستلم
+        /// Recipient phone
+        /// </summary>
+        public string RecipientPhone { get; set; }
+
+        /// <summary>
         /// معرف المرسل
         /// Sender identifier
         /// </summary>

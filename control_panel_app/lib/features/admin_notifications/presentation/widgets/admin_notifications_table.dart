@@ -185,26 +185,7 @@ class _AdminNotificationsTableState extends State<AdminNotificationsTable> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Icon(
-                              CupertinoIcons.person,
-                              size: 14,
-                              color: AppTheme.textMuted,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                'المستلم: ${notification.recipientId}',
-                                style: AppTextStyles.caption.copyWith(
-                                  color: AppTheme.textMuted,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
+                        _buildRecipientBlock(notification),
                         const SizedBox(height: 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -403,7 +384,7 @@ class _AdminNotificationsTableState extends State<AdminNotificationsTable> {
                 child: _buildTypeIcon(notification.type),
               ),
               _buildCell(notification.title, 200),
-              _buildCell(notification.recipientId, 150),
+              _buildRecipientInline(notification, 260),
               SizedBox(
                 width: 100,
                 child: _buildStatusBadge(notification.status),
@@ -471,14 +452,7 @@ class _AdminNotificationsTableState extends State<AdminNotificationsTable> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          notification.recipientId,
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppTheme.textMuted,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        _buildRecipientSummary(notification),
                       ],
                     ),
                   ),
@@ -510,6 +484,138 @@ class _AdminNotificationsTableState extends State<AdminNotificationsTable> {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
+    );
+  }
+
+  Widget _buildRecipientInline(AdminNotificationEntity n, double width) {
+    final name = n.recipientName?.isNotEmpty == true ? n.recipientName! : n.recipientId;
+    final email = n.recipientEmail;
+    final phone = n.recipientPhone;
+    final subtitle = [
+      if (email != null && email.isNotEmpty) email,
+      if (phone != null && phone.isNotEmpty) phone,
+    ].join(' • ');
+
+    return SizedBox(
+      width: width,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            name,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (subtitle.isNotEmpty)
+            Text(
+              subtitle,
+              style: AppTextStyles.caption.copyWith(
+                color: AppTheme.textMuted,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecipientSummary(AdminNotificationEntity n) {
+    final name = n.recipientName?.isNotEmpty == true ? n.recipientName! : n.recipientId;
+    final email = n.recipientEmail;
+    final phone = n.recipientPhone;
+    final lines = <String>[];
+    lines.add(name);
+    if (email != null && email.isNotEmpty) lines.add(email);
+    if (phone != null && phone.isNotEmpty) lines.add(phone);
+    return Text(
+      lines.join(' • '),
+      style: AppTextStyles.caption.copyWith(
+        color: AppTheme.textMuted,
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  Widget _buildRecipientBlock(AdminNotificationEntity n) {
+    final name = n.recipientName?.isNotEmpty == true ? n.recipientName! : n.recipientId;
+    final email = n.recipientEmail;
+    final phone = n.recipientPhone;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              CupertinoIcons.person,
+              size: 14,
+              color: AppTheme.textMuted,
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                'المستلم: $name',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppTheme.textMuted,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        if (email != null && email.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(
+                CupertinoIcons.envelope,
+                size: 14,
+                color: AppTheme.textMuted,
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  'بريد المستلم: $email',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (phone != null && phone.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(
+                CupertinoIcons.phone,
+                size: 14,
+                color: AppTheme.textMuted,
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  'رقم هاتف المستلم: $phone',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 

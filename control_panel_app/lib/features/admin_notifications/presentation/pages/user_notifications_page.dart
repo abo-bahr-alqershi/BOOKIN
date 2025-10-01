@@ -15,6 +15,8 @@ import '../../domain/entities/admin_notification.dart';
 import '../bloc/admin_notifications_bloc.dart';
 import '../bloc/admin_notifications_event.dart';
 import '../bloc/admin_notifications_state.dart';
+import '../../admin_users/presentation/bloc/user_details/user_details_bloc.dart';
+import '../../../admin_users/domain/entities/user_details.dart';
 
 class UserNotificationsPage extends StatefulWidget {
   final String userId;
@@ -46,6 +48,7 @@ class _UserNotificationsPageState extends State<UserNotificationsPage>
     );
 
     _loadUserNotifications();
+    context.read<UserDetailsBloc>().add(LoadUserDetailsEvent(userId: widget.userId));
     _setupScrollListener();
   }
 
@@ -117,12 +120,7 @@ class _UserNotificationsPageState extends State<UserNotificationsPage>
                 fontWeight: FontWeight.w600,
               ),
             ),
-            Text(
-              widget.userId,
-              style: AppTextStyles.caption.copyWith(
-                color: AppTheme.textMuted,
-              ),
-            ),
+            _UserInfoHeader(userId: widget.userId),
           ],
         ),
         background: Stack(
@@ -209,20 +207,7 @@ class _UserNotificationsPageState extends State<UserNotificationsPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'معرف المستخدم',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.userId,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppTheme.textWhite,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                _UserInfoHeader(userId: widget.userId),
               ],
             ),
           ),
@@ -739,5 +724,73 @@ class _UserNotificationsPageState extends State<UserNotificationsPage>
     } else {
       return 'الآن';
     }
+  }
+}
+
+class _UserInfoHeader extends StatelessWidget {
+  final String userId;
+
+  const _UserInfoHeader({required this.userId});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<UserDetailsBloc, UserDetailsState>(
+      builder: (context, state) {
+        if (state is UserDetailsLoaded) {
+          final u = state.userDetails;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                u.userName,
+                style: AppTextStyles.bodyLarge.copyWith(
+                  color: AppTheme.textWhite,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              if (u.email.isNotEmpty)
+                Text(
+                  'البريد: ${u.email}',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+              if (u.phoneNumber.isNotEmpty)
+                Text(
+                  'الهاتف: ${u.phoneNumber}',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+            ],
+          );
+        }
+        if (state is UserDetailsError) {
+          return Text(
+            userId,
+            style: AppTextStyles.caption.copyWith(
+              color: AppTheme.textMuted,
+            ),
+          );
+        }
+        return Row(
+          children: [
+            SizedBox(
+              width: 12,
+              height: 12,
+              child: CupertinoActivityIndicator(color: AppTheme.primaryBlue),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'جاري تحميل بيانات المستخدم...',
+              style: AppTextStyles.caption.copyWith(
+                color: AppTheme.textMuted,
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

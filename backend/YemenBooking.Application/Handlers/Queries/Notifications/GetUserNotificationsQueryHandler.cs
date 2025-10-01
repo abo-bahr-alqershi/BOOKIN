@@ -13,6 +13,7 @@ using YemenBooking.Core.Entities;
 using YemenBooking.Core.Interfaces.Repositories;
 using YemenBooking.Application.Interfaces.Services;
 using YemenBooking.Application.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace YemenBooking.Application.Handlers.Queries.Notifications
 {
@@ -66,9 +67,19 @@ namespace YemenBooking.Application.Handlers.Queries.Notifications
             if (request.IsRead.HasValue)
                 predicate = n => n.RecipientId == request.UserId && n.IsRead == request.IsRead.Value;
 
-            var (entities, totalCount) = await _notificationRepository.GetPagedAsync(
-                request.PageNumber, request.PageSize,
-                predicate, n => n.CreatedAt, false, cancellationToken);
+            // Include recipient/sender
+            var query = _notificationRepository
+                .GetQueryable()
+                .Where(predicate)
+                .Include(n => n.Recipient)
+                .Include(n => n.Sender)
+                .OrderByDescending(n => n.CreatedAt);
+
+            var totalCount = await query.CountAsync(cancellationToken);
+            var entities = await query
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync(cancellationToken);
 
             var items = entities.Select(n => new NotificationDto
             {
@@ -79,9 +90,11 @@ namespace YemenBooking.Application.Handlers.Queries.Notifications
                 Priority = n.Priority,
                 Status = n.Status,
                 RecipientId = n.RecipientId,
-                RecipientName = string.Empty,
+                RecipientName = n.Recipient?.Name ?? string.Empty,
+                RecipientEmail = n.Recipient?.Email ?? string.Empty,
+                RecipientPhone = n.Recipient?.Phone ?? string.Empty,
                 SenderId = n.SenderId,
-                SenderName = string.Empty,
+                SenderName = n.Sender?.Name ?? string.Empty,
                 IsRead = n.IsRead,
                 ReadAt = n.ReadAt,
                 CreatedAt = n.CreatedAt

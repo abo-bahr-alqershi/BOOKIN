@@ -78,6 +78,7 @@ class AdminNotificationsBloc
     });
 
     on<CreateAdminNotificationEvent>((event, emit) async {
+      emit(AdminNotificationsSubmitting('create', stats: _cachedStats, statsError: _statsError));
       final res = await createUseCase(
           type: event.type,
           title: event.title,
@@ -98,6 +99,7 @@ class AdminNotificationsBloc
     });
 
     on<BroadcastAdminNotificationEvent>((event, emit) async {
+      emit(AdminNotificationsSubmitting('broadcast', stats: _cachedStats, statsError: _statsError));
       final res = await broadcastUseCase(
         type: event.type,
         title: event.title,
@@ -122,6 +124,7 @@ class AdminNotificationsBloc
     });
 
     on<DeleteAdminNotificationEvent>((event, emit) async {
+      emit(AdminNotificationsSubmitting('delete', stats: _cachedStats, statsError: _statsError));
       final res = await deleteUseCase(event.notificationId);
       res.fold(
         (l) => emit(AdminNotificationsError(
@@ -138,6 +141,7 @@ class AdminNotificationsBloc
     });
 
     on<ResendAdminNotificationEvent>((event, emit) async {
+      emit(AdminNotificationsSubmitting('resend', stats: _cachedStats, statsError: _statsError));
       final res = await resendUseCase(event.notificationId);
       res.fold(
         (l) => emit(AdminNotificationsError(
