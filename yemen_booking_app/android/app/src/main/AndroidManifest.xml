@@ -4,6 +4,8 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Android 13+ notifications runtime permission -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Camera and media/gallery permissions -->
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- Android 13+ photo picker/read images permission -->
@@ -16,6 +18,16 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:enableOnBackInvokedCallback="true">
+        <!-- Default FCM notification channel and icon -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="yemen_booking_channel" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@android:color/black" />
         <!-- Google Maps API Key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
