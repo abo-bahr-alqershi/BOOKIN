@@ -4,6 +4,7 @@ import '../../../../../core/models/paginated_result.dart';
 import '../../../domain/entities/user.dart';
 import '../../../domain/usecases/get_all_users_usecase.dart';
 import '../../../domain/usecases/create_user_usecase.dart';
+import '../../../domain/usecases/update_user_usecase.dart';
 import '../../../domain/usecases/assign_role_usecase.dart';
 import '../../../domain/usecases/activate_user_usecase.dart';
 import '../../../domain/usecases/deactivate_user_usecase.dart';
@@ -14,6 +15,7 @@ part 'users_list_state.dart';
 class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
   final GetAllUsersUseCase _getAllUsersUseCase;
   final CreateUserUseCase _createUserUseCase;
+  final UpdateUserUseCase _updateUserUseCase;
   final AssignRoleUseCase _assignRoleUseCase;
   final ActivateUserUseCase _activateUserUseCase;
   final DeactivateUserUseCase _deactivateUserUseCase;
@@ -31,11 +33,13 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
     required ActivateUserUseCase activateUserUseCase,
     required DeactivateUserUseCase deactivateUserUseCase,
     required CreateUserUseCase createUserUseCase,
+    required UpdateUserUseCase updateUserUseCase,
     required AssignRoleUseCase assignRoleUseCase,
   })  : _getAllUsersUseCase = getAllUsersUseCase,
         _activateUserUseCase = activateUserUseCase,
         _deactivateUserUseCase = deactivateUserUseCase,
         _createUserUseCase = createUserUseCase,
+        _updateUserUseCase = updateUserUseCase,
         _assignRoleUseCase = assignRoleUseCase,
         super(UsersListInitial()) {
     on<LoadUsersEvent>(_onLoadUsers);
@@ -46,6 +50,7 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
     on<ToggleUserStatusEvent>(_onToggleUserStatus);
     on<SortUsersEvent>(_onSortUsers);
     on<CreateUserEvent>(_onCreateUser);
+    on<UpdateUserEvent>(_onUpdateUser);
     on<DeleteUserEvent>(_onDeleteUser);
   }
 
@@ -78,6 +83,33 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
           totalCount: paginatedResult.totalCount,
           isLoadingMore: false,
         ));
+      },
+    );
+  }
+
+  Future<void> _onUpdateUser(
+    UpdateUserEvent event,
+    Emitter<UsersListState> emit,
+  ) async {
+    final result = await _updateUserUseCase(UpdateUserParams(
+      userId: event.userId,
+      name: event.name,
+      email: event.email,
+      phone: event.phone,
+      profileImage: event.profileImage,
+    ));
+
+    await result.fold(
+      (_) async {},
+      (success) async {
+        if (success) {
+          if (event.roleId != null && event.roleId!.isNotEmpty) {
+            await _assignRoleUseCase(
+              AssignRoleParams(userId: event.userId, roleId: event.roleId!),
+            );
+          }
+          add(RefreshUsersEvent());
+        }
       },
     );
   }

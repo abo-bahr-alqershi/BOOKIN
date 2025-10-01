@@ -49,11 +49,18 @@ class _CreateUserPageState extends State<CreateUserPage>
   String? _selectedRole;
   bool _isPasswordVisible = false;
   int _currentStep = 0;
+  bool _isSubmitting = false;
   
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
+    // Ensure UsersListBloc has a baseline state for listeners/refresh
+    // This allows the page to listen for a loaded state after create/update
+    // and ensures RefreshUsersEvent works.
+    try {
+      context.read<UsersListBloc>().add(LoadUsersEvent());
+    } catch (_) {}
     // Pre-fill if edit mode
     if (widget.userId != null) {
       _nameController.text = widget.initialName ?? _nameController.text;
@@ -141,38 +148,56 @@ class _CreateUserPageState extends State<CreateUserPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
-      body: Stack(
-        children: [
-          // Animated Background
-          _buildAnimatedBackground(),
-          
-          // Main Content
-          SafeArea(
-            child: Column(
-              children: [
-                // Header
-                _buildHeader(),
-                
-                // Progress Indicator
-                _buildProgressIndicator(),
-                
-                // Form Content
-                Expanded(
-                  child: FadeTransition(
-                    opacity: _contentFadeAnimation,
-                    child: SlideTransition(
-                      position: _contentSlideAnimation,
-                      child: _buildFormContent(),
+      body: BlocListener<UsersListBloc, UsersListState>(
+        listener: (context, state) {
+          if (_isSubmitting && state is UsersListLoaded) {
+            final isEdit = widget.userId != null;
+            _showSuccessMessage(isEdit ? 'تم تحديث المستخدم بنجاح' : 'تم إنشاء المستخدم بنجاح');
+            setState(() {
+              _isSubmitting = false;
+            });
+            context.pop();
+          }
+          if (_isSubmitting && state is UsersListError) {
+            _showErrorMessage(state.message);
+            setState(() {
+              _isSubmitting = false;
+            });
+          }
+        },
+        child: Stack(
+          children: [
+            // Animated Background
+            _buildAnimatedBackground(),
+            
+            // Main Content
+            SafeArea(
+              child: Column(
+                children: [
+                  // Header
+                  _buildHeader(),
+                  
+                  // Progress Indicator
+                  _buildProgressIndicator(),
+                  
+                  // Form Content
+                  Expanded(
+                    child: FadeTransition(
+                      opacity: _contentFadeAnimation,
+                      child: SlideTransition(
+                        position: _contentSlideAnimation,
+                        child: _buildFormContent(),
+                      ),
                     ),
                   ),
-                ),
-                
-                // Action Buttons
-                _buildActionButtons(),
-              ],
+                  
+                  // Action Buttons
+                  _buildActionButtons(),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -960,7 +985,9 @@ class _CreateUserPageState extends State<CreateUserPage>
           Expanded(
             flex: _currentStep == 0 ? 1 : 1,
             child: GestureDetector(
-              onTap: _currentStep < 3 ? _nextStep : _submitForm,
+              onTap: _isSubmitting
+                  ? null
+                  : (_currentStep < 3 ? _nextStep : _submitForm),
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
@@ -975,29 +1002,24 @@ class _CreateUserPageState extends State<CreateUserPage>
                   ],
                 ),
                 child: Center(
-                  child: BlocBuilder<UsersListBloc, UsersListState>(
-                    builder: (context, state) {
-                      if (state is UsersListLoading) {
-                        return const SizedBox(
+                  child: _isSubmitting
+                      ? const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                             color: Colors.white,
                             strokeWidth: 2,
                           ),
-                        );
-                      }
-                      return Text(
-                        _currentStep < 3
-                            ? 'التالي'
-                            : (widget.userId == null ? 'إنشاء المستخدم' : 'تحديث المستخدم'),
-                        style: AppTextStyles.buttonMedium.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                        )
+                      : Text(
+                          _currentStep < 3
+                              ? 'التالي'
+                              : (widget.userId == null ? 'إنشاء المستخدم' : 'تحديث المستخدم'),
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      );
-                    },
-                  ),
                 ),
               ),
             ),
@@ -1075,17 +1097,19 @@ class _CreateUserPageState extends State<CreateUserPage>
   
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isSubmitting = true;
+      });
       if (widget.userId == null) {
-      context.read<UsersListBloc>().add(
-        CreateUserEvent(
-          name: _nameController.text,
-          email: _emailController.text,
-          password: _passwordController.text,
-          phone: _phoneController.text,
+        context.read<UsersListBloc>().add(
+          CreateUserEvent(
+            name: _nameController.text,
+            email: _emailController.text,
+            password: _passwordController.text,
+            phone: _phoneController.text,
             roleId: _selectedRole,
-        ),
-      );
-      _showSuccessMessage('تم إنشاء المستخدم بنجاح');
+          ),
+        );
       } else {
         context.read<UsersListBloc>().add(
           UpdateUserEvent(
@@ -1093,11 +1117,10 @@ class _CreateUserPageState extends State<CreateUserPage>
             name: _nameController.text,
             email: _emailController.text,
             phone: _phoneController.text,
+            roleId: _selectedRole,
           ),
         );
-        _showSuccessMessage('تم تحديث المستخدم بنجاح');
       }
-      context.pop();
     }
   }
   
