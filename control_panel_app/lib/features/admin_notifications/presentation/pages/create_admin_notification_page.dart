@@ -104,6 +104,22 @@ class _CreateAdminNotificationPageState
                 ],
               ),
             ),
+            BlocBuilder<AdminNotificationsBloc, AdminNotificationsState>(
+              builder: (context, state) {
+                if (state is AdminNotificationsSubmitting) {
+                  return Container(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    child: const Center(
+                      child: LoadingWidget(
+                        type: LoadingType.futuristic,
+                        message: 'جاري الإرسال...'
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
           ],
         ),
       ),

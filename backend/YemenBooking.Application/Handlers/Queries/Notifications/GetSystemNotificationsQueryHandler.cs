@@ -13,6 +13,7 @@ using YemenBooking.Core.Entities;
 using YemenBooking.Core.Interfaces.Repositories;
 using YemenBooking.Application.Interfaces;
 using YemenBooking.Application.Interfaces.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace YemenBooking.Application.Handlers.Queries.Notifications
 {
@@ -56,9 +57,20 @@ namespace YemenBooking.Application.Handlers.Queries.Notifications
                 && (!request.SentAfter.HasValue || n.CreatedAt >= request.SentAfter.Value)
                 && (!request.SentBefore.HasValue || n.CreatedAt <= request.SentBefore.Value);
 
-            var (entities, totalCount) = await _notificationRepository.GetPagedAsync(
-                request.PageNumber, request.PageSize,
-                predicate, n => n.CreatedAt, false, cancellationToken);
+            // Build query with includes to enrich recipient/sender fields
+            var query = _notificationRepository
+                .GetQueryable()
+                .Where(predicate)
+                .Include(n => n.Recipient)
+                .Include(n => n.Sender);
+
+            var totalCount = await query.CountAsync(cancellationToken);
+
+            var entities = await query
+                .OrderByDescending(n => n.CreatedAt)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync(cancellationToken);
 
             var items = entities.Select(n => new NotificationDto
             {
@@ -69,9 +81,11 @@ namespace YemenBooking.Application.Handlers.Queries.Notifications
                 Priority = n.Priority,
                 Status = n.Status,
                 RecipientId = n.RecipientId,
-                RecipientName = string.Empty,
+                RecipientName = n.Recipient?.Name ?? string.Empty,
+                RecipientEmail = n.Recipient?.Email ?? string.Empty,
+                RecipientPhone = n.Recipient?.Phone ?? string.Empty,
                 SenderId = n.SenderId,
-                SenderName = string.Empty,
+                SenderName = n.Sender?.Name ?? string.Empty,
                 IsRead = n.IsRead,
                 ReadAt = n.ReadAt,
                 CreatedAt = n.CreatedAt
