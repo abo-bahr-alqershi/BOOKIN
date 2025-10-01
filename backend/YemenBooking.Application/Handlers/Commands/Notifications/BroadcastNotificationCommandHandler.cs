@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using YemenBooking.Application.Commands.Notifications;
 using YemenBooking.Application.DTOs;
 using YemenBooking.Application.Interfaces.Services;
+using System.Collections.Generic;
 using YemenBooking.Core.Entities;
 using YemenBooking.Core.Interfaces;
 using YemenBooking.Core.Interfaces.Repositories;
@@ -22,17 +23,20 @@ namespace YemenBooking.Application.Handlers.Commands.Notifications
         private readonly IUserRepository _userRepository;
         private readonly ILogger<BroadcastNotificationCommandHandler> _logger;
         private readonly INotificationService _notificationService;
+        private readonly IFirebaseService _firebaseService;
 
         public BroadcastNotificationCommandHandler(
             IUnitOfWork unitOfWork,
             IUserRepository userRepository,
             ILogger<BroadcastNotificationCommandHandler> logger,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IFirebaseService firebaseService)
         {
             _unitOfWork = unitOfWork;
             _userRepository = userRepository;
             _logger = logger;
             _notificationService = notificationService;
+            _firebaseService = firebaseService;
         }
 
         public async Task<ResultDto<int>> Handle(BroadcastNotificationCommand request, CancellationToken cancellationToken)
@@ -84,26 +88,81 @@ namespace YemenBooking.Application.Handlers.Commands.Notifications
             // إذا لم يكن هناك موعد مجدول، أرسل الإشعارات فوراً عبر قنواتها (بما فيها FCM)
             if (!request.ScheduledFor.HasValue)
             {
-                foreach (var n in notifications)
+                // إذا كان الهدف جميع المستخدمين، استخدم موضوع "all"
+                if (request.TargetAllUsers)
                 {
-                    try
+                    var ok = await _firebaseService.SendNotificationAsync("all", request.Title, request.Message, null, cancellationToken);
+                    _logger.LogInformation("تم إرسال بث موضوع all عبر FCM: {Status}", ok);
+                    foreach (var n in notifications)
                     {
-                        await _notificationService.SendAsync(new YemenBooking.Core.Notifications.NotificationRequest
-                        {
-                            UserId = n.RecipientId,
-                            Title = n.Title,
-                            Message = n.Message,
-                            Type = Enum.TryParse<YemenBooking.Core.Notifications.NotificationType>(n.Type, true, out var t)
-                                ? t : YemenBooking.Core.Notifications.NotificationType.System,
-                            Data = null
-                        }, cancellationToken);
                         n.MarkAsSent("PUSH");
                         n.MarkAsDelivered();
                     }
-                    catch (Exception ex)
+                }
+                // إذا كانت بواسطة أدوار، أرسل لكل موضوع دور بشكل منفصل لتفادي حدود الرسائل
+                else if (request.TargetRoles != null && request.TargetRoles.Length > 0)
+                {
+                    var roles = request.TargetRoles.Where(r => !string.IsNullOrWhiteSpace(r))
+                        .Select(r => r.Trim().ToLowerInvariant())
+                        .Distinct()
+                        .ToArray();
+
+                    foreach (var role in roles)
                     {
-                        _logger.LogError(ex, "فشل إرسال إشعار البث الفوري للمستخدم {UserId}", n.RecipientId);
-                        n.MarkAsFailed(ex.Message);
+                        var topic = $"role_{role}";
+                        var ok = await _firebaseService.SendNotificationAsync(topic, request.Title, request.Message, null, cancellationToken);
+                        _logger.LogInformation("تم إرسال بث دور {Role} عبر FCM: {Status}", role, ok);
+                    }
+
+                    foreach (var n in notifications)
+                    {
+                        n.MarkAsSent("PUSH");
+                        n.MarkAsDelivered();
+                    }
+                }
+                // إذا كانت قائمة مستلمين محددين، أرسل لكل مستخدم عبر موضوع user_{id}
+                else if (request.TargetUserIds != null && request.TargetUserIds.Length > 0)
+                {
+                    foreach (var n in notifications)
+                    {
+                        try
+                        {
+                            var topic = $"user_{n.RecipientId}";
+                            await _firebaseService.SendNotificationAsync(topic, n.Title, n.Message, null, cancellationToken);
+                            n.MarkAsSent("PUSH");
+                            n.MarkAsDelivered();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "فشل إرسال إشعار البث الفوري للمستخدم {UserId}", n.RecipientId);
+                            n.MarkAsFailed(ex.Message);
+                        }
+                    }
+                }
+                else
+                {
+                    // fallback: أرسل فردياً كما كان
+                    foreach (var n in notifications)
+                    {
+                        try
+                        {
+                            await _notificationService.SendAsync(new YemenBooking.Core.Notifications.NotificationRequest
+                            {
+                                UserId = n.RecipientId,
+                                Title = n.Title,
+                                Message = n.Message,
+                                Type = Enum.TryParse<YemenBooking.Core.Notifications.NotificationType>(n.Type, true, out var t)
+                                    ? t : YemenBooking.Core.Notifications.NotificationType.System,
+                                Data = null
+                            }, cancellationToken);
+                            n.MarkAsSent("PUSH");
+                            n.MarkAsDelivered();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "فشل إرسال إشعار البث الفوري للمستخدم {UserId}", n.RecipientId);
+                            n.MarkAsFailed(ex.Message);
+                        }
                     }
                 }
                 await _unitOfWork.SaveChangesAsync(cancellationToken);

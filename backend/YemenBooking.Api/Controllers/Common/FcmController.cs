@@ -1,9 +1,11 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using FirebaseAdmin.Messaging;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization; // added for Authorize attribute
+using YemenBooking.Application.Interfaces.Services;
 
 namespace YemenBooking.Api.Controllers.Common
 {
@@ -17,10 +19,12 @@ namespace YemenBooking.Api.Controllers.Common
     public class FcmController : ControllerBase
     {
         private readonly ILogger<FcmController> _logger;
+        private readonly ICurrentUserService _currentUser;
 
-        public FcmController(ILogger<FcmController> logger)
+        public FcmController(ILogger<FcmController> logger, ICurrentUserService currentUser)
         {
             _logger = logger;
+            _currentUser = currentUser;
         }
 
         /// <summary>
@@ -32,12 +36,30 @@ namespace YemenBooking.Api.Controllers.Common
         {
             try
             {
-                var topic = $"user_{request.UserId}";
-                // الاشتراك بالموضوع
-                await FirebaseMessaging.DefaultInstance.SubscribeToTopicAsync(
-                    new[] { request.Token }, topic);
+                var tokenArr = new[] { request.Token };
 
-                _logger.LogInformation("Subscribed FCM token to topic {Topic} for user {UserId}", topic, request.UserId);
+                // اشتراك موضوع المستخدم
+                var userTopic = $"user_{request.UserId}";
+                await FirebaseMessaging.DefaultInstance.SubscribeToTopicAsync(tokenArr, userTopic);
+                _logger.LogInformation("Subscribed FCM token to topic {Topic} for user {UserId}", userTopic, request.UserId);
+
+                // اشتراك موضوع الجميع
+                await FirebaseMessaging.DefaultInstance.SubscribeToTopicAsync(tokenArr, "all");
+                _logger.LogInformation("Subscribed FCM token to topic {Topic} for user {UserId}", "all", request.UserId);
+
+                // اشتراك مواضيع الأدوار
+                var roleTopics = (_currentUser.UserRoles ?? Enumerable.Empty<string>())
+                    .Where(r => !string.IsNullOrWhiteSpace(r))
+                    .Select(r => $"role_{r.Trim().ToLowerInvariant()}")
+                    .Distinct()
+                    .ToArray();
+
+                foreach (var roleTopic in roleTopics)
+                {
+                    await FirebaseMessaging.DefaultInstance.SubscribeToTopicAsync(tokenArr, roleTopic);
+                    _logger.LogInformation("Subscribed FCM token to topic {Topic} for user {UserId}", roleTopic, request.UserId);
+                }
+
                 return Ok();
             }
             catch (Exception ex)
@@ -56,12 +78,30 @@ namespace YemenBooking.Api.Controllers.Common
         {
             try
             {
-                var topic = $"user_{request.UserId}";
-                // إلغاء الاشتراك من الموضوع
-                await FirebaseMessaging.DefaultInstance.UnsubscribeFromTopicAsync(
-                    new[] { request.Token }, topic);
+                var tokenArr = new[] { request.Token };
 
-                _logger.LogInformation("Unsubscribed FCM token from topic {Topic} for user {UserId}", topic, request.UserId);
+                // إلغاء الاشتراك من موضوع المستخدم
+                var userTopic = $"user_{request.UserId}";
+                await FirebaseMessaging.DefaultInstance.UnsubscribeFromTopicAsync(tokenArr, userTopic);
+                _logger.LogInformation("Unsubscribed FCM token from topic {Topic} for user {UserId}", userTopic, request.UserId);
+
+                // إلغاء الاشتراك من موضوع الجميع
+                await FirebaseMessaging.DefaultInstance.UnsubscribeFromTopicAsync(tokenArr, "all");
+                _logger.LogInformation("Unsubscribed FCM token from topic {Topic} for user {UserId}", "all", request.UserId);
+
+                // إلغاء الاشتراك من مواضيع الأدوار
+                var roleTopics = (_currentUser.UserRoles ?? Enumerable.Empty<string>())
+                    .Where(r => !string.IsNullOrWhiteSpace(r))
+                    .Select(r => $"role_{r.Trim().ToLowerInvariant()}")
+                    .Distinct()
+                    .ToArray();
+
+                foreach (var roleTopic in roleTopics)
+                {
+                    await FirebaseMessaging.DefaultInstance.UnsubscribeFromTopicAsync(tokenArr, roleTopic);
+                    _logger.LogInformation("Unsubscribed FCM token from topic {Topic} for user {UserId}", roleTopic, request.UserId);
+                }
+
                 return Ok();
             }
             catch (Exception ex)
