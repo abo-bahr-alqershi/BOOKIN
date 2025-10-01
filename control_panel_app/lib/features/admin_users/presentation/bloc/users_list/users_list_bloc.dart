@@ -91,27 +91,35 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
     UpdateUserEvent event,
     Emitter<UsersListState> emit,
   ) async {
-    final result = await _updateUserUseCase(UpdateUserParams(
-      userId: event.userId,
-      name: event.name,
-      email: event.email,
-      phone: event.phone,
-      profileImage: event.profileImage,
-    ));
+    try {
+      final result = await _updateUserUseCase(UpdateUserParams(
+        userId: event.userId,
+        name: event.name,
+        email: event.email,
+        phone: event.phone,
+        profileImage: event.profileImage,
+      ));
 
-    await result.fold(
-      (_) async {},
-      (success) async {
-        if (success) {
-          if (event.roleId != null && event.roleId!.isNotEmpty) {
-            await _assignRoleUseCase(
-              AssignRoleParams(userId: event.userId, roleId: event.roleId!),
-            );
+      await result.fold(
+        (failure) async {
+          emit(UsersListError(message: failure.message));
+        },
+        (success) async {
+          if (success) {
+            if (event.roleId != null && event.roleId!.isNotEmpty) {
+              await _assignRoleUseCase(
+                AssignRoleParams(userId: event.userId, roleId: event.roleId!),
+              );
+            }
+            add(RefreshUsersEvent());
+          } else {
+            emit(const UsersListError(message: 'فشل تحديث المستخدم'));
           }
-          add(RefreshUsersEvent());
-        }
-      },
-    );
+        },
+      );
+    } catch (e) {
+      emit(UsersListError(message: e.toString()));
+    }
   }
 
   Future<void> _onLoadMoreUsers(

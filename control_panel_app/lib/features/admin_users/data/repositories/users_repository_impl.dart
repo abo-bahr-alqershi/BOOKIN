@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/exceptions.dart';
+import '../../../../core/network/api_exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/models/paginated_result.dart';
 import '../../../../core/network/network_info.dart';
@@ -64,6 +65,8 @@ class UsersRepositoryImpl implements UsersRepository {
           pageNumber: result.pageNumber,
           pageSize: result.pageSize,
         ));
+      } on ApiException catch (e) {
+        return Left(ServerFailure(e.message));
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }
@@ -91,6 +94,8 @@ class UsersRepositoryImpl implements UsersRepository {
     try {
       final userDetails = await remoteDataSource.getUserDetails(userId);
       return Right(userDetails);
+    } on ApiException catch (e) {
+      return Left(ServerFailure(e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     }
@@ -117,6 +122,8 @@ class UsersRepositoryImpl implements UsersRepository {
         profileImage: profileImage,
       );
       return Right(userId);
+    } on ApiException catch (e) {
+      return Left(ServerFailure(e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     }
@@ -143,6 +150,8 @@ class UsersRepositoryImpl implements UsersRepository {
         profileImage: profileImage,
       );
       return Right(success);
+    } on ApiException catch (e) {
+      return Left(ServerFailure(e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     }
@@ -157,6 +166,8 @@ class UsersRepositoryImpl implements UsersRepository {
     try {
       final success = await remoteDataSource.activateUser(userId);
       return Right(success);
+    } on ApiException catch (e) {
+      return Left(ServerFailure(e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     }
@@ -171,6 +182,8 @@ class UsersRepositoryImpl implements UsersRepository {
     try {
       final success = await remoteDataSource.deactivateUser(userId);
       return Right(success);
+    } on ApiException catch (e) {
+      return Left(ServerFailure(e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     }
