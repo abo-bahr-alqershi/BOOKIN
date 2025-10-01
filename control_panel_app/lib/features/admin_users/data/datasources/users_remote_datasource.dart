@@ -301,11 +301,22 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
     required String roleId,
   }) async {
     try {
+      // Ensure we send a GUID roleId. If a role name/alias is passed (e.g., "admin"),
+      // resolve it to its GUID using the roles endpoint.
+      String roleGuid = roleId;
+      if (!_isGuid(roleGuid)) {
+        final resolved = await _resolveRoleIdByName(roleGuid);
+        if (resolved == null) {
+          throw ApiException(message: 'Invalid role: $roleId');
+        }
+        roleGuid = resolved;
+      }
+
       final response = await _apiClient.post(
         '/api/admin/Users/$userId/assign-role',
         data: {
-          'userId': userId,
-          'roleId': roleId,
+          // Backend binds UserId from route; only RoleId is required in body
+          'roleId': roleGuid,
         },
       );
 
@@ -315,6 +326,46 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
       );
 
       return result.isSuccess && (result.data ?? false);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  bool _isGuid(String value) {
+    final guidRegex = RegExp(r'^[{(]?[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}[)}]?$');
+    return guidRegex.hasMatch(value);
+  }
+
+  Future<String?> _resolveRoleIdByName(String roleName) async {
+    try {
+      final response = await _apiClient.get(
+        '/api/admin/Roles',
+        queryParameters: {
+          'pageNumber': 1,
+          'pageSize': 1000,
+        },
+      );
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        final items = data['items'];
+        if (items is List) {
+          final match = items.cast<dynamic>().firstWhere(
+                (item) {
+                  if (item is Map<String, dynamic>) {
+                    final name = (item['name'] ?? '').toString();
+                    return name.toLowerCase() == roleName.toLowerCase();
+                  }
+                  return false;
+                },
+                orElse: () => null,
+              );
+          if (match is Map<String, dynamic>) {
+            final id = (match['id'] ?? '').toString();
+            if (_isGuid(id)) return id;
+          }
+        }
+      }
+      return null;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
