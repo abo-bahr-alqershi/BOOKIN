@@ -6,6 +6,7 @@ import 'injection_container.dart' as di;
 import 'core/bloc/app_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'services/connectivity_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +24,8 @@ void main() async {
   
   // Initialize connectivity service
   await ConnectivityService().initialize();
+  // Initialize notifications (register FCM token and handlers)
+  await di.sl<NotificationService>().initialize();
   
   // Initialize AppBloc after dependency injection
   AppBloc.initialize();

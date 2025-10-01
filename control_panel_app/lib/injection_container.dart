@@ -2054,10 +2054,36 @@ void _initCore() {
   // Services
   sl.registerLazySingleton(() => LocalStorageService(sl()));
   sl.registerLazySingleton(() => LocationService());
-  sl.registerLazySingleton(() => NotificationService());
+  sl.registerLazySingleton(() => NotificationService(
+    apiClient: sl(),
+    localStorage: sl(),
+    authLocalDataSource: sl(),
+  ));
   sl.registerLazySingleton(() => AnalyticsService());
   sl.registerLazySingleton(() => DeepLinkService());
+
+  // Data Management Services
+  sl.registerLazySingleton(() => LocalDataService(sl()));
   sl.registerLazySingleton(() => ConnectivityService());
+
+  // Reference datasources and repository
+  sl.registerLazySingleton<ReferenceRemoteDataSource>(() => ReferenceRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<ReferenceLocalDataSource>(() => ReferenceLocalDataSourceImpl(localStorage: sl()));
+  sl.registerLazySingleton<ReferenceRepository>(() => ReferenceRepositoryImpl(remote: sl(), local: sl()));
+
+  // Reference use cases
+  sl.registerLazySingleton(() => GetCitiesUseCase(sl()));
+  sl.registerLazySingleton(() => GetCurrenciesUseCase(sl()));
+
+  // Data sync service
+  sl.registerLazySingleton(() => DataSyncService(
+    localDataService: sl(),
+    connectivityService: sl(),
+    remoteDataSource: sl(),
+    referenceRemoteDataSource: sl(),
+  ));
+
+  // Removed generic WebSocketService registration; using ChatWebSocketService for chat feature
 }
 
 Future<void> _initExternal() async {

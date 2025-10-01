@@ -25,20 +25,99 @@ namespace YemenBooking.Infrastructure.Services
         {
             try
             {
+                // Determine if we are sending to a topic or a token
+                // We treat any value that starts with "/topics/" or starts with "topic:" or "user_" as a topic
+                // The control panel and server subscribe tokens to topic "user_{id}", so we send to that topic
+                bool isTopic = false;
+                string? topic = null;
+                string? token = null;
+
+                if (!string.IsNullOrWhiteSpace(topicOrToken))
+                {
+                    var value = topicOrToken.Trim();
+                    if (value.StartsWith("/topics/", StringComparison.OrdinalIgnoreCase))
+                    {
+                        isTopic = true;
+                        topic = value.Substring("/topics/".Length);
+                    }
+                    else if (value.StartsWith("topic:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        isTopic = true;
+                        topic = value.Substring("topic:".Length);
+                    }
+                    else if (value.StartsWith("user_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        isTopic = true;
+                        topic = value; // Firebase accepts topic names without the "/topics/" prefix when using Topic property
+                    }
+                    else
+                    {
+                        token = value;
+                    }
+                }
+
+                var androidConfig = new AndroidConfig
+                {
+                    Priority = Priority.High,
+                    Notification = new AndroidNotification
+                    {
+                        ChannelId = "yemen_booking_default",
+                    },
+                };
+
+                var apnsConfig = new ApnsConfig
+                {
+                    Aps = new Aps
+                    {
+                        ContentAvailable = false,
+                        Alert = new ApsAlert
+                        {
+                            Title = title,
+                            Body = body
+                        },
+                        Sound = "default",
+                    },
+                    Headers = new Dictionary<string, string>
+                    {
+                        // High priority for iOS
+                        { "apns-priority", "10" }
+                    }
+                };
+
                 var message = new Message
                 {
-                    Token = topicOrToken,
                     Notification = new Notification
                     {
                         Title = title,
                         Body = body
                     },
-                    Data = data
+                    Data = data,
+                    Android = androidConfig,
+                    Apns = apnsConfig,
                 };
+
+                if (isTopic && !string.IsNullOrWhiteSpace(topic))
+                {
+                    message.Topic = topic; // send to topic
+                }
+                else if (!string.IsNullOrWhiteSpace(token))
+                {
+                    message.Token = token; // send to device token
+                }
+                else
+                {
+                    _logger.LogWarning("لم يتم توفير Topic أو Token صالح لإشعار Firebase");
+                    return false;
+                }
 
                 var response = await FirebaseMessaging.DefaultInstance.SendAsync(message, cancellationToken);
                 _logger.LogInformation("تم إرسال إشعار Firebase بنجاح: {Response}", response);
                 return true;
+            }
+            catch (FirebaseMessagingException fcmEx)
+            {
+                _logger.LogError(fcmEx, "FirebaseMessagingException أثناء إرسال الإشعار. Code: {Code}, HttpResponse: {HttpResponse}", fcmEx.ErrorCode, fcmEx.HttpResponse);
+                return false;
             }
             catch (Exception ex)
             {
