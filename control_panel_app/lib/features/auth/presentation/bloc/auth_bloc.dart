@@ -12,6 +12,8 @@ import '../../domain/usecases/upload_user_image_usecase.dart';
 import '../../domain/usecases/change_password_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
+import '../../../../services/notification_service.dart';
+import '../../../../injection_container.dart' as di;
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUseCase loginUseCase;
@@ -130,6 +132,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     await result.fold(
       (failure) async => emit(AuthError(message: _mapFailureToMessage(failure))),
       (_) async {
+        // Unregister FCM and unsubscribe topics
+        try {
+          await di.sl<NotificationService>().unregisterFcmToken();
+        } catch (_) {}
         emit(const AuthLogoutSuccess());
         emit(const AuthUnauthenticated());
       },

@@ -138,9 +138,68 @@ class NotificationService {
         debugPrint('FCM token: $token');
         await _sendTokenToServer(token);
         await _localStorage?.saveFcmToken(token);
+        await _subscribeToDefaultTopics();
       }
     } catch (e) {
       debugPrint('Error registering FCM token: $e');
+    }
+  }
+
+  // Subscribe to default topics: all, user_{id}, role_*
+  Future<void> _subscribeToDefaultTopics() async {
+    try {
+      await _firebaseMessaging.subscribeToTopic('all');
+      final user = await _authLocalDataSource?.getCachedUser();
+      if (user != null) {
+        final String userId = user.userId?.toString() ?? '';
+        if (userId.isNotEmpty) {
+          await _firebaseMessaging.subscribeToTopic('user_${userId}');
+        }
+        final List<String> roles = []
+          ..addAll(((user.roles ?? []) as List).map((e) => e.toString()))
+          ..addAll((user.accountRole != null && (user.accountRole as String).isNotEmpty)
+              ? [user.accountRole as String]
+              : const <String>[]);
+        final uniqueRoles = roles
+            .where((r) => r.trim().isNotEmpty)
+            .map((r) => r.trim().toLowerCase())
+            .toSet()
+            .toList();
+        for (final role in uniqueRoles) {
+          await _firebaseMessaging.subscribeToTopic('role_${role}');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error subscribing to default topics: $e');
+    }
+  }
+
+  // Unsubscribe from default topics: all, user_{id}, role_*
+  Future<void> _unsubscribeFromDefaultTopics() async {
+    try {
+      await _firebaseMessaging.unsubscribeFromTopic('all');
+      final user = await _authLocalDataSource?.getCachedUser();
+      if (user != null) {
+        final String userId = user.userId?.toString() ?? '';
+        if (userId.isNotEmpty) {
+          await _firebaseMessaging.unsubscribeFromTopic('user_${userId}');
+        }
+        final List<String> roles = []
+          ..addAll(((user.roles ?? []) as List).map((e) => e.toString()))
+          ..addAll((user.accountRole != null && (user.accountRole as String).isNotEmpty)
+              ? [user.accountRole as String]
+              : const <String>[]);
+        final uniqueRoles = roles
+            .where((r) => r.trim().isNotEmpty)
+            .map((r) => r.trim().toLowerCase())
+            .toSet()
+            .toList();
+        for (final role in uniqueRoles) {
+          await _firebaseMessaging.unsubscribeFromTopic('role_${role}');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error unsubscribing from default topics: $e');
     }
   }
 
@@ -172,6 +231,7 @@ class NotificationService {
     debugPrint('FCM token refreshed: $token');
     await _sendTokenToServer(token);
     await _localStorage?.saveFcmToken(token);
+    await _subscribeToDefaultTopics();
   }
 
   // Unregister FCM token
@@ -191,6 +251,7 @@ class NotificationService {
         },
       );
 
+      await _unsubscribeFromDefaultTopics();
       await _firebaseMessaging.deleteToken();
     } catch (e) {
       debugPrint('Error unregistering FCM token: $e');
