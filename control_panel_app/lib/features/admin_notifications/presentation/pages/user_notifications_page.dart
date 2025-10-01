@@ -1,5 +1,6 @@
 // lib/features/admin_notifications/presentation/pages/user_notifications_page.dart
 
+import 'package:bookn_cp_app/features/admin_users/presentation/bloc/user_details/user_details_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,8 +16,6 @@ import '../../domain/entities/admin_notification.dart';
 import '../bloc/admin_notifications_bloc.dart';
 import '../bloc/admin_notifications_event.dart';
 import '../bloc/admin_notifications_state.dart';
-import '../../admin_users/presentation/bloc/user_details/user_details_bloc.dart';
-import '../../../admin_users/domain/entities/user_details.dart';
 
 class UserNotificationsPage extends StatefulWidget {
   final String userId;
@@ -48,7 +47,9 @@ class _UserNotificationsPageState extends State<UserNotificationsPage>
     );
 
     _loadUserNotifications();
-    context.read<UserDetailsBloc>().add(LoadUserDetailsEvent(userId: widget.userId));
+    context
+        .read<UserDetailsBloc>()
+        .add(LoadUserDetailsEvent(userId: widget.userId));
     _setupScrollListener();
   }
 

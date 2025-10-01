@@ -1,5 +1,6 @@
 // lib/features/admin_notifications/presentation/pages/create_admin_notification_page.dart
 
+import 'package:bookn_cp_app/core/widgets/loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -111,9 +112,8 @@ class _CreateAdminNotificationPageState
                     color: Colors.black.withValues(alpha: 0.4),
                     child: const Center(
                       child: LoadingWidget(
-                        type: LoadingType.futuristic,
-                        message: 'جاري الإرسال...'
-                      ),
+                          type: LoadingType.futuristic,
+                          message: 'جاري الإرسال...'),
                     ),
                   );
                 }
