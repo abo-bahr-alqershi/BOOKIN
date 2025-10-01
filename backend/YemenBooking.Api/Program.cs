@@ -288,7 +288,7 @@ try
         var credentialsJson = builder.Configuration["Firebase:CredentialsJson"]; // raw JSON (appsettings or env)
         var credentialsBase64 = builder.Configuration["Firebase:CredentialsBase64"]; // base64-encoded JSON (env-friendly)
 
-        if (!string.IsNullOrWhiteSpace(credentialsPath) && System.IO.File.Exists(credentialsPath))
+        if (!string.IsNullOrWhiteSpace(credentialsPath) && System.IO.File.Exists(credentialsPath) && new FileInfo(credentialsPath).Length > 0)
         {
             credential = GoogleCredential.FromFile(credentialsPath);
         }
@@ -309,12 +309,21 @@ try
             using var ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(envJson));
             credential = GoogleCredential.FromStream(ms);
         }
-        else
+        else if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS")))
         {
+            // Use standard ADC path if explicitly provided via env var
             credential = GoogleCredential.GetApplicationDefault();
         }
+        else
+        {
+            app.Logger.LogWarning("Firebase credentials not provided or empty. Skipping Firebase Admin initialization until credentials are configured.");
+            credential = null!; // won't be used
+        }
 
-        FirebaseApp.Create(new AppOptions { Credential = credential });
+        if (credential != null)
+        {
+            FirebaseApp.Create(new AppOptions { Credential = credential });
+        }
     }
 }
 catch (Exception ex)
