@@ -71,7 +71,7 @@ namespace YemenBooking.Application.Handlers.Commands.Users
                 Email = request.Email.Trim(),
                 Password = hashedPassword,
                 Phone = request.Phone.Trim(),
-                ProfileImage = request.ProfileImage?.Trim(),
+                ProfileImage = string.IsNullOrWhiteSpace(request.ProfileImage) ? string.Empty : request.ProfileImage.Trim(),
                 CreatedAt = DateTime.UtcNow,
                 IsActive = false,
                 EmailConfirmed = false

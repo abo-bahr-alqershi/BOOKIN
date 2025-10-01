@@ -18,7 +18,13 @@ class CreateUserPage extends StatefulWidget {
   final String? initialEmail;
   final String? initialPhone;
   final String? initialRoleId;
-  const CreateUserPage({super.key, this.userId, this.initialName, this.initialEmail, this.initialPhone, this.initialRoleId});
+  const CreateUserPage(
+      {super.key,
+      this.userId,
+      this.initialName,
+      this.initialEmail,
+      this.initialPhone,
+      this.initialRoleId});
 
   @override
   State<CreateUserPage> createState() => _CreateUserPageState();
@@ -31,26 +37,26 @@ class _CreateUserPageState extends State<CreateUserPage>
   late AnimationController _glowController;
   late AnimationController _particleController;
   late AnimationController _contentAnimationController;
-  
+
   // Animations
   late Animation<double> _backgroundRotation;
   late Animation<double> _glowAnimation;
   late Animation<double> _contentFadeAnimation;
   late Animation<Offset> _contentSlideAnimation;
-  
+
   // Form Controllers
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
-  
+
   // State
   String? _selectedRole;
   bool _isPasswordVisible = false;
   int _currentStep = 0;
   bool _isSubmitting = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -69,28 +75,28 @@ class _CreateUserPageState extends State<CreateUserPage>
       _selectedRole = widget.initialRoleId;
     }
   }
-  
+
   void _initializeAnimations() {
     _backgroundAnimationController = AnimationController(
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
-    
+
     _glowController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _particleController = AnimationController(
       duration: const Duration(seconds: 15),
       vsync: this,
     )..repeat();
-    
+
     _contentAnimationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _backgroundRotation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
@@ -98,7 +104,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       parent: _backgroundAnimationController,
       curve: Curves.linear,
     ));
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.3,
       end: 1.0,
@@ -106,7 +112,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       parent: _glowController,
       curve: Curves.easeInOut,
     ));
-    
+
     _contentFadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -114,7 +120,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       parent: _contentAnimationController,
       curve: Curves.easeOut,
     ));
-    
+
     _contentSlideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.05),
       end: Offset.zero,
@@ -122,7 +128,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       parent: _contentAnimationController,
       curve: Curves.easeOutQuart,
     ));
-    
+
     // Start animations
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
@@ -130,7 +136,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       }
     });
   }
-  
+
   @override
   void dispose() {
     _backgroundAnimationController.dispose();
@@ -143,43 +149,53 @@ class _CreateUserPageState extends State<CreateUserPage>
     _phoneController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: BlocListener<UsersListBloc, UsersListState>(
         listener: (context, state) {
-          if (_isSubmitting && state is UsersListLoaded) {
-            final isEdit = widget.userId != null;
-            _showSuccessMessage(isEdit ? 'تم تحديث المستخدم بنجاح' : 'تم إنشاء المستخدم بنجاح');
+          // الاستماع لحالة نجاح العملية
+          if (state is UserOperationSuccess && _isSubmitting) {
+            _showSuccessMessage(state.message);
             setState(() {
               _isSubmitting = false;
             });
-            context.pop();
+
+            // في حالة التحديث، نعود مرة واحدة فقط (إلى صفحة التفاصيل أو القائمة)
+            // في حالة الإنشاء، نعود إلى صفحة القائمة
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              // إذا لم نستطع pop، نذهب إلى صفحة قائمة المستخدمين
+              context.go('/admin/users');
+            }
           }
-          if (_isSubmitting && state is UsersListError) {
+          // الاستماع لحالة الخطأ
+          if (state is UsersListError && _isSubmitting) {
             _showErrorMessage(state.message);
             setState(() {
               _isSubmitting = false;
             });
+            // لا نقوم بإغلاق الصفحة في حالة الخطأ
           }
         },
         child: Stack(
           children: [
             // Animated Background
             _buildAnimatedBackground(),
-            
+
             // Main Content
             SafeArea(
               child: Column(
                 children: [
                   // Header
                   _buildHeader(),
-                  
+
                   // Progress Indicator
                   _buildProgressIndicator(),
-                  
+
                   // Form Content
                   Expanded(
                     child: FadeTransition(
@@ -190,7 +206,7 @@ class _CreateUserPageState extends State<CreateUserPage>
                       ),
                     ),
                   ),
-                  
+
                   // Action Buttons
                   _buildActionButtons(),
                 ],
@@ -201,7 +217,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       ),
     );
   }
-  
+
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
       animation: Listenable.merge([_backgroundRotation, _glowAnimation]),
@@ -229,7 +245,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       },
     );
   }
-  
+
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -275,18 +291,21 @@ class _CreateUserPageState extends State<CreateUserPage>
               ),
             ),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Title
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ShaderMask(
-                  shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                  shaderCallback: (bounds) =>
+                      AppTheme.primaryGradient.createShader(bounds),
                   child: Text(
-                    widget.userId == null ? 'إضافة مستخدم جديد' : 'تعديل المستخدم',
+                    widget.userId == null
+                        ? 'إضافة مستخدم جديد'
+                        : 'تعديل المستخدم',
                     style: AppTextStyles.heading2.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -295,7 +314,9 @@ class _CreateUserPageState extends State<CreateUserPage>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  widget.userId == null ? 'قم بملء البيانات المطلوبة لإضافة المستخدم' : 'قم بتحديث بيانات المستخدم',
+                  widget.userId == null
+                      ? 'قم بملء البيانات المطلوبة لإضافة المستخدم'
+                      : 'قم بتحديث بيانات المستخدم',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppTheme.textMuted,
                   ),
@@ -307,10 +328,15 @@ class _CreateUserPageState extends State<CreateUserPage>
       ),
     );
   }
-  
+
   Widget _buildProgressIndicator() {
-    final steps = ['المعلومات الأساسية', 'معلومات الاتصال', 'الصلاحيات', 'المراجعة'];
-    
+    final steps = [
+      'المعلومات الأساسية',
+      'معلومات الاتصال',
+      'الصلاحيات',
+      'المراجعة'
+    ];
+
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -318,7 +344,7 @@ class _CreateUserPageState extends State<CreateUserPage>
         children: List.generate(steps.length, (index) {
           final isActive = index <= _currentStep;
           final isCompleted = index < _currentStep;
-          
+
           return Expanded(
             child: Row(
               children: [
@@ -328,9 +354,7 @@ class _CreateUserPageState extends State<CreateUserPage>
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    gradient: isActive
-                        ? AppTheme.primaryGradient
-                        : null,
+                    gradient: isActive ? AppTheme.primaryGradient : null,
                     color: !isActive
                         ? AppTheme.darkSurface.withOpacity(0.5)
                         : null,
@@ -360,13 +384,14 @@ class _CreateUserPageState extends State<CreateUserPage>
                         : Text(
                             '${index + 1}',
                             style: AppTextStyles.caption.copyWith(
-                              color: isActive ? Colors.white : AppTheme.textMuted,
+                              color:
+                                  isActive ? Colors.white : AppTheme.textMuted,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                   ),
                 ),
-                
+
                 // Line
                 if (index < steps.length - 1)
                   Expanded(
@@ -374,9 +399,7 @@ class _CreateUserPageState extends State<CreateUserPage>
                       height: 2,
                       margin: const EdgeInsets.symmetric(horizontal: 8),
                       decoration: BoxDecoration(
-                        gradient: isCompleted
-                            ? AppTheme.primaryGradient
-                            : null,
+                        gradient: isCompleted ? AppTheme.primaryGradient : null,
                         color: !isCompleted
                             ? AppTheme.darkBorder.withOpacity(0.2)
                             : null,
@@ -391,7 +414,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       ),
     );
   }
-  
+
   Widget _buildFormContent() {
     return Form(
       key: _formKey,
@@ -406,7 +429,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       ),
     );
   }
-  
+
   Widget _buildBasicInfoStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -421,9 +444,9 @@ class _CreateUserPageState extends State<CreateUserPage>
             icon: Icons.person_rounded,
             validator: Validators.validateName,
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Email
           _buildInputField(
             controller: _emailController,
@@ -433,16 +456,16 @@ class _CreateUserPageState extends State<CreateUserPage>
             keyboardType: TextInputType.emailAddress,
             validator: Validators.validateEmail,
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Password (only in create mode)
           if (widget.userId == null) _buildPasswordField(),
         ],
       ),
     );
   }
-  
+
   Widget _buildContactStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -458,20 +481,21 @@ class _CreateUserPageState extends State<CreateUserPage>
             keyboardType: TextInputType.phone,
             validator: Validators.validatePhone,
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Additional contact info can be added here
           _buildInfoCard(
             icon: Icons.info_rounded,
             title: 'معلومات إضافية',
-            description: 'يمكنك إضافة معلومات اتصال إضافية لاحقاً من صفحة تفاصيل المستخدم',
+            description:
+                'يمكنك إضافة معلومات اتصال إضافية لاحقاً من صفحة تفاصيل المستخدم',
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildPermissionsStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -486,14 +510,14 @@ class _CreateUserPageState extends State<CreateUserPage>
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Role Selector
           ..._buildRoleOptions(),
         ],
       ),
     );
   }
-  
+
   List<Widget> _buildRoleOptions() {
     final roles = [
       {
@@ -525,10 +549,10 @@ class _CreateUserPageState extends State<CreateUserPage>
         'gradient': [AppTheme.primaryCyan, AppTheme.neonGreen],
       },
     ];
-    
+
     return roles.map((role) {
       final isSelected = _selectedRole == role['id'];
-      
+
       return GestureDetector(
         onTap: () {
           setState(() {
@@ -564,7 +588,8 @@ class _CreateUserPageState extends State<CreateUserPage>
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: (role['gradient'] as List<Color>)[0].withOpacity(0.2),
+                      color:
+                          (role['gradient'] as List<Color>)[0].withOpacity(0.2),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -632,7 +657,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       );
     }).toList();
   }
-  
+
   Widget _buildReviewStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -647,7 +672,7 @@ class _CreateUserPageState extends State<CreateUserPage>
             ),
           ),
           const SizedBox(height: 20),
-          
+
           // Review Cards
           _buildReviewCard(
             title: 'المعلومات الأساسية',
@@ -657,18 +682,18 @@ class _CreateUserPageState extends State<CreateUserPage>
               {'label': 'كلمة المرور', 'value': '••••••••'},
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           _buildReviewCard(
             title: 'معلومات الاتصال',
             items: [
               {'label': 'رقم الهاتف', 'value': _phoneController.text},
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           _buildReviewCard(
             title: 'الصلاحيات',
             items: [
@@ -679,7 +704,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       ),
     );
   }
-  
+
   Widget _buildInputField({
     required TextEditingController controller,
     required String label,
@@ -738,7 +763,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       ],
     );
   }
-  
+
   Widget _buildPasswordField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -804,7 +829,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       ],
     );
   }
-  
+
   Widget _buildInfoCard({
     required IconData icon,
     required String title,
@@ -866,7 +891,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       ),
     );
   }
-  
+
   Widget _buildReviewCard({
     required String title,
     required List<Map<String, String>> items,
@@ -898,36 +923,36 @@ class _CreateUserPageState extends State<CreateUserPage>
           ),
           const SizedBox(height: 12),
           ...items.map((item) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  item['label']!,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    item['value']!,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppTheme.textWhite,
-                      fontWeight: FontWeight.w600,
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      item['label']!,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppTheme.textMuted,
+                      ),
                     ),
-                    textAlign: TextAlign.end,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    Expanded(
+                      child: Text(
+                        item['value']!,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppTheme.textWhite,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.end,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          )),
+              )),
         ],
       ),
     );
   }
-  
+
   Widget _buildActionButtons() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -978,9 +1003,9 @@ class _CreateUserPageState extends State<CreateUserPage>
                 ),
               ),
             ),
-          
+
           if (_currentStep > 0) const SizedBox(width: 12),
-          
+
           // Next/Submit Button
           Expanded(
             flex: _currentStep == 0 ? 1 : 1,
@@ -1014,7 +1039,9 @@ class _CreateUserPageState extends State<CreateUserPage>
                       : Text(
                           _currentStep < 3
                               ? 'التالي'
-                              : (widget.userId == null ? 'إنشاء المستخدم' : 'تحديث المستخدم'),
+                              : (widget.userId == null
+                                  ? 'إنشاء المستخدم'
+                                  : 'تحديث المستخدم'),
                           style: AppTextStyles.buttonMedium.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -1028,7 +1055,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       ),
     );
   }
-  
+
   void _handleBack() {
     if (_currentStep > 0) {
       setState(() {
@@ -1038,7 +1065,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       context.pop();
     }
   }
-  
+
   void _previousStep() {
     if (_currentStep > 0) {
       setState(() {
@@ -1046,12 +1073,12 @@ class _CreateUserPageState extends State<CreateUserPage>
       });
     }
   }
-  
+
   void _nextStep() {
     if (_currentStep < 3) {
       // Validate current step
       bool isValid = true;
-      
+
       if (_currentStep == 0) {
         isValid = _validateBasicInfo();
       } else if (_currentStep == 1) {
@@ -1059,7 +1086,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       } else if (_currentStep == 2) {
         isValid = _validatePermissions();
       }
-      
+
       if (isValid) {
         setState(() {
           _currentStep++;
@@ -1067,7 +1094,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       }
     }
   }
-  
+
   bool _validateBasicInfo() {
     final isEditing = widget.userId != null;
     if (_nameController.text.isEmpty ||
@@ -1078,7 +1105,7 @@ class _CreateUserPageState extends State<CreateUserPage>
     }
     return true;
   }
-  
+
   bool _validateContact() {
     if (_phoneController.text.isEmpty) {
       _showErrorMessage('الرجاء إدخال رقم الهاتف');
@@ -1086,7 +1113,7 @@ class _CreateUserPageState extends State<CreateUserPage>
     }
     return true;
   }
-  
+
   bool _validatePermissions() {
     if (_selectedRole == null) {
       _showErrorMessage('الرجاء اختيار دور المستخدم');
@@ -1094,7 +1121,7 @@ class _CreateUserPageState extends State<CreateUserPage>
     }
     return true;
   }
-  
+
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -1102,28 +1129,28 @@ class _CreateUserPageState extends State<CreateUserPage>
       });
       if (widget.userId == null) {
         context.read<UsersListBloc>().add(
-          CreateUserEvent(
-            name: _nameController.text,
-            email: _emailController.text,
-            password: _passwordController.text,
-            phone: _phoneController.text,
-            roleId: _selectedRole,
-          ),
-        );
+              CreateUserEvent(
+                name: _nameController.text,
+                email: _emailController.text,
+                password: _passwordController.text,
+                phone: _phoneController.text,
+                roleId: _selectedRole,
+              ),
+            );
       } else {
         context.read<UsersListBloc>().add(
-          UpdateUserEvent(
-            userId: widget.userId!,
-            name: _nameController.text,
-            email: _emailController.text,
-            phone: _phoneController.text,
-            roleId: _selectedRole,
-          ),
-        );
+              UpdateUserEvent(
+                userId: widget.userId!,
+                name: _nameController.text,
+                email: _emailController.text,
+                phone: _phoneController.text,
+                roleId: _selectedRole,
+              ),
+            );
       }
     }
   }
-  
+
   String _getRoleText(String role) {
     switch (role.toLowerCase()) {
       case 'admin':
@@ -1138,7 +1165,7 @@ class _CreateUserPageState extends State<CreateUserPage>
         return role;
     }
   }
-  
+
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1162,7 +1189,7 @@ class _CreateUserPageState extends State<CreateUserPage>
       ),
     );
   }
-  
+
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1191,22 +1218,22 @@ class _CreateUserPageState extends State<CreateUserPage>
 class _CreateUserBackgroundPainter extends CustomPainter {
   final double rotation;
   final double glowIntensity;
-  
+
   _CreateUserBackgroundPainter({
     required this.rotation,
     required this.glowIntensity,
   });
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
-    
+
     // Draw grid
     paint.color = AppTheme.primaryBlue.withOpacity(0.05);
     const spacing = 50.0;
-    
+
     for (double x = 0; x < size.width; x += spacing) {
       canvas.drawLine(
         Offset(x, 0),
@@ -1214,7 +1241,7 @@ class _CreateUserBackgroundPainter extends CustomPainter {
         paint,
       );
     }
-    
+
     for (double y = 0; y < size.height; y += spacing) {
       canvas.drawLine(
         Offset(0, y),
@@ -1222,11 +1249,11 @@ class _CreateUserBackgroundPainter extends CustomPainter {
         paint,
       );
     }
-    
+
     // Draw rotating circles
     final center = Offset(size.width / 2, size.height / 2);
     paint.color = AppTheme.primaryBlue.withOpacity(0.03 * glowIntensity);
-    
+
     for (int i = 0; i < 3; i++) {
       final radius = 200.0 + i * 100;
       canvas.save();
@@ -1237,7 +1264,7 @@ class _CreateUserBackgroundPainter extends CustomPainter {
       canvas.restore();
     }
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

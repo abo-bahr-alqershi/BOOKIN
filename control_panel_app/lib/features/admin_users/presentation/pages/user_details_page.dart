@@ -185,33 +185,41 @@ class _UserDetailsPageState extends State<UserDetailsPage>
       body: Stack(
         children: [
           _buildAnimatedBackground(),
-          BlocBuilder<UserDetailsBloc, UserDetailsState>(
-            builder: (context, state) {
-              if (state is UserDetailsLoading) {
-                return const LoadingWidget(
-                  type: LoadingType.futuristic,
-                  message: 'جاري تحميل بيانات المستخدم...',
-                );
-              }
-              if (state is UserDetailsError) {
-                return _buildErrorState(state.message);
-              }
+          BlocListener<UserDetailsBloc, UserDetailsState>(
+            listener: (context, state) {
+              // عند العودة من صفحة التحديث، نعيد تحميل البيانات
               if (state is UserDetailsLoaded) {
-                return CustomScrollView(
-                  physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics(),
-                  ),
-                  slivers: [
-                    _buildSliverAppBar(state),
-                    SliverToBoxAdapter(child: _buildUserInfoCard(state)),
-                    SliverToBoxAdapter(child: _buildStatsSection(state)),
-                    SliverToBoxAdapter(child: _buildTabNavigation(state)),
-                    _buildTabContentSliver(state),
-                  ],
-                );
+                // البيانات تم تحميلها بنجاح
               }
-              return const SizedBox.shrink();
             },
+            child: BlocBuilder<UserDetailsBloc, UserDetailsState>(
+              builder: (context, state) {
+                if (state is UserDetailsLoading) {
+                  return const LoadingWidget(
+                    type: LoadingType.futuristic,
+                    message: 'جاري تحميل بيانات المستخدم...',
+                  );
+                }
+                if (state is UserDetailsError) {
+                  return _buildErrorState(state.message);
+                }
+                if (state is UserDetailsLoaded) {
+                  return CustomScrollView(
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
+                    slivers: [
+                      _buildSliverAppBar(state),
+                      SliverToBoxAdapter(child: _buildUserInfoCard(state)),
+                      SliverToBoxAdapter(child: _buildStatsSection(state)),
+                      SliverToBoxAdapter(child: _buildTabNavigation(state)),
+                      _buildTabContentSliver(state),
+                    ],
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
           ),
           _buildFloatingActionButton(),
 
@@ -1851,8 +1859,9 @@ class _UserDetailsPageState extends State<UserDetailsPage>
   }
 
   // Helper Methods
-  void _navigateToEditPage(UserDetailsLoaded state) {
-    context.go(
+  void _navigateToEditPage(UserDetailsLoaded state) async {
+    // الانتقال إلى صفحة التحديث والانتظار حتى تغلق
+    await context.push(
       '/admin/users/${widget.userId}/edit',
       extra: {
         'name': state.userDetails.userName,
@@ -1861,21 +1870,30 @@ class _UserDetailsPageState extends State<UserDetailsPage>
         'roleId': state.userDetails.role,
       },
     );
+
+    // بعد العودة من صفحة التحديث، نعيد تحميل البيانات
+    if (mounted) {
+      _loadUserDetails();
+    }
   }
 
   void _showRoleSelector(UserDetailsLoaded state) {
+    // حفظ الـ bloc قبل فتح الـ BottomSheet
+    final bloc = context.read<UserDetailsBloc>();
+    
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => UserRoleSelector(
         currentRole: state.userDetails.role,
         onRoleSelected: (roleId) {
-          context.read<UserDetailsBloc>().add(
-                AssignUserRoleEvent(
-                  userId: widget.userId,
-                  roleId: roleId,
-                ),
-              );
+          // استخدام الـ bloc المحفوظ بدلاً من context.read
+          bloc.add(
+            AssignUserRoleEvent(
+              userId: widget.userId,
+              roleId: roleId,
+            ),
+          );
         },
       ),
     );

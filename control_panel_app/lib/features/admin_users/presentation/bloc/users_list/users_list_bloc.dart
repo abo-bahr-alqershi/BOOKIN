@@ -59,11 +59,11 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
     Emitter<UsersListState> emit,
   ) async {
     emit(UsersListLoading());
-    
+
     _currentPage = 1;
     _allUsers = [];
     _hasMoreData = true;
-    
+
     final result = await _getAllUsersUseCase(
       GetAllUsersParams(
         pageNumber: _currentPage,
@@ -76,7 +76,7 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
       (paginatedResult) {
         _allUsers = paginatedResult.items;
         _hasMoreData = paginatedResult.pageNumber < paginatedResult.totalPages;
-        
+
         emit(UsersListLoaded(
           users: _allUsers,
           hasMore: _hasMoreData,
@@ -106,12 +106,28 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
         },
         (success) async {
           if (success) {
+            // محاولة تخصيص الدور إذا تم توفيره
+            bool assignRoleSuccess = true;
+            String? assignRoleError;
+
             if (event.roleId != null && event.roleId!.isNotEmpty) {
-              await _assignRoleUseCase(
+              final assignResult = await _assignRoleUseCase(
                 AssignRoleParams(userId: event.userId, roleId: event.roleId!),
               );
+
+              assignResult.fold(
+                (failure) {
+                  assignRoleSuccess = false;
+                  assignRoleError = failure.message;
+                },
+                (result) {
+                  assignRoleSuccess = result;
+                },
+              );
             }
-            // Reload list and emit loaded to notify listeners
+
+            // إعادة تحميل القائمة بغض النظر عن نتيجة تخصيص الدور
+            // لأن التحديث الأساسي نجح
             final reload = await _getAllUsersUseCase(
               GetAllUsersParams(
                 pageNumber: 1,
@@ -121,6 +137,7 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
                 isActive: _lastActiveFilter,
               ),
             );
+
             reload.fold(
               (failure) => emit(UsersListError(message: failure.message)),
               (paginatedResult) {
@@ -128,12 +145,22 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
                 _allUsers = paginatedResult.items;
                 _hasMoreData =
                     paginatedResult.pageNumber < paginatedResult.totalPages;
-                emit(UsersListLoaded(
+
+                // إصدار حالة نجاح العملية بدلاً من UsersListLoaded
+                emit(UserOperationSuccess(
+                  message: 'تم تحديث المستخدم بنجاح',
                   users: _allUsers,
                   hasMore: _hasMoreData,
                   totalCount: paginatedResult.totalCount,
-                  isLoadingMore: false,
                 ));
+
+                // إذا فشل تخصيص الدور، نعرض رسالة تحذير (اختياري)
+                // لكن لا نفشل العملية بأكملها
+                if (!assignRoleSuccess && assignRoleError != null) {
+                  // يمكن إضافة لوق أو معالجة إضافية هنا إذا لزم الأمر
+                  print(
+                      'تحذير: تم تحديث المستخدم لكن فشل تخصيص الدور: $assignRoleError');
+                }
               },
             );
           } else {
@@ -151,12 +178,12 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
     Emitter<UsersListState> emit,
   ) async {
     if (state is! UsersListLoaded || !_hasMoreData) return;
-    
+
     final currentState = state as UsersListLoaded;
     emit(currentState.copyWith(isLoadingMore: true));
-    
+
     _currentPage++;
-    
+
     final result = await _getAllUsersUseCase(
       GetAllUsersParams(
         pageNumber: _currentPage,
@@ -175,7 +202,7 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
       (paginatedResult) {
         _allUsers.addAll(paginatedResult.items);
         _hasMoreData = paginatedResult.pageNumber < paginatedResult.totalPages;
-        
+
         emit(UsersListLoaded(
           users: _allUsers,
           hasMore: _hasMoreData,
@@ -194,7 +221,7 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
       _currentPage = 1;
       _allUsers = [];
       _hasMoreData = true;
-      
+
       final result = await _getAllUsersUseCase(
         GetAllUsersParams(
           pageNumber: _currentPage,
@@ -209,8 +236,9 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
         (failure) => emit(UsersListError(message: failure.message)),
         (paginatedResult) {
           _allUsers = paginatedResult.items;
-          _hasMoreData = paginatedResult.pageNumber < paginatedResult.totalPages;
-          
+          _hasMoreData =
+              paginatedResult.pageNumber < paginatedResult.totalPages;
+
           emit(UsersListLoaded(
             users: _allUsers,
             hasMore: _hasMoreData,
@@ -227,12 +255,12 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
     Emitter<UsersListState> emit,
   ) async {
     emit(UsersListLoading());
-    
+
     _currentPage = 1;
     _allUsers = [];
     _hasMoreData = true;
     _lastSearchTerm = event.searchTerm;
-    
+
     final result = await _getAllUsersUseCase(
       GetAllUsersParams(
         pageNumber: _currentPage,
@@ -248,7 +276,7 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
       (paginatedResult) {
         _allUsers = paginatedResult.items;
         _hasMoreData = paginatedResult.pageNumber < paginatedResult.totalPages;
-        
+
         emit(UsersListLoaded(
           users: _allUsers,
           hasMore: _hasMoreData,
@@ -264,13 +292,13 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
     Emitter<UsersListState> emit,
   ) async {
     emit(UsersListLoading());
-    
+
     _currentPage = 1;
     _allUsers = [];
     _hasMoreData = true;
     _lastRoleFilter = event.roleId;
     _lastActiveFilter = event.isActive;
-    
+
     final result = await _getAllUsersUseCase(
       GetAllUsersParams(
         pageNumber: _currentPage,
@@ -288,7 +316,7 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
       (paginatedResult) {
         _allUsers = paginatedResult.items;
         _hasMoreData = paginatedResult.pageNumber < paginatedResult.totalPages;
-        
+
         emit(UsersListLoaded(
           users: _allUsers,
           hasMore: _hasMoreData,
@@ -304,12 +332,13 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
     Emitter<UsersListState> emit,
   ) async {
     if (state is! UsersListLoaded) return;
-    
+
     final currentState = state as UsersListLoaded;
-    
+
     final result = event.activate
         ? await _activateUserUseCase(ActivateUserParams(userId: event.userId))
-        : await _deactivateUserUseCase(DeactivateUserParams(userId: event.userId));
+        : await _deactivateUserUseCase(
+            DeactivateUserParams(userId: event.userId));
 
     result.fold(
       (failure) {
@@ -324,9 +353,9 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
             }
             return user;
           }).toList();
-          
+
           _allUsers = updatedUsers;
-          
+
           emit(UsersListLoaded(
             users: _allUsers,
             hasMore: _hasMoreData,
@@ -343,11 +372,11 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
     Emitter<UsersListState> emit,
   ) async {
     emit(UsersListLoading());
-    
+
     _currentPage = 1;
     _allUsers = [];
     _hasMoreData = true;
-    
+
     final result = await _getAllUsersUseCase(
       GetAllUsersParams(
         pageNumber: _currentPage,
@@ -365,7 +394,7 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
       (paginatedResult) {
         _allUsers = paginatedResult.items;
         _hasMoreData = paginatedResult.pageNumber < paginatedResult.totalPages;
-        
+
         emit(UsersListLoaded(
           users: _allUsers,
           hasMore: _hasMoreData,
@@ -394,9 +423,27 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
         emit(UsersListError(message: failure.message));
       },
       (userId) async {
+        // محاولة تخصيص الدور إذا تم توفيره
+        bool assignRoleSuccess = true;
+        String? assignRoleError;
+
         if (event.roleId != null && event.roleId!.isNotEmpty) {
-          await _assignRoleUseCase(AssignRoleParams(userId: userId, roleId: event.roleId!));
+          final assignResult = await _assignRoleUseCase(
+            AssignRoleParams(userId: userId, roleId: event.roleId!),
+          );
+
+          assignResult.fold(
+            (failure) {
+              assignRoleSuccess = false;
+              assignRoleError = failure.message;
+            },
+            (result) {
+              assignRoleSuccess = result;
+            },
+          );
         }
+
+        // إعادة تحميل القائمة بغض النظر عن نتيجة تخصيص الدور
         final reload = await _getAllUsersUseCase(
           GetAllUsersParams(
             pageNumber: 1,
@@ -413,12 +460,20 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
             _allUsers = paginatedResult.items;
             _hasMoreData =
                 paginatedResult.pageNumber < paginatedResult.totalPages;
-            emit(UsersListLoaded(
+
+            // إصدار حالة نجاح العملية بدلاً من UsersListLoaded
+            emit(UserOperationSuccess(
+              message: 'تم إنشاء المستخدم بنجاح',
               users: _allUsers,
               hasMore: _hasMoreData,
               totalCount: paginatedResult.totalCount,
-              isLoadingMore: false,
             ));
+
+            // إذا فشل تخصيص الدور، نعرض رسالة تحذير (اختياري)
+            if (!assignRoleSuccess && assignRoleError != null) {
+              print(
+                  'تحذير: تم إنشاء المستخدم لكن فشل تخصيص الدور: $assignRoleError');
+            }
           },
         );
       },
@@ -430,7 +485,8 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
     Emitter<UsersListState> emit,
   ) async {
     // Backend does not expose hard delete; emulate by deactivating and removing from current list
-    final result = await _deactivateUserUseCase(DeactivateUserParams(userId: event.userId));
+    final result = await _deactivateUserUseCase(
+        DeactivateUserParams(userId: event.userId));
 
     result.fold(
       (_) {},
@@ -443,7 +499,8 @@ class UsersListBloc extends Bloc<UsersListEvent, UsersListState> {
             emit(UsersListLoaded(
               users: _allUsers,
               hasMore: _hasMoreData,
-              totalCount: currentState.totalCount > 0 ? currentState.totalCount - 1 : 0,
+              totalCount:
+                  currentState.totalCount > 0 ? currentState.totalCount - 1 : 0,
               isLoadingMore: false,
             ));
           }

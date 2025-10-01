@@ -50,3 +50,20 @@ class UsersListError extends UsersListState {
   @override
   List<Object> get props => [message];
 }
+
+class UserOperationSuccess extends UsersListState {
+  final String message;
+  final List<User> users;
+  final bool hasMore;
+  final int totalCount;
+
+  const UserOperationSuccess({
+    required this.message,
+    required this.users,
+    required this.hasMore,
+    required this.totalCount,
+  });
+
+  @override
+  List<Object> get props => [message, users, hasMore, totalCount];
+}

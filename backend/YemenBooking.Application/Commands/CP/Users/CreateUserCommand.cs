@@ -13,30 +13,30 @@ namespace YemenBooking.Application.Commands.Users
         /// اسم المستخدم
         /// User name
         /// </summary>
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// البريد الإلكتروني للمستخدم
         /// User email
         /// </summary>
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
         /// <summary>
         /// كلمة المرور للمستخدم
         /// User password
         /// </summary>
-        public string Password { get; set; }
+        public string Password { get; set; } = string.Empty;
 
         /// <summary>
         /// رقم هاتف المستخدم
         /// User phone number
         /// </summary>
-        public string Phone { get; set; }
+        public string Phone { get; set; } = string.Empty;
 
         /// <summary>
-        /// صورة الملف الشخصي للمستخدم
-        /// User profile image
+        /// صورة الملف الشخصي للمستخدم (اختياري)
+        /// User profile image (optional)
         /// </summary>
-        public string ProfileImage { get; set; }
+        public string? ProfileImage { get; set; }
     }
 } 

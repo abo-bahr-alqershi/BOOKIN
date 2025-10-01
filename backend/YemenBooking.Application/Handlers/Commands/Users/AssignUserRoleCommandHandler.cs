@@ -59,12 +59,29 @@ namespace YemenBooking.Application.Handlers.Commands.Users
             if (role == null)
                 return ResultDto<bool>.Failed("الدور غير موجود");
 
-            // التحقق من عدم التكرار
+            // الحصول على الأدوار الحالية
             var assignedRoles = await _userRepository.GetUserRolesAsync(request.UserId, cancellationToken);
+            
+            // التحقق من عدم التكرار
             if (assignedRoles.Any(r => r.RoleId == request.RoleId))
-                return ResultDto<bool>.Failed("الدور مخصص للمستخدم بالفعل");
+            {
+                // إذا كان الدور مسنداً بالفعل، نعتبر ذلك نجاحاً (idempotent operation)
+                _logger.LogInformation("الدور {RoleId} مخصص بالفعل للمستخدم {UserId}، سيتم تجاهل هذه العملية", request.RoleId, request.UserId);
+                return ResultDto<bool>.Succeeded(true, "الدور مخصص للمستخدم بالفعل");
+            }
 
-            // التنفيذ
+            // حذف جميع الأدوار السابقة (المستخدم يجب أن يكون له دور واحد فقط)
+            foreach (var oldRole in assignedRoles)
+            {
+                _logger.LogInformation("حذف الدور القديم {OldRoleId} من المستخدم {UserId}", oldRole.RoleId, request.UserId);
+                var removeResult = await _roleRepository.RemoveRoleFromUserAsync(request.UserId, oldRole.RoleId, cancellationToken);
+                if (!removeResult)
+                {
+                    _logger.LogWarning("فشل حذف الدور القديم {OldRoleId} من المستخدم {UserId}", oldRole.RoleId, request.UserId);
+                }
+            }
+
+            // تخصيص الدور الجديد
             var result = await _roleRepository.AssignRoleToUserAsync(request.UserId, request.RoleId, cancellationToken);
             if (!result)
                 return ResultDto<bool>.Failed("فشل تخصيص الدور للمستخدم");

@@ -91,7 +91,7 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
   }) async {
     try {
       final queryParams = <String, dynamic>{};
-      
+
       if (pageNumber != null) queryParams['pageNumber'] = pageNumber;
       if (pageSize != null) queryParams['pageSize'] = pageSize;
       if (searchTerm != null && searchTerm.isNotEmpty) {
@@ -120,7 +120,7 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
 
       return PaginatedResult<UserModel>.fromJson(
         response.data,
-        (json) => UserModel.fromJson(json as Map<String, dynamic>),
+        (json) => UserModel.fromJson(json),
       );
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -135,11 +135,12 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
         response.data,
         (json) => json as Map<String, dynamic>,
       );
-      
+
       if (result.isSuccess && result.data != null) {
         return UserDetailsModel.fromJson(result.data!);
       } else {
-        throw ApiException(message: result.message ?? 'Failed to get user details');
+        throw ApiException(
+            message: result.message ?? 'Failed to get user details');
       }
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -162,7 +163,7 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
           'email': email,
           'password': password,
           'phone': phone,
-          if (profileImage != null) 'profileImage': profileImage,
+          'profileImage': profileImage ?? '', // إرسال string فارغ بدلاً من null
         },
       );
 
@@ -229,7 +230,8 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
           'propertyId': (data['propertyId'] ?? '').toString(),
         };
       } else {
-        throw ApiException(message: result.message ?? 'Failed to register owner');
+        throw ApiException(
+            message: result.message ?? 'Failed to register owner');
       }
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -270,7 +272,8 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
   @override
   Future<bool> activateUser(String userId) async {
     try {
-      final response = await _apiClient.post('/api/admin/Users/$userId/activate');
+      final response =
+          await _apiClient.post('/api/admin/Users/$userId/activate');
       final result = ResultDto<bool>.fromJson(
         response.data,
         (dynamic json) => json as bool,
@@ -284,7 +287,8 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
   @override
   Future<bool> deactivateUser(String userId) async {
     try {
-      final response = await _apiClient.post('/api/admin/Users/$userId/deactivate');
+      final response =
+          await _apiClient.post('/api/admin/Users/$userId/deactivate');
       final result = ResultDto<bool>.fromJson(
         response.data,
         (dynamic json) => json as bool,
@@ -332,7 +336,8 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
   }
 
   bool _isGuid(String value) {
-    final guidRegex = RegExp(r'^[{(]?[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}[)}]?$');
+    final guidRegex = RegExp(
+        r'^[{(]?[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}[)}]?$');
     return guidRegex.hasMatch(value);
   }
 
@@ -350,15 +355,15 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
         final items = data['items'];
         if (items is List) {
           final match = items.cast<dynamic>().firstWhere(
-                (item) {
-                  if (item is Map<String, dynamic>) {
-                    final name = (item['name'] ?? '').toString();
-                    return name.toLowerCase() == roleName.toLowerCase();
-                  }
-                  return false;
-                },
-                orElse: () => null,
-              );
+            (item) {
+              if (item is Map<String, dynamic>) {
+                final name = (item['name'] ?? '').toString();
+                return name.toLowerCase() == roleName.toLowerCase();
+              }
+              return false;
+            },
+            orElse: () => null,
+          );
           if (match is Map<String, dynamic>) {
             final id = (match['id'] ?? '').toString();
             if (_isGuid(id)) return id;
@@ -374,18 +379,19 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
   @override
   Future<UserLifetimeStatsModel> getUserLifetimeStats(String userId) async {
     try {
-      final response = await _apiClient.get('/api/admin/Users/$userId/lifetime-stats');
-      
+      final response =
+          await _apiClient.get('/api/admin/Users/$userId/lifetime-stats');
+
       // التحقق من أن response.data ليس null
       if (response.data == null) {
         throw ApiException(message: 'No data received from server');
       }
-      
+
       // التحقق من أن response.data هو Map
       if (response.data is! Map<String, dynamic>) {
         throw ApiException(message: 'Invalid response format from server');
       }
-      
+
       final result = ResultDto<Map<String, dynamic>>.fromJson(
         response.data as Map<String, dynamic>,
         (json) {
@@ -398,24 +404,25 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
             // إرجاع Map فارغ بدلاً من رمي استثناء
             return <String, dynamic>{};
           }
-          return json as Map<String, dynamic>;
+          return json;
         },
       );
-      
+
       if (result.isSuccess) {
         // حتى لو كانت البيانات فارغة، نعيد نموذج بقيم افتراضية
         if (result.data != null && result.data!.isNotEmpty) {
-        return UserLifetimeStatsModel.fromJson(result.data!);
+          return UserLifetimeStatsModel.fromJson(result.data!);
         } else {
           // إرجاع بيانات افتراضية إذا كانت البيانات فارغة
-          return UserLifetimeStatsModel(
+          return const UserLifetimeStatsModel(
             totalNightsStayed: 0,
             totalMoneySpent: 0.0,
             favoriteCity: null,
           );
         }
       } else {
-        throw ApiException(message: result.message ?? 'Failed to get lifetime stats');
+        throw ApiException(
+            message: result.message ?? 'Failed to get lifetime stats');
       }
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);

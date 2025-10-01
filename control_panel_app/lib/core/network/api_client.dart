@@ -156,18 +156,26 @@ class ApiClient {
           
           if (errorData is Map) {
             // محاولة استخراج رسالة الخطأ
-            errorMessage = errorData['message'] ?? 
-                          errorData['error'] ?? 
-                          errorData['errors']?.toString() ?? 
-                          'طلب غير صحيح: تحقق من البيانات المدخلة';
-            
-            // إذا كانت هناك تفاصيل للأخطاء
             if (errorData['errors'] is Map) {
+              // أخطاء التحقق من النموذج
               final errors = errorData['errors'] as Map;
-              final errorDetails = errors.entries
-                  .map((e) => '${e.key}: ${e.value}')
-                  .join(', ');
-              errorMessage = 'أخطاء في: $errorDetails';
+              final List<String> errorMessages = [];
+              
+              errors.forEach((key, value) {
+                if (value is List && value.isNotEmpty) {
+                  // استخراج الرسائل من قائمة الأخطاء
+                  errorMessages.addAll(value.map((e) => e.toString()));
+                } else {
+                  errorMessages.add(value.toString());
+                }
+              });
+              
+              errorMessage = errorMessages.join('\n');
+            } else {
+              // رسالة خطأ عامة
+              errorMessage = errorData['message'] ?? 
+                            errorData['error'] ?? 
+                            'طلب غير صحيح: تحقق من البيانات المدخلة';
             }
           }
           

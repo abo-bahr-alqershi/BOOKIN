@@ -45,7 +45,7 @@ public class User : BaseEntity<Guid>
     /// User name
     /// </summary>
     [Display(Name = "صورة المستخدم")]
-    public string ProfileImage { get; set; }
+    public string ProfileImage { get; set; } = string.Empty;
     
     /// <summary>
     /// رابط صورة الملف الشخصي (متوافق مع معالجات الموبايل)

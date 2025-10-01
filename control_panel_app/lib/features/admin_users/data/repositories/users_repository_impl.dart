@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/exceptions.dart';
-import '../../../../core/network/api_exceptions.dart';
+import '../../../../core/network/api_exceptions.dart' hide ApiException;
 import '../../../../core/error/failures.dart';
 import '../../../../core/models/paginated_result.dart';
 import '../../../../core/network/network_info.dart';
@@ -53,12 +53,12 @@ class UsersRepositoryImpl implements UsersRepository {
           loyaltyTier: loyaltyTier,
           minTotalSpent: minTotalSpent,
         );
-        
+
         // Cache first page for offline access
         if (pageNumber == 1 || pageNumber == null) {
           await localDataSource.cacheUsers(result.items);
         }
-        
+
         return Right(PaginatedResult<User>(
           items: result.items,
           totalCount: result.totalCount,
@@ -88,7 +88,7 @@ class UsersRepositoryImpl implements UsersRepository {
   @override
   Future<Either<Failure, UserDetails>> getUserDetails(String userId) async {
     if (!await networkInfo.isConnected) {
-      return Left(NetworkFailure());
+      return const Left(NetworkFailure());
     }
 
     try {
@@ -110,7 +110,7 @@ class UsersRepositoryImpl implements UsersRepository {
     String? profileImage,
   }) async {
     if (!await networkInfo.isConnected) {
-      return Left(NetworkFailure());
+      return const Left(NetworkFailure());
     }
 
     try {
@@ -138,7 +138,7 @@ class UsersRepositoryImpl implements UsersRepository {
     String? profileImage,
   }) async {
     if (!await networkInfo.isConnected) {
-      return Left(NetworkFailure());
+      return const Left(NetworkFailure());
     }
 
     try {
@@ -160,7 +160,7 @@ class UsersRepositoryImpl implements UsersRepository {
   @override
   Future<Either<Failure, bool>> activateUser(String userId) async {
     if (!await networkInfo.isConnected) {
-      return Left(NetworkFailure());
+      return const Left(NetworkFailure());
     }
 
     try {
@@ -176,7 +176,7 @@ class UsersRepositoryImpl implements UsersRepository {
   @override
   Future<Either<Failure, bool>> deactivateUser(String userId) async {
     if (!await networkInfo.isConnected) {
-      return Left(NetworkFailure());
+      return const Left(NetworkFailure());
     }
 
     try {
@@ -195,7 +195,7 @@ class UsersRepositoryImpl implements UsersRepository {
     required String roleId,
   }) async {
     if (!await networkInfo.isConnected) {
-      return Left(NetworkFailure());
+      return const Left(NetworkFailure());
     }
 
     try {
@@ -210,9 +210,10 @@ class UsersRepositoryImpl implements UsersRepository {
   }
 
   @override
-  Future<Either<Failure, UserLifetimeStats>> getUserLifetimeStats(String userId) async {
+  Future<Either<Failure, UserLifetimeStats>> getUserLifetimeStats(
+      String userId) async {
     if (!await networkInfo.isConnected) {
-      return Left(NetworkFailure());
+      return const Left(NetworkFailure());
     }
 
     try {
