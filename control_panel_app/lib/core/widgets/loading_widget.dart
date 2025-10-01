@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_dimensions.dart';
 
@@ -9,6 +12,7 @@ class LoadingWidget extends StatelessWidget {
   final Color? color;
   final String? message;
   final EdgeInsets? padding;
+  final String? svgAsset;
 
   const LoadingWidget({
     super.key,
@@ -17,6 +21,7 @@ class LoadingWidget extends StatelessWidget {
     this.color,
     this.message,
     this.padding,
+    this.svgAsset,
   });
 
   @override
@@ -24,6 +29,7 @@ class LoadingWidget extends StatelessWidget {
     final theme = Theme.of(context);
     final effectiveColor = color ?? AppTheme.primaryBlue;
     final effectiveSize = size ?? 40.0;
+    final effectiveSvgAsset = svgAsset ?? 'assets/images/progress.svg';
 
     Widget loadingIndicator;
 
@@ -31,8 +37,9 @@ class LoadingWidget extends StatelessWidget {
       case LoadingType.circular:
         loadingIndicator = _FuturisticLoading(
           color: effectiveColor,
-          height: (effectiveSize * 5).clamp(120.0, 260.0),
-          innerSize: (effectiveSize * 2.5).clamp(80.0, 120.0),
+          height: (effectiveSize * 5).clamp(200.0, 300.0),
+          innerSize: (effectiveSize * 3.5).clamp(140.0, 200.0),
+          svgAsset: effectiveSvgAsset,
         );
         break;
       case LoadingType.linear:
@@ -50,8 +57,9 @@ class LoadingWidget extends StatelessWidget {
       case LoadingType.futuristic:
         loadingIndicator = _FuturisticLoading(
           color: effectiveColor,
-          height: (effectiveSize * 5).clamp(120.0, 260.0),
-          innerSize: (effectiveSize * 2.5).clamp(80.0, 120.0),
+          height: (effectiveSize * 5).clamp(200.0, 300.0),
+          innerSize: (effectiveSize * 3.5).clamp(140.0, 200.0),
+          svgAsset: effectiveSvgAsset,
         );
         break;
     }
@@ -76,17 +84,6 @@ class LoadingWidget extends StatelessWidget {
     return Padding(
       padding: padding ?? EdgeInsets.zero,
       child: Center(child: loadingIndicator),
-    );
-  }
-
-  Widget _buildCircularLoader(Color color, double size) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CircularProgressIndicator(
-        strokeWidth: 3.0,
-        valueColor: AlwaysStoppedAnimation<Color>(color),
-      ),
     );
   }
 
@@ -183,11 +180,13 @@ class _FuturisticLoading extends StatefulWidget {
   final Color color;
   final double height;
   final double innerSize;
+  final String svgAsset;
 
   const _FuturisticLoading({
     required this.color,
     required this.height,
     required this.innerSize,
+    required this.svgAsset,
   });
 
   @override
@@ -195,21 +194,45 @@ class _FuturisticLoading extends StatefulWidget {
 }
 
 class _FuturisticLoadingState extends State<_FuturisticLoading>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _controller;
+  late AnimationController _rotationController;
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat();
+
+    _rotationController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..repeat();
+
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.98,
+      end: 1.02,
+    ).animate(CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.easeInOut,
+    ));
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _rotationController.dispose();
+    _scaleController.dispose();
     super.dispose();
   }
 
@@ -217,32 +240,120 @@ class _FuturisticLoadingState extends State<_FuturisticLoading>
   Widget build(BuildContext context) {
     return SizedBox(
       height: widget.height,
-      width: double.infinity,
+      width: widget.height,
       child: AnimatedBuilder(
-        animation: _controller,
+        animation: Listenable.merge([
+          _controller,
+          _rotationController,
+          _scaleAnimation,
+        ]),
         builder: (context, child) {
-          return CustomPaint(
-            painter: _RipplePainter(
-                animationValue: _controller.value, color: widget.color),
-            child: Center(
-              child: Container(
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              // رسم الموجات الخارجية
+              CustomPaint(
+                painter: _RipplePainter(
+                  animationValue: _controller.value,
+                  color: widget.color,
+                ),
+                child: const SizedBox.expand(),
+              ),
+
+              // تأثير التوهج الخلفي
+              Container(
+                width: widget.innerSize * 1.3,
+                height: widget.innerSize * 1.3,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      widget.color.withValues(alpha: 0.12),
+                      widget.color.withValues(alpha: 0.06),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.6, 1.0],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: widget.color.withValues(alpha: 0.2),
+                      blurRadius: 35,
+                      spreadRadius: 8,
+                    ),
+                  ],
+                ),
+              ),
+
+              // الدائرة الخارجية الثابتة
+              Container(
                 width: widget.innerSize,
                 height: widget.innerSize,
                 decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    colors: [
-                      widget.color.withValues(alpha: 0.3),
-                      widget.color.withValues(alpha: 0.1),
-                    ],
-                  ),
                   shape: BoxShape.circle,
-                ),
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(widget.color),
-                  strokeWidth: 2,
+                  border: Border.all(
+                    color: widget.color.withValues(alpha: 0.1),
+                    width: 2,
+                  ),
                 ),
               ),
-            ),
+
+              // الدائرة المتحركة
+              Transform.rotate(
+                angle: _rotationController.value * 2 * 3.14159,
+                child: SizedBox(
+                  width: widget.innerSize,
+                  height: widget.innerSize,
+                  child: CustomPaint(
+                    painter: _CircularProgressPainter(
+                      color: widget.color,
+                      progress: _controller.value,
+                    ),
+                  ),
+                ),
+              ),
+
+              // حاوي الصورة SVG (بدون دوران - فقط تأثير النبض)
+              Transform.scale(
+                scale: _scaleAnimation.value,
+                child: Container(
+                  width: widget.innerSize * 0.85,
+                  height: widget.innerSize * 0.85,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.transparent,
+                  ),
+                  child: Center(
+                    // عرض الصورة SVG بدون دوران
+                    child: SvgPicture.asset(
+                      widget.svgAsset,
+                      width: widget.innerSize * 0.75,
+                      height: widget.innerSize * 0.75,
+                      fit: BoxFit.contain,
+                      allowDrawingOutsideViewBox: true,
+                    ),
+                  ),
+                ),
+              ),
+
+              // تأثير إضاءة علوي خفيف
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.transparent,
+                          Colors.transparent,
+                          widget.color.withValues(alpha: 0.02),
+                        ],
+                        stops: const [0.0, 0.85, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -250,6 +361,102 @@ class _FuturisticLoadingState extends State<_FuturisticLoading>
   }
 }
 
+// رسام الدائرة المتحركة
+class _CircularProgressPainter extends CustomPainter {
+  final Color color;
+  final double progress;
+
+  _CircularProgressPainter({
+    required this.color,
+    required this.progress,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - 6) / 2;
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    // رسم القوس الأول مع تدرج
+    final gradient1 = SweepGradient(
+      colors: [
+        Colors.transparent,
+        color.withValues(alpha: 0.3),
+        color,
+        color,
+        color.withValues(alpha: 0.3),
+        Colors.transparent,
+      ],
+      stops: const [0.0, 0.1, 0.3, 0.7, 0.9, 1.0],
+      startAngle: 0,
+      endAngle: 2 * 3.14159,
+    );
+
+    paint.shader = gradient1.createShader(rect);
+
+    const startAngle = -3.14159 / 2;
+    final sweepAngle = 3.14159 * progress * 1.5;
+
+    canvas.drawArc(
+      rect,
+      startAngle,
+      sweepAngle,
+      false,
+      paint,
+    );
+
+    // رسم القوس الثاني المعاكس
+    final paint2 = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round
+      ..color = color.withValues(alpha: 0.3);
+
+    canvas.drawArc(
+      rect,
+      startAngle + 3.14159,
+      sweepAngle * 0.6,
+      false,
+      paint2,
+    );
+
+    // نقاط مضيئة في نهاية الأقواس
+    final dotPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    // حساب موقع النقطة الأولى
+    final angle1 = startAngle + sweepAngle;
+    final x1 = center.dx + radius * math.cos(angle1);
+    final y1 = center.dy + radius * math.sin(angle1);
+    canvas.drawCircle(Offset(x1, y1), 3.5, dotPaint);
+
+    // إضافة توهج للنقطة
+    final glowPaint = Paint()
+      ..color = color.withValues(alpha: 0.3)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.drawCircle(Offset(x1, y1), 6, glowPaint);
+
+    // حساب موقع النقطة الثانية
+    final angle2 = startAngle + 3.14159 + (sweepAngle * 0.6);
+    final x2 = center.dx + radius * math.cos(angle2);
+    final y2 = center.dy + radius * math.sin(angle2);
+    canvas.drawCircle(
+        Offset(x2, y2), 2.5, dotPaint..color = color.withValues(alpha: 0.7));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// رسام الموجات
 class _RipplePainter extends CustomPainter {
   final double animationValue;
   final Color color;
@@ -258,22 +465,28 @@ class _RipplePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+    final paint = Paint()..style = PaintingStyle.stroke;
 
+    final center = Offset(size.width / 2, size.height / 2);
+
+    // رسم 3 موجات بتوقيت مختلف
     for (int i = 0; i < 3; i++) {
-      final radius = 50.0 + (i * 30) + (animationValue * 20);
-      final opacity = (1.0 - animationValue) * 0.3;
+      final progress = (animationValue + (i * 0.33)) % 1.0;
+      final radius = 70.0 + (progress * 60);
+      final opacity = (1.0 - progress) * 0.2;
 
       paint.color = color.withValues(alpha: opacity);
+      paint.strokeWidth = 2.5 - (progress * 2);
 
-      canvas.drawCircle(
-        Offset(size.width / 2, size.height / 2),
-        radius,
-        paint,
-      );
+      canvas.drawCircle(center, radius, paint);
     }
+
+    // دوائر ثابتة خفيفة للخلفية
+    paint.strokeWidth = 0.5;
+    paint.color = color.withValues(alpha: 0.03);
+
+    canvas.drawCircle(center, 90, paint);
+    canvas.drawCircle(center, 120, paint);
   }
 
   @override

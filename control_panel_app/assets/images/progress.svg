@@ -1,0 +1,155 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="primaryGradientHD" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06B6D4;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
+    </linearGradient>
+    
+    <radialGradient id="glowGradientHD">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.35">
+        <animate attributeName="stop-opacity" values="0.25;0.45;0.25" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="40%" style="stop-color:#8B5CF6;stop-opacity:0.2">
+        <animate attributeName="stop-opacity" values="0.15;0.25;0.15" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#1E1B4B;stop-opacity:0" />
+    </radialGradient>
+    
+    <filter id="centerGlowHD" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="
+        1 0 0 0 0
+        0 1 0 0 0
+        0 0 1 0 0
+        0 0 0 2 0"/>
+      <feBlend in="SourceGraphic" in2="blur" mode="normal" />
+    </filter>
+    
+    <filter id="particleGlowHD" x="-400%" y="-400%" width="800%" height="800%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="
+        0.23 0.47 0.98 0 0
+        0.23 0.47 0.98 0 0
+        0.23 0.47 0.98 0 0
+        0 0 0 4 0"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <filter id="dropShadowHD" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="12"/>
+      <feOffset dx="0" dy="4" result="offsetblur"/>
+      <feFlood flood-color="#3B82F6" flood-opacity="0.6"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background glow -->
+  <circle cx="256" cy="256" r="256" fill="url(#glowGradientHD)"/>
+  
+  <!-- Rotating rings group -->
+  <g id="rotatingRingsHD">
+    <circle 
+      cx="256" 
+      cy="256" 
+      r="248" 
+      fill="none" 
+      stroke="#3B82F6" 
+      stroke-width="3" 
+      opacity="0.25"
+    />
+    <circle 
+      cx="256" 
+      cy="256" 
+      r="220" 
+      fill="none" 
+      stroke="#3B82F6" 
+      stroke-width="2.5" 
+      opacity="0.2"
+    />
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      from="0 256 256"
+      to="360 256 256"
+      dur="20s"
+      repeatCount="indefinite"
+    />
+  </g>
+  
+  <!-- Center circle with gradient -->
+  <g filter="url(#dropShadowHD)">
+    <circle 
+      cx="256" 
+      cy="256" 
+      r="198" 
+      fill="url(#primaryGradientHD)"
+      filter="url(#centerGlowHD)"
+    />
+  </g>
+  
+  <!-- Letter B as Path (converted from text) -->
+  <path d="M 156 356 L 156 156 L 256 156 Q 296 156 316 176 Q 336 196 336 226 Q 336 246 326 260 Q 316 274 296 282 Q 320 288 334 306 Q 348 324 348 350 Q 348 382 326 404 Q 304 426 266 426 L 156 426 Z M 206 266 L 206 206 L 246 206 Q 266 206 276 214 Q 286 222 286 236 Q 286 250 276 258 Q 266 266 246 266 Z M 206 376 L 206 306 L 256 306 Q 276 306 288 316 Q 300 326 300 344 Q 300 362 288 369 Q 276 376 256 376 Z" 
+        fill="white" 
+        stroke="rgba(255,255,255,0.1)" 
+        stroke-width="2"
+        transform="translate(0, -70)">
+    <!-- تأثير النبض للحرف B -->
+    <animateTransform
+      attributeName="transform"
+      type="scale"
+      values="1,1; 1.05,1.05; 1,1"
+      dur="2s"
+      repeatCount="indefinite"
+      additive="sum"
+    />
+  </path>
+  
+  <!-- Orbiting particle -->
+  <g id="orbitingParticleHD">
+    <circle 
+      cx="256" 
+      cy="56" 
+      r="21" 
+      fill="#60A5FA"
+      filter="url(#particleGlowHD)"
+    />
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      from="0 256 256"
+      to="360 256 256"
+      dur="10s"
+      repeatCount="indefinite"
+    />
+  </g>
+  
+  <!-- Particle pulse effect -->
+  <circle 
+    cx="256" 
+    cy="56" 
+    r="21" 
+    fill="none"
+    stroke="#60A5FA"
+    stroke-width="3"
+    opacity="0"
+  >
+    <animate attributeName="r" values="21;56;21" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.9;0;0.9" dur="2s" repeatCount="indefinite"/>
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      from="0 256 256"
+      to="360 256 256"
+      dur="10s"
+      repeatCount="indefinite"
+    />
+  </circle>
+</svg>
