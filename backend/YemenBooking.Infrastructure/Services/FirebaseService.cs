@@ -61,7 +61,8 @@ namespace YemenBooking.Infrastructure.Services
                     Priority = Priority.High,
                     Notification = new AndroidNotification
                     {
-                        ChannelId = "yemen_booking_default",
+                        // Must match app's AndroidNotificationDetails channel id
+                        ChannelId = "yemen_booking_channel",
                     },
                 };
 

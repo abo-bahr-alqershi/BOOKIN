@@ -60,6 +60,7 @@ class NotificationService {
 
   // Initialize local notifications
   Future<void> _initializeLocalNotifications() async {
+    // Ensure the Android channel exists so push notifications render reliably
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -76,6 +77,25 @@ class NotificationService {
       initSettings,
       onDidReceiveNotificationResponse: _handleNotificationTap,
     );
+
+    // Android: create notification channels up front
+    const androidChannel = AndroidNotificationChannel(
+      'yemen_booking_channel',
+      'Yemen Booking Notifications',
+      description: 'إشعارات تطبيق حجوزات اليمن',
+      importance: Importance.high,
+    );
+    const androidScheduledChannel = AndroidNotificationChannel(
+      'yemen_booking_scheduled',
+      'Yemen Booking Scheduled',
+      description: 'إشعارات مجدولة لتطبيق حجوزات اليمن',
+      importance: Importance.high,
+    );
+    final androidPlugin =
+        _localNotifications.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    await androidPlugin?.createNotificationChannel(androidChannel);
+    await androidPlugin?.createNotificationChannel(androidScheduledChannel);
   }
 
   // Configure Firebase messaging

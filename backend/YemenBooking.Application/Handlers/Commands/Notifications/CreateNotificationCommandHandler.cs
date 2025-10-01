@@ -76,7 +76,7 @@ namespace YemenBooking.Application.Handlers.Commands.Notifications
             var created = await _unitOfWork.Repository<Notification>().AddAsync(notification, cancellationToken);
             var newId = created.Id;
 
-            // إرسال الإشعار عبر الخدمة
+            // إرسال الإشعار عبر الخدمة مباشرة بعد الإنشاء
             if (Enum.TryParse<NotificationType>(request.Type, true, out var notifType))
             {
                 await _notificationService.SendAsync(new NotificationRequest
@@ -90,7 +90,16 @@ namespace YemenBooking.Application.Handlers.Commands.Notifications
             }
             else
             {
-                _logger.LogWarning("لم يتم إرسال الإشعار، النوع غير موجود في NotificationType enum: {Type}", request.Type);
+                // fallback: still send as system type
+                await _notificationService.SendAsync(new NotificationRequest
+                {
+                    UserId = request.RecipientId,
+                    Type = NotificationType.System,
+                    Title = request.Title,
+                    Message = request.Message,
+                    Data = new { SenderId = request.SenderId, OriginalType = request.Type }
+                }, cancellationToken);
+                _logger.LogWarning("نوع الإشعار غير معروف، تم الإرسال بنوع System: {Type}", request.Type);
             }
 
             // تسجيل العملية في سجل التدقيق
