@@ -1245,6 +1245,7 @@ void _initAdminProperties() {
             localDataSource: sl(),
             networkInfo: sl(),
           ));
+
   sl.registerLazySingleton<ap_am_repo.AmenitiesRepository>(
       () => ap_am_repo_impl.AmenitiesRepositoryImpl(
             remoteDataSource: sl(),
@@ -2079,25 +2080,10 @@ void _initCore() {
   sl.registerLazySingleton(() => LocalDataService(sl()));
   sl.registerLazySingleton(() => ConnectivityService());
 
-  // Reference datasources and repository
-  sl.registerLazySingleton<ref_ds_remote.ReferenceRemoteDataSource>(
-      () => ref_ds_remote.ReferenceRemoteDataSourceImpl(apiClient: sl()));
-  sl.registerLazySingleton<ref_ds_local.ReferenceLocalDataSource>(
-      () => ref_ds_local.ReferenceLocalDataSourceImpl(localStorage: sl()));
-  sl.registerLazySingleton<ref_repo.ReferenceRepository>(
-      () => ref_repo_impl.ReferenceRepositoryImpl(remote: sl(), local: sl()));
-
-  // Reference use cases
-  sl.registerLazySingleton(() => ref_uc_cities.GetCitiesUseCase(sl()));
-  sl.registerLazySingleton(() => ref_uc_currencies.GetCurrenciesUseCase(sl()));
+  // Reference module wiring is handled in _initReference()
 
   // Data sync service
-  sl.registerLazySingleton(() => DataSyncService(
-        localDataService: sl(),
-        connectivityService: sl(),
-        remoteDataSource: sl(),
-        referenceRemoteDataSource: sl(),
-      ));
+  sl.registerLazySingleton(() => DataSyncService());
 
   // Removed generic WebSocketService registration; using ChatWebSocketService for chat feature
 }
