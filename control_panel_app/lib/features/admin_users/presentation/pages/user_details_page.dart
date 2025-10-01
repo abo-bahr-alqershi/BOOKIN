@@ -1880,7 +1880,7 @@ class _UserDetailsPageState extends State<UserDetailsPage>
   void _showRoleSelector(UserDetailsLoaded state) {
     // حفظ الـ bloc قبل فتح الـ BottomSheet
     final bloc = context.read<UserDetailsBloc>();
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,

@@ -6,12 +6,12 @@ import 'api_exceptions.dart';
 
 class ApiClient {
   late final Dio _dio;
-  
+
   ApiClient(Dio dio) {
     _dio = dio;
     _setupDioClient();
   }
-  
+
   void _setupDioClient() {
     final normalizedBaseUrl = _normalizeBaseUrl(ApiConstants.baseUrl);
     _dio.options = BaseOptions(
@@ -24,11 +24,11 @@ class ApiClient {
         ApiConstants.acceptLanguage: 'ar',
       },
     );
-    
+
     _dio.interceptors.addAll([
       AuthInterceptor(),
       ErrorInterceptor(_dio),
-      if (const bool.fromEnvironment('DEBUG')) 
+      if (const bool.fromEnvironment('DEBUG'))
         PrettyDioLogger(
           requestHeader: true,
           requestBody: true,
@@ -39,7 +39,7 @@ class ApiClient {
         ),
     ]);
   }
-  
+
   String _normalizeBaseUrl(String baseUrl) {
     var v = baseUrl.trim();
     // Remove trailing slash to avoid double slashes when passing relative paths
@@ -48,7 +48,7 @@ class ApiClient {
     }
     return v;
   }
-  
+
   Future<Response> get(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -87,7 +87,7 @@ class ApiClient {
     }
     throw ApiException.fromDioError(lastError!);
   }
-  
+
   // Future<Response> post(
   //   String path, {
   //   dynamic data,
@@ -112,7 +112,7 @@ class ApiClient {
   //     throw ApiException.fromDioError(e);
   //   }
   // }
-    Future<Response> post(
+  Future<Response> post(
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
@@ -123,11 +123,12 @@ class ApiClient {
   }) async {
     try {
       // طباعة البيانات للتطوير
-      if (const bool.fromEnvironment('DEBUG') || true) { // مؤقتاً للتطوير
+      if (const bool.fromEnvironment('DEBUG') || true) {
+        // مؤقتاً للتطوير
         print('🔵 POST Request to: $path');
         print('📦 Data: $data');
       }
-      
+
       final response = await _dio.post(
         path,
         data: data,
@@ -137,30 +138,30 @@ class ApiClient {
         onSendProgress: onSendProgress,
         onReceiveProgress: onReceiveProgress,
       );
-      
+
       if (const bool.fromEnvironment('DEBUG') || true) {
         print('✅ Response: ${response.data}');
       }
-      
+
       return response;
     } on DioException catch (e) {
       // طباعة تفاصيل الخطأ
       if (e.response != null) {
         print('❌ Error Status: ${e.response?.statusCode}');
         print('❌ Error Data: ${e.response?.data}');
-        
+
         // معالجة خاصة للخطأ 400
         if (e.response?.statusCode == 400) {
           final errorData = e.response?.data;
           String errorMessage = 'طلب غير صحيح';
-          
+
           if (errorData is Map) {
             // محاولة استخراج رسالة الخطأ
             if (errorData['errors'] is Map) {
               // أخطاء التحقق من النموذج
               final errors = errorData['errors'] as Map;
               final List<String> errorMessages = [];
-              
+
               errors.forEach((key, value) {
                 if (value is List && value.isNotEmpty) {
                   // استخراج الرسائل من قائمة الأخطاء
@@ -169,23 +170,23 @@ class ApiClient {
                   errorMessages.add(value.toString());
                 }
               });
-              
+
               errorMessage = errorMessages.join('\n');
             } else {
               // رسالة خطأ عامة
-              errorMessage = errorData['message'] ?? 
-                            errorData['error'] ?? 
-                            'طلب غير صحيح: تحقق من البيانات المدخلة';
+              errorMessage = errorData['message'] ??
+                  errorData['error'] ??
+                  'طلب غير صحيح: تحقق من البيانات المدخلة';
             }
           }
-          
+
           throw ApiException(
             message: errorMessage,
             statusCode: 400,
           );
         }
       }
-      
+
       throw ApiException.fromDioError(e);
     }
   }
@@ -214,7 +215,7 @@ class ApiClient {
       throw ApiException.fromDioError(e);
     }
   }
-  
+
   Future<Response> patch(
     String path, {
     dynamic data,
@@ -239,7 +240,7 @@ class ApiClient {
       throw ApiException.fromDioError(e);
     }
   }
-  
+
   Future<Response> delete(
     String path, {
     dynamic data,
@@ -260,7 +261,7 @@ class ApiClient {
       throw ApiException.fromDioError(e);
     }
   }
-  
+
   Future<Response> upload(
     String path, {
     required FormData formData,
@@ -272,11 +273,12 @@ class ApiClient {
       final response = await _dio.post(
         path,
         data: formData,
-        options: options ?? Options(
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        ),
+        options: options ??
+            Options(
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+            ),
         cancelToken: cancelToken,
         onSendProgress: onSendProgress,
       );
@@ -285,15 +287,15 @@ class ApiClient {
       throw ApiException.fromDioError(e);
     }
   }
-  
+
   void updateBaseUrl(String baseUrl) {
     _dio.options.baseUrl = _normalizeBaseUrl(baseUrl);
   }
-  
+
   void updateHeaders(Map<String, dynamic> headers) {
     _dio.options.headers.addAll(headers);
   }
-  
+
   void clearHeaders() {
     _dio.options.headers.clear();
   }
