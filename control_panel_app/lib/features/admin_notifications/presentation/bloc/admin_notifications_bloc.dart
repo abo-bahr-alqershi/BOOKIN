@@ -78,7 +78,8 @@ class AdminNotificationsBloc
     });
 
     on<CreateAdminNotificationEvent>((event, emit) async {
-      emit(AdminNotificationsSubmitting('create', stats: _cachedStats, statsError: _statsError));
+      emit(AdminNotificationsSubmitting('create',
+          stats: _cachedStats, statsError: _statsError));
       final res = await createUseCase(
           type: event.type,
           title: event.title,
@@ -90,16 +91,21 @@ class AdminNotificationsBloc
           stats: _cachedStats,
           statsError: _statsError,
         )),
-        (r) => emit(AdminNotificationsSuccess(
-          'تم إنشاء الإشعار',
-          stats: _cachedStats,
-          statsError: _statsError,
-        )),
+        (r) {
+          emit(AdminNotificationsSuccess(
+            'تم إنشام الإشعار',
+            stats: _cachedStats,
+            statsError: _statsError,
+          ));
+          // إعادة تحميل القائمة بعد النجاح
+          add(const LoadSystemNotificationsEvent(page: 1, pageSize: 20));
+        },
       );
     });
 
     on<BroadcastAdminNotificationEvent>((event, emit) async {
-      emit(AdminNotificationsSubmitting('broadcast', stats: _cachedStats, statsError: _statsError));
+      emit(AdminNotificationsSubmitting('broadcast',
+          stats: _cachedStats, statsError: _statsError));
       final res = await broadcastUseCase(
         type: event.type,
         title: event.title,
@@ -115,16 +121,21 @@ class AdminNotificationsBloc
           stats: _cachedStats,
           statsError: _statsError,
         )),
-        (r) => emit(AdminNotificationsSuccess(
-          'تم بث الإشعار لعدد $r مستخدم',
-          stats: _cachedStats,
-          statsError: _statsError,
-        )),
+        (r) {
+          emit(AdminNotificationsSuccess(
+            'تم بث الإشعار لعدد $r مستخدم',
+            stats: _cachedStats,
+            statsError: _statsError,
+          ));
+          // إعادة تحميل القائمة بعد النجاح
+          add(const LoadSystemNotificationsEvent(page: 1, pageSize: 20));
+        },
       );
     });
 
     on<DeleteAdminNotificationEvent>((event, emit) async {
-      emit(AdminNotificationsSubmitting('delete', stats: _cachedStats, statsError: _statsError));
+      emit(AdminNotificationsSubmitting('delete',
+          stats: _cachedStats, statsError: _statsError));
       final res = await deleteUseCase(event.notificationId);
       res.fold(
         (l) => emit(AdminNotificationsError(
@@ -141,7 +152,8 @@ class AdminNotificationsBloc
     });
 
     on<ResendAdminNotificationEvent>((event, emit) async {
-      emit(AdminNotificationsSubmitting('resend', stats: _cachedStats, statsError: _statsError));
+      emit(AdminNotificationsSubmitting('resend',
+          stats: _cachedStats, statsError: _statsError));
       final res = await resendUseCase(event.notificationId);
       res.fold(
         (l) => emit(AdminNotificationsError(

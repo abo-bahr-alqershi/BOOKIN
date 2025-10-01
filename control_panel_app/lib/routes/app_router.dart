@@ -192,7 +192,8 @@ import 'package:bookn_cp_app/features/admin_notifications/presentation/bloc/admi
 import 'package:bookn_cp_app/features/admin_notifications/presentation/pages/admin_notifications_page.dart';
 import 'package:bookn_cp_app/features/admin_notifications/presentation/pages/create_admin_notification_page.dart';
 import 'package:bookn_cp_app/features/admin_notifications/presentation/pages/user_notifications_page.dart';
-import 'package:bookn_cp_app/features/admin_notifications/presentation/pages/user_selector_page.dart' as an_selector;
+import 'package:bookn_cp_app/features/admin_notifications/presentation/pages/user_selector_page.dart'
+    as an_selector;
 
 class AppRouter {
   static GoRouter build(BuildContext context) {
@@ -543,8 +544,15 @@ class AppRouter {
           path: '/admin/notifications/user/:userId',
           builder: (context, state) {
             final userId = state.pathParameters['userId']!;
-            return BlocProvider<an_bloc.AdminNotificationsBloc>(
-              create: (_) => di.sl<an_bloc.AdminNotificationsBloc>(),
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider<an_bloc.AdminNotificationsBloc>(
+                  create: (_) => di.sl<an_bloc.AdminNotificationsBloc>(),
+                ),
+                BlocProvider<au_details_bloc.UserDetailsBloc>(
+                  create: (_) => di.sl<au_details_bloc.UserDetailsBloc>(),
+                ),
+              ],
               child: UserNotificationsPage(userId: userId),
             );
           },

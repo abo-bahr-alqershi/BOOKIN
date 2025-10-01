@@ -6,7 +6,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:ui';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../bloc/admin_notifications_bloc.dart';
@@ -75,6 +74,11 @@ class _CreateAdminNotificationPageState
           _showSuccessDialog(state.message);
         } else if (state is AdminNotificationsError) {
           _showErrorSnackBar(state.message);
+        } else if (state is AdminSystemNotificationsLoaded) {
+          // تم تحميل البيانات الجديدة، الآن يمكن الرجوع
+          if (mounted && Navigator.canPop(context)) {
+            Navigator.pop(context);
+          }
         }
       },
       child: Scaffold(
@@ -340,7 +344,7 @@ class _CreateAdminNotificationPageState
                     child: InkWell(
                       onTap: () {
                         Navigator.pop(ctx);
-                        context.pop();
+                        // لا نرجع مباشرة، سننتظر حتى يتم تحميل البيانات الجديدة
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
