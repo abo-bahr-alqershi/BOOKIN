@@ -145,10 +145,9 @@ class NotificationService {
     }
   }
 
-  // Subscribe to default topics: all, user_{id}, role_*
+  // Subscribe to default topics: user_{id}, role_*; avoid 'all' for admin/staff builds
   Future<void> _subscribeToDefaultTopics() async {
     try {
-      await _firebaseMessaging.subscribeToTopic('all');
       final user = await _authLocalDataSource?.getCachedUser();
       if (user != null) {
         final String userId = user.userId?.toString() ?? '';
@@ -162,7 +161,7 @@ class NotificationService {
               : const <String>[]);
         final uniqueRoles = roles
             .where((r) => r.trim().isNotEmpty)
-            .map((r) => r.trim().toLowerCase())
+            .map((r) => _normalizeRole(r))
             .toSet()
             .toList();
         for (final role in uniqueRoles) {
@@ -174,10 +173,9 @@ class NotificationService {
     }
   }
 
-  // Unsubscribe from default topics: all, user_{id}, role_*
+  // Unsubscribe from default topics: user_{id}, role_*
   Future<void> _unsubscribeFromDefaultTopics() async {
     try {
-      await _firebaseMessaging.unsubscribeFromTopic('all');
       final user = await _authLocalDataSource?.getCachedUser();
       if (user != null) {
         final String userId = user.userId?.toString() ?? '';
@@ -191,7 +189,7 @@ class NotificationService {
               : const <String>[]);
         final uniqueRoles = roles
             .where((r) => r.trim().isNotEmpty)
-            .map((r) => r.trim().toLowerCase())
+            .map((r) => _normalizeRole(r))
             .toSet()
             .toList();
         for (final role in uniqueRoles) {
@@ -200,6 +198,24 @@ class NotificationService {
       }
     } catch (e) {
       debugPrint('Error unsubscribing from default topics: $e');
+    }
+  }
+
+  String _normalizeRole(String role) {
+    final r = role.trim();
+    switch (r.toLowerCase()) {
+      case 'client':
+      case 'customer':
+        return 'client';
+      case 'superadmin':
+      case 'super_admin':
+        return 'admin';
+      case 'staff':
+        return 'staff';
+      case 'guest':
+        return 'guest';
+      default:
+        return r.toLowerCase();
     }
   }
 

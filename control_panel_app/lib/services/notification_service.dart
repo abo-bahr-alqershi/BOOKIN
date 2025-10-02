@@ -145,10 +145,11 @@ class NotificationService {
     }
   }
 
-  // Subscribe to default topics: all, user_{id}, role_*
+  // Subscribe to default topics: user_{id}, role_*; avoid 'all' for admin apps
   Future<void> _subscribeToDefaultTopics() async {
     try {
-      await _firebaseMessaging.subscribeToTopic('all');
+      // In admin/control panel app, do NOT subscribe to global 'all' to avoid
+      // receiving end-user broadcasts on admin/staff devices
       final user = await _authLocalDataSource?.getCachedUser();
       if (user != null) {
         final String userId = user.userId?.toString() ?? '';
@@ -163,7 +164,7 @@ class NotificationService {
               : const <String>[]);
         final uniqueRoles = roles
             .where((r) => r.trim().isNotEmpty)
-            .map((r) => r.trim().toLowerCase())
+            .map((r) => _normalizeRole(r))
             .toSet()
             .toList();
         for (final role in uniqueRoles) {
@@ -175,10 +176,9 @@ class NotificationService {
     }
   }
 
-  // Unsubscribe from default topics: all, user_{id}, role_*
+  // Unsubscribe from default topics: user_{id}, role_*
   Future<void> _unsubscribeFromDefaultTopics() async {
     try {
-      await _firebaseMessaging.unsubscribeFromTopic('all');
       final user = await _authLocalDataSource?.getCachedUser();
       if (user != null) {
         final String userId = user.userId?.toString() ?? '';
@@ -192,7 +192,7 @@ class NotificationService {
               : const <String>[]);
         final uniqueRoles = roles
             .where((r) => r.trim().isNotEmpty)
-            .map((r) => r.trim().toLowerCase())
+            .map((r) => _normalizeRole(r))
             .toSet()
             .toList();
         for (final role in uniqueRoles) {
@@ -201,6 +201,35 @@ class NotificationService {
       }
     } catch (e) {
       debugPrint('Error unsubscribing from default topics: $e');
+    }
+  }
+
+  String _normalizeRole(String role) {
+    final r = role.trim();
+    // Normalize to 5 canonical roles: Admin, Owner, Client, Staff, Guest
+    switch (r.toLowerCase()) {
+      case 'admin':
+      case 'administrator':
+      case 'superadmin':
+      case 'super_admin':
+        return 'admin';
+      case 'owner':
+      case 'hotel_owner':
+      case 'property_owner':
+        return 'owner';
+      case 'client':
+      case 'customer':
+        return 'client';
+      case 'staff':
+      case 'manager':
+      case 'hotel_manager':
+      case 'receptionist':
+        return 'staff';
+      case 'guest':
+      case 'visitor':
+        return 'guest';
+      default:
+        return r.toLowerCase();
     }
   }
 

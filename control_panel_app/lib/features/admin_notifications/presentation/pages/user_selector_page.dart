@@ -42,7 +42,7 @@ class _AdminUserSelectorPageState extends State<AdminUserSelectorPage> {
   bool _hasError = false;
   String? _errorMessage;
 
-  String? _roleName; // Admin, Owner, Manager, Customer
+  String? _roleName; // Admin, Owner, Client, Staff, Guest
   bool? _isActive;
   int _page = 1;
   int _totalPages = 1;
@@ -76,8 +76,8 @@ class _AdminUserSelectorPageState extends State<AdminUserSelectorPage> {
     final lower = role.toLowerCase();
     if (lower.contains('admin')) return 'Admin';
     if (lower.contains('owner')) return 'Owner';
-    if (lower.contains('staff') || lower.contains('manager') || lower.contains('reception')) return 'Manager';
-    if (lower.contains('client') || lower.contains('customer')) return 'Customer';
+    if (lower.contains('staff') || lower.contains('manager') || lower.contains('reception')) return 'Staff';
+    if (lower.contains('client') || lower.contains('customer')) return 'Client';
     return role;
   }
 
@@ -210,7 +210,7 @@ class _AdminUserSelectorPageState extends State<AdminUserSelectorPage> {
                 ),
                 FilterOption(
                   label: 'Staff',
-                  isSelected: _roleName == 'Manager',
+                isSelected: _roleName == 'Staff',
                   onChanged: (s) {
                     setState(() => _roleName = s ? 'Manager' : null);
                     _load(refresh: true);
@@ -218,7 +218,7 @@ class _AdminUserSelectorPageState extends State<AdminUserSelectorPage> {
                 ),
                 FilterOption(
                   label: 'Client',
-                  isSelected: _roleName == 'Customer',
+                isSelected: _roleName == 'Client',
                   onChanged: (s) {
                     setState(() => _roleName = s ? 'Customer' : null);
                     _load(refresh: true);

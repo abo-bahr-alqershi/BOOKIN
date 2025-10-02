@@ -292,13 +292,13 @@ public class UpdateBookingCommandHandler : IRequestHandler<UpdateBookingCommand,
             errors.Add("عدد الضيوف يجب أن يكون أكبر من صفر");
 
         // التحقق من أن المستخدم لديه الصلاحية لتحديث الحجز
-        if (_currentUserService.Role != "Admin" && _currentUserService.Role != "PropertyManager" && _currentUserService.UserId != booking.UserId)
+        if (_currentUserService.Role != "Admin" && _currentUserService.Role != "Staff" && _currentUserService.UserId != booking.UserId)
         {
             errors.Add("ليس لديك الصلاحية لتحديث هذا الحجز / You do not have permission to update this booking");
         }
 
         // التحقق من أن المستخدم هو موظف في الكيان إذا لم يكن المالك أو المسؤول
-        if (_currentUserService.Role != "Admin" && _currentUserService.Role != "PropertyManager" && !_currentUserService.IsStaffInProperty(booking.Unit.PropertyId))
+        if (_currentUserService.Role != "Admin" && _currentUserService.Role != "Staff" && !_currentUserService.IsStaffInProperty(booking.Unit.PropertyId))
         {
             errors.Add("لست موظفًا في هذا الكيان / You are not a staff member of this property");
         }

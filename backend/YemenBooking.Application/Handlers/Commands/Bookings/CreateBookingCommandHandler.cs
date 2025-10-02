@@ -308,16 +308,16 @@ public class CreateBookingCommandHandler : IRequestHandler<CreateBookingCommand,
         var unit = await _unitRepository.GetByIdAsync(request.UnitId, cancellationToken);
 
         // التحقق من الصلاحيات: حجز بنفسه أو مسؤول أو موظف
-        if (currentUserId != request.UserId)
-        {
-            if (_currentUserService.Role != "Admin" && _currentUserService.Role != "PropertyManager" && _currentUserService.UserId != request.UserId)
+            if (currentUserId != request.UserId)
             {
-                return ResultDto<Guid>.Failed("ليس لديك الصلاحية لإنشاء حجز لمستخدم آخر");
+                if (_currentUserService.Role != "Admin" && _currentUserService.Role != "Staff" && _currentUserService.UserId != request.UserId)
+                {
+                    return ResultDto<Guid>.Failed("ليس لديك الصلاحية لإنشاء حجز لمستخدم آخر");
+                }
             }
-        }
 
         // التحقق من أن المستخدم هو موظف في الكيان إذا لم يكن المالك أو المسؤول
-        if (_currentUserService.Role != "Admin" && _currentUserService.Role != "PropertyManager" && unit != null && !_currentUserService.IsStaffInProperty(unit.PropertyId))
+        if (_currentUserService.Role != "Admin" && _currentUserService.Role != "Staff" && unit != null && !_currentUserService.IsStaffInProperty(unit.PropertyId))
         {
             return ResultDto<Guid>.Failed("لست موظفًا في هذا الكيان");
         }

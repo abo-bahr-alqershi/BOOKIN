@@ -6,7 +6,7 @@ class User extends Equatable {
   final String email;
   final String phone;
   final List<String> roles;
-  final String? accountRole; // Admin, Owner, Staff, Customer
+  final String? accountRole; // Admin, Owner, Client, Staff, Guest
   final String? propertyId;
   final String? propertyName;
   final String? propertyCurrency;
