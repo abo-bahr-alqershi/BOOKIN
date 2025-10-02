@@ -106,7 +106,8 @@ namespace YemenBooking.Infrastructure.Services
                         Title = title,
                         Body = body
                     },
-                    Data = data,
+                    // Ensure a stable payload for deduplication on client-side
+                    Data = BuildDataPayload(data, title, body),
                     Android = androidConfig,
                     Apns = apnsConfig,
                 };
@@ -141,4 +142,22 @@ namespace YemenBooking.Infrastructure.Services
             }
         }
     }
+        private IReadOnlyDictionary<string, string> BuildDataPayload(IReadOnlyDictionary<string, string>? extra, string title, string body)
+        {
+            var dict = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                {"title", title ?? string.Empty},
+                {"body", body ?? string.Empty},
+                {"source", "server"}
+            };
+            if (extra != null)
+            {
+                foreach (var kv in extra)
+                {
+                    // do not override core keys
+                    if (!dict.ContainsKey(kv.Key)) dict[kv.Key] = kv.Value ?? string.Empty;
+                }
+            }
+            return dict;
+        }
 } 

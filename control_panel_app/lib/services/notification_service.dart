@@ -291,8 +291,11 @@ class NotificationService {
   // Handle foreground messages
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
     debugPrint('Foreground message received: ${message.messageId}');
-    
-    // Show local notification
+    // Avoid duplicate notifications on iOS: the OS already shows alert in foreground
+    if (Platform.isIOS) {
+      return;
+    }
+    // On Android, show local notification for foreground messages
     await _showLocalNotification(message);
   }
 
