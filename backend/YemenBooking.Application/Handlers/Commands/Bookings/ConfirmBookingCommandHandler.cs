@@ -211,7 +211,7 @@ public class ConfirmBookingCommandHandler : IRequestHandler<ConfirmBookingComman
         }
 
         // التحقق من أن المستخدم لديه الصلاحية لتأكيد الحجز
-        if (_currentUserService.Role != "Admin" && _currentUserService.Role != "PropertyManager")
+        if (_currentUserService.Role != "Admin" && _currentUserService.Role != "Staff")
         {
             errors.Add("ليس لديك الصلاحية لتأكيد هذا الحجز / You do not have permission to confirm this booking");
         }
