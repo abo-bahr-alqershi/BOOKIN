@@ -55,6 +55,14 @@ class _UserRoleSelectorState extends State<UserRoleSelector>
       'features': ['إدارة العقارات', 'تقارير الأرباح', 'إدارة الموظفين'],
     },
     {
+      'id': 'client',
+      'name': 'عميل',
+      'description': 'مستخدم عادي للخدمة',
+      'icon': Icons.person_rounded,
+      'gradient': [AppTheme.primaryCyan, AppTheme.neonGreen],
+      'features': ['حجز الخدمات', 'عرض السجل', 'التقييمات'],
+    },
+    {
       'id': 'staff',
       'name': 'موظف',
       'description': 'موظف في كيان أو عقار',
@@ -63,12 +71,12 @@ class _UserRoleSelectorState extends State<UserRoleSelector>
       'features': ['إدارة الحجوزات', 'خدمة العملاء', 'التقارير الأساسية'],
     },
     {
-      'id': 'customer',
-      'name': 'عميل',
-      'description': 'مستخدم عادي للخدمة',
-      'icon': Icons.person_rounded,
-      'gradient': [AppTheme.primaryCyan, AppTheme.neonGreen],
-      'features': ['حجز الخدمات', 'عرض السجل', 'التقييمات'],
+      'id': 'guest',
+      'name': 'ضيف',
+      'description': 'مستخدم بدون تسجيل',
+      'icon': Icons.hail_rounded,
+      'gradient': [AppTheme.primaryPurple, AppTheme.primaryCyan],
+      'features': ['تصفح', 'اكتشاف العروض'],
     },
   ];
 

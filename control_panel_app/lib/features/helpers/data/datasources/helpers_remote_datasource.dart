@@ -127,18 +127,13 @@ class HelpersRemoteDataSourceImpl implements HelpersRemoteDataSource {
   }
 
   String _mapRoleAlias(String role) {
-    // Map common aliases to backend Role.Name seeds: Admin, Owner, Manager, Customer
+    // Normalize to the 5 canonical roles: Admin, Owner, Client, Staff, Guest
     final lower = role.trim().toLowerCase();
-    if (lower == 'admin' || lower == 'administrator' || lower == 'super_admin')
-      return 'Admin';
-    if (lower == 'owner' || lower == 'hotel_owner' || lower == 'property_owner')
-      return 'Owner';
-    if (lower == 'staff' ||
-        lower == 'manager' ||
-        lower == 'hotel_manager' ||
-        lower == 'receptionist') return 'Manager';
-    if (lower == 'client' || lower == 'customer' || lower == 'guest')
-      return 'Customer';
+    if (lower == 'admin' || lower == 'administrator' || lower == 'super_admin') return 'Admin';
+    if (lower == 'owner' || lower == 'hotel_owner' || lower == 'property_owner') return 'Owner';
+    if (lower == 'client' || lower == 'customer') return 'Client';
+    if (lower == 'staff' || lower == 'manager' || lower == 'hotel_manager' || lower == 'receptionist') return 'Staff';
+    if (lower == 'guest' || lower == 'visitor') return 'Guest';
     // Fallback to original capitalized
     return role;
   }

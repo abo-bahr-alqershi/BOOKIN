@@ -205,10 +205,15 @@ class NotificationService {
     final r = role.trim();
     switch (r.toLowerCase()) {
       case 'client':
-        return 'customer';
+      case 'customer':
+        return 'client';
       case 'superadmin':
       case 'super_admin':
         return 'admin';
+      case 'staff':
+        return 'staff';
+      case 'guest':
+        return 'guest';
       default:
         return r.toLowerCase();
     }

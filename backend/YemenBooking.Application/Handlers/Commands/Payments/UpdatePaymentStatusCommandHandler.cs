@@ -222,7 +222,7 @@ public class UpdatePaymentStatusCommandHandler : IRequestHandler<UpdatePaymentSt
         }
 
         // الموظف المخول
-        if (_currentUserService.Role != "Admin" && _currentUserService.Role != "PropertyManager")
+        if (_currentUserService.Role != "Admin" && _currentUserService.Role != "Staff")
         {
             errors.Add("ليس لديك الصلاحية لتحديث حالة هذه الدفعة / You do not have permission to update this payment status");
         }

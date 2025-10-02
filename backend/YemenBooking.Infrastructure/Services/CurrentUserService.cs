@@ -133,7 +133,7 @@ namespace YemenBooking.Infrastructure.Services
         {
             var userPropertyId = PropertyId;
             return userPropertyId.HasValue && userPropertyId.Value == propertyId &&
-                   (UserRoles.Contains("Staff") || UserRoles.Contains("PropertyManager"));
+                   (UserRoles.Contains("Staff"));
         }
 
         /// <summary>

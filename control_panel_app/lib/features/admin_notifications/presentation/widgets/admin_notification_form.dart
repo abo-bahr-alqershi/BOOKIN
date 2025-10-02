@@ -43,7 +43,7 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
 
   final List<String> _types = ['booking', 'payment', 'promotion', 'system'];
   final List<String> _priorities = ['low', 'normal', 'high', 'urgent'];
-  final List<String> _roles = ['Admin', 'Owner', 'Staff', 'Client'];
+  final List<String> _roles = ['Admin', 'Owner', 'Client', 'Staff', 'Guest'];
 
   @override
   void initState() {
@@ -872,13 +872,20 @@ class _AdminNotificationFormState extends State<AdminNotificationForm>
   }
 
   String _mapRoleValue(String role) {
+    // Canonicalize selected value to 5 roles
     switch (role) {
-      case 'Staff':
-        return 'Manager';
+      case 'Admin':
+        return 'Admin';
+      case 'Owner':
+        return 'Owner';
       case 'Client':
-        return 'Customer';
+        return 'Client';
+      case 'Staff':
+        return 'Staff';
+      case 'Guest':
+        return 'Guest';
       default:
-        return role; // Admin, Owner
+        return role;
     }
   }
 }

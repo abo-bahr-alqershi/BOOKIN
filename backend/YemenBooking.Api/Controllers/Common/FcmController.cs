@@ -128,23 +128,21 @@ namespace YemenBooking.Api.Controllers.Common
             // Subscribe to "all" only for end-user accounts, not admin/owner/staff panels
             var elevated = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
-                "Admin", "Owner", "Staff", "PropertyManager"
+                "Admin", "Owner", "Staff"
             };
 
             var hasElevatedRole = (_currentUser.UserRoles ?? Enumerable.Empty<string>()).Any(r => elevated.Contains(r));
             var accountRole = _currentUser.AccountRole ?? string.Empty;
             if (elevated.Contains(accountRole)) return false;
 
-            // End-user indicators: Guest/Customer/Client
+            // End-user indicators: Guest/Client
             var endUser = (_currentUser.UserRoles ?? Enumerable.Empty<string>()).Any(r =>
                 string.Equals(r, "Guest", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(r, "Customer", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(r, "Client", StringComparison.OrdinalIgnoreCase));
 
             if (!endUser)
             {
                 endUser = string.Equals(accountRole, "Guest", StringComparison.OrdinalIgnoreCase) ||
-                          string.Equals(accountRole, "Customer", StringComparison.OrdinalIgnoreCase) ||
                           string.Equals(accountRole, "Client", StringComparison.OrdinalIgnoreCase);
             }
 

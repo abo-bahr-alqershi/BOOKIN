@@ -206,17 +206,28 @@ class NotificationService {
 
   String _normalizeRole(String role) {
     final r = role.trim();
-    // Align role names with backend topics and queries
-    // Map common variants to canonical names
+    // Normalize to 5 canonical roles: Admin, Owner, Client, Staff, Guest
     switch (r.toLowerCase()) {
-      case 'client':
-        return 'customer';
-      case 'staff':
-        // Staff is canonical for panel; backend may use 'Staff' topic
-        return 'staff';
+      case 'admin':
+      case 'administrator':
       case 'superadmin':
       case 'super_admin':
         return 'admin';
+      case 'owner':
+      case 'hotel_owner':
+      case 'property_owner':
+        return 'owner';
+      case 'client':
+      case 'customer':
+        return 'client';
+      case 'staff':
+      case 'manager':
+      case 'hotel_manager':
+      case 'receptionist':
+        return 'staff';
+      case 'guest':
+      case 'visitor':
+        return 'guest';
       default:
         return r.toLowerCase();
     }
