@@ -58,9 +58,14 @@ namespace YemenBooking.Application.Handlers.Commands.Notifications
             }
             else if (request.TargetRoles != null && request.TargetRoles.Length > 0)
             {
-                var roleNames = request.TargetRoles.Where(r => !string.IsNullOrWhiteSpace(r)).Select(r => r.Trim()).ToArray();
+                var roleNamesLower = request.TargetRoles
+                    .Where(r => !string.IsNullOrWhiteSpace(r))
+                    .Select(r => r.Trim().ToLowerInvariant())
+                    .ToArray();
                 var queryable = _userRepository.GetQueryable();
-                recipients = queryable.Where(u => u.UserRoles.Any(ur => ur.Role != null && roleNames.Contains(ur.Role.Name))).ToList();
+                recipients = queryable
+                    .Where(u => u.UserRoles.Any(ur => ur.Role != null && roleNamesLower.Contains(ur.Role.Name.ToLower())))
+                    .ToList();
             }
             else
             {
