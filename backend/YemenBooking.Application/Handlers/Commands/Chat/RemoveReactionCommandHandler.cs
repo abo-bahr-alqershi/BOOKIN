@@ -59,17 +59,24 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                 await _unitOfWork.Repository<MessageReaction>().DeleteAsync(reaction, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                // إشعار المشاركين الآخرين عبر FCM
+                // إشعار جميع المشاركين عبر FCM (بما فيهم المنفذ للعملية) صامتاً لتحديث الواجهة فوراً
                 var message = await _messageRepo.GetByIdAsync(request.MessageId, cancellationToken);
                 var conversation = await _conversationRepo.GetByIdAsync(message.ConversationId, cancellationToken);
-                foreach (var participant in conversation.Participants.Where(p => p.Id != userId))
+                var dataPayload = new System.Collections.Generic.Dictionary<string, string>
                 {
-                    await _firebaseService.SendNotificationAsync($"user_{participant.Id}", "تمت إزالة تفاعل", string.Empty, new System.Collections.Generic.Dictionary<string, string>
-                    {
-                        { "type", "reaction_removed" },
-                        { "conversation_id", message.ConversationId.ToString() },
-                        { "message_id", message.Id.ToString() }
-                    }, cancellationToken);
+                    { "type", "reaction_removed" },
+                    { "conversation_id", message.ConversationId.ToString() },
+                    { "message_id", message.Id.ToString() },
+                    { "user_id", userId.ToString() },
+                    { "reaction_type", request.ReactionType },
+                    { "silent", "true" }
+                };
+
+                await _firebaseService.SendNotificationAsync($"user_{userId}", string.Empty, string.Empty, dataPayload, cancellationToken);
+                foreach (var participant in conversation.Participants)
+                {
+                    if (participant.Id == userId) continue;
+                    await _firebaseService.SendNotificationAsync($"user_{participant.Id}", string.Empty, string.Empty, dataPayload, cancellationToken);
                 }
 
                 return ResultDto.Ok("تم إزالة التفاعل بنجاح");

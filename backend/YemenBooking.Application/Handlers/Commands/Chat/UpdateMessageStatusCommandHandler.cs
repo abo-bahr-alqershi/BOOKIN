@@ -68,6 +68,8 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                     { "conversation_id", message.ConversationId.ToString() },
                     { "message_id", message.Id.ToString() },
                     { "status", message.Status },
+                    { "read_at", message.ReadAt?.ToString("o") ?? string.Empty },
+                    { "delivered_at", message.DeliveredAt?.ToString("o") ?? string.Empty },
                     { "silent", "true" }
                 }, cancellationToken);
 

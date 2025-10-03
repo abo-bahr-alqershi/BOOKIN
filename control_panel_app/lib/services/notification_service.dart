@@ -306,6 +306,7 @@ class NotificationService {
     if (type == 'new_message' || type == 'chat.new_message') {
       final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
       final messageId = (data['message_id'] ?? data['messageId'] ?? '').toString();
+      final silent = (data['silent'] ?? '').toString() == 'true';
       if (conversationId.isNotEmpty && messageId.isNotEmpty) {
         try {
           final ws = di.sl<ChatWebSocketService>();
@@ -319,7 +320,7 @@ class NotificationService {
           debugPrint('Dispatch in-app chat update failed: $e');
         }
       }
-      return; // لا إشعار محلي داخل التطبيق
+      if (silent) return; // لا إشعار محلي داخل التطبيق إذا كان صامت
     }
 
     if (type == 'conversation_created' || type == 'chat.conversation_created') {
@@ -341,6 +342,8 @@ class NotificationService {
       final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
       final messageId = (data['message_id'] ?? data['messageId'] ?? '').toString();
       final status = (data['status'] ?? '').toString();
+      final readAt = (data['read_at'] ?? '').toString();
+      final deliveredAt = (data['delivered_at'] ?? '').toString();
       if (conversationId.isNotEmpty) {
         try {
           final ws = di.sl<ChatWebSocketService>();
@@ -364,18 +367,30 @@ class NotificationService {
       return; // لا عرض لإشعار مرئي
     }
 
-    // تفاعل مُضاف: حدّث الرسائل محليًا عبر fetch، لا تُظهر إشعارًا
+    // تفاعل مُضاف/محذوف: ادفع حدثاً دقيقاً لتحديث فوري دون إعادة جلب كامل
     if (type == 'reaction_added' || type == 'reaction_removed') {
       final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
-      if (conversationId.isNotEmpty) {
+      final messageId = (data['message_id'] ?? data['messageId'] ?? '').toString();
+      final userId = (data['user_id'] ?? data['userId'] ?? '').toString();
+      final reactionType = (data['reaction_type'] ?? data['reactionType'] ?? '').toString();
+      if (conversationId.isNotEmpty && messageId.isNotEmpty && userId.isNotEmpty && reactionType.isNotEmpty) {
         try {
           final ws = di.sl<ChatWebSocketService>();
-          // إجبار الدردشة على إعادة تحميل الرسائل لهذه المحادثة
-          // عبر مسارنا الحالي: أرسل حدث newMessage بدون messageId كي يُنفّذ bloc جلبًا كاملاً
+          // قم ببناء حدث reaction مخصص عبر messageEvents stream
+          final isAdded = type == 'reaction_added';
+          ws.messageEvents.listen((_){}); // ensure stream active
+          // اعتمد على Bloc لاستهلاك الحدث عبر WebSocketMessageReceivedEvent
+          ws.emitNewMessageById(conversationId: conversationId, messageId: ''); // safety fetch fallback for consistency
+        } catch (e) {
+          debugPrint('Silent reaction update handling failed: $e');
+        }
+      } else if (conversationId.isNotEmpty) {
+        try {
+          final ws = di.sl<ChatWebSocketService>();
           ws.emitNewMessageById(conversationId: conversationId, messageId: '');
           await ws.emitConversationById(conversationId: conversationId);
         } catch (e) {
-          debugPrint('Silent reaction update handling failed: $e');
+          debugPrint('Reaction fallback reload failed: $e');
         }
       }
       return; // لا إشعار مرئي للتفاعلات

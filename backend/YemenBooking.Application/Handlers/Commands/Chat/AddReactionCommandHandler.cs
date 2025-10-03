@@ -69,18 +69,29 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                 await _unitOfWork.Repository<MessageReaction>().AddAsync(reaction, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                // إشعار المشاركين الآخرين عبر FCM
+                // إشعار جميع المشاركين عبر FCM (بما فيهم المنفذ للعملية) مع بيانات كاملة صامتة لتحديث الواجهة فوراً
                 var message = await _messageRepo.GetByIdAsync(request.MessageId, cancellationToken);
                 var conversation = await _conversationRepo.GetByIdAsync(message.ConversationId, cancellationToken);
                 var reactionDto = _mapper.Map<MessageReactionDto>(reaction);
-                foreach (var participant in conversation.Participants.Where(p => p.Id != userId))
+
+                var dataPayload = new System.Collections.Generic.Dictionary<string, string>
                 {
-                    await _firebaseService.SendNotificationAsync($"user_{participant.Id}", "تمت إضافة تفاعل", reactionDto.ReactionType, new System.Collections.Generic.Dictionary<string, string>
-                    {
-                        { "type", "reaction_added" },
-                        { "conversation_id", message.ConversationId.ToString() },
-                        { "message_id", message.Id.ToString() }
-                    }, cancellationToken);
+                    { "type", "reaction_added" },
+                    { "conversation_id", message.ConversationId.ToString() },
+                    { "message_id", message.Id.ToString() },
+                    { "reaction_id", reactionDto.Id.ToString() },
+                    { "user_id", reactionDto.UserId.ToString() },
+                    { "reaction_type", reactionDto.ReactionType },
+                    { "silent", "true" }
+                };
+
+                // أرسل للمشارك المنفذ أيضاً لتحديث فوري بدون انتظار إعادة الجلب
+                await _firebaseService.SendNotificationAsync($"user_{userId}", string.Empty, string.Empty, dataPayload, cancellationToken);
+
+                foreach (var participant in conversation.Participants)
+                {
+                    if (participant.Id == userId) continue; // تم الإرسال له أعلاه
+                    await _firebaseService.SendNotificationAsync($"user_{participant.Id}", string.Empty, string.Empty, dataPayload, cancellationToken);
                 }
 
                 return ResultDto.Ok("تم إضافة التفاعل بنجاح");
