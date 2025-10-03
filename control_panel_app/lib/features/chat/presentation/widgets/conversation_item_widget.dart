@@ -29,18 +29,11 @@ class ConversationItemWidget extends StatelessWidget {
         ? conversation.getOtherParticipant(currentUserId)
         : null;
 
-    // Prefer other participant's name for direct chats if title is empty or equals current user's name
-    String displayName = conversation.title ?? otherParticipant?.name ?? 'محادثة';
-    if (conversation.isDirectChat && otherParticipant != null) {
-      // If API mistakenly set the title to current user's name, override with other participant
-      if (displayName.trim().isEmpty || displayName.trim() == (conversation.getOtherParticipant(currentUserId)?.name ?? '').trim() || displayName.trim() == currentUserId.trim()) {
-        displayName = otherParticipant.name;
-      }
-      // Also if title equals current user's name, replace
-      if (displayName.trim().toLowerCase() == (conversation.participants.firstWhere((p) => p.id == currentUserId, orElse: () => otherParticipant).name.toLowerCase())) {
-        displayName = otherParticipant.name;
-      }
-    }
+    // For direct chats, always show the other participant's name to avoid self-name regressions.
+    // For non-direct, fallback to conversation title.
+    final String displayName = (conversation.isDirectChat && otherParticipant != null)
+        ? otherParticipant.name
+        : (conversation.title ?? 'محادثة');
 
     final displayImage = conversation.avatar ??
         otherParticipant?.profileImage;
