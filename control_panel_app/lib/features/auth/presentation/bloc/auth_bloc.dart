@@ -63,7 +63,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           final userResult = await getCurrentUserUseCase(NoParams());
           await userResult.fold(
             (failure) async => emit(const AuthUnauthenticated()),
-            (user) async => emit(AuthAuthenticated(user: user)),
+            (user) async {
+              emit(AuthAuthenticated(user: user));
+              // Ensure FCM topics match current user after auto-login
+              try {
+                await di.sl<NotificationService>().refreshUserSubscriptions();
+              } catch (_) {}
+            },
           );
         } else {
           emit(const AuthUnauthenticated());
@@ -91,6 +97,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       (authResponse) async {
         emit(AuthLoginSuccess(user: authResponse.user));
         emit(AuthAuthenticated(user: authResponse.user));
+        // After login, (re)register FCM and subscribe to proper topics
+        try {
+          await di.sl<NotificationService>().refreshUserSubscriptions();
+        } catch (_) {}
       },
     );
   }
