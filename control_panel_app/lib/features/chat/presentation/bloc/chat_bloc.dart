@@ -399,8 +399,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           // Update status locally for the specific messageId if present
           if (messageEvent.messageId != null && messageEvent.status != null) {
             final currentMessages = currentState.messages[messageEvent.conversationId] ?? [];
+            bool found = false;
             final updatedMessages = currentMessages.map((m) {
               if (m.id == messageEvent.messageId) {
+                found = true;
                 return Message(
                   id: m.id,
                   conversationId: m.conversationId,
@@ -422,12 +424,30 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
               return m;
             }).toList();
 
-            emit(currentState.copyWith(
-              messages: {
-                ...currentState.messages,
-                messageEvent.conversationId: updatedMessages,
-              },
-            ));
+            if (found) {
+              emit(currentState.copyWith(
+                messages: {
+                  ...currentState.messages,
+                  messageEvent.conversationId: updatedMessages,
+                },
+              ));
+            } else {
+              // If message not found in memory (e.g., user in list view), fetch latest page
+              final result = await getMessagesUseCase(
+                GetMessagesParams(
+                  conversationId: messageEvent.conversationId,
+                  pageNumber: 1,
+                  pageSize: 50,
+                ),
+              );
+              await result.fold(
+                (failure) async => emit(currentState.copyWith(error: _mapFailureToMessage(failure))),
+                (messages) async => emit(currentState.copyWith(messages: {
+                  ...currentState.messages,
+                  messageEvent.conversationId: messages,
+                })),
+              );
+            }
           } else {
             // Fallback: fetch latest messages if we lack ids
             final result = await getMessagesUseCase(
