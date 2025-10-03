@@ -59,6 +59,12 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                     return ResultDto<ChatConversationDto>.Failed("نوع المحادثة مطلوب");
                 }
 
+                // السماح فقط بالمحادثات الثنائية المباشرة
+                if (!string.Equals(request.ConversationType, "direct", StringComparison.OrdinalIgnoreCase))
+                {
+                    return ResultDto<ChatConversationDto>.Failed("يُسمح فقط بالمحادثات الثنائية المباشرة", errorCode: "direct_only");
+                }
+
                 var conversation = new ChatConversation
                 {
                     Id = Guid.NewGuid(),
@@ -77,6 +83,13 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                 var participantIds = request.ParticipantIds.Contains(currentUserId)
                     ? request.ParticipantIds
                     : request.ParticipantIds.Append(currentUserId).ToList();
+
+                // يجب أن تكون المحادثة بين مستخدمين فقط (بما فيهم المستخدم الحالي)
+                var distinctParticipants = participantIds.Distinct().ToList();
+                if (distinctParticipants.Count != 2)
+                {
+                    return ResultDto<ChatConversationDto>.Failed("يجب أن تكون المحادثة بين مستخدمين فقط", errorCode: "invalid_participants_count");
+                }
 
                 // للمحادثات الفردية: تحقق إن كانت موجودة مسبقًا
                 if (string.Equals(request.ConversationType, "direct", StringComparison.OrdinalIgnoreCase) && participantIds.Count == 2)
@@ -153,6 +166,9 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                     _logger.LogError("بعض المستخدمين غير موجودين: {MissingIds}", string.Join(", ", missingIds));
                     return ResultDto<ChatConversationDto>.Failed("بعض المستخدمين المحددين غير موجودين");
                 }
+
+                // فرض النوع direct دائمًا
+                conversation.ConversationType = "direct";
 
                 // إضافة المستخدمين الفعليين للمحادثة
                 foreach (var user in users)
