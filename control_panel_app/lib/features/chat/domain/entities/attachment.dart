@@ -30,37 +30,40 @@ class Attachment extends Equatable {
     this.metadata,
     this.duration,
     this.downloadProgress,
+    required String url,
   });
 
   @override
   List<Object?> get props => [
-    id,
-    conversationId,
-    fileName,
-    contentType,
-    fileSize,
-    filePath,
-    fileUrl,
-    uploadedBy,
-    createdAt,
-    thumbnailUrl,
-    metadata,
-    duration,
-    downloadProgress,
-  ];
+        id,
+        conversationId,
+        fileName,
+        contentType,
+        fileSize,
+        filePath,
+        fileUrl,
+        uploadedBy,
+        createdAt,
+        thumbnailUrl,
+        metadata,
+        duration,
+        downloadProgress,
+      ];
 
   // Helper methods
   String get fileExtension => fileName.split('.').last.toLowerCase();
-  
+
   bool get isImage => contentType.startsWith('image/');
   bool get isVideo => contentType.startsWith('video/');
   bool get isAudio => contentType.startsWith('audio/');
   bool get isDocument => !isImage && !isVideo && !isAudio;
-  
+
   String get formattedFileSize {
     if (fileSize < 1024) return '$fileSize B';
-    if (fileSize < 1024 * 1024) return '${(fileSize / 1024).toStringAsFixed(1)} KB';
-    if (fileSize < 1024 * 1024 * 1024) return '${(fileSize / (1024 * 1024)).toStringAsFixed(1)} MB';
+    if (fileSize < 1024 * 1024)
+      return '${(fileSize / 1024).toStringAsFixed(1)} KB';
+    if (fileSize < 1024 * 1024 * 1024)
+      return '${(fileSize / (1024 * 1024)).toStringAsFixed(1)} MB';
     return '${(fileSize / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 }
@@ -92,15 +95,15 @@ class ChatSettings extends Equatable {
 
   @override
   List<Object> get props => [
-    id,
-    userId,
-    notificationsEnabled,
-    soundEnabled,
-    showReadReceipts,
-    showTypingIndicator,
-    theme,
-    fontSize,
-    autoDownloadMedia,
-    backupMessages,
-  ];
+        id,
+        userId,
+        notificationsEnabled,
+        soundEnabled,
+        showReadReceipts,
+        showTypingIndicator,
+        theme,
+        fontSize,
+        autoDownloadMedia,
+        backupMessages,
+      ];
 }
