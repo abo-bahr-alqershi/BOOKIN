@@ -216,6 +216,32 @@ class ChatWebSocketService {
     }
   }
 
+  // Emit reaction update (used by FCM NotificationService)
+  void emitReactionUpdate({
+    required String conversationId,
+    required String messageId,
+    required String userId,
+    required String reactionType,
+    required bool isAdded,
+  }) {
+    try {
+      final reaction = MessageReactionModel.fromJson({
+        'id': 'temp_${DateTime.now().microsecondsSinceEpoch}',
+        'message_id': messageId,
+        'user_id': userId,
+        'reaction_type': reactionType,
+      });
+      _messageController.add(MessageEvent(
+        type: isAdded ? MessageEventType.reactionAdded : MessageEventType.reactionRemoved,
+        messageId: messageId,
+        conversationId: conversationId,
+        reaction: reaction,
+      ));
+    } catch (e) {
+      debugPrint('emitReactionUpdate error: $e');
+    }
+  }
+
   void _handleTypingIndicator(Map<String, dynamic> message) {
     try {
       final data = message['data'];

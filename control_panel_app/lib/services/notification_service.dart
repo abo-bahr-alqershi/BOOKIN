@@ -376,11 +376,13 @@ class NotificationService {
       if (conversationId.isNotEmpty && messageId.isNotEmpty && userId.isNotEmpty && reactionType.isNotEmpty) {
         try {
           final ws = di.sl<ChatWebSocketService>();
-          // قم ببناء حدث reaction مخصص عبر messageEvents stream
-          final isAdded = type == 'reaction_added';
-          ws.messageEvents.listen((_){}); // ensure stream active
-          // اعتمد على Bloc لاستهلاك الحدث عبر WebSocketMessageReceivedEvent
-          ws.emitNewMessageById(conversationId: conversationId, messageId: ''); // safety fetch fallback for consistency
+          ws.emitReactionUpdate(
+            conversationId: conversationId,
+            messageId: messageId,
+            userId: userId,
+            reactionType: reactionType,
+            isAdded: type == 'reaction_added',
+          );
         } catch (e) {
           debugPrint('Silent reaction update handling failed: $e');
         }
