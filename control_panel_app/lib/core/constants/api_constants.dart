@@ -4,8 +4,8 @@ class ApiConstants {
   // Base URLs
   static const String baseUrl = String.fromEnvironment(
     'BASE_URL',
-    defaultValue: 'http://ameenalqershi-001-site1.mtempurl.com',
-    // defaultValue: 'http://192.168.0.80:5000/',
+    // defaultValue: 'http://ameenalqershi-001-site1.mtempurl.com',
+    defaultValue: 'http://192.168.0.98:5000/',
   );
 
   // Derived base URLs for different API areas
@@ -17,14 +17,14 @@ class ApiConstants {
 
   static const String imageBaseUrl = String.fromEnvironment(
     'IMAGE_BASE_URL',
-    defaultValue: 'http://ameenalqershi-001-site1.mtempurl.com',
-    // defaultValue: 'http://192.168.0.80:5000',
+    // defaultValue: 'http://ameenalqershi-001-site1.mtempurl.com',
+    defaultValue: 'http://192.168.0.98:5000',
   );
 
   static const String socketUrl = String.fromEnvironment(
     'SOCKET_URL',
-    defaultValue: 'wss://ws.ameenalqershi-001-site1.mtempurl.com',
-    // defaultValue: 'wss://192.168.0.80:5000',
+    // defaultValue: 'wss://ws.ameenalqershi-001-site1.mtempurl.com',
+    defaultValue: 'wss://192.168.0.98:5000',
   );
 
   // Google Places API

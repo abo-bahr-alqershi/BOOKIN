@@ -117,7 +117,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       add(WebSocketMessageReceivedEvent(event));
     });
 
-    _conversationSubscription = webSocketService.conversationUpdates.listen((conversation) {
+    _conversationSubscription =
+        webSocketService.conversationUpdates.listen((conversation) {
       add(WebSocketConversationUpdatedEvent(conversation));
     });
 
@@ -142,19 +143,21 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     Emitter<ChatState> emit,
   ) async {
     emit(const ChatLoading());
-    
+
     // Load conversations and settings in parallel
     final conversationsResult = await getConversationsUseCase(
       const GetConversationsParams(),
     );
-    
+
     final settingsResult = await getChatSettingsUseCase(NoParams());
-    
+
     await conversationsResult.fold(
-      (failure) async => emit(ChatError(message: _mapFailureToMessage(failure))),
+      (failure) async =>
+          emit(ChatError(message: _mapFailureToMessage(failure))),
       (conversations) async {
         await settingsResult.fold(
-          (failure) async => emit(ChatError(message: _mapFailureToMessage(failure))),
+          (failure) async =>
+              emit(ChatError(message: _mapFailureToMessage(failure))),
           (settings) async => emit(ChatLoaded(
             conversations: conversations,
             settings: settings,
@@ -180,7 +183,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     );
 
     await result.fold(
-      (failure) async => emit(ChatError(message: _mapFailureToMessage(failure))),
+      (failure) async =>
+          emit(ChatError(message: _mapFailureToMessage(failure))),
       (conversations) async {
         if (state is ChatLoaded) {
           final currentState = state as ChatLoaded;
@@ -220,7 +224,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         error: _mapFailureToMessage(failure),
       )),
       (messages) async {
-        final currentMessages = currentState.messages[event.conversationId] ?? [];
+        final currentMessages =
+            currentState.messages[event.conversationId] ?? [];
         final updatedMessages = event.pageNumber == 1
             ? messages
             : [...currentMessages, ...messages];
@@ -328,11 +333,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     switch (messageEvent.type) {
       case MessageEventType.newMessage:
         if (messageEvent.message != null) {
-          final currentMessages = currentState.messages[messageEvent.conversationId] ?? [];
+          final currentMessages =
+              currentState.messages[messageEvent.conversationId] ?? [];
           emit(currentState.copyWith(
             messages: {
               ...currentState.messages,
-              messageEvent.conversationId: [messageEvent.message!, ...currentMessages],
+              messageEvent.conversationId: [
+                messageEvent.message!,
+                ...currentMessages
+              ],
             },
           ));
         }
@@ -340,7 +349,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
       case MessageEventType.edited:
         if (messageEvent.message != null) {
-          final currentMessages = currentState.messages[messageEvent.conversationId] ?? [];
+          final currentMessages =
+              currentState.messages[messageEvent.conversationId] ?? [];
           final updatedMessages = currentMessages.map((m) {
             return m.id == messageEvent.message!.id ? messageEvent.message! : m;
           }).toList();
@@ -355,7 +365,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
       case MessageEventType.deleted:
         if (messageEvent.messageId != null) {
-          final currentMessages = currentState.messages[messageEvent.conversationId] ?? [];
+          final currentMessages =
+              currentState.messages[messageEvent.conversationId] ?? [];
           final updatedMessages = currentMessages
               .where((m) => m.id != messageEvent.messageId)
               .toList();
@@ -443,168 +454,201 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     return super.close();
   }
 
-Future<void> _onCreateConversation(
-  CreateConversationEvent event,
-  Emitter<ChatState> emit,
-) async {
-  final currentState = state;
-  
-  emit(const ConversationCreating());
-  
-  // للمحادثات الفردية، تحقق من وجود محادثة سابقة
-  if (event.conversationType == 'direct' && currentState is ChatLoaded) {
-    Conversation? existingConversation;
-    
-    for (final conversation in currentState.conversations) {
-      if (conversation.conversationType != 'direct') continue;
-      if (conversation.participants.length != 2) continue;
-      
-      final participantIds = conversation.participants
-          .map((participant) => participant.id)
-          .toList();
-      
-      bool hasTargetParticipant = false;
-      for (final targetId in event.participantIds) {
-        if (participantIds.contains(targetId)) {
-          hasTargetParticipant = true;
+  Future<void> _onCreateConversation(
+    CreateConversationEvent event,
+    Emitter<ChatState> emit,
+  ) async {
+    final currentState = state;
+
+    emit(const ConversationCreating());
+
+    // للمحادثات الفردية، تحقق من وجود محادثة سابقة
+    if (event.conversationType == 'direct' && currentState is ChatLoaded) {
+      Conversation? existingConversation;
+
+      for (final conversation in currentState.conversations) {
+        if (conversation.conversationType != 'direct') continue;
+        if (conversation.participants.length != 2) continue;
+
+        final participantIds = conversation.participants
+            .map((participant) => participant.id)
+            .toList();
+
+        bool hasTargetParticipant = false;
+        for (final targetId in event.participantIds) {
+          if (participantIds.contains(targetId)) {
+            hasTargetParticipant = true;
+            break;
+          }
+        }
+
+        if (hasTargetParticipant) {
+          existingConversation = conversation;
           break;
         }
       }
-      
-      if (hasTargetParticipant) {
-        existingConversation = conversation;
-        break;
-      }
-    }
-    
-    if (existingConversation != null) {
-      emit(ConversationCreated(
-        conversation: existingConversation,
-        message: 'المحادثة موجودة بالفعل',
-      ));
-      
-      await Future.delayed(const Duration(milliseconds: 100));
-      emit(currentState);
-      return;
-    }
-  }
-  
-  // إنشاء محادثة جديدة
-  final result = await createConversationUseCase(
-    CreateConversationParams(
-      participantIds: event.participantIds,
-      conversationType: event.conversationType,
-      title: event.title,
-      description: event.description,
-      propertyId: event.propertyId,
-    ),
-  );
 
-  await result.fold(
-    (failure) async {
-      if (currentState is ChatLoaded) {
-        emit(currentState.copyWith(error: _mapFailureToMessage(failure)));
-      } else {
-        emit(ChatError(message: _mapFailureToMessage(failure)));
-      }
-    },
-    (conversation) async {
-      
-      emit(ConversationCreated(conversation: conversation));
-      
-      if (currentState is ChatLoaded) {
-        final List<Conversation> updatedConversations = [
-          conversation,
-        ];
-        
-        for (final conv in currentState.conversations) {
-          if (conv.id != conversation.id) {
-            updatedConversations.add(conv);
-          }
-        }
-        
-        await Future.delayed(const Duration(milliseconds: 100));
-        
-        emit(currentState.copyWith(
-          conversations: updatedConversations,
+      if (existingConversation != null) {
+        emit(ConversationCreated(
+          conversation: existingConversation,
+          message: 'المحادثة موجودة بالفعل',
         ));
-      } else {
-        add(const LoadConversationsEvent());
+
+        await Future.delayed(const Duration(milliseconds: 100));
+        emit(currentState);
+        return;
       }
-    },
-  );
-}
+    }
 
-  Future<void> _onDeleteConversation(DeleteConversationEvent event, Emitter<ChatState> emit) async {
+    // إنشاء محادثة جديدة
+    final result = await createConversationUseCase(
+      CreateConversationParams(
+        participantIds: event.participantIds,
+        conversationType: event.conversationType,
+        title: event.title,
+        description: event.description,
+        propertyId: event.propertyId,
+      ),
+    );
+
+    await result.fold(
+      (failure) async {
+        if (currentState is ChatLoaded) {
+          emit(currentState.copyWith(error: _mapFailureToMessage(failure)));
+        } else {
+          emit(ChatError(message: _mapFailureToMessage(failure)));
+        }
+      },
+      (conversation) async {
+        emit(ConversationCreated(conversation: conversation));
+
+        if (currentState is ChatLoaded) {
+          final List<Conversation> updatedConversations = [
+            conversation,
+          ];
+
+          for (final conv in currentState.conversations) {
+            if (conv.id != conversation.id) {
+              updatedConversations.add(conv);
+            }
+          }
+
+          await Future.delayed(const Duration(milliseconds: 100));
+
+          emit(currentState.copyWith(
+            conversations: updatedConversations,
+          ));
+        } else {
+          add(const LoadConversationsEvent());
+        }
+      },
+    );
+  }
+
+  Future<void> _onDeleteConversation(
+      DeleteConversationEvent event, Emitter<ChatState> emit) async {
     // Implementation
   }
 
-  Future<void> _onArchiveConversation(ArchiveConversationEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onArchiveConversation(
+      ArchiveConversationEvent event, Emitter<ChatState> emit) async {
     // Implementation
   }
 
-  Future<void> _onUnarchiveConversation(UnarchiveConversationEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onUnarchiveConversation(
+      UnarchiveConversationEvent event, Emitter<ChatState> emit) async {
     // Implementation
   }
 
-  Future<void> _onDeleteMessage(DeleteMessageEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onDeleteMessage(
+      DeleteMessageEvent event, Emitter<ChatState> emit) async {
     // Implementation
   }
 
-  Future<void> _onEditMessage(EditMessageEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onEditMessage(
+      EditMessageEvent event, Emitter<ChatState> emit) async {
     // Implementation
   }
 
-  Future<void> _onAddReaction(AddReactionEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onAddReaction(
+      AddReactionEvent event, Emitter<ChatState> emit) async {
     // Implementation
   }
 
-  Future<void> _onRemoveReaction(RemoveReactionEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onRemoveReaction(
+      RemoveReactionEvent event, Emitter<ChatState> emit) async {
     // Implementation
   }
 
-  Future<void> _onMarkMessagesAsRead(MarkMessagesAsReadEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onMarkMessagesAsRead(
+      MarkMessagesAsReadEvent event, Emitter<ChatState> emit) async {
+    final result = await markAsReadUseCase(
+      MarkAsReadParams(
+        conversationId: event.conversationId,
+        messageIds: event.messageIds,
+      ),
+    );
+    await result.fold(
+      (failure) async {
+        if (state is ChatLoaded) {
+          final current = state as ChatLoaded;
+          emit(current.copyWith(error: _mapFailureToMessage(failure)));
+        }
+      },
+      (_) async {
+        // No-op; optimistic UI already shows as read
+      },
+    );
+  }
+
+  Future<void> _onUploadAttachment(
+      UploadAttachmentEvent event, Emitter<ChatState> emit) async {
     // Implementation
   }
 
-  Future<void> _onUploadAttachment(UploadAttachmentEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onSearchChats(
+      SearchChatsEvent event, Emitter<ChatState> emit) async {
     // Implementation
   }
 
-  Future<void> _onSearchChats(SearchChatsEvent event, Emitter<ChatState> emit) async {
-    // Implementation
-  }
-
-  Future<void> _onLoadAvailableUsers(LoadAvailableUsersEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onLoadAvailableUsers(
+      LoadAvailableUsersEvent event, Emitter<ChatState> emit) async {
     if (state is! ChatLoaded) return;
     final current = state as ChatLoaded;
     final result = await getAvailableUsersUseCase(
-      GetAvailableUsersParams(userType: event.userType, propertyId: event.propertyId),
+      GetAvailableUsersParams(
+          userType: event.userType, propertyId: event.propertyId),
     );
     await result.fold(
-      (failure) async => emit(current.copyWith(error: _mapFailureToMessage(failure))),
+      (failure) async =>
+          emit(current.copyWith(error: _mapFailureToMessage(failure))),
       (users) async => emit(current.copyWith(availableUsers: users)),
     );
   }
 
-  Future<void> _onUpdateUserStatus(UpdateUserStatusEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onUpdateUserStatus(
+      UpdateUserStatusEvent event, Emitter<ChatState> emit) async {
     // Implementation
   }
 
-  Future<void> _onLoadChatSettings(LoadChatSettingsEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onLoadChatSettings(
+      LoadChatSettingsEvent event, Emitter<ChatState> emit) async {
     // Implementation
   }
 
-  Future<void> _onUpdateChatSettings(UpdateChatSettingsEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onUpdateChatSettings(
+      UpdateChatSettingsEvent event, Emitter<ChatState> emit) async {
     // Implementation
   }
 
-  Future<void> _onLoadAdminUsers(LoadAdminUsersEvent event, Emitter<ChatState> emit) async {
+  Future<void> _onLoadAdminUsers(
+      LoadAdminUsersEvent event, Emitter<ChatState> emit) async {
     if (state is! ChatLoaded) return;
     final current = state as ChatLoaded;
     final result = await getAdminUsersUseCase(NoParams());
     await result.fold(
-      (failure) async => emit(current.copyWith(error: _mapFailureToMessage(failure))),
+      (failure) async =>
+          emit(current.copyWith(error: _mapFailureToMessage(failure))),
       (users) async => emit(current.copyWith(adminUsers: users)),
     );
   }
