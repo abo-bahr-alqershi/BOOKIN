@@ -394,6 +394,59 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           );
         }
         break;
+      case MessageEventType.statusUpdated:
+        {
+          // Update status locally for the specific messageId if present
+          if (messageEvent.messageId != null && messageEvent.status != null) {
+            final currentMessages = currentState.messages[messageEvent.conversationId] ?? [];
+            final updatedMessages = currentMessages.map((m) {
+              if (m.id == messageEvent.messageId) {
+                return Message(
+                  id: m.id,
+                  conversationId: m.conversationId,
+                  senderId: m.senderId,
+                  messageType: m.messageType,
+                  content: m.content,
+                  location: m.location,
+                  replyToMessageId: m.replyToMessageId,
+                  reactions: m.reactions,
+                  attachments: m.attachments,
+                  createdAt: m.createdAt,
+                  updatedAt: DateTime.now(),
+                  status: messageEvent.status!,
+                  isEdited: m.isEdited,
+                  editedAt: m.editedAt,
+                  deliveryReceipt: m.deliveryReceipt,
+                );
+              }
+              return m;
+            }).toList();
+
+            emit(currentState.copyWith(
+              messages: {
+                ...currentState.messages,
+                messageEvent.conversationId: updatedMessages,
+              },
+            ));
+          } else {
+            // Fallback: fetch latest messages if we lack ids
+            final result = await getMessagesUseCase(
+              GetMessagesParams(
+                conversationId: messageEvent.conversationId,
+                pageNumber: 1,
+                pageSize: 50,
+              ),
+            );
+            await result.fold(
+              (failure) async => emit(currentState.copyWith(error: _mapFailureToMessage(failure))),
+              (messages) async => emit(currentState.copyWith(messages: {
+                ...currentState.messages,
+                messageEvent.conversationId: messages,
+              })),
+            );
+          }
+        }
+        break;
 
       case MessageEventType.edited:
         if (messageEvent.message != null) {
