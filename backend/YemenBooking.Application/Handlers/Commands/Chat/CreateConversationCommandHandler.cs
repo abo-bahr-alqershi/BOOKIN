@@ -12,6 +12,7 @@ using YemenBooking.Core.Interfaces;
 using YemenBooking.Application.Interfaces.Services;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace YemenBooking.Application.Handlers.Commands.Chat
 {
@@ -87,6 +88,57 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                         var dtoExisting = _mapper.Map<ChatConversationDto>(existing);
                         return ResultDto<ChatConversationDto>.Ok(dtoExisting, "المحادثة موجودة بالفعل");
                     }
+                }
+
+                // قيود الأدوار:
+                // - Admin: يمكنه بدء محادثة مع أي مستخدم
+                // - Owner/Staff: يستخدمون حساب العقار فقط، ويستطيعون مراسلة Admins أو العملاء الذين سبق لهم مراسلة العقار
+                // - Client: يستطيع مراسلة Admins أو العقارات. ولا تظهر العقارات لديه إلا إذا سبق مراسلتها
+                var roles = (_currentUserService.UserRoles ?? Enumerable.Empty<string>()).Select(r => (r ?? string.Empty).ToLowerInvariant()).ToList();
+                var accountRole = (_currentUserService.AccountRole ?? string.Empty).ToLowerInvariant();
+                var isAdmin = roles.Contains("admin") || roles.Contains("super_admin") || accountRole == "admin";
+                var isOwner = roles.Contains("owner") || roles.Contains("hotel_owner") || accountRole == "owner";
+                var isStaff = roles.Contains("staff") || roles.Contains("hotel_manager") || roles.Contains("receptionist") || accountRole == "staff";
+                var isClient = roles.Contains("client") || roles.Contains("customer") || accountRole == "client";
+
+                if (isOwner || isStaff)
+                {
+                    if (!conversation.PropertyId.HasValue || !_currentUserService.PropertyId.HasValue || conversation.PropertyId.Value != _currentUserService.PropertyId!.Value)
+                    {
+                        return ResultDto<ChatConversationDto>.Failed("حساب المراسلة لمالك/موظف يجب أن يرتبط بالعقار الخاص به", errorCode: "property_required");
+                    }
+
+                    // التحقق أن الطرف الآخر Admin أو عميل سبق مراسلة العقار
+                    var otherIds = participantIds.Where(id => id != currentUserId).ToList();
+                    if (otherIds.Count != 1)
+                    {
+                        return ResultDto<ChatConversationDto>.Failed("لا يُسمح بمحادثات جماعية لمالك/موظف في هذا السياق");
+                    }
+                    var otherUserId = otherIds[0];
+
+                    // جلب المستخدم الآخر لمعرفة دوره
+                    var otherUser = await _userRepository.GetByIdAsync(otherUserId, cancellationToken);
+                    if (otherUser == null)
+                        return ResultDto<ChatConversationDto>.Failed("المستخدم الآخر غير موجود");
+
+                    var otherRoles = (otherUser.UserRoles ?? new List<UserRole>()).Select(ur => ur.Role?.Name?.ToLowerInvariant() ?? string.Empty).ToList();
+                    var otherIsAdmin = otherRoles.Contains("admin") || otherRoles.Contains("super_admin");
+                    var otherIsClient = otherRoles.Contains("client") || otherRoles.Contains("customer");
+
+                    if (!otherIsAdmin)
+                    {
+                        if (!(otherIsClient && await _conversationRepository.ExistsConversationBetweenClientAndPropertyAsync(otherUserId, conversation.PropertyId.Value, cancellationToken)))
+                        {
+                            return ResultDto<ChatConversationDto>.Failed("لا يمكنك مراسلة هذا المستخدم لعدم وجود محادثة سابقة مع العقار", errorCode: "no_prior_client_property_chat");
+                        }
+                    }
+                }
+                else if (isClient)
+                {
+                    // عميل: يمكنه مراسلة Admin أو العقارات
+                    // إذا كان الطرف الآخر عقار (من خلال PropertyId)، يجب السماح بإنشاء أول محادثة لبدء التواصل مع العقار
+                    // وإذا كان الطرف الآخر Admin، لا قيود إضافية
+                    // ملاحظة: لعرض قائمة العقارات في جهات الاتصال، يتم التحكم من جهة الاستعلام وليس هنا
                 }
 
                 // *** الحل: جلب المستخدمين الفعليين من قاعدة البيانات ***

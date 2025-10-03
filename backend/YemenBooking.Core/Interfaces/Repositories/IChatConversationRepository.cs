@@ -29,5 +29,17 @@ namespace YemenBooking.Core.Interfaces.Repositories
         /// Get conversation by id including participants and messages
         /// </summary>
         Task<ChatConversation?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// الحصول على المحادثات المرتبطة بعقار محدد (حساب المراسلة الخاص بالعقار)
+        /// Get conversations associated with a specific property (property-level messaging account)
+        /// </summary>
+        Task<(IEnumerable<ChatConversation> Items, int TotalCount)> GetConversationsByPropertyAsync(Guid propertyId, int page, int pageSize, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// التحقق من وجود محادثة سابقة بين عميل وعقار محدد
+        /// Check whether a prior conversation exists between a client user and a specific property
+        /// </summary>
+        Task<bool> ExistsConversationBetweenClientAndPropertyAsync(Guid clientUserId, Guid propertyId, CancellationToken cancellationToken = default);
     }
 } 
