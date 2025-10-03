@@ -491,8 +491,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     emit(const ConversationCreating());
 
     // منع أي محادثة ليست direct أو تتجاوز شخصًا واحدًا (غير المستخدم الحالي)
-    if (event.conversationType != 'direct' ||
-        event.participantIds.length != 1) {
+    if (event.conversationType != 'direct' || event.participantIds.length != 1) {
       if (currentState is ChatLoaded) {
         emit(currentState.copyWith(error: 'يُسمح فقط بمحادثات ثنائية مباشرة'));
       } else {
@@ -713,8 +712,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           // ابحث عن المحادثة التي تحتوي الرسالة واحذفها من قائمتها إن وُجدت
           final updatedMessages = <String, List<Message>>{};
           current.messages.forEach((convId, msgs) {
-            updatedMessages[convId] =
-                msgs.where((m) => m.id != event.messageId).toList();
+            updatedMessages[convId] = msgs.where((m) => m.id != event.messageId).toList();
           });
           emit(current.copyWith(messages: updatedMessages));
         }
@@ -740,8 +738,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           final current = state as ChatLoaded;
           final convId = message.conversationId;
           final msgs = current.messages[convId] ?? [];
-          final updated =
-              msgs.map((m) => m.id == message.id ? message : m).toList();
+          final updated = msgs.map((m) => m.id == message.id ? message : m).toList();
           emit(current.copyWith(messages: {
             ...current.messages,
             convId: updated,
@@ -754,8 +751,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   Future<void> _onAddReaction(
       AddReactionEvent event, Emitter<ChatState> emit) async {
     final result = await addReactionUseCase(
-      AddReactionParams(
-          messageId: event.messageId, reactionType: event.reactionType),
+      AddReactionParams(messageId: event.messageId, reactionType: event.reactionType),
     );
     await result.fold(
       (failure) async {
@@ -771,8 +767,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   Future<void> _onRemoveReaction(
       RemoveReactionEvent event, Emitter<ChatState> emit) async {
     final result = await removeReactionUseCase(
-      RemoveReactionParams(
-          messageId: event.messageId, reactionType: event.reactionType),
+      RemoveReactionParams(messageId: event.messageId, reactionType: event.reactionType),
     );
     await result.fold(
       (failure) async {
@@ -810,9 +805,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       UploadAttachmentEvent event, Emitter<ChatState> emit) async {
     if (state is! ChatLoaded) return;
     final current = state as ChatLoaded;
-    emit(current.copyWith(
-        uploadingAttachment: const Attachment(id: '', url: '', type: ''),
-        uploadProgress: 0));
+    emit(current.copyWith(uploadingAttachment: null, uploadProgress: 0));
 
     final result = await uploadAttachmentUseCase(
       UploadAttachmentParams(
@@ -859,8 +852,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       ),
     );
     await result.fold(
-      (failure) async =>
-          emit(current.copyWith(error: _mapFailureToMessage(failure))),
+      (failure) async => emit(current.copyWith(error: _mapFailureToMessage(failure))),
       (res) async => emit(current.copyWith(searchResult: res)),
     );
   }
@@ -882,8 +874,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   Future<void> _onUpdateUserStatus(
       UpdateUserStatusEvent event, Emitter<ChatState> emit) async {
-    final result = await updateUserStatusUseCase(
-        UpdateUserStatusParams(status: event.status));
+    final result = await updateUserStatusUseCase(UpdateUserStatusParams(status: event.status));
     await result.fold((failure) async {
       if (state is ChatLoaded) {
         final current = state as ChatLoaded;
