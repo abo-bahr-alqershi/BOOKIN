@@ -28,6 +28,11 @@ class NotificationService {
        _localStorage = localStorage,
        _authLocalDataSource = authLocalDataSource;
 
+  /// Re-register FCM token and subscribe to user/role topics for the current user
+  Future<void> refreshUserSubscriptions() async {
+    await _registerFcmToken();
+  }
+
   // Initialize notification service
   Future<void> initialize() async {
     // Request permission
