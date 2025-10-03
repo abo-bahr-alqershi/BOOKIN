@@ -307,6 +307,8 @@ class NotificationService {
             conversationId: conversationId,
             messageId: messageId,
           );
+          // تحديث قائمة المحادثات كذلك (آخر رسالة/ترتيب/عداد غير المقروء)
+          await ws.emitConversationById(conversationId: conversationId);
         } catch (e) {
           debugPrint('Dispatch in-app chat update failed: $e');
         }
@@ -341,7 +343,24 @@ class NotificationService {
   // Handle notification tap when app is opened
   void _handleMessageOpenedApp(RemoteMessage message) {
     debugPrint('Message opened app: ${message.messageId}');
-    _navigateToScreen(message.data);
+    final data = message.data;
+    final type = (data['type'] ?? data['event_type'] ?? '').toString();
+    if (type == 'new_message' || type == 'chat.new_message') {
+      final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
+      final messageId = (data['message_id'] ?? data['messageId'] ?? '').toString();
+      if (conversationId.isNotEmpty) {
+        try {
+          final ws = di.sl<ChatWebSocketService>();
+          if (messageId.isNotEmpty) {
+            ws.emitNewMessageById(conversationId: conversationId, messageId: messageId);
+          }
+          ws.emitConversationById(conversationId: conversationId);
+        } catch (e) {
+          debugPrint('Failed to emit updates on message open: $e');
+        }
+      }
+    }
+    _navigateToScreen(data);
   }
 
   // Handle local notification tap
