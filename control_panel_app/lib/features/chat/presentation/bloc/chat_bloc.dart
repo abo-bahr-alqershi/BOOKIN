@@ -112,31 +112,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   }
 
   void _initializeWebSocket() {
-    webSocketService.connect();
-
-    _messageSubscription = webSocketService.messageEvents.listen((event) {
-      add(WebSocketMessageReceivedEvent(event));
-    });
-
-    _conversationSubscription =
-        webSocketService.conversationUpdates.listen((conversation) {
-      add(WebSocketConversationUpdatedEvent(conversation));
-    });
-
-    _typingSubscription = webSocketService.typingEvents.listen((event) {
-      add(WebSocketTypingIndicatorEvent(
-        conversationId: event.conversationId,
-        typingUserIds: event.typingUserIds,
-      ));
-    });
-
-    _presenceSubscription = webSocketService.presenceEvents.listen((event) {
-      add(WebSocketPresenceUpdateEvent(
-        userId: event.userId,
-        status: event.status,
-        lastSeen: event.lastSeen,
-      ));
-    });
+    // WebSocket disabled; bind NotificationService to dispatch events directly
+    try {
+      final notif = GetIt.instance<NotificationService>();
+      notif.bindChatEventSink((evt) => add(evt));
+    } catch (_) {}
   }
 
   Future<void> _onInitializeChat(

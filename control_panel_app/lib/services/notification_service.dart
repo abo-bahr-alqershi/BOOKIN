@@ -11,6 +11,7 @@ import '../features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:bookn_cp_app/injection_container.dart' as di;
 import '../services/websocket_service.dart';
 import 'package:bookn_cp_app/injection_container.dart' as di;
+import 'package:bookn_cp_app/features/chat/presentation/bloc/chat_bloc.dart';
 
 class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -20,6 +21,17 @@ class NotificationService {
   final ApiClient? _apiClient;
   final LocalStorageService? _localStorage;
   final AuthLocalDataSource? _authLocalDataSource;
+
+  // Optional sink to dispatch chat events directly without WebSocket
+  void Function(WebSocketMessageReceivedEvent event)? _chatEventSink;
+
+  void bindChatEventSink(void Function(WebSocketMessageReceivedEvent event) sink) {
+    _chatEventSink = sink;
+  }
+
+  void unbindChatEventSink() {
+    _chatEventSink = null;
+  }
 
   NotificationService({
     ApiClient? apiClient,
@@ -309,13 +321,15 @@ class NotificationService {
       final silent = (data['silent'] ?? '').toString() == 'true';
       if (conversationId.isNotEmpty && messageId.isNotEmpty) {
         try {
-          final ws = di.sl<ChatWebSocketService>();
-          ws.emitNewMessageById(
-            conversationId: conversationId,
-            messageId: messageId,
-          );
-          // تحديث قائمة المحادثات كذلك (آخر رسالة/ترتيب/عداد غير المقروء)
-          await ws.emitConversationById(conversationId: conversationId);
+          if (_chatEventSink != null) {
+            _chatEventSink!.call(WebSocketMessageReceivedEvent(
+              MessageEvent(type: MessageEventType.newMessage, conversationId: conversationId, messageId: messageId),
+            ));
+          } else {
+            final ws = di.sl<ChatWebSocketService>();
+            ws.emitNewMessageById(conversationId: conversationId, messageId: messageId);
+            await ws.emitConversationById(conversationId: conversationId);
+          }
         } catch (e) {
           debugPrint('Dispatch in-app chat update failed: $e');
         }
@@ -346,20 +360,26 @@ class NotificationService {
       final deliveredAt = (data['delivered_at'] ?? '').toString();
       if (conversationId.isNotEmpty) {
         try {
-          final ws = di.sl<ChatWebSocketService>();
-          // ادفع حدث statusUpdated لتحديث فوري
-          if (messageId.isNotEmpty && status.isNotEmpty) {
-            ws.emitMessageStatusUpdate(
-              conversationId: conversationId,
-              messageId: messageId,
-              status: status,
-            );
+          if (_chatEventSink != null && messageId.isNotEmpty && status.isNotEmpty) {
+            _chatEventSink!.call(WebSocketMessageReceivedEvent(
+              MessageEvent(type: MessageEventType.statusUpdated, conversationId: conversationId, messageId: messageId, status: status),
+            ));
           } else {
-            // fallback: force fetch
-            ws.emitNewMessageById(conversationId: conversationId, messageId: '');
+            final ws = di.sl<ChatWebSocketService>();
+            // ادفع حدث statusUpdated لتحديث فوري
+            if (messageId.isNotEmpty && status.isNotEmpty) {
+              ws.emitMessageStatusUpdate(
+                conversationId: conversationId,
+                messageId: messageId,
+                status: status,
+              );
+            } else {
+              // fallback: force fetch
+              ws.emitNewMessageById(conversationId: conversationId, messageId: '');
+            }
+            // ثم جلب المحادثة لتحديث آخر حالة/عدادات بشكل موثوق
+            await ws.emitConversationById(conversationId: conversationId);
           }
-          // ثم جلب المحادثة لتحديث آخر حالة/عدادات بشكل موثوق
-          await ws.emitConversationById(conversationId: conversationId);
         } catch (e) {
           debugPrint('Silent status update handling failed: $e');
         }
@@ -375,14 +395,31 @@ class NotificationService {
       final reactionType = (data['reaction_type'] ?? data['reactionType'] ?? '').toString();
       if (conversationId.isNotEmpty && messageId.isNotEmpty && userId.isNotEmpty && reactionType.isNotEmpty) {
         try {
-          final ws = di.sl<ChatWebSocketService>();
-          ws.emitReactionUpdate(
-            conversationId: conversationId,
-            messageId: messageId,
-            userId: userId,
-            reactionType: reactionType,
-            isAdded: type == 'reaction_added',
-          );
+          final isAdded = type == 'reaction_added';
+          if (_chatEventSink != null) {
+            _chatEventSink!.call(WebSocketMessageReceivedEvent(
+              MessageEvent(
+                type: isAdded ? MessageEventType.reactionAdded : MessageEventType.reactionRemoved,
+                conversationId: conversationId,
+                messageId: messageId,
+                reaction: MessageReaction(
+                  id: 'temp_${DateTime.now().microsecondsSinceEpoch}',
+                  messageId: messageId,
+                  userId: userId,
+                  reactionType: reactionType,
+                ),
+              ),
+            ));
+          } else {
+            final ws = di.sl<ChatWebSocketService>();
+            ws.emitReactionUpdate(
+              conversationId: conversationId,
+              messageId: messageId,
+              userId: userId,
+              reactionType: reactionType,
+              isAdded: isAdded,
+            );
+          }
         } catch (e) {
           debugPrint('Silent reaction update handling failed: $e');
         }

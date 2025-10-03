@@ -73,6 +73,11 @@ abstract class ChatRemoteDataSource {
     required String reactionType,
   });
 
+  Future<void> updateMessageStatus({
+    required String messageId,
+    required String status,
+  });
+
   Future<AttachmentModel> uploadAttachment({
     required String conversationId,
     required String filePath,
@@ -615,6 +620,33 @@ Future<MessageModel> sendMessage({
     } catch (e, s) {
       logRequestError(requestName, e, stackTrace: s);
       if (e is ServerException) rethrow;
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<void> updateMessageStatus({
+    required String messageId,
+    required String status,
+  }) async {
+    const requestName = 'chat.updateMessageStatus';
+    logRequestStart(requestName, details: {
+      'messageId': messageId,
+      'status': status,
+    });
+    try {
+      final response = await apiClient.put(
+        '/api/common/chat/messages/$messageId/status',
+        data: {
+          'status': status,
+        },
+      );
+      logRequestSuccess(requestName, statusCode: response.statusCode);
+    } on DioException catch (e, s) {
+      logRequestError(requestName, e, stackTrace: s);
+      throw ApiException.fromDioError(e);
+    } catch (e, s) {
+      logRequestError(requestName, e, stackTrace: s);
       throw ServerException(e.toString());
     }
   }
