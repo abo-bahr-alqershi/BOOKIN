@@ -28,7 +28,7 @@ class _NewConversationPageState extends State<NewConversationPage>
   final TextEditingController _groupNameController = TextEditingController();
   final Set<ChatUser> _selectedUsers = {};
 
-  bool _isCreatingGroup = false;
+  bool _isCreatingGroup = false; // المجموعات معطلة
   List<ChatUser> _availableUsers = [];
   List<ChatUser> _filteredUsers = [];
 
@@ -223,23 +223,21 @@ class _NewConversationPageState extends State<NewConversationPage>
               child: Column(
                 children: [
                   _buildPremiumAppBar(),
-                  Expanded(
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: SlideTransition(
-                        position: _slideAnimation,
-                        child: _isCreatingGroup
-                            ? _buildGroupCreationView()
-                            : _buildUserSelectionView(),
-                      ),
+                Expanded(
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: _buildUserSelectionView(),
                     ),
                   ),
+                ),
                 ],
               ),
             ),
           ],
         ),
-        floatingActionButton: _buildPremiumFAB(),
+        floatingActionButton: null,
       ),
     );
   }
@@ -597,35 +595,7 @@ class _NewConversationPageState extends State<NewConversationPage>
                 ),
               ),
 
-              // Next button for group creation
-              if (_selectedUsers.length > 1 && !_isCreatingGroup)
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _isCreatingGroup = true;
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppTheme.primaryBlue, AppTheme.primaryPurple],
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'التالي',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
+              // زر إنشاء مجموعة مُعطّل
             ],
           ),
         ),
@@ -748,156 +718,8 @@ class _NewConversationPageState extends State<NewConversationPage>
     );
   }
 
-  Widget _buildGroupCreationView() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // Group info card
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.darkCard.withValues(alpha: 0.6),
-                  AppTheme.darkCard.withValues(alpha: 0.4),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppTheme.darkBorder.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-            child: Column(
-              children: [
-                // Group avatar
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppTheme.primaryBlue, AppTheme.primaryPurple],
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.group_rounded,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Group name input
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppTheme.darkSurface.withValues(alpha: 0.5),
-                        AppTheme.darkSurface.withValues(alpha: 0.3),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.2),
-                      width: 0.5,
-                    ),
-                  ),
-                  child: TextField(
-                    controller: _groupNameController,
-                    autofocus: true,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      fontSize: 14,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'اسم المجموعة',
-                      hintStyle: AppTextStyles.bodySmall.copyWith(
-                        color: AppTheme.textMuted.withValues(alpha: 0.4),
-                        fontSize: 13,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.edit_rounded,
-                        color: AppTheme.primaryBlue.withValues(alpha: 0.6),
-                        size: 18,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Members section
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.darkCard.withValues(alpha: 0.3),
-                    AppTheme.darkCard.withValues(alpha: 0.2),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: AppTheme.darkBorder.withValues(alpha: 0.05),
-                  width: 0.5,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'الأعضاء (${_selectedUsers.length})',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppTheme.textMuted.withValues(alpha: 0.6),
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _selectedUsers.length,
-                      itemBuilder: (context, index) {
-                        final user = _selectedUsers.elementAt(index);
-                        return ParticipantItemWidget(
-                          participant: user,
-                          onRemove: () {
-                            setState(() {
-                              _selectedUsers.remove(user);
-                              if (_selectedUsers.length < 2) {
-                                _isCreatingGroup = false;
-                              }
-                            });
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // تم تعطيل واجهة إنشاء المجموعات
+  Widget _buildGroupCreationView() => _buildUserSelectionView();
 
   Widget _buildPremiumSearchBar() {
     return Container(
@@ -1321,52 +1143,7 @@ class _NewConversationPageState extends State<NewConversationPage>
     );
   }
 
-  Widget? _buildPremiumFAB() {
-    if (!_isCreatingGroup || _groupNameController.text.isEmpty) {
-      return null;
-    }
-
-    return AnimatedBuilder(
-      animation: _pulseAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _pulseAnimation.value,
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryBlue.withValues(alpha: 0.4),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: FloatingActionButton(
-              onPressed: _createGroup,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              child: Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppTheme.primaryBlue, AppTheme.primaryPurple],
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check_rounded,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
+  Widget? _buildPremiumFAB() => null;
 
   String _formatLastSeen(DateTime dt) {
     final now = DateTime.now();

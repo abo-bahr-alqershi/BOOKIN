@@ -355,3 +355,14 @@ class WebSocketPresenceUpdateEvent extends ChatEvent {
   @override
   List<Object?> get props => [userId, status, lastSeen];
 }
+
+// Internal event (not exported) for upload progress updates
+class _UploadProgressInternal extends ChatEvent {
+  final int sent;
+  final int total;
+
+  const _UploadProgressInternal({required this.sent, required this.total});
+
+  @override
+  List<Object> get props => [sent, total];
+}

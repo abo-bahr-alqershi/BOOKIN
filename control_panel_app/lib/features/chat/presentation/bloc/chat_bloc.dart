@@ -106,6 +106,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<WebSocketConversationUpdatedEvent>(_onWebSocketConversationUpdated);
     on<WebSocketTypingIndicatorEvent>(_onWebSocketTypingIndicator);
     on<WebSocketPresenceUpdateEvent>(_onWebSocketPresenceUpdate);
+    on<_UploadProgressInternal>(_onUploadProgressInternal);
 
     _initializeWebSocket();
   }
@@ -462,6 +463,16 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     emit(const ConversationCreating());
 
+    // منع أي محادثة ليست direct أو تتجاوز شخصًا واحدًا (غير المستخدم الحالي)
+    if (event.conversationType != 'direct' || event.participantIds.length != 1) {
+      if (currentState is ChatLoaded) {
+        emit(currentState.copyWith(error: 'يُسمح فقط بمحادثات ثنائية مباشرة'));
+      } else {
+        emit(const ChatError(message: 'يُسمح فقط بمحادثات ثنائية مباشرة'));
+      }
+      return;
+    }
+
     // للمحادثات الفردية، تحقق من وجود محادثة سابقة
     if (event.conversationType == 'direct' && currentState is ChatLoaded) {
       Conversation? existingConversation;
@@ -547,37 +558,199 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   Future<void> _onDeleteConversation(
       DeleteConversationEvent event, Emitter<ChatState> emit) async {
-    // Implementation
+    final result = await deleteConversationUseCase(
+      DeleteConversationParams(conversationId: event.conversationId),
+    );
+
+    await result.fold(
+      (failure) async {
+        if (state is ChatLoaded) {
+          final current = state as ChatLoaded;
+          emit(current.copyWith(error: _mapFailureToMessage(failure)));
+        }
+      },
+      (_) async {
+        if (state is ChatLoaded) {
+          final current = state as ChatLoaded;
+          emit(current.copyWith(
+            conversations: current.conversations
+                .where((c) => c.id != event.conversationId)
+                .toList(),
+          ));
+        }
+      },
+    );
   }
 
   Future<void> _onArchiveConversation(
       ArchiveConversationEvent event, Emitter<ChatState> emit) async {
-    // Implementation
+    final result = await archiveConversationUseCase(
+      ArchiveConversationParams(conversationId: event.conversationId),
+    );
+
+    await result.fold(
+      (failure) async {
+        if (state is ChatLoaded) {
+          final current = state as ChatLoaded;
+          emit(current.copyWith(error: _mapFailureToMessage(failure)));
+        }
+      },
+      (_) async {
+        if (state is ChatLoaded) {
+          final current = state as ChatLoaded;
+          final updated = current.conversations.map((c) {
+            if (c.id == event.conversationId) {
+              return Conversation(
+                id: c.id,
+                conversationType: c.conversationType,
+                title: c.title,
+                description: c.description,
+                avatar: c.avatar,
+                createdAt: c.createdAt,
+                updatedAt: DateTime.now(),
+                lastMessage: c.lastMessage,
+                unreadCount: c.unreadCount,
+                isArchived: true,
+                isMuted: c.isMuted,
+                propertyId: c.propertyId,
+                participants: c.participants,
+              );
+            }
+            return c;
+          }).toList();
+          emit(current.copyWith(conversations: updated));
+        }
+      },
+    );
   }
 
   Future<void> _onUnarchiveConversation(
       UnarchiveConversationEvent event, Emitter<ChatState> emit) async {
-    // Implementation
+    final result = await unarchiveConversationUseCase(
+      UnarchiveConversationParams(conversationId: event.conversationId),
+    );
+
+    await result.fold(
+      (failure) async {
+        if (state is ChatLoaded) {
+          final current = state as ChatLoaded;
+          emit(current.copyWith(error: _mapFailureToMessage(failure)));
+        }
+      },
+      (_) async {
+        if (state is ChatLoaded) {
+          final current = state as ChatLoaded;
+          final updated = current.conversations.map((c) {
+            if (c.id == event.conversationId) {
+              return Conversation(
+                id: c.id,
+                conversationType: c.conversationType,
+                title: c.title,
+                description: c.description,
+                avatar: c.avatar,
+                createdAt: c.createdAt,
+                updatedAt: DateTime.now(),
+                lastMessage: c.lastMessage,
+                unreadCount: c.unreadCount,
+                isArchived: false,
+                isMuted: c.isMuted,
+                propertyId: c.propertyId,
+                participants: c.participants,
+              );
+            }
+            return c;
+          }).toList();
+          emit(current.copyWith(conversations: updated));
+        }
+      },
+    );
   }
 
   Future<void> _onDeleteMessage(
       DeleteMessageEvent event, Emitter<ChatState> emit) async {
-    // Implementation
+    final result = await deleteMessageUseCase(
+      DeleteMessageParams(messageId: event.messageId),
+    );
+
+    await result.fold(
+      (failure) async {
+        if (state is ChatLoaded) {
+          final current = state as ChatLoaded;
+          emit(current.copyWith(error: _mapFailureToMessage(failure)));
+        }
+      },
+      (_) async {
+        if (state is ChatLoaded) {
+          final current = state as ChatLoaded;
+          // ابحث عن المحادثة التي تحتوي الرسالة واحذفها من قائمتها إن وُجدت
+          final updatedMessages = <String, List<Message>>{};
+          current.messages.forEach((convId, msgs) {
+            updatedMessages[convId] = msgs.where((m) => m.id != event.messageId).toList();
+          });
+          emit(current.copyWith(messages: updatedMessages));
+        }
+      },
+    );
   }
 
   Future<void> _onEditMessage(
       EditMessageEvent event, Emitter<ChatState> emit) async {
-    // Implementation
+    final result = await editMessageUseCase(
+      EditMessageParams(messageId: event.messageId, content: event.content),
+    );
+
+    await result.fold(
+      (failure) async {
+        if (state is ChatLoaded) {
+          final current = state as ChatLoaded;
+          emit(current.copyWith(error: _mapFailureToMessage(failure)));
+        }
+      },
+      (message) async {
+        if (state is ChatLoaded) {
+          final current = state as ChatLoaded;
+          final convId = message.conversationId;
+          final msgs = current.messages[convId] ?? [];
+          final updated = msgs.map((m) => m.id == message.id ? message : m).toList();
+          emit(current.copyWith(messages: {
+            ...current.messages,
+            convId: updated,
+          }));
+        }
+      },
+    );
   }
 
   Future<void> _onAddReaction(
       AddReactionEvent event, Emitter<ChatState> emit) async {
-    // Implementation
+    final result = await addReactionUseCase(
+      AddReactionParams(messageId: event.messageId, reactionType: event.reactionType),
+    );
+    await result.fold(
+      (failure) async {
+        if (state is ChatLoaded) {
+          final current = state as ChatLoaded;
+          emit(current.copyWith(error: _mapFailureToMessage(failure)));
+        }
+      },
+      (_) async {},
+    );
   }
 
   Future<void> _onRemoveReaction(
       RemoveReactionEvent event, Emitter<ChatState> emit) async {
-    // Implementation
+    final result = await removeReactionUseCase(
+      RemoveReactionParams(messageId: event.messageId, reactionType: event.reactionType),
+    );
+    await result.fold(
+      (failure) async {
+        if (state is ChatLoaded) {
+          final current = state as ChatLoaded;
+          emit(current.copyWith(error: _mapFailureToMessage(failure)));
+        }
+      },
+      (_) async {},
+    );
   }
 
   Future<void> _onMarkMessagesAsRead(
@@ -603,12 +776,58 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   Future<void> _onUploadAttachment(
       UploadAttachmentEvent event, Emitter<ChatState> emit) async {
-    // Implementation
+    if (state is! ChatLoaded) return;
+    final current = state as ChatLoaded;
+    emit(current.copyWith(uploadingAttachment: const Attachment(id: '', url: '', type: ''), uploadProgress: 0));
+
+    final result = await uploadAttachmentUseCase(
+      UploadAttachmentParams(
+        conversationId: event.conversationId,
+        filePath: event.filePath,
+        messageType: event.messageType,
+        onSendProgress: (sent, total) {
+          add(_UploadProgressInternal(sent: sent, total: total));
+        },
+      ),
+    );
+
+    await result.fold(
+      (failure) async {
+        emit(current.copyWith(
+          uploadingAttachment: null,
+          uploadProgress: null,
+          error: _mapFailureToMessage(failure),
+        ));
+      },
+      (attachment) async {
+        emit(current.copyWith(
+          uploadingAttachment: attachment,
+          uploadProgress: 1.0,
+        ));
+      },
+    );
   }
 
   Future<void> _onSearchChats(
       SearchChatsEvent event, Emitter<ChatState> emit) async {
-    // Implementation
+    if (state is! ChatLoaded) return;
+    final current = state as ChatLoaded;
+    final result = await searchChatsUseCase(
+      SearchChatsParams(
+        query: event.query,
+        conversationId: event.conversationId,
+        messageType: event.messageType,
+        senderId: event.senderId,
+        dateFrom: event.dateFrom,
+        dateTo: event.dateTo,
+        page: event.page,
+        limit: event.limit,
+      ),
+    );
+    await result.fold(
+      (failure) async => emit(current.copyWith(error: _mapFailureToMessage(failure))),
+      (res) async => emit(current.copyWith(searchResult: res)),
+    );
   }
 
   Future<void> _onLoadAvailableUsers(
@@ -628,17 +847,63 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   Future<void> _onUpdateUserStatus(
       UpdateUserStatusEvent event, Emitter<ChatState> emit) async {
-    // Implementation
+    final result = await updateUserStatusUseCase(UpdateUserStatusParams(status: event.status));
+    await result.fold((failure) async {
+      if (state is ChatLoaded) {
+        final current = state as ChatLoaded;
+        emit(current.copyWith(error: _mapFailureToMessage(failure)));
+      }
+    }, (_) async {});
   }
 
   Future<void> _onLoadChatSettings(
       LoadChatSettingsEvent event, Emitter<ChatState> emit) async {
-    // Implementation
+    final result = await getChatSettingsUseCase(NoParams());
+    await result.fold((failure) async {
+      if (state is ChatLoaded) {
+        final current = state as ChatLoaded;
+        emit(current.copyWith(error: _mapFailureToMessage(failure)));
+      }
+    }, (settings) async {
+      if (state is ChatLoaded) {
+        final current = state as ChatLoaded;
+        emit(current.copyWith(settings: settings));
+      }
+    });
   }
 
   Future<void> _onUpdateChatSettings(
       UpdateChatSettingsEvent event, Emitter<ChatState> emit) async {
-    // Implementation
+    final result = await updateChatSettingsUseCase(UpdateChatSettingsParams(
+      notificationsEnabled: event.notificationsEnabled,
+      soundEnabled: event.soundEnabled,
+      showReadReceipts: event.showReadReceipts,
+      showTypingIndicator: event.showTypingIndicator,
+      theme: event.theme,
+      fontSize: event.fontSize,
+      autoDownloadMedia: event.autoDownloadMedia,
+      backupMessages: event.backupMessages,
+    ));
+    await result.fold((failure) async {
+      if (state is ChatLoaded) {
+        final current = state as ChatLoaded;
+        emit(current.copyWith(error: _mapFailureToMessage(failure)));
+      }
+    }, (settings) async {
+      if (state is ChatLoaded) {
+        final current = state as ChatLoaded;
+        emit(current.copyWith(settings: settings));
+      }
+    });
+  }
+
+  // Internal event for updating upload progress (not exposed)
+  Future<void> _onUploadProgressInternal(
+      _UploadProgressInternal event, Emitter<ChatState> emit) async {
+    if (state is! ChatLoaded) return;
+    final current = state as ChatLoaded;
+    final progress = event.total > 0 ? event.sent / event.total : 0.0;
+    emit(current.copyWith(uploadProgress: progress));
   }
 
   Future<void> _onLoadAdminUsers(

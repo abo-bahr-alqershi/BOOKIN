@@ -70,6 +70,19 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                 if (conversation == null)
                     return ResultDto<ChatMessageDto>.Failed("المحادثة غير موجودة", errorCode: "conversation_not_found");
 
+                // السماح فقط بالمحادثات الثنائية المباشرة
+                if (!string.Equals(conversation.ConversationType, "direct", StringComparison.OrdinalIgnoreCase))
+                {
+                    return ResultDto<ChatMessageDto>.Failed("إرسال الرسائل مسموح فقط في المحادثات الثنائية المباشرة", errorCode: "direct_only");
+                }
+
+                // تأكد أن عدد المشاركين اثنان فقط
+                var participantCount = (conversation.Participants?.Count ?? 0);
+                if (participantCount != 2)
+                {
+                    return ResultDto<ChatMessageDto>.Failed("هذه المحادثة ليست ثنائية صالحة", errorCode: "invalid_participants_count");
+                }
+
                 // تحقق من صلاحيات الإرسال وفق القيود المطلوبة
                 // Admin: يستطيع مراسلة الجميع
                 // Owner/Staff: مراسلة Admin أو العملاء الذين سبق مراسلتهُم للعقار
