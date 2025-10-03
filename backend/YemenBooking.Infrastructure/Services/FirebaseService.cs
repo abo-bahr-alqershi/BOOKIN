@@ -70,10 +70,24 @@ namespace YemenBooking.Infrastructure.Services
                     }
                 }
 
+                // Determine if this is a silent (data-only) push
+                bool isSilent = false;
+                if (data != null && data.TryGetValue("silent", out var silentFlag))
+                {
+                    if (string.Equals(silentFlag, "true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        isSilent = true;
+                    }
+                }
+                if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(body))
+                {
+                    isSilent = true;
+                }
+
                 var androidConfig = new AndroidConfig
                 {
                     Priority = Priority.High,
-                    Notification = new AndroidNotification
+                    Notification = isSilent ? null : new AndroidNotification
                     {
                         // Must match app's AndroidNotificationDetails channel id
                         ChannelId = "yemen_booking_channel",
@@ -82,26 +96,32 @@ namespace YemenBooking.Infrastructure.Services
 
                 var apnsConfig = new ApnsConfig
                 {
-                    Aps = new Aps
-                    {
-                        ContentAvailable = false,
-                        Alert = new ApsAlert
+                    Aps = isSilent
+                        ? new Aps
                         {
-                            Title = title,
-                            Body = body
+                            // Background update without alert
+                            ContentAvailable = true,
+                        }
+                        : new Aps
+                        {
+                            ContentAvailable = false,
+                            Alert = new ApsAlert
+                            {
+                                Title = title,
+                                Body = body
+                            },
+                            Sound = "default",
                         },
-                        Sound = "default",
-                    },
                     Headers = new Dictionary<string, string>
                     {
                         // High priority for iOS
-                        { "apns-priority", "10" }
+                        { "apns-priority", isSilent ? "5" : "10" }
                     }
                 };
 
                 var message = new Message
                 {
-                    Notification = new Notification
+                    Notification = isSilent ? null : new Notification
                     {
                         Title = title,
                         Body = body

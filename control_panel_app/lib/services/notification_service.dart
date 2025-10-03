@@ -334,6 +334,22 @@ class NotificationService {
       return; // لا إشعار محلي داخل التطبيق
     }
 
+    // حالات تحديث الحالة وما شابهها لا يجب أن تظهر كإشعارات مرئية
+    if (type == 'message_status_updated' || data['silent'] == 'true') {
+      // Update UI silently if needed
+      final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
+      if (conversationId.isNotEmpty) {
+        try {
+          final ws = di.sl<ChatWebSocketService>();
+          // جلب المحادثة لتحديث آخر حالة/عدادات
+          await ws.emitConversationById(conversationId: conversationId);
+        } catch (e) {
+          debugPrint('Silent status update handling failed: $e');
+        }
+      }
+      return; // لا عرض لإشعار مرئي
+    }
+
     // أنواع أخرى: أظهر إشعارًا محليًا حسب المنصّة
     if (Platform.isAndroid) {
       await _showLocalNotification(message);

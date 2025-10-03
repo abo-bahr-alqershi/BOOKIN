@@ -60,13 +60,15 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                 await _messageRepo.UpdateAsync(message, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                // إشعار المُرسل عبر FCM بحالة الرسالة
-                await _firebaseService.SendNotificationAsync($"user_{message.SenderId}", "تحديث حالة الرسالة", message.Status, new System.Collections.Generic.Dictionary<string, string>
+                // إشعار المُرسل عبر FCM بحالة الرسالة دون عرض إشعار مرئي على الجهاز
+                // نرسل بيانات فقط (data-only) بحيث يتجاهل العميل عرض إشعار ويكتفي بتحديث الحالة
+                await _firebaseService.SendNotificationAsync($"user_{message.SenderId}", string.Empty, string.Empty, new System.Collections.Generic.Dictionary<string, string>
                 {
                     { "type", "message_status_updated" },
                     { "conversation_id", message.ConversationId.ToString() },
                     { "message_id", message.Id.ToString() },
-                    { "status", message.Status }
+                    { "status", message.Status },
+                    { "silent", "true" }
                 }, cancellationToken);
 
                 return ResultDto.Ok(null, "تم تحديث حالة الرسالة");
