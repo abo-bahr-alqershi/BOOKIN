@@ -16,6 +16,8 @@ import '../widgets/conversation_item_widget.dart';
 import '../widgets/chat_fab.dart';
 import 'chat_page.dart';
 import 'new_conversation_page.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 
 class ConversationsPage extends StatefulWidget {
   const ConversationsPage({super.key});
