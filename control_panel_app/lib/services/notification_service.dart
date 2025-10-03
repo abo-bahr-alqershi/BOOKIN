@@ -8,8 +8,8 @@ import 'package:permission_handler/permission_handler.dart';
 import '../core/network/api_client.dart';
 import 'local_storage_service.dart';
 import '../features/auth/data/datasources/auth_local_datasource.dart';
-import '../features/chat/presentation/bloc/chat_bloc.dart';
 import 'package:bookn_cp_app/injection_container.dart' as di;
+import '../services/websocket_service.dart';
 
 class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -302,9 +302,8 @@ class NotificationService {
       final messageId = (data['message_id'] ?? data['messageId'] ?? '').toString();
       if (conversationId.isNotEmpty && messageId.isNotEmpty) {
         try {
-          final chatBloc = di.sl<ChatBloc>();
-          // دع الـ Bloc يجلب الرسالة عبر REST عند فتح محادثة، أما هنا فنكتفي بإشعار تدفّقي
-          chatBloc.webSocketService.emitNewMessageById(
+          final ws = di.sl<ChatWebSocketService>();
+          ws.emitNewMessageById(
             conversationId: conversationId,
             messageId: messageId,
           );
@@ -319,9 +318,8 @@ class NotificationService {
       final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
       if (conversationId.isNotEmpty) {
         try {
-          final chatBloc = di.sl<ChatBloc>();
-          // اجلب المحادثة وادفع تحديثًا لقائمة المحادثات
-          await chatBloc.webSocketService.emitConversationById(conversationId: conversationId);
+          final ws = di.sl<ChatWebSocketService>();
+          await ws.emitConversationById(conversationId: conversationId);
         } catch (e) {
           debugPrint('Emit conversation update failed: $e');
         }

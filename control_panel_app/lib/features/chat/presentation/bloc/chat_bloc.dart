@@ -805,7 +805,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       UploadAttachmentEvent event, Emitter<ChatState> emit) async {
     if (state is! ChatLoaded) return;
     final current = state as ChatLoaded;
-    emit(current.copyWith(uploadingAttachment: const Attachment(id: '', url: '', type: ''), uploadProgress: 0));
+    emit(current.copyWith(uploadingAttachment: null, uploadProgress: 0));
 
     final result = await uploadAttachmentUseCase(
       UploadAttachmentParams(
