@@ -1,5 +1,7 @@
 // lib/features/chat/presentation/pages/conversations_page.dart
 
+import 'package:bookn_cp_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:bookn_cp_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
@@ -751,7 +753,8 @@ class _ConversationsPageState extends State<ConversationsPage>
           // Try to resolve real current user id from AuthBloc if available
           String currentUserId = 'current_user';
           final authState = context.read<AuthBloc>().state;
-          if (authState is AuthAuthenticated && authState.user.userId.isNotEmpty) {
+          if (authState is AuthAuthenticated &&
+              authState.user.userId.isNotEmpty) {
             currentUserId = authState.user.userId;
           }
 

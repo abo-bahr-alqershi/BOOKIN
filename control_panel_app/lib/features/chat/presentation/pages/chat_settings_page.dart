@@ -1,3 +1,5 @@
+import 'package:bookn_cp_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:bookn_cp_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
@@ -34,17 +36,17 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
   late AnimationController _glowController;
   late AnimationController _headerController;
   late AnimationController _floatingController;
-  
+
   // Animations
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _glowAnimation;
   late Animation<double> _headerAnimation;
   late Animation<double> _floatingAnimation;
-  
+
   // Scroll Controller
   final ScrollController _scrollController = ScrollController();
-  
+
   // Data
   String get currentUserId {
     final authState = context.read<AuthBloc>().state;
@@ -53,14 +55,15 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
     }
     return 'current_user';
   }
+
   bool _notificationsEnabled = true;
   bool _showReadReceipts = true;
   String _theme = 'default';
-  
+
   // UI State
   double _headerOpacity = 1.0;
   bool _isHeaderExpanded = true;
-  
+
   // Background elements
   final List<_FloatingOrb> _floatingOrbs = [];
 
@@ -76,27 +79,27 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
 
   void _initializeControllers() {
     _tabController = TabController(length: 3, vsync: this);
-    
+
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     _slideController = AnimationController(
       duration: const Duration(milliseconds: 700),
       vsync: this,
     );
-    
+
     _glowController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _headerController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    
+
     _floatingController = AnimationController(
       duration: const Duration(seconds: 20),
       vsync: this,
@@ -108,7 +111,7 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
       parent: _fadeController,
       curve: Curves.easeOut,
     );
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0.0, 0.05),
       end: Offset.zero,
@@ -116,7 +119,7 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
       parent: _slideController,
       curve: Curves.easeOutQuart,
     ));
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.3,
       end: 1.0,
@@ -124,7 +127,7 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
       parent: _glowController,
       curve: Curves.easeInOut,
     ));
-    
+
     _headerAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -132,12 +135,12 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
       parent: _headerController,
       curve: Curves.easeOutBack,
     ));
-    
+
     _floatingAnimation = Tween<double>(
       begin: 0,
       end: 2 * math.pi,
     ).animate(_floatingController);
-    
+
     // Start animations
     _fadeController.forward();
     _slideController.forward();
@@ -182,10 +185,10 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
         children: [
           // Premium animated background
           _buildPremiumBackground(),
-          
+
           // Floating orbs
           _buildFloatingOrbs(),
-          
+
           // Main content
           CustomScrollView(
             controller: _scrollController,
@@ -307,7 +310,7 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
                   ),
                 ),
               ),
-            
+
             // Gradient overlay
             Container(
               decoration: BoxDecoration(
@@ -321,7 +324,7 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
                 ),
               ),
             ),
-            
+
             // Glass effect overlay
             ClipRRect(
               child: BackdropFilter(
@@ -336,14 +339,15 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
                       end: Alignment.bottomCenter,
                       colors: [
                         AppTheme.darkBackground.withValues(alpha: 0.0),
-                        AppTheme.darkBackground.withValues(alpha: _headerOpacity * 0.9),
+                        AppTheme.darkBackground
+                            .withValues(alpha: _headerOpacity * 0.9),
                       ],
                     ),
                   ),
                 ),
               ),
             ),
-            
+
             // Avatar and title
             Positioned(
               bottom: 20,
@@ -370,7 +374,8 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.primaryBlue.withValues(alpha: 0.5),
+                                  color: AppTheme.primaryBlue
+                                      .withValues(alpha: 0.5),
                                   blurRadius: 20,
                                   spreadRadius: 2,
                                 ),
@@ -394,7 +399,8 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
                                       child: Center(
                                         child: Text(
                                           _getInitials(displayName),
-                                          style: AppTextStyles.heading2.copyWith(
+                                          style:
+                                              AppTextStyles.heading2.copyWith(
                                             color: Colors.white,
                                             fontSize: 24,
                                           ),
@@ -553,7 +559,8 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
                       _PremiumInfoItem(
                         icon: Icons.group_rounded,
                         label: 'أعضاء',
-                        value: widget.conversation.participants.length.toString(),
+                        value:
+                            widget.conversation.participants.length.toString(),
                         animation: _glowAnimation,
                       ),
                   ],
@@ -650,7 +657,8 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
 
   Widget _buildPremiumParticipantsTab() {
     if (widget.conversation.isDirectChat) {
-      final otherParticipant = widget.conversation.getOtherParticipant(currentUserId);
+      final otherParticipant =
+          widget.conversation.getOtherParticipant(currentUserId);
       if (otherParticipant == null) return const SizedBox.shrink();
 
       return SingleChildScrollView(
@@ -922,7 +930,7 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
               ],
             ),
           ),
-          
+
           // Section content with glass effect
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -988,7 +996,7 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
             child: Switch(
               value: value,
               onChanged: onChanged,
-              activeColor: AppTheme.primaryBlue,
+              activeThumbColor: AppTheme.primaryBlue,
               activeTrackColor: AppTheme.primaryBlue.withValues(alpha: 0.3),
               inactiveThumbColor: AppTheme.textMuted.withValues(alpha: 0.5),
               inactiveTrackColor: AppTheme.darkBorder.withValues(alpha: 0.2),
@@ -1036,8 +1044,8 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
               child: Icon(
                 icon,
                 size: 16,
-                color: isDestructive 
-                    ? AppTheme.error 
+                color: isDestructive
+                    ? AppTheme.error
                     : AppTheme.textMuted.withValues(alpha: 0.7),
               ),
             ),
@@ -1058,7 +1066,7 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
                   Text(
                     subtitle,
                     style: AppTextStyles.caption.copyWith(
-                      color: isDestructive 
+                      color: isDestructive
                           ? AppTheme.error.withValues(alpha: 0.7)
                           : AppTheme.textMuted.withValues(alpha: 0.6),
                       fontSize: 11,
@@ -1196,12 +1204,12 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
 
   void _updateSettings() {
     context.read<ChatBloc>().add(
-      UpdateChatSettingsEvent(
-        notificationsEnabled: _notificationsEnabled,
-        showReadReceipts: _showReadReceipts,
-        theme: _theme,
-      ),
-    );
+          UpdateChatSettingsEvent(
+            notificationsEnabled: _notificationsEnabled,
+            showReadReceipts: _showReadReceipts,
+            theme: _theme,
+          ),
+        );
   }
 
   void _viewParticipantProfile(ChatUser participant) {
@@ -1524,7 +1532,9 @@ class _PremiumBackgroundPainter extends CustomPainter {
     const spacing = 50.0;
     final offset = animation * spacing;
 
-    for (double x = -spacing + offset % spacing; x < size.width + spacing; x += spacing) {
+    for (double x = -spacing + offset % spacing;
+        x < size.width + spacing;
+        x += spacing) {
       canvas.drawLine(
         Offset(x, 0),
         Offset(x, size.height),
@@ -1532,7 +1542,9 @@ class _PremiumBackgroundPainter extends CustomPainter {
       );
     }
 
-    for (double y = -spacing + offset % spacing; y < size.height + spacing; y += spacing) {
+    for (double y = -spacing + offset % spacing;
+        y < size.height + spacing;
+        y += spacing) {
       canvas.drawLine(
         Offset(0, y),
         Offset(size.width, y),

@@ -11,9 +11,9 @@ import '../features/auth/data/datasources/auth_local_datasource.dart';
 
 class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications = 
+  final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
-  
+
   final ApiClient? _apiClient;
   final LocalStorageService? _localStorage;
   final AuthLocalDataSource? _authLocalDataSource;
@@ -22,9 +22,9 @@ class NotificationService {
     ApiClient? apiClient,
     LocalStorageService? localStorage,
     AuthLocalDataSource? authLocalDataSource,
-  }) : _apiClient = apiClient,
-       _localStorage = localStorage,
-       _authLocalDataSource = authLocalDataSource;
+  })  : _apiClient = apiClient,
+        _localStorage = localStorage,
+        _authLocalDataSource = authLocalDataSource;
 
   // Initialize notification service
   Future<void> initialize() async {
@@ -65,13 +65,15 @@ class NotificationService {
       criticalAlert: false,
     );
 
-    debugPrint('Notification permission status: ${settings.authorizationStatus}');
+    debugPrint(
+        'Notification permission status: ${settings.authorizationStatus}');
   }
 
   // Initialize local notifications
   Future<void> _initializeLocalNotifications() async {
     // Ensure the Android channel exists so push notifications render reliably
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -111,7 +113,8 @@ class NotificationService {
   // Configure Firebase messaging
   Future<void> _configureFirebaseMessaging() async {
     // iOS: allow notifications to be displayed while app in foreground
-    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
       sound: true,
@@ -150,22 +153,24 @@ class NotificationService {
     try {
       final user = await _authLocalDataSource?.getCachedUser();
       if (user != null) {
-        final String userId = user.userId?.toString() ?? '';
+        final String userId = user.userId.toString() ?? '';
         if (userId.isNotEmpty) {
-          await _firebaseMessaging.subscribeToTopic('user_${userId}');
+          await _firebaseMessaging.subscribeToTopic('user_$userId');
         }
-        final List<String> roles = []
-          ..addAll(((user.roles ?? []) as List).map((e) => e.toString()))
-          ..addAll((user.accountRole != null && (user.accountRole as String).isNotEmpty)
-              ? [user.accountRole as String]
-              : const <String>[]);
+        final List<String> roles = [
+          ...((user.roles ?? []) as List).map((e) => e.toString()),
+          if ((user.accountRole != null &&
+              (user.accountRole as String).isNotEmpty)) ...[
+            user.accountRole as String
+          ]
+        ];
         final uniqueRoles = roles
             .where((r) => r.trim().isNotEmpty)
             .map((r) => _normalizeRole(r))
             .toSet()
             .toList();
         for (final role in uniqueRoles) {
-          await _firebaseMessaging.subscribeToTopic('role_${role}');
+          await _firebaseMessaging.subscribeToTopic('role_$role');
         }
       }
     } catch (e) {
@@ -178,22 +183,24 @@ class NotificationService {
     try {
       final user = await _authLocalDataSource?.getCachedUser();
       if (user != null) {
-        final String userId = user.userId?.toString() ?? '';
+        final String userId = user.userId.toString() ?? '';
         if (userId.isNotEmpty) {
-          await _firebaseMessaging.unsubscribeFromTopic('user_${userId}');
+          await _firebaseMessaging.unsubscribeFromTopic('user_$userId');
         }
-        final List<String> roles = []
-          ..addAll(((user.roles ?? []) as List).map((e) => e.toString()))
-          ..addAll((user.accountRole != null && (user.accountRole as String).isNotEmpty)
-              ? [user.accountRole as String]
-              : const <String>[]);
+        final List<String> roles = [
+          ...((user.roles ?? []) as List).map((e) => e.toString()),
+          if ((user.accountRole != null &&
+              (user.accountRole as String).isNotEmpty)) ...[
+            user.accountRole as String
+          ]
+        ];
         final uniqueRoles = roles
             .where((r) => r.trim().isNotEmpty)
             .map((r) => _normalizeRole(r))
             .toSet()
             .toList();
         for (final role in uniqueRoles) {
-          await _firebaseMessaging.unsubscribeFromTopic('role_${role}');
+          await _firebaseMessaging.unsubscribeFromTopic('role_$role');
         }
       }
     } catch (e) {
@@ -424,8 +431,9 @@ class NotificationService {
     );
 
     // Convert DateTime to TZDateTime
-    final tz.TZDateTime tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
-    
+    final tz.TZDateTime tzScheduledDate =
+        tz.TZDateTime.from(scheduledDate, tz.local);
+
     await _localNotifications.zonedSchedule(
       id,
       title,
