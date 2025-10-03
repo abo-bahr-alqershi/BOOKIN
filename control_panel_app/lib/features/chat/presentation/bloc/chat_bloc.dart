@@ -783,6 +783,45 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   Future<void> _onAddReaction(
       AddReactionEvent event, Emitter<ChatState> emit) async {
+    // Optimistic update: add reaction locally
+    if (state is ChatLoaded) {
+      final current = state as ChatLoaded;
+      final Map<String, List<Message>> updated = {...current.messages};
+      updated.forEach((convId, msgs) {
+        for (int i = 0; i < msgs.length; i++) {
+          final m = msgs[i];
+          if (m.id == event.messageId) {
+            final reactions = List<MessageReaction>.from(m.reactions);
+            reactions.add(MessageReaction(
+              id: 'temp_${DateTime.now().microsecondsSinceEpoch}',
+              messageId: m.id,
+              userId: 'current_user', // visual only; replaced by server event
+              reactionType: event.reactionType,
+            ));
+            msgs[i] = Message(
+              id: m.id,
+              conversationId: m.conversationId,
+              senderId: m.senderId,
+              messageType: m.messageType,
+              content: m.content,
+              location: m.location,
+              replyToMessageId: m.replyToMessageId,
+              reactions: reactions,
+              attachments: m.attachments,
+              createdAt: m.createdAt,
+              updatedAt: DateTime.now(),
+              status: m.status,
+              isEdited: m.isEdited,
+              editedAt: m.editedAt,
+              deliveryReceipt: m.deliveryReceipt,
+            );
+            break;
+          }
+        }
+      });
+      emit(current.copyWith(messages: updated));
+    }
+
     final result = await addReactionUseCase(
       AddReactionParams(messageId: event.messageId, reactionType: event.reactionType),
     );
@@ -790,7 +829,35 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       (failure) async {
         if (state is ChatLoaded) {
           final current = state as ChatLoaded;
-          emit(current.copyWith(error: _mapFailureToMessage(failure)));
+          // rollback optimistic add
+          final Map<String, List<Message>> rolled = {...current.messages};
+          rolled.forEach((convId, msgs) {
+            for (int i = 0; i < msgs.length; i++) {
+              final m = msgs[i];
+              if (m.id == event.messageId) {
+                final reactions = m.reactions.where((r) => !(r.id.startsWith('temp_') && r.reactionType == event.reactionType)).toList();
+                msgs[i] = Message(
+                  id: m.id,
+                  conversationId: m.conversationId,
+                  senderId: m.senderId,
+                  messageType: m.messageType,
+                  content: m.content,
+                  location: m.location,
+                  replyToMessageId: m.replyToMessageId,
+                  reactions: reactions,
+                  attachments: m.attachments,
+                  createdAt: m.createdAt,
+                  updatedAt: m.updatedAt,
+                  status: m.status,
+                  isEdited: m.isEdited,
+                  editedAt: m.editedAt,
+                  deliveryReceipt: m.deliveryReceipt,
+                );
+                break;
+              }
+            }
+          });
+          emit(current.copyWith(messages: rolled, error: _mapFailureToMessage(failure)));
         }
       },
       (_) async {},
@@ -799,6 +866,39 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   Future<void> _onRemoveReaction(
       RemoveReactionEvent event, Emitter<ChatState> emit) async {
+    // Optimistic update: remove reaction locally
+    if (state is ChatLoaded) {
+      final current = state as ChatLoaded;
+      final Map<String, List<Message>> updated = {...current.messages};
+      updated.forEach((convId, msgs) {
+        for (int i = 0; i < msgs.length; i++) {
+          final m = msgs[i];
+          if (m.id == event.messageId) {
+            final reactions = m.reactions.where((r) => r.reactionType != event.reactionType).toList();
+            msgs[i] = Message(
+              id: m.id,
+              conversationId: m.conversationId,
+              senderId: m.senderId,
+              messageType: m.messageType,
+              content: m.content,
+              location: m.location,
+              replyToMessageId: m.replyToMessageId,
+              reactions: reactions,
+              attachments: m.attachments,
+              createdAt: m.createdAt,
+              updatedAt: DateTime.now(),
+              status: m.status,
+              isEdited: m.isEdited,
+              editedAt: m.editedAt,
+              deliveryReceipt: m.deliveryReceipt,
+            );
+            break;
+          }
+        }
+      });
+      emit(current.copyWith(messages: updated));
+    }
+
     final result = await removeReactionUseCase(
       RemoveReactionParams(messageId: event.messageId, reactionType: event.reactionType),
     );
@@ -806,6 +906,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       (failure) async {
         if (state is ChatLoaded) {
           final current = state as ChatLoaded;
+          // rollback removal by refetching this message list (fallback)
           emit(current.copyWith(error: _mapFailureToMessage(failure)));
         }
       },

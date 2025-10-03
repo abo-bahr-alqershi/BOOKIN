@@ -334,7 +334,7 @@ class NotificationService {
       return; // لا إشعار محلي داخل التطبيق
     }
 
-    // حالات تحديث الحالة وما شابهها لا يجب أن تظهر كإشعارات مرئية
+    // حالات لا يجب أن تظهر كإشعارات مرئية: تحديث الحالة والتفاعلات الصامتة
     if (type == 'message_status_updated' || data['silent'] == 'true') {
       // Update UI silently if needed
       final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
@@ -348,6 +348,23 @@ class NotificationService {
         }
       }
       return; // لا عرض لإشعار مرئي
+    }
+
+    // تفاعل مُضاف: حدّث الرسائل محليًا عبر fetch، لا تُظهر إشعارًا
+    if (type == 'reaction_added' || type == 'reaction_removed') {
+      final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
+      if (conversationId.isNotEmpty) {
+        try {
+          final ws = di.sl<ChatWebSocketService>();
+          // إجبار الدردشة على إعادة تحميل الرسائل لهذه المحادثة
+          // عبر مسارنا الحالي: أرسل حدث newMessage بدون messageId كي يُنفّذ bloc جلبًا كاملاً
+          ws.emitNewMessageById(conversationId: conversationId, messageId: '');
+          await ws.emitConversationById(conversationId: conversationId);
+        } catch (e) {
+          debugPrint('Silent reaction update handling failed: $e');
+        }
+      }
+      return; // لا إشعار مرئي للتفاعلات
     }
 
     // أنواع أخرى: أظهر إشعارًا محليًا حسب المنصّة
