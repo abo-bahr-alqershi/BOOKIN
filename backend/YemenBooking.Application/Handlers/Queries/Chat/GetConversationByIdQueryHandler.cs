@@ -25,7 +25,8 @@ namespace YemenBooking.Application.Handlers.Queries.Chat
 
         public async Task<ResultDto<ChatConversationDto>> Handle(GetConversationByIdQuery request, CancellationToken cancellationToken)
         {
-            var conv = await _repository.GetByIdAsync(request.ConversationId);
+            // Load with details to include participants and messages for accurate lastMessage/updatedAt
+            var conv = await _repository.GetByIdWithDetailsAsync(request.ConversationId, cancellationToken);
             if (conv == null)
                 return ResultDto<ChatConversationDto>.Failure("المحادثة غير موجودة");
 
