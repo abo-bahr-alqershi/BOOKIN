@@ -748,7 +748,12 @@ class _ConversationsPageState extends State<ConversationsPage>
 
           final conversation = conversations[index];
           final typingUsers = state.typingUsers[conversation.id] ?? [];
-          const currentUserId = 'current_user';
+          // Try to resolve real current user id from AuthBloc if available
+          String currentUserId = 'current_user';
+          final authState = context.read<AuthBloc>().state;
+          if (authState is AuthAuthenticated && authState.user.userId.isNotEmpty) {
+            currentUserId = authState.user.userId;
+          }
 
           return TweenAnimationBuilder<double>(
             key: ValueKey(conversation.id),

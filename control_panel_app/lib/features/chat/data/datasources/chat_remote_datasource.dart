@@ -315,9 +315,20 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
 
       logRequestSuccess(requestName, statusCode: response.statusCode);
 
-      if (response.data['success'] != true) {
-        throw ServerException(response.data['message'] ?? 'فشل حذف المحادثة');
+      // Some APIs may return 204 No Content or plain string. Accept those as success.
+      final status = response.statusCode ?? 200;
+      if (status == 204) return;
+
+      final data = response.data;
+      if (data == null) return;
+      if (data is String) return; // treat plain string as OK
+      if (data is Map && (data['success'] == true || data['isSuccess'] == true)) return;
+
+      if (data is Map) {
+        throw ServerException(data['message'] ?? 'فشل حذف المحادثة');
       }
+      // Fallback: assume success if we reached here without explicit failure
+      return;
     } on DioException catch (e, s) {
       logRequestError(requestName, e, stackTrace: s);
       throw ApiException.fromDioError(e);

@@ -46,7 +46,13 @@ class _ChatSettingsPageState extends State<ChatSettingsPage>
   final ScrollController _scrollController = ScrollController();
   
   // Data
-  final String currentUserId = 'current_user';
+  String get currentUserId {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthAuthenticated && authState.user.userId.isNotEmpty) {
+      return authState.user.userId;
+    }
+    return 'current_user';
+  }
   bool _notificationsEnabled = true;
   bool _showReadReceipts = true;
   String _theme = 'default';
