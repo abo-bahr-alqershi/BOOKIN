@@ -194,15 +194,16 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
 
                 var messageDto = _mapper.Map<ChatMessageDto>(message);
 
-                // إشعارات للمشاركين الآخرين
-                var participants = conversation.Participants.Where(p => p.Id != userId).ToList();
-                foreach (var p in participants)
+                // إرسال إشعار صامت للمرسل لتحديث الواجهة فورًا، وإشعار مرئي للمستقبل
+                foreach (var p in conversation.Participants)
                 {
-                    await _firebaseService.SendNotificationAsync($"user_{p.Id}", "رسالة جديدة", message.Content ?? string.Empty, new Dictionary<string, string>
+                    var isSender = p.Id == userId;
+                    await _firebaseService.SendNotificationAsync($"user_{p.Id}", isSender ? string.Empty : "رسالة جديدة", isSender ? string.Empty : (message.Content ?? string.Empty), new Dictionary<string, string>
                     {
                         { "type", "new_message" },
                         { "conversation_id", request.ConversationId.ToString() },
-                        { "message_id", message.Id.ToString() }
+                        { "message_id", message.Id.ToString() },
+                        { "silent", isSender ? "true" : "false" }
                     }, cancellationToken);
                 }
 

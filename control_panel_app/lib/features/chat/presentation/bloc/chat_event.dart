@@ -150,14 +150,16 @@ class EditMessageEvent extends ChatEvent {
 class AddReactionEvent extends ChatEvent {
   final String messageId;
   final String reactionType;
+  final String? currentUserId; // لتحسين التحديث المتفائل باستخدام معرف المستخدم الحقيقي
 
   const AddReactionEvent({
     required this.messageId,
     required this.reactionType,
+    this.currentUserId,
   });
 
   @override
-  List<Object> get props => [messageId, reactionType];
+  List<Object?> get props => [messageId, reactionType, currentUserId];
 }
 
 class RemoveReactionEvent extends ChatEvent {

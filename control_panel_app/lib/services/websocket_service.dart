@@ -195,11 +195,21 @@ class ChatWebSocketService {
       final data = message['data'];
       final isAdded = message['type'] == 'ReactionAdded';
       
+      // data may arrive either as a full reaction object or as primitives via FCM data
+      final reaction = data['reaction'] != null
+          ? MessageReactionModel.fromJson(data['reaction'])
+          : MessageReactionModel.fromJson({
+              'id': data['reactionId'] ?? data['reaction_id'] ?? '',
+              'message_id': data['messageId'] ?? data['message_id'] ?? '',
+              'user_id': data['userId'] ?? data['user_id'] ?? '',
+              'reaction_type': data['reactionType'] ?? data['reaction_type'] ?? '',
+            });
+
       _messageController.add(MessageEvent(
         type: isAdded ? MessageEventType.reactionAdded : MessageEventType.reactionRemoved,
-        messageId: data['messageId'],
-        conversationId: data['conversationId'],
-        reaction: MessageReactionModel.fromJson(data['reaction']),
+        messageId: data['messageId'] ?? data['message_id'],
+        conversationId: data['conversationId'] ?? data['conversation_id'],
+        reaction: reaction,
       ));
     } catch (e) {
       debugPrint('Error handling reaction update: $e');

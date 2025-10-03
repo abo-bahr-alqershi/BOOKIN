@@ -1069,6 +1069,7 @@ class _ChatPageState extends State<ChatPage>
             AddReactionEvent(
               messageId: message.id,
               reactionType: reactionType,
+              currentUserId: userId,
             ),
           );
     }

@@ -467,7 +467,86 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           }
         }
         break;
+      case MessageEventType.reactionAdded:
+      case MessageEventType.reactionRemoved:
+        {
+          if (messageEvent.messageId != null && messageEvent.reaction != null) {
+            final currentMessages = currentState.messages[messageEvent.conversationId] ?? [];
+            final updatedMessages = currentMessages.map((m) {
+              if (m.id == messageEvent.messageId) {
+                if (messageEvent.type == MessageEventType.reactionAdded) {
+                  final reactions = List<MessageReaction>.from(m.reactions);
+                  final exists = reactions.any((r) => r.userId == messageEvent.reaction!.userId && r.reactionType == messageEvent.reaction!.reactionType);
+                  if (!exists) {
+                    reactions.add(messageEvent.reaction!);
+                  }
+                  return Message(
+                    id: m.id,
+                    conversationId: m.conversationId,
+                    senderId: m.senderId,
+                    messageType: m.messageType,
+                    content: m.content,
+                    location: m.location,
+                    replyToMessageId: m.replyToMessageId,
+                    reactions: reactions,
+                    attachments: m.attachments,
+                    createdAt: m.createdAt,
+                    updatedAt: DateTime.now(),
+                    status: m.status,
+                    isEdited: m.isEdited,
+                    editedAt: m.editedAt,
+                    deliveryReceipt: m.deliveryReceipt,
+                  );
+                } else {
+                  final reactions = m.reactions
+                      .where((r) => !(r.userId == messageEvent.reaction!.userId && r.reactionType == messageEvent.reaction!.reactionType))
+                      .toList();
+                  return Message(
+                    id: m.id,
+                    conversationId: m.conversationId,
+                    senderId: m.senderId,
+                    messageType: m.messageType,
+                    content: m.content,
+                    location: m.location,
+                    replyToMessageId: m.replyToMessageId,
+                    reactions: reactions,
+                    attachments: m.attachments,
+                    createdAt: m.createdAt,
+                    updatedAt: DateTime.now(),
+                    status: m.status,
+                    isEdited: m.isEdited,
+                    editedAt: m.editedAt,
+                    deliveryReceipt: m.deliveryReceipt,
+                  );
+                }
+              }
+              return m;
+            }).toList();
 
+            emit(currentState.copyWith(
+              messages: {
+                ...currentState.messages,
+                messageEvent.conversationId: updatedMessages,
+              },
+            ));
+          } else {
+            final result = await getMessagesUseCase(
+              GetMessagesParams(
+                conversationId: messageEvent.conversationId,
+                pageNumber: 1,
+                pageSize: 50,
+              ),
+            );
+            await result.fold(
+              (failure) async => emit(currentState.copyWith(error: _mapFailureToMessage(failure))),
+              (messages) async => emit(currentState.copyWith(messages: {
+                ...currentState.messages,
+                messageEvent.conversationId: messages,
+              })),
+            );
+          }
+        }
+        break;
       case MessageEventType.edited:
         if (messageEvent.message != null) {
           final currentMessages =
@@ -868,7 +947,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             reactions.add(MessageReaction(
               id: 'temp_${DateTime.now().microsecondsSinceEpoch}',
               messageId: m.id,
-              userId: 'current_user', // visual only; replaced by server event
+              userId: (event.currentUserId != null && event.currentUserId!.isNotEmpty)
+                  ? event.currentUserId!
+                  : 'current_user',
               reactionType: event.reactionType,
             ));
             msgs[i] = Message(
