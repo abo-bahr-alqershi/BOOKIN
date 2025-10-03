@@ -339,15 +339,37 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         if (messageEvent.message != null) {
           final currentMessages =
               currentState.messages[messageEvent.conversationId] ?? [];
-          emit(currentState.copyWith(
-            messages: {
-              ...currentState.messages,
-              messageEvent.conversationId: [
-                messageEvent.message!,
-                ...currentMessages
-              ],
-            },
-          ));
+        // Insert message at top (reverse list), update conversation ordering by updatedAt
+        final List<Message> newList = [messageEvent.message!, ...currentMessages];
+        // Also bump the conversation's updatedAt if present
+        final conversations = currentState.conversations.map((c) {
+          if (c.id == messageEvent.conversationId) {
+            return Conversation(
+              id: c.id,
+              conversationType: c.conversationType,
+              title: c.title,
+              description: c.description,
+              avatar: c.avatar,
+              createdAt: c.createdAt,
+              updatedAt: messageEvent.message!.updatedAt,
+              lastMessage: messageEvent.message!,
+              unreadCount: c.unreadCount,
+              isArchived: c.isArchived,
+              isMuted: c.isMuted,
+              propertyId: c.propertyId,
+              participants: c.participants,
+            );
+          }
+          return c;
+        }).toList();
+        conversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+        emit(currentState.copyWith(
+          messages: {
+            ...currentState.messages,
+            messageEvent.conversationId: newList,
+          },
+          conversations: conversations,
+        ));
         } else {
           // في حال لم يصل جسم الرسالة (FCM data فقط)، اجلب آخر الرسائل لهذا الحوار
           final result = await getMessagesUseCase(
@@ -418,15 +440,23 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     final currentState = state as ChatLoaded;
     final existingIndex = currentState.conversations.indexWhere((c) => c.id == event.conversation.id);
-    if (existingIndex >= 0) {
-      final List<Conversation> without = [];
-      for (int i = 0; i < currentState.conversations.length; i++) {
-        if (i != existingIndex) without.add(currentState.conversations[i]);
+    // Merge or insert, then sort by updatedAt desc to keep list stable
+    final List<Conversation> merged = [];
+    bool inserted = false;
+    for (int i = 0; i < currentState.conversations.length; i++) {
+      final c = currentState.conversations[i];
+      if (c.id == event.conversation.id) {
+        if (!inserted) {
+          merged.add(event.conversation);
+          inserted = true;
+        }
+      } else {
+        merged.add(c);
       }
-      emit(currentState.copyWith(conversations: [event.conversation, ...without]));
-    } else {
-      emit(currentState.copyWith(conversations: [event.conversation, ...currentState.conversations]));
     }
+    if (!inserted) merged.add(event.conversation);
+    merged.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    emit(currentState.copyWith(conversations: merged));
   }
 
   Future<void> _onWebSocketTypingIndicator(
