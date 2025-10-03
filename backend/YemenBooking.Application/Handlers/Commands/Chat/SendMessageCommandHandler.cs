@@ -70,9 +70,64 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                 if (conversation == null)
                     return ResultDto<ChatMessageDto>.Failed("المحادثة غير موجودة", errorCode: "conversation_not_found");
 
-                // تحقق من صلاحيات الإرسال
-                // if (!conversation.Participants.Any(p => p.Id == userId))
-                //     return ResultDto<ChatMessageDto>.Failed("لا يحق لك إرسال رسالة في هذه المحادثة", errorCode: "permission_denied");
+                // تحقق من صلاحيات الإرسال وفق القيود المطلوبة
+                // Admin: يستطيع مراسلة الجميع
+                // Owner/Staff: مراسلة Admin أو العملاء الذين سبق مراسلتهُم للعقار
+                // Client: مراسلة Admin أو العقارات
+                var roles = (_currentUserService.UserRoles ?? Enumerable.Empty<string>()).Select(r => (r ?? string.Empty).ToLowerInvariant()).ToList();
+                var accountRole = (_currentUserService.AccountRole ?? string.Empty).ToLowerInvariant();
+                var isAdmin = roles.Contains("admin") || roles.Contains("super_admin") || accountRole == "admin";
+                var isOwner = roles.Contains("owner") || roles.Contains("hotel_owner") || accountRole == "owner";
+                var isStaff = roles.Contains("staff") || roles.Contains("hotel_manager") || roles.Contains("receptionist") || accountRole == "staff";
+                var isClient = roles.Contains("client") || roles.Contains("customer") || accountRole == "client";
+
+                if (!isAdmin)
+                {
+                    if (isOwner || isStaff)
+                    {
+                        if (!conversation.PropertyId.HasValue || !_currentUserService.PropertyId.HasValue || conversation.PropertyId.Value != _currentUserService.PropertyId!.Value)
+                        {
+                            return ResultDto<ChatMessageDto>.Failed("لا يمكنك الإرسال في محادثة لا تخص عقارك", errorCode: "property_mismatch");
+                        }
+
+                        // الطرف الآخر Admin أو عميل سبق مراسلة العقار
+                        var otherParticipants = conversation.Participants.Where(p => p.Id != userId).ToList();
+                        if (otherParticipants.Count != 1)
+                        {
+                            return ResultDto<ChatMessageDto>.Failed("محادثات المالك/الموظف يجب أن تكون ثنائية", errorCode: "invalid_conversation_participants");
+                        }
+                        var other = otherParticipants[0];
+                        var otherRoles = (other.UserRoles ?? new List<UserRole>()).Select(ur => ur.Role?.Name?.ToLowerInvariant() ?? string.Empty).ToList();
+                        var otherIsAdmin = otherRoles.Contains("admin") || otherRoles.Contains("super_admin");
+                        var otherIsClient = otherRoles.Contains("client") || otherRoles.Contains("customer");
+                        if (!otherIsAdmin)
+                        {
+                            var ok = await _conversationRepository.ExistsConversationBetweenClientAndPropertyAsync(other.Id, conversation.PropertyId.Value, cancellationToken);
+                            if (!ok)
+                            {
+                                return ResultDto<ChatMessageDto>.Failed("لا يمكنك مراسلة هذا العميل لعدم وجود محادثة سابقة مع العقار", errorCode: "no_prior_client_property_chat");
+                            }
+                        }
+                    }
+                    else if (isClient)
+                    {
+                        // عميل: يستطيع الإرسال في محادثة مع Admin أو مع محادثة لعقار
+                        // إذا كانت المحادثة بدون PropertyId وليست مع Admin، نمنع
+                        var otherParticipants = conversation.Participants.Where(p => p.Id != userId).ToList();
+                        var otherRoles = otherParticipants.SelectMany(p => (p.UserRoles ?? new List<UserRole>()).Select(ur => ur.Role?.Name?.ToLowerInvariant() ?? string.Empty)).ToList();
+                        var anyAdmin = otherRoles.Contains("admin") || otherRoles.Contains("super_admin");
+                        var isPropertyChat = conversation.PropertyId.HasValue;
+                        if (!anyAdmin && !isPropertyChat)
+                        {
+                            return ResultDto<ChatMessageDto>.Failed("لا يمكنك الإرسال إلا لمحادثات مع الإدارة أو مع عقار", errorCode: "client_restriction");
+                        }
+                    }
+                    else
+                    {
+                        // أدوار أخرى (إن وجدت): امنع بشكل آمن
+                        return ResultDto<ChatMessageDto>.Failed("ليست لديك صلاحية للإرسال في هذه المحادثة", errorCode: "permission_denied");
+                    }
+                }
 
                 // إنشاء الرسالة
                 var message = new ChatMessage

@@ -355,7 +355,7 @@ class NotificationService {
   // Navigate to appropriate screen based on notification data
   void _navigateToScreen(Map<String, dynamic> data) {
     final type = data['type'];
-    final id = data['id'];
+    final id = data['id'] ?? data['conversation_id'];
 
     switch (type) {
       case 'booking':
@@ -367,8 +367,14 @@ class NotificationService {
         debugPrint('Navigate to property: $id');
         break;
       case 'chat':
-        // Navigate to chat
-        debugPrint('Navigate to chat: $id');
+      case 'new_message':
+      case 'conversation_created':
+        if (id != null && id.toString().isNotEmpty) {
+          // GoRouter path: /chat/:conversationId
+          // We don't have context here; rely on app-level navigation service if available
+          debugPrint('Navigate to chat: $id');
+          // Optionally emit a stream/event that UI layer listens to and navigates
+        }
         break;
       case 'promotion':
         // Navigate to promotion

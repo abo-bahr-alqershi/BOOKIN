@@ -341,7 +341,7 @@ class NotificationService {
   // Navigate to appropriate screen based on notification data
   void _navigateToScreen(Map<String, dynamic> data) {
     final type = data['type'];
-    final id = data['id'];
+    final id = data['id'] ?? data['conversation_id'];
 
     switch (type) {
       case 'booking':
@@ -353,8 +353,12 @@ class NotificationService {
         debugPrint('Navigate to property: $id');
         break;
       case 'chat':
-        // Navigate to chat
-        debugPrint('Navigate to chat: $id');
+      case 'new_message':
+      case 'conversation_created':
+        if (id != null && id.toString().isNotEmpty) {
+          debugPrint('Navigate to chat: $id');
+          // Emit event for navigation; UI layer can push /chat/:id
+        }
         break;
       case 'promotion':
         // Navigate to promotion

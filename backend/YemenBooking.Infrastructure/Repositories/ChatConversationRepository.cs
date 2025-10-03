@@ -57,5 +57,30 @@ namespace YemenBooking.Infrastructure.Repositories
                 .ThenInclude(m => m.Sender) // إضافة معلومات المرسل
                 .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
         }
+
+        public async Task<(IEnumerable<ChatConversation> Items, int TotalCount)> GetConversationsByPropertyAsync(Guid propertyId, int page, int pageSize, CancellationToken cancellationToken = default)
+        {
+            var query = _context.Set<ChatConversation>()
+                .Include(c => c.Participants)
+                .Include(c => c.Messages)
+                .Where(c => c.PropertyId.HasValue && c.PropertyId.Value == propertyId);
+
+            var total = await query.CountAsync(cancellationToken);
+            var items = await query
+                .OrderByDescending(c => c.UpdatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return (items, total);
+        }
+
+        public async Task<bool> ExistsConversationBetweenClientAndPropertyAsync(Guid clientUserId, Guid propertyId, CancellationToken cancellationToken = default)
+        {
+            return await _context.Set<ChatConversation>()
+                .AsNoTracking()
+                .AnyAsync(c => c.PropertyId.HasValue && c.PropertyId.Value == propertyId
+                               && c.Participants.Any(p => p.Id == clientUserId), cancellationToken);
+        }
     }
 } 
