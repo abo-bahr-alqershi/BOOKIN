@@ -266,6 +266,20 @@ class ChatWebSocketService {
     ));
   }
 
+  // Emit a message status update event (for FCM data messages inside app)
+  void emitMessageStatusUpdate({
+    required String conversationId,
+    required String messageId,
+    required String status,
+  }) {
+    _messageController.add(MessageEvent(
+      type: MessageEventType.statusUpdated,
+      messageId: messageId,
+      conversationId: conversationId,
+      status: status,
+    ));
+  }
+
   // Fetch and emit conversation update by ID (for conversation_created)
   Future<void> emitConversationById({
     required String conversationId,

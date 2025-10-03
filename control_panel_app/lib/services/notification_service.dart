@@ -10,6 +10,7 @@ import 'local_storage_service.dart';
 import '../features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:bookn_cp_app/injection_container.dart' as di;
 import '../services/websocket_service.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
 
 class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -338,10 +339,23 @@ class NotificationService {
     if (type == 'message_status_updated' || data['silent'] == 'true') {
       // Update UI silently if needed
       final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
+      final messageId = (data['message_id'] ?? data['messageId'] ?? '').toString();
+      final status = (data['status'] ?? '').toString();
       if (conversationId.isNotEmpty) {
         try {
           final ws = di.sl<ChatWebSocketService>();
-          // جلب المحادثة لتحديث آخر حالة/عدادات
+          // ادفع حدث statusUpdated لتحديث فوري
+          if (messageId.isNotEmpty && status.isNotEmpty) {
+            ws.emitMessageStatusUpdate(
+              conversationId: conversationId,
+              messageId: messageId,
+              status: status,
+            );
+          } else {
+            // fallback: force fetch
+            ws.emitNewMessageById(conversationId: conversationId, messageId: '');
+          }
+          // ثم جلب المحادثة لتحديث آخر حالة/عدادات بشكل موثوق
           await ws.emitConversationById(conversationId: conversationId);
         } catch (e) {
           debugPrint('Silent status update handling failed: $e');
@@ -559,5 +573,26 @@ class NotificationService {
   // Unsubscribe from topic
   Future<void> unsubscribeFromTopic(String topic) async {
     await _firebaseMessaging.unsubscribeFromTopic(topic);
+  }
+}
+
+// Helper to dispatch a status update into ChatBloc pipeline via WebSocketService streams
+void _dispatchStatusUpdate(String conversationId, String messageId, String status) {
+  try {
+    final ws = di.sl<ChatWebSocketService>();
+    ws.messageEvents.listen((_){}); // ensure stream is active
+    // Internally push a synthetic status update event
+    // We don't have direct access to add event in bloc here, but WebSocketService exposes a stream consumed by ChatBloc
+    // So we emulate by sending a crafted map through the private handler would be intrusive; as an alternative,
+    // we reuse emitNewMessageById path to force a refresh if messageId missing.
+    // Since ChatBloc now handles MessageEventType.statusUpdated, prefer emitting empty newMessage fetch when ids missing.
+    if (messageId.isEmpty || status.isEmpty) {
+      ws.emitNewMessageById(conversationId: conversationId, messageId: '');
+    } else {
+      // Fallback: trigger a messages fetch which updates statuses from server
+      ws.emitNewMessageById(conversationId: conversationId, messageId: '');
+    }
+  } catch (e) {
+    debugPrint('Failed to dispatch status update: $e');
   }
 }
