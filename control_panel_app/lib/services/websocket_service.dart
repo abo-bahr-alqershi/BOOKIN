@@ -5,6 +5,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:bookn_cp_app/features/chat/data/models/message_reaction_model.dart';
 import '../features/auth/data/datasources/auth_local_datasource.dart';
+import '../features/chat/data/datasources/chat_remote_datasource.dart';
 import '../features/chat/domain/entities/conversation.dart';
 import '../features/chat/domain/entities/message.dart';
 
@@ -16,6 +17,7 @@ class ChatWebSocketService {
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
   // final AuthLocalDataSource? _authLocalDataSource; // Unused field
+  final ChatRemoteDataSource? _chatRemoteDataSource;
   
   // Connection status
   bool _isConnected = false;
@@ -49,7 +51,8 @@ class ChatWebSocketService {
   
   ChatWebSocketService({
     AuthLocalDataSource? authLocalDataSource,
-  });
+    ChatRemoteDataSource? remoteDataSource,
+  }) : _chatRemoteDataSource = remoteDataSource;
 
   // Connect to WebSocket (disabled, rely on FCM)
   Future<void> connect() async {
@@ -249,6 +252,31 @@ class ChatWebSocketService {
       type: ErrorType.serverError,
       message: message['error'] ?? 'Server error occurred',
     ));
+  }
+
+  // Emit a new message event using IDs (for FCM data messages inside app)
+  void emitNewMessageById({
+    required String conversationId,
+    required String messageId,
+  }) {
+    _messageController.add(MessageEvent(
+      type: MessageEventType.newMessage,
+      messageId: messageId,
+      conversationId: conversationId,
+    ));
+  }
+
+  // Fetch and emit conversation update by ID (for conversation_created)
+  Future<void> emitConversationById({
+    required String conversationId,
+  }) async {
+    try {
+      if (_chatRemoteDataSource == null) return;
+      final conversation = await _chatRemoteDataSource!.getConversationById(conversationId);
+      _conversationController.add(conversation);
+    } catch (e) {
+      debugPrint('emitConversationById error: $e');
+    }
   }
 
   // Send typing indicator
