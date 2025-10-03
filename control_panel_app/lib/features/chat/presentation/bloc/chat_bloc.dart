@@ -345,6 +345,28 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
               ],
             },
           ));
+        } else {
+          // في حال لم يصل جسم الرسالة (FCM data فقط)، اجلب آخر الرسائل لهذا الحوار
+          final result = await getMessagesUseCase(
+            GetMessagesParams(
+              conversationId: messageEvent.conversationId,
+              pageNumber: 1,
+              pageSize: 50,
+            ),
+          );
+          await result.fold(
+            (failure) async {
+              emit(currentState.copyWith(error: _mapFailureToMessage(failure)));
+            },
+            (messages) async {
+              emit(currentState.copyWith(
+                messages: {
+                  ...currentState.messages,
+                  messageEvent.conversationId: messages,
+                },
+              ));
+            },
+          );
         }
         break;
 
@@ -392,11 +414,16 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     if (state is! ChatLoaded) return;
 
     final currentState = state as ChatLoaded;
-    final updatedConversations = currentState.conversations.map((c) {
-      return c.id == event.conversation.id ? event.conversation : c;
-    }).toList();
-
-    emit(currentState.copyWith(conversations: updatedConversations));
+    final existingIndex = currentState.conversations.indexWhere((c) => c.id == event.conversation.id);
+    if (existingIndex >= 0) {
+      final List<Conversation> without = [];
+      for (int i = 0; i < currentState.conversations.length; i++) {
+        if (i != existingIndex) without.add(currentState.conversations[i]);
+      }
+      emit(currentState.copyWith(conversations: [event.conversation, ...without]));
+    } else {
+      emit(currentState.copyWith(conversations: [event.conversation, ...currentState.conversations]));
+    }
   }
 
   Future<void> _onWebSocketTypingIndicator(

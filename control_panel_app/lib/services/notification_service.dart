@@ -8,6 +8,8 @@ import 'package:permission_handler/permission_handler.dart';
 import '../core/network/api_client.dart';
 import 'local_storage_service.dart';
 import '../features/auth/data/datasources/auth_local_datasource.dart';
+import '../features/chat/presentation/bloc/chat_bloc.dart';
+import 'package:bookn_cp_app/injection_container.dart' as di;
 
 class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -291,12 +293,46 @@ class NotificationService {
   // Handle foreground messages
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
     debugPrint('Foreground message received: ${message.messageId}');
-    // Avoid duplicate notifications on iOS: the OS already shows alert in foreground
-    if (Platform.isIOS) {
-      return;
+    final data = message.data;
+    final type = (data['type'] ?? data['event_type'] ?? '').toString();
+
+    // إذا كانت رسالة شات داخل التطبيق: لا نعرض إشعارًا، بل نحدّث الـ Bloc مباشرة
+    if (type == 'new_message' || type == 'chat.new_message') {
+      final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
+      final messageId = (data['message_id'] ?? data['messageId'] ?? '').toString();
+      if (conversationId.isNotEmpty && messageId.isNotEmpty) {
+        try {
+          final chatBloc = di.sl<ChatBloc>();
+          // دع الـ Bloc يجلب الرسالة عبر REST عند فتح محادثة، أما هنا فنكتفي بإشعار تدفّقي
+          chatBloc.webSocketService.emitNewMessageById(
+            conversationId: conversationId,
+            messageId: messageId,
+          );
+        } catch (e) {
+          debugPrint('Dispatch in-app chat update failed: $e');
+        }
+      }
+      return; // لا إشعار محلي داخل التطبيق
     }
-    // On Android, show local notification for foreground messages
-    await _showLocalNotification(message);
+
+    if (type == 'conversation_created' || type == 'chat.conversation_created') {
+      final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
+      if (conversationId.isNotEmpty) {
+        try {
+          final chatBloc = di.sl<ChatBloc>();
+          // اجلب المحادثة وادفع تحديثًا لقائمة المحادثات
+          await chatBloc.webSocketService.emitConversationById(conversationId: conversationId);
+        } catch (e) {
+          debugPrint('Emit conversation update failed: $e');
+        }
+      }
+      return; // لا إشعار محلي داخل التطبيق
+    }
+
+    // أنواع أخرى: أظهر إشعارًا محليًا حسب المنصّة
+    if (Platform.isAndroid) {
+      await _showLocalNotification(message);
+    }
   }
 
   // Handle background messages (static function required)

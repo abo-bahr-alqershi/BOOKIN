@@ -972,6 +972,7 @@ void _initChat() {
   // WebSocket Service
   sl.registerLazySingleton(() => ChatWebSocketService(
         authLocalDataSource: sl(),
+        remoteDataSource: sl(),
       ));
 }
 
