@@ -48,6 +48,8 @@ class SendMessageEvent extends ChatEvent {
   final Location? location;
   final String? replyToMessageId;
   final List<String>? attachmentIds;
+  // Current user id to properly align optimistic message
+  final String? currentUserId;
 
   const SendMessageEvent({
     required this.conversationId,
@@ -56,6 +58,7 @@ class SendMessageEvent extends ChatEvent {
     this.location,
     this.replyToMessageId,
     this.attachmentIds,
+    this.currentUserId,
   });
 
   @override
@@ -66,6 +69,7 @@ class SendMessageEvent extends ChatEvent {
     location,
     replyToMessageId,
     attachmentIds,
+    currentUserId,
   ];
 }
 

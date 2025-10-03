@@ -80,7 +80,14 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                 var participantCount = (conversation.Participants?.Count ?? 0);
                 if (participantCount != 2)
                 {
-                    return ResultDto<ChatMessageDto>.Failed("هذه المحادثة ليست ثنائية صالحة", errorCode: "invalid_participants_count");
+                    // حاول تحميل المشاركين الكاملين قبل الرفض (في حال جلب بدون تضمين المشاركين)
+                    var convWithDetails = await _conversationRepository.GetByIdWithDetailsAsync(request.ConversationId, cancellationToken);
+                    participantCount = (convWithDetails?.Participants?.Count ?? participantCount);
+                    if (participantCount != 2)
+                    {
+                        return ResultDto<ChatMessageDto>.Failed("هذه المحادثة ليست ثنائية صالحة", errorCode: "invalid_participants_count");
+                    }
+                    conversation = convWithDetails ?? conversation;
                 }
 
                 // تحقق من صلاحيات الإرسال وفق القيود المطلوبة

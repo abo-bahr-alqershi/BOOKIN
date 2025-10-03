@@ -254,7 +254,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     final tempMessage = Message(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       conversationId: event.conversationId,
-      senderId: 'current_user', // Should get from auth
+      // Use actual current user id if provided to ensure correct alignment
+      senderId: (event.currentUserId != null && event.currentUserId!.isNotEmpty)
+          ? event.currentUserId!
+          : 'current_user',
       messageType: event.messageType,
       content: event.content,
       location: event.location,

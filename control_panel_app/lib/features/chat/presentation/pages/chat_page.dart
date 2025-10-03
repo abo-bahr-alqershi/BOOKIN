@@ -996,6 +996,7 @@ class _ChatPageState extends State<ChatPage>
               messageType: 'text',
               content: content,
               replyToMessageId: _replyToMessageId,
+              currentUserId: _currentUserId,
             ),
           );
       setState(() {
