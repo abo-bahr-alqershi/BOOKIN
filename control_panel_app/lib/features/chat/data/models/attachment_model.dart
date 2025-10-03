@@ -9,6 +9,7 @@ class AttachmentModel extends Attachment {
     required super.fileSize,
     required super.filePath,
     required super.fileUrl,
+    required super.url,
     required super.uploadedBy,
     required super.createdAt,
     super.thumbnailUrl,
@@ -25,12 +26,18 @@ class AttachmentModel extends Attachment {
       contentType: json['mime_type'] ?? json['contentType'] ?? '',
       fileSize: json['file_size'] ?? json['fileSize'] ?? 0,
       filePath: json['file_path'] ?? json['filePath'] ?? '',
-      fileUrl: json['file_url'] ?? '/api/common/chat/attachments/${json['attachment_id'] ?? json['id']}',
+      fileUrl: json['file_url'] ??
+          '/api/common/chat/attachments/${json['attachment_id'] ?? json['id']}',
+    url: json['url'] ??
+      json['file_url'] ??
+      '/api/common/chat/attachments/${json['attachment_id'] ?? json['id']}',
       uploadedBy: json['uploaded_by'] ?? json['uploadedBy'] ?? '',
-      createdAt: DateTime.parse(json['uploaded_at'] ?? json['created_at'] ?? json['createdAt']),
+      createdAt: DateTime.parse(
+          json['uploaded_at'] ?? json['created_at'] ?? json['createdAt']),
       thumbnailUrl: json['thumbnail_url'] ?? json['thumbnailUrl'],
       metadata: json['metadata'],
-      duration: _parseDurationSeconds(json['duration'] ?? json['video_duration'] ?? json['audio_duration']),
+      duration: _parseDurationSeconds(
+          json['duration'] ?? json['video_duration'] ?? json['audio_duration']),
       downloadProgress: json['downloadProgress']?.toDouble(),
     );
   }
@@ -44,6 +51,7 @@ class AttachmentModel extends Attachment {
       'file_size': fileSize,
       'file_path': filePath,
       'file_url': fileUrl,
+  'url': url,
       'uploaded_by': uploadedBy,
       'uploaded_at': createdAt.toIso8601String(),
       if (thumbnailUrl != null) 'thumbnail_url': thumbnailUrl,
@@ -62,6 +70,7 @@ class AttachmentModel extends Attachment {
       fileSize: attachment.fileSize,
       filePath: attachment.filePath,
       fileUrl: attachment.fileUrl,
+  url: attachment.url,
       uploadedBy: attachment.uploadedBy,
       createdAt: attachment.createdAt,
       thumbnailUrl: attachment.thumbnailUrl,

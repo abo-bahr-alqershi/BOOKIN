@@ -8,6 +8,7 @@ class Attachment extends Equatable {
   final int fileSize;
   final String filePath;
   final String fileUrl;
+  final String url;
   final String uploadedBy;
   final DateTime createdAt;
   final String? thumbnailUrl;
@@ -24,13 +25,13 @@ class Attachment extends Equatable {
     required this.fileSize,
     required this.filePath,
     required this.fileUrl,
+  required this.url,
     required this.uploadedBy,
     required this.createdAt,
     this.thumbnailUrl,
     this.metadata,
     this.duration,
     this.downloadProgress,
-    required String url,
   });
 
   @override
@@ -42,6 +43,7 @@ class Attachment extends Equatable {
         fileSize,
         filePath,
         fileUrl,
+    url,
         uploadedBy,
         createdAt,
         thumbnailUrl,
