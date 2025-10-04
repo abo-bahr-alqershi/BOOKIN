@@ -25,7 +25,7 @@ class MultiImagePickerModal extends StatefulWidget {
 }
 
 class _MultiImagePickerModalState extends State<MultiImagePickerModal>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -42,6 +42,7 @@ class _MultiImagePickerModalState extends State<MultiImagePickerModal>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initAnimations();
     _requestPermission();
     _scrollController.addListener(_onScroll);
@@ -74,9 +75,48 @@ class _MultiImagePickerModalState extends State<MultiImagePickerModal>
 
   @override
   void dispose() {
+    // Stop change notifications if started
+    try {
+      PhotoManager.removeChangeCallback(_onPhotoLibraryChanged);
+      PhotoManager.stopChangeNotify();
+    } catch (_) {}
+    WidgetsBinding.instance.removeObserver(this);
     _animationController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _recheckPermissionAfterSettings();
+    }
+  }
+
+  Future<void> _recheckPermissionAfterSettings() async {
+    try {
+      final permission = await PhotoManager.requestPermissionExtend();
+      if (!mounted) return;
+      if (permission.isAuth) {
+        // If permission newly granted, reload media from scratch
+        setState(() {
+          _hasPermission = true;
+          _isLoading = true;
+          _mediaList.clear();
+          _selectedAssets.clear();
+          _currentPage = 0;
+          _hasMore = true;
+        });
+        await _loadMedia();
+      } else {
+        setState(() {
+          _hasPermission = false;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      // No-op; keep current UI
+    }
   }
 
   void _onScroll() {
@@ -89,14 +129,29 @@ class _MultiImagePickerModalState extends State<MultiImagePickerModal>
   Future<void> _requestPermission() async {
     final permission = await PhotoManager.requestPermissionExtend();
     if (permission.isAuth) {
+      // Handle limited library access on iOS
+      if (permission.isLimited) {
+        PhotoManager.addChangeCallback(_onPhotoLibraryChanged);
+        await PhotoManager.startChangeNotify();
+      }
       setState(() => _hasPermission = true);
       await _loadMedia();
     } else {
+      // On Android 13+, READ_MEDIA_IMAGES is required; request again gracefully
+      // If still denied, keep the no-permission UI
       setState(() {
         _hasPermission = false;
         _isLoading = false;
       });
     }
+  }
+
+  void _onPhotoLibraryChanged(MethodCall call) {
+    // Reload when user changes selected photos in limited access mode
+    _mediaList.clear();
+    _currentPage = 0;
+    _hasMore = true;
+    _loadMedia();
   }
 
   Future<void> _loadMedia() async {
