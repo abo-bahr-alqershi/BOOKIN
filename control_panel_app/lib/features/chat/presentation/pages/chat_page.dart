@@ -10,6 +10,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/conversation.dart';
 import '../../domain/entities/message.dart';
 import '../bloc/chat_bloc.dart';
+import '../models/image_upload_info.dart';
 import '../widgets/message_bubble_widget.dart';
 import '../widgets/message_input_widget.dart';
 import '../widgets/typing_indicator_widget.dart';
@@ -645,6 +646,10 @@ class _ChatPageState extends State<ChatPage>
         final showDateSeparator = previousMessage == null ||
             !_isSameDay(message.createdAt, previousMessage.createdAt);
         final isMe = message.senderId == userId && userId.isNotEmpty;
+        final blocState = context.read<ChatBloc>().state;
+        final List<ImageUploadInfo>? uploadingImages = (blocState is ChatLoaded)
+            ? (blocState.uploadingImages[message.id])
+            : null;
 
         // FIXED: Proper alignment for message bubbles
         return Column(
@@ -654,24 +659,55 @@ class _ChatPageState extends State<ChatPage>
               _buildPremiumDateSeparator(message.createdAt),
             Align(
               alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-              child: MessageBubbleWidget(
+              child: _buildMessageBubble(
                 message: message,
                 isMe: isMe,
                 previousMessage: previousMessage,
                 nextMessage: nextMessage,
-                onReply: () => _setReplyTo(message),
-                onEdit: isMe ? () => _startEditingMessage(message) : null,
-                onDelete: isMe ? () => _deleteMessage(message) : null,
-                onReaction: (reactionType) =>
-                    _addReaction(message, reactionType, userId),
-                onReplyTap: message.replyToMessageId != null
-                    ? () => _scrollToMessage(message.replyToMessageId!)
-                    : null,
+                uploadingImages: uploadingImages,
+                userId: userId,
               ),
             ),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildMessageBubble({
+    required Message message,
+    required bool isMe,
+    required Message? previousMessage,
+    required Message? nextMessage,
+    required List<ImageUploadInfo>? uploadingImages,
+    required String userId,
+  }) {
+    final isImageMessage = message.messageType == 'image' ||
+        (message.attachments.isNotEmpty &&
+            message.attachments.every((a) => a.isImage));
+
+    if (isImageMessage) {
+      return ImageMessageBubble(
+        message: message,
+        isMe: isMe,
+        uploadingImages: uploadingImages,
+        onReply: () => _setReplyTo(message),
+        onReaction: (reactionType) => _addReaction(message, reactionType, userId),
+      );
+    }
+
+    return MessageBubbleWidget(
+      message: message,
+      isMe: isMe,
+      previousMessage: previousMessage,
+      nextMessage: nextMessage,
+      onReply: () => _setReplyTo(message),
+      onEdit: isMe ? () => _startEditingMessage(message) : null,
+      onDelete: isMe ? () => _deleteMessage(message) : null,
+      onReaction: (reactionType) => _addReaction(message, reactionType, userId),
+      onReplyTap: message.replyToMessageId != null
+          ? () => _scrollToMessage(message.replyToMessageId!)
+          : null,
     );
   }
 
