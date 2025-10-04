@@ -41,9 +41,16 @@ class CachedImageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final BoxConstraints constraints = (width != null || height != null)
+        ? const BoxConstraints()
+        : const BoxConstraints.tightFor();
+
     return Container(
       width: width,
       height: height,
+      constraints: (width == null && height == null)
+          ? const BoxConstraints(minHeight: 1, minWidth: 1)
+          : null,
       decoration: BoxDecoration(
         color: backgroundColor ?? AppTheme.darkCard,
         borderRadius: borderRadius,
@@ -52,7 +59,8 @@ class CachedImageWidget extends StatelessWidget {
       child: ClipRRect(
         borderRadius: borderRadius ?? BorderRadius.zero,
         child: Stack(
-          fit: StackFit.expand,
+          // Avoid forcing expansion when height is unconstrained
+          fit: StackFit.loose,
           children: [
             CachedNetworkImage(
               imageUrl: ImageUtils.resolveUrl(imageUrl),

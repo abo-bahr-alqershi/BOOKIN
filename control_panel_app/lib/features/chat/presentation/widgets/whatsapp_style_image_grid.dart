@@ -70,16 +70,19 @@ class WhatsAppStyleImageGrid extends StatelessWidget {
   Widget _buildTwoImages() {
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildImageTile(images[0], 0),
-          ),
-          const SizedBox(width: 2),
-          Expanded(
-            child: _buildImageTile(images[1], 1),
-          ),
-        ],
+      child: AspectRatio(
+        aspectRatio: 4 / 3,
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildImageTile(images[0], 0),
+            ),
+            const SizedBox(width: 2),
+            Expanded(
+              child: _buildImageTile(images[1], 1),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -87,27 +90,30 @@ class WhatsAppStyleImageGrid extends StatelessWidget {
   Widget _buildThreeImages() {
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: _buildImageTile(images[0], 0),
-          ),
-          const SizedBox(width: 2),
-          Expanded(
-            child: Column(
-              children: [
-                Expanded(
-                  child: _buildImageTile(images[1], 1),
-                ),
-                const SizedBox(height: 2),
-                Expanded(
-                  child: _buildImageTile(images[2], 2),
-                ),
-              ],
+      child: AspectRatio(
+        aspectRatio: 4 / 3,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: _buildImageTile(images[0], 0),
             ),
-          ),
-        ],
+            const SizedBox(width: 2),
+            Expanded(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: _buildImageTile(images[1], 1),
+                  ),
+                  const SizedBox(height: 2),
+                  Expanded(
+                    child: _buildImageTile(images[2], 2),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -115,36 +121,39 @@ class WhatsAppStyleImageGrid extends StatelessWidget {
   Widget _buildFourImages() {
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
-      child: Column(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildImageTile(images[0], 0),
-                ),
-                const SizedBox(width: 2),
-                Expanded(
-                  child: _buildImageTile(images[1], 1),
-                ),
-              ],
+      child: AspectRatio(
+        aspectRatio: 4 / 3,
+        child: Column(
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildImageTile(images[0], 0),
+                  ),
+                  const SizedBox(width: 2),
+                  Expanded(
+                    child: _buildImageTile(images[1], 1),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 2),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildImageTile(images[2], 2),
-                ),
-                const SizedBox(width: 2),
-                Expanded(
-                  child: _buildImageTile(images[3], 3),
-                ),
-              ],
+            const SizedBox(height: 2),
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildImageTile(images[2], 2),
+                  ),
+                  const SizedBox(width: 2),
+                  Expanded(
+                    child: _buildImageTile(images[3], 3),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -155,62 +164,65 @@ class WhatsAppStyleImageGrid extends StatelessWidget {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
-      child: Column(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildImageTile(displayImages[0], 0),
-                ),
-                const SizedBox(width: 2),
-                Expanded(
-                  child: _buildImageTile(displayImages[1], 1),
-                ),
-              ],
+      child: AspectRatio(
+        aspectRatio: 4 / 3,
+        child: Column(
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildImageTile(displayImages[0], 0),
+                  ),
+                  const SizedBox(width: 2),
+                  Expanded(
+                    child: _buildImageTile(displayImages[1], 1),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 2),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildImageTile(displayImages[2], 2),
-                ),
-                const SizedBox(width: 2),
-                Expanded(
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      _buildImageTile(displayImages[3], 3),
-                      if (remainingCount > 0)
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.black.withValues(alpha: 0.7),
-                                Colors.black.withValues(alpha: 0.5),
-                              ],
+            const SizedBox(height: 2),
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildImageTile(displayImages[2], 2),
+                  ),
+                  const SizedBox(width: 2),
+                  Expanded(
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        _buildImageTile(displayImages[3], 3),
+                        if (remainingCount > 0)
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.black.withValues(alpha: 0.7),
+                                  Colors.black.withValues(alpha: 0.5),
+                                ],
+                              ),
                             ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '+$remainingCount',
-                              style: AppTextStyles.heading2.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 24,
+                            child: Center(
+                              child: Text(
+                                '+$remainingCount',
+                                style: AppTextStyles.heading2.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 24,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
