@@ -676,29 +676,7 @@ class _ChatPageState extends State<ChatPage>
     );
   }
 
-  Widget _buildMessageItem(Message message, bool isMe) {
-    // التحقق من نوع الرسالة
-    if (message.messageType == 'image' ||
-        (message.attachments.isNotEmpty &&
-            message.attachments.every((a) => a.isImage))) {
-      // الحصول على معلومات الرفع إذا كانت الرسالة قيد الرفع
-      final uploadingInfo = state.uploadingImages[message.id];
-
-      return ImageMessageBubble(
-        message: message,
-        isMe: isMe,
-        uploadingImages: uploadingInfo,
-        onReply: () => _setReplyTo(message),
-        onReaction: (reactionType) =>
-            _addReaction(message, reactionType, userId),
-      );
-    }
-    // عرض رسالة عادية
-    return MessageBubbleWidget(
-      message: message,
-      isMe: isMe,
-    );
-  }
+  // Removed legacy _buildMessageItem which referenced undefined identifiers
 
   Widget _buildPremiumDateSeparator(DateTime date) {
     final text = _getDateSeparatorText(date);

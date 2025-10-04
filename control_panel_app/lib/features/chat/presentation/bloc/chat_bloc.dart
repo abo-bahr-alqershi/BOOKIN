@@ -1,11 +1,12 @@
 import 'dart:async';
-import 'package:bookn_cp_app/features/chat/presentation/widgets/image_message_bubble.dart';
-import 'package:bookn_cp_app/features/chat/presentation/widgets/message_bubble_widget.dart';
+import 'dart:io';
+import 'package:bookn_cp_app/features/chat/presentation/models/image_upload_info.dart';
 import 'package:bookn_cp_app/services/notification_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:bookn_cp_app/services/websocket_service.dart';
 import 'package:get_it/get_it.dart';
+import 'dart:io';
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../domain/entities/conversation.dart';
@@ -100,6 +101,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<RemoveReactionEvent>(_onRemoveReaction);
     on<MarkMessagesAsReadEvent>(_onMarkMessagesAsRead);
     on<UploadAttachmentEvent>(_onUploadAttachment);
+    on<SendImagesEvent>(_onSendImages);
+    on<UpdateImageUploadProgressEvent>(_onUpdateImageUploadProgress);
     on<SearchChatsEvent>(_onSearchChats);
     on<LoadAvailableUsersEvent>(_onLoadAvailableUsers);
     on<LoadAdminUsersEvent>(_onLoadAdminUsers);
@@ -306,6 +309,94 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           },
         ));
       },
+    );
+  }
+
+  // إنشاء رسالة مؤقتة لصور متعددة وتخزين معلومات الرفع داخل الحالة
+  Future<void> _onSendImages(
+    SendImagesEvent event,
+    Emitter<ChatState> emit,
+  ) async {
+    if (state is! ChatLoaded) return;
+    final current = state as ChatLoaded;
+
+    // أنشئ رسالة مؤقتة بنوع image بدون مرفقات بعد
+    final tempMessage = Message(
+      id: event.tempMessageId,
+      conversationId: event.conversationId,
+      senderId: 'current_user',
+      messageType: 'image',
+      content: null,
+      location: null,
+      replyToMessageId: null,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      status: 'sending',
+    );
+
+    final existing = current.messages[event.conversationId] ?? [];
+    emit(current.copyWith(
+      messages: {
+        ...current.messages,
+        event.conversationId: [tempMessage, ...existing],
+      },
+      uploadingImages: {
+        ...current.uploadingImages,
+        event.tempMessageId: event.uploadInfos,
+      },
+    ));
+  }
+
+  // تحديث تقدم/نجاح/فشل رفع صورة ضمن الرسالة المؤقتة
+  Future<void> _onUpdateImageUploadProgress(
+    UpdateImageUploadProgressEvent event,
+    Emitter<ChatState> emit,
+  ) async {
+    if (state is! ChatLoaded) return;
+    final current = state as ChatLoaded;
+
+    final list = List<ImageUploadInfo>.from(
+        current.uploadingImages[event.tempMessageId] ?? const []);
+    final index = list.indexWhere((e) => e.id == event.uploadId);
+    if (index == -1) return;
+
+    final updatedItem = list[index].copyWith(
+      progress: event.progress ?? list[index].progress,
+      isCompleted: event.isCompleted || list[index].isCompleted,
+      isFailed: event.isFailed || list[index].isFailed,
+      error: event.error ?? list[index].error,
+    );
+    list[index] = updatedItem;
+
+    emit(current.copyWith(
+      uploadingImages: {
+        ...current.uploadingImages,
+        event.tempMessageId: list,
+      },
+    ));
+
+    // إذا اكتملت جميع الصور بنجاح، أزل حالة الرفع المؤقتة
+    final allDone = list.isNotEmpty && list.every((i) => i.isCompleted || i.isFailed);
+    if (allDone) {
+      final newUploading = Map<String, List<ImageUploadInfo>>.from(current.uploadingImages);
+      newUploading.remove(event.tempMessageId);
+
+      emit((state as ChatLoaded).copyWith(uploadingImages: newUploading));
+    }
+  }
+
+  // API مبسطة لاستخدام واجهة رفع الصورة مع التقدم من الواجهة
+  Future<void> uploadImageWithProgress({
+    required String conversationId,
+    required String filePath,
+    required String uploadId,
+    required void Function(int sent, int total) onProgress,
+  }) async {
+    await uploadAttachmentWithProgress(
+      conversationId: conversationId,
+      filePath: filePath,
+      messageType: 'image',
+      onProgress: onProgress,
     );
   }
 

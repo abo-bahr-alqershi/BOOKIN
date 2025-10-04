@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:bookn_cp_app/features/chat/presentation/widgets/image_message_bubble.dart';
+import 'package:bookn_cp_app/features/chat/presentation/models/image_upload_info.dart';
 import 'package:bookn_cp_app/features/chat/presentation/widgets/multi_image_picker_modal.dart';
 import 'package:bookn_cp_app/features/chat/presentation/widgets/upload_progress_overlay.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +14,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/message.dart';
 import '../bloc/chat_bloc.dart';
+import '../models/image_upload_info.dart';
 
 class MessageInputWidget extends StatefulWidget {
   final TextEditingController controller;
@@ -587,68 +588,43 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
       );
     }).toList();
 
-    // إضافة الرسالة المؤقتة إلى الشات مع معلومات الرفع
-    context.read<ChatBloc>().add(
-          SendImagesEvent(
-            conversationId: widget.conversationId,
-            images: images,
-            tempMessageId: tempMessageId,
-            uploadInfos: uploadInfos,
-          ),
-        );
-
-    // بدء رفع الصور
-    _uploadImagesWithProgress(images, tempMessageId);
+    // إضافة رسالة مؤقتة محلية عبر Overlay تقدم الرفع (اختياري)
+    // بدء رفع الصور بالتتابع مع تقدم
+    _uploadImagesWithProgress(images, tempMessageId, uploadInfos);
   }
 
   Future<void> _uploadImagesWithProgress(
     List<File> images,
     String tempMessageId,
+    List<ImageUploadInfo> uploadInfos,
   ) async {
     for (int i = 0; i < images.length; i++) {
       final image = images[i];
       final uploadId = '${tempMessageId}_$i';
 
       try {
-        // رفع الصورة مع تحديث التقدم
-        await context.read<ChatBloc>().uploadImageWithProgress(
+        await context.read<ChatBloc>().uploadAttachmentWithProgress(
               conversationId: widget.conversationId,
               filePath: image.path,
-              uploadId: uploadId,
+              messageType: 'image',
               onProgress: (sent, total) {
-                // تحديث progress في الرسالة
-                context.read<ChatBloc>().add(
-                      UpdateImageUploadProgressEvent(
-                        conversationId: widget.conversationId,
-                        tempMessageId: tempMessageId,
-                        uploadId: uploadId,
-                        progress: sent / total,
-                      ),
-                    );
+                final ratio = total > 0 ? sent / total : 0.0;
+                if (i < uploadInfos.length) {
+                  uploadInfos[i] = uploadInfos[i].copyWith(progress: ratio);
+                }
+                setState(() {});
               },
             );
 
-        // تحديث حالة النجاح
-        context.read<ChatBloc>().add(
-              UpdateImageUploadProgressEvent(
-                conversationId: widget.conversationId,
-                tempMessageId: tempMessageId,
-                uploadId: uploadId,
-                progress: 1.0,
-                isCompleted: true,
-              ),
-            );
+        if (i < uploadInfos.length) {
+          uploadInfos[i] = uploadInfos[i].copyWith(progress: 1.0, isCompleted: true);
+        }
+        setState(() {});
       } catch (e) {
-        // تحديث حالة الفشل
-        context.read<ChatBloc>().add(
-              UpdateImageUploadProgressEvent(
-                conversationId: widget.conversationId,
-                tempMessageId: tempMessageId,
-                uploadId: uploadId,
-                isFailed: true,
-                error: e.toString(),
-              ),
-            );
+        if (i < uploadInfos.length) {
+          uploadInfos[i] = uploadInfos[i].copyWith(isFailed: true, error: e.toString());
+        }
+        setState(() {});
       }
     }
   }
