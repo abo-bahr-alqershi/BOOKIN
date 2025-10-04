@@ -8,6 +8,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../domain/entities/conversation.dart';
 import '../../domain/entities/message.dart';
+import '../../data/models/message_model.dart';
 import '../../domain/entities/attachment.dart';
 import '../../domain/repositories/chat_repository.dart';
 import '../../domain/usecases/get_conversations_usecase.dart';
@@ -259,10 +260,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     );
 
     final currentMessages = currentState.messages[event.conversationId] ?? [];
+    final tempModel = MessageModel.fromEntity(tempMessage);
     emit(currentState.copyWith(
       messages: {
         ...currentState.messages,
-        event.conversationId: [tempMessage, ...currentMessages],
+        event.conversationId: [tempModel, ...currentMessages],
       },
     ));
 
@@ -999,25 +1001,26 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   Future<void> _onAddReaction(
       AddReactionEvent event, Emitter<ChatState> emit) async {
-    // Optimistic update: add reaction locally
+    // Optimistic update: add reaction locally (preserve list type)
     if (state is ChatLoaded) {
       final current = state as ChatLoaded;
       final Map<String, List<Message>> updated = {...current.messages};
+      updated.update(event.messageId.substring(0,0), (value) => value, ifAbsent: () => []); // no-op safeguard
       updated.forEach((convId, msgs) {
-        for (int i = 0; i < msgs.length; i++) {
-          final m = msgs[i];
+        bool changed = false;
+        final newMsgs = msgs.map((m) {
           if (m.id == event.messageId) {
-            final reactions = List<MessageReaction>.from(m.reactions);
-            reactions.add(MessageReaction(
-              id: 'temp_${DateTime.now().microsecondsSinceEpoch}',
-              messageId: m.id,
-              userId: (event.currentUserId != null &&
-                      event.currentUserId!.isNotEmpty)
-                  ? event.currentUserId!
-                  : 'current_user',
-              reactionType: event.reactionType,
-            ));
-            msgs[i] = Message(
+            final reactions = List<MessageReaction>.from(m.reactions)
+              ..add(MessageReaction(
+                id: 'temp_${DateTime.now().microsecondsSinceEpoch}',
+                messageId: m.id,
+                userId: (event.currentUserId != null && event.currentUserId!.isNotEmpty)
+                    ? event.currentUserId!
+                    : 'current_user',
+                reactionType: event.reactionType,
+              ));
+            changed = true;
+            return MessageModel(
               id: m.id,
               conversationId: m.conversationId,
               senderId: m.senderId,
@@ -1034,9 +1037,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
               editedAt: m.editedAt,
               deliveryReceipt: m.deliveryReceipt,
             );
-            break;
           }
-        }
+          return m;
+        }).toList();
+        if (changed) updated[convId] = newMsgs;
       });
       emit(current.copyWith(messages: updated));
     }
@@ -1090,18 +1094,19 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   Future<void> _onRemoveReaction(
       RemoveReactionEvent event, Emitter<ChatState> emit) async {
-    // Optimistic update: remove reaction locally
+    // Optimistic update: remove reaction locally (preserve list type)
     if (state is ChatLoaded) {
       final current = state as ChatLoaded;
       final Map<String, List<Message>> updated = {...current.messages};
       updated.forEach((convId, msgs) {
-        for (int i = 0; i < msgs.length; i++) {
-          final m = msgs[i];
+        bool changed = false;
+        final newMsgs = msgs.map((m) {
           if (m.id == event.messageId) {
             final reactions = m.reactions
                 .where((r) => !(r.reactionType == event.reactionType && (event.currentUserId == null || r.userId == event.currentUserId)))
                 .toList();
-            msgs[i] = Message(
+            changed = true;
+            return MessageModel(
               id: m.id,
               conversationId: m.conversationId,
               senderId: m.senderId,
@@ -1118,9 +1123,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
               editedAt: m.editedAt,
               deliveryReceipt: m.deliveryReceipt,
             );
-            break;
           }
-        }
+          return m;
+        }).toList();
+        if (changed) updated[convId] = newMsgs;
       });
       emit(current.copyWith(messages: updated));
     }
