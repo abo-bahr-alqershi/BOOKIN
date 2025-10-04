@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:bookn_cp_app/features/chat/presentation/widgets/image_message_bubble.dart';
 import 'package:bookn_cp_app/features/chat/presentation/widgets/multi_image_picker_modal.dart';
 import 'package:bookn_cp_app/features/chat/presentation/widgets/upload_progress_overlay.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'dart:ui';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
+import 'package:photo_manager/photo_manager.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -489,18 +491,42 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
 
   Future<void> _pickImage(ImageSource source) async {
     if (source == ImageSource.gallery) {
-      // فتح نافذة اختيار الصور المتعددة
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => MultiImagePickerModal(
-          onImagesSelected: (images) {
-            _sendMultipleImages(images);
-          },
-          maxImages: 10,
-        ),
-      );
+      // تحقق من صلاحية الصور قبل فتح نافذة الاختيار
+      final state = await PhotoManager.requestPermissionExtend();
+      if (state.isAuth || state == PermissionState.limited) {
+        _showMultiImagePickerBottomSheet();
+      } else {
+        // جرّب منتقي النظام كبديل فوري (Android 13+/iOS لا يحتاج إذن قراءة)
+        final systemPicked = await _pickImagesWithSystemPicker();
+        if (systemPicked) return;
+
+        // كخيار إضافي، افتح الإعدادات ثم أعد المحاولة تلقائياً عند العودة
+        try {
+          await PhotoManager.openSetting();
+        } catch (_) {
+          await openAppSettings();
+        }
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (!mounted) return;
+        final retry = await PhotoManager.requestPermissionExtend();
+        if (retry.isAuth || retry == PermissionState.limited) {
+          _showMultiImagePickerBottomSheet();
+        } else {
+          // محاولة أخيرة عبر منتقي النظام
+          final picked = await _pickImagesWithSystemPicker();
+          if (!picked && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'لا يزال الوصول إلى الصور مرفوضًا. يرجى السماح من الإعدادات.',
+                  style: AppTextStyles.bodySmall.copyWith(color: Colors.white),
+                ),
+                backgroundColor: AppTheme.error.withValues(alpha: 0.9),
+              ),
+            );
+          }
+        }
+      }
     } else {
       // التقاط صورة واحدة من الكاميرا
       final picker = ImagePicker();
@@ -517,69 +543,114 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
     }
   }
 
+  void _showMultiImagePickerBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => MultiImagePickerModal(
+        onImagesSelected: (images) {
+          _sendMultipleImages(images);
+        },
+        maxImages: 10,
+      ),
+    );
+  }
+
+  Future<bool> _pickImagesWithSystemPicker() async {
+    try {
+      final picker = ImagePicker();
+      final picks = await picker.pickMultiImage(
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 85,
+      );
+      if (picks.isNotEmpty) {
+        if (!mounted) return true;
+        _sendMultipleImages(picks.map((x) => File(x.path)).toList());
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
   void _sendMultipleImages(List<File> images) {
-    // إظهار overlay التقدم
-    final tasks = images.map((image) {
-      final fileName = image.path.split('/').last;
-      return UploadTask(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        fileName: fileName,
-        thumbnail: image,
+    if (images.isEmpty) return;
+
+    // إنشاء رسالة مؤقتة مع الصور
+    final tempMessageId = DateTime.now().millisecondsSinceEpoch.toString();
+    final uploadInfos = images.map((image) {
+      return ImageUploadInfo(
+        id: '${tempMessageId}_${images.indexOf(image)}',
+        file: image,
+        progress: 0.0,
       );
     }).toList();
 
-    // إظهار overlay
-    final overlay = OverlayEntry(
-      builder: (context) => UploadProgressOverlay(
-        tasks: tasks,
-        onCancel: () {
-          // إلغاء الرفع
-        },
-      ),
-    );
+    // إضافة الرسالة المؤقتة إلى الشات مع معلومات الرفع
+    context.read<ChatBloc>().add(
+          SendImagesEvent(
+            conversationId: widget.conversationId,
+            images: images,
+            tempMessageId: tempMessageId,
+            uploadInfos: uploadInfos,
+          ),
+        );
 
-    Overlay.of(context).insert(overlay);
-
-    // رفع الصور واحدة تلو الأخرى
-    _uploadImagesSequentially(images, tasks, overlay);
+    // بدء رفع الصور
+    _uploadImagesWithProgress(images, tempMessageId);
   }
 
-  Future<void> _uploadImagesSequentially(
+  Future<void> _uploadImagesWithProgress(
     List<File> images,
-    List<UploadTask> tasks,
-    OverlayEntry overlay,
+    String tempMessageId,
   ) async {
     for (int i = 0; i < images.length; i++) {
       final image = images[i];
-      final task = tasks[i];
+      final uploadId = '${tempMessageId}_$i';
 
       try {
-        await context.read<ChatBloc>().uploadAttachmentWithProgress(
+        // رفع الصورة مع تحديث التقدم
+        await context.read<ChatBloc>().uploadImageWithProgress(
               conversationId: widget.conversationId,
               filePath: image.path,
-              messageType: 'image',
+              uploadId: uploadId,
               onProgress: (sent, total) {
-                setState(() {
-                  task.progress = sent / total;
-                });
+                // تحديث progress في الرسالة
+                context.read<ChatBloc>().add(
+                      UpdateImageUploadProgressEvent(
+                        conversationId: widget.conversationId,
+                        tempMessageId: tempMessageId,
+                        uploadId: uploadId,
+                        progress: sent / total,
+                      ),
+                    );
               },
             );
 
-        setState(() {
-          task.isCompleted = true;
-          task.progress = 1.0;
-        });
+        // تحديث حالة النجاح
+        context.read<ChatBloc>().add(
+              UpdateImageUploadProgressEvent(
+                conversationId: widget.conversationId,
+                tempMessageId: tempMessageId,
+                uploadId: uploadId,
+                progress: 1.0,
+                isCompleted: true,
+              ),
+            );
       } catch (e) {
-        setState(() {
-          task.isFailed = true;
-          task.error = e.toString();
-        });
+        // تحديث حالة الفشل
+        context.read<ChatBloc>().add(
+              UpdateImageUploadProgressEvent(
+                conversationId: widget.conversationId,
+                tempMessageId: tempMessageId,
+                uploadId: uploadId,
+                isFailed: true,
+                error: e.toString(),
+              ),
+            );
       }
     }
-
-    // إخفاء overlay بعد انتهاء كل المهام
-    await Future.delayed(const Duration(seconds: 1));
-    overlay.remove();
   }
 
   Future<void> _pickVideo() async {

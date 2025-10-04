@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'dart:math' as math;
+import 'package:bookn_cp_app/features/chat/presentation/widgets/image_message_bubble.dart';
 import 'package:bookn_cp_app/services/websocket_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -675,6 +676,30 @@ class _ChatPageState extends State<ChatPage>
     );
   }
 
+  Widget _buildMessageItem(Message message, bool isMe) {
+    // التحقق من نوع الرسالة
+    if (message.messageType == 'image' ||
+        (message.attachments.isNotEmpty &&
+            message.attachments.every((a) => a.isImage))) {
+      // الحصول على معلومات الرفع إذا كانت الرسالة قيد الرفع
+      final uploadingInfo = state.uploadingImages[message.id];
+
+      return ImageMessageBubble(
+        message: message,
+        isMe: isMe,
+        uploadingImages: uploadingInfo,
+        onReply: () => _setReplyTo(message),
+        onReaction: (reactionType) =>
+            _addReaction(message, reactionType, userId),
+      );
+    }
+    // عرض رسالة عادية
+    return MessageBubbleWidget(
+      message: message,
+      isMe: isMe,
+    );
+  }
+
   Widget _buildPremiumDateSeparator(DateTime date) {
     final text = _getDateSeparatorText(date);
     return Padding(
@@ -1098,29 +1123,19 @@ class _ChatPageState extends State<ChatPage>
 
   void _addReaction(Message message, String reactionType, String userId) {
     HapticFeedback.lightImpact();
-    // If tapping current selected reaction -> toggle off
-    // If tapping different reaction -> switch
-    final currentUserReaction = message.reactions
-        .firstWhere((r) => r.userId == userId, orElse: () => const MessageReaction(id: '', messageId: '', userId: '', reactionType: ''));
 
-    if (currentUserReaction.id.isNotEmpty) {
-      if (currentUserReaction.reactionType == reactionType) {
-        context.read<ChatBloc>().add(
-              RemoveReactionEvent(
-                messageId: message.id,
-                reactionType: reactionType,
-                currentUserId: userId,
-              ),
-            );
-      } else {
-        context.read<ChatBloc>().add(
-              AddReactionEvent(
-                messageId: message.id,
-                reactionType: reactionType,
-                currentUserId: userId,
-              ),
-            );
-      }
+    final hasReaction = message.reactions.any(
+      (r) => r.userId == userId && r.reactionType == reactionType,
+    );
+
+    if (hasReaction) {
+      context.read<ChatBloc>().add(
+            RemoveReactionEvent(
+              messageId: message.id,
+              reactionType: reactionType,
+              currentUserId: userId,
+            ),
+          );
     } else {
       context.read<ChatBloc>().add(
             AddReactionEvent(

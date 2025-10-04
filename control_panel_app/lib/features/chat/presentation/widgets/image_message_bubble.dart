@@ -1,0 +1,645 @@
+import 'dart:io';
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/cached_image_widget.dart';
+import '../../domain/entities/message.dart';
+import '../../domain/entities/attachment.dart';
+import 'message_status_indicator.dart';
+import 'whatsapp_style_image_grid.dart';
+
+class ImageMessageBubble extends StatefulWidget {
+  final Message message;
+  final bool isMe;
+  final List<ImageUploadInfo>? uploadingImages; // معلومات الرفع
+  final VoidCallback? onReply;
+  final Function(String)? onReaction;
+
+  const ImageMessageBubble({
+    super.key,
+    required this.message,
+    required this.isMe,
+    this.uploadingImages,
+    this.onReply,
+    this.onReaction,
+  });
+
+  @override
+  State<ImageMessageBubble> createState() => _ImageMessageBubbleState();
+}
+
+class _ImageMessageBubbleState extends State<ImageMessageBubble>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.95,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutBack,
+    ));
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: Align(
+          alignment: widget.isMe ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            margin: EdgeInsets.only(
+              left: widget.isMe ? MediaQuery.of(context).size.width * 0.2 : 8,
+              right: widget.isMe ? 8 : MediaQuery.of(context).size.width * 0.2,
+              top: 4,
+              bottom: 2,
+            ),
+            child: GestureDetector(
+              onLongPress: _showOptions,
+              onDoubleTap: _handleDoubleTap,
+              child: _buildBubbleContent(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBubbleContent() {
+    // إذا كانت الصور لا تزال قيد الرفع
+    if (widget.uploadingImages != null && widget.uploadingImages!.isNotEmpty) {
+      return _buildUploadingBubble();
+    }
+
+    // إذا كانت الرسالة تحتوي على مرفقات
+    if (widget.message.attachments.isNotEmpty) {
+      return _buildCompletedBubble();
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildUploadingBubble() {
+    final images = widget.uploadingImages!;
+    final imageCount = images.length;
+
+    return Container(
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.7,
+        minWidth: 200,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: widget.isMe
+              ? AppTheme.primaryBlue.withValues(alpha: 0.2)
+              : AppTheme.darkBorder.withValues(alpha: 0.1),
+          width: 0.5,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            // الصور مع التخطيط الشبكي
+            _buildImageGrid(images),
+
+            // Overlay للتقدم
+            _buildProgressOverlay(images),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompletedBubble() {
+    return Container(
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.7,
+        minWidth: 200,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: widget.isMe
+              ? AppTheme.primaryBlue.withValues(alpha: 0.1)
+              : AppTheme.darkBorder.withValues(alpha: 0.05),
+          width: 0.5,
+        ),
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: WhatsAppStyleImageGrid(
+              images: widget.message.attachments,
+              isMe: widget.isMe,
+            ),
+          ),
+
+          // Footer مع الوقت والحالة
+          Positioned(
+            bottom: 4,
+            right: 8,
+            child: _buildMessageFooter(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageGrid(List<ImageUploadInfo> images) {
+    final count = images.length;
+
+    if (count == 1) {
+      return _buildSingleImageUploading(images.first);
+    } else if (count == 2) {
+      return _buildTwoImagesUploading(images);
+    } else if (count == 3) {
+      return _buildThreeImagesUploading(images);
+    } else if (count == 4) {
+      return _buildFourImagesUploading(images);
+    } else {
+      return _buildMoreImagesUploading(images);
+    }
+  }
+
+  Widget _buildSingleImageUploading(ImageUploadInfo image) {
+    return AspectRatio(
+      aspectRatio: 4 / 3,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (image.file != null)
+            Image.file(
+              image.file!,
+              fit: BoxFit.cover,
+              color: Colors.black.withValues(alpha: 0.2),
+              colorBlendMode: BlendMode.darken,
+            ),
+
+          // Progress indicator في المنتصف
+          if (image.progress < 1.0)
+            Center(
+              child: _buildCircularProgress(image.progress),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTwoImagesUploading(List<ImageUploadInfo> images) {
+    return AspectRatio(
+      aspectRatio: 4 / 3,
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildImageUploadTile(images[0]),
+          ),
+          const SizedBox(width: 2),
+          Expanded(
+            child: _buildImageUploadTile(images[1]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThreeImagesUploading(List<ImageUploadInfo> images) {
+    return AspectRatio(
+      aspectRatio: 4 / 3,
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: _buildImageUploadTile(images[0]),
+          ),
+          const SizedBox(width: 2),
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(
+                  child: _buildImageUploadTile(images[1]),
+                ),
+                const SizedBox(height: 2),
+                Expanded(
+                  child: _buildImageUploadTile(images[2]),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFourImagesUploading(List<ImageUploadInfo> images) {
+    return AspectRatio(
+      aspectRatio: 4 / 3,
+      child: Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildImageUploadTile(images[0]),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: _buildImageUploadTile(images[1]),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 2),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildImageUploadTile(images[2]),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: _buildImageUploadTile(images[3]),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMoreImagesUploading(List<ImageUploadInfo> images) {
+    final displayImages = images.take(4).toList();
+    final remainingCount = images.length - 4;
+
+    return AspectRatio(
+      aspectRatio: 4 / 3,
+      child: Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildImageUploadTile(displayImages[0]),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: _buildImageUploadTile(displayImages[1]),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 2),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildImageUploadTile(displayImages[2]),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _buildImageUploadTile(displayImages[3]),
+                      if (remainingCount > 0)
+                        Container(
+                          color: Colors.black.withValues(alpha: 0.6),
+                          child: Center(
+                            child: Text(
+                              '+$remainingCount',
+                              style: AppTextStyles.heading2.copyWith(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageUploadTile(ImageUploadInfo image) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        if (image.file != null)
+          Image.file(
+            image.file!,
+            fit: BoxFit.cover,
+            color: image.progress < 1.0
+                ? Colors.black.withValues(alpha: 0.3)
+                : null,
+            colorBlendMode: image.progress < 1.0 ? BlendMode.darken : null,
+          ),
+
+        // Progress indicator
+        if (image.progress < 1.0)
+          Container(
+            color: Colors.black.withValues(alpha: 0.3),
+            child: Center(
+              child: _buildCircularProgress(image.progress),
+            ),
+          ),
+
+        // Error indicator
+        if (image.isFailed)
+          Container(
+            color: AppTheme.error.withValues(alpha: 0.3),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'فشل الرفع',
+                    style: AppTextStyles.caption.copyWith(
+                      color: Colors.white,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+        // Success checkmark
+        if (image.isCompleted && !image.isFailed)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: AppTheme.success.withValues(alpha: 0.9),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCircularProgress(double progress) {
+    return Container(
+      width: 48,
+      height: 48,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.5),
+        shape: BoxShape.circle,
+      ),
+      child: CircularProgressIndicator(
+        value: progress,
+        strokeWidth: 3,
+        backgroundColor: Colors.white.withValues(alpha: 0.3),
+        valueColor: AlwaysStoppedAnimation<Color>(
+          Colors.white.withValues(alpha: 0.9),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressOverlay(List<ImageUploadInfo> images) {
+    final totalProgress = images.fold<double>(
+          0,
+          (sum, img) => sum + img.progress,
+        ) /
+        images.length;
+
+    final uploadingCount =
+        images.where((img) => !img.isCompleted && !img.isFailed).length;
+    final failedCount = images.where((img) => img.isFailed).length;
+
+    if (uploadingCount == 0 && failedCount == 0) {
+      return const SizedBox.shrink();
+    }
+
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(12),
+        ),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.0),
+                  Colors.black.withValues(alpha: 0.6),
+                ],
+              ),
+            ),
+            child: Row(
+              children: [
+                // إجمالي التقدم
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.cloud_upload,
+                            color: Colors.white.withValues(alpha: 0.9),
+                            size: 14,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            failedCount > 0
+                                ? 'فشل رفع $failedCount صورة'
+                                : 'جاري الرفع... ${(totalProgress * 100).toInt()}%',
+                            style: AppTextStyles.caption.copyWith(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      LinearProgressIndicator(
+                        value: totalProgress,
+                        minHeight: 2,
+                        backgroundColor: Colors.white.withValues(alpha: 0.2),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          failedCount > 0
+                              ? AppTheme.error
+                              : AppTheme.success.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // زر إعادة المحاولة إذا فشل
+                if (failedCount > 0) ...[
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _retryFailedUploads,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.error.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        Icons.refresh,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageFooter() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            _formatTime(widget.message.createdAt),
+            style: AppTextStyles.caption.copyWith(
+              color: Colors.white.withValues(alpha: 0.8),
+              fontSize: 10,
+            ),
+          ),
+          if (widget.isMe) ...[
+            const SizedBox(width: 3),
+            MessageStatusIndicator(
+              status: widget.message.status,
+              color: Colors.white.withValues(alpha: 0.8),
+              size: 12,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showOptions() {
+    HapticFeedback.lightImpact();
+    // عرض خيارات الرسالة
+  }
+
+  void _handleDoubleTap() {
+    HapticFeedback.lightImpact();
+    widget.onReaction?.call('like');
+  }
+
+  void _retryFailedUploads() {
+    HapticFeedback.mediumImpact();
+    // إعادة محاولة رفع الصور الفاشلة
+  }
+
+  String _formatTime(DateTime dateTime) {
+    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+// معلومات رفع الصورة
+class ImageUploadInfo {
+  final String id;
+  final File? file;
+  final double progress;
+  final bool isCompleted;
+  final bool isFailed;
+  final String? error;
+
+  ImageUploadInfo({
+    required this.id,
+    this.file,
+    this.progress = 0.0,
+    this.isCompleted = false,
+    this.isFailed = false,
+    this.error,
+  });
+
+  ImageUploadInfo copyWith({
+    String? id,
+    File? file,
+    double? progress,
+    bool? isCompleted,
+    bool? isFailed,
+    String? error,
+  }) {
+    return ImageUploadInfo(
+      id: id ?? this.id,
+      file: file ?? this.file,
+      progress: progress ?? this.progress,
+      isCompleted: isCompleted ?? this.isCompleted,
+      isFailed: isFailed ?? this.isFailed,
+      error: error ?? this.error,
+    );
+  }
+}

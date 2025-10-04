@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:bookn_cp_app/features/chat/presentation/widgets/image_message_bubble.dart';
+import 'package:bookn_cp_app/features/chat/presentation/widgets/message_bubble_widget.dart';
 import 'package:bookn_cp_app/services/notification_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -388,9 +390,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
               };
 
               // Also update the conversation's lastMessage and reorder list
-              List<Conversation> updatedConversations = currentState.conversations.map((c) {
+              List<Conversation> updatedConversations =
+                  currentState.conversations.map((c) {
                 if (c.id == messageEvent.conversationId) {
-                  final last = messages.isNotEmpty ? messages.first : c.lastMessage;
+                  final last =
+                      messages.isNotEmpty ? messages.first : c.lastMessage;
                   return Conversation(
                     id: c.id,
                     conversationType: c.conversationType,
@@ -409,7 +413,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                 }
                 return c;
               }).toList();
-              updatedConversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+              updatedConversations
+                  .sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
               emit(currentState.copyWith(
                 messages: updatedMessagesMap,
@@ -453,7 +458,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             if (found) {
               // Decrement unread count if message transitioned to read and it's from other user
               final conversations = currentState.conversations.map((c) {
-                if (c.id == messageEvent.conversationId && messageEvent.status == 'read') {
+                if (c.id == messageEvent.conversationId &&
+                    messageEvent.status == 'read') {
                   final dec = (c.unreadCount > 0) ? c.unreadCount - 1 : 0;
                   return Conversation(
                     id: c.id,
@@ -552,7 +558,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                     deliveryReceipt: m.deliveryReceipt,
                   );
                   // Update lastMessage in conversation if this is the last one
-                  _bumpConversationForMessage(currentState, messageEvent.conversationId, updatedMessage);
+                  _bumpConversationForMessage(currentState,
+                      messageEvent.conversationId, updatedMessage);
                   return updatedMessage;
                 } else {
                   final reactions = m.reactions
@@ -578,7 +585,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                     editedAt: m.editedAt,
                     deliveryReceipt: m.deliveryReceipt,
                   );
-                  _bumpConversationForMessage(currentState, messageEvent.conversationId, updatedMessage);
+                  _bumpConversationForMessage(currentState,
+                      messageEvent.conversationId, updatedMessage);
                   return updatedMessage;
                 }
               }
@@ -676,10 +684,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   }
 
   // Ensure conversation list stays sorted and lastMessage reflects latest mutations (e.g., reactions)
-  void _bumpConversationForMessage(ChatLoaded currentState, String conversationId, Message updatedMessage) {
+  void _bumpConversationForMessage(
+      ChatLoaded currentState, String conversationId, Message updatedMessage) {
     try {
       final conversations = currentState.conversations.map((c) {
-        if (c.id == conversationId && (c.lastMessage?.id == updatedMessage.id)) {
+        if (c.id == conversationId &&
+            (c.lastMessage?.id == updatedMessage.id)) {
           return Conversation(
             id: c.id,
             conversationType: c.conversationType,
@@ -1043,7 +1053,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                     ? event.currentUserId!
                     : 'current_user';
 
-            final List<MessageReaction> reactions = List<MessageReaction>.from(m.reactions);
+            final List<MessageReaction> reactions =
+                List<MessageReaction>.from(m.reactions);
 
             // Remove any existing reaction by this user
             reactions.removeWhere((r) => r.userId == currentUserId);
@@ -1140,7 +1151,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         final newMsgs = msgs.map((m) {
           if (m.id == event.messageId) {
             final reactions = m.reactions
-                .where((r) => !(r.reactionType == event.reactionType && (event.currentUserId == null || r.userId == event.currentUserId)))
+                .where((r) => !(r.reactionType == event.reactionType &&
+                    (event.currentUserId == null ||
+                        r.userId == event.currentUserId)))
                 .toList();
             changed = true;
             return MessageModel(

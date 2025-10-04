@@ -97,7 +97,7 @@ class _MultiImagePickerModalState extends State<MultiImagePickerModal>
     try {
       final permission = await PhotoManager.requestPermissionExtend();
       if (!mounted) return;
-      if (permission.isAuth) {
+      if (permission.isAuth || permission == PermissionState.limited) {
         // If permission newly granted, reload media from scratch
         setState(() {
           _hasPermission = true;
@@ -128,9 +128,9 @@ class _MultiImagePickerModalState extends State<MultiImagePickerModal>
 
   Future<void> _requestPermission() async {
     final permission = await PhotoManager.requestPermissionExtend();
-    if (permission.isAuth) {
+    if (permission.isAuth || permission == PermissionState.limited) {
       // Handle limited library access on iOS
-      if (permission.isLimited) {
+      if (permission == PermissionState.limited) {
         PhotoManager.addChangeCallback(_onPhotoLibraryChanged);
         await PhotoManager.startChangeNotify();
       }
@@ -161,15 +161,20 @@ class _MultiImagePickerModalState extends State<MultiImagePickerModal>
     );
 
     if (albums.isNotEmpty) {
-      final mediaPage = await albums.first.getAssetListPaged(
+      // Ensure we always use the special 'Recent' (All) album when present
+      final AssetPathEntity target = albums.firstWhere(
+        (a) => a.isAll,
+        orElse: () => albums.first,
+      );
+      final mediaPage = await target.getAssetListPaged(
         page: _currentPage,
-        size: 30,
+        size: 60,
       );
 
       setState(() {
         _mediaList.addAll(mediaPage);
         _isLoading = false;
-        _hasMore = mediaPage.length == 30;
+        _hasMore = mediaPage.length == 60;
       });
     }
   }
@@ -441,34 +446,140 @@ class _MultiImagePickerModalState extends State<MultiImagePickerModal>
               color: AppTheme.textMuted.withValues(alpha: 0.5),
             ),
           ),
-          const SizedBox(height: 24),
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              openAppSettings();
+          const SizedBox(height: 8),
+          FutureBuilder<PermissionState>(
+            future: PhotoManager.requestPermissionExtend(),
+            builder: (context, snapshot) {
+              final state = snapshot.data;
+              if (state == null) return const SizedBox.shrink();
+              final isLimited = state == PermissionState.limited;
+              final text = isLimited
+                  ? 'تم منح صلاحية محدودة - اختر صورًا مسموحًا بها'
+                  : 'الوصول مرفوض - يرجى السماح من الإعدادات';
+              return Text(
+                text,
+                style: AppTextStyles.caption.copyWith(
+                  color: AppTheme.textMuted.withValues(alpha: 0.6),
+                  fontSize: 10,
+                ),
+                textAlign: TextAlign.center,
+              );
             },
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 12,
-              ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryBlue.withValues(alpha: 0.8),
-                    AppTheme.primaryPurple.withValues(alpha: 0.6),
-                  ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Open settings
+              GestureDetector(
+                onTap: () async {
+                  HapticFeedback.lightImpact();
+                  try {
+                    await PhotoManager.openSetting();
+                  } catch (_) {
+                    await openAppSettings();
+                  }
+                  // Give the system a moment, then re-check
+                  await Future.delayed(const Duration(milliseconds: 300));
+                  if (!mounted) return;
+                  await _recheckPermissionAfterSettings();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.primaryBlue.withValues(alpha: 0.8),
+                        AppTheme.primaryPurple.withValues(alpha: 0.6),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'فتح الإعدادات',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(10),
               ),
-              child: Text(
-                'فتح الإعدادات',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(width: 12),
+              // Manual retry
+              GestureDetector(
+                onTap: () async {
+                  HapticFeedback.lightImpact();
+                  await _recheckPermissionAfterSettings();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.darkCard.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppTheme.darkBorder.withValues(alpha: 0.1),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Text(
+                    'تحقق الآن',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppTheme.textWhite.withValues(alpha: 0.8),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 12),
+              // System photo picker fallback (no permission required on Android 13+/iOS)
+              GestureDetector(
+                onTap: () async {
+                  HapticFeedback.lightImpact();
+                  try {
+                    final picker = ImagePicker();
+                    final picks = await picker.pickMultiImage(
+                      maxWidth: 1920,
+                      maxHeight: 1920,
+                      imageQuality: 85,
+                    );
+                    if (picks.isNotEmpty) {
+                      if (!mounted) return;
+                      Navigator.pop(context);
+                      widget.onImagesSelected(
+                        picks.map((x) => File(x.path)).toList(),
+                      );
+                    }
+                  } catch (_) {}
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.darkCard.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Text(
+                    'منتقي النظام',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppTheme.textWhite.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -627,7 +738,8 @@ class _MediaTileState extends State<_MediaTile>
               children: [
                 // Image thumbnail (via PhotoManager thumbnail bytes)
                 FutureBuilder<Uint8List?>(
-                  future: widget.asset.thumbnailDataWithSize(const ThumbnailSize(200, 200)),
+                  future: widget.asset
+                      .thumbnailDataWithSize(const ThumbnailSize(200, 200)),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Container(color: AppTheme.darkCard);

@@ -29,6 +29,8 @@ class ChatLoaded extends ChatState {
   final String? error;
   final Attachment? uploadingAttachment;
   final double? uploadProgress;
+  final Map<String, List<ImageUploadInfo>>
+      uploadingImages; // صور قيد الرفع لكل محادثة
 
   const ChatLoaded({
     this.conversations = const [],
@@ -44,6 +46,7 @@ class ChatLoaded extends ChatState {
     this.error,
     this.uploadingAttachment,
     this.uploadProgress,
+    this.uploadingImages = const {},
   });
 
   ChatLoaded copyWith({
@@ -60,6 +63,7 @@ class ChatLoaded extends ChatState {
     String? error,
     Attachment? uploadingAttachment,
     double? uploadProgress,
+    Map<String, List<ImageUploadInfo>>? uploadingImages,
   }) {
     return ChatLoaded(
       conversations: conversations ?? this.conversations,
@@ -75,25 +79,26 @@ class ChatLoaded extends ChatState {
       error: error,
       uploadingAttachment: uploadingAttachment,
       uploadProgress: uploadProgress,
+      uploadingImages: uploadingImages ?? this.uploadingImages,
     );
   }
 
   @override
   List<Object?> get props => [
-    conversations,
-    messages,
-    typingUsers,
-    userPresence,
-    availableUsers,
-    adminUsers,
-    settings,
-    searchResult,
-    isLoadingMessages,
-    isLoadingMore,
-    error,
-    uploadingAttachment,
-    uploadProgress,
-  ];
+        conversations,
+        messages,
+        typingUsers,
+        userPresence,
+        availableUsers,
+        adminUsers,
+        settings,
+        searchResult,
+        isLoadingMessages,
+        isLoadingMore,
+        error,
+        uploadingAttachment,
+        uploadProgress,
+      ];
 }
 
 class ChatError extends ChatState {

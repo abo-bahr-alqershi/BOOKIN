@@ -92,9 +92,8 @@ class _MessageBubbleWidgetState extends State<MessageBubbleWidget>
             bottom: 2,
           ),
           child: Column(
-            crossAxisAlignment: widget.isMe
-                ? CrossAxisAlignment.end
-                : CrossAxisAlignment.start,
+            crossAxisAlignment:
+                widget.isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               GestureDetector(
                 onLongPress: _showOptions,
@@ -127,27 +126,33 @@ class _MessageBubbleWidgetState extends State<MessageBubbleWidget>
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                       colors: [
-                                        AppTheme.primaryBlue.withValues(alpha: 0.9),
-                                        AppTheme.primaryPurple.withValues(alpha: 0.85),
+                                        AppTheme.primaryBlue
+                                            .withValues(alpha: 0.9),
+                                        AppTheme.primaryPurple
+                                            .withValues(alpha: 0.85),
                                       ],
                                     )
                                   : LinearGradient(
                                       colors: [
-                                        AppTheme.darkCard.withValues(alpha: 0.6),
-                                        AppTheme.darkCard.withValues(alpha: 0.4),
+                                        AppTheme.darkCard
+                                            .withValues(alpha: 0.6),
+                                        AppTheme.darkCard
+                                            .withValues(alpha: 0.4),
                                       ],
                                     ),
                               borderRadius: borderRadius,
                               border: Border.all(
                                 color: widget.isMe
                                     ? Colors.white.withValues(alpha: 0.08)
-                                    : AppTheme.darkBorder.withValues(alpha: 0.08),
+                                    : AppTheme.darkBorder
+                                        .withValues(alpha: 0.08),
                                 width: 0.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
                                   color: widget.isMe
-                                      ? AppTheme.primaryBlue.withValues(alpha: 0.15)
+                                      ? AppTheme.primaryBlue
+                                          .withValues(alpha: 0.15)
                                       : Colors.black.withValues(alpha: 0.03),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
@@ -174,8 +179,7 @@ class _MessageBubbleWidgetState extends State<MessageBubbleWidget>
                   ],
                 ),
               ),
-              if (widget.message.reactions.isNotEmpty) 
-                _buildMinimalReactions(),
+              if (widget.message.reactions.isNotEmpty) _buildMinimalReactions(),
               if (_showReactions)
                 Padding(
                   padding: EdgeInsets.only(
@@ -280,7 +284,7 @@ class _MessageBubbleWidgetState extends State<MessageBubbleWidget>
   }
 
   Widget _buildMessageContent() {
-    if (widget.message.messageType == 'text' && 
+    if (widget.message.messageType == 'text' &&
         widget.message.content != null) {
       return Padding(
         padding: const EdgeInsets.symmetric(
@@ -290,8 +294,8 @@ class _MessageBubbleWidgetState extends State<MessageBubbleWidget>
         child: Text(
           widget.message.content!,
           style: AppTextStyles.bodySmall.copyWith(
-            color: widget.isMe 
-                ? Colors.white 
+            color: widget.isMe
+                ? Colors.white
                 : AppTheme.textWhite.withValues(alpha: 0.85),
             height: 1.35,
             fontSize: 12,
@@ -300,7 +304,7 @@ class _MessageBubbleWidgetState extends State<MessageBubbleWidget>
       );
     }
 
-    if (widget.message.messageType == 'location' && 
+    if (widget.message.messageType == 'location' &&
         widget.message.location != null) {
       return _buildMinimalLocationMessage();
     }
@@ -343,7 +347,7 @@ class _MessageBubbleWidgetState extends State<MessageBubbleWidget>
                 color: AppTheme.textMuted,
               ),
             ),
-            
+
             // Glass overlay with location info
             Positioned(
               bottom: 0,
@@ -538,7 +542,7 @@ class _MessageBubbleWidgetState extends State<MessageBubbleWidget>
       right: widget.isMe ? -5 : null,
       child: CustomPaint(
         painter: _MinimalTailPainter(
-          color: widget.isMe 
+          color: widget.isMe
               ? AppTheme.primaryPurple.withValues(alpha: 0.85)
               : AppTheme.darkCard.withValues(alpha: 0.6),
           isMe: widget.isMe,
@@ -572,7 +576,7 @@ class _MessageBubbleWidgetState extends State<MessageBubbleWidget>
   bool _shouldShowTail() {
     if (widget.nextMessage == null) return true;
     if (widget.nextMessage!.senderId != widget.message.senderId) return true;
-    
+
     final timeDiff = widget.message.createdAt
         .difference(widget.nextMessage!.createdAt)
         .inMinutes;
@@ -584,7 +588,7 @@ class _MessageBubbleWidgetState extends State<MessageBubbleWidget>
     if (widget.previousMessage!.senderId != widget.message.senderId) {
       return 8;
     }
-    
+
     final timeDiff = widget.previousMessage!.createdAt
         .difference(widget.message.createdAt)
         .inMinutes;
@@ -833,7 +837,7 @@ class _MinimalMessageOptionsSheet extends StatelessWidget {
               ),
               child: Icon(
                 icon,
-                color: isDestructive 
+                color: isDestructive
                     ? AppTheme.error.withValues(alpha: 0.8)
                     : AppTheme.primaryBlue.withValues(alpha: 0.8),
                 size: 16,
@@ -843,7 +847,7 @@ class _MinimalMessageOptionsSheet extends StatelessWidget {
             Text(
               title,
               style: AppTextStyles.bodyMedium.copyWith(
-                color: isDestructive 
+                color: isDestructive
                     ? AppTheme.error.withValues(alpha: 0.8)
                     : AppTheme.textWhite.withValues(alpha: 0.8),
                 fontSize: 13,
