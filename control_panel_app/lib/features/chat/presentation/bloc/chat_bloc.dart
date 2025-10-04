@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:bookn_cp_app/services/notification_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:bookn_cp_app/services/websocket_service.dart';
+import 'package:get_it/get_it.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../domain/entities/conversation.dart';
@@ -319,37 +321,40 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         if (messageEvent.message != null) {
           final currentMessages =
               currentState.messages[messageEvent.conversationId] ?? [];
-        // Insert message at top (reverse list), update conversation ordering by updatedAt
-        final List<Message> newList = [messageEvent.message!, ...currentMessages];
-        // Also bump the conversation's updatedAt if present
-        final conversations = currentState.conversations.map((c) {
-          if (c.id == messageEvent.conversationId) {
-            return Conversation(
-              id: c.id,
-              conversationType: c.conversationType,
-              title: c.title,
-              description: c.description,
-              avatar: c.avatar,
-              createdAt: c.createdAt,
-              updatedAt: messageEvent.message!.updatedAt,
-              lastMessage: messageEvent.message!,
-              unreadCount: c.unreadCount,
-              isArchived: c.isArchived,
-              isMuted: c.isMuted,
-              propertyId: c.propertyId,
-              participants: c.participants,
-            );
-          }
-          return c;
-        }).toList();
-        conversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-        emit(currentState.copyWith(
-          messages: {
-            ...currentState.messages,
-            messageEvent.conversationId: newList,
-          },
-          conversations: conversations,
-        ));
+          // Insert message at top (reverse list), update conversation ordering by updatedAt
+          final List<Message> newList = [
+            messageEvent.message!,
+            ...currentMessages
+          ];
+          // Also bump the conversation's updatedAt if present
+          final conversations = currentState.conversations.map((c) {
+            if (c.id == messageEvent.conversationId) {
+              return Conversation(
+                id: c.id,
+                conversationType: c.conversationType,
+                title: c.title,
+                description: c.description,
+                avatar: c.avatar,
+                createdAt: c.createdAt,
+                updatedAt: messageEvent.message!.updatedAt,
+                lastMessage: messageEvent.message!,
+                unreadCount: c.unreadCount,
+                isArchived: c.isArchived,
+                isMuted: c.isMuted,
+                propertyId: c.propertyId,
+                participants: c.participants,
+              );
+            }
+            return c;
+          }).toList();
+          conversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+          emit(currentState.copyWith(
+            messages: {
+              ...currentState.messages,
+              messageEvent.conversationId: newList,
+            },
+            conversations: conversations,
+          ));
         } else {
           // في حال لم يصل جسم الرسالة (FCM data فقط)، اجلب آخر الرسائل لهذا الحوار
           final result = await getMessagesUseCase(
@@ -378,7 +383,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         {
           // Update status locally for the specific messageId if present
           if (messageEvent.messageId != null && messageEvent.status != null) {
-            final currentMessages = currentState.messages[messageEvent.conversationId] ?? [];
+            final currentMessages =
+                currentState.messages[messageEvent.conversationId] ?? [];
             bool found = false;
             final updatedMessages = currentMessages.map((m) {
               if (m.id == messageEvent.messageId) {
@@ -421,7 +427,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                 ),
               );
               await result.fold(
-                (failure) async => emit(currentState.copyWith(error: _mapFailureToMessage(failure))),
+                (failure) async => emit(currentState.copyWith(
+                    error: _mapFailureToMessage(failure))),
                 (messages) async => emit(currentState.copyWith(messages: {
                   ...currentState.messages,
                   messageEvent.conversationId: messages,
@@ -438,7 +445,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
               ),
             );
             await result.fold(
-              (failure) async => emit(currentState.copyWith(error: _mapFailureToMessage(failure))),
+              (failure) async => emit(
+                  currentState.copyWith(error: _mapFailureToMessage(failure))),
               (messages) async => emit(currentState.copyWith(messages: {
                 ...currentState.messages,
                 messageEvent.conversationId: messages,
@@ -451,12 +459,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       case MessageEventType.reactionRemoved:
         {
           if (messageEvent.messageId != null && messageEvent.reaction != null) {
-            final currentMessages = currentState.messages[messageEvent.conversationId] ?? [];
+            final currentMessages =
+                currentState.messages[messageEvent.conversationId] ?? [];
             final updatedMessages = currentMessages.map((m) {
               if (m.id == messageEvent.messageId) {
                 if (messageEvent.type == MessageEventType.reactionAdded) {
                   final reactions = List<MessageReaction>.from(m.reactions);
-                  final exists = reactions.any((r) => r.userId == messageEvent.reaction!.userId && r.reactionType == messageEvent.reaction!.reactionType);
+                  final exists = reactions.any((r) =>
+                      r.userId == messageEvent.reaction!.userId &&
+                      r.reactionType == messageEvent.reaction!.reactionType);
                   if (!exists) {
                     reactions.add(messageEvent.reaction!);
                   }
@@ -479,7 +490,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                   );
                 } else {
                   final reactions = m.reactions
-                      .where((r) => !(r.userId == messageEvent.reaction!.userId && r.reactionType == messageEvent.reaction!.reactionType))
+                      .where((r) =>
+                          !(r.userId == messageEvent.reaction!.userId &&
+                              r.reactionType ==
+                                  messageEvent.reaction!.reactionType))
                       .toList();
                   return Message(
                     id: m.id,
@@ -518,7 +532,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
               ),
             );
             await result.fold(
-              (failure) async => emit(currentState.copyWith(error: _mapFailureToMessage(failure))),
+              (failure) async => emit(
+                  currentState.copyWith(error: _mapFailureToMessage(failure))),
               (messages) async => emit(currentState.copyWith(messages: {
                 ...currentState.messages,
                 messageEvent.conversationId: messages,
@@ -571,7 +586,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     if (state is! ChatLoaded) return;
 
     final currentState = state as ChatLoaded;
-    final existingIndex = currentState.conversations.indexWhere((c) => c.id == event.conversation.id);
+    final existingIndex = currentState.conversations
+        .indexWhere((c) => c.id == event.conversation.id);
     // Merge or insert, then sort by updatedAt desc to keep list stable
     final List<Conversation> merged = [];
     bool inserted = false;
@@ -656,7 +672,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     emit(const ConversationCreating());
 
     // منع أي محادثة ليست direct أو تتجاوز شخصًا واحدًا (غير المستخدم الحالي)
-    if (event.conversationType != 'direct' || event.participantIds.length != 1) {
+    if (event.conversationType != 'direct' ||
+        event.participantIds.length != 1) {
       if (currentState is ChatLoaded) {
         emit(currentState.copyWith(error: 'يُسمح فقط بمحادثات ثنائية مباشرة'));
       } else {
@@ -877,7 +894,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           // ابحث عن المحادثة التي تحتوي الرسالة واحذفها من قائمتها إن وُجدت
           final updatedMessages = <String, List<Message>>{};
           current.messages.forEach((convId, msgs) {
-            updatedMessages[convId] = msgs.where((m) => m.id != event.messageId).toList();
+            updatedMessages[convId] =
+                msgs.where((m) => m.id != event.messageId).toList();
           });
           emit(current.copyWith(messages: updatedMessages));
         }
@@ -903,7 +921,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           final current = state as ChatLoaded;
           final convId = message.conversationId;
           final msgs = current.messages[convId] ?? [];
-          final updated = msgs.map((m) => m.id == message.id ? message : m).toList();
+          final updated =
+              msgs.map((m) => m.id == message.id ? message : m).toList();
           emit(current.copyWith(messages: {
             ...current.messages,
             convId: updated,
@@ -927,7 +946,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             reactions.add(MessageReaction(
               id: 'temp_${DateTime.now().microsecondsSinceEpoch}',
               messageId: m.id,
-              userId: (event.currentUserId != null && event.currentUserId!.isNotEmpty)
+              userId: (event.currentUserId != null &&
+                      event.currentUserId!.isNotEmpty)
                   ? event.currentUserId!
                   : 'current_user',
               reactionType: event.reactionType,
@@ -957,7 +977,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
 
     final result = await addReactionUseCase(
-      AddReactionParams(messageId: event.messageId, reactionType: event.reactionType),
+      AddReactionParams(
+          messageId: event.messageId, reactionType: event.reactionType),
     );
     await result.fold(
       (failure) async {
@@ -969,7 +990,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             for (int i = 0; i < msgs.length; i++) {
               final m = msgs[i];
               if (m.id == event.messageId) {
-                final reactions = m.reactions.where((r) => !(r.id.startsWith('temp_') && r.reactionType == event.reactionType)).toList();
+                final reactions = m.reactions
+                    .where((r) => !(r.id.startsWith('temp_') &&
+                        r.reactionType == event.reactionType))
+                    .toList();
                 msgs[i] = Message(
                   id: m.id,
                   conversationId: m.conversationId,
@@ -991,7 +1015,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
               }
             }
           });
-          emit(current.copyWith(messages: rolled, error: _mapFailureToMessage(failure)));
+          emit(current.copyWith(
+              messages: rolled, error: _mapFailureToMessage(failure)));
         }
       },
       (_) async {},
@@ -1008,7 +1033,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         for (int i = 0; i < msgs.length; i++) {
           final m = msgs[i];
           if (m.id == event.messageId) {
-            final reactions = m.reactions.where((r) => r.reactionType != event.reactionType).toList();
+            final reactions = m.reactions
+                .where((r) => r.reactionType != event.reactionType)
+                .toList();
             msgs[i] = Message(
               id: m.id,
               conversationId: m.conversationId,
@@ -1034,7 +1061,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
 
     final result = await removeReactionUseCase(
-      RemoveReactionParams(messageId: event.messageId, reactionType: event.reactionType),
+      RemoveReactionParams(
+          messageId: event.messageId, reactionType: event.reactionType),
     );
     await result.fold(
       (failure) async {
@@ -1120,7 +1148,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       ),
     );
     await result.fold(
-      (failure) async => emit(current.copyWith(error: _mapFailureToMessage(failure))),
+      (failure) async =>
+          emit(current.copyWith(error: _mapFailureToMessage(failure))),
       (res) async => emit(current.copyWith(searchResult: res)),
     );
   }
@@ -1142,7 +1171,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   Future<void> _onUpdateUserStatus(
       UpdateUserStatusEvent event, Emitter<ChatState> emit) async {
-    final result = await updateUserStatusUseCase(UpdateUserStatusParams(status: event.status));
+    final result = await updateUserStatusUseCase(
+        UpdateUserStatusParams(status: event.status));
     await result.fold((failure) async {
       if (state is ChatLoaded) {
         final current = state as ChatLoaded;

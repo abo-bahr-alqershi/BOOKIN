@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:bookn_cp_app/features/chat/domain/entities/message.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
@@ -15,9 +16,9 @@ import 'package:bookn_cp_app/features/chat/presentation/bloc/chat_bloc.dart';
 
 class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications = 
+  final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
-  
+
   final ApiClient? _apiClient;
   final LocalStorageService? _localStorage;
   final AuthLocalDataSource? _authLocalDataSource;
@@ -25,7 +26,8 @@ class NotificationService {
   // Optional sink to dispatch chat events directly without WebSocket
   void Function(WebSocketMessageReceivedEvent event)? _chatEventSink;
 
-  void bindChatEventSink(void Function(WebSocketMessageReceivedEvent event) sink) {
+  void bindChatEventSink(
+      void Function(WebSocketMessageReceivedEvent event) sink) {
     _chatEventSink = sink;
   }
 
@@ -37,9 +39,9 @@ class NotificationService {
     ApiClient? apiClient,
     LocalStorageService? localStorage,
     AuthLocalDataSource? authLocalDataSource,
-  }) : _apiClient = apiClient,
-       _localStorage = localStorage,
-       _authLocalDataSource = authLocalDataSource;
+  })  : _apiClient = apiClient,
+        _localStorage = localStorage,
+        _authLocalDataSource = authLocalDataSource;
 
   /// Re-register FCM token and subscribe to user/role topics for the current user
   Future<void> refreshUserSubscriptions() async {
@@ -85,13 +87,15 @@ class NotificationService {
       criticalAlert: false,
     );
 
-    debugPrint('Notification permission status: ${settings.authorizationStatus}');
+    debugPrint(
+        'Notification permission status: ${settings.authorizationStatus}');
   }
 
   // Initialize local notifications
   Future<void> _initializeLocalNotifications() async {
     // Ensure the Android channel exists so push notifications render reliably
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -131,7 +135,8 @@ class NotificationService {
   // Configure Firebase messaging
   Future<void> _configureFirebaseMessaging() async {
     // iOS: allow notifications to be displayed while app in foreground
-    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
       sound: true,
@@ -172,23 +177,25 @@ class NotificationService {
       // receiving end-user broadcasts on admin/staff devices
       final user = await _authLocalDataSource?.getCachedUser();
       if (user != null) {
-        final String userId = user.userId?.toString() ?? '';
+        final String userId = user.userId.toString() ?? '';
         if (userId.isNotEmpty) {
-          await _firebaseMessaging.subscribeToTopic('user_${userId}');
+          await _firebaseMessaging.subscribeToTopic('user_$userId');
         }
         // roles may come from user.roles and accountRole
-        final List<String> roles = []
-          ..addAll(((user.roles ?? []) as List).map((e) => e.toString()))
-          ..addAll((user.accountRole != null && (user.accountRole as String).isNotEmpty)
-              ? [user.accountRole as String]
-              : const <String>[]);
+        final List<String> roles = [
+          ...((user.roles ?? []) as List).map((e) => e.toString()),
+          if ((user.accountRole != null &&
+              (user.accountRole as String).isNotEmpty)) ...[
+            user.accountRole as String
+          ]
+        ];
         final uniqueRoles = roles
             .where((r) => r.trim().isNotEmpty)
             .map((r) => _normalizeRole(r))
             .toSet()
             .toList();
         for (final role in uniqueRoles) {
-          await _firebaseMessaging.subscribeToTopic('role_${role}');
+          await _firebaseMessaging.subscribeToTopic('role_$role');
         }
       }
     } catch (e) {
@@ -201,22 +208,24 @@ class NotificationService {
     try {
       final user = await _authLocalDataSource?.getCachedUser();
       if (user != null) {
-        final String userId = user.userId?.toString() ?? '';
+        final String userId = user.userId.toString() ?? '';
         if (userId.isNotEmpty) {
-          await _firebaseMessaging.unsubscribeFromTopic('user_${userId}');
+          await _firebaseMessaging.unsubscribeFromTopic('user_$userId');
         }
-        final List<String> roles = []
-          ..addAll(((user.roles ?? []) as List).map((e) => e.toString()))
-          ..addAll((user.accountRole != null && (user.accountRole as String).isNotEmpty)
-              ? [user.accountRole as String]
-              : const <String>[]);
+        final List<String> roles = [
+          ...((user.roles ?? []) as List).map((e) => e.toString()),
+          if ((user.accountRole != null &&
+              (user.accountRole as String).isNotEmpty)) ...[
+            user.accountRole as String
+          ]
+        ];
         final uniqueRoles = roles
             .where((r) => r.trim().isNotEmpty)
             .map((r) => _normalizeRole(r))
             .toSet()
             .toList();
         for (final role in uniqueRoles) {
-          await _firebaseMessaging.unsubscribeFromTopic('role_${role}');
+          await _firebaseMessaging.unsubscribeFromTopic('role_$role');
         }
       }
     } catch (e) {
@@ -316,18 +325,24 @@ class NotificationService {
 
     // إذا كانت رسالة شات داخل التطبيق: لا نعرض إشعارًا، بل نحدّث الـ Bloc مباشرة
     if (type == 'new_message' || type == 'chat.new_message') {
-      final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
-      final messageId = (data['message_id'] ?? data['messageId'] ?? '').toString();
+      final conversationId =
+          (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
+      final messageId =
+          (data['message_id'] ?? data['messageId'] ?? '').toString();
       final silent = (data['silent'] ?? '').toString() == 'true';
       if (conversationId.isNotEmpty && messageId.isNotEmpty) {
         try {
           if (_chatEventSink != null) {
             _chatEventSink!.call(WebSocketMessageReceivedEvent(
-              MessageEvent(type: MessageEventType.newMessage, conversationId: conversationId, messageId: messageId),
+              MessageEvent(
+                  type: MessageEventType.newMessage,
+                  conversationId: conversationId,
+                  messageId: messageId),
             ));
           } else {
             final ws = di.sl<ChatWebSocketService>();
-            ws.emitNewMessageById(conversationId: conversationId, messageId: messageId);
+            ws.emitNewMessageById(
+                conversationId: conversationId, messageId: messageId);
             await ws.emitConversationById(conversationId: conversationId);
           }
         } catch (e) {
@@ -338,7 +353,8 @@ class NotificationService {
     }
 
     if (type == 'conversation_created' || type == 'chat.conversation_created') {
-      final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
+      final conversationId =
+          (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
       if (conversationId.isNotEmpty) {
         try {
           final ws = di.sl<ChatWebSocketService>();
@@ -353,16 +369,24 @@ class NotificationService {
     // حالات لا يجب أن تظهر كإشعارات مرئية: تحديث الحالة والتفاعلات الصامتة
     if (type == 'message_status_updated' || data['silent'] == 'true') {
       // Update UI silently if needed
-      final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
-      final messageId = (data['message_id'] ?? data['messageId'] ?? '').toString();
+      final conversationId =
+          (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
+      final messageId =
+          (data['message_id'] ?? data['messageId'] ?? '').toString();
       final status = (data['status'] ?? '').toString();
       final readAt = (data['read_at'] ?? '').toString();
       final deliveredAt = (data['delivered_at'] ?? '').toString();
       if (conversationId.isNotEmpty) {
         try {
-          if (_chatEventSink != null && messageId.isNotEmpty && status.isNotEmpty) {
+          if (_chatEventSink != null &&
+              messageId.isNotEmpty &&
+              status.isNotEmpty) {
             _chatEventSink!.call(WebSocketMessageReceivedEvent(
-              MessageEvent(type: MessageEventType.statusUpdated, conversationId: conversationId, messageId: messageId, status: status),
+              MessageEvent(
+                  type: MessageEventType.statusUpdated,
+                  conversationId: conversationId,
+                  messageId: messageId,
+                  status: status),
             ));
           } else {
             final ws = di.sl<ChatWebSocketService>();
@@ -375,7 +399,8 @@ class NotificationService {
               );
             } else {
               // fallback: force fetch
-              ws.emitNewMessageById(conversationId: conversationId, messageId: '');
+              ws.emitNewMessageById(
+                  conversationId: conversationId, messageId: '');
             }
             // ثم جلب المحادثة لتحديث آخر حالة/عدادات بشكل موثوق
             await ws.emitConversationById(conversationId: conversationId);
@@ -389,17 +414,25 @@ class NotificationService {
 
     // تفاعل مُضاف/محذوف: ادفع حدثاً دقيقاً لتحديث فوري دون إعادة جلب كامل
     if (type == 'reaction_added' || type == 'reaction_removed') {
-      final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
-      final messageId = (data['message_id'] ?? data['messageId'] ?? '').toString();
+      final conversationId =
+          (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
+      final messageId =
+          (data['message_id'] ?? data['messageId'] ?? '').toString();
       final userId = (data['user_id'] ?? data['userId'] ?? '').toString();
-      final reactionType = (data['reaction_type'] ?? data['reactionType'] ?? '').toString();
-      if (conversationId.isNotEmpty && messageId.isNotEmpty && userId.isNotEmpty && reactionType.isNotEmpty) {
+      final reactionType =
+          (data['reaction_type'] ?? data['reactionType'] ?? '').toString();
+      if (conversationId.isNotEmpty &&
+          messageId.isNotEmpty &&
+          userId.isNotEmpty &&
+          reactionType.isNotEmpty) {
         try {
           final isAdded = type == 'reaction_added';
           if (_chatEventSink != null) {
             _chatEventSink!.call(WebSocketMessageReceivedEvent(
               MessageEvent(
-                type: isAdded ? MessageEventType.reactionAdded : MessageEventType.reactionRemoved,
+                type: isAdded
+                    ? MessageEventType.reactionAdded
+                    : MessageEventType.reactionRemoved,
                 conversationId: conversationId,
                 messageId: messageId,
                 reaction: MessageReaction(
@@ -452,13 +485,16 @@ class NotificationService {
     final data = message.data;
     final type = (data['type'] ?? data['event_type'] ?? '').toString();
     if (type == 'new_message' || type == 'chat.new_message') {
-      final conversationId = (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
-      final messageId = (data['message_id'] ?? data['messageId'] ?? '').toString();
+      final conversationId =
+          (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
+      final messageId =
+          (data['message_id'] ?? data['messageId'] ?? '').toString();
       if (conversationId.isNotEmpty) {
         try {
           final ws = di.sl<ChatWebSocketService>();
           if (messageId.isNotEmpty) {
-            ws.emitNewMessageById(conversationId: conversationId, messageId: messageId);
+            ws.emitNewMessageById(
+                conversationId: conversationId, messageId: messageId);
           }
           ws.emitConversationById(conversationId: conversationId);
         } catch (e) {
@@ -599,8 +635,9 @@ class NotificationService {
     );
 
     // Convert DateTime to TZDateTime
-    final tz.TZDateTime tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
-    
+    final tz.TZDateTime tzScheduledDate =
+        tz.TZDateTime.from(scheduledDate, tz.local);
+
     await _localNotifications.zonedSchedule(
       id,
       title,
@@ -631,10 +668,11 @@ class NotificationService {
 }
 
 // Helper to dispatch a status update into ChatBloc pipeline via WebSocketService streams
-void _dispatchStatusUpdate(String conversationId, String messageId, String status) {
+void _dispatchStatusUpdate(
+    String conversationId, String messageId, String status) {
   try {
     final ws = di.sl<ChatWebSocketService>();
-    ws.messageEvents.listen((_){}); // ensure stream is active
+    ws.messageEvents.listen((_) {}); // ensure stream is active
     // Internally push a synthetic status update event
     // We don't have direct access to add event in bloc here, but WebSocketService exposes a stream consumed by ChatBloc
     // So we emulate by sending a crafted map through the private handler would be intrusive; as an alternative,

@@ -8,6 +8,9 @@ using YemenBooking.Application.Interfaces.Services;
 using System.Threading;
 using System.Threading.Tasks;
 using YemenBooking.Core.Interfaces.Repositories;
+using TimeZoneConverter;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 
 namespace YemenBooking.Infrastructure.Services
 {
@@ -19,15 +22,20 @@ namespace YemenBooking.Infrastructure.Services
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUserRepository _userRepository;
-
+        private readonly IGeolocationService _geolocationService;
+        private readonly IMemoryCache _cache;
+        private readonly ILogger<CurrentUserService> _logger;
         /// <summary>
         /// مُنشئ خدمة المستخدم الحالي مع حقن HttpContextAccessor و IUserRepository
         /// Constructor for CurrentUserService with injected HttpContextAccessor and IUserRepository
         /// </summary>
-        public CurrentUserService(IHttpContextAccessor httpContextAccessor, IUserRepository userRepository)
+        public CurrentUserService(IHttpContextAccessor httpContextAccessor, IUserRepository userRepository, IGeolocationService geolocationService, IMemoryCache cache, ILogger<CurrentUserService> logger)
         {
             _httpContextAccessor = httpContextAccessor;
             _userRepository = userRepository;
+            _geolocationService = geolocationService;
+            _cache = cache;
+            _logger = logger;
         }
 
         private ClaimsPrincipal? User => _httpContextAccessor.HttpContext?.User;
@@ -157,6 +165,155 @@ namespace YemenBooking.Infrastructure.Services
         {
             var hasRole = UserRoles != null && UserRoles.Contains(role);
             return Task.FromResult(hasRole);
+        }
+
+                public async Task<UserLocationInfo> GetUserLocationAsync()
+        {
+            var cacheKey = $"user_location_{UserId}";
+            
+            // التحقق من الـ cache
+            if (_cache.TryGetValue<UserLocationInfo>(cacheKey, out var cachedLocation))
+                return cachedLocation;
+
+            try
+            {
+                // 1. محاولة الحصول على المنطقة الزمنية من profile المستخدم
+                var user = await GetCurrentUserAsync();
+                var timeZoneId = user?.TimeZoneId;
+
+                // 2. إذا لم يكن محفوظاً، استخدم IP geolocation
+                if (string.IsNullOrEmpty(timeZoneId))
+                {
+                    var ipAddress = _geolocationService.GetClientIpAddress();
+                    var geoInfo = await _geolocationService.GetLocationInfoAsync(ipAddress);
+                    timeZoneId = geoInfo?.TimeZoneId;
+
+                    // حفظ المنطقة الزمنية في profile المستخدم للمرات القادمة
+                    if (!string.IsNullOrEmpty(timeZoneId) && user != null)
+                    {
+                        user.TimeZoneId = timeZoneId;
+                        user.Country = geoInfo.Country;
+                        user.City = geoInfo.City;
+                        await _userRepository.UpdateAsync(user);
+                    }
+
+                    var locationInfo = CreateLocationInfo(timeZoneId, geoInfo);
+                    
+                    // Cache لمدة ساعة
+                    _cache.Set(cacheKey, locationInfo, TimeSpan.FromHours(1));
+                    
+                    return locationInfo;
+                }
+
+                var cachedInfo = CreateLocationInfo(timeZoneId, null);
+                _cache.Set(cacheKey, cachedInfo, TimeSpan.FromHours(1));
+                
+                return cachedInfo;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user location");
+                return GetDefaultLocation();
+            }
+        }
+
+        public async Task<DateTime> ConvertFromUtcToUserLocalAsync(DateTime utcDateTime)
+        {
+            if (utcDateTime.Kind != DateTimeKind.Utc)
+            {
+                utcDateTime = DateTime.SpecifyKind(utcDateTime, DateTimeKind.Utc);
+            }
+
+            var timeZoneId = await GetUserTimeZoneIdAsync();
+            
+            try
+            {
+                // استخدام TimeZoneConverter للتعامل مع IANA و Windows time zones
+                var timeZone = TZConvert.GetTimeZoneInfo(timeZoneId);
+                return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, timeZone);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error converting from UTC to local time. TimeZone: {TimeZone}", timeZoneId);
+                // Fallback to Yemen time
+                var yemenTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Arab Standard Time");
+                return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, yemenTimeZone);
+            }
+        }
+
+        public async Task<DateTime> ConvertFromUserLocalToUtcAsync(DateTime localDateTime)
+        {
+            var timeZoneId = await GetUserTimeZoneIdAsync();
+            
+            try
+            {
+                // التأكد من أن التوقيت محلي
+                if (localDateTime.Kind == DateTimeKind.Utc)
+                    return localDateTime;
+
+                localDateTime = DateTime.SpecifyKind(localDateTime, DateTimeKind.Unspecified);
+                
+                var timeZone = TZConvert.GetTimeZoneInfo(timeZoneId);
+                return TimeZoneInfo.ConvertTimeToUtc(localDateTime, timeZone);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error converting from local to UTC time. TimeZone: {TimeZone}", timeZoneId);
+                // Fallback
+                var yemenTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Arab Standard Time");
+                return TimeZoneInfo.ConvertTimeToUtc(localDateTime, yemenTimeZone);
+            }
+        }
+
+        public async Task<string> GetUserTimeZoneIdAsync()
+        {
+            var location = await GetUserLocationAsync();
+            return location?.TimeZoneId ?? "Asia/Aden";
+        }
+
+        public async Task<TimeSpan> GetUserTimeZoneOffsetAsync()
+        {
+            var location = await GetUserLocationAsync();
+            return location?.UtcOffset ?? TimeSpan.FromHours(3);
+        }
+
+        private UserLocationInfo CreateLocationInfo(string timeZoneId, GeolocationInfo geoInfo)
+        {
+            try
+            {
+                var timeZone = TZConvert.GetTimeZoneInfo(timeZoneId ?? "Asia/Aden");
+                var now = DateTime.UtcNow;
+                var offset = timeZone.GetUtcOffset(now);
+                
+                return new UserLocationInfo
+                {
+                    Country = geoInfo?.Country ?? "Yemen",
+                    CountryCode = geoInfo?.CountryCode ?? "YE",
+                    City = geoInfo?.City ?? "Sana'a",
+                    TimeZoneId = timeZoneId ?? "Asia/Aden",
+                    UtcOffset = offset,
+                    TimeZoneName = timeZone.DisplayName,
+                    IsDaylightSaving = timeZone.IsDaylightSavingTime(now)
+                };
+            }
+            catch
+            {
+                return GetDefaultLocation();
+            }
+        }
+
+        private UserLocationInfo GetDefaultLocation()
+        {
+            return new UserLocationInfo
+            {
+                Country = "Yemen",
+                CountryCode = "YE",
+                City = "Sana'a",
+                TimeZoneId = "Asia/Aden",
+                UtcOffset = TimeSpan.FromHours(3),
+                TimeZoneName = "(UTC+03:00) Yemen Time",
+                IsDaylightSaving = false
+            };
         }
     }
 } 

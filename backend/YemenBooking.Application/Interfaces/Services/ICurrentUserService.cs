@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using YemenBooking.Core.Entities;
-
+using YemenBooking.Application.Interfaces.Services;
 namespace YemenBooking.Application.Interfaces.Services
 {
     /// <summary>
@@ -88,5 +88,41 @@ namespace YemenBooking.Application.Interfaces.Services
         /// التحقق بشكل غير متزامن مما إذا كان المستخدم الحالي يمتلك الدور المحدد
         /// </summary>
         Task<bool> IsInRoleAsync(string role);
+
+        /// <summary>
+        /// الحصول على معلومات الموقع الجغرافي للمستخدم
+        /// </summary>
+        Task<UserLocationInfo> GetUserLocationAsync();
+
+        /// <summary>
+        /// تحويل التوقيت من UTC إلى التوقيت المحلي للمستخدم
+        /// </summary>
+        Task<DateTime> ConvertFromUtcToUserLocalAsync(DateTime utcDateTime);
+
+        /// <summary>
+        /// تحويل التوقيت من التوقيت المحلي للمستخدم إلى UTC
+        /// </summary>
+        Task<DateTime> ConvertFromUserLocalToUtcAsync(DateTime localDateTime);
+
+        /// <summary>
+        /// الحصول على معرف المنطقة الزمنية للمستخدم
+        /// </summary>
+        Task<string> GetUserTimeZoneIdAsync();
+
+        /// <summary>
+        /// الحصول على الإزاحة الزمنية الحالية للمستخدم من UTC
+        /// </summary>
+        Task<TimeSpan> GetUserTimeZoneOffsetAsync();
+    }
+
+    public class UserLocationInfo
+    {
+        public string Country { get; set; }
+        public string CountryCode { get; set; }
+        public string City { get; set; }
+        public string TimeZoneId { get; set; }
+        public TimeSpan UtcOffset { get; set; }
+        public string TimeZoneName { get; set; }
+        public bool IsDaylightSaving { get; set; }
     }
 } 

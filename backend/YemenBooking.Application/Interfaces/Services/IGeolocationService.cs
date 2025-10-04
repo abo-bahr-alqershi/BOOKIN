@@ -6,6 +6,20 @@ namespace YemenBooking.Application.Interfaces.Services;
 /// </summary>
 public interface IGeolocationService
 {
+
+    /// <summary>
+    /// الحصول على معلومات الموقع من عنوان IP
+    /// </summary>
+    /// <param name="ipAddress"></param>
+    /// <returns></returns>
+    Task<GeolocationInfo> GetLocationInfoAsync(string ipAddress);
+
+    /// <summary>
+    /// الحصول على عنوان IP الخاص بالعميل من HttpContext
+    /// </summary>
+    /// <returns></returns>
+    string GetClientIpAddress();
+
     /// <summary>
     /// الحصول على الإحداثيات من العنوان
     /// Get coordinates from address
@@ -62,4 +76,15 @@ public interface IGeolocationService
         double latitude, 
         double longitude, 
         CancellationToken cancellationToken = default);
+}
+
+public class GeolocationInfo
+{
+    public string Country { get; set; }
+    public string CountryCode { get; set; }
+    public string City { get; set; }
+    public string TimeZoneId { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    public string Region { get; set; }
 }

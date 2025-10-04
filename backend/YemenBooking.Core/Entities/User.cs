@@ -18,35 +18,35 @@ public class User : BaseEntity<Guid>
     [Display(Name = "اسم المستخدم")]
     public string Name { get; set; }
 
-    
+
     /// <summary>
     /// البريد الإلكتروني للمستخدم
     /// User email
     /// </summary>
     [Display(Name = "البريد الإلكتروني للمستخدم")]
     public string Email { get; set; }
-    
+
     /// <summary>
     /// كلمة المرور للمستخدم
     /// User password
     /// </summary>
     [Display(Name = "كلمة المرور للمستخدم")]
     public string Password { get; set; }
-    
+
     /// <summary>
     /// رقم هاتف المستخدم
     /// User phone number
     /// </summary>
     [Display(Name = "رقم هاتف المستخدم")]
     public string Phone { get; set; }
-    
+
     /// <summary>
     /// صورة المستخدم
     /// User name
     /// </summary>
     [Display(Name = "صورة المستخدم")]
     public string ProfileImage { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// رابط صورة الملف الشخصي (متوافق مع معالجات الموبايل)
     /// Profile image URL (alias for ProfileImage)
@@ -63,7 +63,7 @@ public class User : BaseEntity<Guid>
     /// </summary>
     [Display(Name = "تاريخ إنشاء حساب المستخدم")]
     public DateTime CreatedAt { get; set; }
-    
+
     /// <summary>
     /// حالة تفعيل الحساب
     /// Account activation status
@@ -91,28 +91,28 @@ public class User : BaseEntity<Guid>
     /// </summary>
     [Display(Name = "فئة الولاء")]
     public string? LoyaltyTier { get; set; }
-    
+
     /// <summary>
     /// الأدوار المرتبطة بالمستخدم
     /// Roles associated with the user
     /// </summary>
     [Display(Name = "الأدوار المرتبطة بالمستخدم")]
     public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
-    
+
     /// <summary>
     /// الكيانات المملوكة من قبل المستخدم
     /// Properties owned by the user
     /// </summary>
     [Display(Name = "الكيانات المملوكة من قبل المستخدم")]
     public virtual ICollection<Property> Properties { get; set; } = new List<Property>();
-    
+
     /// <summary>
     /// الحجوزات التي قام بها المستخدم
     /// Bookings made by the user
     /// </summary>
     [Display(Name = "الحجوزات التي قام بها المستخدم")]
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
-    
+
     /// <summary>
     /// الوظائف التي يشغلها المستخدم كموظف
     /// Staff positions held by the user
@@ -126,14 +126,14 @@ public class User : BaseEntity<Guid>
     /// </summary>
     [Display(Name = "هل تم تأكيد البريد الإلكتروني")]
     public bool EmailConfirmed { get; set; } = false;
-    
+
     /// <summary>
     /// هل تم التحقق من البريد الإلكتروني
     /// Is email verified
     /// </summary>
     [Display(Name = "هل تم التحقق من البريد الإلكتروني")]
     public bool IsEmailVerified { get; set; } = false;
-    
+
     /// <summary>
     /// تاريخ التحقق من البريد الإلكتروني
     /// Email verification date
@@ -184,6 +184,24 @@ public class User : BaseEntity<Guid>
     public string FavoritesJson { get; set; } = "[]";
 
     /// <summary>
+    /// معرف المنطقة الزمنية للمستخدم
+    /// </summary>
+    [Display(Name = "معرف المنطقة الزمنية للمستخدم")]
+    public string TimeZoneId { get; set; }
+    
+    /// <summary>
+    /// الدولة
+    /// </summary>
+    [Display(Name = "الدولة")]
+    public string Country { get; set; }
+    
+    /// <summary>
+    /// المدينة
+    /// </summary>
+    [Display(Name = "المدينة")]
+    public string City { get; set; }
+
+    /// <summary>
     /// البلاغات التي قام بها المستخدم
     /// Reports filed by the user
     /// </summary>
@@ -196,4 +214,5 @@ public class User : BaseEntity<Guid>
     /// </summary>
     [Display(Name = "البلاغات المقدمة ضد المستخدم")]
     public virtual ICollection<Report> ReportsAgainstUser { get; set; } = new List<Report>();
+    
 } 
