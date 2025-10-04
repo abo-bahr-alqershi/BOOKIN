@@ -202,21 +202,25 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble>
           width: 0.5,
         ),
       ),
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: CachedImageWidget(
-              imageUrl: url,
-              fit: BoxFit.cover,
-            ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: AspectRatio(
+          aspectRatio: 4 / 3,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              CachedImageWidget(
+                imageUrl: url,
+                fit: BoxFit.cover,
+              ),
+              Positioned(
+                bottom: 4,
+                right: 8,
+                child: _buildMessageFooter(),
+              ),
+            ],
           ),
-          Positioned(
-            bottom: 4,
-            right: 8,
-            child: _buildMessageFooter(),
-          ),
-        ],
+        ),
       ),
     );
   }
