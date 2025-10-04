@@ -41,6 +41,12 @@ namespace YemenBooking.Application.DTOs
         public string? Metadata { get; set; }
 
         /// <summary>
+        /// الرسالة المرتبط بها هذا المرفق (لتمكين التجميع الأمامي)
+        /// </summary>
+        [JsonPropertyName("message_id")]
+        public Guid? MessageId { get; set; }
+
+        /// <summary>
         /// مدة المرفق بالثواني (للصوت/الفيديو)
         /// Attachment duration in seconds (audio/video)
         /// </summary>

@@ -190,7 +190,7 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                     }
                 }
 
-                // Associate pre-uploaded attachments if provided
+                // Associate pre-uploaded attachments if provided (link to this message)
                 if (request.AttachmentIds != null && request.AttachmentIds.Count > 0)
                 {
                     foreach (var attachId in request.AttachmentIds)
@@ -198,8 +198,10 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                         var attachment = await _attachmentRepository.GetByIdAsync(attachId, cancellationToken);
                         if (attachment != null && attachment.ConversationId == request.ConversationId)
                         {
-                            // No extra linking table; attachments are associated with conversation
-                            // Optionally we could add a MessageId on attachments in the future
+                            attachment.MessageId = message.Id;
+                            // ensure EF tracks update
+                            await _unitOfWork.Repository<ChatAttachment>().UpdateAsync(attachment, cancellationToken);
+                            message.Attachments.Add(attachment);
                         }
                     }
                 }

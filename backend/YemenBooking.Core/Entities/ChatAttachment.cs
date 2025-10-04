@@ -54,6 +54,17 @@ namespace YemenBooking.Core.Entities
         public string? Metadata { get; set; }
 
         /// <summary>
+        /// الرسالة المرتبط بها هذا المرفق (اختياري قبل الإسناد)
+        /// The message this attachment is associated with (nullable until assigned)
+        /// </summary>
+        public Guid? MessageId { get; set; }
+
+        /// <summary>
+        /// Navigation property للرسالة المرتبط بها المرفق
+        /// </summary>
+        public virtual ChatMessage? Message { get; set; }
+
+        /// <summary>
         /// مدة المرفق بالثواني (للصوت/الفيديو)
         /// Attachment duration in seconds (audio/video)
         /// </summary>
