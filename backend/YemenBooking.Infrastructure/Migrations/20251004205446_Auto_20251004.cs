@@ -185,7 +185,7 @@ namespace YemenBooking.Infrastructure.Migrations
                 column: "MessageId",
                 principalTable: "ChatMessages",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.SetNull);
+                onDelete: ReferentialAction.Restrict);
         }
 
         /// <inheritdoc />

@@ -4761,7 +4761,7 @@ namespace YemenBooking.Infrastructure.Migrations
                     b.HasOne("YemenBooking.Core.Entities.ChatMessage", "Message")
                         .WithMany("Attachments")
                         .HasForeignKey("MessageId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Message");
                 });

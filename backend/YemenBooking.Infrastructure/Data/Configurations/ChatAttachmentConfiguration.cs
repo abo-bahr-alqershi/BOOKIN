@@ -67,7 +67,7 @@ namespace YemenBooking.Infrastructure.Data.Configurations
             builder.HasOne(a => a.Message)
                 .WithMany(m => m.Attachments)
                 .HasForeignKey(a => a.MessageId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
