@@ -72,20 +72,20 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                         // Notify removal via FCM
-                        var message = await _messageRepo.GetByIdAsync(request.MessageId, cancellationToken);
-                        var conversation = await _conversationRepo.GetByIdWithDetailsAsync(message.ConversationId, cancellationToken)
-                                           ?? await _conversationRepo.GetByIdAsync(message.ConversationId, cancellationToken);
+                        var chatMessage = await _messageRepo.GetByIdAsync(request.MessageId, cancellationToken);
+                        var chatConversation = await _conversationRepo.GetByIdWithDetailsAsync(chatMessage.ConversationId, cancellationToken)
+                                           ?? await _conversationRepo.GetByIdAsync(chatMessage.ConversationId, cancellationToken);
                         var dataRemoved = new System.Collections.Generic.Dictionary<string, string>
                         {
                             { "type", "reaction_removed" },
-                            { "conversation_id", message.ConversationId.ToString() },
-                            { "message_id", message.Id.ToString() },
+                            { "conversation_id", chatMessage.ConversationId.ToString() },
+                            { "message_id", chatMessage.Id.ToString() },
                             { "user_id", userId.ToString() },
                             { "reaction_type", existing.ReactionType },
                             { "silent", "true" }
                         };
                         await _firebaseService.SendNotificationAsync($"user_{userId}", string.Empty, string.Empty, dataRemoved, cancellationToken);
-                        foreach (var participant in conversation.Participants)
+                        foreach (var participant in chatConversation.Participants)
                         {
                             if (participant.Id == userId) continue;
                             await _firebaseService.SendNotificationAsync($"user_{participant.Id}", string.Empty, string.Empty, dataRemoved, cancellationToken);
@@ -100,22 +100,22 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                         await _unitOfWork.Repository<MessageReaction>().UpdateAsync(existing, cancellationToken);
                         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                        var message = await _messageRepo.GetByIdAsync(request.MessageId, cancellationToken);
-                        var conversation = await _conversationRepo.GetByIdWithDetailsAsync(message.ConversationId, cancellationToken)
-                                           ?? await _conversationRepo.GetByIdAsync(message.ConversationId, cancellationToken);
+                        var chatMessage = await _messageRepo.GetByIdAsync(request.MessageId, cancellationToken);
+                        var chatConversation = await _conversationRepo.GetByIdWithDetailsAsync(chatMessage.ConversationId, cancellationToken)
+                                           ?? await _conversationRepo.GetByIdAsync(chatMessage.ConversationId, cancellationToken);
 
                         var switchPayload = new System.Collections.Generic.Dictionary<string, string>
                         {
                             { "type", "reaction_added" },
-                            { "conversation_id", message.ConversationId.ToString() },
-                            { "message_id", message.Id.ToString() },
+                            { "conversation_id", chatMessage.ConversationId.ToString() },
+                            { "message_id", chatMessage.Id.ToString() },
                             { "reaction_id", existing.Id.ToString() },
                             { "user_id", userId.ToString() },
                             { "reaction_type", existing.ReactionType },
                             { "silent", "true" }
                         };
                         await _firebaseService.SendNotificationAsync($"user_{userId}", string.Empty, string.Empty, switchPayload, cancellationToken);
-                        foreach (var participant in conversation.Participants)
+                        foreach (var participant in chatConversation.Participants)
                         {
                             if (participant.Id == userId) continue;
                             await _firebaseService.SendNotificationAsync($"user_{participant.Id}", string.Empty, string.Empty, switchPayload, cancellationToken);
@@ -138,17 +138,17 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 // إشعار جميع المشاركين عبر FCM (بما فيهم المنفذ للعملية) مع بيانات كاملة صامتة لتحديث الواجهة فوراً
-                var message = await _messageRepo.GetByIdAsync(request.MessageId, cancellationToken);
+                var chatMessageFinal = await _messageRepo.GetByIdAsync(request.MessageId, cancellationToken);
                 // Ensure participants are loaded to notify all reliably
-                var conversation = await _conversationRepo.GetByIdWithDetailsAsync(message.ConversationId, cancellationToken) 
-                                   ?? await _conversationRepo.GetByIdAsync(message.ConversationId, cancellationToken);
+                var chatConversationFinal = await _conversationRepo.GetByIdWithDetailsAsync(chatMessageFinal.ConversationId, cancellationToken) 
+                                   ?? await _conversationRepo.GetByIdAsync(chatMessageFinal.ConversationId, cancellationToken);
                 var reactionDto = _mapper.Map<MessageReactionDto>(reaction);
 
                 var dataPayload = new System.Collections.Generic.Dictionary<string, string>
                 {
                     { "type", "reaction_added" },
-                    { "conversation_id", message.ConversationId.ToString() },
-                    { "message_id", message.Id.ToString() },
+                    { "conversation_id", chatMessageFinal.ConversationId.ToString() },
+                    { "message_id", chatMessageFinal.Id.ToString() },
                     { "reaction_id", reactionDto.Id.ToString() },
                     { "user_id", reactionDto.UserId.ToString() },
                     { "reaction_type", reactionDto.ReactionType },
@@ -158,7 +158,7 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                 // أرسل للمشارك المنفذ أيضاً لتحديث فوري بدون انتظار إعادة الجلب
                 await _firebaseService.SendNotificationAsync($"user_{userId}", string.Empty, string.Empty, dataPayload, cancellationToken);
 
-                foreach (var participant in conversation.Participants)
+                foreach (var participant in chatConversationFinal.Participants)
                 {
                     if (participant.Id == userId) continue; // تم الإرسال له أعلاه
                     await _firebaseService.SendNotificationAsync($"user_{participant.Id}", string.Empty, string.Empty, dataPayload, cancellationToken);
