@@ -52,7 +52,9 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                 var userId = _currentUserService.UserId;
                 _logger.LogInformation("المستخدم {UserId} يزيل تفاعل {ReactionType} من الرسالة {MessageId}", userId, request.ReactionType, request.MessageId);
 
-                var reaction = (await _unitOfWork.Repository<MessageReaction>().FindAsync(r => r.MessageId == request.MessageId && r.UserId == userId && r.ReactionType == request.ReactionType, cancellationToken)).FirstOrDefault();
+                var reaction = (await _unitOfWork.Repository<MessageReaction>()
+                    .FindAsync(r => r.MessageId == request.MessageId && r.UserId == userId && r.ReactionType == request.ReactionType, cancellationToken))
+                    .FirstOrDefault();
                 if (reaction == null)
                     return ResultDto.Failure("التفاعل غير موجود");
 

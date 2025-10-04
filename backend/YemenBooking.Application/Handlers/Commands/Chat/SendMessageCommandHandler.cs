@@ -190,12 +190,34 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                     }
                 }
 
+                // Associate pre-uploaded attachments if provided
+                if (request.AttachmentIds != null && request.AttachmentIds.Count > 0)
+                {
+                    foreach (var attachId in request.AttachmentIds)
+                    {
+                        var attachment = await _attachmentRepository.GetByIdAsync(attachId, cancellationToken);
+                        if (attachment != null && attachment.ConversationId == request.ConversationId)
+                        {
+                            // No extra linking table; attachments are associated with conversation
+                            // Optionally we could add a MessageId on attachments in the future
+                        }
+                    }
+                }
+
+                // حدث وقت آخر تحديث للمحادثة لضمان ترتيب القائمة حسب الأحدث
+                // Important for conversations list ordering
+                conversation.UpdatedAt = message.UpdatedAt;
+
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 var messageDto = _mapper.Map<ChatMessageDto>(message);
 
+                // تأكد من تحميل المشاركين لإرسال الإشعارات عبر FCM للمشاركين كافة
+                var conversationWithDetails = await _conversationRepository.GetByIdWithDetailsAsync(request.ConversationId, cancellationToken)
+                                            ?? conversation;
+
                 // إرسال إشعار صامت للمرسل لتحديث الواجهة فورًا، وإشعار مرئي للمستقبل
-                foreach (var p in conversation.Participants)
+                foreach (var p in conversationWithDetails.Participants)
                 {
                     var isSender = p.Id == userId;
                     await _firebaseService.SendNotificationAsync($"user_{p.Id}", isSender ? string.Empty : "رسالة جديدة", isSender ? string.Empty : (message.Content ?? string.Empty), new Dictionary<string, string>

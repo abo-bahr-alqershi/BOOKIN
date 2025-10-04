@@ -481,43 +481,49 @@ class _MessageBubbleWidgetState extends State<MessageBubbleWidget>
         spacing: 2,
         runSpacing: 2,
         children: groupedReactions.entries.map((entry) {
-          return Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 4,
-              vertical: 2,
-            ),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.darkCard.withValues(alpha: 0.5),
-                  AppTheme.darkCard.withValues(alpha: 0.3),
-                ],
+          return GestureDetector(
+            onTap: () {
+              // Tapping a reaction chip toggles user's reaction of that type
+              widget.onReaction?.call(entry.key);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 4,
+                vertical: 2,
               ),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppTheme.darkBorder.withValues(alpha: 0.15),
-                width: 0.5,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  _getEmojiForReaction(entry.key),
-                  style: const TextStyle(fontSize: 10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.darkCard.withValues(alpha: 0.5),
+                    AppTheme.darkCard.withValues(alpha: 0.3),
+                  ],
                 ),
-                if (entry.value > 1) ...[
-                  const SizedBox(width: 2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppTheme.darkBorder.withValues(alpha: 0.15),
+                  width: 0.5,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   Text(
-                    entry.value.toString(),
-                    style: AppTextStyles.caption.copyWith(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textWhite.withValues(alpha: 0.6),
-                    ),
+                    _getEmojiForReaction(entry.key),
+                    style: const TextStyle(fontSize: 10),
                   ),
+                  if (entry.value > 1) ...[
+                    const SizedBox(width: 2),
+                    Text(
+                      entry.value.toString(),
+                      style: AppTextStyles.caption.copyWith(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textWhite.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           );
         }).toList(),

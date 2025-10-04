@@ -26,8 +26,9 @@ namespace YemenBooking.Infrastructure.Repositories
                 .Where(c => c.Participants.Any(p => p.Id == userId));
 
             var total = await query.CountAsync(cancellationToken);
+            // Sort by last activity time: prefer last message time if available
             var items = await query
-                .OrderByDescending(c => c.UpdatedAt)
+                .OrderByDescending(c => c.Messages.Max(m => (DateTime?)m.CreatedAt) ?? c.UpdatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(cancellationToken);
