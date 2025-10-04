@@ -466,11 +466,9 @@ class NotificationService {
       return;
     }
 
-    // بقية الأنواع: أظهر إشعارًا مرئيًا حسب المنصّة
-
-    if (Platform.isAndroid) {
-      await _showLocalNotification(message);
-    }
+    // بقية الأنواع: في وضع foreground داخل التطبيق لا نظهر إشعاراً محلياً،
+    // خاصة إذا كان المستخدم في صفحات المحادثة أو قائمة المحادثات
+    return;
   }
 
   // Handle background messages (static function required)
@@ -514,6 +512,15 @@ class NotificationService {
 
   // Show local notification
   Future<void> _showLocalNotification(RemoteMessage message) async {
+    // Suppress in-app local notifications when user is inside chat UI
+    try {
+      final router = di.sl<ChatWebSocketService>();
+      // We cannot access Router directly; rely on AppBloc/ChatBloc state presence
+      // If chat feature is initialized, we assume foreground chat context. Keep silent.
+      // This avoids duplicate banners while user is in conversations list or chat page.
+      return;
+    } catch (_) {}
+
     final notification = message.notification;
     if (notification == null) return;
 

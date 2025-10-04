@@ -61,7 +61,9 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
 
                 // إشعار جميع المشاركين عبر FCM (بما فيهم المنفذ للعملية) صامتاً لتحديث الواجهة فوراً
                 var message = await _messageRepo.GetByIdAsync(request.MessageId, cancellationToken);
-                var conversation = await _conversationRepo.GetByIdAsync(message.ConversationId, cancellationToken);
+                // Ensure participants are loaded to notify all reliably
+                var conversation = await _conversationRepo.GetByIdWithDetailsAsync(message.ConversationId, cancellationToken)
+                                   ?? await _conversationRepo.GetByIdAsync(message.ConversationId, cancellationToken);
                 var dataPayload = new System.Collections.Generic.Dictionary<string, string>
                 {
                     { "type", "reaction_removed" },

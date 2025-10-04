@@ -111,6 +111,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<_UploadProgressInternal>(_onUploadProgressInternal);
 
     _initializeWebSocket();
+    _bindRealtimeStreams();
   }
 
   void _initializeWebSocket() {
@@ -118,6 +119,42 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     try {
       final notif = GetIt.instance<NotificationService>();
       notif.bindChatEventSink((evt) => add(evt));
+    } catch (_) {}
+  }
+
+  // Bind message/conversation realtime streams (fed by NotificationService)
+  void _bindRealtimeStreams() {
+    try {
+      // Messages
+      _messageSubscription?.cancel();
+      _messageSubscription = webSocketService.messageEvents.listen((evt) {
+        add(WebSocketMessageReceivedEvent(evt));
+      });
+
+      // Conversations
+      _conversationSubscription?.cancel();
+      _conversationSubscription = webSocketService.conversationUpdates.listen((conv) {
+        add(WebSocketConversationUpdatedEvent(conv));
+      });
+
+      // Typing
+      _typingSubscription?.cancel();
+      _typingSubscription = webSocketService.typingEvents.listen((t) {
+        add(WebSocketTypingIndicatorEvent(
+          conversationId: t.conversationId,
+          typingUserIds: t.typingUserIds,
+        ));
+      });
+
+      // Presence
+      _presenceSubscription?.cancel();
+      _presenceSubscription = webSocketService.presenceEvents.listen((p) {
+        add(WebSocketPresenceUpdateEvent(
+          userId: p.userId,
+          status: p.status,
+          lastSeen: p.lastSeen,
+        ));
+      });
     } catch (_) {}
   }
 
@@ -138,6 +175,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       (failure) async =>
           emit(ChatError(message: _mapFailureToMessage(failure))),
       (conversations) async {
+        // Ensure conversations are sorted by updatedAt desc for list stability
+        conversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
         await settingsResult.fold(
           (failure) async =>
               emit(ChatError(message: _mapFailureToMessage(failure))),
@@ -169,6 +208,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       (failure) async =>
           emit(ChatError(message: _mapFailureToMessage(failure))),
       (conversations) async {
+        conversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
         if (state is ChatLoaded) {
           final currentState = state as ChatLoaded;
           emit(currentState.copyWith(
@@ -338,7 +378,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                 createdAt: c.createdAt,
                 updatedAt: messageEvent.message!.updatedAt,
                 lastMessage: messageEvent.message!,
-                unreadCount: c.unreadCount,
+                unreadCount: (c.unreadCount + 1),
                 isArchived: c.isArchived,
                 isMuted: c.isMuted,
                 propertyId: c.propertyId,
@@ -411,11 +451,34 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             }).toList();
 
             if (found) {
+              // Decrement unread count if message transitioned to read and it's from other user
+              final conversations = currentState.conversations.map((c) {
+                if (c.id == messageEvent.conversationId && messageEvent.status == 'read') {
+                  final dec = (c.unreadCount > 0) ? c.unreadCount - 1 : 0;
+                  return Conversation(
+                    id: c.id,
+                    conversationType: c.conversationType,
+                    title: c.title,
+                    description: c.description,
+                    avatar: c.avatar,
+                    createdAt: c.createdAt,
+                    updatedAt: DateTime.now(),
+                    lastMessage: c.lastMessage,
+                    unreadCount: dec,
+                    isArchived: c.isArchived,
+                    isMuted: c.isMuted,
+                    propertyId: c.propertyId,
+                    participants: c.participants,
+                  );
+                }
+                return c;
+              }).toList();
               emit(currentState.copyWith(
                 messages: {
                   ...currentState.messages,
                   messageEvent.conversationId: updatedMessages,
                 },
+                conversations: conversations,
               ));
             } else {
               // If message not found in memory (e.g., user in list view), fetch latest page
@@ -471,7 +534,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                   if (!exists) {
                     reactions.add(messageEvent.reaction!);
                   }
-                  return Message(
+                  final updatedMessage = Message(
                     id: m.id,
                     conversationId: m.conversationId,
                     senderId: m.senderId,
@@ -488,6 +551,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                     editedAt: m.editedAt,
                     deliveryReceipt: m.deliveryReceipt,
                   );
+                  // Update lastMessage in conversation if this is the last one
+                  _bumpConversationForMessage(currentState, messageEvent.conversationId, updatedMessage);
+                  return updatedMessage;
                 } else {
                   final reactions = m.reactions
                       .where((r) =>
@@ -495,7 +561,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                               r.reactionType ==
                                   messageEvent.reaction!.reactionType))
                       .toList();
-                  return Message(
+                  final updatedMessage = Message(
                     id: m.id,
                     conversationId: m.conversationId,
                     senderId: m.senderId,
@@ -512,6 +578,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                     editedAt: m.editedAt,
                     deliveryReceipt: m.deliveryReceipt,
                   );
+                  _bumpConversationForMessage(currentState, messageEvent.conversationId, updatedMessage);
+                  return updatedMessage;
                 }
               }
               return m;
@@ -605,6 +673,34 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     if (!inserted) merged.add(event.conversation);
     merged.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     emit(currentState.copyWith(conversations: merged));
+  }
+
+  // Ensure conversation list stays sorted and lastMessage reflects latest mutations (e.g., reactions)
+  void _bumpConversationForMessage(ChatLoaded currentState, String conversationId, Message updatedMessage) {
+    try {
+      final conversations = currentState.conversations.map((c) {
+        if (c.id == conversationId && (c.lastMessage?.id == updatedMessage.id)) {
+          return Conversation(
+            id: c.id,
+            conversationType: c.conversationType,
+            title: c.title,
+            description: c.description,
+            avatar: c.avatar,
+            createdAt: c.createdAt,
+            updatedAt: DateTime.now(),
+            lastMessage: updatedMessage,
+            unreadCount: c.unreadCount,
+            isArchived: c.isArchived,
+            isMuted: c.isMuted,
+            propertyId: c.propertyId,
+            participants: c.participants,
+          );
+        }
+        return c;
+      }).toList();
+      conversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      emit(currentState.copyWith(conversations: conversations));
+    } catch (_) {}
   }
 
   Future<void> _onWebSocketTypingIndicator(
@@ -1092,7 +1188,32 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         }
       },
       (_) async {
-        // No-op; optimistic UI already shows as read
+        // After marking as read, update unreadCount to 0 for that conversation
+        if (state is ChatLoaded) {
+          final current = state as ChatLoaded;
+          final conversations = current.conversations.map((c) {
+            if (c.id == event.conversationId) {
+              return Conversation(
+                id: c.id,
+                conversationType: c.conversationType,
+                title: c.title,
+                description: c.description,
+                avatar: c.avatar,
+                createdAt: c.createdAt,
+                updatedAt: DateTime.now(),
+                lastMessage: c.lastMessage,
+                unreadCount: 0,
+                isArchived: c.isArchived,
+                isMuted: c.isMuted,
+                propertyId: c.propertyId,
+                participants: c.participants,
+              );
+            }
+            return c;
+          }).toList();
+          conversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+          emit(current.copyWith(conversations: conversations));
+        }
       },
     );
   }
