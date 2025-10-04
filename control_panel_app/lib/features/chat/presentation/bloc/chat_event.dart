@@ -207,6 +207,9 @@ class UploadAttachmentEvent extends ChatEvent {
   List<Object?> get props => [conversationId, filePath, messageType];
 }
 
+// Legacy SendImagesEvent and UpdateImageUploadProgressEvent removed. UI now
+// uploads attachments sequentially and shows local progress overlay.
+
 class SearchChatsEvent extends ChatEvent {
   final String query;
   final String? conversationId;

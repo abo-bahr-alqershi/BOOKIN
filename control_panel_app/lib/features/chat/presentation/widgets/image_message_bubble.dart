@@ -7,6 +7,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/cached_image_widget.dart';
 import '../../domain/entities/message.dart';
 import '../../domain/entities/attachment.dart';
+import '../models/image_upload_info.dart';
 import 'message_status_indicator.dart';
 import 'whatsapp_style_image_grid.dart';
 
@@ -604,42 +605,5 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble>
 
   String _formatTime(DateTime dateTime) {
     return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-  }
-}
-
-// معلومات رفع الصورة
-class ImageUploadInfo {
-  final String id;
-  final File? file;
-  final double progress;
-  final bool isCompleted;
-  final bool isFailed;
-  final String? error;
-
-  ImageUploadInfo({
-    required this.id,
-    this.file,
-    this.progress = 0.0,
-    this.isCompleted = false,
-    this.isFailed = false,
-    this.error,
-  });
-
-  ImageUploadInfo copyWith({
-    String? id,
-    File? file,
-    double? progress,
-    bool? isCompleted,
-    bool? isFailed,
-    String? error,
-  }) {
-    return ImageUploadInfo(
-      id: id ?? this.id,
-      file: file ?? this.file,
-      progress: progress ?? this.progress,
-      isCompleted: isCompleted ?? this.isCompleted,
-      isFailed: isFailed ?? this.isFailed,
-      error: error ?? this.error,
-    );
   }
 }

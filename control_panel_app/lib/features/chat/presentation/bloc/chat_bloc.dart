@@ -1,11 +1,12 @@
 import 'dart:async';
-import 'package:bookn_cp_app/features/chat/presentation/widgets/image_message_bubble.dart';
-import 'package:bookn_cp_app/features/chat/presentation/widgets/message_bubble_widget.dart';
+import 'dart:io';
+import 'package:bookn_cp_app/features/chat/presentation/models/image_upload_info.dart';
 import 'package:bookn_cp_app/services/notification_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:bookn_cp_app/services/websocket_service.dart';
 import 'package:get_it/get_it.dart';
+import 'dart:io';
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../domain/entities/conversation.dart';
@@ -100,6 +101,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<RemoveReactionEvent>(_onRemoveReaction);
     on<MarkMessagesAsReadEvent>(_onMarkMessagesAsRead);
     on<UploadAttachmentEvent>(_onUploadAttachment);
+    // Removed legacy image upload temp-message handlers
     on<SearchChatsEvent>(_onSearchChats);
     on<LoadAvailableUsersEvent>(_onLoadAvailableUsers);
     on<LoadAdminUsersEvent>(_onLoadAdminUsers);
@@ -308,6 +310,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       },
     );
   }
+
+  // Legacy _onSendImages removed; UI handles local progress now.
+
+  // Legacy _onUpdateImageUploadProgress removed; UI handles local progress now.
+
+  // Public helper retained: UI may call uploadAttachmentWithProgress directly.
 
   // ... باقي event handlers ...
 
