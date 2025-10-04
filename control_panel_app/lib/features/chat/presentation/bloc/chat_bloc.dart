@@ -1556,4 +1556,71 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       },
     );
   }
+
+  // Upload a single attachment and return it without sending any message
+  Future<Attachment> uploadAttachmentOnly({
+    required String conversationId,
+    required String filePath,
+    required String messageType,
+    required void Function(int sent, int total) onProgress,
+  }) async {
+    final result = await uploadAttachmentUseCase(
+      UploadAttachmentParams(
+        conversationId: conversationId,
+        filePath: filePath,
+        messageType: messageType,
+        onSendProgress: (sent, total) {
+          add(_UploadProgressInternal(sent: sent, total: total));
+          try { onProgress(sent, total); } catch (_) {}
+        },
+      ),
+    );
+
+    return await result.fold(
+      (failure) async => throw Exception(_mapFailureToMessage(failure)),
+      (attachment) async => attachment,
+    );
+  }
+
+  // Upload multiple images, then send a single message that contains all attachments
+  Future<void> uploadImagesAndSendSingleMessage({
+    required String conversationId,
+    required List<String> filePaths,
+    required void Function(int index, int sent, int total) onProgress,
+  }) async {
+    final List<Attachment> uploaded = [];
+    for (int i = 0; i < filePaths.length; i++) {
+      final path = filePaths[i];
+      final att = await uploadAttachmentOnly(
+        conversationId: conversationId,
+        filePath: path,
+        messageType: 'image',
+        onProgress: (s, t) => onProgress(i, s, t),
+      );
+      uploaded.add(att);
+    }
+
+    // send one message with all attachment ids
+    final sendResult = await sendMessageUseCase(
+      SendMessageParams(
+        conversationId: conversationId,
+        messageType: 'image',
+        content: uploaded.isNotEmpty ? uploaded.first.fileUrl : null,
+        location: null,
+        replyToMessageId: null,
+        attachmentIds: uploaded.map((a) => a.id).toList(),
+      ),
+    );
+
+    await sendResult.fold(
+      (failure) async => throw Exception(_mapFailureToMessage(failure)),
+      (message) async {
+        add(WebSocketMessageReceivedEvent(MessageEvent(
+          type: MessageEventType.newMessage,
+          message: message,
+          conversationId: conversationId,
+        )));
+      },
+    );
+  }
 }
