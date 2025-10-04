@@ -63,12 +63,14 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
 
   Future<void> _editImage(int index) async {
     HapticFeedback.lightImpact();
-    
+    // Read image bytes before building the route to avoid using 'await' in builder
+    final bytes = await _editedImages[index].readAsBytes();
+
     final editedImage = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ImageEditor(
-          image: await _editedImages[index].readAsBytes(),
+          image: bytes,
         ),
       ),
     );

@@ -239,8 +239,7 @@ class WhatsAppStyleImageGrid extends StatelessWidget {
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            ExpandableImageViewer(
+        pageBuilder: (context, animation, secondaryAnimation) => ExpandableImageViewer(
           images: images,
           initialIndex: initialIndex,
         ),

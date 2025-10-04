@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -569,18 +570,26 @@ class _MediaTileState extends State<_MediaTile>
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Image thumbnail
-                AssetEntityImage(
-                  widget.asset,
-                  isOriginal: false,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: AppTheme.darkCard,
-                      child: Icon(
-                        Icons.broken_image,
-                        color: AppTheme.textMuted.withValues(alpha: 0.3),
-                      ),
+                // Image thumbnail (via PhotoManager thumbnail bytes)
+                FutureBuilder<Uint8List?>(
+                  future: widget.asset.thumbnailDataWithSize(const ThumbnailSize(200, 200)),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Container(color: AppTheme.darkCard);
+                    }
+                    final data = snapshot.data;
+                    if (data == null || data.isEmpty) {
+                      return Container(
+                        color: AppTheme.darkCard,
+                        child: Icon(
+                          Icons.broken_image,
+                          color: AppTheme.textMuted.withValues(alpha: 0.3),
+                        ),
+                      );
+                    }
+                    return Image.memory(
+                      data,
+                      fit: BoxFit.cover,
                     );
                   },
                 ),

@@ -1437,4 +1437,58 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       (users) async => emit(current.copyWith(adminUsers: users)),
     );
   }
+
+  // Public helper for uploading an attachment with progress and sending a message.
+  // Used by UI to run sequential uploads while reflecting progress in an overlay.
+  Future<void> uploadAttachmentWithProgress({
+    required String conversationId,
+    required String filePath,
+    required String messageType,
+    required void Function(int sent, int total) onProgress,
+  }) async {
+    final result = await uploadAttachmentUseCase(
+      UploadAttachmentParams(
+        conversationId: conversationId,
+        filePath: filePath,
+        messageType: messageType,
+        onSendProgress: (sent, total) {
+          // Update Bloc state and surface progress to caller
+          add(_UploadProgressInternal(sent: sent, total: total));
+          try {
+            onProgress(sent, total);
+          } catch (_) {}
+        },
+      ),
+    );
+
+    await result.fold(
+      (failure) async {
+        throw Exception(_mapFailureToMessage(failure));
+      },
+      (attachment) async {
+        final sendResult = await sendMessageUseCase(
+          SendMessageParams(
+            conversationId: conversationId,
+            messageType: messageType,
+            content: attachment.fileUrl,
+            location: null,
+            replyToMessageId: null,
+            attachmentIds: [attachment.id],
+          ),
+        );
+
+        await sendResult.fold(
+          (failure) async => throw Exception(_mapFailureToMessage(failure)),
+          (message) async {
+            // Propagate the new message via existing handler to update state
+            add(WebSocketMessageReceivedEvent(MessageEvent(
+              type: MessageEventType.newMessage,
+              message: message,
+              conversationId: conversationId,
+            )));
+          },
+        );
+      },
+    );
+  }
 }
