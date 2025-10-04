@@ -124,38 +124,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   // Bind message/conversation realtime streams (fed by NotificationService)
   void _bindRealtimeStreams() {
-    try {
-      // Messages
-      _messageSubscription?.cancel();
-      _messageSubscription = webSocketService.messageEvents.listen((evt) {
-        add(WebSocketMessageReceivedEvent(evt));
-      });
-
-      // Conversations
-      _conversationSubscription?.cancel();
-      _conversationSubscription = webSocketService.conversationUpdates.listen((conv) {
-        add(WebSocketConversationUpdatedEvent(conv));
-      });
-
-      // Typing
-      _typingSubscription?.cancel();
-      _typingSubscription = webSocketService.typingEvents.listen((t) {
-        add(WebSocketTypingIndicatorEvent(
-          conversationId: t.conversationId,
-          typingUserIds: t.typingUserIds,
-        ));
-      });
-
-      // Presence
-      _presenceSubscription?.cancel();
-      _presenceSubscription = webSocketService.presenceEvents.listen((p) {
-        add(WebSocketPresenceUpdateEvent(
-          userId: p.userId,
-          status: p.status,
-          lastSeen: p.lastSeen,
-        ));
-      });
-    } catch (_) {}
+    // No WebSocket realtime streams; FCM dispatches via NotificationService -> bindChatEventSink
   }
 
   Future<void> _onInitializeChat(
