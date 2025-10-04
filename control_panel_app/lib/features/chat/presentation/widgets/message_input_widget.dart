@@ -604,51 +604,48 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
     String tempMessageId,
     List<ImageUploadInfo> uploadInfos,
   ) async {
-    for (int i = 0; i < images.length; i++) {
-      final image = images[i];
-      final uploadId = '${tempMessageId}_$i';
+    final bloc = context.read<ChatBloc>();
+    final filePaths = images.map((f) => f.path).toList();
 
-      try {
-        await context.read<ChatBloc>().uploadAttachmentWithProgress(
-              conversationId: widget.conversationId,
-              filePath: image.path,
-              messageType: 'image',
-              onProgress: (sent, total) {
-                final ratio = total > 0 ? sent / total : 0.0;
-                context.read<ChatBloc>().add(
-                      UpdateImageUploadProgressEvent(
-                        conversationId: widget.conversationId,
-                        uploadId: uploadId,
-                        progress: ratio,
-                      ),
-                    );
-              },
-            );
+    try {
+      await bloc.uploadImagesAndSendSingleMessage(
+        conversationId: widget.conversationId,
+        filePaths: filePaths,
+        onProgress: (index, sent, total) {
+          final ratio = total > 0 ? sent / total : 0.0;
+          final uploadId = '${tempMessageId}_$index';
+          bloc.add(UpdateImageUploadProgressEvent(
+            conversationId: widget.conversationId,
+            uploadId: uploadId,
+            progress: ratio,
+          ));
+        },
+      );
 
-        context.read<ChatBloc>().add(
-              UpdateImageUploadProgressEvent(
-                conversationId: widget.conversationId,
-                uploadId: uploadId,
-                progress: 1.0,
-                isCompleted: true,
-              ),
-            );
-      } catch (e) {
-        context.read<ChatBloc>().add(
-              UpdateImageUploadProgressEvent(
-                conversationId: widget.conversationId,
-                uploadId: uploadId,
-                isFailed: true,
-                error: e.toString(),
-              ),
-            );
+      // Mark all as completed
+      for (int i = 0; i < images.length; i++) {
+        final uploadId = '${tempMessageId}_$i';
+        bloc.add(UpdateImageUploadProgressEvent(
+          conversationId: widget.conversationId,
+          uploadId: uploadId,
+          progress: 1.0,
+          isCompleted: true,
+        ));
       }
-    }
-    // إنهاء عرض فقاعة الرفع
-    if (mounted) {
-      context
-          .read<ChatBloc>()
-          .add(FinishImageUploadsEvent(conversationId: widget.conversationId));
+    } catch (e) {
+      for (int i = 0; i < images.length; i++) {
+        final uploadId = '${tempMessageId}_$i';
+        bloc.add(UpdateImageUploadProgressEvent(
+          conversationId: widget.conversationId,
+          uploadId: uploadId,
+          isFailed: true,
+          error: e.toString(),
+        ));
+      }
+    } finally {
+      if (mounted) {
+        bloc.add(FinishImageUploadsEvent(conversationId: widget.conversationId));
+      }
     }
   }
 
