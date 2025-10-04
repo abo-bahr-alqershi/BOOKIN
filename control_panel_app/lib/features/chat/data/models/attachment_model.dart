@@ -28,9 +28,9 @@ class AttachmentModel extends Attachment {
       filePath: json['file_path'] ?? json['filePath'] ?? '',
       fileUrl: json['file_url'] ??
           '/api/common/chat/attachments/${json['attachment_id'] ?? json['id']}',
-    url: json['url'] ??
-      json['file_url'] ??
-      '/api/common/chat/attachments/${json['attachment_id'] ?? json['id']}',
+      url: json['url'] ??
+          json['file_url'] ??
+          '/api/common/chat/attachments/${json['attachment_id'] ?? json['id']}',
       uploadedBy: json['uploaded_by'] ?? json['uploadedBy'] ?? '',
       createdAt: DateTime.parse(
           json['uploaded_at'] ?? json['created_at'] ?? json['createdAt']),
@@ -51,7 +51,7 @@ class AttachmentModel extends Attachment {
       'file_size': fileSize,
       'file_path': filePath,
       'file_url': fileUrl,
-  'url': url,
+      'url': url,
       'uploaded_by': uploadedBy,
       'uploaded_at': createdAt.toIso8601String(),
       if (thumbnailUrl != null) 'thumbnail_url': thumbnailUrl,
@@ -70,7 +70,7 @@ class AttachmentModel extends Attachment {
       fileSize: attachment.fileSize,
       filePath: attachment.filePath,
       fileUrl: attachment.fileUrl,
-  url: attachment.url,
+      url: attachment.url,
       uploadedBy: attachment.uploadedBy,
       createdAt: attachment.createdAt,
       thumbnailUrl: attachment.thumbnailUrl,
