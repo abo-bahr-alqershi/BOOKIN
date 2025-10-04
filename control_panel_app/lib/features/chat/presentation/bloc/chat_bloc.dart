@@ -101,6 +101,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<RemoveReactionEvent>(_onRemoveReaction);
     on<MarkMessagesAsReadEvent>(_onMarkMessagesAsRead);
     on<UploadAttachmentEvent>(_onUploadAttachment);
+    on<StartImageUploadsEvent>(_onStartImageUploads);
+    on<UpdateImageUploadProgressEvent>(_onUpdateImageUploadProgress);
+    on<FinishImageUploadsEvent>(_onFinishImageUploads);
     // Removed legacy image upload temp-message handlers
     on<SearchChatsEvent>(_onSearchChats);
     on<LoadAvailableUsersEvent>(_onLoadAvailableUsers);
@@ -1345,6 +1348,47 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         );
       },
     );
+  }
+
+  // Track per-conversation in-bubble image upload progress and render via state
+  Future<void> _onStartImageUploads(
+      StartImageUploadsEvent event, Emitter<ChatState> emit) async {
+    if (state is! ChatLoaded) return;
+    final current = state as ChatLoaded;
+    final updated = Map<String, List<ImageUploadInfo>>.from(current.uploadingImages);
+    updated[event.conversationId] = event.uploads;
+    emit(current.copyWith(uploadingImages: updated));
+  }
+
+  Future<void> _onUpdateImageUploadProgress(
+      UpdateImageUploadProgressEvent event, Emitter<ChatState> emit) async {
+    if (state is! ChatLoaded) return;
+    final current = state as ChatLoaded;
+    final convoUploads = List<ImageUploadInfo>.from(
+        current.uploadingImages[event.conversationId] ?? const []);
+    final index = convoUploads.indexWhere((u) => u.id == event.uploadId);
+    if (index >= 0) {
+      final prev = convoUploads[index];
+      final next = prev.copyWith(
+        progress: event.progress ?? prev.progress,
+        isCompleted: event.isCompleted ?? prev.isCompleted,
+        isFailed: event.isFailed ?? prev.isFailed,
+        error: event.error ?? prev.error,
+      );
+      convoUploads[index] = next;
+      final updated = Map<String, List<ImageUploadInfo>>.from(current.uploadingImages);
+      updated[event.conversationId] = convoUploads;
+      emit(current.copyWith(uploadingImages: updated));
+    }
+  }
+
+  Future<void> _onFinishImageUploads(
+      FinishImageUploadsEvent event, Emitter<ChatState> emit) async {
+    if (state is! ChatLoaded) return;
+    final current = state as ChatLoaded;
+    final updated = Map<String, List<ImageUploadInfo>>.from(current.uploadingImages);
+    updated.remove(event.conversationId);
+    emit(current.copyWith(uploadingImages: updated));
   }
 
   Future<void> _onSearchChats(

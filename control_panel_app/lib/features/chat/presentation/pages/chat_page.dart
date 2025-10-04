@@ -11,6 +11,7 @@ import '../../domain/entities/conversation.dart';
 import '../../domain/entities/message.dart';
 import '../bloc/chat_bloc.dart';
 import '../widgets/message_bubble_widget.dart';
+import '../widgets/image_message_bubble.dart';
 import '../widgets/message_input_widget.dart';
 import '../widgets/typing_indicator_widget.dart';
 import '../widgets/chat_app_bar.dart';
@@ -455,7 +456,7 @@ class _ChatPageState extends State<ChatPage>
                   _messageKeys[message.id] ??= GlobalKey();
                 }
 
-                return _buildMessagesList(messages, typingUsers,
+                return _buildMessagesList(state, messages, typingUsers,
                     userId: userId);
               },
             );
@@ -611,8 +612,14 @@ class _ChatPageState extends State<ChatPage>
     );
   }
 
-  Widget _buildMessagesList(List<Message> messages, List<String> typingUsers,
+  Widget _buildMessagesList(ChatLoaded state, List<Message> messages, List<String> typingUsers,
       {required String userId}) {
+    final uploading = state.uploadingImages[widget.conversation.id] ?? const [];
+    final hasUploading = uploading.isNotEmpty;
+
+    // Items: [typing?] + [uploading?] + messages
+    final baseExtra = (typingUsers.isNotEmpty ? 1 : 0) + (hasUploading ? 1 : 0);
+
     return ListView.builder(
       key: _listKey,
       controller: _scrollController,
@@ -622,9 +629,11 @@ class _ChatPageState extends State<ChatPage>
         vertical: 8,
       ),
       physics: const BouncingScrollPhysics(),
-      itemCount: messages.length + (typingUsers.isNotEmpty ? 1 : 0),
+      itemCount: messages.length + baseExtra,
       itemBuilder: (context, index) {
-        if (index == 0 && typingUsers.isNotEmpty) {
+        int cursor = 0;
+        // Typing indicator at the very top
+        if (typingUsers.isNotEmpty && index == cursor) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: TypingIndicatorWidget(
@@ -634,7 +643,34 @@ class _ChatPageState extends State<ChatPage>
           );
         }
 
-        final messageIndex = typingUsers.isNotEmpty ? index - 1 : index;
+        cursor += typingUsers.isNotEmpty ? 1 : 0;
+
+        // Uploading images bubble just below typing indicator (if any)
+        if (hasUploading && index == cursor) {
+          // Synthetic message to carry meta for alignment/time
+          final synthetic = Message(
+            id: 'uploading_${widget.conversation.id}',
+            conversationId: widget.conversation.id,
+            senderId: userId.isNotEmpty ? userId : 'current_user',
+            messageType: 'image',
+            content: null,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+            status: 'sending',
+          );
+          return Align(
+            alignment: Alignment.centerRight,
+            child: ImageMessageBubble(
+              message: synthetic,
+              isMe: true,
+              uploadingImages: uploading,
+            ),
+          );
+        }
+
+        cursor += hasUploading ? 1 : 0;
+
+        final messageIndex = index - cursor;
         final message = messages[messageIndex];
         final previousMessage = messageIndex < messages.length - 1
             ? messages[messageIndex + 1]
@@ -654,24 +690,46 @@ class _ChatPageState extends State<ChatPage>
               _buildPremiumDateSeparator(message.createdAt),
             Align(
               alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-              child: MessageBubbleWidget(
-                message: message,
-                isMe: isMe,
-                previousMessage: previousMessage,
-                nextMessage: nextMessage,
-                onReply: () => _setReplyTo(message),
-                onEdit: isMe ? () => _startEditingMessage(message) : null,
-                onDelete: isMe ? () => _deleteMessage(message) : null,
-                onReaction: (reactionType) =>
-                    _addReaction(message, reactionType, userId),
-                onReplyTap: message.replyToMessageId != null
-                    ? () => _scrollToMessage(message.replyToMessageId!)
-                    : null,
-              ),
+              child: _buildMessageBubbleFor(message, isMe, previousMessage, nextMessage, userId),
             ),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildMessageBubbleFor(
+    Message message,
+    bool isMe,
+    Message? previousMessage,
+    Message? nextMessage,
+    String userId,
+  ) {
+    final isImageMessage = message.messageType == 'image' ||
+        (message.attachments.isNotEmpty &&
+            message.attachments.any((a) => a.isImage));
+
+    if (isImageMessage) {
+      return ImageMessageBubble(
+        message: message,
+        isMe: isMe,
+        onReply: () => _setReplyTo(message),
+        onReaction: (reactionType) => _addReaction(message, reactionType, userId),
+      );
+    }
+
+    return MessageBubbleWidget(
+      message: message,
+      isMe: isMe,
+      previousMessage: previousMessage,
+      nextMessage: nextMessage,
+      onReply: () => _setReplyTo(message),
+      onEdit: isMe ? () => _startEditingMessage(message) : null,
+      onDelete: isMe ? () => _deleteMessage(message) : null,
+      onReaction: (reactionType) => _addReaction(message, reactionType, userId),
+      onReplyTap: message.replyToMessageId != null
+          ? () => _scrollToMessage(message.replyToMessageId!)
+          : null,
     );
   }
 
