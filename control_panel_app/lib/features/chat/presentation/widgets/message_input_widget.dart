@@ -27,6 +27,7 @@ class MessageInputWidget extends StatefulWidget {
   final VoidCallback? onLocation;
   final VoidCallback? onCancelReply;
   final VoidCallback? onCancelEdit;
+  final String? currentUserId;
 
   const MessageInputWidget({
     super.key,
@@ -40,6 +41,7 @@ class MessageInputWidget extends StatefulWidget {
     this.onLocation,
     this.onCancelReply,
     this.onCancelEdit,
+    this.currentUserId,
   });
 
   @override
@@ -586,6 +588,7 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
         id: '${tempMessageId}_$i',
         file: images[i],
         progress: 0.0,
+        uploaderId: widget.currentUserId,
       ));
     }
 

@@ -612,7 +612,8 @@ class _ChatPageState extends State<ChatPage>
     );
   }
 
-  Widget _buildMessagesList(ChatLoaded state, List<Message> messages, List<String> typingUsers,
+  Widget _buildMessagesList(
+      ChatLoaded state, List<Message> messages, List<String> typingUsers,
       {required String userId}) {
     final uploading = state.uploadingImages[widget.conversation.id] ?? const [];
     final hasUploading = uploading.isNotEmpty;
@@ -690,7 +691,8 @@ class _ChatPageState extends State<ChatPage>
               _buildPremiumDateSeparator(message.createdAt),
             Align(
               alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-              child: _buildMessageBubbleFor(message, isMe, previousMessage, nextMessage, userId),
+              child: _buildMessageBubbleFor(
+                  message, isMe, previousMessage, nextMessage, userId),
             ),
           ],
         );
@@ -714,7 +716,8 @@ class _ChatPageState extends State<ChatPage>
         message: message,
         isMe: isMe,
         onReply: () => _setReplyTo(message),
-        onReaction: (reactionType) => _addReaction(message, reactionType, userId),
+        onReaction: (reactionType) =>
+            _addReaction(message, reactionType, userId),
       );
     }
 
@@ -875,6 +878,7 @@ class _ChatPageState extends State<ChatPage>
               _messageController.clear();
             });
           },
+          currentUserId: _currentUserId,
         ),
       ],
     );

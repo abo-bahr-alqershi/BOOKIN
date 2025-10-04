@@ -1,10 +1,16 @@
+import 'dart:math' as math;
+import 'dart:ui';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui';
+import 'package:bookn_cp_app/injection_container.dart';
+import 'package:bookn_cp_app/services/local_storage_service.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/cached_image_widget.dart';
+import '../../../../core/constants/storage_constants.dart';
+import '../../../../core/utils/image_utils.dart';
 import '../../domain/entities/attachment.dart';
 
 class AttachmentPreviewWidget extends StatefulWidget {
@@ -22,14 +28,18 @@ class AttachmentPreviewWidget extends StatefulWidget {
   });
 
   @override
-  State<AttachmentPreviewWidget> createState() => _AttachmentPreviewWidgetState();
+  State<AttachmentPreviewWidget> createState() =>
+      _AttachmentPreviewWidgetState();
 }
 
 class _AttachmentPreviewWidgetState extends State<AttachmentPreviewWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _shimmerController;
   late Animation<double> _shimmerAnimation;
-  
+  ImageStream? _imageStream;
+  ImageStreamListener? _imageStreamListener;
+  Size? _displaySize;
+
   @override
   void initState() {
     super.initState();
@@ -44,17 +54,99 @@ class _AttachmentPreviewWidgetState extends State<AttachmentPreviewWidget>
       parent: _shimmerController,
       curve: Curves.easeInOutSine,
     ));
-    
-    if (widget.attachment.downloadProgress != null && 
+
+    if (widget.attachment.downloadProgress != null &&
         widget.attachment.downloadProgress! < 1.0) {
       _shimmerController.repeat();
     }
+    _resolveImageDimensions();
   }
-  
+
   @override
   void dispose() {
+    _removeImageStreamListener();
     _shimmerController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant AttachmentPreviewWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.attachment.fileUrl != widget.attachment.fileUrl) {
+      _resolveImageDimensions();
+    }
+  }
+
+  void _resolveImageDimensions() {
+    _removeImageStreamListener();
+    final resolvedUrl = ImageUtils.resolveUrl(widget.attachment.fileUrl);
+    if (resolvedUrl.isEmpty) {
+      setState(() {
+        _displaySize = const Size(180, 180);
+      });
+      return;
+    }
+
+    final headers = _buildAuthHeaders();
+    final provider = CachedNetworkImageProvider(resolvedUrl, headers: headers);
+    final stream = provider.resolve(const ImageConfiguration());
+    final listener = ImageStreamListener((imageInfo, _) {
+      final width = imageInfo.image.width / imageInfo.scale;
+      final height = imageInfo.image.height / imageInfo.scale;
+      final constrained = _constrainSize(Size(width, height));
+      if (mounted) {
+        setState(() {
+          _displaySize = constrained;
+        });
+      }
+      _removeImageStreamListener();
+    }, onError: (_, __) {
+      _removeImageStreamListener();
+    });
+
+    stream.addListener(listener);
+    _imageStream = stream;
+    _imageStreamListener = listener;
+  }
+
+  void _removeImageStreamListener() {
+    if (_imageStream != null && _imageStreamListener != null) {
+      _imageStream!.removeListener(_imageStreamListener!);
+    }
+    _imageStream = null;
+    _imageStreamListener = null;
+  }
+
+  Size _constrainSize(Size original) {
+    const maxWidth = 300.0;
+    const maxHeight = 300.0;
+    double width = original.width;
+    double height = original.height;
+
+    if (width <= 0 || height <= 0) {
+      return const Size(180, 180);
+    }
+
+    if (width > maxWidth || height > maxHeight) {
+      final widthScale = maxWidth / width;
+      final heightScale = maxHeight / height;
+      final scale = math.min(widthScale, heightScale);
+      width *= scale;
+      height *= scale;
+    }
+
+    return Size(width, height);
+  }
+
+  Map<String, String>? _buildAuthHeaders() {
+    try {
+      final local = sl<LocalStorageService>();
+      final token = local.getData(StorageConstants.accessToken) as String?;
+      if (token != null && token.isNotEmpty) {
+        return {'Authorization': 'Bearer $token'};
+      }
+    } catch (_) {}
+    return null;
   }
 
   @override
@@ -71,43 +163,40 @@ class _AttachmentPreviewWidgetState extends State<AttachmentPreviewWidget>
   }
 
   Widget _buildImagePreview() {
+    final size = _displaySize ?? const Size(180, 180);
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
         widget.onTap?.call();
       },
-      child: Container(
-        constraints: const BoxConstraints(
-          maxHeight: 220, // Reduced from 300
-          minHeight: 120, // Reduced from 150
-        ),
-        margin: const EdgeInsets.all(6), // Reduced from 8
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10), // Reduced from 12
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          width: size.width,
+          height: size.height,
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Glass effect background
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      widget.isMe 
-                        ? AppTheme.primaryBlue.withValues(alpha: 0.05)
-                        : AppTheme.darkCard.withValues(alpha: 0.3),
                       widget.isMe
-                        ? AppTheme.primaryPurple.withValues(alpha: 0.03)
-                        : AppTheme.darkSurface.withValues(alpha: 0.2),
+                          ? AppTheme.primaryBlue.withValues(alpha: 0.05)
+                          : AppTheme.darkCard.withValues(alpha: 0.3),
+                      widget.isMe
+                          ? AppTheme.primaryPurple.withValues(alpha: 0.03)
+                          : AppTheme.darkSurface.withValues(alpha: 0.2),
                     ],
                   ),
                 ),
               ),
-              // Image
               CachedImageWidget(
                 imageUrl: widget.attachment.fileUrl,
                 fit: BoxFit.cover,
+                width: size.width,
+                height: size.height,
               ),
-              // Progress overlay
               if (widget.attachment.downloadProgress != null &&
                   widget.attachment.downloadProgress! < 1.0)
                 _buildMinimalProgressOverlay(),
@@ -156,7 +245,7 @@ class _AttachmentPreviewWidgetState extends State<AttachmentPreviewWidget>
                     color: AppTheme.textMuted.withValues(alpha: 0.5),
                   ),
                 ),
-              
+
               // Glassmorphism play button
               Center(
                 child: ClipRRect(
@@ -188,7 +277,7 @@ class _AttachmentPreviewWidgetState extends State<AttachmentPreviewWidget>
                   ),
                 ),
               ),
-              
+
               // Duration badge
               Positioned(
                 bottom: 6,
@@ -217,7 +306,7 @@ class _AttachmentPreviewWidgetState extends State<AttachmentPreviewWidget>
                   ),
                 ),
               ),
-              
+
               if (widget.attachment.downloadProgress != null &&
                   widget.attachment.downloadProgress! < 1.0)
                 _buildMinimalProgressOverlay(),
@@ -270,14 +359,19 @@ class _AttachmentPreviewWidgetState extends State<AttachmentPreviewWidget>
                     height: 32,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: widget.isMe 
-                            ? [Colors.white.withValues(alpha: 0.9), Colors.white.withValues(alpha: 0.7)]
+                        colors: widget.isMe
+                            ? [
+                                Colors.white.withValues(alpha: 0.9),
+                                Colors.white.withValues(alpha: 0.7)
+                              ]
                             : [AppTheme.primaryBlue, AppTheme.primaryPurple],
                       ),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: (widget.isMe ? Colors.white : AppTheme.primaryBlue)
+                          color: (widget.isMe
+                                  ? Colors.white
+                                  : AppTheme.primaryBlue)
                               .withValues(alpha: 0.2),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
@@ -292,7 +386,7 @@ class _AttachmentPreviewWidgetState extends State<AttachmentPreviewWidget>
                   ),
                 ),
                 const SizedBox(width: 10),
-                
+
                 // Waveform
                 Expanded(
                   child: Column(
@@ -395,7 +489,7 @@ class _AttachmentPreviewWidgetState extends State<AttachmentPreviewWidget>
                     ),
                   ),
                   const SizedBox(width: 10),
-                  
+
                   // File info
                   Expanded(
                     child: Column(
@@ -404,7 +498,8 @@ class _AttachmentPreviewWidgetState extends State<AttachmentPreviewWidget>
                         Text(
                           widget.attachment.fileName,
                           style: AppTextStyles.bodySmall.copyWith(
-                            color: widget.isMe ? Colors.white : AppTheme.textWhite,
+                            color:
+                                widget.isMe ? Colors.white : AppTheme.textWhite,
                             fontWeight: FontWeight.w500,
                             fontSize: 12,
                           ),
@@ -424,7 +519,7 @@ class _AttachmentPreviewWidgetState extends State<AttachmentPreviewWidget>
                       ],
                     ),
                   ),
-                  
+
                   // Download button
                   if (widget.onDownload != null)
                     GestureDetector(
@@ -446,7 +541,8 @@ class _AttachmentPreviewWidgetState extends State<AttachmentPreviewWidget>
                         ),
                         child: Icon(
                           Icons.download_rounded,
-                          color: widget.isMe ? Colors.white : AppTheme.primaryBlue,
+                          color:
+                              widget.isMe ? Colors.white : AppTheme.primaryBlue,
                           size: 16,
                         ),
                       ),
@@ -567,20 +663,26 @@ class _MinimalWaveformPainter extends CustomPainter {
 
     const barCount = 25; // Reduced from 30
     final barWidth = size.width / barCount;
-    
+
     for (int i = 0; i < barCount; i++) {
       final x = i * barWidth + barWidth / 2;
       final normalizedPosition = (i / barCount - shimmerPosition).abs();
-      final shimmerOpacity = normalizedPosition < 0.2 ? 1.0 - (normalizedPosition * 5) : 0.0;
-      
+      final shimmerOpacity =
+          normalizedPosition < 0.2 ? 1.0 - (normalizedPosition * 5) : 0.0;
+
       // Create more elegant wave pattern
-      final waveHeight = (i % 3 == 0 ? 0.2 : i % 2 == 0 ? 0.4 : 0.6) * size.height;
+      final waveHeight = (i % 3 == 0
+              ? 0.2
+              : i % 2 == 0
+                  ? 0.4
+                  : 0.6) *
+          size.height;
       final y1 = (size.height - waveHeight) / 2;
       final y2 = y1 + waveHeight;
-      
+
       final isProgressed = i / barCount <= progress;
       final currentPaint = isProgressed ? progressPaint : paint;
-      
+
       if (shimmerOpacity > 0) {
         final shimmerPaint = Paint()
           ..color = color.withValues(alpha: 0.2 + shimmerOpacity * 0.3)

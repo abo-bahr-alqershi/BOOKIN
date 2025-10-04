@@ -352,6 +352,31 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             ...currentMessages
           ];
           // Also bump the conversation's updatedAt if present
+          Map<String, List<ImageUploadInfo>>?
+              maybeUpdatedUploadingImages;
+          final pendingUploads =
+              currentState.uploadingImages[messageEvent.conversationId];
+          if (pendingUploads != null && pendingUploads.isNotEmpty) {
+            final senderId = messageEvent.message!.senderId;
+            final isImageMessage = messageEvent.message!.messageType == 'image' ||
+                messageEvent.message!.attachments
+                    .any((attachment) => attachment.isImage);
+            final allBelongToSender = pendingUploads.every((upload) {
+              if (upload.uploaderId == null) {
+                // Fall back to completed flag when uploader unknown
+                return upload.isCompleted;
+              }
+              return upload.uploaderId == senderId;
+            });
+            final allMarkedCompleted =
+                pendingUploads.every((upload) => upload.isCompleted);
+            if (isImageMessage && allBelongToSender && allMarkedCompleted) {
+              maybeUpdatedUploadingImages = Map<String, List<ImageUploadInfo>>
+                  .from(currentState.uploadingImages);
+              maybeUpdatedUploadingImages
+                  .remove(messageEvent.conversationId);
+            }
+          }
           final conversations = currentState.conversations.map((c) {
             if (c.id == messageEvent.conversationId) {
               return Conversation(
@@ -379,6 +404,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
               messageEvent.conversationId: newList,
             },
             conversations: conversations,
+            uploadingImages: maybeUpdatedUploadingImages,
           ));
         } else {
           // في حال لم يصل جسم الرسالة (FCM data فقط)، اجلب آخر الرسائل لهذا الحوار
@@ -1355,7 +1381,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       StartImageUploadsEvent event, Emitter<ChatState> emit) async {
     if (state is! ChatLoaded) return;
     final current = state as ChatLoaded;
-    final updated = Map<String, List<ImageUploadInfo>>.from(current.uploadingImages);
+    final updated =
+        Map<String, List<ImageUploadInfo>>.from(current.uploadingImages);
     updated[event.conversationId] = event.uploads;
     emit(current.copyWith(uploadingImages: updated));
   }
@@ -1376,8 +1403,18 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         error: event.error ?? prev.error,
       );
       convoUploads[index] = next;
-      final updated = Map<String, List<ImageUploadInfo>>.from(current.uploadingImages);
-      updated[event.conversationId] = convoUploads;
+      final updated =
+          Map<String, List<ImageUploadInfo>>.from(current.uploadingImages);
+      final allCompleted = convoUploads.isNotEmpty &&
+          convoUploads
+              .every((upload) => upload.isCompleted && !upload.isFailed);
+
+      if (allCompleted) {
+        updated.remove(event.conversationId);
+      } else {
+        updated[event.conversationId] = convoUploads;
+      }
+
       emit(current.copyWith(uploadingImages: updated));
     }
   }
@@ -1386,7 +1423,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       FinishImageUploadsEvent event, Emitter<ChatState> emit) async {
     if (state is! ChatLoaded) return;
     final current = state as ChatLoaded;
-    final updated = Map<String, List<ImageUploadInfo>>.from(current.uploadingImages);
+    final updated =
+        Map<String, List<ImageUploadInfo>>.from(current.uploadingImages);
     updated.remove(event.conversationId);
     emit(current.copyWith(uploadingImages: updated));
   }
@@ -1571,7 +1609,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         messageType: messageType,
         onSendProgress: (sent, total) {
           add(_UploadProgressInternal(sent: sent, total: total));
-          try { onProgress(sent, total); } catch (_) {}
+          try {
+            onProgress(sent, total);
+          } catch (_) {}
         },
       ),
     );

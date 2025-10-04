@@ -8,6 +8,7 @@ class ImageUploadInfo {
   final bool isCompleted;
   final bool isFailed;
   final String? error;
+  final String? uploaderId;
 
   const ImageUploadInfo({
     required this.id,
@@ -16,6 +17,7 @@ class ImageUploadInfo {
     this.isCompleted = false,
     this.isFailed = false,
     this.error,
+    this.uploaderId,
   });
 
   ImageUploadInfo copyWith({
@@ -25,6 +27,7 @@ class ImageUploadInfo {
     bool? isCompleted,
     bool? isFailed,
     String? error,
+    String? uploaderId,
   }) {
     return ImageUploadInfo(
       id: id ?? this.id,
@@ -33,6 +36,7 @@ class ImageUploadInfo {
       isCompleted: isCompleted ?? this.isCompleted,
       isFailed: isFailed ?? this.isFailed,
       error: error ?? this.error,
+      uploaderId: uploaderId ?? this.uploaderId,
     );
   }
 }

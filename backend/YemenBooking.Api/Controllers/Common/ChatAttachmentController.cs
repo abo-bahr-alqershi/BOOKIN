@@ -49,7 +49,7 @@ namespace YemenBooking.Api.Controllers.Common
                 return NotFound();
 
             // تحقق من كون المستخدم مشاركاً في المحادثة
-            var conv = await _conversationRepo.GetByIdAsync(attachment.ConversationId);
+            var conv = await _conversationRepo.GetByIdWithParticipantsAsync(attachment.ConversationId);
             if (conv == null || !conv.Participants.Any(p => p.Id == userId))
                 return Forbid();
 

@@ -30,6 +30,12 @@ namespace YemenBooking.Core.Interfaces.Repositories
         /// </summary>
         Task<ChatConversation?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// جلب محادثة مع المشاركين فقط للتحقق من الصلاحيات بسرعة
+    /// Get conversation by id including only participants for fast access checks
+    /// </summary>
+    Task<ChatConversation?> GetByIdWithParticipantsAsync(Guid id, CancellationToken cancellationToken = default);
+
         /// <summary>
         /// الحصول على المحادثات المرتبطة بعقار محدد (حساب المراسلة الخاص بالعقار)
         /// Get conversations associated with a specific property (property-level messaging account)
