@@ -103,6 +103,9 @@ dependencies:
   path_provider: ^2.1.2
   chewie: ^1.13.0
   
+  photo_manager: ^3.0.0
+  image_editor_plus: ^1.0.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

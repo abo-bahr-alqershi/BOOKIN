@@ -46,7 +46,7 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
   late AnimationController _animationController;
   late Animation<double> _sendButtonAnimation;
   late Animation<double> _recordAnimation;
-  
+
   final AudioRecorder _audioRecorder = AudioRecorder();
   bool _isRecording = false;
   bool _showAttachmentOptions = false;
@@ -74,7 +74,7 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
-    
+
     widget.controller.addListener(_onTextChanged);
   }
 
@@ -88,7 +88,8 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
   void _onTextChanged() {
     if (widget.controller.text.isNotEmpty && _sendButtonAnimation.value == 0) {
       _animationController.forward();
-    } else if (widget.controller.text.isEmpty && _sendButtonAnimation.value == 1) {
+    } else if (widget.controller.text.isEmpty &&
+        _sendButtonAnimation.value == 1) {
       _animationController.reverse();
     }
   }
@@ -124,8 +125,7 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (_showAttachmentOptions) 
-                _buildMinimalAttachmentOptions(),
+              if (_showAttachmentOptions) _buildMinimalAttachmentOptions(),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -243,8 +243,8 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
           turns: _showAttachmentOptions ? 0.125 : 0,
           child: Icon(
             Icons.add_rounded,
-            color: _showAttachmentOptions 
-                ? Colors.white 
+            color: _showAttachmentOptions
+                ? Colors.white
                 : AppTheme.textMuted.withValues(alpha: 0.5),
             size: 18,
           ),
@@ -333,7 +333,7 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
       animation: _sendButtonAnimation,
       builder: (context, child) {
         final showSend = _sendButtonAnimation.value > 0.5;
-        
+
         return GestureDetector(
           onTap: showSend ? _sendMessage : null,
           onLongPress: !showSend ? _startRecording : null,
@@ -386,9 +386,7 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
                 child: _isRecording
                     ? _buildMinimalRecordingIndicator()
                     : Icon(
-                        showSend
-                            ? Icons.send_rounded
-                            : Icons.mic_rounded,
+                        showSend ? Icons.send_rounded : Icons.mic_rounded,
                         color: showSend || _isRecording
                             ? Colors.white
                             : AppTheme.textMuted.withValues(alpha: 0.5),
@@ -444,39 +442,40 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
 
   Future<void> _startRecording() async {
     HapticFeedback.mediumImpact();
-    
+
     final permission = await Permission.microphone.request();
     if (!permission.isGranted) return;
 
     if (await _audioRecorder.hasPermission()) {
       final directory = Directory.systemTemp;
-      _recordingPath = '${directory.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      
+      _recordingPath =
+          '${directory.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
       await _audioRecorder.start(
         const RecordConfig(),
         path: _recordingPath,
       );
-      
+
       setState(() {
         _isRecording = true;
       });
-      
+
       _animationController.repeat(reverse: true);
     }
   }
 
   Future<void> _stopRecording() async {
     if (!_isRecording) return;
-    
+
     HapticFeedback.mediumImpact();
     _animationController.stop();
-    
+
     final path = await _audioRecorder.stop();
-    
+
     setState(() {
       _isRecording = false;
     });
-    
+
     if (path != null) {
       _sendAudioMessage(path);
     }
@@ -487,28 +486,98 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(
-      source: source,
-      maxWidth: 1920,
-      maxHeight: 1920,
-      imageQuality: 85,
+    if (source == ImageSource.gallery) {
+      // فتح نافذة اختيار الصور المتعددة
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => MultiImagePickerModal(
+          onImagesSelected: (images) {
+            _sendMultipleImages(images);
+          },
+          maxImages: 10,
+        ),
+      );
+    } else {
+      // التقاط صورة واحدة من الكاميرا
+      final picker = ImagePicker();
+      final image = await picker.pickImage(
+        source: source,
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        _sendMultipleImages([File(image.path)]);
+      }
+    }
+  }
+
+  void _sendMultipleImages(List<File> images) {
+    // إظهار overlay التقدم
+    final tasks = images.map((image) {
+      final fileName = image.path.split('/').last;
+      return UploadTask(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        fileName: fileName,
+        thumbnail: image,
+      );
+    }).toList();
+
+    // إظهار overlay
+    final overlay = OverlayEntry(
+      builder: (context) => UploadProgressOverlay(
+        tasks: tasks,
+        onCancel: () {
+          // إلغاء الرفع
+        },
+      ),
     );
-    
-    if (image != null) {
-      setState(() {
-        _showAttachmentOptions = false;
-      });
-      // Send image with real upload progress via Bloc
-      if (!mounted) return;
-      context.read<ChatBloc>().add(
-            UploadAttachmentEvent(
+
+    Overlay.of(context).insert(overlay);
+
+    // رفع الصور واحدة تلو الأخرى
+    _uploadImagesSequentially(images, tasks, overlay);
+  }
+
+  Future<void> _uploadImagesSequentially(
+    List<File> images,
+    List<UploadTask> tasks,
+    OverlayEntry overlay,
+  ) async {
+    for (int i = 0; i < images.length; i++) {
+      final image = images[i];
+      final task = tasks[i];
+
+      try {
+        await context.read<ChatBloc>().uploadAttachmentWithProgress(
               conversationId: widget.conversationId,
               filePath: image.path,
               messageType: 'image',
-            ),
-          );
+              onProgress: (sent, total) {
+                setState(() {
+                  task.progress = sent / total;
+                });
+              },
+            );
+
+        setState(() {
+          task.isCompleted = true;
+          task.progress = 1.0;
+        });
+      } catch (e) {
+        setState(() {
+          task.isFailed = true;
+          task.error = e.toString();
+        });
+      }
     }
+
+    // إخفاء overlay بعد انتهاء كل المهام
+    await Future.delayed(const Duration(seconds: 1));
+    overlay.remove();
   }
 
   Future<void> _pickVideo() async {
@@ -517,7 +586,7 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
       source: ImageSource.gallery,
       maxDuration: const Duration(minutes: 5),
     );
-    
+
     if (video != null) {
       setState(() {
         _showAttachmentOptions = false;
