@@ -339,11 +339,6 @@ class NotificationService {
                   conversationId: conversationId,
                   messageId: messageId),
             ));
-          } else {
-            final ws = di.sl<ChatWebSocketService>();
-            ws.emitNewMessageById(
-                conversationId: conversationId, messageId: messageId);
-            await ws.emitConversationById(conversationId: conversationId);
           }
         } catch (e) {
           debugPrint('Dispatch in-app chat update failed: $e');
@@ -356,12 +351,7 @@ class NotificationService {
       final conversationId =
           (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
       if (conversationId.isNotEmpty) {
-        try {
-          final ws = di.sl<ChatWebSocketService>();
-          await ws.emitConversationById(conversationId: conversationId);
-        } catch (e) {
-          debugPrint('Emit conversation update failed: $e');
-        }
+        // UI will fetch when navigating/opening
       }
       return; // لا إشعار محلي داخل التطبيق
     }
@@ -397,26 +387,9 @@ class NotificationService {
                 ),
               ),
             ));
-          } else {
-            final ws = di.sl<ChatWebSocketService>();
-            ws.emitReactionUpdate(
-              conversationId: conversationId,
-              messageId: messageId,
-              userId: userId,
-              reactionType: reactionType,
-              isAdded: isAdded,
-            );
           }
         } catch (e) {
           debugPrint('Silent reaction update handling failed: $e');
-        }
-      } else if (conversationId.isNotEmpty) {
-        try {
-          final ws = di.sl<ChatWebSocketService>();
-          ws.emitNewMessageById(conversationId: conversationId, messageId: '');
-          await ws.emitConversationById(conversationId: conversationId);
-        } catch (e) {
-          debugPrint('Reaction fallback reload failed: $e');
         }
       }
       return; // لا إشعار مرئي للتفاعلات
@@ -441,18 +414,6 @@ class NotificationService {
                   messageId: messageId,
                   status: status),
             ));
-          } else {
-            final ws = di.sl<ChatWebSocketService>();
-            if (messageId.isNotEmpty && status.isNotEmpty) {
-              ws.emitMessageStatusUpdate(
-                conversationId: conversationId,
-                messageId: messageId,
-                status: status,
-              );
-            } else {
-              ws.emitNewMessageById(conversationId: conversationId, messageId: '');
-            }
-            await ws.emitConversationById(conversationId: conversationId);
           }
         } catch (e) {
           debugPrint('Silent status update handling failed: $e');
@@ -487,16 +448,7 @@ class NotificationService {
       final messageId =
           (data['message_id'] ?? data['messageId'] ?? '').toString();
       if (conversationId.isNotEmpty) {
-        try {
-          final ws = di.sl<ChatWebSocketService>();
-          if (messageId.isNotEmpty) {
-            ws.emitNewMessageById(
-                conversationId: conversationId, messageId: messageId);
-          }
-          ws.emitConversationById(conversationId: conversationId);
-        } catch (e) {
-          debugPrint('Failed to emit updates on message open: $e');
-        }
+        // UI will load when navigated
       }
     }
     _navigateToScreen(data);
@@ -512,14 +464,8 @@ class NotificationService {
 
   // Show local notification
   Future<void> _showLocalNotification(RemoteMessage message) async {
-    // Suppress in-app local notifications when user is inside chat UI
-    try {
-      final router = di.sl<ChatWebSocketService>();
-      // We cannot access Router directly; rely on AppBloc/ChatBloc state presence
-      // If chat feature is initialized, we assume foreground chat context. Keep silent.
-      // This avoids duplicate banners while user is in conversations list or chat page.
-      return;
-    } catch (_) {}
+    // Suppress in-app local notifications always (foreground)
+    return;
 
     final notification = message.notification;
     if (notification == null) return;
