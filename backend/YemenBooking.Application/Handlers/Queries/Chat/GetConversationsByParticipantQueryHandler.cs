@@ -8,6 +8,8 @@ using YemenBooking.Application.DTOs;
 using YemenBooking.Core.Interfaces.Repositories;
 using YemenBooking.Core.Interfaces;
 using YemenBooking.Application.Interfaces.Services; // Added for ICurrentUserService
+using System.Linq;
+using System.Collections.Generic;
 
 namespace YemenBooking.Application.Handlers.Queries.Chat
 {
@@ -38,7 +40,19 @@ namespace YemenBooking.Application.Handlers.Queries.Chat
             _logger.LogInformation("جلب المحادثات للمستخدم {UserId}", _currentUserService.UserId);
             var userId = _currentUserService.UserId;
             var (items, total) = await _conversationRepo.GetConversationsByParticipantAsync(userId, request.PageNumber, request.PageSize, cancellationToken);
-            var dtos = _mapper.Map<IEnumerable<ChatConversationDto>>(items);
+            var itemList = items?.ToList() ?? new List<Core.Entities.ChatConversation>();
+            var dtos = _mapper.Map<List<ChatConversationDto>>(itemList);
+
+            // Compute unread count per conversation for the current user
+            for (int i = 0; i < dtos.Count; i++)
+            {
+                var conv = itemList[i];
+                var unread = conv.Messages
+                    .Where(m => m.SenderId != userId)
+                    .Count(m => !string.Equals(m.Status, "read", System.StringComparison.OrdinalIgnoreCase));
+                dtos[i].UnreadCount = unread;
+            }
+
             return PaginatedResult<ChatConversationDto>.Create(dtos, request.PageNumber, request.PageSize, total);
         }
     }

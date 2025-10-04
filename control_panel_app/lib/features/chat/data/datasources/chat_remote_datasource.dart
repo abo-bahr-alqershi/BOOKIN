@@ -219,9 +219,10 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       logRequestSuccess(requestName, statusCode: response.statusCode);
 
       if (response.data['conversations'] != null) {
-        return (response.data['conversations'] as List)
+        final list = (response.data['conversations'] as List)
             .map((json) => ConversationModel.fromJson(json))
             .toList();
+        return list;
       }
       return [];
     } on DioException catch (e, s) {

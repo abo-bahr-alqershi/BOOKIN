@@ -171,7 +171,8 @@ namespace YemenBooking.Application.Mappings
                     .OrderByDescending(m => m.CreatedAt)
                     .Select(m => (DateTime?)m.CreatedAt)
                     .FirstOrDefault()))
-                .ForMember(dest => dest.UnreadCount, opt => opt.MapFrom(src => 0))
+                // UnreadCount will be computed per current user in the query handler
+                .ForMember(dest => dest.UnreadCount, opt => opt.Ignore())
                 .ForMember(dest => dest.IsArchived, opt => opt.MapFrom(src => src.IsArchived))
                 .ForMember(dest => dest.IsMuted, opt => opt.MapFrom(src => src.IsMuted))
                 .ForMember(dest => dest.PropertyId, opt => opt.MapFrom(src => src.PropertyId));

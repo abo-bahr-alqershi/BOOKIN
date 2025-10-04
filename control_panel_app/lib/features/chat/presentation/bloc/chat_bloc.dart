@@ -178,6 +178,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       (failure) async =>
           emit(ChatError(message: _mapFailureToMessage(failure))),
       (conversations) async {
+        // Ensure stable ordering and preserve unread counts coming from API
         conversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
         if (state is ChatLoaded) {
           final currentState = state as ChatLoaded;
