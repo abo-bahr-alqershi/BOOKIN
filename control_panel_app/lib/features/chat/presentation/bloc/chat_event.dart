@@ -207,55 +207,8 @@ class UploadAttachmentEvent extends ChatEvent {
   List<Object?> get props => [conversationId, filePath, messageType];
 }
 
-// إرسال عدة صور كرسالة واحدة مع إنشاء رسالة مؤقتة تحتوي معلومات الرفع
-class SendImagesEvent extends ChatEvent {
-  final String conversationId;
-  final List<File> images;
-  final String tempMessageId;
-  final List<ImageUploadInfo> uploadInfos;
-
-  const SendImagesEvent({
-    required this.conversationId,
-    required this.images,
-    required this.tempMessageId,
-    required this.uploadInfos,
-  });
-
-  @override
-  List<Object> get props => [conversationId, images, tempMessageId, uploadInfos];
-}
-
-// تحديث تقدم رفع صورة معينة داخل الرسالة المؤقتة
-class UpdateImageUploadProgressEvent extends ChatEvent {
-  final String conversationId;
-  final String tempMessageId;
-  final String uploadId;
-  final double? progress;
-  final bool isCompleted;
-  final bool isFailed;
-  final String? error;
-
-  const UpdateImageUploadProgressEvent({
-    required this.conversationId,
-    required this.tempMessageId,
-    required this.uploadId,
-    this.progress,
-    this.isCompleted = false,
-    this.isFailed = false,
-    this.error,
-  });
-
-  @override
-  List<Object?> get props => [
-        conversationId,
-        tempMessageId,
-        uploadId,
-        progress,
-        isCompleted,
-        isFailed,
-        error,
-      ];
-}
+// Legacy SendImagesEvent and UpdateImageUploadProgressEvent removed. UI now
+// uploads attachments sequentially and shows local progress overlay.
 
 class SearchChatsEvent extends ChatEvent {
   final String query;

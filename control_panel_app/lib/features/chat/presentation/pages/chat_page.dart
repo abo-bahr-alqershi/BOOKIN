@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 import 'dart:math' as math;
-import 'package:bookn_cp_app/features/chat/presentation/widgets/image_message_bubble.dart';
 import 'package:bookn_cp_app/services/websocket_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
