@@ -45,13 +45,13 @@ public class User : BaseEntity<Guid>
     /// User name
     /// </summary>
     [Display(Name = "صورة المستخدم")]
-    public string ProfileImage { get; set; } = string.Empty;
+    public string? ProfileImage { get; set; }
 
     /// <summary>
     /// رابط صورة الملف الشخصي (متوافق مع معالجات الموبايل)
     /// Profile image URL (alias for ProfileImage)
     /// </summary>
-    public string ProfileImageUrl
+    public string? ProfileImageUrl
     {
         get => ProfileImage;
         set => ProfileImage = value;

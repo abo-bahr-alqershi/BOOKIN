@@ -33,7 +33,10 @@ namespace YemenBooking.Core.Seeds
                     PasswordResetToken = null,
                     PasswordResetTokenExpires = null,
                     SettingsJson = "{}",
-                    FavoritesJson = "[]"
+                    FavoritesJson = "[]",
+                    TimeZoneId = "Asia/Aden",
+                    Country = "Yemen",
+                    City = "Sana'a"
                     
                 },
                 new User
@@ -55,7 +58,10 @@ namespace YemenBooking.Core.Seeds
                     PasswordResetToken = null,
                     PasswordResetTokenExpires = null,
                     SettingsJson = "{}",
-                    FavoritesJson = "[]"
+                    FavoritesJson = "[]",
+                    TimeZoneId = "Asia/Aden",
+                    Country = "Yemen",
+                    City = "Aden"
                 }
             };
         }

@@ -31,7 +31,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Password).IsRequired();
         builder.Property(u => u.Phone).HasMaxLength(20);
         // Profile image path or URL
-        builder.Property(u => u.ProfileImage).IsRequired().HasMaxLength(500);
+        builder.Property(u => u.ProfileImage)
+            .HasMaxLength(500)
+            .HasComment("رابط صورة الملف الشخصي (اختياري)");
         // Last updated date for the user
         builder.Property(b => b.UpdatedAt).HasColumnType("datetime").IsRequired();
         builder.Property(u => u.CreatedAt).HasColumnType("datetime").IsRequired();
