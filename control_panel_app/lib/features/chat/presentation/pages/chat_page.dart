@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'dart:math' as math;
+import 'package:bookn_cp_app/services/websocket_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -64,8 +65,10 @@ class _ChatPageState extends State<ChatPage>
   String? _currentUserId; // سيتم ملؤه من AuthBloc
   StreamSubscription<AuthState>?
       _authSubscription; // للاشتراك في تغييرات حالة المصادقة
-  StreamSubscription? _wsMessagesSubscription; // للاشتراك برسائل FCM داخل الشاشة
-  StreamSubscription<ChatState>? _chatStateSubscription; // لمتابعة تغييرات حالة الشات وتطبيق القراءة التلقائية
+  StreamSubscription?
+      _wsMessagesSubscription; // للاشتراك برسائل FCM داخل الشاشة
+  StreamSubscription<ChatState>?
+      _chatStateSubscription; // لمتابعة تغييرات حالة الشات وتطبيق القراءة التلقائية
 
   @override
   void initState() {
@@ -160,7 +163,8 @@ class _ChatPageState extends State<ChatPage>
       if (evt.type == MessageEventType.newMessage &&
           evt.conversationId == widget.conversation.id) {
         // انتظر دورة بناء قصيرة لضمان تحديث القائمة ثم علّم كمقروء
-        WidgetsBinding.instance.addPostFrameCallback((_) => _markMessagesAsRead());
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => _markMessagesAsRead());
       }
     });
   }
@@ -173,7 +177,8 @@ class _ChatPageState extends State<ChatPage>
       if (!mounted) return;
       if (state is ChatLoaded) {
         // جدولة بعد الإطار الحالي لتفادي تعارض مع البناء
-        WidgetsBinding.instance.addPostFrameCallback((_) => _markMessagesAsRead());
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => _markMessagesAsRead());
       }
     });
   }

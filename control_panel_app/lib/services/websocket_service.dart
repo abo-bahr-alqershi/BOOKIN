@@ -12,43 +12,45 @@ import '../features/chat/domain/entities/message.dart';
 import '../features/chat/data/models/conversation_model.dart';
 import '../features/chat/data/models/message_model.dart';
 
-
 class ChatWebSocketService {
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
   // final AuthLocalDataSource? _authLocalDataSource; // Unused field
   final ChatRemoteDataSource? _chatRemoteDataSource;
-  
+
   // Connection status
   bool _isConnected = false;
   bool get isConnected => _isConnected;
-  
+
   // Reconnection
   Timer? _reconnectionTimer;
   // final int _reconnectionAttempts = 0; // Unused field
   // static const int _maxReconnectionAttempts = 5; // Unused field
   // static const Duration _reconnectionDelay = Duration(seconds: 5); // Unused field
-  
+
   // Typing indicators
   final Map<String, Set<String>> _typingUsers = {};
   Timer? _typingTimer;
-  
+
   // Stream controllers
-  final _connectionStatusController = StreamController<ConnectionStatus>.broadcast();
+  final _connectionStatusController =
+      StreamController<ConnectionStatus>.broadcast();
   final _conversationController = StreamController<Conversation>.broadcast();
   final _messageController = StreamController<MessageEvent>.broadcast();
   final _typingController = StreamController<TypingEvent>.broadcast();
   final _presenceController = StreamController<PresenceEvent>.broadcast();
   final _errorController = StreamController<WebSocketError>.broadcast();
-  
+
   // Streams
-  Stream<ConnectionStatus> get connectionStatus => _connectionStatusController.stream;
-  Stream<Conversation> get conversationUpdates => _conversationController.stream;
+  Stream<ConnectionStatus> get connectionStatus =>
+      _connectionStatusController.stream;
+  Stream<Conversation> get conversationUpdates =>
+      _conversationController.stream;
   Stream<MessageEvent> get messageEvents => _messageController.stream;
   Stream<TypingEvent> get typingEvents => _typingController.stream;
   Stream<PresenceEvent> get presenceEvents => _presenceController.stream;
   Stream<WebSocketError> get errors => _errorController.stream;
-  
+
   ChatWebSocketService({
     AuthLocalDataSource? authLocalDataSource,
     ChatRemoteDataSource? remoteDataSource,
@@ -57,8 +59,8 @@ class ChatWebSocketService {
   // Connect to WebSocket (disabled, rely on FCM)
   Future<void> connect() async {
     if (_isConnected) return;
-      _isConnected = true;
-      _connectionStatusController.add(ConnectionStatus.connected);
+    _isConnected = true;
+    _connectionStatusController.add(ConnectionStatus.connected);
   }
 
   // Disconnect
@@ -77,46 +79,46 @@ class ChatWebSocketService {
     try {
       final Map<String, dynamic> message = json.decode(data as String);
       final String type = message['type'] ?? '';
-      
+
       switch (type) {
         case 'ConversationCreated':
         case 'ConversationUpdated':
           _handleConversationUpdate(message);
           break;
-          
+
         case 'NewMessage':
           _handleNewMessage(message);
           break;
-          
+
         case 'MessageEdited':
           _handleMessageEdited(message);
           break;
-          
+
         case 'MessageDeleted':
           _handleMessageDeleted(message);
           break;
-          
+
         case 'MessageStatusUpdated':
           _handleMessageStatusUpdate(message);
           break;
-          
+
         case 'ReactionAdded':
         case 'ReactionRemoved':
           _handleReactionUpdate(message);
           break;
-          
+
         case 'UserTyping':
           _handleTypingIndicator(message);
           break;
-          
+
         case 'UserPresence':
           _handlePresenceUpdate(message);
           break;
-          
+
         case 'Error':
           _handleServerError(message);
           break;
-          
+
         default:
           debugPrint('Unknown WebSocket message type: $type');
       }
@@ -194,7 +196,7 @@ class ChatWebSocketService {
     try {
       final data = message['data'];
       final isAdded = message['type'] == 'ReactionAdded';
-      
+
       // data may arrive either as a full reaction object or as primitives via FCM data
       final reaction = data['reaction'] != null
           ? MessageReactionModel.fromJson(data['reaction'])
@@ -202,11 +204,14 @@ class ChatWebSocketService {
               'id': data['reactionId'] ?? data['reaction_id'] ?? '',
               'message_id': data['messageId'] ?? data['message_id'] ?? '',
               'user_id': data['userId'] ?? data['user_id'] ?? '',
-              'reaction_type': data['reactionType'] ?? data['reaction_type'] ?? '',
+              'reaction_type':
+                  data['reactionType'] ?? data['reaction_type'] ?? '',
             });
 
       _messageController.add(MessageEvent(
-        type: isAdded ? MessageEventType.reactionAdded : MessageEventType.reactionRemoved,
+        type: isAdded
+            ? MessageEventType.reactionAdded
+            : MessageEventType.reactionRemoved,
         messageId: data['messageId'] ?? data['message_id'],
         conversationId: data['conversationId'] ?? data['conversation_id'],
         reaction: reaction,
@@ -232,7 +237,9 @@ class ChatWebSocketService {
         'reaction_type': reactionType,
       });
       _messageController.add(MessageEvent(
-        type: isAdded ? MessageEventType.reactionAdded : MessageEventType.reactionRemoved,
+        type: isAdded
+            ? MessageEventType.reactionAdded
+            : MessageEventType.reactionRemoved,
         messageId: messageId,
         conversationId: conversationId,
         reaction: reaction,
@@ -248,17 +255,17 @@ class ChatWebSocketService {
       final conversationId = data['conversationId'];
       final userId = data['userId'];
       final isTyping = data['isTyping'] ?? false;
-      
+
       if (!_typingUsers.containsKey(conversationId)) {
         _typingUsers[conversationId] = {};
       }
-      
+
       if (isTyping) {
         _typingUsers[conversationId]!.add(userId);
       } else {
         _typingUsers[conversationId]!.remove(userId);
       }
-      
+
       _typingController.add(TypingEvent(
         conversationId: conversationId,
         typingUserIds: _typingUsers[conversationId]!.toList(),
@@ -274,9 +281,8 @@ class ChatWebSocketService {
       _presenceController.add(PresenceEvent(
         userId: data['userId'],
         status: data['status'],
-        lastSeen: data['lastSeen'] != null 
-            ? DateTime.parse(data['lastSeen']) 
-            : null,
+        lastSeen:
+            data['lastSeen'] != null ? DateTime.parse(data['lastSeen']) : null,
       ));
     } catch (e) {
       debugPrint('Error handling presence update: $e');
@@ -322,7 +328,8 @@ class ChatWebSocketService {
   }) async {
     try {
       if (_chatRemoteDataSource == null) return;
-      final conversation = await _chatRemoteDataSource!.getConversationById(conversationId);
+      final conversation =
+          await _chatRemoteDataSource!.getConversationById(conversationId);
       _conversationController.add(conversation);
     } catch (e) {
       debugPrint('emitConversationById error: $e');
@@ -353,7 +360,7 @@ class ChatWebSocketService {
   //     type: ErrorType.connectionError,
   //     message: error.toString(),
   //   ));
-  //   
+  //
   //   if (_isConnected) {
   //     _isConnected = false;
   //     _connectionStatusController.add(ConnectionStatus.error);
@@ -464,7 +471,7 @@ enum ErrorType {
 class WebSocketException implements Exception {
   final String message;
   WebSocketException(this.message);
-  
+
   @override
   String toString() => message;
 }
