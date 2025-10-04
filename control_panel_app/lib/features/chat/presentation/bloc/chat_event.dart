@@ -165,14 +165,16 @@ class AddReactionEvent extends ChatEvent {
 class RemoveReactionEvent extends ChatEvent {
   final String messageId;
   final String reactionType;
+  final String? currentUserId; // لمعالجة الإزالة المتفائلة بدقة
 
   const RemoveReactionEvent({
     required this.messageId,
     required this.reactionType,
+    this.currentUserId,
   });
 
   @override
-  List<Object> get props => [messageId, reactionType];
+  List<Object?> get props => [messageId, reactionType, currentUserId];
 }
 
 class MarkMessagesAsReadEvent extends ChatEvent {

@@ -1034,7 +1034,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           final m = msgs[i];
           if (m.id == event.messageId) {
             final reactions = m.reactions
-                .where((r) => r.reactionType != event.reactionType)
+                .where((r) => !(r.reactionType == event.reactionType && (event.currentUserId == null || r.userId == event.currentUserId)))
                 .toList();
             msgs[i] = Message(
               id: m.id,

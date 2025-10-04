@@ -366,52 +366,6 @@ class NotificationService {
       return; // لا إشعار محلي داخل التطبيق
     }
 
-    // حالات لا يجب أن تظهر كإشعارات مرئية: تحديث الحالة والتفاعلات الصامتة
-    if (type == 'message_status_updated' || data['silent'] == 'true') {
-      // Update UI silently if needed
-      final conversationId =
-          (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
-      final messageId =
-          (data['message_id'] ?? data['messageId'] ?? '').toString();
-      final status = (data['status'] ?? '').toString();
-      final readAt = (data['read_at'] ?? '').toString();
-      final deliveredAt = (data['delivered_at'] ?? '').toString();
-      if (conversationId.isNotEmpty) {
-        try {
-          if (_chatEventSink != null &&
-              messageId.isNotEmpty &&
-              status.isNotEmpty) {
-            _chatEventSink!.call(WebSocketMessageReceivedEvent(
-              MessageEvent(
-                  type: MessageEventType.statusUpdated,
-                  conversationId: conversationId,
-                  messageId: messageId,
-                  status: status),
-            ));
-          } else {
-            final ws = di.sl<ChatWebSocketService>();
-            // ادفع حدث statusUpdated لتحديث فوري
-            if (messageId.isNotEmpty && status.isNotEmpty) {
-              ws.emitMessageStatusUpdate(
-                conversationId: conversationId,
-                messageId: messageId,
-                status: status,
-              );
-            } else {
-              // fallback: force fetch
-              ws.emitNewMessageById(
-                  conversationId: conversationId, messageId: '');
-            }
-            // ثم جلب المحادثة لتحديث آخر حالة/عدادات بشكل موثوق
-            await ws.emitConversationById(conversationId: conversationId);
-          }
-        } catch (e) {
-          debugPrint('Silent status update handling failed: $e');
-        }
-      }
-      return; // لا عرض لإشعار مرئي
-    }
-
     // تفاعل مُضاف/محذوف: ادفع حدثاً دقيقاً لتحديث فوري دون إعادة جلب كامل
     if (type == 'reaction_added' || type == 'reaction_removed') {
       final conversationId =
@@ -468,7 +422,52 @@ class NotificationService {
       return; // لا إشعار مرئي للتفاعلات
     }
 
-    // أنواع أخرى: أظهر إشعارًا محليًا حسب المنصّة
+    // تحديث حالة الرسالة: تحديث صامت للواجهة
+    if (type == 'message_status_updated') {
+      final conversationId =
+          (data['conversation_id'] ?? data['conversationId'] ?? '').toString();
+      final messageId =
+          (data['message_id'] ?? data['messageId'] ?? '').toString();
+      final status = (data['status'] ?? '').toString();
+      final readAt = (data['read_at'] ?? '').toString();
+      final deliveredAt = (data['delivered_at'] ?? '').toString();
+      if (conversationId.isNotEmpty) {
+        try {
+          if (_chatEventSink != null && messageId.isNotEmpty && status.isNotEmpty) {
+            _chatEventSink!.call(WebSocketMessageReceivedEvent(
+              MessageEvent(
+                  type: MessageEventType.statusUpdated,
+                  conversationId: conversationId,
+                  messageId: messageId,
+                  status: status),
+            ));
+          } else {
+            final ws = di.sl<ChatWebSocketService>();
+            if (messageId.isNotEmpty && status.isNotEmpty) {
+              ws.emitMessageStatusUpdate(
+                conversationId: conversationId,
+                messageId: messageId,
+                status: status,
+              );
+            } else {
+              ws.emitNewMessageById(conversationId: conversationId, messageId: '');
+            }
+            await ws.emitConversationById(conversationId: conversationId);
+          }
+        } catch (e) {
+          debugPrint('Silent status update handling failed: $e');
+        }
+      }
+      return; // لا عرض لإشعار مرئي
+    }
+
+    // أي رسائل صامتة عامة أخرى: لا تعرض تنبيهًا
+    if ((data['silent'] ?? '').toString() == 'true') {
+      return;
+    }
+
+    // بقية الأنواع: أظهر إشعارًا مرئيًا حسب المنصّة
+
     if (Platform.isAndroid) {
       await _showLocalNotification(message);
     }

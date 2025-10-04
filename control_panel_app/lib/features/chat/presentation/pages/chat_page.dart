@@ -64,6 +64,8 @@ class _ChatPageState extends State<ChatPage>
   String? _currentUserId; // سيتم ملؤه من AuthBloc
   StreamSubscription<AuthState>?
       _authSubscription; // للاشتراك في تغييرات حالة المصادقة
+  StreamSubscription? _wsMessagesSubscription; // للاشتراك برسائل FCM داخل الشاشة
+  StreamSubscription<ChatState>? _chatStateSubscription; // لمتابعة تغييرات حالة الشات وتطبيق القراءة التلقائية
 
   @override
   void initState() {
@@ -76,6 +78,8 @@ class _ChatPageState extends State<ChatPage>
     _scrollController.addListener(_onScroll);
     _messageController.addListener(_onTypingChanged);
     _initializeTypingIndicator();
+    _subscribeToIncomingMessagesForAutoRead();
+    _subscribeToChatStateForAutoRead();
   }
 
   void _initializeAnimations() {
@@ -148,6 +152,32 @@ class _ChatPageState extends State<ChatPage>
     });
   }
 
+  // عندما تصل رسالة جديدة أثناء فتح شاشة المحادثة، ضعها كمقروء فوراً
+  void _subscribeToIncomingMessagesForAutoRead() {
+    final ws = context.read<ChatBloc>().webSocketService;
+    _wsMessagesSubscription = ws.messageEvents.listen((evt) {
+      if (!mounted) return;
+      if (evt.type == MessageEventType.newMessage &&
+          evt.conversationId == widget.conversation.id) {
+        // انتظر دورة بناء قصيرة لضمان تحديث القائمة ثم علّم كمقروء
+        WidgetsBinding.instance.addPostFrameCallback((_) => _markMessagesAsRead());
+      }
+    });
+  }
+
+  // في حال وصول الأحداث مباشرة إلى الـ Bloc عبر NotificationService،
+  // نراقب تغيّر الحالة لتفعيل التعليم كمقروء عند تحديث رسائل هذه المحادثة.
+  void _subscribeToChatStateForAutoRead() {
+    final bloc = context.read<ChatBloc>();
+    _chatStateSubscription = bloc.stream.listen((state) {
+      if (!mounted) return;
+      if (state is ChatLoaded) {
+        // جدولة بعد الإطار الحالي لتفادي تعارض مع البناء
+        WidgetsBinding.instance.addPostFrameCallback((_) => _markMessagesAsRead());
+      }
+    });
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -160,6 +190,8 @@ class _ChatPageState extends State<ChatPage>
     _glowController.dispose();
     _typingTimer?.cancel();
     _authSubscription?.cancel();
+    _wsMessagesSubscription?.cancel();
+    _chatStateSubscription?.cancel();
     super.dispose();
   }
 
@@ -176,6 +208,8 @@ class _ChatPageState extends State<ChatPage>
             conversationId: widget.conversation.id,
           ),
         );
+    // بعد التحميل مباشرةً، حاول وضع علامة مقروء إذا كانت الشاشة مفتوحة
+    WidgetsBinding.instance.addPostFrameCallback((_) => _markMessagesAsRead());
   }
 
   void _onScroll() {
@@ -257,6 +291,13 @@ class _ChatPageState extends State<ChatPage>
             );
       }
     }
+  }
+
+  @override
+  void didUpdateWidget(covariant ChatPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // إذا تغيّر المحادثة أو جرى إعادة البناء بعد إظهار الرسائل، ضع علامة مقروء
+    WidgetsBinding.instance.addPostFrameCallback((_) => _markMessagesAsRead());
   }
 
   // FIXED: Scroll to reply message
@@ -1062,6 +1103,7 @@ class _ChatPageState extends State<ChatPage>
             RemoveReactionEvent(
               messageId: message.id,
               reactionType: reactionType,
+              currentUserId: userId,
             ),
           );
     } else {
