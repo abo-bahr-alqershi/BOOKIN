@@ -30,7 +30,7 @@ class MessageModel extends Message {
       senderId: json['senderId'] ?? json['sender_id'] ?? '',
       messageType: json['messageType'] ?? json['message_type'] ?? 'text',
       content: json['content'],
-      location: json['location'] != null 
+      location: json['location'] != null
           ? LocationModel.fromJson(json['location'])
           : null,
       replyToMessageId: json['replyToMessageId'] ?? json['reply_to_message_id'],
@@ -47,9 +47,11 @@ class MessageModel extends Message {
       editedAt: json['editedAt'] != null || json['edited_at'] != null
           ? DateTime.parse(json['editedAt'] ?? json['edited_at'])
           : null,
-      deliveryReceipt: json['deliveryReceipt'] != null || json['delivery_receipt'] != null
-          ? DeliveryReceiptModel.fromJson(json['deliveryReceipt'] ?? json['delivery_receipt'])
-          : null,
+      deliveryReceipt:
+          json['deliveryReceipt'] != null || json['delivery_receipt'] != null
+              ? DeliveryReceiptModel.fromJson(
+                  json['deliveryReceipt'] ?? json['delivery_receipt'])
+              : null,
     );
   }
 
@@ -62,14 +64,17 @@ class MessageModel extends Message {
       if (content != null) 'content': content,
       if (location != null) 'location': (location as LocationModel).toJson(),
       if (replyToMessageId != null) 'reply_to_message_id': replyToMessageId,
-      'reactions': reactions.map((r) => (r as MessageReactionModel).toJson()).toList(),
-      'attachments': attachments.map((a) => (a as AttachmentModel).toJson()).toList(),
+      'reactions':
+          reactions.map((r) => (r as MessageReactionModel).toJson()).toList(),
+      'attachments':
+          attachments.map((a) => (a as AttachmentModel).toJson()).toList(),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'status': status,
       'is_edited': isEdited,
       if (editedAt != null) 'edited_at': editedAt!.toIso8601String(),
-      if (deliveryReceipt != null) 'delivery_receipt': (deliveryReceipt as DeliveryReceiptModel).toJson(),
+      if (deliveryReceipt != null)
+        'delivery_receipt': (deliveryReceipt as DeliveryReceiptModel).toJson(),
     };
   }
 
@@ -117,4 +122,3 @@ class LocationModel extends Location {
     };
   }
 }
-
