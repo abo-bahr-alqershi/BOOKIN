@@ -380,11 +380,39 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
               emit(currentState.copyWith(error: _mapFailureToMessage(failure)));
             },
             (messages) async {
+              // Update messages in memory
+              final updatedMessagesMap = {
+                ...currentState.messages,
+                messageEvent.conversationId: messages,
+              };
+
+              // Also update the conversation's lastMessage and reorder list
+              List<Conversation> updatedConversations = currentState.conversations.map((c) {
+                if (c.id == messageEvent.conversationId) {
+                  final last = messages.isNotEmpty ? messages.first : c.lastMessage;
+                  return Conversation(
+                    id: c.id,
+                    conversationType: c.conversationType,
+                    title: c.title,
+                    description: c.description,
+                    avatar: c.avatar,
+                    createdAt: c.createdAt,
+                    updatedAt: (last?.updatedAt ?? DateTime.now()),
+                    lastMessage: last ?? c.lastMessage,
+                    unreadCount: c.unreadCount + 1,
+                    isArchived: c.isArchived,
+                    isMuted: c.isMuted,
+                    propertyId: c.propertyId,
+                    participants: c.participants,
+                  );
+                }
+                return c;
+              }).toList();
+              updatedConversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
               emit(currentState.copyWith(
-                messages: {
-                  ...currentState.messages,
-                  messageEvent.conversationId: messages,
-                },
+                messages: updatedMessagesMap,
+                conversations: updatedConversations,
               ));
             },
           );
@@ -1001,24 +1029,32 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   Future<void> _onAddReaction(
       AddReactionEvent event, Emitter<ChatState> emit) async {
-    // Optimistic update: add reaction locally (preserve list type)
+    // Optimistic toggle/switch: ensure only one reaction per user
     if (state is ChatLoaded) {
       final current = state as ChatLoaded;
       final Map<String, List<Message>> updated = {...current.messages};
-      updated.update(event.messageId.substring(0,0), (value) => value, ifAbsent: () => []); // no-op safeguard
       updated.forEach((convId, msgs) {
         bool changed = false;
         final newMsgs = msgs.map((m) {
           if (m.id == event.messageId) {
-            final reactions = List<MessageReaction>.from(m.reactions)
-              ..add(MessageReaction(
-                id: 'temp_${DateTime.now().microsecondsSinceEpoch}',
-                messageId: m.id,
-                userId: (event.currentUserId != null && event.currentUserId!.isNotEmpty)
+            final String currentUserId =
+                (event.currentUserId != null && event.currentUserId!.isNotEmpty)
                     ? event.currentUserId!
-                    : 'current_user',
-                reactionType: event.reactionType,
-              ));
+                    : 'current_user';
+
+            final List<MessageReaction> reactions = List<MessageReaction>.from(m.reactions);
+
+            // Remove any existing reaction by this user
+            reactions.removeWhere((r) => r.userId == currentUserId);
+
+            // If the same type wasn't already set, add the new one
+            reactions.add(MessageReaction(
+              id: 'temp_${DateTime.now().microsecondsSinceEpoch}',
+              messageId: m.id,
+              userId: currentUserId,
+              reactionType: event.reactionType,
+            ));
+
             changed = true;
             return MessageModel(
               id: m.id,
@@ -1094,7 +1130,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   Future<void> _onRemoveReaction(
       RemoveReactionEvent event, Emitter<ChatState> emit) async {
-    // Optimistic update: remove reaction locally (preserve list type)
+    // Optimistic removal: remove only this user's reaction of given type
     if (state is ChatLoaded) {
       final current = state as ChatLoaded;
       final Map<String, List<Message>> updated = {...current.messages};
@@ -1219,10 +1255,72 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         ));
       },
       (attachment) async {
+        // Mark upload done
         emit(current.copyWith(
           uploadingAttachment: attachment,
           uploadProgress: 1.0,
         ));
+
+        // Immediately send a message referencing this attachment
+        final sendResult = await sendMessageUseCase(
+          SendMessageParams(
+            conversationId: event.conversationId,
+            messageType: event.messageType,
+            content: attachment.fileUrl,
+            location: null,
+            replyToMessageId: null,
+            attachmentIds: [attachment.id],
+          ),
+        );
+
+        await sendResult.fold(
+          (failure) async {
+            // Reset uploading state and surface error
+            final latest = state is ChatLoaded ? state as ChatLoaded : current;
+            emit(latest.copyWith(
+              error: _mapFailureToMessage(failure),
+            ));
+          },
+          (message) async {
+            // Insert message at top and bump conversation ordering
+            final latest = state is ChatLoaded ? state as ChatLoaded : current;
+            final currentMessages = latest.messages[event.conversationId] ?? [];
+            final updatedMessages = [
+              message,
+              ...currentMessages,
+            ];
+
+            var conversations = latest.conversations.map((c) {
+              if (c.id == event.conversationId) {
+                return Conversation(
+                  id: c.id,
+                  conversationType: c.conversationType,
+                  title: c.title,
+                  description: c.description,
+                  avatar: c.avatar,
+                  createdAt: c.createdAt,
+                  updatedAt: message.updatedAt,
+                  lastMessage: message,
+                  unreadCount: c.unreadCount,
+                  isArchived: c.isArchived,
+                  isMuted: c.isMuted,
+                  propertyId: c.propertyId,
+                  participants: c.participants,
+                );
+              }
+              return c;
+            }).toList();
+            conversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+            emit(latest.copyWith(
+              messages: {
+                ...latest.messages,
+                event.conversationId: updatedMessages,
+              },
+              conversations: conversations,
+            ));
+          },
+        );
       },
     );
   }

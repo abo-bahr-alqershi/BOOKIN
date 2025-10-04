@@ -1098,19 +1098,29 @@ class _ChatPageState extends State<ChatPage>
 
   void _addReaction(Message message, String reactionType, String userId) {
     HapticFeedback.lightImpact();
+    // If tapping current selected reaction -> toggle off
+    // If tapping different reaction -> switch
+    final currentUserReaction = message.reactions
+        .firstWhere((r) => r.userId == userId, orElse: () => const MessageReaction(id: '', messageId: '', userId: '', reactionType: ''));
 
-    final hasReaction = message.reactions.any(
-      (r) => r.userId == userId && r.reactionType == reactionType,
-    );
-
-    if (hasReaction) {
-      context.read<ChatBloc>().add(
-            RemoveReactionEvent(
-              messageId: message.id,
-              reactionType: reactionType,
-              currentUserId: userId,
-            ),
-          );
+    if (currentUserReaction.id.isNotEmpty) {
+      if (currentUserReaction.reactionType == reactionType) {
+        context.read<ChatBloc>().add(
+              RemoveReactionEvent(
+                messageId: message.id,
+                reactionType: reactionType,
+                currentUserId: userId,
+              ),
+            );
+      } else {
+        context.read<ChatBloc>().add(
+              AddReactionEvent(
+                messageId: message.id,
+                reactionType: reactionType,
+                currentUserId: userId,
+              ),
+            );
+      }
     } else {
       context.read<ChatBloc>().add(
             AddReactionEvent(

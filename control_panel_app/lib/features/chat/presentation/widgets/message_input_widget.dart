@@ -497,7 +497,15 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
       setState(() {
         _showAttachmentOptions = false;
       });
-      // Send image
+      // Send image with real upload progress via Bloc
+      if (!mounted) return;
+      context.read<ChatBloc>().add(
+            UploadAttachmentEvent(
+              conversationId: widget.conversationId,
+              filePath: image.path,
+              messageType: 'image',
+            ),
+          );
     }
   }
 
@@ -512,7 +520,14 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
       setState(() {
         _showAttachmentOptions = false;
       });
-      // Send video
+      if (!mounted) return;
+      context.read<ChatBloc>().add(
+            UploadAttachmentEvent(
+              conversationId: widget.conversationId,
+              filePath: video.path,
+              messageType: 'video',
+            ),
+          );
     }
   }
 

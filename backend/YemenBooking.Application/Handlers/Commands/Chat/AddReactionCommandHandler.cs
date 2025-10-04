@@ -56,6 +56,74 @@ namespace YemenBooking.Application.Handlers.Commands.Chat
                 var userId = _currentUserService.UserId;
                 _logger.LogInformation("المستخدم {UserId} يضيف تفاعل {ReactionType} على الرسالة {MessageId}", userId, request.ReactionType, request.MessageId);
 
+                // Rule: single reaction per user per message; clicking another reaction switches it,
+                // clicking the same reaction toggles it off. Enforce atomically here.
+                var existingReactions = await _unitOfWork
+                    .Repository<MessageReaction>()
+                    .FindAsync(r => r.MessageId == request.MessageId && r.UserId == userId, cancellationToken);
+
+                var existing = existingReactions.FirstOrDefault();
+                if (existing != null)
+                {
+                    if (string.Equals(existing.ReactionType, request.ReactionType, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Toggle off same reaction
+                        await _unitOfWork.Repository<MessageReaction>().DeleteAsync(existing, cancellationToken);
+                        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                        // Notify removal via FCM
+                        var message = await _messageRepo.GetByIdAsync(request.MessageId, cancellationToken);
+                        var conversation = await _conversationRepo.GetByIdWithDetailsAsync(message.ConversationId, cancellationToken)
+                                           ?? await _conversationRepo.GetByIdAsync(message.ConversationId, cancellationToken);
+                        var dataRemoved = new System.Collections.Generic.Dictionary<string, string>
+                        {
+                            { "type", "reaction_removed" },
+                            { "conversation_id", message.ConversationId.ToString() },
+                            { "message_id", message.Id.ToString() },
+                            { "user_id", userId.ToString() },
+                            { "reaction_type", existing.ReactionType },
+                            { "silent", "true" }
+                        };
+                        await _firebaseService.SendNotificationAsync($"user_{userId}", string.Empty, string.Empty, dataRemoved, cancellationToken);
+                        foreach (var participant in conversation.Participants)
+                        {
+                            if (participant.Id == userId) continue;
+                            await _firebaseService.SendNotificationAsync($"user_{participant.Id}", string.Empty, string.Empty, dataRemoved, cancellationToken);
+                        }
+                        return ResultDto.Ok("تم إلغاء التفاعل");
+                    }
+                    else
+                    {
+                        // Switch reaction type
+                        existing.ReactionType = request.ReactionType;
+                        existing.UpdatedAt = DateTime.UtcNow;
+                        await _unitOfWork.Repository<MessageReaction>().UpdateAsync(existing, cancellationToken);
+                        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                        var message = await _messageRepo.GetByIdAsync(request.MessageId, cancellationToken);
+                        var conversation = await _conversationRepo.GetByIdWithDetailsAsync(message.ConversationId, cancellationToken)
+                                           ?? await _conversationRepo.GetByIdAsync(message.ConversationId, cancellationToken);
+
+                        var switchPayload = new System.Collections.Generic.Dictionary<string, string>
+                        {
+                            { "type", "reaction_added" },
+                            { "conversation_id", message.ConversationId.ToString() },
+                            { "message_id", message.Id.ToString() },
+                            { "reaction_id", existing.Id.ToString() },
+                            { "user_id", userId.ToString() },
+                            { "reaction_type", existing.ReactionType },
+                            { "silent", "true" }
+                        };
+                        await _firebaseService.SendNotificationAsync($"user_{userId}", string.Empty, string.Empty, switchPayload, cancellationToken);
+                        foreach (var participant in conversation.Participants)
+                        {
+                            if (participant.Id == userId) continue;
+                            await _firebaseService.SendNotificationAsync($"user_{participant.Id}", string.Empty, string.Empty, switchPayload, cancellationToken);
+                        }
+                        return ResultDto.Ok("تم تغيير التفاعل");
+                    }
+                }
+
                 var reaction = new MessageReaction
                 {
                     Id = Guid.NewGuid(),

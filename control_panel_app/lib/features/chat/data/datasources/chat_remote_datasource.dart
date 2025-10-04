@@ -690,7 +690,7 @@ Future<MessageModel> sendMessage({
       if (response.data is Map<String, dynamic>) {
         final map = response.data as Map<String, dynamic>;
         final dynamic payload = map['data'] ?? map['attachment'];
-        if (map['success'] == true && payload != null) {
+        if (payload != null) {
           return AttachmentModel.fromJson(payload as Map<String, dynamic>);
         }
       }

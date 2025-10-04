@@ -153,6 +153,10 @@ class NotificationService {
     if (initialMessage != null) {
       _handleMessageOpenedApp(initialMessage);
     }
+
+    // Background message handler registration (Android/iOS)
+    FirebaseMessaging.onBackgroundMessage(
+        NotificationService._handleBackgroundMessage);
   }
 
   // Register FCM token with backend

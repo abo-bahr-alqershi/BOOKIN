@@ -47,5 +47,11 @@ namespace YemenBooking.Application.Commands.Chat
         /// Attachments sent with the message
         /// </summary>
         public List<IFormFile>? Attachments { get; set; }
+
+        /// <summary>
+        /// معرفات مرفقات مرفوعة مسبقًا لإسنادها إلى الرسالة
+        /// Previously uploaded attachment IDs to associate with this message
+        /// </summary>
+        public List<Guid>? AttachmentIds { get; set; }
     }
 } 
