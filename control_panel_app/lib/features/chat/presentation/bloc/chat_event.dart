@@ -210,6 +210,58 @@ class UploadAttachmentEvent extends ChatEvent {
 // Legacy SendImagesEvent and UpdateImageUploadProgressEvent removed. UI now
 // uploads attachments sequentially and shows local progress overlay.
 
+// Begin: In-bubble image upload events
+class StartImageUploadsEvent extends ChatEvent {
+  final String conversationId;
+  final List<ImageUploadInfo> uploads;
+
+  const StartImageUploadsEvent({
+    required this.conversationId,
+    required this.uploads,
+  });
+
+  @override
+  List<Object?> get props => [conversationId, uploads];
+}
+
+class UpdateImageUploadProgressEvent extends ChatEvent {
+  final String conversationId;
+  final String uploadId;
+  final double? progress; // 0.0 - 1.0
+  final bool? isCompleted;
+  final bool? isFailed;
+  final String? error;
+
+  const UpdateImageUploadProgressEvent({
+    required this.conversationId,
+    required this.uploadId,
+    this.progress,
+    this.isCompleted,
+    this.isFailed,
+    this.error,
+  });
+
+  @override
+  List<Object?> get props => [
+        conversationId,
+        uploadId,
+        progress,
+        isCompleted,
+        isFailed,
+        error,
+      ];
+}
+
+class FinishImageUploadsEvent extends ChatEvent {
+  final String conversationId;
+
+  const FinishImageUploadsEvent({required this.conversationId});
+
+  @override
+  List<Object?> get props => [conversationId];
+}
+// End: In-bubble image upload events
+
 class SearchChatsEvent extends ChatEvent {
   final String query;
   final String? conversationId;

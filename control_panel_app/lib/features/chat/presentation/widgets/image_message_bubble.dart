@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/cached_image_widget.dart';
@@ -10,6 +11,7 @@ import '../../domain/entities/attachment.dart';
 import '../models/image_upload_info.dart';
 import 'message_status_indicator.dart';
 import 'whatsapp_style_image_grid.dart';
+import '../bloc/chat_bloc.dart';
 
 class ImageMessageBubble extends StatefulWidget {
   final Message message;
@@ -107,6 +109,12 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble>
       return _buildCompletedBubble();
     }
 
+    // fallback: في حال كانت رسالة صورة بدون مرفقات لكن المحتوى يحمل رابط صورة
+    if (widget.message.messageType == 'image' &&
+        (widget.message.content != null && widget.message.content!.isNotEmpty)) {
+      return _buildSingleContentImage(widget.message.content!);
+    }
+
     return const SizedBox.shrink();
   }
 
@@ -169,6 +177,40 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble>
           ),
 
           // Footer مع الوقت والحالة
+          Positioned(
+            bottom: 4,
+            right: 8,
+            child: _buildMessageFooter(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSingleContentImage(String url) {
+    return Container(
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.7,
+        minWidth: 200,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: widget.isMe
+              ? AppTheme.primaryBlue.withValues(alpha: 0.1)
+              : AppTheme.darkBorder.withValues(alpha: 0.05),
+          width: 0.5,
+        ),
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: CachedImageWidget(
+              imageUrl: url,
+              fit: BoxFit.cover,
+            ),
+          ),
           Positioned(
             bottom: 4,
             right: 8,
@@ -600,7 +642,47 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble>
 
   void _retryFailedUploads() {
     HapticFeedback.mediumImpact();
-    // إعادة محاولة رفع الصور الفاشلة
+    final uploads = widget.uploadingImages ?? const <ImageUploadInfo>[];
+    final failed = uploads.where((u) => u.isFailed && u.file != null).toList();
+    if (failed.isEmpty) return;
+
+    for (final item in failed) {
+      final filePath = item.file!.path;
+      final uploadId = item.id;
+      context.read<ChatBloc>().uploadAttachmentWithProgress(
+        conversationId: widget.message.conversationId,
+        filePath: filePath,
+        messageType: 'image',
+        onProgress: (sent, total) {
+          final ratio = total > 0 ? sent / total : 0.0;
+          context.read<ChatBloc>().add(
+                UpdateImageUploadProgressEvent(
+                  conversationId: widget.message.conversationId,
+                  uploadId: uploadId,
+                  progress: ratio,
+                ),
+              );
+        },
+      ).then((_) {
+        context.read<ChatBloc>().add(
+              UpdateImageUploadProgressEvent(
+                conversationId: widget.message.conversationId,
+                uploadId: uploadId,
+                progress: 1.0,
+                isCompleted: true,
+              ),
+            );
+      }).catchError((e) {
+        context.read<ChatBloc>().add(
+              UpdateImageUploadProgressEvent(
+                conversationId: widget.message.conversationId,
+                uploadId: uploadId,
+                isFailed: true,
+                error: e.toString(),
+              ),
+            );
+      });
+    }
   }
 
   String _formatTime(DateTime dateTime) {

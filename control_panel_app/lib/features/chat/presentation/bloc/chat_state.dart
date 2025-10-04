@@ -98,6 +98,7 @@ class ChatLoaded extends ChatState {
         error,
         uploadingAttachment,
         uploadProgress,
+        uploadingImages,
       ];
 }
 

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:bookn_cp_app/injection_container.dart';
+import 'package:bookn_cp_app/services/local_storage_service.dart';
+import '../constants/storage_constants.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_dimensions.dart';
 import '../utils/image_utils.dart';
@@ -58,6 +61,7 @@ class CachedImageWidget extends StatelessWidget {
               height: height,
               color: color,
               colorBlendMode: colorBlendMode,
+              httpHeaders: _buildAuthHeaders(),
               placeholder: (context, url) => placeholder ?? _buildPlaceholder(),
               errorWidget: (context, url, error) => 
                 errorWidget ?? _buildErrorWidget(),
@@ -72,6 +76,17 @@ class CachedImageWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Map<String, String>? _buildAuthHeaders() {
+    try {
+      final local = sl<LocalStorageService>();
+      final token = local.getData(StorageConstants.accessToken) as String?;
+      if (token != null && token.isNotEmpty) {
+        return {'Authorization': 'Bearer $token'};
+      }
+    } catch (_) {}
+    return null;
   }
 
   Widget _buildPlaceholder() {

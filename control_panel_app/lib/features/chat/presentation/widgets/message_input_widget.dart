@@ -580,15 +580,21 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
 
     // إنشاء رسالة مؤقتة مع الصور
     final tempMessageId = DateTime.now().millisecondsSinceEpoch.toString();
-    final uploadInfos = images.map((image) {
-      return ImageUploadInfo(
-        id: '${tempMessageId}_${images.indexOf(image)}',
-        file: image,
+    final uploadInfos = <ImageUploadInfo>[];
+    for (int i = 0; i < images.length; i++) {
+      uploadInfos.add(ImageUploadInfo(
+        id: '${tempMessageId}_$i',
+        file: images[i],
         progress: 0.0,
-      );
-    }).toList();
+      ));
+    }
 
-    // إضافة رسالة مؤقتة محلية عبر Overlay تقدم الرفع (اختياري)
+    // إعلام الـ Bloc ببدء عملية رفع الصور لإظهار فقاعة الرفع داخل الشات
+    context.read<ChatBloc>().add(StartImageUploadsEvent(
+          conversationId: widget.conversationId,
+          uploads: uploadInfos,
+        ));
+
     // بدء رفع الصور بالتتابع مع تقدم
     _uploadImagesWithProgress(images, tempMessageId, uploadInfos);
   }
@@ -609,23 +615,40 @@ class _MessageInputWidgetState extends State<MessageInputWidget>
               messageType: 'image',
               onProgress: (sent, total) {
                 final ratio = total > 0 ? sent / total : 0.0;
-                if (i < uploadInfos.length) {
-                  uploadInfos[i] = uploadInfos[i].copyWith(progress: ratio);
-                }
-                setState(() {});
+                context.read<ChatBloc>().add(
+                      UpdateImageUploadProgressEvent(
+                        conversationId: widget.conversationId,
+                        uploadId: uploadId,
+                        progress: ratio,
+                      ),
+                    );
               },
             );
 
-        if (i < uploadInfos.length) {
-          uploadInfos[i] = uploadInfos[i].copyWith(progress: 1.0, isCompleted: true);
-        }
-        setState(() {});
+        context.read<ChatBloc>().add(
+              UpdateImageUploadProgressEvent(
+                conversationId: widget.conversationId,
+                uploadId: uploadId,
+                progress: 1.0,
+                isCompleted: true,
+              ),
+            );
       } catch (e) {
-        if (i < uploadInfos.length) {
-          uploadInfos[i] = uploadInfos[i].copyWith(isFailed: true, error: e.toString());
-        }
-        setState(() {});
+        context.read<ChatBloc>().add(
+              UpdateImageUploadProgressEvent(
+                conversationId: widget.conversationId,
+                uploadId: uploadId,
+                isFailed: true,
+                error: e.toString(),
+              ),
+            );
       }
+    }
+    // إنهاء عرض فقاعة الرفع
+    if (mounted) {
+      context
+          .read<ChatBloc>()
+          .add(FinishImageUploadsEvent(conversationId: widget.conversationId));
     }
   }
 
